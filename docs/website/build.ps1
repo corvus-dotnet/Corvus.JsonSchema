@@ -1479,6 +1479,7 @@ $lycheeArgs = @(
     "--exclude-path", "playground-toon"
     "--exclude-path", "playground-asyncapi"
     "--exclude-path", "playground-openapi"
+    "--exclude-path", "playground-typescript"
     "--exclude-path", "playground-openapi-typescript"
     "."
 )
@@ -1504,7 +1505,7 @@ if ($BasePathPrefix) {
     # Rewrite HTML files (excluding playgrounds which use <base href>)
     # Use -notmatch with [/\\] separators for cross-platform compatibility (Linux uses /, Windows uses \)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi-typescript[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-typescript[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi-typescript[/\\]' }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -1570,7 +1571,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi-typescript[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-typescript[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi-typescript[/\\]' }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
