@@ -34,7 +34,7 @@ public class ManagementTagWriteBenchmarks
     // fixed list (the owner's tenant identity).
     private static readonly IReadOnlyList<SecurityTag> InternalTags = [new SecurityTag("sys:tenant", "acme")];
 
-    private ParsedJsonDocument<Models.CredentialBindingWrite> body = null!;
+    private ParsedJsonDocument<Models.CredentialBindingCreate> body = null!;
 
     // Precomputed inputs so the per-element arms isolate exactly one step's allocation.
     private IReadOnlyList<SecurityTag> userManagement = null!;
@@ -43,7 +43,7 @@ public class ManagementTagWriteBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        this.body = ParsedJsonDocument<Models.CredentialBindingWrite>.Parse(BodyJson);
+        this.body = ParsedJsonDocument<Models.CredentialBindingCreate>.Parse(BodyJson);
         this.userManagement = ReadTags(this.body.RootElement.ManagementTags);
         this.merged = new List<SecurityTag>(InternalTags);
         this.merged.AddRange(this.userManagement);
@@ -125,7 +125,7 @@ public class ManagementTagWriteBenchmarks
     }
 
     // A verbatim copy of the handler's private ReadTags, so the benchmark measures the same code.
-    private static List<SecurityTag> ReadTags(Models.CredentialBindingWrite.CredentialSecurityTagArray tags)
+    private static List<SecurityTag> ReadTags(Models.CredentialBindingCreate.CredentialSecurityTagArray tags)
     {
         var list = new List<SecurityTag>();
         if (tags.IsNotUndefined())

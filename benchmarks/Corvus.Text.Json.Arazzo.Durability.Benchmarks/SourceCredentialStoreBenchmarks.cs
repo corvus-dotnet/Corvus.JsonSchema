@@ -47,14 +47,14 @@ public class SourceCredentialStoreBenchmarks
         }
         """u8.ToArray();
 
-    private ParsedJsonDocument<Models.CredentialBindingWrite> body = null!;
+    private ParsedJsonDocument<Models.CredentialBindingCreate> body = null!;
     private SecurityTagSet managementTags;
     private SecurityTagSet usageTags;
 
     [GlobalSetup]
     public void Setup()
     {
-        this.body = ParsedJsonDocument<Models.CredentialBindingWrite>.Parse(BodyJson);
+        this.body = ParsedJsonDocument<Models.CredentialBindingCreate>.Parse(BodyJson);
 
         // Resolved by the handler from the caller's AccessContext (internal tenant tag + usage grants); precomputed here
         // so the measured region is the persistence seam, not the access-tag resolution (which both seams share).
@@ -71,7 +71,7 @@ public class SourceCredentialStoreBenchmarks
     public void Create_FromRecord()
     {
         var store = new InMemorySourceCredentialStore();
-        Models.CredentialBindingWrite b = this.body.RootElement;
+        Models.CredentialBindingCreate b = this.body.RootElement;
 
         var secretRefs = new List<SecretReferenceDefinition>();
         foreach (Models.SecretReference reference in b.SecretRefs.EnumerateArray())
@@ -110,7 +110,7 @@ public class SourceCredentialStoreBenchmarks
     public void Create_FromDraft()
     {
         var store = new InMemorySourceCredentialStore();
-        Models.CredentialBindingWrite b = this.body.RootElement;
+        Models.CredentialBindingCreate b = this.body.RootElement;
 
         using ParsedJsonDocument<SourceCredentialBinding> draft = SourceCredentialBinding.Draft(
             sourceName: (JsonElement)b.SourceName,
