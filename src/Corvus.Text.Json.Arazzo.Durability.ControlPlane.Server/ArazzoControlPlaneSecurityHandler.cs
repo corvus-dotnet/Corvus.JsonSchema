@@ -346,15 +346,14 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         workspace.TakeOwnership(granteeDoc);
         Models.ResolvedGrantee grantee = granteeDoc.RootElement;
 
-        // The grantee's internal sys: identity, resolved bytes-to-bytes from its operator-facing {dimension,value}
-        // grants (the same ResolveUsageGrantInto seam the credential usage grants use — no managed string per grant).
-        // Empty when unscoped (no policy). It keys the administered-workflows reverse index and the credential
-        // usage-entitlement (IsUsableBy) matches.
+        // The grantee's identity is already the resolved internal sys: form at the wire (design §16.5.4 — an identity is
+        // described back as {dimension,value} grants over its sys: tags, e.g. sys:sub). It is taken verbatim (no
+        // re-resolution) and keys the administered-workflows reverse index and the credential IsUsableBy match directly.
         SecurityTagSet granteeIdentity = SecurityTagSet.Empty;
-        if (this.access is { } access && grantee.Identity.IsNotUndefined())
+        if (grantee.Identity.IsNotUndefined())
         {
-            var identityState = new GranteeIdentityState(access, grantee.Identity);
-            granteeIdentity = SecurityTagSet.Build(in identityState, WriteGranteeIdentity);
+            Models.ResolvedGrantee.AdministratorIdentityArray identity = grantee.Identity;
+            granteeIdentity = SecurityTagSet.Build(in identity, WriteGranteeIdentity);
         }
 
         // bindings: page the store keeping only the bindings whose claim the grantee satisfies. A contributing page's
@@ -615,24 +614,24 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         => GetAccessGrantsResult.BadRequest(
             Problem("invalid-grantee", "Invalid grantee token", 400, "The 'grantee' query parameter is not a valid resolved-grantee token."), workspace);
 
-    // Resolves the grantee's operator-facing {dimension,value} grants bytes-to-bytes into its internal sys: identity via
-    // the same ResolveUsageGrantInto seam a credential usage grant uses (ArazzoControlPlaneCredentialsHandler.WriteUsageTags):
-    // each dimension/value is read as unescaped UTF-8 straight off the grantee document (no managed string per grant) and
-    // written into the identity buffer. An unscoped deployment (no policy) writes nothing, yielding the empty identity.
-    private static void WriteGranteeIdentity(ref IdentityBuilder builder, in GranteeIdentityState state)
+    // Writes the grantee's already-resolved sys: identity grants into the identity buffer verbatim: each dimension/value
+    // is read as unescaped UTF-8 straight off the grantee document (no managed string per grant) and added as a tag. The
+    // wire identity is the sys: form (§16.5.4), so no re-resolution is needed. An absent identity yields the empty set.
+    private static void WriteGranteeIdentity(ref IdentityBuilder builder, in Models.ResolvedGrantee.AdministratorIdentityArray identity)
     {
-        foreach (Models.AdministratorIdentity grant in state.Identity.EnumerateArray())
+        foreach (Models.AdministratorIdentity grant in identity.EnumerateArray())
         {
             using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
             using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
-            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
+            builder.Add(dimension.Span, value.Span);
         }
     }
 
-    // Whether a binding grants the grantee reach: the wildcard '*' claim matches every principal; otherwise one of the
-    // grantee's {dimension,value} grants must match the binding's claim type (and value, when the binding pins one).
-    // Compared bytes-native off both documents' UTF-8 — the binding's raw ClaimType/ClaimValue vs each grantee identity
-    // item's dimension/value read as unescaped spans — so nothing is materialised into a managed string or grant list.
+    // Whether a binding grants the grantee reach: the wildcard '*' claim matches every principal; otherwise the
+    // operator-facing claim derived from one of the grantee's sys: identity grants must match the binding's claim type
+    // (and value, when the binding pins one). Compared bytes-native off both documents' UTF-8 — the binding's raw
+    // ClaimType/ClaimValue vs each grantee identity item's sys:-stripped dimension / value read as unescaped spans — so
+    // nothing is materialised into a managed string or grant list.
     private static bool BindingAppliesToGrantee(SecurityBindingDocument binding, Models.ResolvedGrantee grantee)
     {
         if (binding.ClaimType.ValueEquals("*"u8))
@@ -649,7 +648,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         foreach (Models.AdministratorIdentity item in grantee.Identity.EnumerateArray())
         {
             using UnescapedUtf8JsonString dimension = item.DimensionValue.GetUtf8String();
-            if (!binding.ClaimType.ValueEquals(dimension.Span))
+
+            // The grantee identity is the resolved sys: form; a binding keys on the operator-facing claim it derives
+            // from (design §6.5, lossy), so strip the sys: prefix before matching (sys:sub -> sub; a bare team/role
+            // dimension is unchanged).
+            if (!binding.ClaimType.ValueEquals(StripSysPrefix(dimension.Span)))
             {
                 continue;
             }
@@ -668,6 +671,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         return false;
     }
+
+    // Strips the internal "sys:" namespace prefix from a resolved identity dimension to recover the operator-facing claim
+    // a binding keys on (sys:sub -> sub); a dimension without the prefix (a bare team/role) is returned unchanged.
+    private static ReadOnlySpan<byte> StripSysPrefix(ReadOnlySpan<byte> dimension)
+        => dimension.StartsWith("sys:"u8) ? dimension["sys:"u8.Length..] : dimension;
 
     // The bindings array reuses the existing whole-summary projection (BuildBindingSummary) per matched binding — the
     // item type is shared with the search response; only the enclosing array type differs. Closure-free: the matched
@@ -705,14 +713,6 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
                 environment: Models.JsonString.From(binding.Environment),
                 sourceName: Models.JsonString.From(binding.SourceName)));
         }
-    }
-
-    // The grantee's row-security access + its identity grants, threaded so the identity build stays closure-free.
-    private readonly struct GranteeIdentityState(ControlPlaneAccess access, Models.ResolvedGrantee.AdministratorIdentityArray identity)
-    {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.ResolvedGrantee.AdministratorIdentityArray Identity { get; } = identity;
     }
 
     // The matched aggregation sets, threaded as one context through the access-grants overview build (no closure). The
