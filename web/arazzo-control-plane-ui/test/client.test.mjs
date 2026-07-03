@@ -349,12 +349,12 @@ test('purgeCatalog reaps obsolete, unreferenced versions', async () => {
 
 test('listCredentials returns the seeded bindings with a derived credentialStatus', async () => {
   const { credentials } = await makeClient().listCredentials();
-  assert.equal(credentials.length, 4);
-  const byStatus = Object.fromEntries(credentials.map((c) => [c.sourceName, c.credentialStatus]));
-  assert.equal(byStatus.petstore, 'valid');       // 20 days out
-  assert.equal(byStatus.billing, 'expiringSoon');  // 3 days out (inside the 7-day window)
-  assert.equal(byStatus.legacy, 'expired');        // 2 days past
-  assert.equal(byStatus.events, 'valid');          // no expiry
+  assert.equal(credentials.length, 5);
+  const byKey = Object.fromEntries(credentials.map((c) => [`${c.sourceName}@${c.environment}`, c.credentialStatus]));
+  assert.equal(byKey['petstore@production'], 'valid');      // 20 days out
+  assert.equal(byKey['billing@production'], 'expiringSoon'); // 3 days out (inside the 7-day window)
+  assert.equal(byKey['legacy@production'], 'expired');       // 2 days past
+  assert.equal(byKey['events@staging'], 'valid');            // no expiry
   // references only — every secretRef carries a scheme, never inline secret material.
   assert.ok(credentials.every((c) => c.secretRefs.every((r) => /:\/\//.test(r.ref))));
 });
@@ -371,8 +371,8 @@ test('listCredentials keyset-pages: limit + the opaque nextPageToken walk every 
     assert.ok(page.credentials.length <= 2, 'each page respects the limit');
     for (const b of page.credentials) seen.push(`${b.sourceName}@${b.environment}`);
   }
-  assert.equal(seen.length, 4, 'all four bindings, exactly once');
-  assert.equal(new Set(seen).size, 4, 'no duplicates across page boundaries');
+  assert.equal(seen.length, 5, 'all five bindings, exactly once');
+  assert.equal(new Set(seen).size, 5, 'no duplicates across page boundaries');
   assert.deepEqual(seen, [...seen].sort(), 'ordered by sourceName then environment');
 });
 
@@ -422,7 +422,7 @@ test('deleteCredential removes the binding (then 404)', async () => {
 test('listAdministrators returns resolved-identity grants, and an empty set for an unknown base id', async () => {
   const c = makeClient();
   const { administrators } = await c.listAdministrators('nightly-reconcile');
-  assert.equal(administrators.length, 2); // the Platform team + alice@ops (the admin persona, seeded on every workflow)
+  assert.equal(administrators.length, 3); // Platform team + alice@ops (seeded on every workflow) + Ada Lovelace (§6.1 Access Overview seed)
   assert.ok(administrators.some((a) => a.kind === 'team' && a.identity[0].value === 'platform'));
   assert.ok(administrators.some((a) => a.identity.some((t) => t.dimension === 'sys:sub' && t.value === 'alice@ops')));
   assert.match(administrators[0].digest, /^[0-9a-f]{64}$/);
@@ -432,9 +432,9 @@ test('listAdministrators returns resolved-identity grants, and an empty set for 
 test('addAdministrator is idempotent and transferAdministration replaces the whole set', async () => {
   const c = makeClient();
   const added = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
-  assert.equal(added.administrators.length, 3); // Platform + alice@ops (seeded) + the newly-added Growth
+  assert.equal(added.administrators.length, 4); // Platform + alice@ops + Ada (seeded) + the newly-added Growth
   const again = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
-  assert.equal(again.administrators.length, 3, 'idempotent');
+  assert.equal(again.administrators.length, 4, 'idempotent');
   const transferred = await c.transferAdministration('nightly-reconcile', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
   assert.equal(transferred.administrators.length, 1);
   assert.deepEqual(transferred.administrators[0].identity, [{ dimension: 'tenant', value: 'acme' }]);
@@ -447,7 +447,9 @@ test('addAdministrator accepts a resolved grantee (kind + value + identity)', as
     identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }],
     complete: true,
   });
-  const ada = added.administrators.find((a) => a.label === 'Ada Lovelace');
+  // nightly-reconcile is also seeded with a single-dimension Ada (sys:sub only, §6.1); disambiguate by the two-dimension
+  // identity this resolved grantee (sys:iss + sys:sub) was added with.
+  const ada = added.administrators.find((a) => a.label === 'Ada Lovelace' && a.identity.length === 2);
   assert.ok(ada, 'the resolved grantee was added');
   assert.equal(ada.kind, 'person');
   assert.equal(ada.identity.length, 2);
@@ -540,6 +542,24 @@ test('security-binding client methods validate their arguments before calling th
   await assert.rejects(async () => c.updateSecurityBinding('x', {}), TypeError);
   await assert.rejects(async () => c.deleteSecurityBinding(''), TypeError);
   await assert.rejects(async () => c.getSecurityBinding(''), TypeError);
+});
+
+// ---- access overview (§6.1) ---------------------------------------------------------------------
+
+test('getAccessGrants for Ada projects her binding, administered workflow, and usable credential', async () => {
+  const c = makeClient();
+  const grantee = { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:sub', value: 'u-1042' }], source: 'directory', complete: true };
+  const { bindings, administers, credentialUsage } = await c.getAccessGrants(grantee);
+  assert.ok(bindings.some((b) => b.claimType === 'sub' && b.claimValue === 'u-1042'), 'her sub binding is projected');
+  assert.ok(administers.some((a) => a.baseWorkflowId === 'nightly-reconcile'), 'the workflow she administers is projected');
+  assert.ok(credentialUsage.some((u) => u.sourceName === 'billing' && u.environment === 'staging'), 'her usage-restricted credential is projected');
+});
+
+test('getAccessGrants for the payments team projects the team binding', async () => {
+  const c = makeClient();
+  const grantee = { kind: 'team', value: 'payments', label: 'Payments', identity: [{ dimension: 'team', value: 'payments' }], source: 'directory', complete: true };
+  const { bindings } = await c.getAccessGrants(grantee);
+  assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'), 'the payments team binding (bind-1) is projected');
 });
 
 // ---- identity / grantee resolution (§16.5.4) ----------------------------------------------------
