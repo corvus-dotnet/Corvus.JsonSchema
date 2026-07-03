@@ -192,7 +192,7 @@
 <p>A JSON Schema validation keyword (<code>minLength</code>, <code>pattern</code>, <code>minimum</code>/<code>maximum</code>, <code>multipleOf</code>, <code>format</code>, …) constrains a value beyond its type. So the generator splits the two concerns: the <strong>interface is the shape</strong>, and <strong><code>Registration.evaluate</code> is the constraint authority</strong>. Evaluation returns a plain <code>boolean</code>. A rejection is <code>false</code>, with no thrown exception and no allocated error graph. (Collecting <em>why</em> a value failed, the per-keyword results, is a separate opt-in, like the engine's results collector.)</p>
 <p>A <code>format</code> keyword additionally produces a <strong>branded</strong> type with an eager factory (<code>Email.from</code>) that throws on a malformed value at construction. This is useful when you want to fail fast on one field rather than evaluate a whole document.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/19709753d1ad32b3e1dd1a4709807ce1d0f1e9f8/docs/typescript/examples/002-validation/registration.json"><code>registration.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/10d4b74bf94e49dbe2c967067a15b21f63bf0f0b/docs/typescript/examples/002-validation/registration.json"><code>registration.json</code></a></p>
 <pre><code class="language-json">{
   &quot;title&quot;: &quot;Registration&quot;,
   &quot;type&quot;: &quot;object&quot;,
@@ -206,7 +206,7 @@
 }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/19709753d1ad32b3e1dd1a4709807ce1d0f1e9f8/docs/typescript/examples/002-validation/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/10d4b74bf94e49dbe2c967067a15b21f63bf0f0b/docs/typescript/examples/002-validation/demo.ts">Example code</a></p>
 <h3 id="evaluate-a-value">Evaluate a value</h3>
 <p><code>Registration.evaluate</code> returns a boolean, <code>true</code> when every constraint holds:</p>
 <pre><code class="language-typescript">const bytes = Registration.build({ username: &quot;ada_lovelace&quot;, age: 36, email: Email.from(&quot;ada@example.com&quot;), score: 4.5 });
