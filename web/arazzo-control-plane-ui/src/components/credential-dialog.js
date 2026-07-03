@@ -25,6 +25,7 @@
 import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
 import './grantee-picker.js';
 import './tag-editor.js';
+import './environment-input.js';
 
 const SECRET_REF = /^(keyvault|awssm|vault|env|file):\/\/.+/;
 
@@ -340,6 +341,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
     this.$('#sourceName').value = b?.sourceName || dup?.sourceName || this._prefillSource || '';
     this.$('#environment').value = b?.environment || ''; // duplicate: the environment is the thing you change → blank
+    this.$('#environment').client = this.client; // the environment-input's filtered dropdown of real environments (§7.7)
     this.$('#sourceName').readOnly = ro || this._lockSource; // locked for a catalogued/duplicated source
     this.$('#environment').readOnly = ro;
 
@@ -781,7 +783,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
               <legend>Identity</legend>
               <div class="grid2">
                 <div><label for="sourceName">Source name *</label><input id="sourceName" type="text" placeholder="petstore"></div>
-                <div><label for="environment">Environment *</label><input id="environment" type="text" placeholder="production"></div>
+                <div><label for="environment">Environment *</label><arazzo-environment-input id="environment" placeholder="Choose or type an environment…"></arazzo-environment-input></div>
               </div>
               <div class="grid2">
                 <div><label for="authKind">Auth kind *</label><input id="authKind" type="text" list="authkinds" placeholder="apiKey"><datalist id="authkinds">${AUTH_KINDS.map((k) => `<option value="${k}">`).join('')}</datalist><div class="authkind-note" hidden></div></div>

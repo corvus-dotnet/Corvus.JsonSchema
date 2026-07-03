@@ -588,6 +588,19 @@ test('listEnvironments returns the seeded environments, ordered by name', async 
   assert.equal(nextPageToken, null);
 });
 
+test('environments are reach-filtered — a reach-scoped caller sees only what its reach admits (non-disclosing)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  // Administrator (reach: all) sees every environment.
+  mock.setPersona('administrator');
+  assert.deepEqual((await c.listEnvironments()).environments.map((e) => e.name), ['production', 'staging']);
+  // The payments-reach persona: neither seeded environment is tagged domain=payments, so the list is empty and a
+  // direct read is reported as absent (404), not forbidden (403) — non-disclosing, mirroring IEnvironmentStore (§7.7).
+  mock.setPersona('team-reader');
+  assert.deepEqual((await c.listEnvironments()).environments, []);
+  await assert.rejects(() => c.getEnvironment('production'), (err) => err instanceof ProblemError && err.status === 404);
+});
+
 test('getEnvironment returns one environment and 404s for an unknown name', async () => {
   const c = makeClient();
   const e = await c.getEnvironment('production');
