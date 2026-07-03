@@ -189,6 +189,56 @@ maps the certificate to a tier. Outbound, an mTLS source credential authenticate
 source at the TLS handshake rather than an individual run, so it is forced Shared and cannot be
 usage-scoped.
 
+## How a deployment wires it
+
+Authentication is ordinary ASP.NET Core, in the host's `Program.cs`. The deployment brings the scheme
+or schemes; the control plane consumes the resulting principal. The demo host
+(`samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo`) wires all of it and is the worked example.
+The shape is:
+
+1. **Authentication.** `AddAuthentication(...)` with one scheme per credential type, and a policy
+   scheme that forwards each request to the right one by what it presents (an `X-Api-Key` header to the
+   API-key scheme, a `Bearer` token to JWT, otherwise the browser cookie session). A token scheme
+   (`AddKeycloakJwtBearer`, `AddJwtBearer`) surfaces the token's `scope` claim automatically. A
+   credential that carries no scopes maps to claims in its handler. The demo's
+   `DevApiKeyAuthenticationHandler` looks the key up and emits a `scope` claim, and a certificate
+   scheme (`AddCertificate`) does the same keyed on the certificate.
+2. **Per-provider claim mapping (optional).** An `IClaimsTransformation` for an IdP that issues roles
+   or groups rather than scopes, mapping them into the `scope` claim and the `sys:` identity.
+3. **Scope authorization.** `AddArazzoControlPlaneAuthorization(scopeClaimType)` registers one policy
+   per scope.
+4. **Endpoint mapping.** `MapArazzoControlPlane(..., ControlPlaneSecurityMode.Scoped, policy, ...)`,
+   passing the row-security or entitlement policy for reach.
+
+The control plane also installs `ControlPlaneEntitlementClaimsTransformer`, which unions a principal's
+stored entitlement scopes (a capability grant an access-request approval wrote, §16.5) into the `scope`
+claim at authentication time. Capability is therefore resolved from claims union stored entitlements,
+so an approval takes effect without the identity provider ever being mutated.
+
+### Storing an API key (or any non-token credential) in production
+
+The demo keeps raw keys in an in-memory dictionary and emits only a `scope` claim. A real
+implementation changes only this handler, and hardens it in three ways.
+
+- **Store a hash, never the raw key.** Treat the key as a secret. Give each key a public **prefix** (a
+  short identifier) plus a random secret; store `prefix -> record` for an indexed lookup, then
+  constant-time compare the hash of the presented key. Show the full key once, at creation. The record
+  holds `{ prefix, keyHash, subject, issuer, scopes?, expiresAt, disabled, createdBy, createdAt,
+  lastUsedAt }`, in a durable store (a first-class resource with its own audit, in the same spirit as
+  source credentials, §13).
+- **Prefer identity plus the entitlement store over scopes on the key.** Two patterns:
+  - *Scopes on the key.* The record carries a fixed scope set; the handler emits `scope` from it.
+    Simple, and fine for a key with one fixed capability.
+  - *Identity, scopes from the store (recommended).* The record maps the key to a service-principal
+    identity (`sub` plus `sys:iss`); the handler emits only those identity claims, and the built-in
+    entitlement transformer supplies the scopes from the same grant and approval store every other
+    principal uses. The key becomes purely an authentication credential, scope changes flow through the
+    standard grant flow rather than by editing key records, and the service principal gets a real
+    `sys:` identity so reach works for it too. The demo's key, which carries no identity, has no reach.
+- **Lifecycle.** Cache the lookup on the per-request warm path with a short TTL and invalidate on
+  revoke. Rotate by issuing a new key, honouring both briefly, then disabling the old. Record
+  `lastUsedAt` for audit; expire and revoke via `expiresAt` and `disabled`.
+
 ## Where reach is authored
 
 Reach (grants and rules) is authored in the security UI. Grants bind a claim to per-verb reach; rules
