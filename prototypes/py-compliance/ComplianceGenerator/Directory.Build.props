@@ -1,0 +1,5 @@
+<!-- Empty, on purpose: stops MSBuild walking up to the repo's strict StyleCop /
+     TreatWarningsAsErrors props. This is the compliance harness's OWN tooling, built standalone
+     (not in the solution) — it is not part of the shipped product. -->
+<Project>
+</Project>

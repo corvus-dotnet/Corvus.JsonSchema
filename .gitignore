@@ -412,3 +412,12 @@ tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Generated26/
 
 # @endjin/corvus-json-client-runtime is a real source package too.
 !/packages/corvus-json-client-runtime/
+
+# The Python model runtime (corvus_json_runtime) is a real source package too.
+!/packages/corvus-json-runtime-py/
+
+# Generated Python benchmark / compliance artifacts (regenerable — do not commit).
+prototypes/py-bench/ab-gen/
+prototypes/py-bench/bench-gen/
+prototypes/py-compliance/out-suite/
+prototypes/py-compliance/schemas/

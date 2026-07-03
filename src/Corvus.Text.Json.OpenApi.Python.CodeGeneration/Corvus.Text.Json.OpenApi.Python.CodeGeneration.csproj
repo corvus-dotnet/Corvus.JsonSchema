@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <!-- The Python OpenAPI client emitter: implements the shared IClientEmitter to emit idiomatic,
+       async-first Python clients from the language-neutral OperationInfo IR. The Python peer of
+       Corvus.Text.Json.OpenApi.TypeScript.CodeGeneration. IsPackable is turned on in the polish phase. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);NU1504;CS8500;CS8969;CS1591;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

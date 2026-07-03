@@ -1,0 +1,37 @@
+Python engine benchmark — SINGLE-FILE (JSON Schema model validators)
+Dataset: sourcemeta jsonschema-benchmark (37 real-world schemas). Mutation-isolated (deep-copy per validator).
+
+== Single-file vs module-per-type (in-process A/B, contention-robust; ab.py cur sf) ==
+Geomean speedup (sf vs cur): 1.042x  (single-file ~4.2% faster)
+Per-schema (>2% band): sf faster on 26, cur faster on 6, tie on 5 (of 37 correct — all validity-agree)
+Geomean ns/instance: cur (module-per-type) 10276 -> sf (single-file) 9864
+Biggest wins: omnisharp 1.10x, nest-cli 1.09x, krakend 1.08x, jshintrc 1.07x
+
+== Clean 4-way standing (single-file corvus-py; bench.py, WARMUP=8 ROUNDS=9) ==
+Geomean ns/instance over each validator's CORRECT schemas:
+  corvus-py       7408.8 ns   correct 37/37   (UNIQUELY correct on all)
+  jsonschema-rs   2593.0 ns   correct 36/37   (Rust; fails cspell)          fastest
+  fastjsonschema  5943.7 ns   correct 30/37   (C-codegen; fails 7)
+  jsonschema    140198.8 ns   correct 37/37   (pure Python; ~19x slower than corvus-py)
+Fastest-correct schemas won: jsonschema-rs 27, corvus-py 5, fastjsonschema 5
+Cross-check: 36/37 agree on valid-counts (disagreement: helm-chart-lock; corvus-py is Test-Suite-verified 7848/7849)
+
+Note: A/B and 4-way use different harnesses (A/B interleaves both variants), so absolute ns differ between them;
+compare within a harness. corvus-py remains the only validator correct on all 37 schemas.
+
+== Optimization (4): drop il/kl from the validate path (in-process A/B; ab.py sf il) ==
+Validators take (value, ev, r) not (value, ev, il, kl, r); location carried by a push/pop path stack in Results,
+entered only when a collector is present (r is not None). Fast path builds/threads no instance/keyword location.
+Geomean speedup (il vs sf): 1.012x  (il faster on 13, sf faster on 5, tie on 19 of 37)
+Geomean ns/instance: sf 7565 -> il 7479
+Still 7848/7849 conformant; collect-mode locations verified exact; mypy --strict + pyright clean.
+== Optimization (bounded 2): inline single-use FLAT SCALAR subtypes (in-process A/B; ab.py il fs) ==
+A property/array-item whose type is a flat scalar (type + const/enum/bounds/multipleOf/length/pattern; NO
+structure/composition/format/ref -> no recursion) is inlined at the call site against a bound local `_v`, with
+no validator call. Binds `_v = value[_k]` so is_num/isinstance TypeGuards narrow (they narrow names, not
+subscripts) -> stays mypy --strict + pyright clean. Format excluded (falls back to a call); the 5 remaining
+constraint families covered. Not in the TS engine (a Python-specific divergence; CPython calls are costly).
+Geomean speedup (fs vs il): 1.015x  (fs faster on 13, il faster on 3, tie on 21 of 37)
+Still 7848/7849 conformant; inlined-check locations verified exact; mypy --strict + pyright clean.
+
+Cumulative single-file -> +4 -> +bounded-2: ~2.7% faster; corvus-py still uniquely correct 37/37.

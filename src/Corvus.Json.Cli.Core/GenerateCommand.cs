@@ -145,9 +145,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         Engine engine = settings.GenerationEngine ?? CliDefaults.DefaultEngine;
 
-        // The TypeScript engine ignores the .NET namespace; default it so --rootNamespace is optional there.
-        string rootNamespace = settings.RootNamespace ?? (engine == Engine.TypeScript ? "Generated" : string.Empty);
-        if (engine != Engine.TypeScript)
+        // The TypeScript and Python engines ignore the .NET namespace; default it so --rootNamespace is
+        // optional there.
+        bool ignoresDotnetNamespace = engine is Engine.TypeScript or Engine.Python;
+        string rootNamespace = settings.RootNamespace ?? (ignoresDotnetNamespace ? "Generated" : string.Empty);
+        if (!ignoresDotnetNamespace)
         {
             ArgumentNullException.ThrowIfNullOrEmpty(rootNamespace); // C# requires a root namespace.
         }

@@ -59,6 +59,7 @@
     <Project Path="src/Corvus.Text.Json.AsyncApi30/Corvus.Text.Json.AsyncApi30.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi32/Corvus.Text.Json.OpenApi32.csproj" />
     <Project Path="src/Corvus.Text.Json.TypeScript.CodeGeneration/Corvus.Text.Json.TypeScript.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.Python.CodeGeneration/Corvus.Text.Json.Python.CodeGeneration.csproj" />
   </Folder>
   <Folder Name="/tests-v4/">
     <Project Path="tests-v4/Corvus.Json.Specs.Tests/Corvus.Json.Specs.Tests.csproj" />
@@ -125,6 +126,7 @@
     <Project Path="src/Corvus.Text.Json.OpenApi31/Corvus.Text.Json.OpenApi31.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi.CodeGeneration/Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi.TypeScript.CodeGeneration/Corvus.Text.Json.OpenApi.TypeScript.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.OpenApi.Python.CodeGeneration/Corvus.Text.Json.OpenApi.Python.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi.HttpTransport/Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
   </Folder>
   <Folder Name="/v5/">
