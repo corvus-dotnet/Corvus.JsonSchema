@@ -588,6 +588,7 @@ function seedCredentials() {
     b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'workflow', value: 'nightly-reconcile' }], kind: 'workflow', label: 'nightly-reconcile' }, expiresAt: iso(3 * day) }),
     b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { config: [{ key: 'username', value: 'svc-legacy' }], expiresAt: iso(-2 * day) }),
     b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
+    b('billing', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing-staging#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'sys:sub', value: 'u-1042' }], kind: 'person', label: 'Ada Lovelace' } }),
   ];
 }
 
@@ -642,6 +643,7 @@ function seedAdministrators() {
     'nightly-reconcile': [
       adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform'),
       adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'alice@ops'),
+      adminGrant([{ dimension: 'sys:sub', value: 'u-1042' }], 'person', 'Ada Lovelace'),
     ],
     'onboard-customer': [
       adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform'),
@@ -838,6 +840,7 @@ function seedSecurityBindings() {
   return [
     { id: 'bind-1', claimType: 'team', claimValue: 'payments', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 0, description: 'Payments team can read payments-domain rows.', createdBy: 'alice@example.com', createdAt: iso(-12 * day), etag: nextEtag() },
     { id: 'bind-2', claimType: 'tenant', claimValue: 'acme', read: { unrestricted: true }, write: { unrestricted: true }, purge: { unrestricted: false }, order: 1, description: 'Acme tenant operators.', createdBy: 'alice@example.com', createdAt: iso(-5 * day), etag: nextEtag() },
+    { id: 'bind-3', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 2, description: 'Ada Lovelace can read payments-domain rows.', createdBy: 'alice@example.com', createdAt: iso(-4 * day), etag: nextEtag() },
   ];
 }
 
@@ -1160,6 +1163,13 @@ export function createMockControlPlane(options = {}) {
 
     const runnersResponse = handleRunners(path, method, u.searchParams);
     if (runnersResponse) return runnersResponse;
+
+    // /access/grants — the Access Overview (§6.1): one resolved grantee's aggregated access (bindings, administered
+    // workflows, usable credentials). Prefix-tolerant like the /runs routes so a base path (e.g. /arazzo/v1) still matches.
+    if (/\/access\/grants\/?$/.test(path)) {
+      if (method === 'GET') return handleAccessGrants(u.searchParams);
+      return problem(405, 'Method not allowed');
+    }
 
     // /runs collection
     if (/\/runs\/?$/.test(path)) {
@@ -1800,6 +1810,51 @@ export function createMockControlPlane(options = {}) {
     const binding = { id: `bind-${++nextBindingId}`, ...normalizeBinding(body), createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag() };
     securityBindings.push(binding);
     return json(structuredClone(binding), 201);
+  }
+
+  // The Access Overview (§6.1): GET /access/grants aggregates one resolved grantee's access. `grantee` is a base64url
+  // token of the resolved-grantee JSON the identity picker hands back ({ kind, value, label, identity:[{dimension,value}],
+  // source, complete }, identity in the resolved sys: form). The binding match strips the sys: prefix from each identity
+  // dimension before comparing to a binding's operator-facing claimType (sys:sub → sub; a bare team/role is unchanged).
+  function handleAccessGrants(params) {
+    const raw = params.get('grantee');
+    if (!raw) return problem(400, 'Invalid grantee', 'A grantee token is required.');
+    let grantee;
+    try {
+      const std = raw.replace(/-/g, '+').replace(/_/g, '/');
+      grantee = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(std), (c) => c.charCodeAt(0))));
+    } catch {
+      return problem(400, 'Invalid grantee', 'The grantee token is not a valid base64url-encoded grantee.');
+    }
+    const idents = Array.isArray(grantee.identity) ? grantee.identity : [];
+    const stripSys = (d) => (typeof d === 'string' && d.startsWith('sys:')) ? d.slice(4) : d;
+
+    // bindings: a binding matches when its claimType is the wildcard, or an identity dimension (sys: stripped) equals the
+    // claimType and (the binding is value-agnostic, or the values match). Same summary shape the bindings list returns.
+    const bindings = securityBindings
+      .filter((b) => b.claimType === '*'
+        || idents.some((t) => stripSys(t.dimension) === b.claimType
+          && (b.claimValue == null || b.claimValue === '' || t.value === b.claimValue)))
+      .map((b) => structuredClone(b));
+
+    // administers: a base workflow the grantee administers — its admin array holds a grant whose identity is a subset of
+    // the grantee's identity (an identity-based grant the grantee satisfies).
+    const administers = Object.keys(administrators)
+      .filter((baseWorkflowId) => (administrators[baseWorkflowId] || [])
+        .some((g) => (g.identity || []).every((gt) => idents.some((t) => t.dimension === gt.dimension && t.value === gt.value))))
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+      .map((baseWorkflowId) => ({ baseWorkflowId }));
+
+    // credentialUsage: credentials the grantee may use — a credential with no usageGrantee is shared (usable by all); a
+    // usage-restricted one is usable iff its usageGrantee identity is a subset of the grantee's identity.
+    const credentialUsage = credentials
+      .filter((c) => !c.usageGrantee
+        || (c.usageGrantee.identity || []).every((ut) => idents.some((t) => t.dimension === ut.dimension && t.value === ut.value)))
+      .map((c) => ({ sourceName: c.sourceName, environment: c.environment }))
+      .sort((a, b) => (a.sourceName < b.sourceName ? -1 : a.sourceName > b.sourceName ? 1
+        : a.environment < b.environment ? -1 : a.environment > b.environment ? 1 : 0));
+
+    return json({ grantee, bindings, administers, credentialUsage });
   }
 
   // Keyset pagination over `name` plus a case-insensitive q over name/expression — the same contract the durable store

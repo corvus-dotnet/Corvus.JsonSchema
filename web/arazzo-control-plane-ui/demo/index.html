@@ -84,6 +84,8 @@
     </div>
 
     <div id="view-access" role="tabpanel" hidden>
+      <arazzo-access-overview base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-access-overview>
+      <hr style="border:none;border-top:1px solid var(--arazzo-border, #e2e5ea);margin:24px 0;">
       <arazzo-access-requests base-url="https://mock/arazzo/v1" theme="auto"></arazzo-access-requests>
     </div>
 
@@ -115,6 +117,7 @@
     import '../src/arazzo-catalog.js';
     import '../src/components/credentials.js';
     import '../src/components/access-requests-panel.js';
+    import '../src/components/access-overview-panel.js';
     import '../src/components/availability-requests-panel.js';
     import '../src/components/scopes-panel.js';
     import '../src/components/grants-panel.js';
@@ -133,6 +136,7 @@
     const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
     const credentialsPanel = document.querySelector('arazzo-credentials');
     const access = document.querySelector('arazzo-access-requests');
+    const overview = document.querySelector('arazzo-access-overview');
     const promotions = document.querySelector('arazzo-availability-requests');
     const reach = document.querySelector('arazzo-scopes-panel');
     const bindings = document.querySelector('arazzo-grants-panel');
@@ -141,6 +145,7 @@
     const runnerAuth = document.querySelector('arazzo-runner-authorizations');
     credentialsPanel.client = client;
     access.client = client;
+    overview.client = client;
     promotions.client = client;
     reach.client = client;
     bindings.client = client;
@@ -194,6 +199,7 @@
       environments.setAttribute('scopes', `${prefixed(scopes, 'environments:')} ${prefixed(scopes, 'availability:')}`.trim());
       reach.setAttribute('scopes', prefixed(scopes, 'security:'));
       bindings.setAttribute('scopes', prefixed(scopes, 'security:'));
+      overview.setAttribute('scopes', prefixed(scopes, 'security:')); // the who-can-do-what overview (gates inline Revoke)
       runnersPanel.setAttribute('scopes', prefixed(scopes, 'runs:')); // runs:read; read-only observability
       // A persona change swaps the caller's scopes AND reach, so reset every surface to page 1 (a stale page/cursor from
       // the previous caller's data must not carry over, and an open detail may now be out of reach). Prefer reload().
