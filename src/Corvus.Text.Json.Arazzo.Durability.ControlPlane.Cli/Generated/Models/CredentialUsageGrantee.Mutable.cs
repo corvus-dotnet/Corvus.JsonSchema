@@ -374,7 +374,7 @@ public readonly partial struct CredentialUsageGrantee
         /// Set the <c>identity</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIdentity(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source value)
+        public void SetIdentity(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source value)
         {
             CheckValidInstance();
 
@@ -439,7 +439,7 @@ public readonly partial struct CredentialUsageGrantee
         /// Set the <c>kind</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKind(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source value)
+        public void SetKind(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source value)
         {
             CheckValidInstance();
 
@@ -484,7 +484,7 @@ public readonly partial struct CredentialUsageGrantee
         /// Set the <c>label</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLabel(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetLabel(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -630,7 +630,7 @@ public readonly partial struct CredentialUsageGrantee
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -653,7 +653,7 @@ public readonly partial struct CredentialUsageGrantee
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -700,7 +700,7 @@ public readonly partial struct CredentialUsageGrantee
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -872,7 +872,7 @@ public readonly partial struct CredentialUsageGrantee
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1040,7 +1040,7 @@ public readonly partial struct CredentialUsageGrantee
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1350,7 +1350,7 @@ public readonly partial struct CredentialUsageGrantee
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1366,7 +1366,7 @@ public readonly partial struct CredentialUsageGrantee
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1413,7 +1413,7 @@ public readonly partial struct CredentialUsageGrantee
     /// <param name="kind">The value of the <c>"kind"</c> property.</param>
     /// <param name="label">The value of the <c>"label"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source identity, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source identity, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default)
     {
         return new Source(identity, kind, label);
     }
@@ -1427,7 +1427,7 @@ public readonly partial struct CredentialUsageGrantee
     /// <param name="kind">The value of the <c>"kind"</c> property.</param>
     /// <param name="label">The value of the <c>"label"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source<TContext> identity, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source<TContext> identity, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

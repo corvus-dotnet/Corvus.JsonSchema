@@ -525,7 +525,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>authKind</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuthKind(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source value)
+        public void SetAuthKind(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source value)
         {
             CheckValidInstance();
 
@@ -556,7 +556,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>config</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetConfig(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source value)
+        public void SetConfig(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source value)
         {
             CheckValidInstance();
 
@@ -637,7 +637,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetDescription(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -682,7 +682,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>environment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnvironment(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -713,7 +713,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>expiresAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExpiresAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetExpiresAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -758,7 +758,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>managementTags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetManagementTags(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source value)
+        public void SetManagementTags(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source value)
         {
             CheckValidInstance();
 
@@ -839,7 +839,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>rotatedAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRotatedAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetRotatedAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -884,7 +884,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>secretRefs</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSecretRefs(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source value)
+        public void SetSecretRefs(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source value)
         {
             CheckValidInstance();
 
@@ -949,7 +949,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>sourceName</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSourceName(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetSourceName(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -980,7 +980,7 @@ public readonly partial struct CredentialBindingCreate
         /// Set the <c>usageGrantee</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUsageGrantee(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source value)
+        public void SetUsageGrantee(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source value)
         {
             CheckValidInstance();
 
@@ -1162,7 +1162,7 @@ public readonly partial struct CredentialBindingCreate
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1185,7 +1185,7 @@ public readonly partial struct CredentialBindingCreate
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1232,7 +1232,7 @@ public readonly partial struct CredentialBindingCreate
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1411,7 +1411,7 @@ public readonly partial struct CredentialBindingCreate
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source arg10)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source arg10)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1593,7 +1593,7 @@ public readonly partial struct CredentialBindingCreate
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source<TContext> arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source<TContext> arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source<TContext> arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source<TContext> arg10)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source<TContext> arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source<TContext> arg10)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1959,7 +1959,7 @@ public readonly partial struct CredentialBindingCreate
         /// <param name="arg9">The value of the property.</param>
         /// <param name="arg10">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source arg10, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source arg10, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1982,7 +1982,7 @@ public readonly partial struct CredentialBindingCreate
         /// <param name="arg9">The value of the property.</param>
         /// <param name="arg10">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source<TContext> arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source<TContext> arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source<TContext> arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source<TContext> arg10, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source<TContext> arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source<TContext> arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2036,7 +2036,7 @@ public readonly partial struct CredentialBindingCreate
     /// <param name="rotatedAt">The value of the <c>"rotatedAt"</c> property.</param>
     /// <param name="usageGrantee">The value of the <c>"usageGrantee"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source authKind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source secretRefs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source config = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source expiresAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source rotatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source usageGrantee = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source authKind, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source secretRefs, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source config = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source expiresAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source managementTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source rotatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source usageGrantee = default)
     {
         return new Source(authKind, environment, secretRefs, sourceName, config, description, expiresAt, managementTags, rotatedAt, usageGrantee);
     }
@@ -2057,7 +2057,7 @@ public readonly partial struct CredentialBindingCreate
     /// <param name="rotatedAt">The value of the <c>"rotatedAt"</c> property.</param>
     /// <param name="usageGrantee">The value of the <c>"usageGrantee"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source authKind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source<TContext> secretRefs, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source<TContext> config = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source expiresAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source<TContext> managementTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source rotatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source<TContext> usageGrantee = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Source authKind, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.SecretReferenceArray.Source<TContext> secretRefs, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sourceName, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialConfigEntryArray.Source<TContext> config = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source expiresAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate.CredentialSecurityTagArray.Source<TContext> managementTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source rotatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialUsageGrantee.Source<TContext> usageGrantee = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
