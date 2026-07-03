@@ -89,10 +89,56 @@ A worked example, a payments-team operator:
   which is a `403` decided before reach is even consulted. A `domain == finance` version is simply
   absent to them (`404`), never a `403`.
 
-## Where each is authored
+## Where scopes come from
 
-- **Scopes (capability).** The deployment's IdP and role mapping (§14.1). Standing, coarse, outside
-  this UI.
-- **Reach (grants + rules).** The security UI. Grants bind a claim to per-verb reach; rules are the
-  reusable WHERE vocabulary a grant points at. See the grants and rules panels, and the access
-  overview, in [`security-ui-design.md`](./security-ui-design.md).
+Scopes do not live in the control plane, and they are not stored against an identity. They ride on the
+caller's **token**, and the control plane only reads a claim. `AddArazzoControlPlaneAuthorization`
+registers one authorization policy per scope; the default policy admits an authenticated principal
+that carries the scope value in a `scope` claim (OAuth-style, space-delimited, and the claim type is
+configurable via `scopeClaimType`). So the control plane is agnostic to which identity provider
+authenticated the caller. Whatever issued the token, the token carries the scopes, and the policy
+checks them.
+
+Putting the scopes into the token is the identity provider's and the deployment's job, done the
+standard OAuth way. This is where the per-provider variation lives.
+
+- An IdP that issues OAuth scopes natively populates the `scope` claim directly.
+- An IdP that issues roles or groups (EntraID app roles, Okta and Keycloak groups, LDAP groups) needs
+  those mapped to control-plane scopes. The deployment does that mapping either at the token layer (a
+  claims transformation in the IdP or an API gateway that emits a `scope` claim), or in the control
+  plane's authorization config (point `scopeClaimType` at the roles claim, or replace the per-scope
+  policies with ones that translate that provider's roles). The control plane supplies the seam; the
+  deployment fills in the provider-specific mapping.
+
+### Not from the directory adapters
+
+The per-provider **directory adapters** (`IPrincipalDirectory`: LDAP, Keycloak, EntraID, Okta, Google,
+SCIM) do not carry scopes. They resolve a grantee (person, team, role) to its exact `sys:` identity,
+with `sys:iss` for issuer-uniqueness (§16.5.4). That feeds the reach plane: the grantee picker, grant
+authoring, and row-security. It answers "who is this", never "what may they do". Seeing those
+per-provider adapters and assuming scopes flow through them is the common mix-up; they feed the WHERE
+plane, not the WHAT.
+
+### The two planes are independent axes
+
+`ControlPlaneSecurityMode` turns each plane on or off on its own.
+
+| Mode | Capability (scopes) | Reach (row-security) |
+|---|---|---|
+| `Scoped` (production) | on | on |
+| `ScopesOnly` | on | off (full `sys:` System reach) |
+| `RowSecurityOnly` | off (any authenticated caller) | on |
+| `Open` (development only) | off | off |
+
+### One security consequence
+
+Because scopes arrive as a token claim, the control plane trusts the token's issuer to assert them.
+Which identity providers you let assert scopes is therefore a deployment trust decision. That is the
+mirror image of the reach side, which goes to the trouble of issuer-qualifying identity (`sys:iss`)
+precisely because a bare `sub` cannot be trusted across multiple semi-trusted providers.
+
+## Where reach is authored
+
+Reach (grants and rules) is authored in the security UI. Grants bind a claim to per-verb reach; rules
+are the reusable WHERE vocabulary a grant points at. See the grants and rules panels, and the access
+overview, in [`security-ui-design.md`](./security-ui-design.md).
