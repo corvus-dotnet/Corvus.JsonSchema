@@ -189,10 +189,11 @@ test('clip-3-register-connection', async ({ page }) => {
 
   await reveal(page, `${CD} .src[data-name="petstore"]`);
   await caption(page, 'petstore already has a production credential — credentials are reusable, so you’d normally just reuse it', 5000);
-  await caption(page, 'Here we’ll add the staging environment. Set up credential opens a dialog already rooted in this source', 5000);
+  await caption(page, 'Here we’ll add the staging environment. The ＋ menu opens a dialog rooted in this source — New, or Copy an existing environment', 5000);
 
-  await step(page, 'Set up a credential for petstore', async () => {
-    await page.locator(`${CD} .src[data-name="petstore"] .setup-cred`).click();
+  await step(page, 'Open the ＋ menu and choose New credential for petstore', async () => {
+    await page.locator(`${CD} .src[data-name="petstore"] .setup-menu`).click();
+    await page.locator(`${CD} .src[data-name="petstore"] .cred-menu [data-action="new"]`).click();
     await page.locator(`${CDLG} dialog`).waitFor();
   }, { hold: 1600 });
 
