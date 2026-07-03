@@ -2,7 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Buffers.Text;
 using System.Security.Claims;
+using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -21,9 +24,16 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The page size the access-grants aggregation reads the credential store with. The credential store treats a
+    // non-positive limit as 1 (unlike the security-policy store's "use the default" sentinel), so a positive size is
+    // passed to avoid a page-per-row scan.
+    private const int CredentialScanPageSize = 50;
+
     private readonly ISecurityPolicyStore store;
     private readonly PersistentRowSecurityPolicy? policy;
     private readonly ControlPlaneAccess? access;
+    private readonly ISecuredWorkflowCatalog? catalog;
+    private readonly ISourceCredentialStore? credentials;
     private readonly string actor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneSecurityHandler"/> class.</summary>
@@ -31,7 +41,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <param name="policy">An optional policy to refresh after a mutation so changes take effect in-process.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
     public ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy = null, string actor = "control-plane")
-        : this(store, policy, null, actor)
+        : this(store, policy, null, actor: actor)
     {
     }
 
@@ -41,13 +51,15 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <param name="policy">An optional policy to refresh after a mutation.</param>
     /// <param name="access">The request-scoped access binding the guard reads the caller's claims from (<see langword="null"/> disables the guard — the unscoped posture).</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, string actor = "control-plane")
+    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, string actor = "control-plane")
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(actor);
         this.store = store;
         this.policy = policy;
         this.access = access;
+        this.catalog = catalog;
+        this.credentials = credentials;
         this.actor = actor;
     }
 
@@ -285,6 +297,149 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         return DeleteSecurityBindingResult.NoContent();
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<GetAccessGrantsResult> HandleGetAccessGrantsAsync(GetAccessGrantsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The grantee is an opaque URL-safe token that round-trips a resolved grantee's full JSON (design §6.1). Decode
+        // it into a pooled buffer, then parse it into an OWNED document that TAKES OWNERSHIP of that buffer — the parsed
+        // document retains (does not copy) the backing memory, so the buffer must live for the document's lifetime; the
+        // document returns it to the pool on dispose. Any empty/malformed token, or a non-object payload, is a 400.
+        if (!parameters.Grantee.IsNotUndefined())
+        {
+            return InvalidGrantee(workspace);
+        }
+
+        string token = (string)parameters.Grantee;
+        if (token.Length == 0)
+        {
+            return InvalidGrantee(workspace);
+        }
+
+        byte[] decodeBuffer = ArrayPool<byte>.Shared.Rent(Base64Url.GetMaxDecodedLength(token.Length));
+        if (Base64Url.DecodeFromChars(token, decodeBuffer, out _, out int decodedLength) != OperationStatus.Done)
+        {
+            ArrayPool<byte>.Shared.Return(decodeBuffer);
+            return InvalidGrantee(workspace);
+        }
+
+        ParsedJsonDocument<Models.ResolvedGrantee> granteeDoc;
+        try
+        {
+            granteeDoc = ParsedJsonDocument<Models.ResolvedGrantee>.Parse(decodeBuffer.AsMemory(0, decodedLength), decodeBuffer);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Parse attaches the rented buffer to the document only on success, so return it ourselves on failure.
+            ArrayPool<byte>.Shared.Return(decodeBuffer);
+            return InvalidGrantee(workspace);
+        }
+
+        if (granteeDoc.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            granteeDoc.Dispose(); // returns the rented decode buffer it now owns
+            return InvalidGrantee(workspace);
+        }
+
+        // The grantee is echoed verbatim in the response (a congruent whole-document From wrap), which is validated and
+        // serialized after this handler returns — so hand the document to the workspace (it disposes it, and returns the
+        // rented decode buffer, at request end).
+        workspace.TakeOwnership(granteeDoc);
+        Models.ResolvedGrantee grantee = granteeDoc.RootElement;
+
+        // The grantee's internal sys: identity, resolved bytes-to-bytes from its operator-facing {dimension,value}
+        // grants (the same ResolveUsageGrantInto seam the credential usage grants use — no managed string per grant).
+        // Empty when unscoped (no policy). It keys the administered-workflows reverse index and the credential
+        // usage-entitlement (IsUsableBy) matches.
+        SecurityTagSet granteeIdentity = SecurityTagSet.Empty;
+        if (this.access is { } access && grantee.Identity.IsNotUndefined())
+        {
+            var identityState = new GranteeIdentityState(access, grantee.Identity);
+            granteeIdentity = SecurityTagSet.Build(in identityState, WriteGranteeIdentity);
+        }
+
+        // bindings: page the store keeping only the bindings whose claim the grantee satisfies. A contributing page's
+        // documents are handed to the workspace so the matched summaries survive the deferred body serialization; the
+        // page itself is disposed each iteration, so the next-page token is copied into a workspace-owned JsonString
+        // (which survives that dispose — a JsonString over the page's own span would dangle) before the loop repeats.
+        var matchedBindings = new List<SecurityBindingDocument>();
+        JsonString bindingPageToken = default;
+        while (true)
+        {
+            using SecurityBindingPage page = await this.store.ListBindingsAsync(0, bindingPageToken, default, cancellationToken).ConfigureAwait(false);
+            bool contributed = false;
+            foreach (SecurityBindingDocument binding in page.Bindings)
+            {
+                if (BindingAppliesToGrantee(binding, grantee))
+                {
+                    matchedBindings.Add(binding);
+                    contributed = true;
+                }
+            }
+
+            if (contributed)
+            {
+                page.Bindings.TransferOwnershipTo(workspace);
+            }
+
+            if (page.NextPageToken.IsEmpty)
+            {
+                break;
+            }
+
+            bindingPageToken = (JsonString)JsonString.CreateBuilder(workspace, (JsonString.Source)page.NextPageToken.Span).RootElement;
+        }
+
+        // administers: a single reverse-index lookup keyed by the grantee's identity (bounded; materialised in full).
+        IReadOnlyList<string> administered = this.catalog is { } catalog
+            ? await catalog.ListAdministeredWorkflowsAsync(granteeIdentity, cancellationToken).ConfigureAwait(false)
+            : [];
+
+        // credentialUsage: page the credential store (System context — usage entitlement is not management-reach-scoped)
+        // keeping the bindings the grantee's identity may use (label-superset). Same page-lifetime discipline as bindings.
+        var matchedCredentials = new List<SourceCredentialBinding>();
+        if (this.credentials is { } credentialStore)
+        {
+            JsonString credentialPageToken = default;
+            while (true)
+            {
+                using SourceCredentialPage page = await credentialStore.ListAsync(AccessContext.System, CredentialScanPageSize, credentialPageToken, cancellationToken).ConfigureAwait(false);
+                bool contributed = false;
+                foreach (SourceCredentialBinding binding in page.Bindings)
+                {
+                    if (binding.IsUsableBy(granteeIdentity))
+                    {
+                        matchedCredentials.Add(binding);
+                        contributed = true;
+                    }
+                }
+
+                if (contributed)
+                {
+                    page.Bindings.TransferOwnershipTo(workspace);
+                }
+
+                if (page.NextPageToken.IsEmpty)
+                {
+                    break;
+                }
+
+                credentialPageToken = (JsonString)JsonString.CreateBuilder(workspace, (JsonString.Source)page.NextPageToken.Span).RootElement;
+            }
+        }
+
+        // Build the response closure-free: a single context carries the three matched collections, threaded through the
+        // outer object build and each inner array build (no capturing lambda). The grantee is echoed as a congruent
+        // whole-document From wrap over the workspace-owned grantee document.
+        var overviewContext = new AccessGrantsContext(administered, matchedBindings, matchedCredentials);
+        Models.AccessGrantsOverview.Source<AccessGrantsContext> body = Models.AccessGrantsOverview.Build(
+            in overviewContext,
+            administers: Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Build(in overviewContext, BuildAdministeredWorkflows),
+            bindings: Models.AccessGrantsOverview.SecurityBindingSummaryArray.Build(in overviewContext, BuildAccessBindings),
+            credentialUsage: Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Build(in overviewContext, BuildCredentialUsages),
+            grantee: (Models.ResolvedGrantee.Source)Models.ResolvedGrantee.From(grantee));
+        return GetAccessGrantsResult.Ok(body, workspace);
+    }
+
     private static bool IsInvalidRule(string expression, out Models.ProblemDetails.Source problem)
     {
         try
@@ -454,6 +609,121 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         {
             array.AddItem(Models.SecurityBindingSummary.Build(in binding, BuildBindingSummary));
         }
+    }
+
+    private static GetAccessGrantsResult InvalidGrantee(JsonWorkspace workspace)
+        => GetAccessGrantsResult.BadRequest(
+            Problem("invalid-grantee", "Invalid grantee token", 400, "The 'grantee' query parameter is not a valid resolved-grantee token."), workspace);
+
+    // Resolves the grantee's operator-facing {dimension,value} grants bytes-to-bytes into its internal sys: identity via
+    // the same ResolveUsageGrantInto seam a credential usage grant uses (ArazzoControlPlaneCredentialsHandler.WriteUsageTags):
+    // each dimension/value is read as unescaped UTF-8 straight off the grantee document (no managed string per grant) and
+    // written into the identity buffer. An unscoped deployment (no policy) writes nothing, yielding the empty identity.
+    private static void WriteGranteeIdentity(ref IdentityBuilder builder, in GranteeIdentityState state)
+    {
+        foreach (Models.AdministratorIdentity grant in state.Identity.EnumerateArray())
+        {
+            using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
+            using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
+            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
+        }
+    }
+
+    // Whether a binding grants the grantee reach: the wildcard '*' claim matches every principal; otherwise one of the
+    // grantee's {dimension,value} grants must match the binding's claim type (and value, when the binding pins one).
+    // Compared bytes-native off both documents' UTF-8 — the binding's raw ClaimType/ClaimValue vs each grantee identity
+    // item's dimension/value read as unescaped spans — so nothing is materialised into a managed string or grant list.
+    private static bool BindingAppliesToGrantee(SecurityBindingDocument binding, Models.ResolvedGrantee grantee)
+    {
+        if (binding.ClaimType.ValueEquals("*"u8))
+        {
+            return true;
+        }
+
+        if (!grantee.Identity.IsNotUndefined())
+        {
+            return false;
+        }
+
+        bool claimValuePinned = !binding.ClaimValue.IsUndefined();
+        foreach (Models.AdministratorIdentity item in grantee.Identity.EnumerateArray())
+        {
+            using UnescapedUtf8JsonString dimension = item.DimensionValue.GetUtf8String();
+            if (!binding.ClaimType.ValueEquals(dimension.Span))
+            {
+                continue;
+            }
+
+            if (!claimValuePinned)
+            {
+                return true;
+            }
+
+            using UnescapedUtf8JsonString value = item.Value.GetUtf8String();
+            if (binding.ClaimValue.ValueEquals(value.Span))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // The bindings array reuses the existing whole-summary projection (BuildBindingSummary) per matched binding — the
+    // item type is shared with the search response; only the enclosing array type differs. Closure-free: the matched
+    // list is threaded as the context and each binding as the per-item context.
+    private static void BuildAccessBindings(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.SecurityBindingSummaryArray.Builder array)
+    {
+        foreach (SecurityBindingDocument binding in ctx.Bindings)
+        {
+            array.AddItem(Models.SecurityBindingSummary.Build(in binding, BuildBindingSummary));
+        }
+    }
+
+    // Each administered base workflow id is a genuine C# string (from the reverse index), so it encodes to UTF-8 once
+    // via the implicit string -> JsonString.Source conversion applied INSIDE the item's Create (a void mutate) rather
+    // than passed to a Source-returning Build — the span-bearing temp would otherwise fail ref-safety escape analysis
+    // (the same pattern the security-orderings labels use).
+    private static void BuildAdministeredWorkflows(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Builder array)
+    {
+        foreach (string baseWorkflowId in ctx.Administered)
+        {
+            array.AddItem(Models.AccessGrantsAdministeredWorkflow.Build(in baseWorkflowId, BuildAdministeredWorkflow));
+        }
+    }
+
+    private static void BuildAdministeredWorkflow(in string baseWorkflowId, ref Models.AccessGrantsAdministeredWorkflow.Builder b)
+        => b.Create(baseWorkflowId: baseWorkflowId);
+
+    // Each usable credential is projected to its (sourceName, environment) key, carried bytes-native (Models.JsonString.From
+    // over the binding's raw accessors — zero-copy element wraps referencing the workspace-owned page document).
+    private static void BuildCredentialUsages(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Builder array)
+    {
+        foreach (SourceCredentialBinding binding in ctx.Credentials)
+        {
+            array.AddItem(Models.AccessGrantsCredentialUsage.Build(
+                environment: Models.JsonString.From(binding.Environment),
+                sourceName: Models.JsonString.From(binding.SourceName)));
+        }
+    }
+
+    // The grantee's row-security access + its identity grants, threaded so the identity build stays closure-free.
+    private readonly struct GranteeIdentityState(ControlPlaneAccess access, Models.ResolvedGrantee.AdministratorIdentityArray identity)
+    {
+        public ControlPlaneAccess Access { get; } = access;
+
+        public Models.ResolvedGrantee.AdministratorIdentityArray Identity { get; } = identity;
+    }
+
+    // The matched aggregation sets, threaded as one context through the access-grants overview build (no closure). The
+    // lists hold the matched documents (whose pages were handed to the workspace), so they live to serialization.
+    private readonly ref struct AccessGrantsContext(IReadOnlyList<string> administered, List<SecurityBindingDocument> bindings, List<SourceCredentialBinding> credentials)
+    {
+        public IReadOnlyList<string> Administered { get; } = administered;
+
+        public List<SecurityBindingDocument> Bindings { get; } = bindings;
+
+        public List<SourceCredentialBinding> Credentials { get; } = credentials;
     }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string kind, string id)

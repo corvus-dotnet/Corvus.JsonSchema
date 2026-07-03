@@ -118,11 +118,14 @@ public static class ControlPlaneEndpointExtensions
         // The security-authoring API persists rules/bindings; if the deployment's policy is the persistent one,
         // refresh it after writes so authoring changes take effect for subsequent authorization decisions.
         ISecurityPolicyStore policyStore = securityPolicyStore ?? new InMemorySecurityPolicyStore();
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access);
 
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
         var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access);
+
+        // The access-overview (GET /access/grants) aggregates a grantee's bindings + administered workflows + usable
+        // credentials, so the security handler also reads the catalog (administered workflows) and the credential store.
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore);
 
         // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
         // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
@@ -179,11 +182,11 @@ public static class ControlPlaneEndpointExtensions
         var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, environmentAdministration, access, accessRequestSubjectClaimType);
 
         return endpoints.MapApiEndpoints(
+            securityHandler,
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners, access),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore),
             availabilityHandler,
-            securityHandler,
             credentialsHandler,
             environmentsHandler,
             runnerAuthorizationsHandler,

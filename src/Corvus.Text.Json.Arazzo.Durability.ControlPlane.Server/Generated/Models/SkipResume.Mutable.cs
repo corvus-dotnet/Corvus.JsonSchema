@@ -371,7 +371,7 @@ public readonly partial struct SkipResume
         /// Set the <c>mode</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMode(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.ModeEntity.Source value)
+        public void SetMode(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.ModeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct SkipResume
         /// Set the <c>skipOutputs</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSkipOutputs(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetSkipOutputs(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -483,7 +483,7 @@ public readonly partial struct SkipResume
         /// Set the <c>targetCursor</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTargetCursor(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source value)
+        public void SetTargetCursor(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source value)
         {
             CheckValidInstance();
 
@@ -629,7 +629,7 @@ public readonly partial struct SkipResume
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -652,7 +652,7 @@ public readonly partial struct SkipResume
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -699,7 +699,7 @@ public readonly partial struct SkipResume
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -870,7 +870,7 @@ public readonly partial struct SkipResume
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2)
+        internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1036,7 +1036,7 @@ public readonly partial struct SkipResume
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SkipResume.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1338,7 +1338,7 @@ public readonly partial struct SkipResume
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1353,7 +1353,7 @@ public readonly partial struct SkipResume
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1399,7 +1399,7 @@ public readonly partial struct SkipResume
     /// <param name="skipOutputs">The value of the <c>"skipOutputs"</c> property.</param>
     /// <param name="targetCursor">The value of the <c>"targetCursor"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.JsonElement.Source skipOutputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source targetCursor = default)
+    public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source skipOutputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source targetCursor = default)
     {
         return new Source(skipOutputs, targetCursor);
     }
@@ -1412,7 +1412,7 @@ public readonly partial struct SkipResume
     /// <param name="skipOutputs">The value of the <c>"skipOutputs"</c> property.</param>
     /// <param name="targetCursor">The value of the <c>"targetCursor"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> skipOutputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source targetCursor = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> skipOutputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source targetCursor = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

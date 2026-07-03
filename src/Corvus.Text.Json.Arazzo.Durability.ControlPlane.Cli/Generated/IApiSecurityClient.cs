@@ -98,6 +98,16 @@ public interface IApiSecurityClient : IAsyncDisposable
     public static class SecurityRequirements
     {
         /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrants</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetAccessGrants</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetAccessGrantsOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ListSecurityOrderingsOauth2Scopes = ["security:read"];
@@ -217,6 +227,16 @@ public interface IApiSecurityClient : IAsyncDisposable
         /// </summary>
         public static readonly string[] AllOpenIdConnectScopes = ["security:read", "security:write"];
     }
+
+    /// <summary>
+    /// Who-can-do-what overview for a grantee
+    /// </summary>
+    /// <remarks>
+    /// Aggregates, for a single resolved grantee, all their access: the security bindings whose claim matches the grantee's identity (with per-verb reach), the base workflows the grantee administers, and the source-credential bindings the grantee's runs may use. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Binding selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.
+    /// </remarks>
+    /// <param name="grantee">The grantee parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetAccessGrantsResponse> GetAccessGrantsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source grantee, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List the configured ordered tag dimensions

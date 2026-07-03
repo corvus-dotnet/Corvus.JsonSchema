@@ -38,7 +38,7 @@ public readonly partial struct ProblemDetails
         private static readonly JsonSchemaPathProvider TitleSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/title"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider TypeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/type"u8, buffer, out written);
 
-        private static void MatchDetail(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchDetail(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -53,7 +53,7 @@ public readonly partial struct ProblemDetails
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchInstance(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchInstance(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -68,7 +68,7 @@ public readonly partial struct ProblemDetails
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -83,7 +83,7 @@ public readonly partial struct ProblemDetails
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
-        private static void MatchTitle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchTitle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -98,7 +98,7 @@ public readonly partial struct ProblemDetails
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
-        private static void MatchType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
@@ -113,9 +113,9 @@ public readonly partial struct ProblemDetails
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
+            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
                 (static () => JsonPropertyNames.DetailUtf8, MatchDetail),
                 (static () => JsonPropertyNames.InstanceUtf8, MatchInstance),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
@@ -124,13 +124,13 @@ public readonly partial struct ProblemDetails
             ]);
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -187,9 +187,9 @@ public readonly partial struct ProblemDetails
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

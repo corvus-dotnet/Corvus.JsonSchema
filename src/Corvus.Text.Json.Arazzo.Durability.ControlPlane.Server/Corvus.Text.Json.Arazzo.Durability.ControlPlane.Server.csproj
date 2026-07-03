@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.Benchmarks" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
