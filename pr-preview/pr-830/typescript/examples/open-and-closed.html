@@ -191,13 +191,13 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p>By default a JSON Schema object is <strong>open</strong>. Properties beyond those declared are allowed and ignored. Adding <code>unevaluatedProperties: false</code> makes it <strong>closed</strong>, so any property not accounted for by the schema is rejected. The generated <code>interface</code> carries the declared properties either way; the open/closed distinction is enforced by <code>StrictPoint.evaluate</code>. (A closed type has no index signature, so it also reads as exact in TypeScript.)</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/593f68ada746084e3df4fed5775271ded7734d98/docs/typescript/examples/004-open-and-closed/point.json"><code>point.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/b740d7578793778d51d3c63ff367ab3e875fce28/docs/typescript/examples/004-open-and-closed/point.json"><code>point.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;StrictPoint&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;x&quot;, &quot;y&quot;],
   &quot;properties&quot;: { &quot;x&quot;: { &quot;type&quot;: &quot;number&quot; }, &quot;y&quot;: { &quot;type&quot;: &quot;number&quot; } },
   &quot;unevaluatedProperties&quot;: false }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/593f68ada746084e3df4fed5775271ded7734d98/docs/typescript/examples/004-open-and-closed/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/b740d7578793778d51d3c63ff367ab3e875fce28/docs/typescript/examples/004-open-and-closed/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">StrictPoint.evaluate({ x: 1, y: 2 });        // true
 StrictPoint.evaluate({ x: 1, y: 2, z: 3 });  // false — z is an unevaluated (unknown) property
 StrictPoint.evaluate({ x: 1 });              // false — y is required
