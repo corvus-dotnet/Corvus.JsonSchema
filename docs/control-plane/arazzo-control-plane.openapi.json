@@ -1792,6 +1792,250 @@
         }
       }
     },
+    "/workspace/workflows/{id}/sources": {
+      "get": {
+        "operationId": "listWorkingCopySources",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List a working copy's attached sources",
+        "description": "Lists the working copy's attachments (no documents — the operations endpoint projects them). 404 when the working copy is absent or out of reach.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedSourceList"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/sources/{name}": {
+      "put": {
+        "operationId": "attachWorkingCopySource",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Attach a source to a working copy",
+        "description": "Attaches (or replaces) the source for a sourceDescriptions name: a registry reference or an inline document — exactly one. The attachment is saved onto the working copy under optimistic concurrency; a concurrent save conflicts (409) and the client retries against the fresh state. A registry reference must name a source in the caller's reach (404 otherwise).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/AttachedSourceNamePath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachSourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The attachment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedSource"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "detachWorkingCopySource",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Detach a source from a working copy",
+        "description": "Removes the attachment for a sourceDescriptions name. 404 when the working copy or the attachment is absent.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/AttachedSourceNamePath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Detached."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/sources/{name}/operations": {
+      "get": {
+        "operationId": "listWorkingCopySourceOperations",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List an attached source's operation surface",
+        "description": "Projects the attached source's operation surface (raw-JSON-Schema request/parameter/response shapes) for the operation browser and the step inspector's templates. A registry attachment resolves the registered source at read time (reach-checked). 404 when the working copy, the attachment, or the referenced registered source is absent.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/AttachedSourceNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation surface.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationSurface"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sources/{name}/operations": {
+      "get": {
+        "operationId": "listRegisteredSourceOperations",
+        "security": [
+          {
+            "oauth2": [
+              "sources:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "sources:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "sources"
+        ],
+        "summary": "List a registered source's operation surface",
+        "description": "Projects the registered source's operation surface (raw-JSON-Schema request/parameter/response shapes) — browse a source before attaching it. 404 when the source is absent or out of reach.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SourceNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation surface.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationSurface"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/environments": {
       "get": {
         "operationId": "listEnvironments",
@@ -2928,6 +3172,15 @@
         "in": "path",
         "required": true,
         "description": "The server-assigned working-copy id.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "AttachedSourceNamePath": {
+        "name": "name",
+        "in": "path",
+        "required": true,
+        "description": "The sourceDescriptions name the attachment satisfies.",
         "schema": {
           "type": "string"
         }
@@ -4200,6 +4453,203 @@
         "required": [
           "valid",
           "diagnostics"
+        ]
+      },
+      "AttachedSource": {
+        "type": "object",
+        "description": "One source attached to a working copy under a sourceDescriptions name (workflow-designer design §4.1): a registry reference (resolved at read time against the caller-reachable registered source) or an inline document (upload/fetch result, stored on the working copy so it resolves like a package). The list never returns documents; the operations endpoint projects them.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The sourceDescriptions name this attachment satisfies."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "registry",
+              "inline"
+            ],
+            "description": "registry = resolves a registered source by name at read time; inline = the document is stored on the working copy."
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "registry only: the registered source's name."
+          },
+          "type": {
+            "type": "string",
+            "description": "The source type (openapi | asyncapi | arazzo), recorded for inline attachments and echoed from the registry otherwise."
+          },
+          "attachedBy": {
+            "type": "string"
+          },
+          "attachedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string",
+            "description": "On an attach response: the working copy's NEW concurrency token (the attach bumped it; present the fresh etag on the next save). List entries omit it."
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "attachedBy",
+          "attachedAt"
+        ]
+      },
+      "AttachedSourceList": {
+        "type": "object",
+        "description": "A working copy's attachments (unpaged — a workflow references few sources).",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachedSource"
+            }
+          }
+        },
+        "required": [
+          "sources"
+        ]
+      },
+      "AttachSourceRequest": {
+        "type": "object",
+        "description": "Attach (or replace) the source for a sourceDescriptions name: EXACTLY ONE of sourceName (a registry reference) or document (an inline upload/fetch result) — both or neither is rejected (400).",
+        "properties": {
+          "sourceName": {
+            "type": "string",
+            "description": "Attach the registered source with this name (resolved at read time, reach-checked)."
+          },
+          "document": {
+            "type": "object",
+            "description": "Attach this document inline (stored on the working copy verbatim).",
+            "additionalProperties": true
+          },
+          "type": {
+            "type": "string",
+            "description": "The inline document's type (openapi | asyncapi | arazzo); detected from the document's own top-level field when omitted."
+          }
+        }
+      },
+      "SourceOperationDescriptor": {
+        "type": "object",
+        "description": "One entry in a source's operation surface: an OpenAPI operation (operationId / path+method) or an AsyncAPI operation (channelPath+action), with RAW JSON Schema request/parameter/response shapes — exactly what the designer's typed editors and operation templates consume.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "openapi",
+              "asyncapi"
+            ]
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "OpenAPI: the path template."
+          },
+          "method": {
+            "type": "string",
+            "description": "OpenAPI: the upper-case HTTP method."
+          },
+          "channelPath": {
+            "type": "string",
+            "description": "AsyncAPI: the channel address (or key)."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "send",
+              "receive"
+            ],
+            "description": "AsyncAPI: 2.x publish/subscribe map to receive/send exactly as the code generator maps them."
+          },
+          "summary": {
+            "type": "string"
+          },
+          "deprecated": {
+            "type": "boolean"
+          },
+          "request": {
+            "type": "object",
+            "description": "The request body (OpenAPI, the JSON content type preferred) or message payload (AsyncAPI).",
+            "properties": {
+              "contentType": {
+                "type": "string"
+              },
+              "schema": {
+                "type": "object",
+                "description": "Raw JSON Schema, local $refs inlined to a bounded depth.",
+                "additionalProperties": true,
+                "title": "RawSchema"
+              }
+            },
+            "title": "SourceOperationRequestDescriptor"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "in": {
+                  "type": "string",
+                  "description": "path | query | header | cookie | querystring."
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "RawSchema"
+                }
+              },
+              "required": [
+                "name",
+                "in"
+              ],
+              "title": "SourceOperationParameterDescriptor"
+            }
+          },
+          "responses": {
+            "type": "object",
+            "description": "The documented responses, keyed by status code (200, 4XX, default, …) — the key set drives the designer's criteria/failure-action templates.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "RawSchema"
+                }
+              },
+              "title": "SourceOperationResponseDescriptor"
+            },
+            "title": "SourceOperationResponses"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "OperationSurface": {
+        "type": "object",
+        "description": "A source document's full operation surface, in document order.",
+        "properties": {
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceOperationDescriptor"
+            }
+          }
+        },
+        "required": [
+          "operations"
         ]
       },
       "SourceCredentialKind": {

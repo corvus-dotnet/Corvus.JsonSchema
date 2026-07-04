@@ -24,6 +24,9 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// <para>The analyzer is tolerant by design: it walks whatever shape it finds and never throws on a
 /// malformed document — structural conformance is the JSON-Schema pass's job (the control plane
 /// runs both and merges the diagnostics).</para>
+/// <para>Pointer segments accumulate in a single grow-once buffer with push/pop scope discipline;
+/// a pointer <em>string</em> materializes only when a finding is actually emitted (with its
+/// human-facing message — the per-finding leaves), so a clean document allocates no paths at all.</para>
 /// </remarks>
 public static class WorkflowDocumentAnalyzer
 {
@@ -63,6 +66,9 @@ public static class WorkflowDocumentAnalyzer
             return diagnostics;
         }
 
+        var pointers = new PointerBuilder();
+        using PointerScope workflowsScope = pointers.Push("workflows");
+
         int wi = 0;
         foreach (JsonElement workflow in workflows.EnumerateArray())
         {
@@ -72,10 +78,11 @@ public static class WorkflowDocumentAnalyzer
                 && id.GetString() is { Length: > 0 } workflowId
                 && !workflowIds.Add(workflowId))
             {
+                using PointerScope indexScope = pointers.Push(wi);
                 diagnostics.Add(new(
                     WorkflowDocumentDiagnosticSeverity.Error,
                     "duplicate-id",
-                    $"/workflows/{wi}/workflowId",
+                    pointers.Materialize("workflowId"),
                     $"Duplicate workflowId '{workflowId}' — workflow ids must be unique within the document."));
             }
 
@@ -85,7 +92,8 @@ public static class WorkflowDocumentAnalyzer
         wi = 0;
         foreach (JsonElement workflow in workflows.EnumerateArray())
         {
-            AnalyzeWorkflow(workflow, $"/workflows/{wi}", workflowIds, hasArazzoSources, components, diagnostics);
+            using PointerScope indexScope = pointers.Push(wi);
+            AnalyzeWorkflow(workflow, pointers, workflowIds, hasArazzoSources, components, diagnostics);
             wi++;
         }
 
@@ -94,7 +102,7 @@ public static class WorkflowDocumentAnalyzer
 
     private static void AnalyzeWorkflow(
         in JsonElement workflow,
-        string pointer,
+        PointerBuilder pointers,
         HashSet<string> workflowIds,
         bool hasArazzoSources,
         in JsonElement components,
@@ -106,13 +114,14 @@ public static class WorkflowDocumentAnalyzer
         }
 
         // Workflow-level dependsOn names workflows.
-        CheckDependsOn(workflow, pointer, workflowIds, hasArazzoSources, isWorkflow: true, diagnostics);
+        CheckDependsOn(workflow, pointers, workflowIds, hasArazzoSources, isWorkflow: true, diagnostics);
 
         // The workflow's step ids (goto stepId targets, step dependsOn, reachability).
         var stepIds = new List<string>();
         JsonElement steps = workflow.TryGetProperty("steps"u8, out JsonElement s) && s.ValueKind == JsonValueKind.Array ? s : default;
         if (steps.ValueKind == JsonValueKind.Array)
         {
+            using PointerScope stepsScope = pointers.Push("steps");
             int si = 0;
             foreach (JsonElement step in steps.EnumerateArray())
             {
@@ -121,10 +130,11 @@ public static class WorkflowDocumentAnalyzer
                 {
                     if (stepIds.Contains(stepId))
                     {
+                        using PointerScope indexScope = pointers.Push(si);
                         diagnostics.Add(new(
                             WorkflowDocumentDiagnosticSeverity.Error,
                             "duplicate-id",
-                            $"{pointer}/steps/{si}/stepId",
+                            pointers.Materialize("stepId"),
                             $"Duplicate stepId '{stepId}' — step ids must be unique within the workflow."));
                     }
                     else
@@ -141,45 +151,48 @@ public static class WorkflowDocumentAnalyzer
         var flows = new Dictionary<int, StepFlow>(); // step index → reachability edges
 
         // Workflow-level success/failure action defaults.
-        CheckActions(workflow, "successActions"u8, $"{pointer}/successActions", stepIdSet, workflowIds, hasArazzoSources, components, null, successList: true, diagnostics);
-        CheckActions(workflow, "failureActions"u8, $"{pointer}/failureActions", stepIdSet, workflowIds, hasArazzoSources, components, null, successList: false, diagnostics);
+        CheckActions(workflow, "successActions"u8, "successActions", pointers, stepIdSet, workflowIds, hasArazzoSources, components, null, successList: true, diagnostics);
+        CheckActions(workflow, "failureActions"u8, "failureActions", pointers, stepIdSet, workflowIds, hasArazzoSources, components, null, successList: false, diagnostics);
 
         // Workflow outputs are runtime expressions.
-        CheckOutputs(workflow, $"{pointer}/outputs", diagnostics);
+        CheckOutputs(workflow, pointers, diagnostics);
 
         if (steps.ValueKind != JsonValueKind.Array)
         {
             return;
         }
 
-        int index = 0;
-        foreach (JsonElement step in steps.EnumerateArray())
+        using (PointerScope stepsScope = pointers.Push("steps"))
         {
-            string stepPointer = $"{pointer}/steps/{index}";
-            if (step.ValueKind == JsonValueKind.Object)
+            int index = 0;
+            foreach (JsonElement step in steps.EnumerateArray())
             {
-                var flow = new StepFlow();
-                flows[index] = flow;
+                if (step.ValueKind == JsonValueKind.Object)
+                {
+                    using PointerScope indexScope = pointers.Push(index);
+                    var flow = new StepFlow();
+                    flows[index] = flow;
 
-                CheckDependsOn(step, stepPointer, stepIdSet, hasArazzoSources: false, isWorkflow: false, diagnostics);
-                CheckCriteria(step, "successCriteria"u8, $"{stepPointer}/successCriteria", diagnostics);
-                CheckActions(step, "onSuccess"u8, $"{stepPointer}/onSuccess", stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: true, diagnostics);
-                CheckActions(step, "onFailure"u8, $"{stepPointer}/onFailure", stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: false, diagnostics);
-                CheckParameters(step, $"{stepPointer}/parameters", components, diagnostics);
-                CheckOutputs(step, $"{stepPointer}/outputs", diagnostics);
-                CheckRequestBody(step, stepPointer, diagnostics);
+                    CheckDependsOn(step, pointers, stepIdSet, hasArazzoSources: false, isWorkflow: false, diagnostics);
+                    CheckCriteria(step, "successCriteria"u8, "successCriteria", pointers, diagnostics);
+                    CheckActions(step, "onSuccess"u8, "onSuccess", pointers, stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: true, diagnostics);
+                    CheckActions(step, "onFailure"u8, "onFailure", pointers, stepIdSet, workflowIds, hasArazzoSources, components, flow, successList: false, diagnostics);
+                    CheckParameters(step, pointers, components, diagnostics);
+                    CheckOutputs(step, pointers, diagnostics);
+                    CheckRequestBody(step, pointers, diagnostics);
+                }
+
+                index++;
             }
-
-            index++;
         }
 
-        CheckReachability(steps, pointer, stepIds, flows, diagnostics);
+        CheckReachability(steps, pointers, stepIds, flows, diagnostics);
     }
 
     // ── dependsOn (workflow-level names workflows; step-level names steps) ────────────────────────
     private static void CheckDependsOn(
         in JsonElement owner,
-        string ownerPointer,
+        PointerBuilder pointers,
         HashSet<string> knownIds,
         bool hasArazzoSources,
         bool isWorkflow,
@@ -203,7 +216,7 @@ public static class WorkflowDocumentAnalyzer
                     diagnostics.Add(new(
                         WorkflowDocumentDiagnosticSeverity.Warning,
                         "depends-on",
-                        $"{ownerPointer}/dependsOn/{i}",
+                        pointers.Materialize("dependsOn", i),
                         $"dependsOn references '{name}', which is not a {kind} in this document (it may be defined by an arazzo-type source)."));
                 }
                 else
@@ -212,7 +225,7 @@ public static class WorkflowDocumentAnalyzer
                     diagnostics.Add(new(
                         WorkflowDocumentDiagnosticSeverity.Error,
                         "depends-on",
-                        $"{ownerPointer}/dependsOn/{i}",
+                        pointers.Materialize("dependsOn", i),
                         $"dependsOn references unknown {kind} '{name}'."));
                 }
             }
@@ -225,7 +238,8 @@ public static class WorkflowDocumentAnalyzer
     private static void CheckActions(
         in JsonElement owner,
         ReadOnlySpan<byte> property,
-        string listPointer,
+        string segment,
+        PointerBuilder pointers,
         HashSet<string> stepIds,
         HashSet<string> workflowIds,
         bool hasArazzoSources,
@@ -239,10 +253,11 @@ public static class WorkflowDocumentAnalyzer
             return;
         }
 
+        using PointerScope listScope = pointers.Push(segment);
         int i = 0;
         foreach (JsonElement entry in actions.EnumerateArray())
         {
-            string actionPointer = $"{listPointer}/{i}";
+            using PointerScope indexScope = pointers.Push(i);
             i++;
             if (entry.ValueKind != JsonValueKind.Object)
             {
@@ -260,7 +275,7 @@ public static class WorkflowDocumentAnalyzer
                     diagnostics.Add(new(
                         WorkflowDocumentDiagnosticSeverity.Error,
                         "component-reference",
-                        $"{actionPointer}/reference",
+                        pointers.Materialize("reference"),
                         $"Could not resolve reusable reference '{reference}' against the document's components."));
                     continue;
                 }
@@ -292,7 +307,7 @@ public static class WorkflowDocumentAnalyzer
                         diagnostics.Add(new(
                             WorkflowDocumentDiagnosticSeverity.Error,
                             "goto-target",
-                            actionPointer,
+                            pointers.Materialize(),
                             $"The {type} action targets unknown step '{targetStep}'."));
                     }
                     else
@@ -306,33 +321,35 @@ public static class WorkflowDocumentAnalyzer
                     diagnostics.Add(new(
                         hasArazzoSources ? WorkflowDocumentDiagnosticSeverity.Warning : WorkflowDocumentDiagnosticSeverity.Error,
                         "goto-target",
-                        actionPointer,
+                        pointers.Materialize(),
                         $"The {type} action targets workflow '{targetWorkflow}', which is not defined in this document"
                         + (hasArazzoSources ? " (it may be defined by an arazzo-type source)." : ".")));
                 }
             }
 
-            CheckCriteria(action, "criteria"u8, $"{actionPointer}/criteria", diagnostics);
+            CheckCriteria(action, "criteria"u8, "criteria", pointers, diagnostics);
         }
     }
 
     // ── criteria (validated with the runtime's own compiler) ──────────────────────────────────────
-    private static void CheckCriteria(in JsonElement owner, ReadOnlySpan<byte> property, string listPointer, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckCriteria(in JsonElement owner, ReadOnlySpan<byte> property, string segment, PointerBuilder pointers, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!owner.TryGetProperty(property, out JsonElement criteria) || criteria.ValueKind != JsonValueKind.Array)
         {
             return;
         }
 
+        using PointerScope listScope = pointers.Push(segment);
         int i = 0;
         foreach (JsonElement criterion in criteria.EnumerateArray())
         {
-            CheckCriterion(criterion, $"{listPointer}/{i}", diagnostics);
+            using PointerScope indexScope = pointers.Push(i);
+            CheckCriterion(criterion, pointers, diagnostics);
             i++;
         }
     }
 
-    private static void CheckCriterion(in JsonElement criterion, string pointer, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckCriterion(in JsonElement criterion, PointerBuilder pointers, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (criterion.ValueKind != JsonValueKind.Object)
         {
@@ -351,7 +368,7 @@ public static class WorkflowDocumentAnalyzer
 
         if (context is { Length: > 0 })
         {
-            CheckExpression(context, $"{pointer}/context", diagnostics);
+            CheckExpression(context, pointers, "context", diagnostics);
         }
 
         if (type == "xpath")
@@ -360,7 +377,7 @@ public static class WorkflowDocumentAnalyzer
             diagnostics.Add(new(
                 WorkflowDocumentDiagnosticSeverity.Warning,
                 "criterion-type",
-                pointer,
+                pointers.Materialize(),
                 "This runtime does not evaluate xpath criteria; the criterion is preserved but a run will not honour it."));
             return;
         }
@@ -385,16 +402,16 @@ public static class WorkflowDocumentAnalyzer
         }
         catch (FormatException ex)
         {
-            diagnostics.Add(new(WorkflowDocumentDiagnosticSeverity.Error, "criterion-syntax", $"{pointer}/condition", ex.Message));
+            diagnostics.Add(new(WorkflowDocumentDiagnosticSeverity.Error, "criterion-syntax", pointers.Materialize("condition"), ex.Message));
         }
         catch (ArgumentException ex)
         {
-            diagnostics.Add(new(WorkflowDocumentDiagnosticSeverity.Error, "criterion-syntax", pointer, ex.Message));
+            diagnostics.Add(new(WorkflowDocumentDiagnosticSeverity.Error, "criterion-syntax", pointers.Materialize(), ex.Message));
         }
     }
 
     // ── runtime expressions ───────────────────────────────────────────────────────────────────────
-    private static void CheckExpression(string value, string pointer, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckExpression(string value, PointerBuilder pointers, string segment, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         // ArazzoExpression.Parse never throws: anything malformed comes back as Literal. A value that
         // BEGINS with '$' is an expression by intent, so a Literal parse means it is malformed.
@@ -403,38 +420,40 @@ public static class WorkflowDocumentAnalyzer
             diagnostics.Add(new(
                 WorkflowDocumentDiagnosticSeverity.Error,
                 "expression-syntax",
-                pointer,
+                pointers.Materialize(segment),
                 $"'{value}' is not a valid runtime expression."));
         }
     }
 
-    private static void CheckOutputs(in JsonElement owner, string outputsPointer, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckOutputs(in JsonElement owner, PointerBuilder pointers, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!owner.TryGetProperty("outputs"u8, out JsonElement outputs) || outputs.ValueKind != JsonValueKind.Object)
         {
             return;
         }
 
+        using PointerScope outputsScope = pointers.Push("outputs");
         foreach (JsonProperty<JsonElement> output in outputs.EnumerateObject())
         {
             if (output.Value.ValueKind == JsonValueKind.String && output.Value.GetString() is { Length: > 0 } value)
             {
-                CheckExpression(value, $"{outputsPointer}/{EscapePointerSegment(output.Name)}", diagnostics);
+                CheckExpression(value, pointers, output.Name, diagnostics);
             }
         }
     }
 
-    private static void CheckParameters(in JsonElement step, string listPointer, in JsonElement components, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckParameters(in JsonElement step, PointerBuilder pointers, in JsonElement components, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!step.TryGetProperty("parameters"u8, out JsonElement parameters) || parameters.ValueKind != JsonValueKind.Array)
         {
             return;
         }
 
+        using PointerScope listScope = pointers.Push("parameters");
         int i = 0;
         foreach (JsonElement parameter in parameters.EnumerateArray())
         {
-            string parameterPointer = $"{listPointer}/{i}";
+            using PointerScope indexScope = pointers.Push(i);
             i++;
             if (parameter.ValueKind != JsonValueKind.Object)
             {
@@ -448,7 +467,7 @@ public static class WorkflowDocumentAnalyzer
                     diagnostics.Add(new(
                         WorkflowDocumentDiagnosticSeverity.Error,
                         "component-reference",
-                        $"{parameterPointer}/reference",
+                        pointers.Materialize("reference"),
                         $"Could not resolve reusable reference '{reference}' against the document's components."));
                 }
 
@@ -457,34 +476,37 @@ public static class WorkflowDocumentAnalyzer
 
             if (ReadString(parameter, "value"u8) is { Length: > 0 } value)
             {
-                CheckExpression(value, $"{parameterPointer}/value", diagnostics);
+                CheckExpression(value, pointers, "value", diagnostics);
             }
         }
     }
 
-    private static void CheckRequestBody(in JsonElement step, string stepPointer, List<WorkflowDocumentDiagnostic> diagnostics)
+    private static void CheckRequestBody(in JsonElement step, PointerBuilder pointers, List<WorkflowDocumentDiagnostic> diagnostics)
     {
         if (!step.TryGetProperty("requestBody"u8, out JsonElement requestBody) || requestBody.ValueKind != JsonValueKind.Object)
         {
             return;
         }
 
+        using PointerScope bodyScope = pointers.Push("requestBody");
         if (requestBody.TryGetProperty("payload"u8, out JsonElement payload)
             && payload.ValueKind == JsonValueKind.String
             && payload.GetString() is { Length: > 0 } payloadValue)
         {
-            CheckExpression(payloadValue, $"{stepPointer}/requestBody/payload", diagnostics);
+            CheckExpression(payloadValue, pointers, "payload", diagnostics);
         }
 
         if (requestBody.TryGetProperty("replacements"u8, out JsonElement replacements) && replacements.ValueKind == JsonValueKind.Array)
         {
+            using PointerScope listScope = pointers.Push("replacements");
             int i = 0;
             foreach (JsonElement replacement in replacements.EnumerateArray())
             {
                 if (replacement.ValueKind == JsonValueKind.Object
                     && ReadString(replacement, "value"u8) is { Length: > 0 } value)
                 {
-                    CheckExpression(value, $"{stepPointer}/requestBody/replacements/{i}/value", diagnostics);
+                    using PointerScope indexScope = pointers.Push(i);
+                    CheckExpression(value, pointers, "value", diagnostics);
                 }
 
                 i++;
@@ -501,7 +523,7 @@ public static class WorkflowDocumentAnalyzer
     // reachability keeps this a warning with no false flags).
     private static void CheckReachability(
         in JsonElement steps,
-        string workflowPointer,
+        PointerBuilder pointers,
         List<string> stepIds,
         Dictionary<int, StepFlow> flows,
         List<WorkflowDocumentDiagnostic> diagnostics)
@@ -548,26 +570,19 @@ public static class WorkflowDocumentAnalyzer
             }
         }
 
+        using PointerScope stepsScope = pointers.Push("steps");
         for (int i = 0; i < count; i++)
         {
             if (!reachable.Contains(i))
             {
+                using PointerScope indexScope = pointers.Push(i);
                 diagnostics.Add(new(
                     WorkflowDocumentDiagnosticSeverity.Warning,
                     "reachability",
-                    $"{workflowPointer}/steps/{i}",
+                    pointers.Materialize(),
                     "No path reaches this step: no earlier step falls through or jumps to it (an unconditional success action diverts before it)."));
             }
         }
-    }
-
-    // The per-step reachability edges: resolved goto targets plus whether a catch-all success
-    // action blocks the sequential fall-through.
-    private sealed class StepFlow
-    {
-        public List<string> Targets { get; } = [];
-
-        public bool BlocksFallThrough { get; set; }
     }
 
     /// <summary>Resolves a reusable-object reference (<c>$components.&lt;kind&gt;.&lt;name&gt;</c>) against the components object.</summary>
@@ -579,15 +594,23 @@ public static class WorkflowDocumentAnalyzer
         }
 
         JsonElement node = components;
-        foreach (string segment in reference["$components.".Length..].Split('.'))
+        ReadOnlySpan<char> remaining = reference.AsSpan("$components.".Length);
+        while (true)
         {
+            int dot = remaining.IndexOf('.');
+            ReadOnlySpan<char> segment = dot < 0 ? remaining : remaining[..dot];
             if (node.ValueKind != JsonValueKind.Object || !node.TryGetProperty(segment, out node))
             {
                 return null;
             }
-        }
 
-        return node;
+            if (dot < 0)
+            {
+                return node;
+            }
+
+            remaining = remaining[(dot + 1)..];
+        }
     }
 
     private static string? ReadString(in JsonElement owner, ReadOnlySpan<byte> property)
@@ -595,9 +618,105 @@ public static class WorkflowDocumentAnalyzer
             ? value.GetString()
             : null;
 
-    // RFC 6901: '~' → '~0', '/' → '~1'.
-    private static string EscapePointerSegment(string segment)
-        => segment.Contains('~') || segment.Contains('/')
-            ? segment.Replace("~", "~0").Replace("/", "~1")
-            : segment;
+    // The per-step reachability edges: resolved goto targets plus whether a catch-all success
+    // action blocks the sequential fall-through.
+    private sealed class StepFlow
+    {
+        public List<string> Targets { get; } = [];
+
+        public bool BlocksFallThrough { get; set; }
+    }
+
+    // Pops a pushed pointer segment when its scope closes.
+    private readonly ref struct PointerScope(PointerBuilder owner, int mark)
+    {
+        public void Dispose() => owner.PopTo(mark);
+    }
+
+    // Accumulates the current JSON Pointer in one grow-once char buffer; a pointer STRING
+    // materializes only when a finding is emitted. Segments escape per RFC 6901 ('~'→'~0', '/'→'~1').
+    private sealed class PointerBuilder
+    {
+        private char[] buffer = new char[128];
+        private int length;
+
+        public PointerScope Push(string segment)
+        {
+            int mark = this.length;
+            this.AppendSegment(segment);
+            return new PointerScope(this, mark);
+        }
+
+        public PointerScope Push(int index)
+        {
+            int mark = this.length;
+            this.AppendIndex(index);
+            return new PointerScope(this, mark);
+        }
+
+        public void PopTo(int mark) => this.length = mark;
+
+        /// <summary>The current pointer as a string (a finding is being emitted).</summary>
+        public string Materialize() => new(this.buffer, 0, this.length);
+
+        /// <summary>The current pointer plus one trailing segment.</summary>
+        public string Materialize(string segment)
+        {
+            int mark = this.length;
+            this.AppendSegment(segment);
+            string result = this.Materialize();
+            this.length = mark;
+            return result;
+        }
+
+        /// <summary>The current pointer plus a segment and an index (e.g. <c>…/dependsOn/2</c>).</summary>
+        public string Materialize(string segment, int index)
+        {
+            int mark = this.length;
+            this.AppendSegment(segment);
+            this.AppendIndex(index);
+            string result = this.Materialize();
+            this.length = mark;
+            return result;
+        }
+
+        private void AppendSegment(string segment)
+        {
+            this.EnsureCapacity(1 + (segment.Length * 2));
+            this.buffer[this.length++] = '/';
+            foreach (char c in segment)
+            {
+                if (c == '~')
+                {
+                    this.buffer[this.length++] = '~';
+                    this.buffer[this.length++] = '0';
+                }
+                else if (c == '/')
+                {
+                    this.buffer[this.length++] = '~';
+                    this.buffer[this.length++] = '1';
+                }
+                else
+                {
+                    this.buffer[this.length++] = c;
+                }
+            }
+        }
+
+        private void AppendIndex(int index)
+        {
+            this.EnsureCapacity(12);
+            this.buffer[this.length++] = '/';
+            index.TryFormat(this.buffer.AsSpan(this.length), out int written);
+            this.length += written;
+        }
+
+        private void EnsureCapacity(int extra)
+        {
+            if (this.length + extra > this.buffer.Length)
+            {
+                Array.Resize(ref this.buffer, Math.Max(this.buffer.Length * 2, this.length + extra));
+            }
+        }
+    }
 }

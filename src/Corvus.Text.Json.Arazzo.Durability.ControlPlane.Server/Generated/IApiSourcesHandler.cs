@@ -21,6 +21,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IApiSourcesHandler
 {
     /// <summary>
+    /// Handles GET /sources/{name}/operations — List a registered source's operation surface
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListRegisteredSourceOperationsResult> HandleListRegisteredSourceOperationsAsync(ListRegisteredSourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /sources — List registered sources
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

@@ -158,6 +158,46 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] ValidateWorkspaceWorkflowOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySources</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourcesOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySources</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourcesOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>AttachWorkingCopySource</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] AttachWorkingCopySourceOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>AttachWorkingCopySource</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] AttachWorkingCopySourceOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DetachWorkingCopySource</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] DetachWorkingCopySourceOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DetachWorkingCopySource</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] DetachWorkingCopySourceOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySourceOperations</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourceOperationsOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySourceOperations</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourceOperationsOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["workspace:read", "workspace:write"];
@@ -229,4 +269,48 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="id">The id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ValidateWorkspaceWorkflowResponse> ValidateWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// List a working copy's attached sources
+    /// </summary>
+    /// <remarks>
+    /// Lists the working copy's attachments (no documents — the operations endpoint projects them). 404 when the working copy is absent or out of reach.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ListWorkingCopySourcesResponse> ListWorkingCopySourcesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Attach a source to a working copy
+    /// </summary>
+    /// <remarks>
+    /// Attaches (or replaces) the source for a sourceDescriptions name: a registry reference or an inline document — exactly one. The attachment is saved onto the working copy under optimistic concurrency; a concurrent save conflicts (409) and the client retries against the fresh state. A registry reference must name a source in the caller's reach (404 otherwise).
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<AttachWorkingCopySourceResponse> AttachWorkingCopySourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AttachSourceRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Detach a source from a working copy
+    /// </summary>
+    /// <remarks>
+    /// Removes the attachment for a sourceDescriptions name. 404 when the working copy or the attachment is absent.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<DetachWorkingCopySourceResponse> DetachWorkingCopySourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// List an attached source's operation surface
+    /// </summary>
+    /// <remarks>
+    /// Projects the attached source's operation surface (raw-JSON-Schema request/parameter/response shapes) for the operation browser and the step inspector's templates. A registry attachment resolves the registered source at read time (reach-checked). 404 when the working copy, the attachment, or the referenced registered source is absent.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ListWorkingCopySourceOperationsResponse> ListWorkingCopySourceOperationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

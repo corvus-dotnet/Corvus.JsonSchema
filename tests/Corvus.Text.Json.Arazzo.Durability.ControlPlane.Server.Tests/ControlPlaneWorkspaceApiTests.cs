@@ -323,6 +323,123 @@ public sealed class ControlPlaneWorkspaceApiTests
         (await host.SendAsync(HttpMethod.Post, "/workspace/workflows/nope/validate", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    private const string PetstoreDoc =
+        """{"openapi":"3.1.0","info":{"title":"Petstore","version":"1.0"},"paths":{"/pets":{"get":{"operationId":"listPets","summary":"List pets","responses":{"200":{"description":"ok","content":{"application/json":{"schema":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"}}}}}}},"default":{"description":"unexpected"}}}}}}""";
+
+    [TestMethod]
+    public async Task An_inline_source_attaches_lists_without_its_document_and_projects_operations()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (string id, string etag) = await CreateAsync(host);
+
+        HttpResponseMessage attached = await host.SendJsonAsync(
+            HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write);
+        attached.StatusCode.ShouldBe(HttpStatusCode.OK);
+        string freshEtag;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(attached))
+        {
+            doc.RootElement.GetProperty("name").GetString().ShouldBe("pets");
+            doc.RootElement.GetProperty("kind").GetString().ShouldBe("inline");
+            doc.RootElement.GetProperty("type").GetString().ShouldBe("openapi"); // detected from the document
+            doc.RootElement.TryGetProperty("document", out _).ShouldBeFalse();   // never echoed
+            freshEtag = doc.RootElement.GetProperty("etag").GetString()!;        // the attach bumped the working copy
+            freshEtag.ShouldNotBe(etag);
+        }
+
+        // The list omits documents; the working copy still saves with the FRESH etag.
+        using (Stj.JsonDocument list = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources", Read)))
+        {
+            Stj.JsonElement entry = list.RootElement.GetProperty("sources").EnumerateArray().Single();
+            entry.GetProperty("name").GetString().ShouldBe("pets");
+            entry.TryGetProperty("document", out _).ShouldBeFalse();
+        }
+
+        (await host.SendJsonAsync(
+            HttpMethod.Put, $"/workspace/workflows/{id}",
+            $$"""{"document":{"arazzo":"1.1.0","x-rev":2},"expectedEtag":"{{freshEtag}}"}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The attachments survived the save; the operation surface projects raw schemas.
+        using Stj.JsonDocument surface = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources/pets/operations", Read));
+        Stj.JsonElement op = surface.RootElement.GetProperty("operations").EnumerateArray().Single();
+        op.GetProperty("kind").GetString().ShouldBe("openapi");
+        op.GetProperty("operationId").GetString().ShouldBe("listPets");
+        op.GetProperty("method").GetString().ShouldBe("GET");
+        Stj.JsonElement responses = op.GetProperty("responses");
+        responses.TryGetProperty("200", out Stj.JsonElement ok).ShouldBeTrue();
+        ok.GetProperty("schema").GetProperty("items").GetProperty("properties").TryGetProperty("name", out _).ShouldBeTrue();
+        responses.TryGetProperty("default", out _).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task A_registry_attachment_resolves_the_registered_source_at_read_time()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (string id, _) = await CreateAsync(host);
+        (await host.SendJsonAsync(
+            HttpMethod.Post, "/sources",
+            $$"""{"name":"petstore","type":"openapi","document":{{PetstoreDoc}}}""",
+            "sources:write")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(
+            HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", """{"sourceName":"petstore"}""", Write)))
+        {
+            doc.RootElement.GetProperty("kind").GetString().ShouldBe("registry");
+            doc.RootElement.GetProperty("sourceName").GetString().ShouldBe("petstore");
+            doc.RootElement.GetProperty("type").GetString().ShouldBe("openapi"); // echoed from the registry
+        }
+
+        using (Stj.JsonDocument surface = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources/pets/operations", Read)))
+        {
+            surface.RootElement.GetProperty("operations").EnumerateArray().Single().GetProperty("operationId").GetString().ShouldBe("listPets");
+        }
+
+        // The reference re-resolves on every read: deleting the registered source breaks it honestly.
+        (await host.SendAsync(HttpMethod.Delete, "/sources/petstore", "sources:write")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources/pets/operations", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task Attach_validation_rejects_ambiguity_and_unknown_references_and_detach_removes()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (string id, _) = await CreateAsync(host);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", "{}", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"sourceName":"x","document":{{PetstoreDoc}}}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", """{"sourceName":"nope"}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", """{"document":{"random":true}}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest); // undetectable type, none supplied
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, $"/workspace/workflows/{id}/sources/nope", Write)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.SendAsync(HttpMethod.Delete, $"/workspace/workflows/{id}/sources/pets", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        using Stj.JsonDocument list = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources", Read));
+        list.RootElement.GetProperty("sources").GetArrayLength().ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task The_registry_side_operation_surface_projects_without_a_working_copy()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (await host.SendJsonAsync(
+            HttpMethod.Post, "/sources",
+            $$"""{"name":"petstore","type":"openapi","document":{{PetstoreDoc}}}""",
+            "sources:write")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        using (Stj.JsonDocument surface = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/sources/petstore/operations", "sources:read")))
+        {
+            surface.RootElement.GetProperty("operations").EnumerateArray().Single().GetProperty("operationId").GetString().ShouldBe("listPets");
+        }
+
+        (await host.SendAsync(HttpMethod.Get, "/sources/nope/operations", "sources:read")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
     [TestMethod]
     public async Task The_scopes_are_enforced()
     {
