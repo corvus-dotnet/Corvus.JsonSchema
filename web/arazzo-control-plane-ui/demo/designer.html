@@ -12,7 +12,13 @@
     header h1 { font-size: 15px; margin: 0 12px 0 0; }
     header .spacer { flex: 1; }
     main { display: grid; grid-template-columns: 1fr 360px; gap: 12px; padding: 12px 14px; height: calc(100vh - 100px); box-sizing: border-box; }
-    arazzo-design-surface { height: 100%; }
+    #center { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 8px; }
+    .tabs { display: flex; gap: 4px; }
+    .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 4px 14px; font-size: 12px; opacity: 0.7; }
+    .tabs button.active { opacity: 1; border-color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
+    arazzo-design-surface, arazzo-text-editor { flex: 1; min-height: 0; }
+    /* Custom elements set :host{display:block}, which beats the UA [hidden] rule. */
+    #center > [hidden] { display: none !important; }
     aside { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
     aside section { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
     #inspector, #inspector > * { min-width: 0; }
@@ -27,6 +33,8 @@
   <header>
     <h1>Design-surface spike</h1>
     <select id="workflow"></select>
+    <button id="undo" title="Undo (this actor's last edit)" disabled>↩ Undo</button>
+    <button id="redo" title="Redo" disabled>↪ Redo</button>
     <button id="fit">Fit</button>
     <button id="relayout">Auto-layout</button>
     <button id="simulate">▶ Simulate (canned trace)</button>
@@ -37,7 +45,14 @@
     <button id="theme">Toggle theme</button>
   </header>
   <main>
-    <arazzo-design-surface id="surface"></arazzo-design-surface>
+    <div id="center">
+      <div class="tabs">
+        <button id="tab-design" class="active">Design</button>
+        <button id="tab-text">Text</button>
+      </div>
+      <arazzo-design-surface id="surface"></arazzo-design-surface>
+      <arazzo-text-editor id="text" hidden></arazzo-text-editor>
+    </div>
     <aside>
       <section>
         <h2>Selection</h2>
@@ -64,20 +79,28 @@
     import { designerFixture } from './designer-fixture.js';
     import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
     import { EXPRESSION_ROOTS } from '../src/expression-language.js';
+    import { WorkflowDocumentModel } from '../src/workflow-document-model.js';
     import '../src/components/design-surface.js';
     import '../src/components/expression-input.js';
     import '../src/components/criteria-editor.js';
     import '../src/components/action-editor.js';
     import '../src/components/step-inspector.js';
     import '../src/components/workflow-inspector.js';
+    import '../src/components/text-editor.js';
 
     const surface = document.getElementById('surface');
+    const textEditor = document.getElementById('text');
     const select = document.getElementById('workflow');
     const selectionPre = document.getElementById('selection');
     const log = document.getElementById('log');
+    const undoBtn = document.getElementById('undo');
+    const redoBtn = document.getElementById('redo');
 
-    // The demo owns a mutable copy of the fixture so edge-created can round-trip into the document.
-    const doc = structuredClone(designerFixture);
+    // ONE document model behind every editor (design §5.2): the canvas, the inspectors, and the
+    // text tab all mutate through it and re-render from it. `doc` stays a stable reference for
+    // reads — the model mutates in place via identity-addressed ops.
+    const model = new WorkflowDocumentModel(designerFixture, { actor: 'you' });
+    const doc = model.document;
 
     // What listSourceOperations will provide in the full designer: per-operation documented
     // responses and request/message schemas, powering the template affordances.
@@ -139,11 +162,50 @@
       h.textContent = text;
       return h;
     };
-    function reproject(keepSelection) {
+    // The single render seam: every model change (canvas, inspector, text, undo/redo, remote)
+    // re-projects the canvas with positions preserved; the text tab refreshes unless it made the
+    // edit; the inspector rebuilds only for edits it did NOT make (focus survives typing).
+    model.addEventListener('document-changed', (e) => {
       surface.layoutOverrides = surface.positions;
       project();
-      if (keepSelection) surface.selection = keepSelection;
+      if (e.detail.origin !== 'text' && !textEditor.hidden) {
+        textEditor.value = model.text;
+        textEditor.setProblem(null);
+      }
+      if (e.detail.origin !== 'inspector' && e.detail.origin !== 'canvas') {
+        showSelection(surface.selection);
+      }
+      undoBtn.disabled = !model.canUndo;
+      redoBtn.disabled = !model.canRedo;
+      logEvent('ops', { origin: e.detail.origin, label: e.detail.label, count: e.detail.ops.length });
+    });
+    undoBtn.addEventListener('click', () => model.undo());
+    redoBtn.addEventListener('click', () => model.redo());
+
+    // Design ↔ Text tabs over the same model.
+    const tabDesign = document.getElementById('tab-design');
+    const tabText = document.getElementById('tab-text');
+    function showTab(which) {
+      tabDesign.classList.toggle('active', which === 'design');
+      tabText.classList.toggle('active', which === 'text');
+      surface.hidden = which !== 'design';
+      textEditor.hidden = which !== 'text';
+      if (which === 'text') {
+        textEditor.value = model.text;
+        textEditor.setProblem(null);
+        const sel = surface.selection;
+        if (sel?.type === 'node' && !sel.id.startsWith('#')) textEditor.revealStep(sel.id);
+      } else {
+        surface.fit();
+      }
     }
+    tabDesign.addEventListener('click', () => showTab('design'));
+    tabText.addEventListener('click', () => showTab('text'));
+    textEditor.addEventListener('text-changed', (e) => {
+      const result = model.applyText(e.detail.text);
+      textEditor.setProblem(result.ok ? null : result.error);
+    });
+
     surface.addEventListener('selection-changed', (e) => showSelection(e.detail.selection));
     function showSelection(sel) {
       inspector.replaceChildren();
@@ -165,8 +227,8 @@
         if (workflowSection) ed.setAttribute('focus-section', workflowSection);
         inspector.append(heading(`workflow — ${wf.workflowId}`), ed);
         ed.addEventListener('workflow-changed', (ev) => {
-          doc.workflows[wi] = ev.detail.workflow;
-          reproject(sel);
+          model.update((d) => { d.workflows[wi] = ev.detail.workflow; },
+            { origin: 'inspector', label: `edit workflow ${wf.workflowId}`, coalesce: true });
         });
         return;
       }
@@ -187,8 +249,10 @@
         ed.value = step;
         inspector.append(heading(`step — ${sel.id}`), ed);
         ed.addEventListener('step-changed', (ev) => {
-          wf.steps[si] = ev.detail.step;
-          reproject(sel);
+          model.update((d) => {
+            const w = d.workflows.find((x) => x.workflowId === wf.workflowId);
+            w.steps[si] = ev.detail.step;
+          }, { origin: 'inspector', label: `edit step ${sel.id}`, coalesce: true });
         });
         return;
       }
@@ -213,8 +277,10 @@
         ed.value = step[list][idx];
         inspector.append(heading(`${edge.from} · ${list}[${idx}]`), ed);
         ed.addEventListener('action-changed', (ev) => {
-          step[list][idx] = ev.detail.action;
-          reproject(null);
+          model.update((d) => {
+            const w = d.workflows.find((x) => x.workflowId === wf.workflowId);
+            w.steps.find((s) => s.stepId === edge.from)[list][idx] = ev.detail.action;
+          }, { origin: 'inspector', label: `edit action on ${edge.from}`, coalesce: true });
           const renamed = surface.graph.edges.find((x) =>
             x.from === edge.from && x.kind === edge.kind && x.actionName === ev.detail.action.name);
           if (renamed) surface.selection = { type: 'edge', id: renamed.id };
@@ -249,9 +315,11 @@
       const action = to === '#end'
         ? { name, type: 'end' }
         : { name, type: 'goto', stepId: to };
-      step[list] = [...actions, action];
-      surface.layoutOverrides = surface.positions; // keep the canvas stable across the re-projection
-      project();
+      model.update((d) => {
+        const w = d.workflows.find((x) => x.workflowId === select.value);
+        const s = w.steps.find((x) => x.stepId === from);
+        s[list] = [...(s[list] || []), action];
+      }, { origin: 'canvas', label: `draw ${kind} edge from ${from}` });
       const created = surface.graph.edges.find((x) => x.from === from && x.actionName === name);
       if (created) surface.selection = { type: 'edge', id: created.id };
     });
