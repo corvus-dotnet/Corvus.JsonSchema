@@ -827,6 +827,91 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listWorkingCopies` — one page of designer working copies (workflow-designer design §4.1; the list omits each
+   * working copy's `document` and `designerState`, returned only on a single read). Ordered by id. Page with `limit`
+   * and the opaque `pageToken`.
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ workingCopies: object[], nextPageToken: (string|null) }>} A {@link WorkingCopyList}.
+   */
+  async listWorkingCopies(query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/workspace/workflows${qs(search)}`, { signal: query.signal });
+    return { workingCopies: result.workingCopies ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listWorkingCopies`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ workingCopies: object[], nextPageToken: (string|null) }>}
+   */
+  async *listWorkingCopiesPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listWorkingCopies({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `getWorkingCopy` — a single working copy WITH its Arazzo `document` and `designerState`.
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} A {@link WorkingCopy}. Throws {@link ProblemError} `404` if absent or out of reach.
+   */
+  getWorkingCopy(id, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `createWorkingCopy` — open a new working copy: from a supplied Arazzo `document`, from a published catalog version
+   * (`fromBaseWorkflowId` + `fromVersionNumber` — the carry-over), or blank (a minimal skeleton). The name defaults to
+   * the document's first `workflowId`, or `'untitled'`. Saving never mints a catalog version; publish does.
+   * @param {{ name?: string, document?: object, fromBaseWorkflowId?: string, fromVersionNumber?: number, designerState?: object, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} [workingCopy]
+   * @returns {Promise<object>} The created {@link WorkingCopy} (its server-minted `id` and `etag` included).
+   */
+  createWorkingCopy(workingCopy = {}) {
+    const body = {};
+    if (workingCopy.name) body.name = workingCopy.name;
+    if (workingCopy.document != null) body.document = workingCopy.document;
+    if (workingCopy.fromBaseWorkflowId) body.fromBaseWorkflowId = workingCopy.fromBaseWorkflowId;
+    if (workingCopy.fromVersionNumber != null) body.fromVersionNumber = workingCopy.fromVersionNumber;
+    if (workingCopy.designerState != null) body.designerState = workingCopy.designerState;
+    if (workingCopy.managementTags) body.managementTags = workingCopy.managementTags;
+    return this._request('POST', '/workspace/workflows', { body, signal: workingCopy.signal });
+  }
+
+  /**
+   * `saveWorkingCopy` — replace the working copy's `document` (and optionally its `name`/`designerState`), presenting
+   * the `expectedEtag` the client read. A stale save throws {@link ProblemError} `409` rather than clobbering a
+   * collaborator's work — re-fetch and reconcile. Provenance, tags, and created-* audit fields are immutable.
+   * @param {string} id
+   * @param {{ document: object, expectedEtag: string, name?: string, designerState?: object, signal?: AbortSignal }} save
+   * @returns {Promise<object>} The saved {@link WorkingCopy} (its new `etag` included).
+   */
+  saveWorkingCopy(id, save) {
+    if (!save || save.document == null || !save.expectedEtag) {
+      throw new TypeError('saveWorkingCopy requires the document and the expectedEtag it read.');
+    }
+    const body = { document: save.document, expectedEtag: save.expectedEtag };
+    if (save.name !== undefined) body.name = save.name;
+    if (save.designerState !== undefined) body.designerState = save.designerState;
+    return this._request('PUT', `/workspace/workflows/${encodeURIComponent(id)}`, { body, signal: save.signal });
+  }
+
+  /**
+   * `deleteWorkingCopy` — delete a working copy (development state; the catalog is the durable record).
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `404` if absent or out of reach.
+   */
+  async deleteWorkingCopy(id, opts = {}) {
+    await this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}`, { signal: opts.signal });
+  }
+
+  /**
    * `getCredential` — one binding by its `(sourceName, environment)` key.
    * @param {string} sourceName
    * @param {string} environment
