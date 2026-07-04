@@ -128,6 +128,9 @@ export const designerFixture = {
           stepId: 'run-order',
           description: 'The whole place-order workflow as one step.',
           workflowId: 'place-order',
+          onSuccess: [
+            { name: 'ordered', type: 'end' },
+          ],
           onFailure: [
             { name: 'compensate', type: 'goto', stepId: 'refund-payment' },
           ],
