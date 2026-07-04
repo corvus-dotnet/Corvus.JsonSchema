@@ -48,7 +48,7 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
   future-phase section: *publish* is reserved for minting a catalog version from a working copy;
   the endpoint-serving service is the *hosting service*.
 
-- [ ] **6. Qualify bare "tags"** (decision F). Always **user tags** (free-form metadata) /
+- [x] **6. Qualify bare "tags"** (decision F). Always **user tags** (free-form metadata) /
   **security tags** (versions, runs) / **management tags** (environments, sources, credentials);
   **reach labels** is the umbrella. Fix the ambiguous spots in `execution-host-design.md` §14.2,
   `ui-design.md`, `ux-review.md` — prioritize any sentence where a reader could mistake which kind

@@ -394,7 +394,7 @@ runner is pruned server-side), uptime, advertised `maxConcurrency`, transports, 
 The workflow catalog browse/govern surface — one row per workflow with a version switcher.
 
 #### `<arazzo-catalog-table>`
-Searches catalogued versions (free-text `q` · base id · status · owner · tags). Shows **one row per base
+Searches catalogued versions (free-text `q` · base id · status · owner · user tags). Shows **one row per base
 workflow** — its versions collapse together, the latest is the representative; the detail view switches versions.
 
 | | |
@@ -403,13 +403,13 @@ workflow** — its versions collapse together, the latest is the representative;
 | **Properties** | `.client`, `.filters = { q, baseWorkflowId, status, owner, tags }` |
 | **Events** | `version-selected {detail:{version, baseWorkflowId, versions}}`, `loaded {detail:{count, hasMore}}`, `error {detail:{problem}}` |
 
-Columns: Workflow (title + `baseWorkflowId`) · latest version · status · owner · updated · tags. Because a base
+Columns: Workflow (title + `baseWorkflowId`) · latest version · status · owner · updated · user tags. Because a base
 workflow has many immutable versions, the table fetches every matching version (walking the server's keyset
 pages) and groups them **client-side**; paging the table is over the resulting groups.
 
 #### `<arazzo-catalog-detail>`
 One workflow's versions and documents, plus governance actions — the **per-workflow governance hub**. A version
-switcher selects a version; renders its metadata (`owner`, tags, status), and offers the document downloads
+switcher selects a version; renders its metadata (`owner`, user tags, status), and offers the document downloads
 (`package`/`workflow`/`sources`/`schemas`) and a typed-value **validate** (via `<arazzo-value-editor>` against
 the baked schemas). Guarded actions: **update** governance metadata + **obsolete** (`catalog:write`),
 **delete** a version (`catalog:purge`, confirmed). Embeds the authz-gated **Security — administrators** section
@@ -419,7 +419,7 @@ action (opens `<arazzo-access-request-dialog>` locked to this workflow, §16.5).
 
 #### `<arazzo-catalog-add-dialog>`
 Upload a pre-built package **or build one in-browser** from a workflow document + its source files
-(`./workflow-package`), set `owner`/tags, and submit — the catalog assigns the version number server-side.
+(`./workflow-package`), set `owner`/user tags, and submit — the catalog assigns the version number server-side.
 `catalog:write`. Emits `version-added`.
 
 ### Credentials & administration (`/credentials`, `/administrators`)
