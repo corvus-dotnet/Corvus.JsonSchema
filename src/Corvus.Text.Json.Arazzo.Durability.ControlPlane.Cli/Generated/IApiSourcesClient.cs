@@ -98,6 +98,16 @@ public interface IApiSourcesClient : IAsyncDisposable
     public static class SecurityRequirements
     {
         /// <summary>
+        /// Gets the scopes required by <c>ListRegisteredSourceOperations</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRegisteredSourceOperationsOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListRegisteredSourceOperations</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRegisteredSourceOperationsOpenIdConnectScopes = ["sources:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ListSources</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ListSourcesOauth2Scopes = ["sources:read"];
@@ -157,6 +167,16 @@ public interface IApiSourcesClient : IAsyncDisposable
         /// </summary>
         public static readonly string[] AllOpenIdConnectScopes = ["sources:read", "sources:write"];
     }
+
+    /// <summary>
+    /// List a registered source's operation surface
+    /// </summary>
+    /// <remarks>
+    /// Projects the registered source's operation surface (raw-JSON-Schema request/parameter/response shapes) — browse a source before attaching it. 404 when the source is absent or out of reach.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ListRegisteredSourceOperationsResponse> ListRegisteredSourceOperationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List registered sources

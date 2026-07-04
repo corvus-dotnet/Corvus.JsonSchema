@@ -38,7 +38,7 @@ public interface IWorkspaceWorkflowStore
     /// (the document included).</summary>
     /// <param name="draft">The draft working copy (name + document + optional provenance/designer state + resolved
     /// management tags) — typically built by
-    /// <see cref="WorkspaceWorkflow.Draft(in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in SecurityTagSet)"/>
+    /// <see cref="WorkspaceWorkflow.Draft(in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in SecurityTagSet)"/>
     /// or from a request body; read synchronously, so a pooled draft may be disposed once the call returns.</param>
     /// <param name="actor">The authenticated identity creating the working copy (for audit).</param>
     /// <param name="cancellationToken">A cancellation token.</param>

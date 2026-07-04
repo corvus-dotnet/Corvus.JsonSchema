@@ -5,6 +5,7 @@
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -233,6 +234,23 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         return deleted
             ? DeleteSourceResult.NoContent()
             : DeleteSourceResult.NotFound(NotFoundProblem(name), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ListRegisteredSourceOperationsResult> HandleListRegisteredSourceOperationsAsync(ListRegisteredSourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string name = (string)parameters.Name;
+        using ParsedJsonDocument<RegisteredSource>? source = await this.store.GetAsync(name, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (source is not { } s)
+        {
+            return ListRegisteredSourceOperationsResult.NotFound(NotFoundProblem(name), workspace);
+        }
+
+        // The projection writes straight through into the pooled response body (schemas $ref-inlined in
+        // place) while the source is alive; the pooled source may then dispose.
+        ParsedJsonDocument<Models.OperationSurface> body = WorkspaceSourceJson.OperationSurfaceResponse((JsonElement)s.RootElement.Document);
+        workspace.TakeOwnership(body);
+        return ListRegisteredSourceOperationsResult.Ok(body.RootElement, workspace);
     }
 
     // ── source-summary list projection (field-select, closure-free Build<TContext>; the document is dropped) ──────────

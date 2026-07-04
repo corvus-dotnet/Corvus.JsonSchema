@@ -926,6 +926,72 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listWorkingCopySources` — the working copy's attachments (no documents; the operations
+   * endpoint projects them).
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ sources: object[] }>}
+   */
+  listWorkingCopySources(id, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/sources`, { signal: opts.signal });
+  }
+
+  /**
+   * `attachWorkingCopySource` — attach (or replace) the source for a `sourceDescriptions` name:
+   * EXACTLY ONE of `sourceName` (a registry reference, resolved reach-checked at read time) or
+   * `document` (an inline upload, stored on the working copy). The response carries the working
+   * copy's NEW `etag` — the attach bumped it; present the fresh token on the next save.
+   * @param {string} id
+   * @param {string} name The sourceDescriptions name.
+   * @param {{ sourceName?: string, document?: object, type?: string, signal?: AbortSignal }} attachment
+   * @returns {Promise<object>} The {@link AttachedSource} (with the fresh working-copy `etag`).
+   */
+  attachWorkingCopySource(id, name, attachment) {
+    if (!attachment || (attachment.sourceName ? attachment.document != null : attachment.document == null)) {
+      throw new TypeError('attachWorkingCopySource requires exactly one of sourceName or document.');
+    }
+    const body = {};
+    if (attachment.sourceName) body.sourceName = attachment.sourceName;
+    if (attachment.document != null) body.document = attachment.document;
+    if (attachment.type) body.type = attachment.type;
+    return this._request('PUT', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}`, { body, signal: attachment.signal });
+  }
+
+  /**
+   * `detachWorkingCopySource` — remove an attachment. The working copy's etag advances; re-fetch
+   * (or save-and-reconcile) before the next etag-guarded save.
+   * @param {string} id
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>}
+   */
+  async detachWorkingCopySource(id, name, opts = {}) {
+    await this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `listWorkingCopySourceOperations` — the attached source's operation surface: raw-JSON-Schema
+   * request/parameter/response shapes for the operation browser and the step inspector's templates.
+   * @param {string} id
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ operations: object[] }>}
+   */
+  listWorkingCopySourceOperations(id, name, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}/operations`, { signal: opts.signal });
+  }
+
+  /**
+   * `listRegisteredSourceOperations` — a registered source's operation surface (browse before attaching).
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ operations: object[] }>}
+   */
+  listRegisteredSourceOperations(name, opts = {}) {
+    return this._request('GET', `/sources/${encodeURIComponent(name)}/operations`, { signal: opts.signal });
+  }
+
+  /**
    * `getCredential` — one binding by its `(sourceName, environment)` key.
    * @param {string} sourceName
    * @param {string} environment

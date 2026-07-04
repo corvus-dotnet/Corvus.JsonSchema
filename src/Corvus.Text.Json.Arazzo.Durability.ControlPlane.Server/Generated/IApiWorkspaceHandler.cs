@@ -73,4 +73,40 @@ public interface IApiWorkspaceHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<ValidateWorkspaceWorkflowResult> HandleValidateWorkspaceWorkflowAsync(ValidateWorkspaceWorkflowParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /workspace/workflows/{id}/sources — List a working copy's attached sources
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListWorkingCopySourcesResult> HandleListWorkingCopySourcesAsync(ListWorkingCopySourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles PUT /workspace/workflows/{id}/sources/{name} — Attach a source to a working copy
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<AttachWorkingCopySourceResult> HandleAttachWorkingCopySourceAsync(AttachWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles DELETE /workspace/workflows/{id}/sources/{name} — Detach a source from a working copy
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<DetachWorkingCopySourceResult> HandleDetachWorkingCopySourceAsync(DetachWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /workspace/workflows/{id}/sources/{name}/operations — List an attached source's operation surface
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListWorkingCopySourceOperationsResult> HandleListWorkingCopySourceOperationsAsync(ListWorkingCopySourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

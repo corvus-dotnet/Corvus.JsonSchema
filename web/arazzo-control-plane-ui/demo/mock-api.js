@@ -2016,9 +2016,16 @@ export function createMockControlPlane(options = {}) {
   // catalog's per-version embedded source (/catalog/.../sources/{n}) is a different endpoint, handled earlier.
 
   function handleSources(fullPath, method, params, body) {
+    const ops = fullPath.match(/\/sources\/([^/]+)\/operations\/?$/);
+    if (ops && !fullPath.includes('/catalog/') && !fullPath.includes('/workspace/')) {
+      const s = sourceRegistry.find((x) => x.name === decodeURIComponent(ops[1]));
+      if (!s) return problem(404, 'Source not found', `No source named '${ops[1]}'.`);
+      return json({ operations: projectOperationSurface(s.document) });
+    }
+
     const m = fullPath.match(/\/sources(?:\/([^/]+))?\/?$/);
     if (!m) return null;
-    if (fullPath.includes('/catalog/')) return null; // a version's embedded source, not the registry
+    if (fullPath.includes('/catalog/') || fullPath.includes('/workspace/')) return null; // a version's embedded source or a working-copy attachment, not the registry
     const name = m[1] ? decodeURIComponent(m[1]) : null;
     if (!name) {
       if (method === 'GET') return listSourcesPage(params);
@@ -2027,6 +2034,12 @@ export function createMockControlPlane(options = {}) {
     }
     if (method === 'GET') return getRegisteredSource(name);
     if (method === 'PUT') return updateSource(name, body);
+    if (method === 'DELETE') {
+      const at = sourceRegistry.findIndex((x) => x.name === name);
+      if (at < 0) return problem(404, 'Source not found', `No source named '${name}'.`);
+      sourceRegistry.splice(at, 1);
+      return new Response(null, { status: 204 });
+    }
     return problem(405, 'Method not allowed');
   }
 
@@ -2093,6 +2106,40 @@ export function createMockControlPlane(options = {}) {
   let workingCopySeq = 0;
 
   function handleWorkspace(fullPath, method, params, body) {
+    const srcOps = fullPath.match(/\/workspace\/workflows\/([^/]+)\/sources\/([^/]+)\/operations\/?$/);
+    if (srcOps) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcOps[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const entry = (wc.sources ?? []).find((x) => x.name === decodeURIComponent(srcOps[2]));
+      if (!entry) return problem(404, 'Attachment not found');
+      const doc = entry.document ?? sourceRegistry.find((x) => x.name === entry.sourceName)?.document;
+      if (!doc) return problem(404, 'Source not found', 'The referenced registered source no longer exists.');
+      return json({ operations: projectOperationSurface(doc) });
+    }
+
+    const srcOne = fullPath.match(/\/workspace\/workflows\/([^/]+)\/sources\/([^/]+)\/?$/);
+    if (srcOne) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcOne[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const name = decodeURIComponent(srcOne[2]);
+      if (method === 'PUT') return attachWorkingCopySource(wc, name, body);
+      if (method === 'DELETE') {
+        const at = (wc.sources ?? []).findIndex((x) => x.name === name);
+        if (at < 0) return problem(404, 'Attachment not found');
+        wc.sources.splice(at, 1);
+        wc.etag = nextEtag();
+        return new Response(null, { status: 204 });
+      }
+      return problem(405, 'Method not allowed');
+    }
+
+    const srcList = fullPath.match(/\/workspace\/workflows\/([^/]+)\/sources\/?$/);
+    if (srcList) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcList[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      return json({ sources: (wc.sources ?? []).map(({ document, ...rest }) => structuredClone(rest)) });
+    }
+
     const validate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/validate\/?$/);
     if (validate) {
       if (method !== 'POST') return problem(405, 'Method not allowed');
@@ -2212,6 +2259,115 @@ export function createMockControlPlane(options = {}) {
     }
 
     return { valid: diagnostics.every((d) => d.severity !== 'error'), diagnostics };
+  }
+
+  function attachWorkingCopySource(wc, name, body) {
+    const isRegistry = !!body?.sourceName;
+    const isInline = body?.document != null;
+    if (isRegistry === isInline) return problem(400, 'Invalid attachment', 'Supply EXACTLY ONE of sourceName or document.');
+    let type = body.type;
+    if (isInline && !type) {
+      type = body.document.openapi ? 'openapi' : body.document.asyncapi ? 'asyncapi' : body.document.arazzo ? 'arazzo' : null;
+      if (!type) return problem(400, 'Invalid attachment', 'The inline document declares neither openapi, asyncapi, nor arazzo; supply an explicit type.');
+    }
+    if (isRegistry) {
+      const registered = sourceRegistry.find((x) => x.name === body.sourceName);
+      if (!registered) return problem(404, 'Source not found', `No registered source named '${body.sourceName}'.`);
+      type = type || registered.type;
+    }
+    wc.sources = (wc.sources ?? []).filter((x) => x.name !== name);
+    const entry = {
+      name, kind: isRegistry ? 'registry' : 'inline',
+      ...(isRegistry ? { sourceName: body.sourceName } : { document: structuredClone(body.document) }),
+      ...(type ? { type } : {}),
+      attachedBy: actingSubject(), attachedAt: iso(0),
+    };
+    wc.sources.push(entry);
+    wc.etag = nextEtag();
+    const { document, ...rest } = entry;
+    return json({ ...structuredClone(rest), etag: wc.etag });
+  }
+
+  // A light stand-in for the server's operation-surface projection: OpenAPI paths×methods with
+  // parameters/request/responses, AsyncAPI 2.x publish/subscribe (→ receive/send) and 3.0
+  // operations, local $refs inlined to a bounded depth. Raw JSON Schema out, like the server.
+  function projectOperationSurface(doc) {
+    const deref = (node, depth = 0) => {
+      if (depth > 8 || node == null || typeof node !== 'object') return node;
+      if (node.$ref && typeof node.$ref === 'string' && node.$ref.startsWith('#/')) {
+        let target = doc;
+        for (const seg of node.$ref.slice(2).split('/')) target = target?.[seg.replaceAll('~1', '/').replaceAll('~0', '~')];
+        return deref(target, depth + 1);
+      }
+      if (Array.isArray(node)) return node.map((x) => deref(x, depth + 1));
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, deref(v, depth + 1)]));
+    };
+    const contentSchema = (content) => {
+      if (!content || typeof content !== 'object') return {};
+      const keys = Object.keys(content);
+      const chosen = keys.find((k) => k === 'application/json') ?? keys.find((k) => k.endsWith('+json') || k.endsWith('/json')) ?? keys[0];
+      if (!chosen) return {};
+      const schema = content[chosen]?.schema ? deref(content[chosen].schema) : undefined;
+      return { contentType: chosen, ...(schema ? { schema } : {}) };
+    };
+    const operations = [];
+    if (doc.openapi) {
+      for (const [path, item] of Object.entries(doc.paths ?? {})) {
+        if (!item || typeof item !== 'object') continue;
+        for (const method of ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query']) {
+          const op = item[method];
+          if (!op || typeof op !== 'object') continue;
+          const parameters = [...(Array.isArray(item.parameters) ? item.parameters : []), ...(Array.isArray(op.parameters) ? op.parameters : [])]
+            .map((x) => deref(x)).filter((x) => x?.name && x?.in)
+            .map((x) => ({ name: x.name, in: x.in, ...(x.required ? { required: true } : {}), ...(x.schema ? { schema: x.schema } : {}) }));
+          const responses = {};
+          for (const [code, r] of Object.entries(op.responses ?? {})) {
+            const resolved = deref(r);
+            const { schema } = contentSchema(resolved?.content);
+            responses[code] = schema ? { schema } : {};
+          }
+          const request = op.requestBody ? contentSchema(deref(op.requestBody)?.content) : null;
+          operations.push({
+            kind: 'openapi', path, method: method.toUpperCase(),
+            ...(op.operationId ? { operationId: op.operationId } : {}),
+            ...(op.summary || op.description ? { summary: op.summary ?? op.description } : {}),
+            ...(op.deprecated ? { deprecated: true } : {}),
+            ...(request && (request.contentType || request.schema) ? { request } : {}),
+            ...(parameters.length ? { parameters } : {}),
+            ...(Object.keys(responses).length ? { responses } : {}),
+          });
+        }
+      }
+    } else if (doc.asyncapi && String(doc.asyncapi).startsWith('3')) {
+      for (const [opId, op] of Object.entries(doc.operations ?? {})) {
+        const channel = deref(op?.channel);
+        const messages = op?.messages ?? channel?.messages;
+        const first = deref(Array.isArray(messages) ? messages[0] : Object.values(messages ?? {})[0]);
+        operations.push({
+          kind: 'asyncapi', operationId: opId,
+          ...(op?.action ? { action: op.action } : {}),
+          ...(channel?.address ? { channelPath: channel.address } : {}),
+          ...(op?.summary || op?.description ? { summary: op.summary ?? op.description } : {}),
+          ...(first?.payload ? { request: { schema: deref(first.payload) } } : {}),
+        });
+      }
+    } else if (doc.asyncapi) {
+      for (const [channelPath, channel] of Object.entries(doc.channels ?? {})) {
+        for (const [prop, action] of [['publish', 'receive'], ['subscribe', 'send']]) {
+          const op = channel?.[prop];
+          if (!op || typeof op !== 'object') continue;
+          let message = deref(op.message);
+          if (Array.isArray(message?.oneOf)) message = deref(message.oneOf[0]);
+          operations.push({
+            kind: 'asyncapi', channelPath, action,
+            ...(op.operationId ? { operationId: op.operationId } : {}),
+            ...(op.summary || op.description ? { summary: op.summary ?? op.description } : {}),
+            ...(message?.payload ? { request: { schema: message.payload } } : {}),
+          });
+        }
+      }
+    }
+    return operations;
   }
 
   // ---- deployment environments (§7.7) -----------------------------------------------------------

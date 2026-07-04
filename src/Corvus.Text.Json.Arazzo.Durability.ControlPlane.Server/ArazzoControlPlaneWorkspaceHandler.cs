@@ -2,13 +2,13 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability.Sources;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Corvus.Text.Json.Internal;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
@@ -42,7 +42,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
     private readonly IWorkspaceWorkflowStore store;
     private readonly ISecuredWorkflowCatalog? catalog;
+    private readonly ISourceStore? sources;
     private readonly ControlPlaneAccess access;
+    private readonly TimeProvider timeProvider;
     private readonly string actor;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
@@ -52,7 +54,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// creating from a version is unavailable when <see langword="null"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
     public ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ISecuredWorkflowCatalog? catalog = null, string actor = "control-plane")
-        : this(store, new ControlPlaneAccess(), catalog, actor)
+        : this(store, new ControlPlaneAccess(), catalog, null, null, actor)
     {
     }
 
@@ -62,8 +64,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// stamped onto working copies (§14.2). Unscoped (<see cref="AccessContext.System"/>) when no row security is configured.</param>
     /// <param name="catalog">The secured catalog used to open a working copy from a published version (the carry-over);
     /// creating from a version is unavailable when <see langword="null"/>.</param>
+    /// <param name="sources">The source registry used to resolve registry-reference attachments at read time
+    /// (reach-checked); registry attachments are unavailable when <see langword="null"/>.</param>
+    /// <param name="timeProvider">The time source stamped onto attachments; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, string actor = "control-plane")
+    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane")
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -71,6 +76,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         this.store = store;
         this.access = access;
         this.catalog = catalog;
+        this.sources = sources;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
         this.actor = actor;
     }
 
@@ -134,8 +141,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 Problem("management-out-of-reach", "Management scope out of reach", 400, "The working copy's management tags are outside your own management reach."), workspace);
         }
 
-        // Resolve the document: supplied verbatim, copied from a catalog version (the carry-over), or a blank skeleton.
-        ReadOnlyMemory<byte> documentUtf8;
+        // Resolve the carry-over document when requested; the draft below writes the request document
+        // bytes-to-bytes, the carry-over bytes, or an inline blank skeleton — no interim buffers.
+        ReadOnlyMemory<byte> catalogDocumentUtf8 = default;
         string? baseWorkflowId = null;
         int? basedOnVersion = null;
         if (fromVersion)
@@ -162,31 +170,16 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                     Problem("version-not-found", "Catalog version not found", 404, $"No catalog version '{baseWorkflowId}' v{basedOnVersion} exists, or it is outside your reach."), workspace);
             }
 
-            documentUtf8 = workflowDocument;
+            catalogDocumentUtf8 = workflowDocument;
         }
-        else if (hasDocument)
-        {
-            documentUtf8 = JsonMarshal.GetRawUtf8Value((JsonElement)body.Document).Memory;
-        }
-        else
-        {
-            documentUtf8 = ReadOnlyMemory<byte>.Empty; // the skeleton is written below, once the name is known
-        }
-
-        // The display name: supplied, or derived from the document's first workflowId, or 'untitled'.
-        string name = body.Name.IsNotUndefined() ? (string)body.Name : DeriveName(documentUtf8.Span);
-        if (documentUtf8.IsEmpty)
-        {
-            documentUtf8 = BlankDocument(name);
-        }
-
-        ReadOnlyMemory<byte> designerStateUtf8 = body.DesignerState.IsNotUndefined()
-            ? JsonMarshal.GetRawUtf8Value((JsonElement)body.DesignerState).Memory
-            : ReadOnlyMemory<byte>.Empty;
 
         try
         {
-            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceWorkflow.Draft(name, documentUtf8, designerStateUtf8, baseWorkflowId, basedOnVersion, managementTags);
+            // The whole create draft — name resolution (supplied / first workflowId / base id /
+            // 'untitled'), the document (request bytes-to-bytes / carry-over / blank skeleton),
+            // designer state, provenance, and tags — writes in ONE pooled pass.
+            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceSourceJson.CreateDraft(
+                (JsonElement)body.Name, (JsonElement)body.Document, catalogDocumentUtf8, (JsonElement)body.DesignerState, baseWorkflowId, basedOnVersion, managementTags);
             ParsedJsonDocument<WorkspaceWorkflow> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
             // The full working copy (document included) is congruent with the API model — a free whole-document re-wrap.
@@ -240,6 +233,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             default,
             (JsonElement)body.Document,
             (JsonElement)body.DesignerState,
+            default,
             SecurityTagSet.Empty);
         try
         {
@@ -334,6 +328,179 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         return ValidateWorkspaceWorkflowResult.Ok(body, workspace);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ListWorkingCopySourcesResult> HandleListWorkingCopySourcesAsync(ListWorkingCopySourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return ListWorkingCopySourcesResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        // The list is the stored attachments minus their inline documents — one pooled write+parse pass;
+        // the pooled body document is handed to the workspace (it disposes it after serialization).
+        ParsedJsonDocument<Models.AttachedSourceList> body = WorkspaceSourceJson.AttachmentListResponse((JsonElement)w.RootElement.Sources);
+        workspace.TakeOwnership(body);
+        return ListWorkingCopySourcesResult.Ok(body.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<AttachWorkingCopySourceResult> HandleAttachWorkingCopySourceAsync(AttachWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        string name = (string)parameters.Name;
+        Models.AttachSourceRequest body = parameters.Body;
+        bool isRegistry = body.SourceName.IsNotUndefined();
+        bool isInline = body.Document.IsNotUndefined();
+        if (isRegistry == isInline)
+        {
+            return AttachWorkingCopySourceResult.BadRequest(
+                Problem("invalid-attachment", "Invalid attachment", 400, "Supply EXACTLY ONE of sourceName (a registry reference) or document (an inline upload)."), workspace);
+        }
+
+        string? sourceName = isRegistry ? (string)body.SourceName : null;
+        string? type = body.Type.IsNotUndefined() ? (string)body.Type : null;
+        if (isInline && type is null)
+        {
+            type = WorkspaceSourceJson.DetectDocumentType((JsonElement)body.Document);
+            if (type is null)
+            {
+                return AttachWorkingCopySourceResult.BadRequest(
+                    Problem("invalid-attachment", "Invalid attachment", 400, "The inline document declares neither openapi, asyncapi, nor arazzo; supply an explicit type."), workspace);
+            }
+        }
+
+        if (isRegistry)
+        {
+            if (this.sources is null)
+            {
+                return AttachWorkingCopySourceResult.BadRequest(
+                    Problem("registry-unavailable", "Source registry unavailable", 400, "This deployment does not offer registry attachments."), workspace);
+            }
+
+            // The reference must resolve within the caller's reach NOW (attach-time honesty); it re-resolves on every read.
+            using ParsedJsonDocument<RegisteredSource>? registered = await this.sources.GetAsync(sourceName!, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (registered is not { } r)
+            {
+                return AttachWorkingCopySourceResult.NotFound(
+                    Problem("source-not-found", "Source not found", 404, $"No registered source named '{sourceName}' exists, or it is outside your reach."), workspace);
+            }
+
+            type ??= r.RootElement.Type.IsNotUndefined() ? (string)r.RootElement.Type : null;
+        }
+
+        // Read-modify-write under the etag we read: the replacement attachment set rides a draft that
+        // carries ONLY sources (everything else carries forward bytes-to-bytes in the store).
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return AttachWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        try
+        {
+            // The replacement attachment set composes INSIDE the draft's single pooled write pass (stored
+            // entries bytes-to-bytes, the new entry from the request); the store carries everything else
+            // forward, and the response body is a second pooled pass over the saved entry.
+            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceSourceJson.DraftReplacingAttachment(
+                (JsonElement)w.RootElement.Sources, name, isRegistry ? "registry" : "inline", sourceName, (JsonElement)body.Document, type, this.actor, this.timeProvider.GetUtcNow());
+            using ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, w.RootElement.EtagValue, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (saved is not { } s)
+            {
+                return AttachWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
+            }
+
+            ParsedJsonDocument<Models.AttachedSource> response = WorkspaceSourceJson.AttachmentResponse((JsonElement)s.RootElement.Sources, name, s.RootElement.EtagValue.Value);
+            workspace.TakeOwnership(response);
+            return AttachWorkingCopySourceResult.Ok(response.RootElement, workspace);
+        }
+        catch (WorkspaceWorkflowConflictException ex)
+        {
+            return AttachWorkingCopySourceResult.Conflict(
+                Problem("save-conflict", "Save conflict", 409, ex.Message + " Retry the attach against the fresh state."), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<DetachWorkingCopySourceResult> HandleDetachWorkingCopySourceAsync(DetachWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        string name = (string)parameters.Name;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return DetachWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        if (WorkspaceSourceJson.FindAttachment((JsonElement)w.RootElement.Sources, name).ValueKind != JsonValueKind.Object)
+        {
+            return DetachWorkingCopySourceResult.NotFound(AttachmentNotFoundProblem(id, name), workspace);
+        }
+
+        try
+        {
+            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceSourceJson.DraftRemovingAttachment((JsonElement)w.RootElement.Sources, name);
+            using ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, w.RootElement.EtagValue, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            return saved is not null
+                ? DetachWorkingCopySourceResult.NoContent()
+                : DetachWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
+        }
+        catch (WorkspaceWorkflowConflictException ex)
+        {
+            return DetachWorkingCopySourceResult.Conflict(
+                Problem("save-conflict", "Save conflict", 409, ex.Message + " Retry the detach against the fresh state."), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ListWorkingCopySourceOperationsResult> HandleListWorkingCopySourceOperationsAsync(ListWorkingCopySourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        string name = (string)parameters.Name;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return ListWorkingCopySourceOperationsResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        JsonElement attachment = WorkspaceSourceJson.FindAttachment((JsonElement)w.RootElement.Sources, name);
+        if (attachment.ValueKind != JsonValueKind.Object)
+        {
+            return ListWorkingCopySourceOperationsResult.NotFound(AttachmentNotFoundProblem(id, name), workspace);
+        }
+
+        // An inline attachment projects its stored document; a registry attachment re-resolves the
+        // registered source at read time (reach-checked, non-disclosing). The projection writes straight
+        // through into the pooled response body while the source is alive; the pooled source may then
+        // dispose (the response owns its own pooled buffer).
+        ParsedJsonDocument<Models.OperationSurface> body;
+        if (attachment.TryGetProperty("document"u8, out JsonElement inlineDocument))
+        {
+            body = WorkspaceSourceJson.OperationSurfaceResponse(inlineDocument);
+        }
+        else
+        {
+            string? sourceName = attachment.TryGetProperty("sourceName"u8, out JsonElement sn) && sn.ValueKind == JsonValueKind.String ? sn.GetString() : null;
+            if (sourceName is null || this.sources is null)
+            {
+                return ListWorkingCopySourceOperationsResult.NotFound(AttachmentNotFoundProblem(id, name), workspace);
+            }
+
+            using ParsedJsonDocument<RegisteredSource>? registered = await this.sources.GetAsync(sourceName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (registered is not { } r)
+            {
+                return ListWorkingCopySourceOperationsResult.NotFound(
+                    Problem("source-not-found", "Source not found", 404, $"The attachment references registered source '{sourceName}', which no longer exists or is outside your reach."), workspace);
+            }
+
+            body = WorkspaceSourceJson.OperationSurfaceResponse((JsonElement)r.RootElement.Document);
+        }
+
+        workspace.TakeOwnership(body);
+        return ListWorkingCopySourceOperationsResult.Ok(body.RootElement, workspace);
+    }
+
     // ── working-copy summary list projection (field-select, closure-free Build<TContext>) ─────────────────────────────
     private static void BuildSummaries(in IReadOnlyList<WorkspaceWorkflow> workingCopies, ref Models.WorkingCopyList.WorkingCopySummaryArray.Builder array)
     {
@@ -358,74 +525,6 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             basedOnVersion: Models.JsonInteger.From(workingCopy.BasedOnVersion),
             lastUpdatedAt: Models.JsonDateTime.From(workingCopy.LastUpdatedAt),
             lastUpdatedBy: Models.JsonString.From(workingCopy.LastUpdatedBy));
-    }
-
-    // ── document helpers ──────────────────────────────────────────────────────────────────────────────────────────────
-
-    // Derives a display name from the document's first workflowId ('untitled' when there is none) — a linear
-    // Utf8JsonReader scan of the raw bytes; the document may be interim-invalid, so this never throws.
-    private static string DeriveName(ReadOnlySpan<byte> documentUtf8)
-    {
-        if (documentUtf8.IsEmpty)
-        {
-            return "untitled";
-        }
-
-        try
-        {
-            var reader = new Utf8JsonReader(documentUtf8);
-            int depth = -1;
-            bool inWorkflows = false;
-            while (reader.Read())
-            {
-                if (reader.TokenType == JsonTokenType.PropertyName && reader.CurrentDepth == 1 && reader.ValueTextEquals("workflows"u8))
-                {
-                    inWorkflows = true;
-                    depth = reader.CurrentDepth;
-                    continue;
-                }
-
-                if (inWorkflows && reader.TokenType == JsonTokenType.PropertyName && reader.ValueTextEquals("workflowId"u8))
-                {
-                    reader.Read();
-                    return reader.TokenType == JsonTokenType.String ? reader.GetString() ?? "untitled" : "untitled";
-                }
-
-                if (inWorkflows && reader.TokenType == JsonTokenType.EndArray && reader.CurrentDepth == depth)
-                {
-                    break; // workflows was empty
-                }
-            }
-        }
-        catch (JsonException)
-        {
-            // An interim-invalid document is fine — the name just defaults.
-        }
-
-        return "untitled";
-    }
-
-    // A blank Arazzo skeleton: enough structure for the designer to open, deliberately not yet valid (working copies
-    // hold work in progress; validation is on demand).
-    private static ReadOnlyMemory<byte> BlankDocument(string name)
-    {
-        var buffer = new ArrayBufferWriter<byte>(256);
-        using (var writer = new Utf8JsonWriter(buffer))
-        {
-            writer.WriteStartObject();
-            writer.WriteString("arazzo"u8, "1.1.0"u8);
-            writer.WriteStartObject("info"u8);
-            writer.WriteString("title"u8, name);
-            writer.WriteString("version"u8, "0.1.0"u8);
-            writer.WriteEndObject();
-            writer.WriteStartArray("sourceDescriptions"u8);
-            writer.WriteEndArray();
-            writer.WriteStartArray("workflows"u8);
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-        }
-
-        return buffer.WrittenMemory;
     }
 
     // ── management-tag build (internal + operator tags → one SecurityTagSet), mirroring the sources handler ───────────
@@ -518,6 +617,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     }
 
     // ── problem documents ──────────────────────────────────────────────────────────────────────────────────────────
+    private static Models.ProblemDetails.Source AttachmentNotFoundProblem(string id, string name)
+        => Problem("attachment-not-found", "Attachment not found", 404, $"Working copy '{id}' has no source attached as '{name}'.");
+
     private static Models.ProblemDetails.Source NotFoundProblem(string id)
         => Problem("working-copy-not-found", "Working copy not found", 404, $"No working copy '{id}' exists, or it is outside your reach.");
 

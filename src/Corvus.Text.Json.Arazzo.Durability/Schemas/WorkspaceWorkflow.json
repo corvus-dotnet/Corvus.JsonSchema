@@ -31,6 +31,11 @@
       "description": "Designer UI state (node positions and similar) — a sibling of the document, never written into it and never packaged (design §5.2). Stored and returned verbatim.",
       "additionalProperties": true
     },
+    "sources": {
+      "type": "array",
+      "description": "The sources attached to this working copy, keyed by sourceDescriptions name (workflow-designer design §4.1): a registry reference (resolved at read time) or an inline document (stored verbatim so the working copy resolves like a package).",
+      "items": { "$ref": "#/$defs/AttachedSource" }
+    },
     "managementTags": {
       "type": "array",
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this working copy (§14.2). Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update.",
@@ -61,6 +66,44 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "AttachedSource": {
+      "title": "AttachedSource",
+      "type": "object",
+      "description": "One attachment: the sourceDescriptions name it satisfies, plus a registry reference OR an inline document.",
+      "required": ["name", "kind", "attachedBy", "attachedAt"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The sourceDescriptions name this attachment satisfies."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["registry", "inline"],
+          "description": "registry = resolves a registered source by name at read time; inline = the document is stored here."
+        },
+        "sourceName": {
+          "type": "string",
+          "description": "registry only: the registered source's name."
+        },
+        "type": {
+          "type": "string",
+          "description": "The source type (openapi | asyncapi | arazzo)."
+        },
+        "document": {
+          "type": "object",
+          "description": "inline only: the source document, stored verbatim.",
+          "additionalProperties": true
+        },
+        "attachedBy": {
+          "type": "string"
+        },
+        "attachedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
     "SecurityTagInfo": {
       "title": "SecurityTagInfo",
       "type": "object",

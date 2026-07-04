@@ -997,3 +997,44 @@ test('validateWorkingCopy reports positioned findings and 404s for an unknown id
 
   await assert.rejects(() => c.validateWorkingCopy('nope'), (e) => e instanceof ProblemError && e.status === 404);
 });
+
+test('sources attach inline or by registry reference, list without documents, and project operations', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({ name: 'wc', document: { arazzo: '1.1.0' } });
+  const petstore = {
+    openapi: '3.1.0',
+    info: { title: 'Petstore', version: '1.0' },
+    paths: { '/pets': { get: { operationId: 'listPets', responses: { 200: { description: 'ok', content: { 'application/json': { schema: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' } } } } } } }, default: { description: 'unexpected' } } } } },
+  };
+
+  // Inline attach: type detected, document never echoed, the fresh etag flows back.
+  const attached = await c.attachWorkingCopySource(wc.id, 'pets', { document: petstore });
+  assert.equal(attached.kind, 'inline');
+  assert.equal(attached.type, 'openapi');
+  assert.equal(attached.document, undefined);
+  assert.notEqual(attached.etag, wc.etag);
+
+  const { sources } = await c.listWorkingCopySources(wc.id);
+  assert.equal(sources.length, 1);
+  assert.equal(sources[0].document, undefined);
+
+  const { operations } = await c.listWorkingCopySourceOperations(wc.id, 'pets');
+  assert.equal(operations[0].operationId, 'listPets');
+  assert.equal(operations[0].method, 'GET');
+  assert.deepEqual(Object.keys(operations[0].responses), ['200', 'default']);
+  assert.equal(operations[0].responses['200'].schema.items.properties.name.type, 'string');
+
+  // Registry attach: resolves at read time; the registry-side surface projects too.
+  await c.createSource({ name: 'petstore-testonly', type: 'openapi', document: petstore });
+  const viaRegistry = await c.attachWorkingCopySource(wc.id, 'pets2', { sourceName: 'petstore-testonly' });
+  assert.equal(viaRegistry.kind, 'registry');
+  assert.equal((await c.listWorkingCopySourceOperations(wc.id, 'pets2')).operations[0].operationId, 'listPets');
+  assert.equal((await c.listRegisteredSourceOperations('petstore-testonly')).operations[0].operationId, 'listPets');
+
+  // Detach removes; unknown names 404; ambiguity throws client-side.
+  await c.detachWorkingCopySource(wc.id, 'pets');
+  assert.equal((await c.listWorkingCopySources(wc.id)).sources.length, 1);
+  await assert.rejects(() => c.listWorkingCopySourceOperations(wc.id, 'pets'), (e) => e.status === 404);
+  assert.throws(() => c.attachWorkingCopySource(wc.id, 'x', {}), TypeError);
+  assert.throws(() => c.attachWorkingCopySource(wc.id, 'x', { sourceName: 'a', document: {} }), TypeError);
+});

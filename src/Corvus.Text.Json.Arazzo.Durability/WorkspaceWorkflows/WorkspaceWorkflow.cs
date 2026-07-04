@@ -61,6 +61,7 @@ public readonly partial struct WorkspaceWorkflow
     /// <param name="basedOnVersion">The provenance version-number value (or undefined).</param>
     /// <param name="document">The Arazzo document value (required on create; a save that omits it keeps the stored one).</param>
     /// <param name="designerState">The designer UI state value (or undefined).</param>
+    /// <param name="sources">The attached-sources value (or undefined — attachments are edited through their own endpoint; a save that omits them keeps the stored ones).</param>
     /// <param name="managementTags">The resolved management tags (empty for a save).</param>
     /// <returns>A pooled, disposable draft document; <c>using</c> it and pass its
     /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
@@ -70,9 +71,10 @@ public readonly partial struct WorkspaceWorkflow
         in JsonElement basedOnVersion,
         in JsonElement document,
         in JsonElement designerState,
+        in JsonElement sources,
         in SecurityTagSet managementTags)
     {
-        DraftElements state = new(name, baseWorkflowId, basedOnVersion, document, designerState, managementTags);
+        DraftElements state = new(name, baseWorkflowId, basedOnVersion, document, designerState, sources, managementTags);
         return PersistedJson.ToPooledDocument<WorkspaceWorkflow, DraftElements>(
             state,
             static (Utf8JsonWriter writer, in DraftElements s) =>
@@ -83,6 +85,7 @@ public readonly partial struct WorkspaceWorkflow
                 WriteValueIfPresent(writer, JsonPropertyNames.BasedOnVersionUtf8, s.BasedOnVersion);
                 WriteValueIfPresent(writer, JsonPropertyNames.DocumentUtf8, s.Document);
                 WriteValueIfPresent(writer, JsonPropertyNames.DesignerStateUtf8, s.DesignerState);
+                WriteValueIfPresent(writer, JsonPropertyNames.SourcesUtf8, s.Sources);
                 if (!s.ManagementTags.IsEmpty)
                 {
                     writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -94,7 +97,7 @@ public readonly partial struct WorkspaceWorkflow
     }
 
     /// <summary>Builds a draft working copy from primitive values — the cold-path / test convenience over the
-    /// bytes-native <see cref="Draft(in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in SecurityTagSet)"/>:
+    /// bytes-native <see cref="Draft(in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in SecurityTagSet)"/>:
     /// the display name, the raw Arazzo document JSON, and the optional provenance are written straight into the draft
     /// document (the genuine construction leaf), plus the resolved management tags. No intermediate record.</summary>
     /// <param name="name">The display name.</param>
@@ -164,6 +167,7 @@ public readonly partial struct WorkspaceWorkflow
         WriteValueIfPresent(writer, JsonPropertyNames.BasedOnVersionUtf8, (JsonElement)draft.BasedOnVersion);
         WriteValueIfPresent(writer, JsonPropertyNames.DocumentUtf8, (JsonElement)draft.Document);
         WriteValueIfPresent(writer, JsonPropertyNames.DesignerStateUtf8, (JsonElement)draft.DesignerState);
+        WriteValueIfPresent(writer, JsonPropertyNames.SourcesUtf8, (JsonElement)draft.Sources);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
@@ -195,6 +199,10 @@ public readonly partial struct WorkspaceWorkflow
         // either way bytes-to-bytes (no parse/reformat of the potentially large document).
         WriteValuePreferringDraft(writer, JsonPropertyNames.DocumentUtf8, (JsonElement)draft.Document, (JsonElement)this.Document);
         WriteValuePreferringDraft(writer, JsonPropertyNames.DesignerStateUtf8, (JsonElement)draft.DesignerState, (JsonElement)this.DesignerState);
+
+        // Attachments are edited through their own endpoint (an attach/detach supplies the whole
+        // replacement set); a plain save omits them and the stored set carries forward.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.SourcesUtf8, (JsonElement)draft.Sources, (JsonElement)this.Sources);
 
         // Reach scope (§14.2) is immutable: carried forward from the stored working copy bytes-to-bytes.
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)this.ManagementTags);
@@ -264,6 +272,7 @@ public readonly partial struct WorkspaceWorkflow
         JsonElement basedOnVersion,
         JsonElement document,
         JsonElement designerState,
+        JsonElement sources,
         SecurityTagSet managementTags)
     {
         public JsonElement Name { get; } = name;
@@ -275,6 +284,8 @@ public readonly partial struct WorkspaceWorkflow
         public JsonElement Document { get; } = document;
 
         public JsonElement DesignerState { get; } = designerState;
+
+        public JsonElement Sources { get; } = sources;
 
         public SecurityTagSet ManagementTags { get; } = managementTags;
     }

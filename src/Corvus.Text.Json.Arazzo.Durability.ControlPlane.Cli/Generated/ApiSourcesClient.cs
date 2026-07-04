@@ -31,6 +31,25 @@ public sealed class ApiSourcesClient : IApiSourcesClient
     }
 
     /// <summary>
+    /// List a registered source's operation surface
+    /// </summary>
+    /// <remarks>
+    /// Projects the registered source's operation surface (raw-JSON-Schema request/parameter/response shapes) — browse a source before attaching it. 404 when the source is absent or out of reach.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ListRegisteredSourceOperationsResponse> ListRegisteredSourceOperationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        ListRegisteredSourceOperationsRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ListRegisteredSourceOperationsRequest, ListRegisteredSourceOperationsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List registered sources
     /// </summary>
     /// <remarks>
