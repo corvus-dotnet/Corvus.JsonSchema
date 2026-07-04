@@ -405,7 +405,10 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
                 bool contributed = false;
                 foreach (SourceCredentialBinding binding in page.Bindings)
                 {
-                    if (binding.IsUsableBy(granteeIdentity))
+                    // Only the credentials scoped to THIS grantee's identity (a usage-scoped binding the grantee
+                    // satisfies). A shared binding (no usage grant, usable by any run) is deployment-wide, not a
+                    // grantee-specific grant, so it is omitted from the overview (design §6.1).
+                    if (binding.IsUsageScoped && binding.IsUsableBy(granteeIdentity))
                     {
                         matchedCredentials.Add(binding);
                         contributed = true;

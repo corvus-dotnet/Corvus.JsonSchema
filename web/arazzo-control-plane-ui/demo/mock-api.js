@@ -1845,11 +1845,12 @@ export function createMockControlPlane(options = {}) {
       .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
       .map((baseWorkflowId) => ({ baseWorkflowId }));
 
-    // credentialUsage: credentials the grantee may use — a credential with no usageGrantee is shared (usable by all); a
-    // usage-restricted one is usable iff its usageGrantee identity is a subset of the grantee's identity.
+    // credentialUsage: credentials scoped to THIS grantee's identity — a usage-restricted binding whose usageGrantee
+    // identity is a subset of the grantee's identity. Shared bindings (no usageGrantee, usable by any run) are
+    // deployment-wide, not a grantee-specific grant, so they are omitted (design §6.1), matching the server.
     const credentialUsage = credentials
-      .filter((c) => !c.usageGrantee
-        || (c.usageGrantee.identity || []).every((ut) => idents.some((t) => t.dimension === ut.dimension && t.value === ut.value)))
+      .filter((c) => c.usageGrantee
+        && (c.usageGrantee.identity || []).every((ut) => idents.some((t) => t.dimension === ut.dimension && t.value === ut.value)))
       .map((c) => ({ sourceName: c.sourceName, environment: c.environment }))
       .sort((a, b) => (a.sourceName < b.sourceName ? -1 : a.sourceName > b.sourceName ? 1
         : a.environment < b.environment ? -1 : a.environment > b.environment ? 1 : 0));
