@@ -79,17 +79,46 @@ export const expressionStreamParser = {
 };
 
 /**
- * Schema-driven completions for a partial expression.
+ * Schema-driven completions for a partial expression, including JSON-Pointer descent into payload
+ * schemas: `$response.body#/receipt/…` completes from the response body's JSON Schema.
+ *
+ * Context shape (every surface optional):
+ *   {
+ *     inputs:  <JSON Schema> | string[],          // the workflow inputs (schema preferred)
+ *     outputs: string[],                          // workflow output names
+ *     steps:   { [stepId]: { outputs?: string[], outputSchemas?: {[name]: <JSON Schema>}, summary? } },
+ *     response: { body?: <JSON Schema> },         // the selected step's response body schema
+ *     request:  { body?: <JSON Schema> },
+ *     message:  { payload?: <JSON Schema> },      // the selected channel's message payload schema
+ *   }
  *
  * @param {string} text  The whole field text.
  * @param {number} pos   The caret position within it.
- * @param {{inputs?: string[], outputs?: string[], steps?: Record<string, {outputs?: string[], summary?: string}>}} [context]
  * @returns {{from: number, options: {label: string, type: string, detail?: string}[]} | null}
  */
 export function completionsFor(text, pos, context = {}) {
   const head = text.slice(0, pos);
-  const frag = /(\$[A-Za-z0-9_.-]*)$/.exec(head)?.[1];
+  const frag = /(\$[A-Za-z0-9_.-]*(?:#[A-Za-z0-9_./-]*)?)$/.exec(head)?.[1];
   if (!frag) return null;
+
+  // A `#/json/pointer` tail: walk the matching schema surface.
+  const hashAt = frag.indexOf('#');
+  if (hashAt >= 0) {
+    const schema = schemaForExpression(frag.slice(0, hashAt), context);
+    const pointer = frag.slice(hashAt + 1);
+    if (!schema || (pointer !== '' && !pointer.startsWith('/'))) return null;
+    const segments = pointer === '' ? [''] : pointer.split('/').slice(1);
+    const last = segments.pop() ?? '';
+    let target = schema;
+    for (const seg of segments) {
+      target = stepInto(target, seg);
+      if (!target) return null;
+    }
+    const options = Object.entries(target.properties || {})
+      .filter(([name]) => name.toLowerCase().startsWith(last.toLowerCase()))
+      .map(([name, s]) => ({ label: name, type: 'property', ...(schemaDetail(s) ? { detail: schemaDetail(s) } : {}) }));
+    return options.length ? { from: pos - last.length, options } : null;
+  }
 
   const parts = frag.split('.');
   const last = parts[parts.length - 1];
@@ -105,8 +134,16 @@ export function completionsFor(text, pos, context = {}) {
     return filter(EXPRESSION_ROOTS, 'keyword');
   }
   switch (parts[0]) {
-    case '$inputs':
-      return parts.length === 2 ? filter(context.inputs || [], 'property') : null;
+    case '$inputs': {
+      if (parts.length !== 2) return null;
+      if (isSchema(context.inputs)) {
+        const props = context.inputs.properties || {};
+        return filter(Object.keys(props), 'property', Object.fromEntries(
+          Object.entries(props).map(([n, s]) => [n, schemaDetail(s)]).filter(([, v]) => v),
+        ));
+      }
+      return filter(context.inputs || [], 'property');
+    }
     case '$outputs':
       return parts.length === 2 ? filter(context.outputs || [], 'property') : null;
     case '$steps': {
@@ -118,7 +155,8 @@ export function completionsFor(text, pos, context = {}) {
       }
       if (parts.length === 3) return filter(['outputs'], 'keyword');
       if (parts.length === 4 && parts[2] === 'outputs') {
-        return filter(steps[parts[1]]?.outputs || [], 'property');
+        const step = steps[parts[1]];
+        return filter(step?.outputs || Object.keys(step?.outputSchemas || {}), 'property');
       }
       return null;
     }
@@ -130,4 +168,38 @@ export function completionsFor(text, pos, context = {}) {
     default:
       return null;
   }
+}
+
+/** The JSON Schema a pointer-completed expression addresses, if the context carries one. */
+function schemaForExpression(expr, ctx) {
+  if (expr === '$response.body') return ctx.response?.body;
+  if (expr === '$request.body') return ctx.request?.body;
+  if (expr === '$message.payload') return ctx.message?.payload;
+  const parts = expr.split('.');
+  if (parts[0] === '$inputs' && parts.length === 2 && isSchema(ctx.inputs)) {
+    return ctx.inputs.properties?.[parts[1]];
+  }
+  if (parts[0] === '$steps' && parts.length === 4 && parts[2] === 'outputs') {
+    return ctx.steps?.[parts[1]]?.outputSchemas?.[parts[3]];
+  }
+  return null;
+}
+
+/** One pointer segment of schema descent: object properties, or array items by index. */
+function stepInto(schema, seg) {
+  if (!schema) return null;
+  if (schema.properties?.[seg]) return schema.properties[seg];
+  if (schema.items && (/^\d+$/.test(seg) || seg === '-')) return schema.items;
+  return null;
+}
+
+function schemaDetail(s) {
+  if (!s || typeof s !== 'object') return undefined;
+  const type = Array.isArray(s.type) ? s.type.join('|') : s.type;
+  if (!type) return undefined;
+  return s.format ? `${type} (${s.format})` : type;
+}
+
+function isSchema(v) {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
 }
