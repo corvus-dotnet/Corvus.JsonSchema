@@ -192,7 +192,7 @@
 <p>A subschema defined under <code>$defs</code> and referenced with <code>$ref</code> is generated <strong>once</strong>, as a named <code>interface</code>, and every reference to it resolves to that same type. Here <code>shipTo</code> and <code>billTo</code> both <code>$ref</code> <code>#/$defs/address</code>, so both properties are typed <code>Address</code>. Define an address value once and use it for either.</p>
 <p>A referenced type is first-class: <code>Address</code> gets its own <code>Address.evaluate</code> / <code>Address.build</code> / <code>Address.patch</code> / <code>Address.produce</code> alongside <code>Order</code>'s, so you can construct and evaluate it independently.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2605a6f19085a36dfbd67c4e8e80181977c02a02/docs/typescript/examples/003-references/order.json"><code>order.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0075d259572e894465cb08eb4714a440a2670de4/docs/typescript/examples/003-references/order.json"><code>order.json</code></a></p>
 <pre><code class="language-json">{
   &quot;title&quot;: &quot;Order&quot;,
   &quot;type&quot;: &quot;object&quot;,
@@ -218,7 +218,7 @@
 </code></pre>
 <p>The generated types are <code>interface Order { id: string; shipTo: Address; billTo?: Address }</code> and <code>interface Address { line1: string; city: string; postcode: string }</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2605a6f19085a36dfbd67c4e8e80181977c02a02/docs/typescript/examples/003-references/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0075d259572e894465cb08eb4714a440a2670de4/docs/typescript/examples/003-references/demo.ts">Example code</a></p>
 <h3 id="define-a-referenced-value-once-reuse-it">Define a referenced value once, reuse it</h3>
 <pre><code class="language-typescript">const home: Address = { line1: &quot;1 Mill Rd&quot;, city: &quot;Cambridge&quot;, postcode: &quot;CB1 2AB&quot; };
 const bytes = Order.build({ id: &quot;ord-1&quot;, shipTo: home, billTo: home });
