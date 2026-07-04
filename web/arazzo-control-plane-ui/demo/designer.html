@@ -67,6 +67,8 @@
     import '../src/components/expression-input.js';
     import '../src/components/criteria-editor.js';
     import '../src/components/action-editor.js';
+    import '../src/components/step-inspector.js';
+    import '../src/components/workflow-inspector.js';
 
     const surface = document.getElementById('surface');
     const select = document.getElementById('workflow');
@@ -119,26 +121,38 @@
       if (!sel) { selectionPre.textContent = '(nothing selected)'; return; }
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
 
-      if (sel.type === 'node' && sel.id === '#start') {
-        selectionPre.textContent = JSON.stringify({ inputs: wf.inputs || {} }, null, 2);
-        return;
-      }
-      if (sel.type === 'node' && sel.id === '#end') {
-        selectionPre.textContent = JSON.stringify({ outputs: wf.outputs || {} }, null, 2);
+      // Start / end / background / defaults all land on the workflow inspector, focused per §6.2.
+      const workflowSection = sel.type === 'node' && sel.id === '#start' ? 'inputs'
+        : sel.type === 'node' && sel.id === '#end' ? 'outputs'
+        : sel.type === 'defaults' ? 'failure'
+        : null;
+      if (workflowSection !== null || sel.type === 'defaults') {
+        const wi = doc.workflows.indexOf(wf);
+        const ed = document.createElement('arazzo-workflow-inspector');
+        ed.stepIds = wf.steps.map((s) => s.stepId);
+        ed.completionContext = expr.completionContext;
+        ed.value = wf;
+        if (workflowSection) ed.setAttribute('focus-section', workflowSection);
+        inspector.append(heading(`workflow — ${wf.workflowId}`), ed);
+        ed.addEventListener('workflow-changed', (ev) => {
+          doc.workflows[wi] = ev.detail.workflow;
+          reproject(sel);
+        });
         return;
       }
       if (sel.type === 'node') {
-        const step = wf.steps.find((s) => s.stepId === sel.id);
-        const ed = document.createElement('arazzo-criteria-editor');
+        const si = wf.steps.findIndex((s) => s.stepId === sel.id);
+        const ed = document.createElement('arazzo-step-inspector');
+        ed.stepIds = wf.steps.map((s) => s.stepId);
+        ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
+        ed.workflowDefaults = { successActions: wf.successActions || [], failureActions: wf.failureActions || [] };
         ed.completionContext = expr.completionContext;
-        ed.value = step.successCriteria || [];
-        inspector.append(heading(`successCriteria — ${sel.id}`), ed);
-        ed.addEventListener('criteria-changed', (ev) => {
-          if (ev.detail.criteria.length) step.successCriteria = ev.detail.criteria;
-          else delete step.successCriteria;
+        ed.value = wf.steps[si];
+        inspector.append(heading(`step — ${sel.id}`), ed);
+        ed.addEventListener('step-changed', (ev) => {
+          wf.steps[si] = ev.detail.step;
           reproject(sel);
         });
-        selectionPre.textContent = JSON.stringify(step, null, 2);
         return;
       }
       if (sel.type === 'edge') {
@@ -170,10 +184,7 @@
         });
         return;
       }
-      // defaults layer (and anything else): the raw view
-      selectionPre.textContent = sel.type === 'defaults'
-        ? JSON.stringify({ successActions: wf.successActions || [], failureActions: wf.failureActions || [] }, null, 2)
-        : JSON.stringify(sel, null, 2);
+      selectionPre.textContent = JSON.stringify(sel, null, 2);
     }
 
     // Round-trip: drawing an edge writes a goto action — or, dropped on the end terminal, an
