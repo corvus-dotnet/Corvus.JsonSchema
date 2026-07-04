@@ -153,6 +153,35 @@ test('an unknown workflowId projects empty with a problem', () => {
   assert.equal(g.problems.length, 1);
 });
 
+test('first-match order: edges carry precedence, actions after a catch-all are unreachable', () => {
+  const doc = structuredClone(designerFixture);
+  doc.workflows[0].steps[0].onFailure = [
+    { name: 'catch-everything', type: 'end' }, // criteria-less: always matches
+    { name: 'never-fires', type: 'goto', stepId: 'manual-review', criteria: [{ condition: '$statusCode == 400' }] },
+  ];
+  const g = projectWorkflow(doc, 'place-order');
+  const dead = g.edges.find((e) => e.actionName === 'never-fires');
+  assert.equal(dead.unreachable, true);
+  assert.equal(dead.order, 2);
+  assert.equal(dead.orderCount, 2);
+  assert.ok(g.problems.some((p) => /never-fires.*unreachable.*catch-everything/s.test(p.message)));
+  // The fixture's own multi-action step carries order info too.
+  const decline = g.edges.find((e) => e.actionName === 'manual-review-on-decline');
+  assert.equal(decline.order, 2, 'declaration order preserved (after the retry)');
+  assert.equal(decline.orderCount, 3);
+  assert.ok(!decline.unreachable);
+});
+
+test('workflow-level defaults get the same unreachable diagnostic', () => {
+  const doc = structuredClone(designerFixture);
+  doc.workflows[0].failureActions = [
+    { name: 'give-up', type: 'end' },
+    { name: 'shadowed', type: 'end', criteria: [{ condition: '$statusCode == 503' }] },
+  ];
+  const g = projectWorkflow(doc, 'place-order');
+  assert.ok(g.problems.some((p) => /shadowed.*unreachable.*give-up/s.test(p.message)));
+});
+
 test('identically-named actions still yield unique edge ids', () => {
   const doc = structuredClone(designerFixture);
   doc.workflows[0].steps[0].onSuccess = [
