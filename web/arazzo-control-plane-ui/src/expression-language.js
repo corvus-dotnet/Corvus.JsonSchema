@@ -20,7 +20,12 @@ const JSONPATH_FUNCTIONS = new Set(['length', 'count', 'match', 'search', 'value
 export const expressionStreamParser = {
   name: 'arazzo-expression',
   startState: () => ({ str: null, afterDot: false }),
-  token(stream, state) {
+  // NB: a plain function, not a method using `this` — CodeMirror invokes `token` detached.
+  token: tokenExpression,
+};
+
+function tokenExpression(stream, state) {
+  {
     // Inside a string literal (JSON-style escapes; RFC 9535 allows \' in single-quoted).
     if (state.str) {
       while (!stream.eol()) {
@@ -36,8 +41,8 @@ export const expressionStreamParser = {
     const wasAfterDot = state.afterDot;
     state.afterDot = false;
 
-    if (stream.match('"')) { state.str = '"'; return this.token(stream, state); }
-    if (stream.match("'")) { state.str = "'"; return this.token(stream, state); }
+    if (stream.match('"')) { state.str = '"'; return tokenExpression(stream, state); }
+    if (stream.match("'")) { state.str = "'"; return tokenExpression(stream, state); }
 
     // Numbers (incl. negative + decimal).
     if (stream.match(/^-?\d+(\.\d+)?/)) return 'exprNumber';
@@ -75,8 +80,8 @@ export const expressionStreamParser = {
 
     stream.next();
     return null;
-  },
-};
+  }
+}
 
 /**
  * Schema-driven completions for a partial expression, including JSON-Pointer descent into payload
