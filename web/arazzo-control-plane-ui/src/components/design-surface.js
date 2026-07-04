@@ -171,8 +171,8 @@ class ArazzoDesignSurface extends ArazzoElement {
         .node.pseudo .plabel { font: 700 10px var(--_font); fill: var(--_muted);
                                text-transform: uppercase; letter-spacing: 0.06em; }
 
-        /* Breakpoint dot */
-        .bp { fill: transparent; stroke: var(--_muted); stroke-width: 1; cursor: pointer; }
+        /* Breakpoint dot — solid card-coloured fill so edges never show through it */
+        .bp { fill: var(--_bg); stroke: var(--_muted); stroke-width: 1; cursor: pointer; }
         .bp:hover { stroke: var(--_danger); }
         .node.bp-on .bp { fill: var(--_danger); stroke: var(--_danger); }
 
