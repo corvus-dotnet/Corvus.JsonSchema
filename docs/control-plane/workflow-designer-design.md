@@ -16,9 +16,9 @@ Status: **design**. Nothing in this document is built; §14 sequences the delive
 
 - **Cover the full Arazzo 1.1 capability surface.** Everything the schema can express is editable:
   all step binding kinds (OpenAPI operation, nested workflow, AsyncAPI channel with
-  `action`/`correlationId`/`timeout`), all criterion types, workflow-level and step-level actions,
-  reusable components, payload replacements, `querystring` parameters, `dependsOn`, multiple
-  workflows per document.
+  `action`/`correlationId`/`timeout`), all criterion types (`xpath` round-trips but is flagged —
+  the runtime does not evaluate it), workflow-level and step-level actions, reusable components,
+  payload replacements, `querystring` parameters, `dependsOn`, multiple workflows per document.
 - **The design surface is an instrument, not an illustration.** The same canvas that authors the
   workflow runs it: debug sessions step the workflow live, light the taken path, expose paused
   state, and let the author inject triggers and advance the virtual clock interactively.
@@ -358,7 +358,7 @@ loading/empty/error states; scope-gated actions. (Attribute/event tables in the 
 | `<arazzo-step-inspector>` | Selected step: binding (operation/workflow/channel pickers), parameters (typed), `requestBody` payload (typed via descriptor) + replacements, success criteria, local actions, outputs. |
 | `<arazzo-workflow-inspector>` | Selected workflow: `inputs` schema editor, workflow-level actions (the defaults layer), `outputs`, `parameters`, `dependsOn`. |
 | `<arazzo-document-inspector>` | `info`, source descriptions, `components` (reusable library management). |
-| `<arazzo-criteria-editor>` | An ordered list of criterion rows: type picker (`simple`/`regex`/`jsonpath`/`xpath` + version), `context` expression input, condition editor with syntax highlighting + live server validation. |
+| `<arazzo-criteria-editor>` | An ordered list of criterion rows: type picker (`simple`/`regex`/`jsonpath`; a version select only where a real choice exists), `context` expression input, condition editor with syntax highlighting + live server validation. `xpath` is schema-valid Arazzo but the runtime does not evaluate it — never offered for new criteria; preserved and flagged ⚠ when a document carries it. |
 | `<arazzo-expression-input>` | Single-line highlighted runtime-expression / JSONPath editor with completions from the schema context (§7.2). Reused by criteria, parameters, outputs, payload replacements, scenario expectations. |
 | `<arazzo-action-editor>` | One success/failure action: type (`end`/`goto`/`retry`), target step/workflow picker, retry settings, criteria; "localize/revert to inherited" affordances. |
 | `<arazzo-scenario-panel>` | Scenario suite: list + per-scenario status chips, run one/all, open editor, "save session as scenario". |
