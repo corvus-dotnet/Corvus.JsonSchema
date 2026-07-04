@@ -64,4 +64,13 @@ public interface IApiWorkspaceHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<DeleteWorkspaceWorkflowResult> HandleDeleteWorkspaceWorkflowAsync(DeleteWorkspaceWorkflowParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /workspace/workflows/{id}/validate — Validate a working copy
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ValidateWorkspaceWorkflowResult> HandleValidateWorkspaceWorkflowAsync(ValidateWorkspaceWorkflowParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

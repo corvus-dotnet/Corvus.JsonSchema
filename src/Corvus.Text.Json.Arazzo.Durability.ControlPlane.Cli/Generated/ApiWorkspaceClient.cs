@@ -158,6 +158,25 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
         return SendAsyncCore<DeleteWorkspaceWorkflowRequest, DeleteWorkspaceWorkflowResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Validate a working copy
+    /// </summary>
+    /// <remarks>
+    /// Runs full diagnostics over the working copy's stored Arazzo document: JSON-Schema conformance (positioned schema findings) plus document-local semantic checks mirroring the workflow compiler's rules. Always 200 with the findings (an invalid document is a successful validation run); 404 when the working copy is absent or out of reach. The document is never modified.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ValidateWorkspaceWorkflowResponse> ValidateWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        ValidateWorkspaceWorkflowRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ValidateWorkspaceWorkflowRequest, ValidateWorkspaceWorkflowResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
