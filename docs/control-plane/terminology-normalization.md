@@ -38,7 +38,7 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
   terms: *source description* (in-document), *source document* (the file), *registered source*
   (a `/sources` entry) — never bare "source" where ambiguous.
 
-- [ ] **4. Allocation-campaign "draft" jargon** (decision D). "Draft" is now a lifecycle term (a
+- [x] **4. Allocation-campaign "draft" jargon** (decision D). "Draft" is now a lifecycle term (a
   catalog version not yet available in any environment). In `allocation-protocol.md` /
   `allocation-matrix.md` prose, qualify the pooled write-leaf document as **write draft** going
   forward; historical matrix rows need not be mass-edited. Leave code symbols (e.g.
