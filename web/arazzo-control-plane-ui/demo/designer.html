@@ -150,18 +150,50 @@
         steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped', 'manual-review': 'done-success', '#end': 'done-success' },
         edges: ['seq:#start', 'seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure', 'end:manual-review:halt-after-review:success'] },
     ];
-    let timer = null;
-    document.getElementById('simulate').addEventListener('click', () => {
-      clearInterval(timer);
+    // A tiny trace player standing in for the real replay-based debug session (design §8.2):
+    // entering a breakpointed step pauses playback; the button becomes Resume.
+    const simBtn = document.getElementById('simulate');
+    const SIM_LABEL = '▶ Simulate (canned trace)';
+    let player = null; // { i, timer, paused }
+
+    function applyFrame() {
+      const frame = trace[player.i];
+      surface.debugState = frame;
+      const entered = frame.active && frame.active !== trace[player.i - 1]?.active;
+      if (entered && surface.breakpoints.has(frame.active)) {
+        clearInterval(player.timer);
+        player.timer = null;
+        player.paused = true;
+        simBtn.textContent = `⏵ Resume (paused at ${frame.active})`;
+        logEvent('debug-paused', { stepId: frame.active, note: 'breakpoint hit' });
+      }
+    }
+    function tick() {
+      player.i++;
+      if (player.i >= trace.length) {
+        clearInterval(player.timer);
+        player = null;
+        simBtn.textContent = SIM_LABEL;
+        return;
+      }
+      applyFrame();
+    }
+    simBtn.addEventListener('click', () => {
+      if (player?.paused) {
+        player.paused = false;
+        simBtn.textContent = '⏸ running…';
+        logEvent('debug-resumed', {});
+        player.timer = setInterval(tick, 900);
+        return;
+      }
+      if (player?.timer) clearInterval(player.timer);
       select.value = 'place-order';
       project();
-      let i = 0;
-      surface.debugState = trace[i++];
-      timer = setInterval(() => {
-        if (i >= trace.length) { clearInterval(timer); return; }
-        surface.debugState = trace[i++];
-      }, 900);
+      player = { i: 0, timer: null, paused: false };
+      simBtn.textContent = '⏸ running…';
       logEvent('simulate', { scenario: 'payment-declined → manual review' });
+      applyFrame(); // frame 0 can itself hit a breakpoint
+      if (!player.paused) player.timer = setInterval(tick, 900);
     });
 
     // Expression console: completions from the fixture's schema surface, validation of $roots.
