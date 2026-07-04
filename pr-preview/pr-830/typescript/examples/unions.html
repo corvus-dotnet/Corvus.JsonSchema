@@ -196,7 +196,7 @@
 </ul>
 <p>When each branch carries a discriminant property (here <code>kind: &quot;circle&quot;</code> / <code>&quot;rectangle&quot;</code> via <code>const</code>), the guards key off it; the same shape with no discriminant still works, distinguished structurally by the evaluator.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/eb4af659632718add26983cb9e79a32b6e78e318/docs/typescript/examples/011-unions/shape.json"><code>shape.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/90e06cf9f35fe8f2390f43f44e080ee8f57025e7/docs/typescript/examples/011-unions/shape.json"><code>shape.json</code></a></p>
 <pre><code class="language-json">{
   &quot;title&quot;: &quot;Shape&quot;,
   &quot;oneOf&quot;: [
@@ -208,7 +208,7 @@
 }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/eb4af659632718add26983cb9e79a32b6e78e318/docs/typescript/examples/011-unions/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/90e06cf9f35fe8f2390f43f44e080ee8f57025e7/docs/typescript/examples/011-unions/demo.ts">Example code</a></p>
 <h3 id="match-exhaustively">Match exhaustively</h3>
 <pre><code class="language-typescript">const area = (s: Shape) =&gt;
   Shape.match(s, {

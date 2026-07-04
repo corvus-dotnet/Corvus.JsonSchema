@@ -191,7 +191,7 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p><code>allOf</code> can reference more than one base. <code>Widget</code> mixes in <code>Named</code> (a <code>name</code>) and <code>Timestamped</code> (a <code>createdAt</code>), and adds its own <code>id</code>. The generated <code>interface</code> merges all of them, and a value must satisfy each. This is the &quot;combine orthogonal capabilities&quot; pattern.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/eb4af659632718add26983cb9e79a32b6e78e318/docs/typescript/examples/010-mixins/widget.json"><code>widget.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/90e06cf9f35fe8f2390f43f44e080ee8f57025e7/docs/typescript/examples/010-mixins/widget.json"><code>widget.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Widget&quot;, &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
     &quot;named&quot;: { &quot;title&quot;: &quot;Named&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;name&quot;], &quot;properties&quot;: { &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; } } },
@@ -201,7 +201,7 @@
 </code></pre>
 <p>The generated <code>interface Widget</code> has <code>name</code>, <code>createdAt?</code> (a <code>date-time</code> brand), and <code>id?</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/eb4af659632718add26983cb9e79a32b6e78e318/docs/typescript/examples/010-mixins/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/90e06cf9f35fe8f2390f43f44e080ee8f57025e7/docs/typescript/examples/010-mixins/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const bytes = Widget.build({ name: &quot;gauge&quot;, createdAt: CreatedAt.from(&quot;2026-06-26T10:00:00Z&quot;), id: &quot;w-1&quot; });
 </code></pre>
 <h2 id="running-the-example">Running the Example</h2>
