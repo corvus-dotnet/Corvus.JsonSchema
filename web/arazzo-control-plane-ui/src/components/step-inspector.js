@@ -21,6 +21,7 @@ import { templatesFromResponses, payloadSkeletonFromSchema } from '../operation-
 import './expression-input.js';
 import './criteria-editor.js';
 import './outputs-editor.js';
+import './payload-editor.js';
 
 const KINDS = [
   ['operationId', 'operation (by id)'],
@@ -139,9 +140,8 @@ class ArazzoStepInspector extends ArazzoElement {
         </div>
       </div>
       <div>
-        <label>payload (JSON; runtime expressions allowed in strings)</label>
-        <textarea class="payload" rows="4" spellcheck="false">${s.requestBody?.payload !== undefined ? escapeHtml(JSON.stringify(s.requestBody.payload, null, 2)) : ''}</textarea>
-        <div class="hint payload-hint"></div>
+        <label>payload</label>
+        <div class="payload-slot"></div>
       </div>
 
       <h3>success criteria</h3>
@@ -211,28 +211,23 @@ class ArazzoStepInspector extends ArazzoElement {
       this._pruneRequestBody();
       this._emit();
     });
-    const payload = form.querySelector('.payload');
-    payload.addEventListener('input', () => {
-      const hint = form.querySelector('.payload-hint');
-      if (!payload.value.trim()) {
-        payload.classList.remove('invalid');
-        hint.textContent = '';
+    // The strongly-typed payload editor: structure from the binding's schema, expression-capable
+    // leaves, JSON view for full fidelity (schema-less bindings get JSON only).
+    const payload = document.createElement('arazzo-payload-editor');
+    payload.schema = this._operationRequest?.schema || null;
+    payload.completionContext = this._completionContext;
+    payload.value = s.requestBody?.payload;
+    form.querySelector('.payload-slot').append(payload);
+    payload.addEventListener('payload-changed', (e) => {
+      e.stopPropagation();
+      if (e.detail.payload === undefined) {
         if (this._step.requestBody) { delete this._step.requestBody.payload; this._pruneRequestBody(); }
-        this._emit();
-        return;
-      }
-      try {
-        const parsed = JSON.parse(payload.value);
-        payload.classList.remove('invalid');
-        hint.textContent = '';
+      } else {
         this._ensureRequestBody();
-        this._step.requestBody.payload = parsed;
-        this._emit();
-      } catch (err) {
-        payload.classList.add('invalid');
-        hint.textContent = `not JSON yet: ${String(err.message).slice(0, 80)}`;
-        // Don't emit a broken payload; the last valid one stands until this parses.
+        this._step.requestBody.payload = e.detail.payload;
       }
+      this._renderBodyTemplateButton(); // the skeleton affordance tracks payload presence
+      this._emit();
     });
   }
 

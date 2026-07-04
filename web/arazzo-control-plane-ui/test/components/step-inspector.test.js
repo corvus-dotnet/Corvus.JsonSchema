@@ -35,7 +35,8 @@ describe('<arazzo-step-inspector>', () => {
     equal(el.shadowRoot.querySelector('.binding .bval').value, 'authorizePayment');
     equal(el.shadowRoot.querySelector('.prow .pname').value, 'orderId');
     equal(el.shadowRoot.querySelector('.ctype').value, 'application/json');
-    ok(el.shadowRoot.querySelector('.payload').value.includes('$inputs.amount'));
+    const payloadEd = el.shadowRoot.querySelector('arazzo-payload-editor');
+    ok(payloadEd.shadowRoot.querySelector('.payload').value.includes('$inputs.amount'), 'JSON mode without a schema');
     equal(el.shadowRoot.querySelector('arazzo-criteria-editor').value.length, 1);
     ok(el.shadowRoot.querySelector('.onfailure summary').textContent.includes('retry-throttled'));
     equal(Object.keys(el.shadowRoot.querySelector('arazzo-outputs-editor').value)[0], 'authorizationId');
@@ -55,7 +56,7 @@ describe('<arazzo-step-inspector>', () => {
 
   it('guards the payload: invalid JSON never emits, valid JSON does', async () => {
     make();
-    const payload = el.shadowRoot.querySelector('.payload');
+    const payload = el.shadowRoot.querySelector('arazzo-payload-editor').shadowRoot.querySelector('.payload');
     let emitted = 0;
     el.addEventListener('step-changed', () => emitted++);
     payload.value = '{ broken';
@@ -66,6 +67,26 @@ describe('<arazzo-step-inspector>', () => {
     payload.dispatchEvent(new Event('input', { bubbles: true }));
     equal(emitted, 1);
     ok(!payload.classList.contains('invalid'));
+  });
+
+  it('with an operation schema the payload is a typed form (leaves are expression inputs)', async () => {
+    make({ stepId: 'x', operationId: 'op', requestBody: { payload: { amount: '$inputs.amount' } } });
+    el.value = { stepId: 'x', operationId: 'op', requestBody: { payload: { amount: '$inputs.amount' } } };
+    el.operationRequest = {
+      contentType: 'application/json',
+      schema: { type: 'object', properties: { orderId: { type: 'string' }, amount: { type: 'number' } } },
+    };
+    el.value = el.value; // rebuild with the schema in place
+    const pe = el.shadowRoot.querySelector('arazzo-payload-editor');
+    ok(!pe.shadowRoot.querySelector('.modes').hidden, 'Form|JSON toggle offered');
+    const leaves = pe.shadowRoot.querySelectorAll('arazzo-expression-input');
+    equal(leaves.length, 2, 'a leaf per schema property');
+
+    // A literal typed into the number field coerces; the expression string is preserved.
+    const changed = nextEvent(el, 'step-changed');
+    leaves[1].dispatchEvent(new CustomEvent('value-changed', { detail: { value: '42' } }));
+    const step = (await changed).detail.step;
+    equal(step.requestBody.payload.amount, 42, 'literal coerced to the schema type');
   });
 
   it('localize copies the inherited defaults onto the step (only when inheriting)', async () => {
