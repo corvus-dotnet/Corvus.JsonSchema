@@ -107,7 +107,7 @@
     // ONE document model behind every editor (design §5.2): the canvas, the inspectors, and the
     // text tab all mutate through it and re-render from it. `doc` stays a stable reference for
     // reads — the model mutates in place via identity-addressed ops.
-    const model = new WorkflowDocumentModel(designerFixture, { actor: 'you' });
+    const model = new WorkflowDocumentModel(designerFixture, { actor: 'you', designerState: { nodes: {} } });
     const doc = model.document;
 
     // What listSourceOperations will provide in the full designer: per-operation documented
@@ -160,6 +160,15 @@
       surface.addEventListener(type, (e) => logEvent(type, e.detail));
     }
 
+    // Layout moves go THROUGH the model like every other edit, so they land on the same undo/redo
+    // stack (in gesture order) and the same op stream. The surface pins only manually-moved nodes
+    // (its overrides map); the model's designer state is the single source of truth the render
+    // seam reads back from — undoing a first move unpins the node back to auto-layout.
+    surface.addEventListener('layout-changed', (e) => {
+      model.updateDesignerState((s) => { s.nodes = structuredClone(e.detail.overrides); },
+        { origin: 'canvas', label: 'move node', coalesce: true });
+    });
+
     // The inspector: selection drives a real editor with write-back into the document — the
     // drop → select → conditions flow. Edits re-project with positions preserved and never
     // rebuild the editor mid-typing (only a selection change does).
@@ -171,10 +180,11 @@
       return h;
     };
     // The single render seam: every model change (canvas, inspector, text, undo/redo, remote)
-    // re-projects the canvas with positions preserved; the text tab refreshes unless it made the
-    // edit; the inspector rebuilds only for edits it did NOT make (focus survives typing).
+    // re-projects the canvas with the model's pinned positions (manually-moved nodes; the rest
+    // stay auto-layout); the text tab refreshes unless it made the edit; the inspector rebuilds
+    // only for edits it did NOT make (focus survives typing).
     model.addEventListener('document-changed', (e) => {
-      surface.layoutOverrides = surface.positions;
+      surface.layoutOverrides = structuredClone(model.designerState.nodes ?? {});
       project();
       if (e.detail.origin !== 'text' && !textEditor.hidden) {
         textEditor.value = model.text;

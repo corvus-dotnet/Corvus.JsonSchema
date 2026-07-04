@@ -22,11 +22,18 @@
 // Editors keep the simple API: `update(mutator)` and `applyText(text)` — the differ turns whatever
 // they did into minimal ops (a step edit in TEXT mode becomes the same op a canvas edit produces).
 //
-//   const model = new WorkflowDocumentModel(doc, { actor: 'mwa' });
+// The model also owns the DESIGNER STATE (node positions and similar, design §5.2): a sibling of
+// the document, never written into it and never packaged, but edited through the SAME op pipeline —
+// `updateDesignerState(mutator)` reduces to ops flagged `d: 'designer'`, so layout changes ride the
+// same undo/redo stack (one Undo button, interleaved with document edits in gesture order), the
+// same `ops` transport seam (collaborators see each other's layout), and the same LWW convergence.
+//
+//   const model = new WorkflowDocumentModel(doc, { actor: 'mwa', designerState: saved ?? {} });
 //   model.addEventListener('document-changed', (e) => render(model.document, e.detail));
 //   model.addEventListener('ops', (e) => transport.send(e.detail));      // → server
 //   transport.onmessage = (group) => model.applyRemote(group);           // ← server order
 //   model.update((d) => { … }, { origin: 'inspector', label: 'edit step' });
+//   model.updateDesignerState((s) => { s.nodes = overrides; }, { origin: 'canvas', label: 'move node', coalesce: true });
 //   model.undo();  model.redo();
 
 const HISTORY_LIMIT = 200;
@@ -38,11 +45,13 @@ const IDENTITY_KEYS = { workflows: 'workflowId', steps: 'stepId', sourceDescript
 export class WorkflowDocumentModel extends EventTarget {
   /**
    * @param {object} document  The Arazzo document (cloned in).
-   * @param {{actor?: string}} [opts]  The local actor id stamped on op groups.
+   * @param {{actor?: string, designerState?: object}} [opts]  The local actor id stamped on op
+   *   groups, plus the initial designer state (node positions etc. — the document's sibling).
    */
-  constructor(document, { actor = 'local' } = {}) {
+  constructor(document, { actor = 'local', designerState = {} } = {}) {
     super();
     /** @private */ this._document = structuredClone(document ?? {});
+    /** @private */ this._designerState = structuredClone(designerState ?? {});
     /** @private */ this._actor = actor;
     /** @private */ this._seq = 0;
     /** @private */ this._undo = []; // [{ops, label, at}] — this actor's groups only
@@ -52,6 +61,10 @@ export class WorkflowDocumentModel extends EventTarget {
 
   /** The current document. Treat as read-only — mutate through update()/applyOps(). */
   get document() { return this._document; }
+
+  /** The current designer state (node positions etc.). Read-only — mutate through updateDesignerState(). */
+  get designerState() { return this._designerState; }
+
   get actor() { return this._actor; }
   get canUndo() { return this._undo.length > 0; }
   get canRedo() { return this._redo.length > 0; }
@@ -76,13 +89,30 @@ export class WorkflowDocumentModel extends EventTarget {
   }
 
   /**
+   * Apply an edit to the DESIGNER STATE (node positions etc.) through the same op pipeline as
+   * document edits: the diff's ops are flagged `d: 'designer'`, so they land on the same undo/redo
+   * stack (layout moves undo in gesture order, interleaved with document edits) and the same `ops`
+   * transport seam. The document itself is never touched.
+   */
+  updateDesignerState(mutator, { origin = 'canvas', label = 'layout', coalesce = false } = {}) {
+    const before = this._designerState;
+    const draft = structuredClone(before);
+    const result = mutator(draft);
+    const after = result === undefined ? draft : result;
+    const ops = diff(before, after);
+    if (!ops.length) return { ok: true, ops: [] };
+    for (const op of ops) op.d = 'designer';
+    return this._commitLocal(ops, { origin, label, coalesce });
+  }
+
+  /**
    * Apply a remote actor's op group, delivered in server order. Never touches this actor's
    * undo/redo stacks; unresolvable ops (their target left with the document) are skipped.
    */
   applyRemote(group) {
     const applied = [];
     for (const op of group.ops || []) {
-      if (applyOp(this._document, structuredClone(op))) applied.push(op);
+      if (this._applyOne(structuredClone(op))) applied.push(op);
     }
     if (applied.length) {
       this._emitChanged({ origin: 'remote', label: group.label || 'remote edit', actor: group.actor, ops: applied, remote: true });
@@ -94,7 +124,7 @@ export class WorkflowDocumentModel extends EventTarget {
     const entry = this._undo.pop();
     if (!entry) return false;
     const inverse = entry.ops.map(invertOp).reverse();
-    const applied = inverse.filter((op) => applyOp(this._document, structuredClone(op)));
+    const applied = inverse.filter((op) => this._applyOne(structuredClone(op)));
     this._redo.push(entry);
     this._lastEdit = null;
     const detail = { origin: 'history', label: `undo ${entry.label}`, actor: this._actor, ops: applied };
@@ -106,7 +136,7 @@ export class WorkflowDocumentModel extends EventTarget {
   redo() {
     const entry = this._redo.pop();
     if (!entry) return false;
-    const applied = entry.ops.filter((op) => applyOp(this._document, structuredClone(op)));
+    const applied = entry.ops.filter((op) => this._applyOne(structuredClone(op)));
     this._undo.push(entry);
     this._lastEdit = null;
     const detail = { origin: 'history', label: `redo ${entry.label}`, actor: this._actor, ops: applied };
@@ -137,9 +167,14 @@ export class WorkflowDocumentModel extends EventTarget {
     return this._commitLocal(ops, { origin, label: 'text edit', coalesce });
   }
 
+  /** @private — routes an op to its root: document ops (no flag) vs designer-state ops (`d`). */
+  _applyOne(op) {
+    return applyOp(op.d === 'designer' ? this._designerState : this._document, op);
+  }
+
   /** @private */
   _commitLocal(ops, { origin, label, coalesce }) {
-    const applied = ops.filter((op) => applyOp(this._document, structuredClone(op)));
+    const applied = ops.filter((op) => this._applyOne(structuredClone(op)));
     if (!applied.length) return { ok: true, ops: [] };
 
     const now = Date.now();
@@ -246,6 +281,12 @@ function applyOp(doc, op) {
 }
 
 function invertOp(op) {
+  const inverse = invertOpCore(op);
+  if (op.d !== undefined) inverse.d = op.d; // the inverse stays in the op's domain
+  return inverse;
+}
+
+function invertOpCore(op) {
   switch (op.kind) {
     case 'set':
       return op.prev === undefined
