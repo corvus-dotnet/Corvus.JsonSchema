@@ -79,6 +79,35 @@
     // The demo owns a mutable copy of the fixture so edge-created can round-trip into the document.
     const doc = structuredClone(designerFixture);
 
+    // What listSourceOperations will provide in the full designer: per-operation documented
+    // responses and request/message schemas, powering the template affordances.
+    const OPERATION_SURFACE = {
+      validateOrder: { responses: ['200', '400', 'default'] },
+      authorizePayment: {
+        responses: ['201', '402', '429', '5XX'],
+        request: {
+          contentType: 'application/json',
+          schema: {
+            type: 'object',
+            properties: {
+              orderId: { type: 'string' },
+              amount: { type: 'number' },
+              card: { type: 'object', properties: { number: { type: 'string' }, cvv: { type: 'string' } } },
+              capture: { type: 'boolean', default: false },
+            },
+          },
+        },
+      },
+      capturePayment: { responses: ['200', '404'] },
+      createReviewTask: { responses: ['201'] },
+      refundPayment: { responses: ['200', '404', 'default'] },
+      '/channels/orderConfirmations': {
+        request: {
+          schema: { type: 'object', properties: { confirmed: { type: 'boolean' }, at: { type: 'string', format: 'date-time' } } },
+        },
+      },
+    };
+
     for (const w of listWorkflows(doc)) {
       const opt = document.createElement('option');
       opt.value = w.workflowId;
@@ -143,12 +172,19 @@
       }
       if (sel.type === 'node') {
         const si = wf.steps.findIndex((s) => s.stepId === sel.id);
+        const step = wf.steps[si];
         const ed = document.createElement('arazzo-step-inspector');
         ed.stepIds = wf.steps.map((s) => s.stepId);
         ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
         ed.workflowDefaults = { successActions: wf.successActions || [], failureActions: wf.failureActions || [] };
         ed.completionContext = expr.completionContext;
-        ed.value = wf.steps[si];
+        // The fixture operation surface (stands in for listSourceOperations): documented
+        // responses drive the criteria templates, the request/message schema drives the
+        // body-skeleton template.
+        const op = OPERATION_SURFACE[step.operationId] ?? (step.channelPath ? OPERATION_SURFACE[step.channelPath] : undefined);
+        if (op?.responses) ed.operationResponses = op.responses;
+        if (op?.request) ed.operationRequest = op.request;
+        ed.value = step;
         inspector.append(heading(`step — ${sel.id}`), ed);
         ed.addEventListener('step-changed', (ev) => {
           wf.steps[si] = ev.detail.step;
