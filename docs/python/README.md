@@ -66,13 +66,13 @@ walkthrough README. Regenerate every recipe and run its checks (`mypy --strict`,
 | 017 | [conditional](./examples/017-conditional/) | `if` / `then` / `else` |
 | 018 | [defaults](./examples/018-defaults/) | `default` |
 | 019 | [formats](./examples/019-formats/) | `format` brands + `to_temporal` / `to_exact` |
-| 020 | [json-patch](./examples/020-json-patch/) | RFC 7396 merge patch |
+| 020 | [json-patch](./examples/020-json-patch/) | RFC 6902 JSON Patch + RFC 7396 merge patch |
 
 ## Guides
 
 - [reading-and-validating](./reading-and-validating.md) — `evaluate`, `parse`, the boolean/no-exception model
 - [the-type-surface](./the-type-surface.md) — the full JSON-Schema-to-Python type mapping
-- [mutation](./mutation.md) — `build` / `build_canonical` / byte-native `patch` / `with_defaults`
-- [json-patch](./json-patch.md) — RFC 7396 merge patch (and the RFC 6902 gap)
+- [mutation](./mutation.md) — `build` / `build_canonical` / byte-native `patch` / `with_defaults` / `produce`
+- [json-patch](./json-patch.md) — RFC 6902 JSON Patch and RFC 7396 merge patch
 - [code-generation](./code-generation.md) — the CLI, output layout, and the type-check gate
 - [runtime](./runtime.md) — the `corvus_json_runtime` package

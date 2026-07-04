@@ -1,9 +1,10 @@
-"""The immer-style ``produce`` and the byte-native read-modify-write helpers (Model C).
+"""The recipe-driven ``produce`` and the byte-native read-modify-write helpers (Model C).
 
-The differentiator path: a partial update is applied by SPLICING the changed members' value bytes into the
-source document, copying every other byte through verbatim, rather than parsing + re-serialising the whole
-value. A faithful port of the TypeScript runtime's Model C (scan / edit / rmw functions). ``produce`` (the
-draft-proxy recipe) and array-element edits are later slices and still raise ``NotImplementedError``.
+The differentiator path: a partial update is applied by SPLICING the changed members' (and array elements')
+value bytes into the source document, copying every other byte through verbatim, rather than parsing +
+re-serialising the whole value (``rmw_upsert`` / ``rmw_produce_full`` / ``rmw_array_bytes``, a port of the
+TypeScript runtime's Model C scan / edit / rmw functions). ``produce`` is the recipe-driven whole-value
+transform (mutate a decoded draft, return canonical bytes).
 """
 
 from __future__ import annotations

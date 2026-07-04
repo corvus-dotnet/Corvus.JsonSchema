@@ -2,7 +2,7 @@
 
 Parsed values are read as plain `TypedDict`s, so the mutation API never changes data in place. It produces a
 new document over canonical UTF-8 JSON bytes, the wire and persistence shape. The generator emits `build_<t>`,
-`build_canonical_<t>`, `patch_<t>`, and, when the subtree declares defaults, `with_defaults_<t>`.
+`build_canonical_<t>`, `patch_<t>`, `produce_<t>`, and, when the subtree declares defaults, `with_defaults_<t>`.
 
 ## `build_<t>`: construct from values
 
@@ -95,6 +95,30 @@ with_defaults_document({"id": "doc-2"})           # {'id': 'doc-2', 'title': 'Un
 Unlike the other three, `with_defaults_<t>` works on a parsed value and returns a parsed value, not bytes. Pass
 its result to `build_<t>` when you want the filled document as bytes.
 
+## `produce_<t>`: mutate a decoded draft
+
+`produce_<t>(source, recipe)` decodes `source` into a mutable draft, runs `recipe` over that draft, and returns
+the result as canonical bytes. The recipe mutates the draft in place, so an edit reads like ordinary Python. The
+source bytes are left untouched.
+
+```python
+from generated import Document, build_document, produce_document
+
+data = build_document({"id": "doc-3", "title": "Draft", "version": 1})
+
+
+def publish(draft: Document) -> None:
+    draft["title"] = "Published"
+    draft["version"] = draft.get("version", 0) + 1
+
+
+produce_document(data, publish)   # canonical bytes with the recipe applied
+```
+
+The recipe takes the decoded draft, typed as the model, and returns `None`. Use `produce_<t>` for a whole-value
+transform that is easier to express as in-place edits than as a set of named changes. When you know exactly the
+members to set or remove, `patch_<t>` is the byte-native splice and does not decode the whole document.
+
 ## How it works: splice, don't rebuild
 
 `build_<t>` and `build_canonical_<t>` encode a whole value. `patch_<t>` avoids rebuilding.
@@ -110,16 +134,14 @@ its result to `build_<t>` when you want the filled document as bytes.
 - `build_canonical_<t>`, you need deterministic, sorted-key bytes.
 - `patch_<t>`, set or remove a known set of members, or edit array elements, on an existing document. The fast
   path.
+- `produce_<t>`, apply a recipe of in-place edits to a decoded draft when that is clearer than a set of named
+  changes.
 
-All three return new bytes and leave their input untouched, so they are safe to use on shared, immutable
+They all return new bytes and leave their input untouched, so they are safe to use on shared, immutable
 documents.
-
-> The immer-style draft recipe (`produce`) is present in the TypeScript engine but is not yet implemented in
-> the Python runtime. For nested edits, `patch_<t>` with `changes` (rebuilding the nested member) or a
-> merge patch covers the common cases.
 
 ## See also
 
-- [json-patch](./json-patch.md), RFC 7396 merge patch over the same bytes.
+- [json-patch](./json-patch.md), RFC 6902 JSON Patch and RFC 7396 merge patch over the same bytes.
 - [reading-and-validating](./reading-and-validating.md), the read surface these produce.
 - [examples/016-mutation](./examples/016-mutation/), a runnable walkthrough.

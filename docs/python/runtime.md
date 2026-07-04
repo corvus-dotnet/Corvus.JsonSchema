@@ -62,8 +62,10 @@ The generated code imports these from `corvus_json_runtime`.
   `uuid`, `uri-template`, `json-pointer` / `relative-json-pointer`, and `regex`, shared by the validators and
   the brand factories. `FormatError` is raised by a `from_<t>` factory on a bad value.
 - The byte-level edit engine. `rmw_upsert`, `rmw_produce_full`, and the `RmwTarget`, `RmwArrayEdit`,
-  `RmwArrayOps`, and `ListOps` types that back `patch_<t>` (see [Mutation](./mutation.md)).
-- Merge patch. `apply_merge_patch` and `create_merge_patch` (RFC 7396), and `JsonPatchError`.
+  `RmwArrayOps`, and `ListOps` types that back `patch_<t>`, plus `produce`, the recipe-driven draft that backs
+  `produce_<t>` (see [Mutation](./mutation.md)).
+- JSON Patch. `apply_patch` and `create_patch` (RFC 6902 operation patch), `apply_merge_patch` and
+  `create_merge_patch` (RFC 7396 merge patch), and `JsonPatchError` (see [JSON Patch](./json-patch.md)).
 - The evaluation tracker and results. `Ev`, `NOEV`, `fresh` (the tracker for `unevaluated*`), and `Results`,
   `Failure`, and `Annotation` (the spec-output failure collector, see
   [Reading and validating](./reading-and-validating.md#detailed-results)).
@@ -85,13 +87,6 @@ birth_date = person.get("birth_date")
 if birth_date is not None:
     to_temporal_birth_date(birth_date)   # whenever.Date("1820-01-17")
 ```
-
-## Not yet implemented
-
-Two pieces of the TypeScript runtime are present in the Python package but not yet implemented. `apply_patch`
-and `create_patch` (RFC 6902 JSON Patch, see [JSON Merge Patch](./json-patch.md#rfc-6902-json-patch)) and
-`produce` (the immer-style draft recipe, see [Mutation](./mutation.md)) raise `NotImplementedError`. The RFC
-7396 merge patch and the byte-native `patch_<t>` cover the mutation cases in the meantime.
 
 ## Python version
 

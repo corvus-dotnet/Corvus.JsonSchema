@@ -2,7 +2,7 @@
 from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Required, TypeGuard, TypedDict, cast
-from corvus_json_runtime import Ev, NOEV, Results, RmwTarget, apply_merge_patch, build, canonicalize, create_merge_patch, decode_and_parse, eq, fresh, is_num, is_obj, rmw_produce_full, rmw_upsert
+from corvus_json_runtime import Ev, NOEV, Results, RmwTarget, apply_merge_patch, apply_patch, build, canonicalize, create_merge_patch, create_patch, decode_and_parse, eq, fresh, is_num, is_obj, produce, rmw_produce_full, rmw_upsert
 
 
 type Event = Click | KeyPress | Scroll
@@ -177,6 +177,21 @@ def create_merge_patch_click(source: Click | bytes, target: Click | bytes) -> ob
     )
 
 
+def apply_patch_click(doc: Click | bytes, patch: object) -> bytes:
+    return canonicalize(apply_patch(decode_and_parse(doc) if isinstance(doc, bytes) else doc, patch))
+
+
+def create_patch_click(source: Click | bytes, target: Click | bytes) -> object:
+    return create_patch(
+        decode_and_parse(source) if isinstance(source, bytes) else source,
+        decode_and_parse(target) if isinstance(target, bytes) else target,
+    )
+
+
+def produce_click(source: bytes, recipe: Callable[[Click], None]) -> bytes:
+    return produce(source, cast("Callable[[object], None]", recipe))
+
+
 def patch_click(source: bytes, changes: Mapping[str, object], removals: Sequence[str] | None = None) -> bytes:
     targets: list[RmwTarget] = []
     if "type" in changes:
@@ -311,6 +326,21 @@ def create_merge_patch_key_press(source: KeyPress | bytes, target: KeyPress | by
     )
 
 
+def apply_patch_key_press(doc: KeyPress | bytes, patch: object) -> bytes:
+    return canonicalize(apply_patch(decode_and_parse(doc) if isinstance(doc, bytes) else doc, patch))
+
+
+def create_patch_key_press(source: KeyPress | bytes, target: KeyPress | bytes) -> object:
+    return create_patch(
+        decode_and_parse(source) if isinstance(source, bytes) else source,
+        decode_and_parse(target) if isinstance(target, bytes) else target,
+    )
+
+
+def produce_key_press(source: bytes, recipe: Callable[[KeyPress], None]) -> bytes:
+    return produce(source, cast("Callable[[object], None]", recipe))
+
+
 def patch_key_press(source: bytes, changes: Mapping[str, object], removals: Sequence[str] | None = None) -> bytes:
     targets: list[RmwTarget] = []
     if "key" in changes:
@@ -427,6 +457,21 @@ def create_merge_patch_scroll(source: Scroll | bytes, target: Scroll | bytes) ->
         decode_and_parse(source) if isinstance(source, bytes) else source,
         decode_and_parse(target) if isinstance(target, bytes) else target,
     )
+
+
+def apply_patch_scroll(doc: Scroll | bytes, patch: object) -> bytes:
+    return canonicalize(apply_patch(decode_and_parse(doc) if isinstance(doc, bytes) else doc, patch))
+
+
+def create_patch_scroll(source: Scroll | bytes, target: Scroll | bytes) -> object:
+    return create_patch(
+        decode_and_parse(source) if isinstance(source, bytes) else source,
+        decode_and_parse(target) if isinstance(target, bytes) else target,
+    )
+
+
+def produce_scroll(source: bytes, recipe: Callable[[Scroll], None]) -> bytes:
+    return produce(source, cast("Callable[[object], None]", recipe))
 
 
 def patch_scroll(source: bytes, changes: Mapping[str, object], removals: Sequence[str] | None = None) -> bytes:
