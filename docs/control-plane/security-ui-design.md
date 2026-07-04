@@ -42,9 +42,23 @@ The rest of this doc is the original design narrative and lags the code in place
   match derives the operator-facing claim (strip `sys:`, e.g. `sys:sub` → `sub`, design §6.5 lossy). Client/UI: the
   `getAccessGrants(grantee)` client method (base64url of the grantee JSON), a mock `/access/grants` aggregation,
   `<arazzo-access-overview>` (grantee picker + reach grants with inline Revoke + administers + credential usage) wired
-  into the demo Access tab, all tested. **Remaining:** container-conformance for the endpoint, and the slice-7 slotting.
-  *Open UI polish: the credential-usage list mirrors the server's `IsUsableBy` (includes shared credentials), so it can
-  read noisy — consider distinguishing "via identity" from "shared".*
+  into the demo Access tab, all tested. Credential usage was tidied to list only the credentials **scoped to the
+  grantee's identity** (a new `SourceCredentialBinding.IsUsageScoped` gates the handler filter; shared deployment-wide
+  bindings are omitted, §6.1) — server + mock + tests done.
+  **Remaining — the paged-overview rework (queued as a focused pass; DESIGN CAPTURED):** the three overview sections
+  return **unbounded** lists today, but a grantee can administer/use hundreds — they must be **standard keyset-paged
+  Prev/Next lists** (campaign rule: page every list + its store from the start). Design: replace the single
+  `GET /access/grants` (returns all three) with **three paged sub-resource endpoints** — `GET /access/grants/reach`,
+  `/administered`, `/credentials` — each `grantee` + `limit` + `pageToken` → `{ items, nextPageToken }`. **administered**
+  pages cleanly through the already-keyset `IWorkflowAdministratorStore.ListAdministeredAsync(digest, limit, pageToken)`,
+  reached via a **new paged `ISecuredWorkflowCatalog.ListAdministeredWorkflowsAsync(identity, limit, pageToken)`**
+  (the store isn't at the wiring site — it's wrapped in `SecuredWorkflowCatalog`). **reach** and **credentials** are
+  handler-side **filter-and-page**: read one underlying store page, apply the claim / usage-scope filter, project
+  bytes-native, and carry the store's page token through as the overview continuation (the binding/credential stores
+  don't index by claim/usage-match, so no store-side filter without a 10-backend change). Web: 3 paged client methods,
+  the mock's 3 paged handlers, and the component reworked to three sections each driving `<arazzo-pager>` (Prev/Next).
+  Also fold in the OpenAPI credential-usage description update (the identity-scoped narrowing) with that rework's regen.
+  Then container-conformance, and the slice-7 slotting.
 - **Slice 7 — Access-area reorg — IN PROGRESS** (decision taken). Today an **Access** tab holds Requests and a
   **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: fold
   Overview | Bindings | Reach | Requests under a single Access sub-nav, move Bindings+Reach out of Permissions,

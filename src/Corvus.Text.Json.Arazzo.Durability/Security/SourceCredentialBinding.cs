@@ -74,6 +74,11 @@ public readonly partial struct SourceCredentialBinding
     /// check (<see cref="IsUsableBy"/>); independent of <see cref="ManagementTagsValue"/>.</summary>
     public SecurityTagSet UsageTagsValue => SecurityTagSet.CopyFrom(this.UsageTags);
 
+    /// <summary>Whether this binding is scoped to a specific run identity (it carries <c>usageTags</c>), as opposed to a
+    /// shared binding usable by any run. The access overview (§6.1) lists only the usage-scoped bindings a grantee's
+    /// identity satisfies — a shared binding is deployment-wide, not a grantee-specific grant.</summary>
+    public bool IsUsageScoped => this.UsageTags.IsNotUndefined() && this.UsageTags.GetArrayLength() > 0;
+
     /// <summary>Whether a run carrying <paramref name="runTags"/> is entitled to use this binding (design §13/§14.2):
     /// it is, iff the run satisfies <em>every</em> <c>usageTags</c> entry the binding carries (label-superset). An
     /// untagged-for-usage binding is shared and usable by any run; a usage-tagged binding is usable only by a run that
