@@ -40,4 +40,10 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The Arazzo meta-schemas, embedded for validateWorkspaceWorkflow's document-conformance pass
+         (picked by the document's declared arazzo version). -->
+    <EmbeddedResource Include="..\Corvus.Text.Json.Arazzo10\Arazzo10.json" Link="Schemas\Arazzo10.json" LogicalName="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Schemas.Arazzo10.json" />
+    <EmbeddedResource Include="..\Corvus.Text.Json.Arazzo11\Arazzo11.json" Link="Schemas\Arazzo11.json" LogicalName="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Schemas.Arazzo11.json" />
+  </ItemGroup>
 </Project>

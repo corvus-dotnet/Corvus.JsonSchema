@@ -6,10 +6,12 @@ using System.Buffers;
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Corvus.Text.Json.Internal;
+using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -36,6 +38,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
+    private const int MaxValidationErrors = 200;
 
     private readonly IWorkspaceWorkflowStore store;
     private readonly ISecuredWorkflowCatalog? catalog;
@@ -266,6 +269,71 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             : DeleteWorkspaceWorkflowResult.NotFound(NotFoundProblem(id), workspace);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ValidateWorkspaceWorkflowResult> HandleValidateWorkspaceWorkflowAsync(ValidateWorkspaceWorkflowParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return ValidateWorkspaceWorkflowResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        // Both passes run over the stored document and their findings merge, in document-conformance-
+        // then-semantic order. An invalid document is a SUCCESSFUL validation run (200 + findings).
+        var findings = new List<Finding>();
+        var document = (Corvus.Text.Json.JsonElement)w.RootElement.Document;
+
+        // 1 — JSON-Schema conformance against the Arazzo meta-schema the document declares.
+        using (JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed))
+        {
+            ArazzoMetaSchema.For(document).Validate(in document, collector);
+            foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
+            {
+                if (!result.IsMatch)
+                {
+                    findings.Add(new("error", "schema", result.GetDocumentEvaluationLocationText(), result.GetMessageText(), result.GetSchemaEvaluationLocationText()));
+                    if (findings.Count >= MaxValidationErrors)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2 — document-local semantic checks (the compiler's rules, collected instead of thrown).
+        foreach (WorkflowDocumentDiagnostic diagnostic in WorkflowDocumentAnalyzer.Analyze(in document))
+        {
+            findings.Add(new(
+                diagnostic.Severity switch
+                {
+                    WorkflowDocumentDiagnosticSeverity.Error => "error",
+                    WorkflowDocumentDiagnosticSeverity.Warning => "warning",
+                    _ => "info",
+                },
+                diagnostic.Category,
+                diagnostic.InstancePath,
+                diagnostic.Message,
+                SchemaLocation: null));
+        }
+
+        bool valid = true;
+        foreach (Finding finding in findings)
+        {
+            if (finding.Severity == "error")
+            {
+                valid = false;
+                break;
+            }
+        }
+
+        Models.WorkingCopyDiagnostics.Source<List<Finding>> body = Models.WorkingCopyDiagnostics.Build(
+            in findings,
+            valid: valid,
+            diagnostics: Models.WorkingCopyDiagnostics.WorkflowDiagnosticArray.Build(in findings, BuildFindings));
+        return ValidateWorkspaceWorkflowResult.Ok(body, workspace);
+    }
+
     // ── working-copy summary list projection (field-select, closure-free Build<TContext>) ─────────────────────────────
     private static void BuildSummaries(in IReadOnlyList<WorkspaceWorkflow> workingCopies, ref Models.WorkingCopyList.WorkingCopySummaryArray.Builder array)
     {
@@ -400,6 +468,53 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         public IReadOnlyList<SecurityTag> InternalTags { get; } = internalTags;
 
         public SecurityTagSet UserTags { get; } = userTags;
+    }
+
+    // ── diagnostics projection (schema + semantic findings → the wire model) ──────────────────────
+    private static void BuildFindings(in List<Finding> findings, ref Models.WorkingCopyDiagnostics.WorkflowDiagnosticArray.Builder array)
+    {
+        foreach (Finding finding in findings)
+        {
+            array.AddItem(Models.WorkflowDiagnostic.Build(in finding, BuildFinding));
+        }
+    }
+
+    private static void BuildFinding(in Finding finding, ref Models.WorkflowDiagnostic.Builder b)
+        => b.Create(
+            severity: finding.Severity,
+            category: finding.Category,
+            instancePath: finding.InstancePath,
+            message: finding.Message,
+            schemaLocation: finding.SchemaLocation is { } schemaLocation ? schemaLocation : default(Models.JsonString.Source));
+
+    // One positioned finding, from either pass (SchemaLocation only on schema-conformance findings).
+    private readonly record struct Finding(string Severity, string Category, string InstancePath, string Message, string? SchemaLocation);
+
+    /// <summary>The embedded Arazzo meta-schemas, compiled once and picked by the document's declared <c>arazzo</c> version.</summary>
+    private static class ArazzoMetaSchema
+    {
+        private static readonly Lazy<ValidatorSchema> Arazzo10 = new(() => Load("Arazzo10", "https://spec.openapis.org/arazzo/1.0/schema/embedded"));
+        private static readonly Lazy<ValidatorSchema> Arazzo11 = new(() => Load("Arazzo11", "https://spec.openapis.org/arazzo/1.1/schema/embedded"));
+
+        public static ValidatorSchema For(in Corvus.Text.Json.JsonElement document)
+        {
+            // A 1.0.x declaration validates against the 1.0 schema; everything else (1.1.x, absent,
+            // malformed) uses 1.1 — the schema pass itself reports a bad/missing arazzo field.
+            bool isV10 = document.ValueKind == JsonValueKind.Object
+                && document.TryGetProperty("arazzo"u8, out Corvus.Text.Json.JsonElement version)
+                && version.ValueKind == JsonValueKind.String
+                && version.GetString() is { } v
+                && v.StartsWith("1.0", StringComparison.Ordinal);
+            return isV10 ? Arazzo10.Value : Arazzo11.Value;
+        }
+
+        private static ValidatorSchema Load(string name, string canonicalUri)
+        {
+            using Stream stream = typeof(ArazzoMetaSchema).Assembly.GetManifestResourceStream($"Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Schemas.{name}.json")
+                ?? throw new InvalidOperationException($"The embedded Arazzo meta-schema '{name}' is missing.");
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            return ValidatorSchema.FromText(reader.ReadToEnd(), canonicalUri);
+        }
     }
 
     // ── problem documents ──────────────────────────────────────────────────────────────────────────────────────────

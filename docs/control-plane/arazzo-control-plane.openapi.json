@@ -1747,6 +1747,51 @@
         }
       }
     },
+    "/workspace/workflows/{id}/validate": {
+      "post": {
+        "operationId": "validateWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Validate a working copy",
+        "description": "Runs full diagnostics over the working copy's stored Arazzo document: JSON-Schema conformance (positioned schema findings) plus document-local semantic checks mirroring the workflow compiler's rules. Always 200 with the findings (an invalid document is a successful validation run); 404 when the working copy is absent or out of reach. The document is never modified.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The validation outcome (valid flag + every positioned finding).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopyDiagnostics"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/environments": {
       "get": {
         "operationId": "listEnvironments",
@@ -4097,6 +4142,64 @@
         },
         "required": [
           "workingCopies"
+        ]
+      },
+      "WorkflowDiagnostic": {
+        "type": "object",
+        "description": "One positioned validation finding over a working copy's Arazzo document: where (a JSON Pointer), how bad (severity), what family of problem (category — 'schema' for JSON-Schema conformance findings; semantic slugs like 'goto-target', 'depends-on', 'criterion-syntax', 'criterion-type', 'expression-syntax', 'component-reference', 'duplicate-id', 'reachability'), and a human-readable message.",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ],
+            "description": "error = cannot run correctly as written; warning = suspect but runnable; info = advisory."
+          },
+          "category": {
+            "type": "string",
+            "description": "The stable finding family (kebab-case slug) the UI groups and filters by."
+          },
+          "instancePath": {
+            "type": "string",
+            "description": "A JSON Pointer to the finding's location within the document."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable description of the finding."
+          },
+          "schemaLocation": {
+            "type": "string",
+            "description": "For schema-conformance findings: the evaluation location within the Arazzo schema that produced the failure."
+          }
+        },
+        "required": [
+          "severity",
+          "category",
+          "instancePath",
+          "message"
+        ]
+      },
+      "WorkingCopyDiagnostics": {
+        "type": "object",
+        "description": "The outcome of validating a working copy's Arazzo document: JSON-Schema conformance against the Arazzo schema for the document's declared version, plus document-local semantic checks (goto/retry targets, dependsOn references, criterion syntax via the runtime's own compiler, runtime-expression syntax, reusable component references, duplicate ids, reachability). Source-dependent checks (unresolved operationId/operationPath/channelPath) arrive with attached sources. Warnings do not fail validation — valid means no errors.",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "Whether the document is free of error-severity findings (warnings/infos may still be present)."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowDiagnostic"
+            },
+            "description": "Every finding, in document order (empty when clean)."
+          }
+        },
+        "required": [
+          "valid",
+          "diagnostics"
         ]
       },
       "SourceCredentialKind": {

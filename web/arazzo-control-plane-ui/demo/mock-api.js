@@ -2093,6 +2093,14 @@ export function createMockControlPlane(options = {}) {
   let workingCopySeq = 0;
 
   function handleWorkspace(fullPath, method, params, body) {
+    const validate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/validate\/?$/);
+    if (validate) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(validate[1]));
+      if (!wc) return problem(404, 'Working copy not found', `No working copy '${validate[1]}' exists, or it is outside your reach.`);
+      return json(validateWorkingCopyDocument(wc.document));
+    }
+
     const m = fullPath.match(/\/workspace\/workflows(?:\/([^/]+))?\/?$/);
     if (!m) return null;
     const id = m[1] ? decodeURIComponent(m[1]) : null;
@@ -2157,6 +2165,53 @@ export function createMockControlPlane(options = {}) {
     if (body.designerState !== undefined) wc.designerState = body.designerState;
     wc.lastUpdatedBy = actingSubject(); wc.lastUpdatedAt = iso(0); wc.etag = nextEtag();
     return json(structuredClone(wc));
+  }
+
+  // A light stand-in for the server's validate pass: the required-shape subset of the schema check
+  // plus the document-local goto-target/duplicate-id semantics. The real backend also runs full
+  // JSON-Schema conformance and criterion/expression syntax through the runtime's own compilers.
+  function validateWorkingCopyDocument(doc) {
+    const diagnostics = [];
+    const schemaError = (instancePath, message) => diagnostics.push({ severity: 'error', category: 'schema', instancePath, message });
+    if (!doc || typeof doc !== 'object') {
+      schemaError('', 'The document must be a JSON object.');
+      return { valid: false, diagnostics };
+    }
+    if (typeof doc.arazzo !== 'string') schemaError('', "Required property 'arazzo' is missing.");
+    if (!doc.info || typeof doc.info !== 'object') schemaError('', "Required property 'info' is missing.");
+    if (!Array.isArray(doc.sourceDescriptions) || doc.sourceDescriptions.length === 0) schemaError('', "Required property 'sourceDescriptions' must be a non-empty array.");
+    if (!Array.isArray(doc.workflows) || doc.workflows.length === 0) schemaError('', "Required property 'workflows' must be a non-empty array.");
+
+    for (const [wi, workflow] of (Array.isArray(doc.workflows) ? doc.workflows : []).entries()) {
+      const steps = Array.isArray(workflow?.steps) ? workflow.steps : [];
+      const stepIds = new Set(steps.map((s) => s?.stepId).filter(Boolean));
+      const seen = new Set();
+      for (const [si, step] of steps.entries()) {
+        if (step?.stepId) {
+          if (seen.has(step.stepId)) {
+            diagnostics.push({
+              severity: 'error', category: 'duplicate-id',
+              instancePath: `/workflows/${wi}/steps/${si}/stepId`,
+              message: `Duplicate stepId '${step.stepId}' — step ids must be unique within the workflow.`,
+            });
+          }
+          seen.add(step.stepId);
+        }
+        for (const list of ['onSuccess', 'onFailure']) {
+          for (const [ai, action] of (Array.isArray(step?.[list]) ? step[list] : []).entries()) {
+            if ((action?.type === 'goto' || action?.type === 'retry') && action.stepId && !stepIds.has(action.stepId)) {
+              diagnostics.push({
+                severity: 'error', category: 'goto-target',
+                instancePath: `/workflows/${wi}/steps/${si}/${list}/${ai}`,
+                message: `The ${action.type} action targets unknown step '${action.stepId}'.`,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return { valid: diagnostics.every((d) => d.severity !== 'error'), diagnostics };
   }
 
   // ---- deployment environments (§7.7) -----------------------------------------------------------
