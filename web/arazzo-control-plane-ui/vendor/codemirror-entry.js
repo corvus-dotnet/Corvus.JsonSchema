@@ -15,3 +15,4 @@ export * as language from '@codemirror/language';
 export * as autocomplete from '@codemirror/autocomplete';
 export * as commands from '@codemirror/commands';
 export * as lezerHighlight from '@lezer/highlight';
+export * as langJson from '@codemirror/lang-json';

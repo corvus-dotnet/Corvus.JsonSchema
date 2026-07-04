@@ -38,8 +38,11 @@ Status: **design**. Nothing in this document is built; §14 sequences the delive
 
 - Not a replacement for the text editor: the text mode and the design surface are peers over one
   document model; neither is a downgraded mirror of the other.
-- No collaborative real-time editing (CRDT/multi-cursor). Working copies use etag concurrency; Git
-  integration covers multi-author flows.
+- Real-time collaboration ships later, but the document model is **collaboration-ready from day
+  one** (decided 2026-07-04 — this reverses an earlier non-goal): edits are identity-addressed
+  operations with inverses, never snapshots, so the realtime transport is an addition, not a
+  rewrite (§5.2). Working copies keep etag concurrency for whole-document saves; Git covers
+  asynchronous multi-author flows.
 - No arbitrary-API live calls from the designer. Simulation talks to the mock transport only;
   running against real environments stays the runs surface's job.
 - No bundled IdP or GitHub credential UI beyond the control-plane-brokered flow (§12); the kit stays
@@ -344,19 +347,32 @@ the control plane.
 github). Same conventions: `ProblemError`, keyset paging, host-supplied auth, conformance-tested
 against the OpenAPI document.
 
-### 5.2 Layer 0.5 — `WorkflowDocumentModel` (new, DOM-free)
+### 5.2 Layer 0.5 — `WorkflowDocumentModel` (new, DOM-free, collaboration-ready)
 
-A shared observable model over the Arazzo document, imported by both editors and the inspector:
+A shared observable model over the Arazzo document, imported by both editors and the inspector.
+**Every edit is a group of identity-addressed operations, never a snapshot** — the property that
+cannot be retrofitted, so it is the foundation:
 
-- Holds the parsed document + a change-event stream; all edits go through it (canvas, inspector,
-  text) so the editors never talk to each other.
-- **Undo/redo** stack (grouped operations, e.g. "add step + bind operation" is one undo unit).
-- Two-way text sync: serializes deterministically for Monaco; on text edits, reparses and diffs
-  (structural diff keyed by `stepId`/`workflowId` so canvas positions and selection survive edits).
-- Derived views: the **graph projection** (nodes/edges incl. the inherited-defaults layer — §6.2),
-  the diagnostics overlay, and the expression-completion context (from the working-copy schemas).
-- Layout persistence: node positions are UI state, not document content — stored in the working
-  copy's `designerState` (a sibling field, never written into the Arazzo document, never packaged).
+- **Operations, not snapshots.** `set`/`remove`/`insert`/`move` ops address the document by its
+  stable Arazzo identities (`workflows[id=…].steps[id=…].description`), not array indices —
+  concurrent edits to different steps merge with no transform; indices never shear under
+  concurrent insertion. Editors keep a simple API (`update(mutator)`, `applyText(text)`): an
+  **identity-aware structural diff** reduces whatever they did to minimal ops — a step edited in
+  text mode emits the *same* op a canvas edit would, which is also what keeps canvas positions
+  and selection stable across text edits.
+- **Undo/redo are local and inverse-based**: they invert *this actor's* op groups (with coalescing
+  for typing bursts), never a collaborator's interleaved work — snapshot undo would revert
+  everyone.
+- **The transport seam, not the transport**: local groups emit as an `ops` event (actor + seq +
+  label); `applyRemote(group)` applies a collaborator's ops delivered in **server total order**
+  (the workspace later grows an ops relay — `POST /workspace/workflows/{id}/ops` + an SSE/WebSocket
+  stream — and remains etag-guarded for whole-document saves). Same-field concurrent writes
+  resolve last-writer-wins in that order; ops whose target a collaborator deleted are skipped,
+  not faulted. Client-side pending-op rebasing (for latency masking) layers on later without
+  changing the op shapes.
+- **Layout persistence**: node positions are UI state, not document content — stored in the working
+  copy's `designerState` (a sibling field, never written into the Arazzo document, never packaged,
+  never part of the op stream).
 
 ### 5.3 Layer 1 — new components
 
