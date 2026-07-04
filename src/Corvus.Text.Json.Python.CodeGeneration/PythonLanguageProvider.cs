@@ -674,14 +674,27 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
     private static void EmitObjectSurface(TypeDeclaration td, PyModule mod)
     {
         string name = TypeNameOf(td);
-        mod.Typing.Add("TypedDict");
 
         var props = td.PropertyDeclarations.ToList();
         if (props.Count == 0)
         {
+            // A pure map (an additionalProperties value type, no declared properties) is a `Mapping[str, V]`
+            // alias (design §5.3, the TS `Record<string, V>` peer); an object with neither properties nor a
+            // fallback value type stays an empty TypedDict.
+            FallbackObjectPropertyType? mapFb = td.LocalEvaluatedPropertyType();
+            if (mapFb is not null && mapFb.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+            {
+                mod.NeedsMapping = true;
+                mod.Body.Append("type ").Append(name).Append(" = Mapping[str, ").Append(PyTypeRef(mapFb.ReducedType, mod)).Append("]\n");
+                return;
+            }
+
+            mod.Typing.Add("TypedDict");
             mod.Body.Append("class ").Append(name).Append("(TypedDict, total=False):\n    pass\n");
             return;
         }
+
+        mod.Typing.Add("TypedDict");
 
         // A TypedDict class body only accepts identifier keys; any non-identifier (or Python-keyword) member
         // name forces the functional TypedDict("Name", {...}) form. (Functional-form values are evaluated at
