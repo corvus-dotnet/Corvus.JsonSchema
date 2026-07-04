@@ -7,6 +7,8 @@ converters, and the JSON Patch / Merge Patch surface. The Python peer of ``@endj
 
 from __future__ import annotations
 
+from whenever import Date, Instant, Time, TimeDelta
+
 from .core import build, canonicalize, decode_and_parse, eq, is_arr, is_obj, ptr, re_test
 from .formats import FormatError, fmt, fmt_content
 from .numbers import cmp, exact_number, is_int, is_num, multiple_of, num_eq
@@ -24,9 +26,13 @@ from .temporal import to_duration, to_instant, to_plain_date, to_plain_time
 __all__ = [
     "NOEV",
     "Annotation",
+    "Date",
     "Ev",
     "Failure",
     "FormatError",
+    "Instant",
+    "Time",
+    "TimeDelta",
     "JsonPatchError",
     "Results",
     "apply_merge_patch",

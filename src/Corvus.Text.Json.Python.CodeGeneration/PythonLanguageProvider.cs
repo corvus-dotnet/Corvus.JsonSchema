@@ -735,9 +735,39 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         }
     }
 
+    // The well-known string formats that get a branded alias + validating factory (design §5.3.1), a faithful
+    // port of the TypeScript KnownStringFormats set.
+    private static readonly HashSet<string> KnownStringFormats = new(StringComparer.Ordinal)
+    {
+        "uuid", "email", "idn-email", "hostname", "idn-hostname", "ipv4", "ipv6",
+        "uri", "uri-reference", "uri-template", "iri", "iri-reference",
+        "date", "date-time", "time", "duration", "json-pointer", "relative-json-pointer", "regex",
+    };
+
+    // The four RFC 3339 temporal formats that additionally get a `to_temporal_<t>` accessor: the whenever type
+    // it returns and the runtime converter it delegates to (date -> Date, date-time -> the absolute Instant,
+    // time -> Time, duration -> TimeDelta), the port of the TypeScript KnownTemporalFormats map.
+    private static readonly IReadOnlyDictionary<string, (string TemporalType, string Converter)> KnownTemporalFormats =
+        new Dictionary<string, (string, string)>(StringComparer.Ordinal)
+        {
+            ["date"] = ("Date", "to_plain_date"),
+            ["date-time"] = ("Instant", "to_instant"),
+            ["time"] = ("Time", "to_plain_time"),
+            ["duration"] = ("TimeDelta", "to_duration"),
+        };
+
+    private static bool IsBrandedStringFormat(TypeDeclaration td)
+        => SchemaTypes(td).Contains("string") && td.Format() is string f && KnownStringFormats.Contains(f);
+
     private static void EmitScalarSurface(TypeDeclaration td, PyModule mod)
     {
         string name = TypeNameOf(td);
+        if (IsBrandedStringFormat(td))
+        {
+            EmitStringFormatBrand(td, mod, name);
+            return;
+        }
+
         var prims = new List<string>();
         foreach (string k in SchemaTypes(td))
         {
@@ -758,13 +788,35 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         }
     }
 
+    // A well-known string format: a NewType brand over `str` + a validating `from_<t>` factory that mints the
+    // brand only after the format check (the Python analog of V5's conversion operators / the TS branded alias).
+    // The four temporal formats additionally get a `to_temporal_<t>` accessor parsing the branded string into
+    // its whenever value. Always emitted (a pure type surface + parse helpers); validation is untouched.
+    private static void EmitStringFormatBrand(TypeDeclaration td, PyModule mod, string name)
+    {
+        string format = td.Format()!;
+        string fmtLit = PyEmit.Str(format);
+        string module = ModuleNameOf(td);
+        mod.Typing.Add("NewType");
+        mod.Body.Append(name).Append(" = NewType(").Append(PyEmit.Str(name)).Append(", str)\n");
+        mod.Body.Append("\n\ndef from_").Append(module).Append("(value: str) -> ").Append(name).Append(":\n");
+        mod.Body.Append("    if not ").Append(mod.Rt("fmt")).Append('(').Append(fmtLit).Append(", value):\n");
+        mod.Body.Append("        raise ").Append(mod.Rt("FormatError")).Append('(').Append(fmtLit).Append(")\n");
+        mod.Body.Append("    return ").Append(name).Append("(value)\n");
+        if (KnownTemporalFormats.TryGetValue(format, out (string TemporalType, string Converter) temporal))
+        {
+            mod.Body.Append("\n\ndef to_temporal_").Append(module).Append("(value: ").Append(name).Append(") -> ").Append(mod.Rt(temporal.TemporalType)).Append(":\n");
+            mod.Body.Append("    return ").Append(mod.Rt(temporal.Converter)).Append("(value)\n");
+        }
+    }
+
     // The Python type reference for a member type: a named, GENERATED (object/enum/union) type is its
     // unqualified name (all types share the single file); a scalar maps to its builtin; an array to
     // Sequence[...]; anything else (including an object type with no generated validator) falls back to Any.
     private static string PyTypeRef(TypeDeclaration td, PyModule mod)
     {
         TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
-        if ((IsObject(reduced) || IsEnum(reduced) || IsUnion(reduced)) && HasModule(reduced))
+        if ((IsObject(reduced) || IsEnum(reduced) || IsUnion(reduced) || IsBrandedStringFormat(reduced)) && HasModule(reduced))
         {
             return TypeNameOf(reduced);
         }
