@@ -26,7 +26,7 @@ The rest of this doc is the original design narrative and lags the code in place
   runtime-compiled, never codegen-inlined. Ordering is real and threaded (configured `SecurityLabelOrderings` →
   store predicate; fail-closed on unranked labels). Per-backend pushdown: SQL + Cosmos native; InMemory/Mongo/
   Redis/Nats evaluate in memory (pre-existing pattern). Unit + container-conformance pushdown-oracle + end-to-end tests.
-- **Slice 4 — Reach/Rules UI (`scopes-panel`) — DONE.** Template-first builder including the set-membership and
+- **Slice 4 — Reach/Rules UI (`arazzo-rules-panel`) — DONE.** Template-first builder including the set-membership and
   classification-ordering templates (the latter gated on `/security/orderings`), CRUD, reach-scoped, 13 tests.
 - **Slice 5 — Bindings UI (`grants-panel`) — DONE**, including the server-side **self-elevation guard** (create +
   update) with a dedicated test; person elevation routed to the request flow.
@@ -102,7 +102,7 @@ Two sub-mechanisms name "WHO", and that is the crux of today's inconsistency:
   `{dimension,value}` tuples (the §16.5.4 guessing hazard).
 - **Claim→rule bindings** (§14.2) name a principal by an inbound **claim** (`claimType`/`claimValue`, e.g.
   `team=payments`) and grant per-verb **reach** (a set of rule names, AND-ed, or `unrestricted`). This is the
-  *reach* plane. *(Originally CLI/API-only with no UI — since delivered: the Rules UI (`scopes-panel`, slice 4)
+  *reach* plane. *(Originally CLI/API-only with no UI — since delivered: the Rules UI (`arazzo-rules-panel`, slice 4)
   and the Bindings UI (`grants-panel`, slice 5) now exist under the Permissions tab. See §0.)*
 
 So the same question — *"what can Alice do, and where?"* — is unanswerable in the UI, and "who" is authored

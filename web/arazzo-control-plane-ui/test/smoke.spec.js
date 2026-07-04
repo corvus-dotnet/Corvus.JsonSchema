@@ -248,15 +248,15 @@ test('the Environments tab lists environments and opens one to administer it', a
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
-test('Grants and Scopes live on the Permissions tab; Access holds the request inbox', async ({ page }) => {
+test('Grants and Rules live on the Permissions tab; Access holds the request inbox', async ({ page }) => {
   await page.goto('/demo/index.html');
 
-  // Permissions carries the reach vocabulary — grants + scopes.
+  // Permissions carries the reach vocabulary — grants + rules.
   await page.getByRole('tab', { name: 'Permissions' }).click();
   await expect(page.locator('arazzo-grants-panel')).toBeVisible();
-  await expect(page.locator('arazzo-scopes-panel')).toBeVisible();
+  await expect(page.locator('arazzo-rules-panel')).toBeVisible();
 
-  // Access carries the request/approval inbox (and no longer the grants/scopes panels).
+  // Access carries the request/approval inbox (and no longer the grants/rules panels).
   await page.getByRole('tab', { name: 'Access' }).click();
   await expect(page.locator('arazzo-access-requests')).toBeVisible();
   await expect(page.locator('arazzo-grants-panel')).toBeHidden();
