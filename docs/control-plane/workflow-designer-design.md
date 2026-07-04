@@ -110,8 +110,14 @@ beyond that model rather than copying it:
   local handlers shows ghosted inherited markers; clicking one offers **"localize here"** (copy to
   the step for editing). A step that overrides shows solid local markers with an "overrides
   defaults" affordance. This makes the Arazzo inheritance model legible at a glance.
-- **Criteria on edges.** An action's `criteria` summarize on the edge label; clicking the edge opens
-  the criteria editor in the inspector.
+- **Criteria on edges.** An action's `criteria` summarize on the edge label; an explicit action
+  edge with no criteria is labelled *always* (ghost style) — unconditional behaviour is visible,
+  not silent. Clicking the edge opens the criteria editor in the inspector.
+- **Drop → select → conditions.** Drawing an edge writes the action, auto-selects the new edge,
+  and the inspector opens on its criteria — conditions are one keystroke away without a modal
+  interrupting bulk authoring. Dropping an *identical unconditional* duplicate selects the
+  existing edge instead of appending a dead action; once criteria differ, parallel edges between
+  the same pair are legitimate and fan out side by side.
 - **Multiple workflows** in a document appear in the toolbar switcher; a step bound to another
   workflow (`workflowId` binding) renders as a sub-workflow card that can be opened (breadcrumb
   navigation). `dependsOn` renders in a document-level overview mode.

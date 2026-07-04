@@ -186,6 +186,15 @@ export function projectWorkflow(doc, workflowId) {
     }
   }
 
+  // Edge ids derive from action names; duplicate names (e.g. two identically-named gotos) must
+  // still yield unique ids or the renderer's keyed updates leave stale twins behind on re-path.
+  const seen = new Map();
+  for (const edge of edges) {
+    const n = (seen.get(edge.id) || 0) + 1;
+    seen.set(edge.id, n);
+    if (n > 1) edge.id = `${edge.id}~${n}`;
+  }
+
   return {
     workflowId: workflow.workflowId,
     summary: workflow.summary || '',

@@ -55,6 +55,10 @@ describe('<arazzo-design-surface>', () => {
     equal(failures.length, 2, 'decline goto + reusable escalate');
     ok(failures.some((e) => e.classList.contains('reusable')), 'reusable action edge is marked');
     ok(el.shadowRoot.textContent.includes('$statusCode == 402'), 'criteria summary on the edge label');
+    const endEdge = el.shadowRoot.querySelector('.edge[data-id="end:capture-payment:done:success"]');
+    equal(endEdge.querySelector('.elabel').textContent, 'always', 'unconditional action edges say so');
+    ok(endEdge.querySelector('.elabel').classList.contains('ghost'), '…in the ghost style');
+    ok(!el.shadowRoot.querySelector('.edge-seq .elabel'), 'sequence edges stay unlabelled');
     // Both failure edges share from→to (decline + escalate): the parallel fan must separate them.
     const [d1, d2] = failures.map((e) => e.querySelector('.line').getAttribute('d'));
     ok(d1 !== d2, 'parallel edges take distinct paths');

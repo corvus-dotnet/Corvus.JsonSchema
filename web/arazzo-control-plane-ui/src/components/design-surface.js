@@ -193,6 +193,7 @@ class ArazzoDesignSurface extends ArazzoElement {
         .edge.reusable .line { stroke-dasharray: 8 3; }
         .elabel { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted);
                   paint-order: stroke; stroke: var(--_surface); stroke-width: 3; }
+        .elabel.ghost { font-style: italic; opacity: 0.8; }
         marker path { fill: var(--_muted); }
         marker.m-success path { fill: var(--arazzo-status-completed, #2a8a4a); }
         marker.m-failure path { fill: var(--arazzo-status-faulted, #d4351c); }
@@ -353,10 +354,13 @@ class ArazzoDesignSurface extends ArazzoElement {
     el.setAttribute('data-id', edge.id);
     const d = this._edgePath(edge);
     const mid = this._edgeMid(edge);
+    // An explicit action edge with no criteria fires unconditionally — say so, visibly and
+    // clickably, instead of leaving the missing conditions silent.
+    const label = edge.criteriaSummary ?? (edge.kind !== 'seq' ? 'always' : undefined);
     el.innerHTML = `
       <path class="hit" d="${d}"></path>
       <path class="line" d="${d}" marker-end="url(#arr-${edge.kind === 'seq' ? 'seq' : edge.kind})"></path>
-      ${edge.criteriaSummary ? `<text class="elabel" x="${mid.x + 8}" y="${mid.y}">${escapeHtml(truncate(edge.criteriaSummary, 34))}</text>` : ''}
+      ${label ? `<text class="elabel${edge.criteriaSummary ? '' : ' ghost'}" x="${mid.x + 8}" y="${mid.y}">${escapeHtml(truncate(label, 34))}</text>` : ''}
     `;
     return el;
   }
@@ -691,16 +695,17 @@ class ArazzoDesignSurface extends ArazzoElement {
     // Re-path the edges touching the node (cheap: a handful per node).
     for (const edge of this._graph?.edges || []) {
       if (edge.from !== id && edge.to !== id) continue;
-      const el = this.$(`.edge[data-id="${cssEscape(edge.id)}"]`);
-      if (!el) continue;
-      const d = this._edgePath(edge);
-      el.querySelector('.hit').setAttribute('d', d);
-      el.querySelector('.line').setAttribute('d', d);
-      const label = el.querySelector('.elabel');
-      if (label) {
-        const mid = this._edgeMid(edge);
-        label.setAttribute('x', mid.x + 8);
-        label.setAttribute('y', mid.y);
+      // querySelectorAll: ids are unique by construction, but stale twins must never survive a move.
+      for (const el of this.$$(`.edge[data-id="${cssEscape(edge.id)}"]`)) {
+        const d = this._edgePath(edge);
+        el.querySelector('.hit').setAttribute('d', d);
+        el.querySelector('.line').setAttribute('d', d);
+        const label = el.querySelector('.elabel');
+        if (label) {
+          const mid = this._edgeMid(edge);
+          label.setAttribute('x', mid.x + 8);
+          label.setAttribute('y', mid.y);
+        }
       }
     }
   }
