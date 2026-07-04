@@ -152,7 +152,7 @@ ask for run access. *Approver:* clear the inbox of requests they can act on.
 3. **Fill the template's fields** — a **live preview** shows the expression and the name auto-suggests.
 4. **`Create`.** (`Edit`/`Delete` from each row; deleting warns that grants referencing it lose that reach.)
 
-### 6.2 Author a grant (give an identity reach)
+### 6.2 Author a grant binding (give an identity reach)
 1. **Open Access → Grants** and **search** (server-side + `Load more`).
 2. **`New grant` → WHO:** use the **grantee picker** to find a team/role. *(Pick a person and the form refuses it and points you at the access-request flow; a partial identity is flagged.)*
 3. **WHERE:** for each of **read / write / purge** choose `Denied`, `Unrestricted`, or **scoped reach**; for scoped reach, add one or more rules via the **server-backed typeahead** (each becomes a removable chip).
@@ -193,7 +193,7 @@ ask for run access. *Approver:* clear the inbox of requests they can act on.
 6. **Purge dialog forgets the last cutoff** (resets to "30 days ago" each open) — minor repeated tax for routine reaping.
 
 **P3 — capability gaps / nice-to-haves**
-7. **Credential usage grant is immutable after create** — changing who may use a source means delete + recreate. Likewise **grant claim *type*** is read-only in edit. Both force destroy-and-recreate for a small change.
+7. **Credential usage grant is immutable after create** — changing who may use a source means delete + recreate. Likewise a **grant binding's claim *type*** is read-only in edit. Both force destroy-and-recreate for a small change.
 8. **No delete affordance for a source credential in the table/dialog** (the API supports it) — the lifecycle is create/rotate only in the UI.
 9. **Durations are hours-only** (request duration; eligibility window). Day/week shortcuts would cut arithmetic.
 10. **Untyped "extra config" rows** on credentials aren't validated against what the runner expects — easy to mistype a key.
@@ -213,7 +213,7 @@ system concept into the user surface and is wrong for multi-tenant SaaS. Two con
   optional reach vocabulary. Neither belongs in a single-tenant view — administration and reach should be expressed in
   team/role/domain/classification terms. *(The demo's example data has been corrected to reflect this — see below;
   removing the `tenant` option from the components themselves is the matching code change.)*
-- **Multi-tenant membership is a tenant switcher, not a grant.** An identity that belongs to more than one tenant needs
+- **Multi-tenant membership is a tenant switcher, not a grant binding.** An identity that belongs to more than one tenant needs
   a dedicated **tenant switcher** in the console chrome that sets the active tenant for the whole session (re-scoping
   everything), distinct from anything in the grant/admin surfaces. This is new UI, not a tweak.
 
