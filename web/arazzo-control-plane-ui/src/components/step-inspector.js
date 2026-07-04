@@ -67,6 +67,7 @@ class ArazzoStepInspector extends ArazzoElement {
         ${ACTION_LIST_CSS}
         :host { display: block; }
         .form { display: grid; gap: 12px; }
+        .form > *, .pair > *, .prow > *, .binding { min-width: 0; }
         label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
         h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
         input[type="text"], input[type="number"], textarea {
