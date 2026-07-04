@@ -54,10 +54,10 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
   `ui-design.md`, `ux-review.md` — prioritize any sentence where a reader could mistake which kind
   is meant.
 
-- [ ] **7. "Reach scopes" → "reach rules"** (decision G). The Access-area label in `ux-review.md`
+- [x] **7. "Reach scopes" → "reach rules"** (decision G). The Access-area label in `ux-review.md`
   re-fuses the two planes; fix it.
 
-- [ ] **8. Readiness is a hard gate** (decision H). Fix the `ux-review.md` spot (~line 278) that
+- [x] **8. Readiness is a hard gate** (decision H). Fix the `ux-review.md` spot (~line 278) that
   calls readiness "a readiness check, not a hard gate": views may *display* readiness, but
   promotion and the add-workflow wizard never bypass it.
 
