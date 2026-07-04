@@ -231,7 +231,7 @@ class ArazzoExpressionInput extends ArazzoElement {
     const completionSource = (ctx) => {
       const r = completionsFor(ctx.state.doc.toString(), ctx.pos, this._completionContext);
       if (!r) return null;
-      return { from: r.from, options: r.options, validFor: /^[\w$.-]*$/ };
+      return { from: r.from, options: r.options, validFor: /^[\w$.#/-]*$/ };
     };
 
     const input = this.$('input');
