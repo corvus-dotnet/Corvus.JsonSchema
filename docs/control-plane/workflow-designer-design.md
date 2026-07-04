@@ -453,6 +453,14 @@ shadow-DOM support, and that is the **agreed decision** (2026-07-04):
   documented shadow-DOM gotchas requiring workarounds.
 - **Zero-build fit:** CM6 is modular ESM (MIT); Monaco's only no-bundler consumption path (AMD
   loader) is deprecated, and the kit ships loose ESM with no bundle step.
+  *Spike finding (2026-07-04):* CM6 must be **vendored as one bundle**
+  (`src/vendor/codemirror.mjs`, `npm run build:vendor`), not CDN-imported per package — CM6
+  requires a single shared instance of each core package, and per-package CDN bundles pin their
+  internal dependencies independently (observed on jsDelivr: autocomplete pinned `state@6.6.0`
+  while view/language/commands pinned `6.7.0`), breaking CM6's instanceof-based extension checks.
+  The bundle is lazily imported only when an editor mounts; hosts can substitute import-map-managed
+  modules via the `cmLoader` hook, and the component falls back to a themed plain `<input>` with
+  the same value/event contract if the modules never load.
 - **One grammar stack:** the same JSONPath/runtime-expression/`simple`-grammar tokenizer and the
   same schema-driven completion source serve the full document editor *and* every one-line
   criterion/expression field — consistency Monaco-plus-something-else cannot give.
