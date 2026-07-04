@@ -848,12 +848,57 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
     private static bool IsBrandedStringFormat(TypeDeclaration td)
         => SchemaTypes(td).Contains("string") && td.Format() is string f && KnownStringFormats.Contains(f);
 
+    // Sub-64-bit integer formats -> a branded NewType over `int` + a range-checked factory (the port of the TS
+    // KnownIntegerFormats). 64-bit+ formats stay plain `int` (Python ints are unbounded).
+    private static readonly IReadOnlyDictionary<string, (long Min, long Max)> KnownIntegerFormats =
+        new Dictionary<string, (long, long)>(StringComparer.Ordinal)
+        {
+            ["byte"] = (0, 255),
+            ["sbyte"] = (-128, 127),
+            ["int16"] = (-32768, 32767),
+            ["uint16"] = (0, 65535),
+            ["int32"] = (-2147483648, 2147483647),
+            ["uint32"] = (0, 4294967295),
+        };
+
+    // Floating-point / arbitrary-precision numeric formats -> a branded NewType over `float` + a factory (the
+    // port of the TS KnownFloatFormats). A null bound means no check on that side; `decimal` also gets to_exact.
+    private static readonly IReadOnlyDictionary<string, (double? Min, double? Max)> KnownFloatFormats =
+        new Dictionary<string, (double?, double?)>(StringComparer.Ordinal)
+        {
+            ["half"] = (-65504, 65504),
+            ["single"] = (null, null),
+            ["float"] = (null, null),
+            ["double"] = (null, null),
+            ["decimal"] = (-7.922816251426434e28, 7.922816251426434e28),
+        };
+
+    private static bool IsNumericFormatBrandable(TypeDeclaration td) => !SchemaTypes(td).Contains("string");
+
+    private static bool IsBrandedIntegerFormat(TypeDeclaration td)
+        => td.Format() is string f && KnownIntegerFormats.ContainsKey(f) && IsNumericFormatBrandable(td);
+
+    private static bool IsBrandedFloatFormat(TypeDeclaration td)
+        => td.Format() is string f && KnownFloatFormats.ContainsKey(f) && IsNumericFormatBrandable(td);
+
     private static void EmitScalarSurface(TypeDeclaration td, PyModule mod)
     {
         string name = TypeNameOf(td);
         if (IsBrandedStringFormat(td))
         {
             EmitStringFormatBrand(td, mod, name);
+            return;
+        }
+
+        if (IsBrandedIntegerFormat(td))
+        {
+            EmitIntegerFormatBrand(td, mod, name);
+            return;
+        }
+
+        if (IsBrandedFloatFormat(td))
+        {
+            EmitFloatFormatBrand(td, mod, name);
             return;
         }
 
@@ -905,6 +950,50 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         }
     }
 
+    // A sub-64-bit integer format: a NewType brand over `int` + a range-checked from_<t> factory (Python ints
+    // are always integral, so only the [Min, Max] bound is checked).
+    private static void EmitIntegerFormatBrand(TypeDeclaration td, PyModule mod, string name)
+    {
+        string format = td.Format()!;
+        (long min, long max) = KnownIntegerFormats[format];
+        string module = ModuleNameOf(td);
+        string fmtLit = PyEmit.Str(format);
+        mod.Typing.Add("NewType");
+        mod.Body.Append(name).Append(" = NewType(").Append(PyEmit.Str(name)).Append(", int)\n");
+        mod.Body.Append("\n\ndef from_").Append(module).Append("(value: int) -> ").Append(name).Append(":\n");
+        mod.Body.Append("    if value < ").Append(min).Append(" or value > ").Append(max).Append(":\n");
+        mod.Body.Append("        raise ").Append(mod.Rt("FormatError")).Append('(').Append(fmtLit).Append(")\n");
+        mod.Body.Append("    return ").Append(name).Append("(value)\n");
+    }
+
+    // A floating-point / arbitrary-precision numeric format: a NewType brand over `float` + a factory that
+    // range-checks (unbounded single/double/float mint with no check). `decimal` additionally gets to_exact_<t>.
+    private static void EmitFloatFormatBrand(TypeDeclaration td, PyModule mod, string name)
+    {
+        string format = td.Format()!;
+        (double? min, double? max) = KnownFloatFormats[format];
+        string module = ModuleNameOf(td);
+        string fmtLit = PyEmit.Str(format);
+        mod.Typing.Add("NewType");
+        mod.Body.Append(name).Append(" = NewType(").Append(PyEmit.Str(name)).Append(", float)\n");
+        mod.Body.Append("\n\ndef from_").Append(module).Append("(value: float) -> ").Append(name).Append(":\n");
+        if (min is double mn && max is double mx)
+        {
+            mod.Body.Append("    if value < ").Append(PyNum(mn)).Append(" or value > ").Append(PyNum(mx)).Append(":\n");
+            mod.Body.Append("        raise ").Append(mod.Rt("FormatError")).Append('(').Append(fmtLit).Append(")\n");
+        }
+
+        mod.Body.Append("    return ").Append(name).Append("(value)\n");
+        if (format == "decimal")
+        {
+            mod.Body.Append("\n\ndef to_exact_").Append(module).Append("(value: ").Append(name).Append(") -> str:\n");
+            mod.Body.Append("    return ").Append(mod.Rt("exact_number")).Append("(value)\n");
+        }
+    }
+
+    // Format a double bound as a round-trippable Python numeric literal.
+    private static string PyNum(double value) => value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
     // The Python type reference for a member type: a named, GENERATED (object/enum/union) type is its
     // unqualified name (all types share the single file); a scalar maps to its builtin; an array to
     // Sequence[...]; anything else (including an object type with no generated validator) falls back to Any.
@@ -915,7 +1004,7 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         // A named type (with a module) is referenced BY NAME — including arrays/tuples, which is also what
         // breaks a self-referential array/tuple cycle (a recursive `type X` alias is lazy, but building its
         // element string must resolve the back-reference to the name, not re-inline it).
-        if ((IsObject(reduced) || IsEnum(reduced) || IsUnion(reduced) || IsBrandedStringFormat(reduced) || IsArrayType(reduced)) && HasModule(reduced))
+        if ((IsObject(reduced) || IsEnum(reduced) || IsUnion(reduced) || IsBrandedStringFormat(reduced) || IsBrandedIntegerFormat(reduced) || IsBrandedFloatFormat(reduced) || IsArrayType(reduced)) && HasModule(reduced))
         {
             return TypeNameOf(reduced);
         }
