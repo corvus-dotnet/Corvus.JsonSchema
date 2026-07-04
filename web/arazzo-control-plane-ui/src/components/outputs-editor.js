@@ -48,9 +48,13 @@ class ArazzoOutputsEditor extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; }
-        .rows { display: grid; gap: 6px; }
-        .orow { display: grid; grid-template-columns: minmax(90px, 2fr) 3fr auto; gap: 6px; align-items: center; }
+        .rows { display: grid; gap: 8px; }
+        /* Same stacked-card shape as parameters: name + remove on the head line, the expression
+           full-width beneath. */
+        .orow { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 8px; display: grid; gap: 6px; }
         .orow > * { min-width: 0; }
+        .ohead { display: grid; grid-template-columns: minmax(90px, 1fr) auto; gap: 6px; align-items: center; }
+        .ohead > * { min-width: 0; }
         input.oname {
           width: 100%; box-sizing: border-box; font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
           padding: 7px 9px; border: 1px solid var(--_border); border-radius: var(--_radius);
@@ -82,9 +86,11 @@ class ArazzoOutputsEditor extends ArazzoElement {
       const row = document.createElement('div');
       row.className = 'orow';
       row.innerHTML = `
-        <input class="oname" type="text" placeholder="name" value="${escapeHtml(entry.name)}">
+        <div class="ohead">
+          <input class="oname" type="text" placeholder="name" value="${escapeHtml(entry.name)}">
+          <button class="close" type="button" title="Remove output">✕</button>
+        </div>
         <span class="slot"></span>
-        <button class="close" type="button" title="Remove output">✕</button>
       `;
       const exprInput = document.createElement('arazzo-expression-input');
       exprInput.setAttribute('placeholder', '$response.body#/…');
