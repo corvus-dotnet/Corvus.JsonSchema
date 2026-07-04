@@ -971,3 +971,29 @@ test('listWorkingCopiesPaged walks every page via the token', async () => {
   assert.equal(total, 5);
   assert.equal(pages, 3);
 });
+
+test('validateWorkingCopy reports positioned findings and 404s for an unknown id', async () => {
+  const c = makeClient();
+
+  // The blank skeleton is deliberately not yet valid Arazzo — findings, not an error response.
+  const blank = await c.createWorkingCopy();
+  const outcome = await c.validateWorkingCopy(blank.id);
+  assert.equal(outcome.valid, false);
+  assert.ok(outcome.diagnostics.every((d) => d.category === 'schema' && d.severity === 'error'));
+
+  // Semantically broken: a goto to a step that does not exist, positioned by JSON Pointer.
+  const broken = await c.createWorkingCopy({
+    document: {
+      arazzo: '1.1.0',
+      info: { title: 'T', version: '1.0.0' },
+      sourceDescriptions: [{ name: 'pets', url: './pets.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'w', steps: [{ stepId: 'a', operationId: 'x', onSuccess: [{ name: 'j', type: 'goto', stepId: 'ghost' }] }] }],
+    },
+  });
+  const semantic = await c.validateWorkingCopy(broken.id);
+  assert.equal(semantic.valid, false);
+  const finding = semantic.diagnostics.find((d) => d.category === 'goto-target');
+  assert.equal(finding.instancePath, '/workflows/0/steps/0/onSuccess/0');
+
+  await assert.rejects(() => c.validateWorkingCopy('nope'), (e) => e instanceof ProblemError && e.status === 404);
+});

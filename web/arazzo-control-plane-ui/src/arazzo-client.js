@@ -912,6 +912,20 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `validateWorkingCopy` — full diagnostics over the working copy's stored Arazzo document:
+   * JSON-Schema conformance plus document-local semantic checks (goto/retry targets, dependsOn,
+   * criterion syntax, runtime expressions, component references, duplicate ids, reachability),
+   * each positioned by a JSON Pointer. An invalid document is a successful validation run (`200`);
+   * `valid` means no error-severity findings (warnings/infos may still be present).
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ valid: boolean, diagnostics: Array<{severity: string, category: string, instancePath: string, message: string, schemaLocation?: string}> }>}
+   */
+  validateWorkingCopy(id, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/validate`, { signal: opts.signal });
+  }
+
+  /**
    * `getCredential` — one binding by its `(sourceName, environment)` key.
    * @param {string} sourceName
    * @param {string} environment

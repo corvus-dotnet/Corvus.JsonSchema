@@ -148,6 +148,16 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] DeleteWorkspaceWorkflowOpenIdConnectScopes = ["workspace:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>ValidateWorkspaceWorkflow</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ValidateWorkspaceWorkflowOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ValidateWorkspaceWorkflow</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ValidateWorkspaceWorkflowOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["workspace:read", "workspace:write"];
@@ -209,4 +219,14 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="id">The id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<DeleteWorkspaceWorkflowResponse> DeleteWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Validate a working copy
+    /// </summary>
+    /// <remarks>
+    /// Runs full diagnostics over the working copy's stored Arazzo document: JSON-Schema conformance (positioned schema findings) plus document-local semantic checks mirroring the workflow compiler's rules. Always 200 with the findings (an invalid document is a successful validation run); 404 when the working copy is absent or out of reach. The document is never modified.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ValidateWorkspaceWorkflowResponse> ValidateWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

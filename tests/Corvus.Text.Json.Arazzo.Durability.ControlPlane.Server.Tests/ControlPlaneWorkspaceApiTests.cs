@@ -219,6 +219,111 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Validation_of_a_clean_document_is_valid_with_no_findings()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Clean", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{ "workflowId": "w", "steps": [{ "stepId": "a", "operationId": "listPets" }] }]
+        }
+        """);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeTrue();
+        outcome.RootElement.GetProperty("diagnostics").GetArrayLength().ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task Validation_reports_schema_conformance_findings_with_pointers()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // The blank skeleton is deliberately not yet valid Arazzo (that is the point of a working
+        // copy) — validating it reports the missing pieces as positioned schema findings.
+        string id;
+        using (Stj.JsonDocument created = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", "{}", Write)))
+        {
+            id = created.RootElement.GetProperty("id").GetString()!;
+        }
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement[] findings = [.. outcome.RootElement.GetProperty("diagnostics").EnumerateArray()];
+        findings.ShouldAllBe(f => f.GetProperty("category").GetString() == "schema");
+        findings.ShouldAllBe(f => f.GetProperty("severity").GetString() == "error");
+        findings.ShouldContain(f => f.GetProperty("instancePath").GetString() != null && f.GetProperty("schemaLocation").GetString() != null);
+    }
+
+    [TestMethod]
+    public async Task Validation_reports_semantic_findings_the_schema_cannot_see()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // Schema-valid, semantically broken: the goto targets a step that does not exist.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Broken", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "steps": [{
+              "stepId": "a",
+              "operationId": "listPets",
+              "onSuccess": [{ "name": "jump", "type": "goto", "stepId": "ghost" }]
+            }]
+          }]
+        }
+        """);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement finding = outcome.RootElement.GetProperty("diagnostics").EnumerateArray().Single();
+        finding.GetProperty("category").GetString().ShouldBe("goto-target");
+        finding.GetProperty("instancePath").GetString().ShouldBe("/workflows/0/steps/0/onSuccess/0");
+        finding.GetProperty("message").GetString()!.ShouldContain("ghost");
+    }
+
+    [TestMethod]
+    public async Task Warnings_do_not_fail_validation()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // xpath round-trips but this runtime does not evaluate it — a warning, not an error.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Xpath", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "steps": [{
+              "stepId": "a",
+              "operationId": "listPets",
+              "successCriteria": [{ "context": "$response.body", "type": "xpath", "condition": "//pet" }]
+            }]
+          }]
+        }
+        """);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeTrue();
+        Stj.JsonElement finding = outcome.RootElement.GetProperty("diagnostics").EnumerateArray().Single();
+        finding.GetProperty("severity").GetString().ShouldBe("warning");
+        finding.GetProperty("category").GetString().ShouldBe("criterion-type");
+    }
+
+    [TestMethod]
+    public async Task Validating_a_missing_working_copy_is_not_found()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (await host.SendAsync(HttpMethod.Post, "/workspace/workflows/nope/validate", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
     public async Task The_scopes_are_enforced()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
@@ -237,6 +342,14 @@ public sealed class ControlPlaneWorkspaceApiTests
     {
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", CreateBody, Write));
         return (doc.RootElement.GetProperty("id").GetString()!, doc.RootElement.GetProperty("etag").GetString()!);
+    }
+
+    private static async Task<string> CreateWithDocumentAsync(Scoped host, string documentJson)
+    {
+        HttpResponseMessage created = await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", $$"""{"document":{{documentJson}}}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using Stj.JsonDocument doc = await ReadJsonAsync(created);
+        return doc.RootElement.GetProperty("id").GetString()!;
     }
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
