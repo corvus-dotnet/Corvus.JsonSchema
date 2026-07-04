@@ -29,6 +29,7 @@
     <button id="fit">Fit</button>
     <button id="relayout">Auto-layout</button>
     <button id="simulate">▶ Simulate (canned trace)</button>
+    <button id="step">⏭ Step</button>
     <button id="stop" hidden>■ Stop</button>
     <label class="chk"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
@@ -155,12 +156,14 @@
     // run → the button becomes Pause (halts before the next step); breakpoints pause on entry;
     // Resume continues; Stop terminates the session and clears the overlay.
     const simBtn = document.getElementById('simulate');
+    const stepBtn = document.getElementById('step');
     const stopBtn = document.getElementById('stop');
     const SIM_LABEL = '▶ Simulate (canned trace)';
     let player = null; // { i, timer, paused }
 
     function setUi() {
       stopBtn.hidden = !player;
+      stepBtn.hidden = !!player && !player.paused; // step is for idle (start paused) or paused
       simBtn.textContent = !player
         ? SIM_LABEL
         : player.paused
@@ -212,6 +215,29 @@
       applyFrame(); // frame 0 can itself hit a breakpoint
       setUi();
       if (player && !player.paused) player.timer = setInterval(tick, 900);
+    });
+    stepBtn.addEventListener('click', () => {
+      if (!player) {
+        // From idle: start the session paused before the first step.
+        select.value = 'place-order';
+        project();
+        player = { i: 0, timer: null, paused: true };
+        surface.debugState = trace[0];
+        logEvent('debug-step', { at: trace[0].active, note: 'session started paused' });
+        setUi();
+        return;
+      }
+      if (!player.paused) return;
+      // Execute exactly the next step, then stay paused (no breakpoint check — already stepping).
+      player.i++;
+      if (player.i >= trace.length) {
+        player = null;
+        setUi();
+        return;
+      }
+      surface.debugState = trace[player.i];
+      logEvent('debug-step', { at: trace[player.i].active ?? 'end' });
+      setUi();
     });
     stopBtn.addEventListener('click', () => {
       if (player?.timer) clearInterval(player.timer);
