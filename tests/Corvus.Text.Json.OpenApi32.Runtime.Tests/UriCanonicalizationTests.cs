@@ -354,6 +354,50 @@ public class UriCanonicalizationTests
         Assert.AreEqual("/search?q=hello", uri);
     }
 
+    // ── Reserved-character + boolean-element repro tests (compound params) ──
+    // These pin the bytes-native, percent-encoded compound serialization. Before the element/key
+    // refactor the element/key path emitted GetBytes(item.ToString())/GetBytes(prop.Name) with no
+    // percent-encoding, so reserved characters passed through literally (e.g. "a b" -> "a b").
+    [TestMethod]
+    public void QueryArray_StringElements_ReservedChars_PercentEncoded()
+    {
+        // form + explode=false array of strings; reserved chars in element values are escaped.
+        QueryArrayNonexplodeRequest request = new(
+            GetComplexQueryArrayNonexplodeColors.ParseValue("[\"a b\",\"a/b\"]"u8));
+        string query = WriteQuery(request);
+        Assert.AreEqual("colors=a%20b,a%2Fb", query);
+    }
+
+    [TestMethod]
+    public void QueryArray_BooleanElements_LowercaseCommaSeparated()
+    {
+        // form + explode=false array of booleans; booleans render as lowercase true/false.
+        QueryArrayBoolRequest request = new(
+            GetComplexQueryArrayBoolFlags.ParseValue("[true,false]"u8));
+        string query = WriteQuery(request);
+        Assert.AreEqual("flags=true,false", query);
+    }
+
+    [TestMethod]
+    public void QueryObject_Explode_ReservedKeyAndValue_PercentEncoded()
+    {
+        // form + explode object with free-form string keys/values; both keys and values are escaped.
+        QueryObjectReservedRequest request = new(
+            GetComplexQueryObjectReservedDims.ParseValue("{\"x y\":\"a/b\"}"u8));
+        string query = WriteQuery(request);
+        Assert.AreEqual("x%20y=a%2Fb", query);
+    }
+
+    [TestMethod]
+    public void PathArray_StringElements_ReservedChars_PercentEncoded()
+    {
+        // simple-style path array of strings; reserved chars in element values are escaped.
+        PathArraySimpleRequest request = new(
+            GetComplexPathArraySimpleByIdsIds.ParseValue("[\"a b\",\"a/b\"]"u8));
+        string path = WritePath(request);
+        Assert.AreEqual("/complex/path-array-simple/a%20b,a%2Fb", path);
+    }
+
     private static string WritePath<TRequest>(in TRequest request)
         where TRequest : struct, IApiRequest<TRequest>
     {

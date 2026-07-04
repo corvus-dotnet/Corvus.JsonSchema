@@ -1,0 +1,148 @@
+# ts-bench — Sourcemeta-dataset validation benchmark
+
+Benchmarks the **corvus-ts** validators (emitted by the production CLI, `corvus jsonschema … --engine
+TypeScript`) against the fastest JS/TS JSON Schema validators, over the
+[Sourcemeta `jsonschema-benchmark`](https://github.com/sourcemeta-research/jsonschema-benchmark) dataset:
+**37 real-world schemas** (npm/CI/cloud config schemas — 35 draft-07, 2 2020-12) and **35,407 instances**.
+
+## Competitors
+
+| Impl | Package | Notes |
+|---|---|---|
+| **corvus-ts** | (this repo, `--engine TypeScript`) | AOT-compiled validators over `JSON.parse`'d values |
+| ajv | `ajv` / `ajv/dist/2020` / `ajv-draft-04` | `{strict:false}`, no `ajv-formats` (formats as annotations) |
+| @exodus/schemasafe | `@exodus/schemasafe` | `{mode:'spec', isJSON:true}` |
+| @hyperjump/json-schema | `@hyperjump/json-schema` | compiled validator (sync) |
+
+## Methodology
+
+Mirrors Sourcemeta's: per schema, every validator receives the *same* `JSON.parse`'d instances. We run one
+cold pass (records the valid-count), `WARMUP` warm-up passes (default 30 — enough for V8 JIT convergence),
+then time **one warm pass** over all instances. **Compile time is excluded** — this measures steady-state
+validation throughput. A **correctness cross-check** records each validator's valid-count per schema; a
+fast-but-wrong validator is meaningless, so disagreements are surfaced.
+
+```
+npm install
+./generate.sh /path/to/jsonschema-benchmark      # regenerates bench-gen/ via the production CLI
+npx tsc -p tsconfig.bench.json
+node bench.mjs /path/to/jsonschema-benchmark      # WARMUP=N to override
+```
+
+> **`generate.sh` passes `--assertFormat false`, and must.** The dataset's expected valid-counts (and
+> the other validators ajv/hyperjump/schemasafe) treat `format` as **annotation-only** (the 2020-12
+> default). The CLI asserts formats by default, so the benchmark must opt out — otherwise corvus-ts
+> would reject `format`-violating instances the consensus accepts, producing spurious disagreements
+> and an unfair comparison.
+
+## Results (WARMUP=30, ROUNDS=7 median; see `RESULTS.txt` for the full per-schema table)
+
+A validator should only get *credit* on a schema where it produces the **correct** result — being fast
+because you skip/mis-validate isn't a win. So the headline metric is **correctness-gated**: per schema, the
+consensus valid-count is ground truth, wrong/err results are discounted, and we rank the *correct* runners.
+(Median of 7 passes — single-pass runs are too noisy to compare; see the optimization study below.)
+
+| Validator | Correct on | **Fastest *correct* on** | Geomean over its correct schemas |
+|---|:---:|:---:|---:|
+| **corvus-ts** | **37 / 37** | **26** | 1,853 ns |
+| ajv | 33 / 37 | 7 | 2,593 ns |
+| @exodus/schemasafe | 27 / 37 | 4 | 2,316 ns |
+| @hyperjump/json-schema | 35 / 37 | 0 | 39,598 ns |
+
+**corvus-ts is the only validator correct on all 37 schemas, and it is the fastest *correct* validator on
+the most schemas (26, vs ajv's 7).** ajv is wrong on **openapi (0/107)** and **code-climate** and fails to
+compile 2; schemasafe is wrong on draft-04/helm-chart-lock and fails to compile 8; hyperjump is correct but
+~13–50× slower. The geomean columns are over **different schema sets** (each validator's *correct* ones), so
+they are not directly comparable — yet corvus's **1,853 ns over all 37** (including hard ones like openapi,
+~210 µs of fully-correct `$dynamicRef` + `unevaluatedProperties` validation that ajv "does" in 42 µs by
+accepting **none** of them) still beats ajv's 2,593 ns over its easier 33.
+
+corvus wins large on complex schemas (cypress 15–22×, jsconfig/omnisharp/jshintrc 4–6×, geojson ~3×) **and
+now on most small/flat schemas too** (nest-cli, gitpod, pulumi, semantic-release, lerna, omnisharp, …); ajv
+edges it only on the very tiniest hand-tuned cases (aws-cdk, jasmine, importmap, stale), mostly by < 2×. It
+**never** loses to hyperjump.
+
+**Dispatch micro-optimizations don't help in JS (A/B-disproven).** We tried, behind the controlled
+`bench-compare.mjs` A/B: Ajv-style direct property access (33% *slower* — our O(instanceKeys) loop beats
+O(declaredProps) on sparse instances), a name→validator **Map** (the C# generator's dictionary trick;
+**0.99×**, a wash), and a **`switch`** (**1.015×**, within noise, with an unexplained ui5 deopt). Reason:
+V8 compares interned-string `k === "name"` by pointer identity, so the if/else-if chain is already
+near-optimal — unlike C#'s UTF-8 `SequenceEqual`, where the dictionary is a real win.
+
+**What *did* move the needle: per-validation allocation.** Replacing the per-object `Object.keys` array
+with an allocation-free `for...in` over own keys (no `hasOwn` guard — a JSON instance owns every key
+`for...in` yields; it differs only under a globally-polluted `Object.prototype`, the host's concern) and
+**fusing** `properties`/`patternProperties`/`additionalProperties` into a single enumeration cut the
+validator's *own* allocation ~3× (it had rivalled `JSON.parse` itself) at **neutral warm time**. That moved
+corvus from **18 → 26** fastest-*correct* schemas — the small/flat schemas it used to lose to ajv flipped
+(nest-cli, gitpod, pulumi, semantic-release, …), because the per-object key-array allocation isn't free even
+warm. The allocation win is *understated* by this warm microbenchmark (no GC-pause time) and is larger under
+sustained-load GC pressure — the actual server target.
+
+## Sustained-load validation benchmark (`validate-sustained.bench.mjs`, gap G5)
+
+`bench.mjs` (above) is a one-pass *cross-validator* comparison. The **permanent sustained-load** benchmark
+that profiles our own validator's throughput **and GC pressure** under repeated load is
+`validate-sustained.bench.mjs` — the validation analog of the mutation benchmark (`rmw-e2e.bench.mjs` /
+`RMW-BENCH.md`). Run it with:
+
+```bash
+./run-validate-bench.sh    # builds the codegen worker, generates the Catalog module, runs with --expose-gc
+```
+
+It times three paths over the generated `Catalog` validator (`parse-only`, `validate-only`, `parse+validate`)
+across payload sizes (small/mid/large) and ascii/non-ascii content, reporting ns/op, a best-effort bytes/op,
+and — the load-bearing signal — **minor-GC event count + total pause over a fixed workload**. It is
+correctness-gated (the validator must accept the valid fixture and reject invalid input before timing). A
+representative run is checked in as `RESULTS-validate.txt`; the finding: under sustained load `validate-only`
+is ~2× faster than `JSON.parse` and triggers ~half the minor GCs, so on the validate path the validator is
+**leaner than the parse**, not the allocation bottleneck.
+
+## Correctness
+
+33/37 schemas: **all four validators agree** on valid-counts. The 4 disagreements:
+
+- **code-climate**, **helm-chart-lock**, **draft-04** — corvus-ts agrees with the **majority**; the
+  outlier is ajv (stricter) or schemasafe (stricter/erroring), not corvus.
+- **openapi** (2020-12 OpenAPI 3.1 metaschema, `$dynamicRef`-heavy) — a genuine 3-way split
+  (corvus 9 / ajv 0 / hyperjump 107 valid of 107). No ground truth; the validators disagree wildly with
+  each other. Flagged for separate study.
+
+## Finding: the krakend `u`-flag regex bug (fixed)
+
+krakend originally **failed in all four validators** (including corvus-ts). Its schema uses a `pattern`
+with identity escapes — `[^\*\?\&\%]` — which are valid ECMA-262 *without* the Unicode (`u`) flag but a
+`SyntaxError` *with* it. corvus-ts (like ajv/hyperjump/schemasafe) compiled patterns with `u` and crashed.
+
+Fixed in the generator: the `pattern`/`patternProperties` **keyword** now compiles through a cached `__re`
+helper that tries `u` first (correct Unicode semantics; the test-suite pattern cases stay green) and falls
+back to non-`u` for identity-escape patterns. `format: regex` deliberately stays `u`-only (strict
+ECMA-262 validity — `\a` *is* an invalid escape there, per the test suite). After the fix corvus-ts
+validates krakend 47/47 and is the **only** validator in this set that compiles all 37 schemas, while the
+full JSON-Schema-Test-Suite still passes 7848/7849.
+
+## Optimization study — direct property access (NEGATIVE result; do not re-attempt without an A/B)
+
+We lose to Ajv on a few tiny flat objects, so we tried Ajv's strategy: replace the `Object.keys` + key
+loop with **direct property access** (`if (Object.hasOwn(o, "x")) …`), which required switching the
+evaluation tracker's property marks from an **index bitmask** to a **name `Set<string>`**. It passed the
+suite (7848/7849) but was a **33% regression** — measured by a *controlled same-run A/B*
+(`bench-compare.mjs`, median of 7 passes, old vs new vs ajv adjacently, so machine-state noise hits all
+impls equally):
+
+```
+Geomean NEW/OLD speedup: 0.672x   (>1 = faster)   →  refactor 33% SLOWER
+Per-schema: NEW faster on 1, OLD faster on 34, ~tie on 2
+Geomean ns/instance:  old 1222   new 1820   ajv 1376    →  the BASELINE already beats ajv
+```
+
+Why the baseline wins: the index bitmask `markProp(i)` = `pl |= 1<<i` is zero-allocation; a `Set<string>`
+allocates + hashes (brutal for `unevaluated*`/`allOf` tracking schemas — openapi 0.32×). And in V8,
+`Object.keys(o)` (a fast intrinsic over a stable hidden class) + interned-string identity compares beats
+N× `Object.hasOwn` + N× property accesses. Ajv's edge is its *whole* specialised machinery, not "direct
+access" in isolation.
+
+**Method lesson:** a single noisy run (a concurrent process on the box) had shown the refactor *improving*
+2,300→1,957 ns — pure machine-state noise that would have led to committing a 33% regression. Only the
+same-run A/B exposed it. **Measure optimizations with `bench-compare.mjs`, never by comparing two separate
+full runs.**

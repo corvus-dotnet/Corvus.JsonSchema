@@ -1,0 +1,58 @@
+{
+  "spec": "petstore-3.0",
+  "cases": [
+    {
+      "name": "getPet-200-pet",
+      "operation": "getPet",
+      "status": 200,
+      "bodyUtf8": "{\"id\":\"p-1\",\"name\":\"Rex\",\"tag\":\"dog\"}",
+      "headers": {},
+      "decoded": {
+        "matched": "ok",
+        "valid": true
+      }
+    },
+    {
+      "name": "getStatus-default-error",
+      "operation": "getStatus",
+      "status": 503,
+      "bodyUtf8": "{\"code\":503,\"message\":\"down\"}",
+      "headers": {},
+      "decoded": {
+        "matched": "default",
+        "valid": true
+      }
+    },
+    {
+      "name": "limits-200-headers",
+      "operation": "limits",
+      "status": 200,
+      "bodyUtf8": "{\"id\":\"p-1\",\"name\":\"Rex\"}",
+      "headers": {
+        "X-Expires-At": "2026-01-02T03:04:05Z",
+        "X-Rate-Limit": "100",
+        "X-Request-Id": "req-7",
+        "X-Scope": "kind,read,region,eu",
+        "X-Tags": "a,b,c"
+      },
+      "decoded": {
+        "matched": "ok",
+        "valid": true,
+        "headerValues": {
+          "xRateLimit": 100,
+          "xRequestId": "req-7",
+          "xTags": [
+            "a",
+            "b",
+            "c"
+          ],
+          "xExpiresAt": "2026-01-02T03:04:05Z",
+          "xScope": {
+            "kind": "read",
+            "region": "eu"
+          }
+        }
+      }
+    }
+  ]
+}

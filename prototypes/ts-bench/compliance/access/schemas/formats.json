@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Account",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "balance": { "type": "integer", "format": "int64" },
+    "owner": { "type": "string", "format": "email" }
+  },
+  "required": ["id"]
+}

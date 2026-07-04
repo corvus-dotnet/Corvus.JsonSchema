@@ -77,6 +77,14 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("Format assertion mode overrides, comma-separated. Use '<format>=<assert|disable|warning>' for one format (e.g. 'date-time=disable,time=warning'), or a bare '<assert|disable|warning>' (equivalently '*=<mode>') to set the default for ALL formats — e.g. '--formatMode disable' for annotation-only output across every draft. May be specified more than once. An override takes precedence over the schema's format vocabulary and --assertFormat.")]
         public string[]? FormatMode { get; init; }
 
+        [CommandOption("--tsRuntimeModule <VALUE>")]
+        [Description("(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained). Pass a package specifier (e.g. '@endjin/corvus-json-runtime') to import the installed runtime package instead, and skip re-emitting it.")]
+        public string? TsRuntimeModule { get; init; }
+
+        [CommandOption("--tsModulePerType")]
+        [Description("(TypeScript engine) Emit one .ts module per generated type plus a barrel index.ts that re-exports them (enables tree-shaking and IDE navigation). The default emits a single generated.ts containing every type.")]
+        public bool TsModulePerType { get; init; }
+
         [Description("The path to the schema file to process.")]
         [CommandArgument(0, "<schemaFile>")]
         [NotNull] // <> => NotNull
@@ -134,9 +142,17 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
-        ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
         Engine engine = settings.GenerationEngine ?? CliDefaults.DefaultEngine;
+
+        // The TypeScript and Python engines ignore the .NET namespace; default it so --rootNamespace is
+        // optional there.
+        bool ignoresDotnetNamespace = engine is Engine.TypeScript or Engine.Python;
+        string rootNamespace = settings.RootNamespace ?? (ignoresDotnetNamespace ? "Generated" : string.Empty);
+        if (!ignoresDotnetNamespace)
+        {
+            ArgumentNullException.ThrowIfNullOrEmpty(rootNamespace); // C# requires a root namespace.
+        }
 
         GeneratorConfig.GenerationSpecification generationSpecification =
             GeneratorConfig.GenerationSpecification.Create(
@@ -151,7 +167,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         }
 
         var config = GeneratorConfig.Create(
-            settings.RootNamespace,
+            rootNamespace,
             [generationSpecification],
             additionalFiles: null,
             assertFormat: settings.AssertFormat,
@@ -160,6 +176,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             optionalAsNullable: settings.OptionalAsNullable.ToString(),
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
+            tsRuntimeModule: settings.TsRuntimeModule.AsNullableJsonString(),
+            tsModulePerType: settings.TsModulePerType,
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
             useImplicitOperatorString: settings.UseImplicitOperatorString,
             useUnixLineEndings: settings.UseUnixLineEndings,

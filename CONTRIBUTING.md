@@ -6,10 +6,45 @@ Thank you for your interest in contributing! This guide covers the practical det
 
 ### Prerequisites
 
-- .NET 10.0 SDK (primary target)
-- .NET 9.0 SDK (multi-targeting)
+- .NET 10.0 SDK (primary target) and .NET 9.0 SDK (multi-targeting)
 - Git (with submodule support)
-- PowerShell 7+
+- PowerShell 7+. The repository's build and code-generation scripts are cross-platform PowerShell (`.ps1`), so `pwsh` is required on every platform.
+- Node.js 20 LTS or later, with npm. This is needed for the TypeScript code-generation engine: its model and OpenAPI-client example recipes under `docs/typescript/`, and the `@endjin/corvus-json-runtime` and `@endjin/corvus-json-client-runtime` packages under `packages/`. TypeScript itself is a dev dependency that `npm install` restores per package, so there is no separate global install.
+
+The .NET-only workflow (build and test the solution) needs the first three. Node.js is required only when you touch the TypeScript engine, its runtime packages, or the TypeScript docs recipes.
+
+#### Installing the prerequisites on Windows
+
+Using [winget](https://learn.microsoft.com/windows/package-manager/winget/) (included with Windows 10 and 11):
+
+```powershell
+winget install Microsoft.DotNet.SDK.10
+winget install Microsoft.DotNet.SDK.9
+winget install Microsoft.PowerShell
+winget install OpenJS.NodeJS.LTS
+winget install Git.Git
+```
+
+Restart the terminal afterwards so the updated `PATH` is picked up.
+
+#### Installing the prerequisites on Linux
+
+The commands below target Ubuntu and Debian. For other distributions, see the official install guides for [.NET](https://learn.microsoft.com/dotnet/core/install/linux), [PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-linux), and [Node.js](https://nodejs.org/en/download/package-manager).
+
+```bash
+# .NET 10 and 9 SDKs, plus Git
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-10.0 dotnet-sdk-9.0 git
+
+# PowerShell 7 (the classic snap works on any snap-enabled distribution)
+sudo snap install powershell --classic
+
+# Node.js 20 LTS (NodeSource)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+If `dotnet-sdk-10.0` is not yet in your distribution's feed, use the distribution-agnostic install script instead. Run `curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0` (then repeat with `--channel 9.0`) and add `~/.dotnet` to your `PATH`.
 
 ### Clone and build
 
@@ -19,7 +54,7 @@ cd Corvus.JsonSchema
 dotnet build Corvus.Text.Json.slnx
 ```
 
-The `--recurse-submodules` flag is required to fetch the `JSON-Schema-Test-Suite/` submodule used by the test suite.
+The `--recurse-submodules` flag fetches the compliance and test-suite submodules that the build and tests depend on: `JSON-Schema-Test-Suite/`, `tests/json-patch-tests/`, `Jsonata-Test-Suite/`, `JMESPath-Test-Suite/`, `yaml-test-suite/`, `jsonpath-compliance-test-suite/`, and `toon-format-spec/`. Without them the build fails (missing generated test inputs). If you have already cloned without the flag, run `git submodule update --init --recursive`.
 
 ### Run tests
 

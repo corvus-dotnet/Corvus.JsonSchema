@@ -58,10 +58,10 @@ public readonly struct ShowPetByIdRequest : IApiRequest<ShowPetByIdRequest>
     {
         writer.Write("/pets/"u8);
         using UnescapedUtf8JsonString utf8PetId = ((JsonElement)this.PetId).GetUtf8String();
-        Span<byte> escPetId = stackalloc byte[utf8PetId.Span.Length * 3];
+        Span<byte> escPetId = writer.GetSpan(utf8PetId.Span.Length * 3);
         if (Utf8Uri.TryEscapeDataString(utf8PetId.Span, escPetId, out int ewPetId))
         {
-            writer.Write(escPetId[..ewPetId]);
+            writer.Advance(ewPetId);
         }
     }
 

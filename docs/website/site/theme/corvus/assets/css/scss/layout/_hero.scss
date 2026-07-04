@@ -75,6 +75,12 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--space-sm);
+
+    // Secondary row (the "Try …" playgrounds + GitHub) sits on its own line
+    // below the two primary "Get Started" buttons.
+    &--secondary {
+      margin-top: var(--space-sm);
+    }
   }
 
   // ---- Version / metadata badge ----

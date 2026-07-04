@@ -834,6 +834,120 @@ ContentBlocks:
 }
 Write-StepDuration "Docs generation ($docCount pages)" $sw
 
+# -- Step 5b: Generate TypeScript guide + recipe pages -----------------------
+# Renders the docs/typescript guides and the per-recipe READMEs as native /typescript/ pages
+# (mirrors Step 4/5) so they no longer just link out to the repo. The hand-authored landing
+# blocks in content/TypeScript/ and the two section index.yml files are preserved; everything
+# this step writes is prefixed Generated_ / lives next to the section index so it can be cleaned.
+Write-Host "`n[5b/10] Generating TypeScript guide + recipe pages..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$tsSourceDir = Join-Path $repoRoot "docs\typescript"
+$tsContentDir = Join-Path $siteDir "content\TypeScript"
+$tsGuidesTaxDir = Join-Path $siteDir "taxonomy\typescript-guides"
+$tsExamplesTaxDir = Join-Path $siteDir "taxonomy\typescript-examples"
+$tsGhExamplesBase = "$canonicalRepoUrl/blob/$canonicalBlobRef/docs/typescript/examples"
+
+# Clean previously-generated pages (hand-authored landing blocks + the two index.yml survive)
+Get-ChildItem $tsContentDir -Filter "Generated_*.md" -ErrorAction SilentlyContinue | Remove-Item -Force
+foreach ($td in @($tsGuidesTaxDir, $tsExamplesTaxDir)) {
+    Get-ChildItem $td -Filter "*.yml" -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne "index.yml" } | Remove-Item -Force
+}
+
+function Write-TsDocPage($contentName, $slug, $title, $description, $parentUrl, $url, $taxDir, $rank, $body) {
+    $t = $title -replace '"', '\"'
+    $d = $description -replace '"', '\"'
+    $fm = "---`nContentType: `"application/vnd.endjin.ssg.content+md`"`nPublicationStatus: Published`nDate: 2026-06-29T00:00:00.0+00:00`nTitle: `"$t`"`n---`n"
+    [System.IO.File]::WriteAllText((Join-Path $tsContentDir "$contentName.md"), ($fm + $body), [System.Text.Encoding]::UTF8)
+    $tax = @"
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: "$t"
+Template: typescript/doc-page
+Navigation:
+  Title: "$t"
+  Description: "$d"
+  Parent: $parentUrl
+  Url: $url
+  Rank: $rank
+  Header:
+    Visible: False
+    Link: False
+  Footer:
+    Visible: False
+    Link: False
+MetaData:
+  Title: "$t — Corvus.Text.Json TypeScript"
+  Description: "$d"
+  Keywords: [TypeScript, JSON Schema, Corvus.Text.Json, code generation]
+OpenGraph:
+  Title: "$t — Corvus.Text.Json TypeScript"
+  Description: "$d"
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: $contentName
+    Spec:
+      Path: ../../content/TypeScript/$contentName.md
+"@
+    [System.IO.File]::WriteAllText((Join-Path $taxDir "$slug.yml"), $tax, [System.Text.Encoding]::UTF8)
+}
+
+# Recipe slug map (e.g. 019-formats -> formats), used for cross-recipe link rewriting
+$tsRecipeSlugMap = [ordered]@{}
+$tsRecipeDirs = @(Get-ChildItem (Join-Path $tsSourceDir "examples") -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '^\d+-(.+)$' } | Sort-Object Name)
+foreach ($rd in $tsRecipeDirs) { if ($rd.Name -match '^\d+-(.+)$') { $tsRecipeSlugMap[$rd.Name] = $Matches[1] } }
+
+$tsGuideFiles = @('code-generation', 'the-type-surface', 'reading-and-validating', 'value-types', 'mutation', 'json-patch', 'runtime', 'openapi', 'authentication')
+$tsPageCount = 0
+
+# --- Guides (getting-started IS the /typescript/ landing, so it is not regenerated here) ---
+$guideRank = 0
+foreach ($g in $tsGuideFiles) {
+    $guideRank++
+    $src = Join-Path $tsSourceDir "$g.md"
+    if (!(Test-Path $src)) { continue }
+    $raw = Get-Content $src -Raw -Encoding utf8
+    $title = if ($raw -match '^#\s+(.+?)[\r\n]') { ($Matches[1].Trim() -replace '`', '') } else { $g }
+    $body = ($raw -replace '^#[^\n]+\n\s*', '').TrimStart()
+    $body = $body -replace '\]\(\./getting-started\.md(#[^)]*)?\)', '](/typescript/index.html$1)'
+    foreach ($og in $tsGuideFiles) { $body = $body -replace "\]\(\./$og\.md(#[^)]*)?\)", "](/typescript/guides/$og.html`$1)" }
+    foreach ($e in $tsRecipeSlugMap.GetEnumerator()) {
+        $body = $body -replace [regex]::Escape("](./examples/$($e.Key)/)"), "](/typescript/examples/$($e.Value).html)"
+        $body = $body -replace [regex]::Escape("](./examples/$($e.Key))"), "](/typescript/examples/$($e.Value).html)"
+    }
+    $body = $body -replace '\]\(\./examples/?\)', '](/typescript/examples/index.html)'
+    $body = $body -replace '\]\(\.\./playground-typescript/?\)', '](/playground-typescript/index.html)'
+    $desc = if ($body -match '(?s)^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
+    Write-TsDocPage "Generated_Guide_$g" $g $title $desc "/typescript/guides/index.html" "/typescript/guides/$g.html" $tsGuidesTaxDir $guideRank $body
+    $tsPageCount++
+    Write-Host "  guide -> /typescript/guides/$g.html" -ForegroundColor Gray
+}
+
+# --- Recipes (one page per docs/typescript/examples/<recipe>/README.md) ---
+foreach ($dir in $tsRecipeDirs) {
+    $readme = Join-Path $dir.FullName "README.md"
+    if (!(Test-Path $readme)) { continue }
+    $slug = $tsRecipeSlugMap[$dir.Name]
+    $raw = Get-Content $readme -Raw -Encoding utf8
+    $title = if ($raw -match '^# TypeScript Patterns\s*[-–]\s*(.+?)[\r\n]') { $Matches[1].Trim() }
+             elseif ($raw -match '^#\s+(.+?)[\r\n]') { $Matches[1].Trim() } else { $slug }
+    $body = ($raw -replace '^#[^\n]+\n\s*', '').TrimStart()
+    foreach ($e in $tsRecipeSlugMap.GetEnumerator()) {
+        $body = $body -replace [regex]::Escape("](../$($e.Key)/)"), "](/typescript/examples/$($e.Value).html)"
+        $body = $body -replace [regex]::Escape("](../$($e.Key))"), "](/typescript/examples/$($e.Value).html)"
+    }
+    $ghDir = "$tsGhExamplesBase/$($dir.Name)"
+    $body = $body -replace '\]\(\./([^)]+)\)', "](${ghDir}/`$1)"
+    $desc = if ($body -match '(?s)^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
+    $recipeRank = [int]($dir.Name -replace '^0*(\d+)-.*$', '$1')
+    Write-TsDocPage "Generated_Recipe_$slug" $slug $title $desc "/typescript/examples/index.html" "/typescript/examples/$slug.html" $tsExamplesTaxDir $recipeRank $body
+    $tsPageCount++
+    Write-Host "  recipe -> /typescript/examples/$slug.html" -ForegroundColor Gray
+}
+Write-StepDuration "TypeScript page generation ($tsPageCount pages)" $sw
+
 # -- Step 6: Run Vellum ------------------------------------------------------
 Write-Host "`n[6/10] Running Vellum..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -1243,6 +1357,68 @@ $openapiSize = (Get-ChildItem $openapiOutputDir -Recurse -File | Measure-Object 
 Write-Host "  OpenAPI Playground: $([math]::Round($openapiSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "OpenAPI Playground build" $sw
 
+# -- Step 9j: Build TypeScript Playground (Blazor WASM) -------------------------
+Write-Host "`n[9j/10] Building TypeScript Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$tsPlaygroundProject = Join-Path $repoRoot "docs\playground-typescript\src\Corvus.Text.Json.TypeScript.Playground\Corvus.Text.Json.TypeScript.Playground.csproj"
+$tsPlaygroundPublishDir = Join-Path $here ".playground-typescript-publish"
+$tsPlaygroundOutputDir = Join-Path $outputDir "playground-typescript"
+
+& dotnet publish $tsPlaygroundProject -c Release -o $tsPlaygroundPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "TypeScript Playground publish failed" }
+
+$tsPlaygroundWwwroot = Join-Path $tsPlaygroundPublishDir "wwwroot"
+if (!(Test-Path $tsPlaygroundWwwroot)) {
+    throw "TypeScript Playground wwwroot not found at $tsPlaygroundWwwroot"
+}
+Copy-Item -Path $tsPlaygroundWwwroot -Destination $tsPlaygroundOutputDir -Recurse -Force
+
+$tsPlaygroundIndex = Join-Path $tsPlaygroundOutputDir "index.html"
+if (Test-Path $tsPlaygroundIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($tsPlaygroundIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-typescript/`" />"
+    [System.IO.File]::WriteAllText($tsPlaygroundIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-typescript/" -ForegroundColor Gray
+}
+
+Remove-Item $tsPlaygroundPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$tsPlaygroundSize = (Get-ChildItem $tsPlaygroundOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  TypeScript Playground: $([math]::Round($tsPlaygroundSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "TypeScript Playground build" $sw
+
+# -- Step 9k: Build OpenAPI TypeScript Playground (Blazor WASM) -----------------
+Write-Host "`n[9k/10] Building OpenAPI TypeScript Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$openapiTsPlaygroundProject = Join-Path $repoRoot "docs\playground-openapi-typescript\src\Corvus.Text.Json.OpenApi.TypeScript.Playground\Corvus.Text.Json.OpenApi.TypeScript.Playground.csproj"
+$openapiTsPlaygroundPublishDir = Join-Path $here ".playground-openapi-typescript-publish"
+$openapiTsPlaygroundOutputDir = Join-Path $outputDir "playground-openapi-typescript"
+
+& dotnet publish $openapiTsPlaygroundProject -c Release -o $openapiTsPlaygroundPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "OpenAPI TypeScript Playground publish failed" }
+
+$openapiTsPlaygroundWwwroot = Join-Path $openapiTsPlaygroundPublishDir "wwwroot"
+if (!(Test-Path $openapiTsPlaygroundWwwroot)) {
+    throw "OpenAPI TypeScript Playground wwwroot not found at $openapiTsPlaygroundWwwroot"
+}
+Copy-Item -Path $openapiTsPlaygroundWwwroot -Destination $openapiTsPlaygroundOutputDir -Recurse -Force
+
+$openapiTsPlaygroundIndex = Join-Path $openapiTsPlaygroundOutputDir "index.html"
+if (Test-Path $openapiTsPlaygroundIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($openapiTsPlaygroundIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-openapi-typescript/`" />"
+    [System.IO.File]::WriteAllText($openapiTsPlaygroundIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-openapi-typescript/" -ForegroundColor Gray
+}
+
+Remove-Item $openapiTsPlaygroundPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$openapiTsPlaygroundSize = (Get-ChildItem $openapiTsPlaygroundOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  OpenAPI TypeScript Playground: $([math]::Round($openapiTsPlaygroundSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "OpenAPI TypeScript Playground build" $sw
+
 # Disable Jekyll processing so that _-prefixed directories (_framework, _content)
 # are served correctly at any nesting depth (e.g. pr-preview/pr-NNN/playground/_framework/).
 # The previous _config.yml include approach only worked for root-level directories.
@@ -1303,6 +1479,8 @@ $lycheeArgs = @(
     "--exclude-path", "playground-toon"
     "--exclude-path", "playground-asyncapi"
     "--exclude-path", "playground-openapi"
+    "--exclude-path", "playground-typescript"
+    "--exclude-path", "playground-openapi-typescript"
     "."
 )
 
@@ -1327,7 +1505,7 @@ if ($BasePathPrefix) {
     # Rewrite HTML files (excluding playgrounds which use <base href>)
     # Use -notmatch with [/\\] separators for cross-platform compatibility (Linux uses /, Windows uses \)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-typescript[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi-typescript[/\\]' }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -1393,7 +1571,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' -and $_.FullName -notmatch '[/\\]playground-toon[/\\]' -and $_.FullName -notmatch '[/\\]playground-asyncapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi[/\\]' -and $_.FullName -notmatch '[/\\]playground-typescript[/\\]' -and $_.FullName -notmatch '[/\\]playground-openapi-typescript[/\\]' }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)

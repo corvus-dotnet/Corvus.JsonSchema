@@ -88,10 +88,10 @@ public readonly struct CreatePetRequest : IApiRequest<CreatePetRequest>
         writer.Write("session_token="u8);
         totalWritten += 14;
         using UnescapedUtf8JsonString utf8SessionToken = ((JsonElement)this.SessionToken).GetUtf8String();
-        Span<byte> escSessionToken = stackalloc byte[utf8SessionToken.Span.Length * 3];
+        Span<byte> escSessionToken = writer.GetSpan(utf8SessionToken.Span.Length * 3);
         if (Utf8Uri.TryEscapeDataString(utf8SessionToken.Span, escSessionToken, out int ewSessionToken))
         {
-            writer.Write(escSessionToken[..ewSessionToken]);
+            writer.Advance(ewSessionToken);
             totalWritten += ewSessionToken;
         }
 

@@ -1,0 +1,3 @@
+{ "title": "Point3D", "type": "object", "required": ["coord"],
+  "properties": { "coord": { "type": "array", "minItems": 3,
+      "prefixItems": [ { "type": "number" }, { "type": "number" }, { "type": "number" } ], "items": false } } }

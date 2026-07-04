@@ -38,7 +38,9 @@ $CatalogPath = Join-Path $RepoRoot 'docs' 'code-sample-catalog.yaml'
 # Section definitions — order determines catalog layout
 $SectionDefinitions = @(
     @{ Name = 'example-recipes';       Pattern = 'docs\ExampleRecipes\*\README.md' }
+    @{ Name = 'typescript-recipes';    Pattern = 'docs\typescript\examples\*\README.md' }
     @{ Name = 'main-docs';             Pattern = 'docs\*.md' }
+    @{ Name = 'typescript-docs';       Pattern = 'docs\typescript\*.md' }
     @{ Name = 'v4-docs';               Pattern = 'docs\V4\*.md' }
     @{ Name = 'copilot-docs';          Pattern = 'docs\copilot\*.md' }
     @{ Name = 'copilot-instructions';  Pattern = '.github\copilot-instructions.md' }

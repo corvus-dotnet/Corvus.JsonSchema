@@ -23,4 +23,14 @@ public enum Engine
     /// The V5 engine using Corvus.Text.Json.
     /// </summary>
     V5,
+
+    /// <summary>
+    /// The V5 engine emitting idiomatic TypeScript (types + AOT validators) instead of C#.
+    /// </summary>
+    TypeScript,
+
+    /// <summary>
+    /// The V5 engine emitting idiomatic Python (types + AOT validators) instead of C#.
+    /// </summary>
+    Python,
 }

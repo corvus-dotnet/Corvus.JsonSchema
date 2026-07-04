@@ -1,0 +1,9 @@
+{
+  "title": "Oa31Account",
+  "type": "object",
+  "properties": {
+    "label": { "type": ["string", "null"] },
+    "code": { "type": "string" }
+  },
+  "required": ["code"]
+}

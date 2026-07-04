@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "age": { "type": "integer", "minimum": 0 },
+    "status": { "enum": ["active", "archived", "deleted"] },
+    "price": { "type": "number", "multipleOf": 0.5 },
+    "contact": { "type": "string", "format": "email" },
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string" },
+        "postcode": { "type": "string", "pattern": "^[0-9]{5}$" }
+      },
+      "required": ["postcode"]
+    }
+  },
+  "required": ["name", "address"]
+}

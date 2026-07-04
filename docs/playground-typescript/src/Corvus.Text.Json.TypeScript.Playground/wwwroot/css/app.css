@@ -1,0 +1,317 @@
+/* Minimal theme + layout for the TypeScript playground foundation (the full theme system lands later). */
+:root {
+    --accent-color: #3178c6; /* TypeScript blue */
+}
+
+[data-theme="dark"] {
+    --bg: #1e1e1e;
+    --bg-panel: #252526;
+    --bg-toolbar: #333333;
+    --fg: #d4d4d4;
+    --fg-dim: #9d9d9d;
+    --border: #3c3c3c;
+    --status-bg: #007acc;
+    --status-fg: #ffffff;
+    --error: #f48771;
+}
+
+[data-theme="light"] {
+    --bg: #ffffff;
+    --bg-panel: #f3f3f3;
+    --bg-toolbar: #e7e7e7;
+    --fg: #1e1e1e;
+    --fg-dim: #6a6a6a;
+    --border: #d0d0d0;
+    --status-bg: #007acc;
+    --status-fg: #ffffff;
+    --error: #c72e2e;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+#app { height: 100vh; }
+
+.pg-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.pg-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    background: var(--bg-toolbar);
+    border-bottom: 1px solid var(--border);
+}
+
+.pg-toolbar h1 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.pg-toolbar h1 .accent { color: var(--accent-color); }
+
+.spacer { flex: 1; }
+
+.pg-btn {
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    color: var(--fg);
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.pg-btn.primary {
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.pg-btn:disabled { opacity: 0.6; cursor: default; }
+
+.pg-file-label { cursor: pointer; display: inline-flex; align-items: center; }
+.pg-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
+.pg-select {
+    background: var(--bg-panel);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.pg-icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--fg);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.pg-icon-btn:hover { background: var(--bg-panel); border-color: var(--border); }
+
+.pg-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    min-height: 0;
+}
+
+.pg-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+/* right column has no right border; bottom row has no bottom border */
+.pg-panel:nth-child(2n) { border-right: none; }
+.pg-panel:nth-child(n+3) { border-bottom: none; }
+
+.pg-console {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 8px 12px;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.5;
+    background: var(--bg);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.pg-console-line { color: var(--fg); }
+.pg-console-line.dim { color: var(--fg-dim); font-style: italic; }
+.pg-console-line.error { color: var(--error); }
+.pg-console-line.warn { color: #d7a000; }
+.pg-console-line.info { color: var(--accent-color); }
+
+/* Schema file tabs */
+.schema-tabs {
+    display: flex;
+    align-items: stretch;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.schema-tab-scroll {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 6px;
+    flex-shrink: 0;
+}
+
+.schema-tabs-scroll {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    flex: 1;
+    scrollbar-width: none;
+}
+
+.schema-tabs-scroll::-webkit-scrollbar { display: none; }
+
+.schema-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    color: var(--fg-dim);
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    border-top: 2px solid transparent;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.schema-tab:hover { color: var(--fg); }
+.schema-tab.active { color: var(--fg); background: var(--bg); border-bottom: 2px solid var(--accent-color); }
+.schema-tab.root-type { border-top-color: #a3be8c; }
+.schema-tab-name { font-family: "Cascadia Code", Consolas, monospace; }
+.schema-tab-rename {
+    width: 84px;
+    font-size: 0.72rem;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--accent-color);
+    border-radius: 2px;
+}
+
+.schema-tab-badge {
+    background: var(--border);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 1px 5px;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+}
+
+.schema-tab-badge.is-root { background: #a3be8c33; color: #a3be8c; }
+.schema-tab-close { background: transparent; border: none; color: var(--fg-dim); cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 0 2px; }
+.schema-tab-close:hover { color: var(--error); }
+.schema-tab-add { background: transparent; border: none; color: var(--fg-dim); cursor: pointer; font-size: 1rem; padding: 0 8px; flex-shrink: 0; }
+.schema-tab-add:hover { color: var(--accent-color); }
+
+.pg-panel-title {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--fg-dim);
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+}
+
+.pg-editor-host { flex: 1; min-height: 0; }
+.pg-editor-host > * { height: 100%; }
+
+/* Tabs (top-right panel: Generated TypeScript | Type Map) */
+.pg-panel-tabs {
+    display: flex;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+}
+
+.pg-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--fg-dim);
+    padding: 6px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+
+.pg-tab.active { color: var(--fg); border-bottom-color: var(--accent-color); }
+
+/* Type-map tree */
+.tm-scroll { flex: 1; min-height: 0; overflow: auto; }
+.tm-empty { padding: 12px; color: var(--fg-dim); font-style: italic; font-size: 0.85rem; }
+.tm-list { padding: 8px 10px; font-family: "Cascadia Code", Consolas, monospace; font-size: 12.5px; }
+
+.tm-type {
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.tm-type-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 9px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+}
+
+.tm-name { font-weight: 700; color: var(--accent-color); }
+
+.tm-kind {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--border);
+    color: var(--fg-dim);
+}
+
+.tm-kind.kind-object { background: #3178c633; color: #6cb6ff; }
+.tm-kind.kind-oneOf, .tm-kind.kind-anyOf, .tm-kind.kind-allOf { background: #b48ead33; color: #c9a0dc; }
+.tm-kind.kind-array, .tm-kind.kind-tuple { background: #a3be8c33; color: #a3be8c; }
+.tm-kind.kind-enum, .tm-kind.kind-const { background: #d0883033; color: #e0a060; }
+
+.tm-row { display: flex; align-items: baseline; gap: 6px; padding: 2px 10px; }
+.tm-prop-name { color: var(--fg); }
+.tm-colon { color: var(--fg-dim); }
+.tm-prop-type { color: #6cb6ff; }
+.tm-req { font-size: 0.6rem; color: var(--error); text-transform: uppercase; }
+.tm-enum, .tm-const { color: #e0a060; }
+.tm-comp-kw { color: #c9a0dc; font-weight: 600; }
+.tm-comp-types { color: var(--fg); }
+
+.pg-status {
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    background: var(--status-bg);
+    color: var(--status-fg);
+}
+
+.pg-status.error { background: var(--error); }

@@ -1,0 +1,11 @@
+{
+  "title": "Registration",
+  "type": "object",
+  "required": ["username", "age", "email"],
+  "properties": {
+    "username": { "type": "string", "minLength": 3, "maxLength": 20, "pattern": "^[a-z][a-z0-9_]*$" },
+    "age": { "type": "integer", "minimum": 18, "maximum": 120 },
+    "email": { "type": "string", "format": "email" },
+    "score": { "type": "number", "exclusiveMinimum": 0, "multipleOf": 0.5 }
+  }
+}

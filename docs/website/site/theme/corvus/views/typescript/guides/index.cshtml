@@ -1,0 +1,34 @@
+@model SiteViewModel
+@{
+    Layout = "../../Shared/_Layout.cshtml";
+    var docsLanding = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => (x.Url?.ToString() ?? "").Contains("/typescript/guides/"));
+    var docs = docsLanding?.Children?.OrderBy(x => x.Rank).ToList();
+}
+<div class="layout-docs container">
+    @await Html.PartialAsync("_TypeScriptSidebar").ConfigureAwait(false)
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Documentation</h1>
+            <p>
+                In-depth documentation for the TypeScript that Corvus.Text.Json generates from a JSON Schema:
+                the read surface and validators, the byte-level mutation API, every JSON Schema construct mapped
+                to its generated TypeScript, and the branded value types. New here? Start with the
+                <a href="/typescript/index.html">Getting Started</a> walkthrough, or browse the
+                <a href="/typescript/examples/index.html">worked examples</a>.
+            </p>
+            <div class="card-grid" style="margin-top:var(--space-lg)">
+                @if (docs != null)
+                {
+                    @foreach (var d in docs)
+                    {
+                        <a class="card card--link" href="@d.Url">
+                            <h3 class="card__title">@d.Title</h3>
+                            <p class="card__body">@d.Description</p>
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    </main>
+</div>

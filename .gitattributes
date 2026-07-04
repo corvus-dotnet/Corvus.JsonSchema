@@ -64,3 +64,4 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+tests/Corvus.Text.Json.OpenApi.CodeGeneration.Tests/TestData/golden/*.txt text eol=lf

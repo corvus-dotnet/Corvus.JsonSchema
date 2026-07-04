@@ -1,0 +1,12 @@
+{
+  "title": "Person",
+  "type": "object",
+  "required": ["familyName", "givenName"],
+  "properties": {
+    "familyName": { "type": "string" },
+    "givenName": { "type": "string" },
+    "otherNames": { "type": "string" },
+    "birthDate": { "type": "string", "format": "date" },
+    "height": { "type": "number" }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Event",
+  "type": "object",
+  "properties": {
+    "day": { "type": "string", "format": "date" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "atTime": { "type": "string", "format": "time" },
+    "span": { "type": "string", "format": "duration" },
+    "id": { "type": "string", "format": "uuid" }
+  },
+  "required": ["day"]
+}

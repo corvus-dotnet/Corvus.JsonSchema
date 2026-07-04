@@ -1,0 +1,7 @@
+# The runtime source is the SINGLE source of truth that the C# provider embeds verbatim
+# (LogicalName corvus-runtime.ts) and emits byte-for-byte. It has mixed line endings by
+# construction (raw-string blocks are CRLF, concatenated "...\n" blocks are LF) and no
+# trailing newline. Treat it as binary so git performs NO EOL normalization on commit or
+# checkout — otherwise `* text=auto` would rewrite it and the generated runtime would drift
+# across platforms, breaking the byte-identical guarantee.
+src/index.ts -text

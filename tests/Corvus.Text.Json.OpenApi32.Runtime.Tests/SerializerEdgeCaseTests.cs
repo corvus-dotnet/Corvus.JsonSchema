@@ -86,7 +86,7 @@ public class SerializerEdgeCaseTests
         string output = Encoding.UTF8.GetString(stream.ToArray());
 
         StringAssert.Contains(output, "Content-Type: text/plain");
-        StringAssert.Contains(output, "True");
+        StringAssert.Contains(output, "true");
     }
 
     [TestMethod]

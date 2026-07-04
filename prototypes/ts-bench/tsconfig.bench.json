@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "outDir": "dist",
+    "rootDir": ".",
+    "skipLibCheck": true,
+    "noEmitOnError": false,
+    "noUnusedLocals": false
+  },
+  "include": ["bench-gen/**/*.ts", "bench-gen-old/**/*.ts", "bench-gen-new/**/*.ts", "globals.d.ts"]
+}

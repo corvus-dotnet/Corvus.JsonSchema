@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2023", "dom", "esnext.disposable"],
+    "outDir": "dist",
+    "rootDir": ".",
+    "skipLibCheck": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmitOnError": true
+  },
+  "include": ["globals.d.ts", "*/client/**/*.ts"]
+}

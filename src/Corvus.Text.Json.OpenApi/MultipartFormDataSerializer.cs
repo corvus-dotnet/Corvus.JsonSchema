@@ -137,7 +137,12 @@ public static class MultipartFormDataSerializer
                     }
 
                     writer.Write("\r\n");
-                    writer.Write(propValue.ToString());
+                    writer.Write(propValue.ValueKind switch
+                    {
+                        JsonValueKind.True => "true",
+                        JsonValueKind.False => "false",
+                        _ => propValue.ToString(),
+                    });
                     break;
 
                 case JsonValueKind.Null:
@@ -258,7 +263,12 @@ public static class MultipartFormDataSerializer
                     }
 
                     writer.Write("\r\n");
-                    writer.Write(propValue.ToString());
+                    writer.Write(propValue.ValueKind switch
+                    {
+                        JsonValueKind.True => "true",
+                        JsonValueKind.False => "false",
+                        _ => propValue.ToString(),
+                    });
                     break;
 
                 case JsonValueKind.Null:

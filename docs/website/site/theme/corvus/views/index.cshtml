@@ -12,16 +12,22 @@
         <p class="hero__subtitle">
             Source-generated strongly-typed C# from JSON Schema. Zero-allocation parsing,
             full validation for all drafts, mutable documents, JSONata, JMESPath, JSONPath, JsonLogic, YAML, JSON Patch, and more.
+            The same engine also generates idiomatic, high-performance <a href="/typescript/index.html">TypeScript</a>.
         </p>
-        <div class="hero__actions">
-            <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
+        <div class="hero__actions hero__actions--primary">
+            <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started - C#</a>
+            <a href="/typescript/index.html" class="btn btn--primary btn--lg">Get Started - TypeScript</a>
+        </div>
+        <div class="hero__actions hero__actions--secondary">
             <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
+            <a href="/playground-typescript/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try TypeScript</a>
             <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
             <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
             <a href="/playground-jsonlogic/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSON Logic</a>
             <a href="/playground-jsonpath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONPath</a>
             <a href="/playground-yaml/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try YAML</a>
             <a href="/playground-openapi/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try OpenAPI</a>
+            <a href="/playground-openapi-typescript/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try OpenAPI (TS)</a>
             <a href="/playground-asyncapi/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try AsyncAPI</a>
             <a href="@ViewBag.GitHubUrl"
                class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">View on GitHub</a>
@@ -65,6 +71,11 @@
                 <p class="card__body">Roslyn incremental source generator or CLI tool produces strongly-typed C# from any JSON Schema. Type-safe accessors, validation, serialization — all from a single schema file.</p>
             </div>
             <div class="card">
+                <div class="card__icon">🟦</div>
+                <h3 class="card__title">TypeScript Code Generation</h3>
+                <p class="card__body">The same engine generates idiomatic, high-performance TypeScript from JSON Schema. A companion object per type carries <code>evaluate()</code> validators (all drafts, no runtime schema interpretation), <code>build()</code>/<code>patch()</code>/<code>produce()</code> byte-level mutation, branded <code>format</code> types, and exhaustive <code>match()</code> &mdash; and it also generates <a href="/typescript/guides/openapi.html">OpenAPI clients</a>. <a href="/typescript/index.html">Get started</a>.</p>
+            </div>
+            <div class="card">
                 <div class="card__icon">📋</div>
                 <h3 class="card__title">Schema Validation</h3>
                 <p class="card__body">Full draft 4, 6, 7, 2019-09, and 2020-12 validation with <code>EvaluateSchema()</code>. Over 10x faster than other .NET validators. Detailed diagnostics for every failure.</p>
@@ -92,7 +103,7 @@
             <div class="card">
                 <div class="card__icon">🌐</div>
                 <h3 class="card__title">OpenAPI Client Generation</h3>
-                <p class="card__body">Generate strongly-typed HTTP clients from OpenAPI 3.0, 3.1, and 3.2 specs with validated parameters and typed request/response models. <a href="/playground-openapi/" target="_blank" rel="noopener noreferrer">Try the playground &rarr;</a></p>
+                <p class="card__body">Generate strongly-typed HTTP clients from OpenAPI 3.0, 3.1, and 3.2 specs &mdash; in <strong>C#</strong> and <strong>TypeScript</strong> &mdash; with validated parameters and typed request/response models. Try the <a href="/playground-openapi/" target="_blank" rel="noopener noreferrer">C#</a> or <a href="/playground-openapi-typescript/" target="_blank" rel="noopener noreferrer">TypeScript</a> playground &rarr;</p>
             </div>
             <div class="card">
                 <div class="card__icon">🖥️</div>

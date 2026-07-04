@@ -7,6 +7,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 ## Features
 
 - **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
+- **[TypeScript](#typescript)** — Generate idiomatic, high-performance TypeScript from the same JSON Schema and OpenAPI inputs: strongly-typed models with ahead-of-time validators, byte-level mutation, and pattern matching, plus full OpenAPI 3.0/3.1/3.2 HTTP clients — with published npm runtimes.
 - **[OpenAPI](#openapi)** — Generate strongly-typed OpenAPI 3.0, 3.1, and 3.2 HTTP clients and ASP.NET Core server stubs with typed parameters, request/response validation, streaming, and result matching.
 - **[AsyncAPI](#asyncapi)** — Generate strongly-typed AsyncAPI 2.6 and 3.0 producers, consumers, handlers, and request/reply flows with broker transport packages for NATS, Kafka, AMQP, MQTT, WebSocket, and Azure Service Bus.
 - **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
@@ -74,6 +75,10 @@ Most applications need `Corvus.Text.Json` plus either the source generator or th
 | JSON Schema generation | **Corvus.Text.Json.CodeGeneration** | Shared JSON Schema code-generation engine for tools and advanced extension scenarios. |
 | JSON Schema generation | **Corvus.Json.Cli** | CLI tool (`corvusjson`) for ahead-of-time JSON Schema, OpenAPI, AsyncAPI, and query-language code generation. |
 | JSON Schema generation | **Corvus.Json.CodeGenerator** | Immutable-model CLI tool (`generatejsonschematypes`). Delegates to the same engines; defaults to V4. |
+| TypeScript | **Corvus.Text.Json.TypeScript.CodeGeneration** | Code-generation engine emitting idiomatic TypeScript (types + ahead-of-time validators) from JSON Schema. Driven by `corvusjson … --engine TypeScript`. |
+| TypeScript | **Corvus.Text.Json.OpenApi.TypeScript.CodeGeneration** | Code-generation engine emitting TypeScript OpenAPI HTTP clients. |
+| TypeScript (npm) | **@endjin/corvus-json-runtime** | Model runtime for generated TypeScript — validators, mutation, patch, and `Temporal` support. |
+| TypeScript (npm) | **@endjin/corvus-json-client-runtime** | Byte-native HTTP transport runtime for generated TypeScript OpenAPI clients (fetch/Node transports, middleware, auth). |
 | Dynamic validation | **Corvus.Text.Json.Validator** | Dynamically load, compile, and validate JSON against JSON Schema at runtime using Roslyn. |
 | Compatibility | **Corvus.Text.Json.Compatibility** | Bridge helpers for interop with V4 `Corvus.Json.ExtendedTypes` and System.Text.Json during migration. |
 | Migration | **Corvus.Text.Json.Migration.Analyzers** | Roslyn analyzers and code fixes for migrating V4 `Corvus.Json` code to V5 `Corvus.Text.Json`. |
@@ -164,6 +169,8 @@ Then open http://localhost:5000.
 - [Building & Mutating JSON](docs/JsonDocumentBuilder.md)
 - [Source Generator](docs/SourceGenerator.md)
 - [CLI Code Generation](docs/CodeGenerator.md)
+- [TypeScript Code Generation](docs/typescript/getting-started.md)
+- [TypeScript OpenAPI Client Generation](docs/typescript/openapi.md)
 - [Dynamic Schema Validation](docs/Validator.md)
 - [OpenAPI Client and Server Generation](docs/OpenApi.md)
 - [AsyncAPI Producer and Consumer Generation](docs/AsyncApi.md)
@@ -200,6 +207,22 @@ dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloo
 | Date/Time | `DateTime`, `DateTimeOffset` | All .NET types plus NodaTime |
 | Numeric precision | `decimal` (28 digits) | `BigNumber` (arbitrary precision), `Int128`, `Half` |
 | String/URI handling | .NET string allocation | Zero-allocation UTF-8/UTF-16 access |
+
+## TypeScript
+
+The same engine that generates C# also generates idiomatic, high-performance **TypeScript** from the same JSON Schema and OpenAPI inputs — `corvusjson jsonschema <schema.json> --engine TypeScript` for models, `corvusjson openapi-client <spec> --engine TypeScript` for HTTP clients.
+
+- **Models** — each type is a plain `interface`/`type` plus a companion object carrying an ahead-of-time `evaluate()` validator (all drafts, no runtime schema interpretation), `parse()`, byte-level `build()`/`patch()`/`produce()` mutation, RFC 6902/7396 patch and diff, branded `format` types with `Temporal` accessors, and exhaustive `match()`.
+- **OpenAPI clients** — strongly-typed clients for OpenAPI 3.0, 3.1, and 3.2 over an injectable byte-native transport: typed parameters in every style, JSON/form/multipart/binary bodies, `match()`/`tryGet` response dispatch, typed headers, links, and `AsyncIterable` streaming — verified byte-identical to the C# client by a shared parity harness.
+- **npm runtimes** — [`@endjin/corvus-json-runtime`](https://www.npmjs.com/package/@endjin/corvus-json-runtime) (models) and [`@endjin/corvus-json-client-runtime`](https://www.npmjs.com/package/@endjin/corvus-json-client-runtime) (OpenAPI transport: `FetchApiTransport`/`NodeApiTransport`, retry/redirect/timeout middleware, bearer/api-key/basic auth).
+
+```ts
+import { evaluateRoot } from "./generated.js"; // your generated module imports @endjin/corvus-json-runtime
+
+const ok = evaluateRoot(JSON.parse(text));
+```
+
+See [TypeScript documentation](docs/typescript/getting-started.md) and [TypeScript OpenAPI client generation](docs/typescript/openapi.md). **[Try the TypeScript Playground](docs/playground-typescript/)** and **[the TypeScript OpenAPI Playground](docs/playground-openapi-typescript/)** in your browser.
 
 ## JSONata
 

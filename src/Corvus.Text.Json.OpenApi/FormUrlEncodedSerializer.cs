@@ -495,12 +495,12 @@ public static class FormUrlEncodedSerializer
         {
             case JsonValueKind.True:
                 EnsureCapacity(ref valueBuf, 4);
-                "True"u8.CopyTo(valueBuf);
+                "true"u8.CopyTo(valueBuf);
                 return 4;
 
             case JsonValueKind.False:
                 EnsureCapacity(ref valueBuf, 5);
-                "False"u8.CopyTo(valueBuf);
+                "false"u8.CopyTo(valueBuf);
                 return 5;
 
             case JsonValueKind.Null:

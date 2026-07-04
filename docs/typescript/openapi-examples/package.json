@@ -1,0 +1,20 @@
+{
+  "name": "corvus-text-json-openapi-typescript-examples",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worked OpenAPI client recipes for the Corvus.Text.Json TypeScript OpenAPI client generator.",
+  "scripts": {
+    "build": "tsc",
+    "regenerate": "pwsh -File regenerate.ps1"
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
+    "lossless-json": "^4.0.2",
+    "tr46": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}

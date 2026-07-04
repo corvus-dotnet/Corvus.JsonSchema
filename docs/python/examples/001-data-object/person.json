@@ -1,0 +1,12 @@
+{
+  "title": "Person",
+  "type": "object",
+  "required": ["family_name", "given_name"],
+  "properties": {
+    "family_name": { "type": "string" },
+    "given_name": { "type": "string" },
+    "birth_date": { "type": "string", "format": "date" },
+    "height": { "type": "number" },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,1375 @@
+// <copyright file="PythonLanguageProvider.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using System.Text.Json;
+using Corvus.Json;
+using Corvus.Json.CodeGeneration;
+
+namespace Corvus.Text.Json.Python.CodeGeneration;
+
+/// <summary>
+/// A language provider that emits idiomatic, byte-native Python (TypedDict type surfaces + AOT
+/// validators) from JSON Schema — the Python peer of <c>TypeScriptLanguageProvider</c>.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Module-per-type emission: each type gets a module with its type surface (a <c>TypedDict</c> for objects,
+/// an alias for enums / scalars), a threaded validator <c>evaluate_typed(value, ev, il, kl, r)</c> composed
+/// from the registered keyword handlers (the <c>Py*Handler</c> family), a public <c>evaluate</c> wrapper, and
+/// a <c>parse</c> helper. A <c>__init__.py</c> barrel re-exports every type. Validators delegate to the shared
+/// <c>corvus_json_runtime</c> package.
+/// </para>
+/// <para>
+/// The type surface is <c>TypedDict</c> (<c>total=False</c> with <c>Required[...]</c> for required members).
+/// The full keyword family and the richer surface (brands / unions / build / produce) grow incrementally; the
+/// validator dispatch and the runtime ABI are established here.
+/// </para>
+/// </remarks>
+public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
+{
+    private const string PyTypeKey = "Py_TypeName";
+    private const string PyModuleKey = "Py_Module";
+
+    private readonly KeywordValidationHandlerRegistry validationHandlers = new();
+    private string runtimeModule = "corvus_json_runtime";
+
+    /// <summary>
+    /// Gets or sets the root type whose public <c>evaluate</c>/<c>parse</c> entry point the single file exposes.
+    /// The driver sets this before <see cref="GenerateCodeFor"/> (the type list is post-order, so the root is
+    /// not reliably first); when unset, the first type is used as a fallback.
+    /// </summary>
+    public TypeDeclaration? RootHint { get; set; }
+
+    /// <summary>
+    /// Options for the Python provider (driver entry point).
+    /// </summary>
+    /// <param name="RuntimeModuleSpecifier">
+    /// The import package the generated modules import the shared model runtime from. Defaults to the
+    /// published package name <c>corvus_json_runtime</c>.
+    /// </param>
+    /// <param name="AlwaysAssertFormat">
+    /// Whether the provider asserts <c>format</c> / <c>content</c> rather than leaving them annotations (the
+    /// 2020-12 default). Enables the optional/format suite.
+    /// </param>
+    public sealed record Options(string RuntimeModuleSpecifier = "corvus_json_runtime", bool AlwaysAssertFormat = false);
+
+    /// <summary>
+    /// Creates a provider with the default keyword handlers registered (format left as an annotation).
+    /// </summary>
+    /// <returns>A configured <see cref="PythonLanguageProvider"/>.</returns>
+    public static PythonLanguageProvider CreateDefault()
+    {
+        var provider = new PythonLanguageProvider();
+        provider.RegisterValidationHandlers(
+            new PyTypeHandler(),
+            new PyConstantBoundHandler(),
+            new PyMembershipHandler(),
+            new PyRegexHandler(),
+            new PyRequiredHandler(),
+            new PyObjectPropertiesHandler(),
+            new PyAllOfHandler(),
+            new PyAnyOfHandler(),
+            new PyOneOfHandler(),
+            new PyNotHandler(),
+            new PyIfThenElseHandler(),
+            new PyPrefixItemsHandler(),
+            new PyItemsHandler(),
+            new PyContainsHandler(),
+            new PyUniqueItemsHandler(),
+            new PyPropertyNamesHandler(),
+            new PyDependentRequiredHandler(),
+            new PyDependentSchemasHandler(),
+            new PyUnevaluatedPropertiesHandler(),
+            new PyUnevaluatedItemsHandler());
+        return provider;
+    }
+
+    /// <summary>
+    /// Creates a provider like <see cref="CreateDefault"/> but asserting <c>format</c> / <c>content</c> (the
+    /// optional/format suite).
+    /// </summary>
+    /// <returns>A configured <see cref="PythonLanguageProvider"/> that asserts <c>format</c>.</returns>
+    public static PythonLanguageProvider CreateWithFormatAssertion()
+    {
+        PythonLanguageProvider provider = CreateDefault();
+        provider.RegisterValidationHandlers(new PyFormatHandler(), new PyContentHandler());
+        return provider;
+    }
+
+    /// <summary>
+    /// The driver-facing entry point, mirroring <c>TypeScriptLanguageProvider.DefaultWithOptions</c>.
+    /// </summary>
+    /// <param name="options">The options configuring the provider.</param>
+    /// <returns>A configured <see cref="PythonLanguageProvider"/>.</returns>
+    public static PythonLanguageProvider DefaultWithOptions(Options options)
+    {
+        PythonLanguageProvider provider = options.AlwaysAssertFormat ? CreateWithFormatAssertion() : CreateDefault();
+        provider.runtimeModule = options.RuntimeModuleSpecifier;
+        return provider;
+    }
+
+    /// <inheritdoc/>
+    public ILanguageProvider RegisterValidationHandlers(params IKeywordValidationHandler[] handlers)
+    {
+        this.validationHandlers.RegisterValidationHandlers(handlers);
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ILanguageProvider RegisterCodeFileBuilders(params ICodeFileBuilder[] builders) => this;
+
+    /// <inheritdoc/>
+    public ILanguageProvider RegisterNameHeuristics(params INameHeuristic[] heuristics) => this;
+
+    /// <inheritdoc/>
+    public bool TryGetValidationHandlersFor(IKeyword keyword, [NotNullWhen(true)] out IReadOnlyCollection<IKeywordValidationHandler>? validationHandlers)
+        => this.validationHandlers.TryGetHandlersFor(keyword, out validationHandlers);
+
+    /// <inheritdoc/>
+    public bool ShouldGenerate(TypeDeclaration type) => true;
+
+    /// <inheritdoc/>
+    public void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
+    {
+    }
+
+    /// <inheritdoc/>
+    public void SetParent(TypeDeclaration child, TypeDeclaration? parent)
+    {
+    }
+
+    /// <inheritdoc/>
+    public TypeDeclaration? GetParent(TypeDeclaration child) => null;
+
+    /// <inheritdoc/>
+    public IReadOnlyCollection<TypeDeclaration> GetChildren(TypeDeclaration typeDeclaration) => [];
+
+    /// <inheritdoc/>
+    public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName, CancellationToken cancellationToken)
+    {
+    }
+
+    /// <inheritdoc/>
+    public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, IEnumerable<TypeDeclaration> existingTypeDeclarations, CancellationToken cancellationToken)
+    {
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken)
+    {
+        List<TypeDeclaration> types = typeDeclarations.ToList();
+        AssignNames(types);
+
+        // Single-file emission (the TypeScript engine's model): every type's TypedDict surface + `_eval_<name>`
+        // validator go in ONE module, so cross-type references are unqualified function calls — no per-module
+        // import, no `_m_` aliasing, and recursive/mutually-referential types resolve for free (Python looks up
+        // a called function at call time). The module-level dispatch tables are emitted after all validators.
+        var mod = new PyModule(this.runtimeModule);
+        foreach (TypeDeclaration td in types)
+        {
+            this.EmitType(td, mod);
+        }
+
+        // The public `evaluate`/`parse` entry point for the ROOT type. Emitting it here — rather than via
+        // RootEvaluateExport after the header is assembled — keeps its imports (json/cast/Results and the exact
+        // tracker) in the single header. The driver sets RootHint (the type list is post-order, so the root is
+        // not reliably first); fall back to the first type only if unset.
+        TypeDeclaration? root = this.RootHint ?? (types.Count > 0 ? types[0] : null);
+        if (root is not null)
+        {
+            EmitRootEntry(root, mod);
+        }
+
+        var body = new StringBuilder(mod.Body.ToString().TrimEnd('\n'));
+        if (mod.ModuleLevel.Length > 0)
+        {
+            body.Append("\n\n\n").Append(mod.ModuleLevel.ToString().TrimEnd('\n'));
+        }
+
+        string content = AssembleHeader(mod) + "\n\n\n" + body.ToString();
+        return [new GeneratedCodeFile("__init__.py", content)];
+    }
+
+    /// <summary>
+    /// Re-exports the root type's validator as the package-level <c>evaluate</c> entry point, for appending to
+    /// the barrel <c>__init__.py</c> after <see cref="GenerateCodeFor(IEnumerable{TypeDeclaration}, CancellationToken)"/>
+    /// has assigned names.
+    /// </summary>
+    /// <param name="rootType">The root type whose validator the entry point aliases.</param>
+    /// <returns>The Python source (an import) to append to <c>__init__.py</c>.</returns>
+    public string RootEvaluateExport(TypeDeclaration rootType)
+    {
+        // The root's public evaluate/parse are emitted inline by GenerateCodeFor into the single module, so
+        // there is nothing to append after the fact.
+        _ = rootType;
+        return string.Empty;
+    }
+
+    /// <summary>The snake_case module name assigned to a type declaration (unique across the single file).</summary>
+    /// <param name="td">The type declaration.</param>
+    /// <returns>The module name.</returns>
+    internal static string ModuleNameOf(TypeDeclaration td)
+        => td.TryGetMetadata<string>(PyModuleKey, out string? n) && !string.IsNullOrEmpty(n) ? n! : "entity";
+
+    /// <summary>The unique name of a type's threaded validator function (<c>_eval_&lt;module&gt;</c>).</summary>
+    /// <param name="td">The type declaration.</param>
+    /// <returns>The validator function name.</returns>
+    internal static string EvalNameOf(TypeDeclaration td) => "_eval_" + ModuleNameOf(td);
+
+    /// <summary>The PascalCase Python type name assigned to a type declaration.</summary>
+    /// <param name="td">The type declaration.</param>
+    /// <returns>The type name.</returns>
+    internal static string TypeNameOf(TypeDeclaration td)
+        => td.TryGetMetadata<string>(PyTypeKey, out string? n) && !string.IsNullOrEmpty(n) ? n! : "Entity";
+
+    /// <summary>True when a module was generated for this type (it was in the generated set and named).</summary>
+    /// <param name="td">The type declaration.</param>
+    /// <returns>Whether a module exists for the type.</returns>
+    internal static bool HasModule(TypeDeclaration td)
+        => td.TryGetMetadata<string>(PyModuleKey, out string? n) && !string.IsNullOrEmpty(n);
+
+    // A faithful port of the TypeScript NameForType heuristic chain (itself the port of the C# NameHeuristic
+    // chain): Pass 0 records, per type, the property it is the value of (a fallback name source for nested
+    // types); then each type is named and deduplicated.
+    private static void AssignNames(List<TypeDeclaration> types)
+    {
+        var propertyName = new Dictionary<TypeDeclaration, string>();
+        foreach (TypeDeclaration td in types)
+        {
+            foreach (PropertyDeclaration p in td.PropertyDeclarations)
+            {
+                if (!propertyName.ContainsKey(p.ReducedPropertyType))
+                {
+                    propertyName[p.ReducedPropertyType] = p.JsonPropertyName;
+                }
+            }
+        }
+
+        var usedTypes = new HashSet<string>(StringComparer.Ordinal);
+        var usedModules = new HashSet<string>(StringComparer.Ordinal);
+        foreach (TypeDeclaration td in types)
+        {
+            // The module and type names must both be valid Python identifiers that are not keywords (a
+            // subschema under `not`/`if`/`then`/`else` derives those very names; a module named `not` makes
+            // `from .not import ...` a syntax error). NameForType already avoids the reserved TYPE names; the
+            // `_` guard covers a keyword surfacing as a module (snake) name.
+            string baseName = NameForType(td, propertyName);
+            if (!IsIdentifier(baseName))
+            {
+                baseName += "_";
+            }
+
+            string name = baseName;
+            for (int i = 2; !usedTypes.Add(name); i++)
+            {
+                name = baseName + i;
+            }
+
+            string module = Snake(name);
+            if (!IsIdentifier(module))
+            {
+                module += "_";
+            }
+
+            string moduleName = module;
+            for (int i = 2; !usedModules.Add(moduleName); i++)
+            {
+                moduleName = module + "_" + i;
+            }
+
+            td.SetMetadata(PyTypeKey, name);
+            td.SetMetadata(PyModuleKey, moduleName);
+        }
+    }
+
+    // PascalCase identifiers that would shadow a runtime/typing import a generated module relies on, or a
+    // Python keyword that pascalises to itself (True/False/None); a name colliding with one is suffixed
+    // "Entity" (the Python peer of the TypeScript reserved-word pass).
+    private static readonly HashSet<string> PyReserved = new(StringComparer.Ordinal)
+    {
+        "True", "False", "None",
+        "Any", "Sequence", "Required", "TypedDict", "Literal", "cast",
+        "Ev", "NOEV", "Results", "Annotation", "Failure",
+    };
+
+    // BaseSchema/Documentation/Subschema heuristic chain (faithful port of TypeScriptLanguageProvider.NameForType).
+    private static string NameForType(TypeDeclaration td, Dictionary<TypeDeclaration, string> propertyName)
+    {
+        JsonReferenceBuilder reference = JsonReferenceBuilder.From(td.LocatedSchema.Location.ToString());
+        string? raw;
+        if (td.IsInDefinitionsContainer())
+        {
+            // A $defs member is named from its key (the last fragment segment), never the title.
+            raw = NameFromReference(reference, allowPath: false) ?? TitleIfShort(td);
+        }
+        else if (!reference.HasFragment)
+        {
+            // The document root: a short usable title, else the path basename, else a generic fallback.
+            raw = TitleIfShort(td) ?? NameFromReference(reference, allowPath: true) ?? "Schema";
+        }
+        else
+        {
+            // A nested subschema: a short usable title, else the fragment segment, else the property it is the value of.
+            raw = TitleIfShort(td)
+                ?? NameFromReference(reference, allowPath: false)
+                ?? (propertyName.TryGetValue(td, out string? pn) ? Pascal(pn) : null);
+        }
+
+        string name = raw ?? string.Empty;
+        if (name.Length == 0)
+        {
+            return "Entity";
+        }
+
+        return PyReserved.Contains(name) ? name + "Entity" : name;
+    }
+
+    // Use the `title` ONLY when it is short (< 64 chars) and pascalises to a usable identifier (2..63 chars).
+    private static string? TitleIfShort(TypeDeclaration td)
+    {
+        JsonElement s = td.LocatedSchema.Schema;
+        if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("title", out JsonElement t) && t.ValueKind == JsonValueKind.String)
+        {
+            string raw = t.GetString()!;
+            if (raw.Length > 0 && raw.Length < 64)
+            {
+                string p = Pascal(raw);
+                if (p.Length > 1 && p.Length < 64)
+                {
+                    return p;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // Derive a name from the type's decomposed location: the last fragment segment (skipping a trailing
+    // numeric index, e.g. allOf/0 -> AllOf), else (root only) the document path's basename without extension.
+    private static string? NameFromReference(JsonReferenceBuilder reference, bool allowPath)
+    {
+        if (reference.HasFragment)
+        {
+            ReadOnlySpan<char> frag = reference.Fragment;
+            int lastSlash = frag.LastIndexOf('/');
+            if (lastSlash >= 0 && lastSlash < frag.Length - 1)
+            {
+                if (char.IsDigit(frag[lastSlash + 1]))
+                {
+                    int prev = frag[..lastSlash].LastIndexOf('/');
+                    if (prev >= 0)
+                    {
+                        string keyword = Pascal(frag[(prev + 1)..lastSlash].ToString());
+                        if (keyword.Length > 0)
+                        {
+                            return keyword;
+                        }
+                    }
+                }
+
+                string seg = Pascal(frag[(lastSlash + 1)..].ToString());
+                if (seg.Length > 0)
+                {
+                    return seg;
+                }
+            }
+        }
+
+        if (allowPath && reference.HasPath)
+        {
+            ReadOnlySpan<char> path = reference.Path;
+            int lastSlash = path.LastIndexOf('/');
+            ReadOnlySpan<char> baseSeg = lastSlash >= 0 && lastSlash < path.Length - 1 ? path[(lastSlash + 1)..] : path;
+            int dot = baseSeg.LastIndexOf('.');
+            if (dot > 0)
+            {
+                baseSeg = baseSeg[..dot];
+            }
+
+            string p = Pascal(baseSeg.ToString());
+            if (p.Length > 0)
+            {
+                return p;
+            }
+        }
+
+        return null;
+    }
+
+    // Emit ONE type's module: type surface + threaded validator + evaluate wrapper + parse.
+    // Emit one type's TypedDict surface + its `_eval_<name>` validator into the shared single-file body. No
+    // per-type public evaluate/parse (only the root gets those, via EmitRootEntry); the module-level dispatch
+    // tables a handler defers stay in mod.ModuleLevel and are emitted after ALL validators.
+    private void EmitType(TypeDeclaration td, PyModule mod)
+    {
+        if (mod.Body.Length > 0)
+        {
+            mod.Body.Append("\n\n\n");
+        }
+
+        if (IsObject(td))
+        {
+            EmitObjectSurface(td, mod);
+        }
+        else if (IsEnum(td))
+        {
+            EmitEnumSurface(td, mod);
+        }
+        else if (IsUnion(td))
+        {
+            EmitUnionSurface(td, mod);
+        }
+        else
+        {
+            EmitScalarSurface(td, mod);
+        }
+
+        mod.Body.Append("\n\n");
+        this.EmitValidator(td, mod);
+        EmitConstruction(td, mod);
+    }
+
+    // The construction surface a named type exposes alongside its validator (the Python peer of the TypeScript
+    // companion's build/buildCanonical). An object serialises its TypedDict props to JSON bytes — at the native
+    // floor (`build`, caller key order) or canonically (`canonicalize`, RFC 8785 recursive key sort). produce /
+    // patch (Model C) and the RFC-patch wrappers await the runtime's Phase-1 byte primitives.
+    private static void EmitConstruction(TypeDeclaration td, PyModule mod)
+    {
+        if (!IsObject(td))
+        {
+            return;
+        }
+
+        string module = ModuleNameOf(td);
+        string typeRef = TypeNameOf(td);
+        mod.Body.Append("\n\n\ndef build_").Append(module).Append("(value: ").Append(typeRef).Append(") -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("build")).Append("(value)\n");
+        mod.Body.Append("\n\ndef build_canonical_").Append(module).Append("(value: ").Append(typeRef).Append(") -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("canonicalize")).Append("(value)\n");
+        mod.Typing.Add("cast");
+        mod.Body.Append("\n\ndef parse_").Append(module).Append("(data: bytes | str) -> ").Append(typeRef).Append(":\n");
+        mod.Body.Append("    return cast(\"").Append(typeRef).Append("\", ").Append(mod.Rt("decode_and_parse")).Append("(data))\n");
+
+        // RFC 7396 merge patch (runtime-ready). apply returns canonical bytes; create returns the patch value.
+        // Each side accepts a decoded value or the wire bytes, decoding via decode_and_parse (the byte-native seam).
+        string decodeDoc = mod.Rt("decode_and_parse") + "(doc) if isinstance(doc, bytes) else doc";
+        mod.Body.Append("\n\ndef apply_merge_patch_").Append(module).Append("(doc: ").Append(typeRef).Append(" | bytes, merge_patch: object) -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("canonicalize")).Append("(").Append(mod.Rt("apply_merge_patch")).Append("(").Append(decodeDoc).Append(", merge_patch))\n");
+        mod.Body.Append("\n\ndef create_merge_patch_").Append(module).Append("(source: ").Append(typeRef).Append(" | bytes, target: ").Append(typeRef).Append(" | bytes) -> object:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("create_merge_patch")).Append("(\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(source) if isinstance(source, bytes) else source,\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(target) if isinstance(target, bytes) else target,\n");
+        mod.Body.Append("    )\n");
+
+        // RFC 6902 JSON Patch (runtime-ready). apply returns canonical bytes; create returns the ops list.
+        mod.Body.Append("\n\ndef apply_patch_").Append(module).Append("(doc: ").Append(typeRef).Append(" | bytes, patch: object) -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("canonicalize")).Append("(").Append(mod.Rt("apply_patch")).Append("(").Append(decodeDoc).Append(", patch))\n");
+        mod.Body.Append("\n\ndef create_patch_").Append(module).Append("(source: ").Append(typeRef).Append(" | bytes, target: ").Append(typeRef).Append(" | bytes) -> object:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("create_patch")).Append("(\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(source) if isinstance(source, bytes) else source,\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(target) if isinstance(target, bytes) else target,\n");
+        mod.Body.Append("    )\n");
+
+        // produce: run a recipe that mutates a decoded draft in place, returning canonical bytes (the Pythonic
+        // whole-value transform; the byte-native patch above is the targeted, splice-only counterpart).
+        mod.NeedsCallable = true;
+        mod.Typing.Add("cast");
+        mod.Body.Append("\n\ndef produce_").Append(module).Append("(source: bytes, recipe: Callable[[").Append(typeRef).Append("], None]) -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("produce")).Append("(source, cast(\"Callable[[object], None]\", recipe))\n");
+
+        // Model C: byte-native partial update. Each changed member's value bytes are SPLICED into the source
+        // document and every other byte copied through verbatim (no full parse + re-serialise) - the runtime
+        // rmw path. `changes` upserts members; `removals` deletes named members. Array-element edits + the
+        // draft-recipe `produce` are later slices.
+        List<PropertyDeclaration> props = [.. td.PropertyDeclarations];
+        if (props.Count > 0)
+        {
+            bool hasArrayProps = false;
+            foreach (PropertyDeclaration p in props)
+            {
+                if (IsArrayType(p.ReducedPropertyType))
+                {
+                    hasArrayProps = true;
+                    break;
+                }
+            }
+
+            mod.NeedsMapping = true;
+            mod.NeedsSequence = true;
+            string arraysParam = hasArrayProps ? ", arrays: Mapping[str, " + mod.Rt("RmwArrayOps") + "] | None = None" : string.Empty;
+            mod.Body.Append("\n\ndef patch_").Append(module).Append("(source: bytes, changes: Mapping[str, object], removals: Sequence[str] | None = None").Append(arraysParam).Append(") -> bytes:\n");
+            mod.Body.Append("    targets: list[").Append(mod.Rt("RmwTarget")).Append("] = []\n");
+            foreach (PropertyDeclaration p in props)
+            {
+                string nameLit = PyEmit.Str(p.JsonPropertyName);
+                mod.Body.Append("    if ").Append(nameLit).Append(" in changes:\n");
+                mod.Body.Append("        targets.append(").Append(mod.Rt("RmwTarget")).Append('(').Append(nameLit).Append(".encode(), ").Append(mod.Rt("build")).Append("(changes[").Append(nameLit).Append("])))\n");
+            }
+
+            if (hasArrayProps)
+            {
+                mod.Body.Append("    array_edits: list[").Append(mod.Rt("RmwArrayEdit")).Append("] = []\n");
+                mod.Body.Append("    if arrays is not None:\n");
+                foreach (PropertyDeclaration p in props)
+                {
+                    if (!IsArrayType(p.ReducedPropertyType))
+                    {
+                        continue;
+                    }
+
+                    string nameLit = PyEmit.Str(p.JsonPropertyName);
+                    mod.Body.Append("        if ").Append(nameLit).Append(" in arrays:\n");
+                    mod.Body.Append("            array_edits.append(").Append(mod.Rt("RmwArrayEdit")).Append('(').Append(nameLit).Append(".encode(), arrays[").Append(nameLit).Append("], 0))\n");
+                }
+
+                mod.Body.Append("    if removals or array_edits:\n");
+                mod.Body.Append("        return ").Append(mod.Rt("rmw_produce_full")).Append("(source, targets, [n.encode() for n in removals] if removals else [], array_edits)\n");
+                mod.Body.Append("    return ").Append(mod.Rt("rmw_upsert")).Append("(source, targets)\n");
+            }
+            else
+            {
+                mod.Body.Append("    if removals:\n");
+                mod.Body.Append("        return ").Append(mod.Rt("rmw_produce_full")).Append("(source, targets, [n.encode() for n in removals], [])\n");
+                mod.Body.Append("    return ").Append(mod.Rt("rmw_upsert")).Append("(source, targets)\n");
+            }
+        }
+
+        EmitWithDefaults(td, mod);
+    }
+
+    // with_defaults_<t>: return a shallow clone of the value with every ABSENT property that declares a `default`
+    // filled in, recursing into present nested objects / arrays-of-object whose own type carries defaults (the
+    // TS EmitWithDefaults port). Emitted only when the subtree can actually fill a default (tree-shaken).
+    private static void EmitWithDefaults(TypeDeclaration td, PyModule mod)
+    {
+        if (!td.HasPropertyDeclarations || !SubtreeHasDefault(td, new HashSet<TypeDeclaration>()))
+        {
+            return;
+        }
+
+        string name = TypeNameOf(td);
+        mod.Typing.Add("cast");
+        mod.Body.Append("\n\ndef with_defaults_").Append(ModuleNameOf(td)).Append("(value: ").Append(name).Append(") -> ").Append(name).Append(":\n");
+        mod.Body.Append("    out: dict[str, object] = dict(value)\n");
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            string k = PyEmit.Str(p.JsonPropertyName);
+            if (TryGetPropertyDefault(p, out JsonElement def))
+            {
+                mod.Body.Append("    if ").Append(k).Append(" not in value:\n        out[").Append(k).Append("] = ").Append(PyEmit.Literal(def)).Append('\n');
+            }
+
+            TypeDeclaration propType = p.ReducedPropertyType;
+            if (IsObject(propType) && SubtreeHasDefault(propType, new HashSet<TypeDeclaration>()))
+            {
+                mod.Body.Append("    if ").Append(k).Append(" in value:\n        _v = out[").Append(k).Append("]\n        if isinstance(_v, dict):\n");
+                mod.Body.Append("            out[").Append(k).Append("] = with_defaults_").Append(ModuleNameOf(propType)).Append("(cast(\"").Append(TypeNameOf(propType)).Append("\", _v))\n");
+            }
+            else if (ArrayElementType(propType) is TypeDeclaration elem && IsObject(elem) && SubtreeHasDefault(elem, new HashSet<TypeDeclaration>()))
+            {
+                mod.Body.Append("    if ").Append(k).Append(" in value:\n        _v = out[").Append(k).Append("]\n        if isinstance(_v, list):\n");
+                mod.Body.Append("            out[").Append(k).Append("] = [with_defaults_").Append(ModuleNameOf(elem)).Append("(cast(\"").Append(TypeNameOf(elem)).Append("\", e)) if isinstance(e, dict) else e for e in cast(\"list[object]\", _v)]\n");
+            }
+        }
+
+        mod.Body.Append("    return cast(\"").Append(name).Append("\", out)\n");
+    }
+
+    private static bool TryGetPropertyDefault(PropertyDeclaration p, out JsonElement defaultValue)
+    {
+        JsonElement schema = p.UnreducedPropertyType.LocatedSchema.Schema;
+        if (schema.ValueKind == JsonValueKind.Object && schema.TryGetProperty("default", out JsonElement d))
+        {
+            defaultValue = d;
+            return true;
+        }
+
+        defaultValue = default;
+        return false;
+    }
+
+    private static TypeDeclaration? ArrayElementType(TypeDeclaration td)
+    {
+        ArrayItemsTypeDeclaration? items = td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType();
+        return items?.ReducedType;
+    }
+
+    private static bool SubtreeHasDefault(TypeDeclaration td, HashSet<TypeDeclaration> visited)
+    {
+        if (!visited.Add(td) || !IsObject(td))
+        {
+            return false;
+        }
+
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (TryGetPropertyDefault(p, out _))
+            {
+                return true;
+            }
+
+            TypeDeclaration propType = p.ReducedPropertyType;
+            if (IsObject(propType) && SubtreeHasDefault(propType, visited))
+            {
+                return true;
+            }
+
+            if (ArrayElementType(propType) is TypeDeclaration elem && IsObject(elem) && SubtreeHasDefault(elem, visited))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // A property whose reduced type is an array (a plain items array or a tuple/prefixItems array): the members
+    // that gain byte-native array-element edits in patch_<t>.
+    private static bool IsArrayType(TypeDeclaration td)
+    {
+        TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
+        return SchemaTypes(reduced).Contains("array") || reduced.ExplicitTupleType() is not null || (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType()) is not null;
+    }
+
+    private static string AssembleHeader(PyModule mod)
+    {
+        var h = new StringBuilder();
+        h.Append("# AUTO-GENERATED by Corvus.Text.Json (Python engine, single-file). Do not edit.\n");
+        h.Append("from __future__ import annotations\n");
+        if (mod.NeedsJson)
+        {
+            h.Append("import json\n");
+        }
+
+        var abc = new List<string>();
+        if (mod.NeedsCallable)
+        {
+            abc.Add("Callable");
+        }
+
+        if (mod.NeedsMapping)
+        {
+            abc.Add("Mapping");
+        }
+
+        if (mod.NeedsSequence)
+        {
+            abc.Add("Sequence");
+        }
+
+        if (abc.Count > 0)
+        {
+            h.Append("from collections.abc import ").Append(string.Join(", ", abc)).Append('\n');
+        }
+
+        if (mod.Typing.Count > 0)
+        {
+            h.Append("from typing import ").Append(string.Join(", ", mod.Typing)).Append('\n');
+        }
+
+        if (mod.Runtime.Count > 0)
+        {
+            h.Append("from ").Append(mod.RuntimeModule).Append(" import ").Append(string.Join(", ", mod.Runtime)).Append('\n');
+        }
+
+        return h.ToString().TrimEnd('\n');
+    }
+
+    private void EmitValidator(TypeDeclaration td, PyModule mod)
+    {
+        mod.Body.Append("def ").Append(EvalNameOf(td)).Append("(value: object, ev: ").Append(mod.Rt("Ev"))
+                .Append(", r: ").Append(mod.Rt("Results")).Append(" | None) -> bool:\n");
+
+        // A boolean `false` schema matches nothing; `true` (and an empty schema) matches everything.
+        if (td.LocatedSchema.Schema.ValueKind == JsonValueKind.False)
+        {
+            mod.Body.Append("    if r is not None:\n");
+            mod.Body.Append("        r.fail(\"\", ").Append(PyEmit.Str(PyEmit.AbsoluteKeywordLocation(td, null))).Append(")\n");
+            mod.Body.Append("    return False\n");
+            return;
+        }
+
+        mod.Body.Append("    ok = True\n");
+
+        var steps = new List<(uint Priority, IPyKeywordEmitter Emitter, IKeyword Keyword)>();
+        foreach (IKeyword keyword in td.Keywords())
+        {
+            if (this.validationHandlers.TryGetHandlersFor(keyword, out IReadOnlyCollection<IKeywordValidationHandler>? handlers))
+            {
+                foreach (IKeywordValidationHandler handler in handlers)
+                {
+                    if (handler is IPyKeywordEmitter emitter)
+                    {
+                        steps.Add((handler.ValidationHandlerPriority, emitter, keyword));
+                    }
+                }
+            }
+        }
+
+        foreach ((uint _, IPyKeywordEmitter emitter, IKeyword keyword) in steps.OrderBy(s => s.Priority))
+        {
+            emitter.Emit(mod, td, keyword);
+        }
+
+        EmitAnnotations(td, mod);
+        mod.Body.Append("    return ok\n");
+    }
+
+    // Verbose mode: a SUCCESSFULLY validated subschema contributes its annotation keywords at the current
+    // instance location (the analog of the .NET EvaluateSchema annotation walk). Gated on
+    // `r is not None and r.verbose and ok`, so boolean and detailed modes pay nothing.
+    private static readonly string[] AnnotationKeywords = ["title", "description", "default", "examples", "readOnly", "writeOnly", "deprecated", "format"];
+
+    private static void EmitAnnotations(TypeDeclaration td, PyModule mod)
+    {
+        JsonElement schema = td.LocatedSchema.Schema;
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        var present = new List<(string Keyword, JsonElement Value)>();
+        foreach (string kw in AnnotationKeywords)
+        {
+            if (schema.TryGetProperty(kw, out JsonElement v))
+            {
+                present.Add((kw, v));
+            }
+        }
+
+        if (present.Count == 0)
+        {
+            return;
+        }
+
+        mod.Body.Append("    if r is not None and r.verbose and ok:\n");
+        foreach ((string kw, JsonElement value) in present)
+        {
+            mod.Body.Append("        r.annotate(").Append(PyEmit.Str(kw)).Append(", ").Append(PyEmit.Literal(value))
+                    .Append(", ").Append(PyEmit.Str("/" + kw)).Append(", ").Append(PyEmit.Str(PyEmit.AbsoluteKeywordLocation(td, kw))).Append(")\n");
+        }
+    }
+
+    // The single file's public entry point, for the ROOT type only. A $ref/$dynamicRef-only root reduces to
+    // its target (the generated validator), mirroring the TypeScript RootEvaluatorExport.
+    private static void EmitRootEntry(TypeDeclaration rootType, PyModule mod)
+    {
+        TypeDeclaration td = rootType.ReducedTypeDeclaration().ReducedType;
+        string name = TypeNameOf(td);
+
+        // Pass the no-op tracker unless the root itself consults `unevaluated*` — a fresh collecting tracker is
+        // only needed when something reads the marks. This turns off the whole mark/merge apparatus at runtime
+        // (gated on `ev.n`) for the common schema with no unevaluated* at the root.
+        string rootEv = td.RequiresPropertyEvaluationTracking() || td.RequiresItemsEvaluationTracking()
+            ? mod.Rt("fresh") + "()"
+            : mod.Rt("NOEV");
+
+        // Byte-native entry: a Uint8Array-equivalent (bytes) is decoded to a Python value first, mirroring the
+        // TypeScript companion's `v instanceof Uint8Array ? decodeAndParse(v) : v`, so evaluate/parse accept
+        // both a decoded value and the wire bytes produced by build/build_canonical.
+        mod.Body.Append("\n\n\ndef evaluate(value: object, results: ").Append(mod.Rt("Results")).Append(" | None = None) -> bool:\n");
+        mod.Body.Append("    if isinstance(value, bytes):\n");
+        mod.Body.Append("        value = ").Append(mod.Rt("decode_and_parse")).Append("(value)\n");
+        mod.Body.Append("    return ").Append(EvalNameOf(td)).Append("(value, ").Append(rootEv).Append(", results)\n");
+
+        mod.Typing.Add("cast");
+        mod.Body.Append("\n\ndef parse(data: bytes | str) -> ").Append(name).Append(":\n");
+        mod.Body.Append("    return cast(\"").Append(name).Append("\", ").Append(mod.Rt("decode_and_parse")).Append("(data))\n");
+    }
+
+    private static void EmitObjectSurface(TypeDeclaration td, PyModule mod)
+    {
+        string name = TypeNameOf(td);
+
+        var props = td.PropertyDeclarations.ToList();
+        if (props.Count == 0)
+        {
+            // A pure map (an additionalProperties value type, no declared properties) is a `Mapping[str, V]`
+            // alias (design §5.3, the TS `Record<string, V>` peer); an object with neither properties nor a
+            // fallback value type stays an empty TypedDict.
+            FallbackObjectPropertyType? mapFb = td.LocalEvaluatedPropertyType();
+            if (mapFb is not null && mapFb.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+            {
+                mod.NeedsMapping = true;
+                mod.Body.Append("type ").Append(name).Append(" = Mapping[str, ").Append(PyTypeRef(mapFb.ReducedType, mod)).Append("]\n");
+                return;
+            }
+
+            mod.Typing.Add("TypedDict");
+            mod.Body.Append("class ").Append(name).Append("(TypedDict, total=False):\n    pass\n");
+            return;
+        }
+
+        mod.Typing.Add("TypedDict");
+
+        // A TypedDict class body only accepts identifier keys; any non-identifier (or Python-keyword) member
+        // name forces the functional TypedDict("Name", {...}) form. (Functional-form values are evaluated at
+        // import, but this only triggers for the rare non-identifier key.)
+        bool classForm = props.All(p => IsIdentifier(p.JsonPropertyName));
+        if (classForm)
+        {
+            mod.Body.Append("class ").Append(name).Append("(TypedDict, total=False):\n");
+            foreach (PropertyDeclaration p in props)
+            {
+                mod.Body.Append("    ").Append(p.JsonPropertyName).Append(": ").Append(MemberType(p, mod)).Append('\n');
+            }
+        }
+        else
+        {
+            // Functional form (a non-identifier key like "$ref" forces it): the member types are string
+            // forward references so they are NOT eagerly evaluated at import (which would deadlock a recursive
+            // schema); the class-body form above relies on `from __future__ import annotations` for the same.
+            mod.Body.Append(name).Append(" = TypedDict(\"").Append(name).Append("\", {\n");
+            foreach (PropertyDeclaration p in props)
+            {
+                mod.Body.Append("    ").Append(PyEmit.Str(p.JsonPropertyName)).Append(": ").Append(PyEmit.Str(MemberType(p, mod))).Append(",\n");
+            }
+
+            mod.Body.Append("}, total=False)\n");
+        }
+    }
+
+    private static string MemberType(PropertyDeclaration p, PyModule mod)
+    {
+        string typeRef = PyTypeRef(p.ReducedPropertyType, mod);
+        if (p.RequiredOrOptional != RequiredOrOptional.Optional)
+        {
+            mod.Typing.Add("Required");
+            typeRef = "Required[" + typeRef + "]";
+        }
+
+        return typeRef;
+    }
+
+    private static void EmitEnumSurface(TypeDeclaration td, PyModule mod)
+    {
+        string name = TypeNameOf(td);
+        var literals = new List<string>();
+        int total = 0;
+        if (td.LocatedSchema.Schema.TryGetProperty("enum", out JsonElement en) && en.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement m in en.EnumerateArray())
+            {
+                total++;
+                if (m.ValueKind is JsonValueKind.String or JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null)
+                {
+                    string lit = PyEmit.Literal(m);
+                    if (!literals.Contains(lit))
+                    {
+                        literals.Add(lit);
+                    }
+                }
+            }
+        }
+
+        if (literals.Count == total && literals.Count > 0)
+        {
+            mod.Typing.Add("Literal");
+            mod.Body.Append("type ").Append(name).Append(" = Literal[").Append(string.Join(", ", literals)).Append("]\n");
+        }
+        else
+        {
+            mod.Typing.Add("Any");
+            mod.Body.Append("type ").Append(name).Append(" = Any\n");
+        }
+    }
+
+    // A oneOf/anyOf union: `X = A | B` plus per-member type guards (the V5 TryGetAs{Branch} analog, backed by
+    // the member's boolean validator). The alias drops any self-reference (a recursive union can't be an alias
+    // of itself); the validator (the anyOf/oneOf handler) still enforces the recursive branch.
+    private static void EmitUnionSurface(TypeDeclaration td, PyModule mod)
+    {
+        string name = TypeNameOf(td);
+        List<TypeDeclaration> members = UnionMembers(td);
+
+        var refs = new List<string>();
+        foreach (TypeDeclaration m in members)
+        {
+            string rf = PyTypeRef(m, mod);
+            if (rf != name && !refs.Contains(rf))
+            {
+                refs.Add(rf);
+            }
+        }
+
+        if (refs.Count == 0)
+        {
+            refs.Add(Any(mod));
+        }
+
+        // A PEP 695 `type` alias (lazily evaluated, type-only — the analog of TypeScript's erased `type X = ...`),
+        // NOT a runtime `X = A | B` expression: the latter eagerly evaluates the member references at import and
+        // deadlocks on a recursive/circular schema.
+        mod.Body.Append("type ").Append(name).Append(" = ").Append(string.Join(" | ", refs)).Append('\n');
+
+        var matchCases = new List<(string Guard, string Kwarg, string Ref)>();
+        foreach (TypeDeclaration m in members)
+        {
+            TypeDeclaration reduced = m.ReducedTypeDeclaration().ReducedType;
+            if (!HasModule(reduced))
+            {
+                continue;
+            }
+
+            string rf = PyTypeRef(reduced, mod);
+            if (rf == name)
+            {
+                continue;
+            }
+
+            string kwarg = Snake(TypeNameOf(reduced));
+            string guard = "is_" + kwarg;
+
+            // Collect every guarded member for the match dispatcher (even one whose guard function was already
+            // emitted by another union — the function still exists to call).
+            if (!matchCases.Any(c => c.Guard == guard))
+            {
+                matchCases.Add((guard, kwarg, rf));
+            }
+
+            // Dedup guard functions across the WHOLE single file — the same member type reached from two
+            // different unions must define `is_<name>` only once (the guard body is identical).
+            if (!mod.EmittedGuards.Add(guard))
+            {
+                continue;
+            }
+
+            mod.Typing.Add("TypeGuard");
+            mod.Body.Append("\n\ndef ").Append(guard).Append("(value: object) -> TypeGuard[").Append(rf).Append("]:\n")
+                    .Append("    return ").Append(EvalNameOf(reduced)).Append("(value, ").Append(mod.Rt("fresh")).Append("(), None)\n");
+        }
+
+        // A guard-based match dispatcher (the V5 Match() / TS matchX analog): a PEP 695 generic that tries each
+        // member guard in order and invokes the matching keyword-only handler, raising if nothing matched (a
+        // well-formed union value always matches a branch).
+        if (matchCases.Count > 0)
+        {
+            mod.NeedsCallable = true;
+            mod.Body.Append("\n\ndef match_").Append(ModuleNameOf(td)).Append("[R](value: ").Append(name).Append(", *");
+            foreach ((string _, string kwarg, string rf) in matchCases)
+            {
+                mod.Body.Append(", ").Append(kwarg).Append(": Callable[[").Append(rf).Append("], R]");
+            }
+
+            mod.Body.Append(") -> R:\n");
+            foreach ((string guard, string kwarg, string _) in matchCases)
+            {
+                mod.Body.Append("    if ").Append(guard).Append("(value):\n        return ").Append(kwarg).Append("(value)\n");
+            }
+
+            mod.Body.Append("    raise ValueError(").Append(PyEmit.Str("no " + name + " branch matched")).Append(")\n");
+        }
+    }
+
+    // The well-known string formats that get a branded alias + validating factory (design §5.3.1), a faithful
+    // port of the TypeScript KnownStringFormats set.
+    private static readonly HashSet<string> KnownStringFormats = new(StringComparer.Ordinal)
+    {
+        "uuid", "email", "idn-email", "hostname", "idn-hostname", "ipv4", "ipv6",
+        "uri", "uri-reference", "uri-template", "iri", "iri-reference",
+        "date", "date-time", "time", "duration", "json-pointer", "relative-json-pointer", "regex",
+    };
+
+    // The four RFC 3339 temporal formats that additionally get a `to_temporal_<t>` accessor: the whenever type
+    // it returns and the runtime converter it delegates to (date -> Date, date-time -> the absolute Instant,
+    // time -> Time, duration -> TimeDelta), the port of the TypeScript KnownTemporalFormats map.
+    private static readonly IReadOnlyDictionary<string, (string TemporalType, string Converter)> KnownTemporalFormats =
+        new Dictionary<string, (string, string)>(StringComparer.Ordinal)
+        {
+            ["date"] = ("Date", "to_plain_date"),
+            ["date-time"] = ("Instant", "to_instant"),
+            ["time"] = ("Time", "to_plain_time"),
+            ["duration"] = ("TimeDelta", "to_duration"),
+        };
+
+    private static bool IsBrandedStringFormat(TypeDeclaration td)
+        => SchemaTypes(td).Contains("string") && td.Format() is string f && KnownStringFormats.Contains(f);
+
+    // Sub-64-bit integer formats -> a branded NewType over `int` + a range-checked factory (the port of the TS
+    // KnownIntegerFormats). 64-bit+ formats stay plain `int` (Python ints are unbounded).
+    private static readonly IReadOnlyDictionary<string, (long Min, long Max)> KnownIntegerFormats =
+        new Dictionary<string, (long, long)>(StringComparer.Ordinal)
+        {
+            ["byte"] = (0, 255),
+            ["sbyte"] = (-128, 127),
+            ["int16"] = (-32768, 32767),
+            ["uint16"] = (0, 65535),
+            ["int32"] = (-2147483648, 2147483647),
+            ["uint32"] = (0, 4294967295),
+        };
+
+    // Floating-point / arbitrary-precision numeric formats -> a branded NewType over `float` + a factory (the
+    // port of the TS KnownFloatFormats). A null bound means no check on that side; `decimal` also gets to_exact.
+    private static readonly IReadOnlyDictionary<string, (double? Min, double? Max)> KnownFloatFormats =
+        new Dictionary<string, (double?, double?)>(StringComparer.Ordinal)
+        {
+            ["half"] = (-65504, 65504),
+            ["single"] = (null, null),
+            ["float"] = (null, null),
+            ["double"] = (null, null),
+            ["decimal"] = (-7.922816251426434e28, 7.922816251426434e28),
+        };
+
+    private static bool IsNumericFormatBrandable(TypeDeclaration td) => !SchemaTypes(td).Contains("string");
+
+    private static bool IsBrandedIntegerFormat(TypeDeclaration td)
+        => td.Format() is string f && KnownIntegerFormats.ContainsKey(f) && IsNumericFormatBrandable(td);
+
+    private static bool IsBrandedFloatFormat(TypeDeclaration td)
+        => td.Format() is string f && KnownFloatFormats.ContainsKey(f) && IsNumericFormatBrandable(td);
+
+    private static void EmitScalarSurface(TypeDeclaration td, PyModule mod)
+    {
+        string name = TypeNameOf(td);
+        if (IsBrandedStringFormat(td))
+        {
+            EmitStringFormatBrand(td, mod, name);
+            return;
+        }
+
+        if (IsBrandedIntegerFormat(td))
+        {
+            EmitIntegerFormatBrand(td, mod, name);
+            return;
+        }
+
+        if (IsBrandedFloatFormat(td))
+        {
+            EmitFloatFormatBrand(td, mod, name);
+            return;
+        }
+
+        if (IsArrayType(td))
+        {
+            mod.Body.Append("type ").Append(name).Append(" = ").Append(PyArrayTypeRef(td.ReducedTypeDeclaration().ReducedType, mod)).Append('\n');
+            return;
+        }
+
+        var prims = new List<string>();
+        foreach (string k in SchemaTypes(td))
+        {
+            if (Prim(k) is string p && !prims.Contains(p))
+            {
+                prims.Add(p);
+            }
+        }
+
+        if (prims.Count == 0)
+        {
+            mod.Typing.Add("Any");
+            mod.Body.Append("type ").Append(name).Append(" = Any\n");
+        }
+        else
+        {
+            mod.Body.Append("type ").Append(name).Append(" = ").Append(string.Join(" | ", prims)).Append('\n');
+        }
+    }
+
+    // A well-known string format: a NewType brand over `str` + a validating `from_<t>` factory that mints the
+    // brand only after the format check (the Python analog of V5's conversion operators / the TS branded alias).
+    // The four temporal formats additionally get a `to_temporal_<t>` accessor parsing the branded string into
+    // its whenever value. Always emitted (a pure type surface + parse helpers); validation is untouched.
+    private static void EmitStringFormatBrand(TypeDeclaration td, PyModule mod, string name)
+    {
+        string format = td.Format()!;
+        string fmtLit = PyEmit.Str(format);
+        string module = ModuleNameOf(td);
+        mod.Typing.Add("NewType");
+        mod.Body.Append(name).Append(" = NewType(").Append(PyEmit.Str(name)).Append(", str)\n");
+        mod.Body.Append("\n\ndef from_").Append(module).Append("(value: str) -> ").Append(name).Append(":\n");
+        mod.Body.Append("    if not ").Append(mod.Rt("fmt")).Append('(').Append(fmtLit).Append(", value):\n");
+        mod.Body.Append("        raise ").Append(mod.Rt("FormatError")).Append('(').Append(fmtLit).Append(")\n");
+        mod.Body.Append("    return ").Append(name).Append("(value)\n");
+        if (KnownTemporalFormats.TryGetValue(format, out (string TemporalType, string Converter) temporal))
+        {
+            mod.Body.Append("\n\ndef to_temporal_").Append(module).Append("(value: ").Append(name).Append(") -> ").Append(mod.Rt(temporal.TemporalType)).Append(":\n");
+            mod.Body.Append("    return ").Append(mod.Rt(temporal.Converter)).Append("(value)\n");
+        }
+    }
+
+    // A sub-64-bit integer format: a NewType brand over `int` + a range-checked from_<t> factory (Python ints
+    // are always integral, so only the [Min, Max] bound is checked).
+    private static void EmitIntegerFormatBrand(TypeDeclaration td, PyModule mod, string name)
+    {
+        string format = td.Format()!;
+        (long min, long max) = KnownIntegerFormats[format];
+        string module = ModuleNameOf(td);
+        string fmtLit = PyEmit.Str(format);
+        mod.Typing.Add("NewType");
+        mod.Body.Append(name).Append(" = NewType(").Append(PyEmit.Str(name)).Append(", int)\n");
+        mod.Body.Append("\n\ndef from_").Append(module).Append("(value: int) -> ").Append(name).Append(":\n");
+        mod.Body.Append("    if value < ").Append(min).Append(" or value > ").Append(max).Append(":\n");
+        mod.Body.Append("        raise ").Append(mod.Rt("FormatError")).Append('(').Append(fmtLit).Append(")\n");
+        mod.Body.Append("    return ").Append(name).Append("(value)\n");
+    }
+
+    // A floating-point / arbitrary-precision numeric format: a NewType brand over `float` + a factory that
+    // range-checks (unbounded single/double/float mint with no check). `decimal` additionally gets to_exact_<t>.
+    private static void EmitFloatFormatBrand(TypeDeclaration td, PyModule mod, string name)
+    {
+        string format = td.Format()!;
+        (double? min, double? max) = KnownFloatFormats[format];
+        string module = ModuleNameOf(td);
+        string fmtLit = PyEmit.Str(format);
+        mod.Typing.Add("NewType");
+        mod.Body.Append(name).Append(" = NewType(").Append(PyEmit.Str(name)).Append(", float)\n");
+        mod.Body.Append("\n\ndef from_").Append(module).Append("(value: float) -> ").Append(name).Append(":\n");
+        if (min is double mn && max is double mx)
+        {
+            mod.Body.Append("    if value < ").Append(PyNum(mn)).Append(" or value > ").Append(PyNum(mx)).Append(":\n");
+            mod.Body.Append("        raise ").Append(mod.Rt("FormatError")).Append('(').Append(fmtLit).Append(")\n");
+        }
+
+        mod.Body.Append("    return ").Append(name).Append("(value)\n");
+        if (format == "decimal")
+        {
+            mod.Body.Append("\n\ndef to_exact_").Append(module).Append("(value: ").Append(name).Append(") -> str:\n");
+            mod.Body.Append("    return ").Append(mod.Rt("exact_number")).Append("(value)\n");
+        }
+    }
+
+    // Format a double bound as a round-trippable Python numeric literal.
+    private static string PyNum(double value) => value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
+    // The Python type reference for a member type: a named, GENERATED (object/enum/union) type is its
+    // unqualified name (all types share the single file); a scalar maps to its builtin; an array to
+    // Sequence[...]; anything else (including an object type with no generated validator) falls back to Any.
+    private static string PyTypeRef(TypeDeclaration td, PyModule mod)
+    {
+        TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
+
+        // A named type (with a module) is referenced BY NAME — including arrays/tuples, which is also what
+        // breaks a self-referential array/tuple cycle (a recursive `type X` alias is lazy, but building its
+        // element string must resolve the back-reference to the name, not re-inline it).
+        if ((IsObject(reduced) || IsEnum(reduced) || IsUnion(reduced) || IsBrandedStringFormat(reduced) || IsBrandedIntegerFormat(reduced) || IsBrandedFloatFormat(reduced) || IsArrayType(reduced)) && HasModule(reduced))
+        {
+            return TypeNameOf(reduced);
+        }
+
+        List<string> kinds = SchemaTypes(reduced);
+        if (kinds.Contains("array") || reduced.ExplicitTupleType() is not null || (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType()) is not null)
+        {
+            return PyArrayTypeRef(reduced, mod);
+        }
+
+        var prims = new List<string>();
+        foreach (string k in kinds)
+        {
+            if (Prim(k) is string p && !prims.Contains(p))
+            {
+                prims.Add(p);
+            }
+        }
+
+        return prims.Count > 0 ? string.Join(" | ", prims) : Any(mod);
+    }
+
+    // Array/tuple element typing (design §5.3), the port of TsArrayTypeRef: a pure tuple `tuple[A, B]`, a
+    // prefix + variadic tail `tuple[A, *tuple[T, ...]]` (prefixItems with a tail schema; `items: false` closes
+    // the tuple), else a plain `Sequence[T]`.
+    private static string PyArrayTypeRef(TypeDeclaration td, PyModule mod)
+    {
+        TupleTypeDeclaration? tuple = td.ExplicitTupleType();
+        ArrayItemsTypeDeclaration? items = td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType();
+        if (tuple is not null)
+        {
+            var parts = new List<string>();
+            foreach (var it in tuple.ItemsTypes)
+            {
+                parts.Add(PyTypeRef(it.ReducedType, mod));
+            }
+
+            if (items is not null && items.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+            {
+                parts.Add("*tuple[" + PyTypeRef(items.ReducedType, mod) + ", ...]");
+            }
+
+            if (parts.Count > 0)
+            {
+                return "tuple[" + string.Join(", ", parts) + "]";
+            }
+        }
+
+        mod.NeedsSequence = true;
+        return "Sequence[" + (items is not null ? PyTypeRef(items.ReducedType, mod) : Any(mod)) + "]";
+    }
+
+    private static string Any(PyModule mod)
+    {
+        mod.Typing.Add("Any");
+        return "Any";
+    }
+
+    private static List<string> SchemaTypes(TypeDeclaration td)
+    {
+        var result = new List<string>();
+        JsonElement s = td.LocatedSchema.Schema;
+        if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("type", out JsonElement t))
+        {
+            if (t.ValueKind == JsonValueKind.String && t.GetString() is { } single)
+            {
+                result.Add(single);
+            }
+            else if (t.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement e in t.EnumerateArray())
+                {
+                    if (e.ValueKind == JsonValueKind.String && e.GetString() is { } member)
+                    {
+                        result.Add(member);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static bool IsObject(TypeDeclaration td)
+    {
+        JsonElement s = td.LocatedSchema.Schema;
+        if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("properties", out _))
+        {
+            return true;
+        }
+
+        if (SchemaTypes(td).Contains("object"))
+        {
+            return true;
+        }
+
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (p.LocalOrComposed == LocalOrComposed.Composed)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsEnum(TypeDeclaration td)
+        => td.LocatedSchema.Schema.ValueKind == JsonValueKind.Object && td.LocatedSchema.Schema.TryGetProperty("enum", out _);
+
+    private static bool IsUnion(TypeDeclaration td)
+        => (td.OneOfCompositionTypes()?.Count ?? 0) > 0 || (td.AnyOfCompositionTypes()?.Count ?? 0) > 0;
+
+    private static List<TypeDeclaration> UnionMembers(TypeDeclaration td)
+    {
+        var members = new List<TypeDeclaration>();
+        CollectInto(td.OneOfCompositionTypes(), members);
+        CollectInto(td.AnyOfCompositionTypes(), members);
+        return members;
+    }
+
+    private static void CollectInto<TKeyword>(IReadOnlyDictionary<TKeyword, IReadOnlyCollection<TypeDeclaration>>? composition, List<TypeDeclaration> into)
+        where TKeyword : notnull
+    {
+        if (composition is null)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<TKeyword, IReadOnlyCollection<TypeDeclaration>> kv in composition)
+        {
+            foreach (TypeDeclaration m in kv.Value)
+            {
+                TypeDeclaration r = m.ReducedTypeDeclaration().ReducedType;
+                if (!into.Contains(r))
+                {
+                    into.Add(r);
+                }
+            }
+        }
+    }
+
+    private static string? Prim(string jsonType) => jsonType switch
+    {
+        "string" => "str",
+        "integer" => "int",
+        "number" => "float",
+        "boolean" => "bool",
+        "null" => "None",
+        _ => null,
+    };
+
+    // Python hard keywords (soft keywords match/case/type are valid identifiers, so excluded).
+    private static readonly HashSet<string> PythonKeywords = new(StringComparer.Ordinal)
+    {
+        "False", "None", "True", "and", "as", "assert", "async", "await", "break", "class", "continue",
+        "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in",
+        "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield",
+    };
+
+    // True when `name` is usable as a bare TypedDict class-body member (a valid Python identifier that is not
+    // a keyword); anything else forces the functional TypedDict form.
+    private static bool IsIdentifier(string name)
+    {
+        if (name.Length == 0 || PythonKeywords.Contains(name))
+        {
+            return false;
+        }
+
+        char c0 = name[0];
+        if (!(char.IsLetter(c0) || c0 == '_'))
+        {
+            return false;
+        }
+
+        foreach (char c in name)
+        {
+            if (!(char.IsLetterOrDigit(c) || c == '_'))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string Pascal(string raw)
+    {
+        var sb = new StringBuilder();
+        bool upper = true;
+        foreach (char c in raw)
+        {
+            if (char.IsLetterOrDigit(c))
+            {
+                sb.Append(upper ? char.ToUpperInvariant(c) : c);
+                upper = false;
+            }
+            else
+            {
+                upper = true;
+            }
+        }
+
+        if (sb.Length == 0 || char.IsDigit(sb[0]))
+        {
+            sb.Insert(0, 'T');
+        }
+
+        return sb.ToString();
+    }
+
+    private static string Snake(string pascal)
+    {
+        var sb = new StringBuilder();
+        for (int i = 0; i < pascal.Length; i++)
+        {
+            char c = pascal[i];
+            if (char.IsUpper(c) && i > 0 && (char.IsLower(pascal[i - 1]) || char.IsDigit(pascal[i - 1])))
+            {
+                sb.Append('_');
+            }
+
+            sb.Append(char.ToLowerInvariant(c));
+        }
+
+        return sb.Length == 0 ? "entity" : sb.ToString();
+    }
+}

@@ -397,6 +397,7 @@ asyncapi-sample-output/
 
 # Build-time generated code (regenerated from OpenAPI/AsyncAPI specs by MSBuild targets)
 tests/Corvus.Text.Json.OpenApi.Runtime.Tests/Generated/
+tests/Corvus.Text.Json.OpenApi.Parity.Tests/Generated/
 tests/Corvus.Text.Json.OpenApi30.Runtime.Tests/Generated/
 tests/Corvus.Text.Json.OpenApi30.Server.Runtime.Tests/Generated/
 tests/Corvus.Text.Json.OpenApi31.Runtime.Tests/Generated/
@@ -405,3 +406,18 @@ tests/Corvus.Text.Json.OpenApi32.Runtime.Tests/Generated/
 tests/Corvus.Text.Json.OpenApi32.Server.Runtime.Tests/Generated/
 tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Generated/
 tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Generated26/
+
+# @endjin/corvus-json-runtime is a real source package, not a NuGet Package Restore folder.
+!/packages/corvus-json-runtime/
+
+# @endjin/corvus-json-client-runtime is a real source package too.
+!/packages/corvus-json-client-runtime/
+
+# The Python model runtime (corvus_json_runtime) is a real source package too.
+!/packages/corvus-json-runtime-py/
+
+# Generated Python benchmark / compliance artifacts (regenerable — do not commit).
+prototypes/py-bench/ab-gen/
+prototypes/py-bench/bench-gen/
+prototypes/py-compliance/out-suite/
+prototypes/py-compliance/schemas/

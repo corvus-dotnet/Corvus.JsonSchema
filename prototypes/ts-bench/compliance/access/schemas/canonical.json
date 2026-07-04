@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Doc",
+  "type": "object",
+  "properties": {
+    "zeta": { "type": "string" },
+    "alpha": { "type": "integer" },
+    "nested": {
+      "type": "object",
+      "properties": {
+        "y": { "type": "string" },
+        "x": { "type": "string" }
+      }
+    }
+  }
+}

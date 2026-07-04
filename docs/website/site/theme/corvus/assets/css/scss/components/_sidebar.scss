@@ -227,6 +227,7 @@
     // JS sets --sidebar-available-height when the footer is visible;
     // otherwise fall back to full viewport minus header.
     max-height: var(--sidebar-available-height, calc(100vh - var(--header-height) - var(--space-lg)));
+    max-height: var(--sidebar-available-height, calc(100dvh - var(--header-height) - var(--space-lg)));
     // Allow horizontal overflow so the search dropdown can extend
     // beyond the sidebar width; vertical is clipped by flex layout.
     overflow: visible;

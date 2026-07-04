@@ -92,7 +92,7 @@ public class GeneratedServerEndToEndTests
         Assert.AreEqual("req-123", response.Headers.GetValues("X-Request-Id").Single());
         Assert.AreEqual("alpha,beta", response.Headers.GetValues("X-Tags").Single());
         Assert.AreEqual("10,25", response.Headers.GetValues("X-Page-Sizes").Single());
-        Assert.AreEqual("True,False", response.Headers.GetValues("X-Flags").Single());
+        Assert.AreEqual("true,false", response.Headers.GetValues("X-Flags").Single());
     }
 
     [TestMethod]
@@ -160,6 +160,18 @@ public class GeneratedServerEndToEndTests
     {
         HttpResponseMessage response = await Client.SendAsync(CreateSearchRequest("/search?q=test&tags=foo%7Cbar%7Cbaz"));
         await AssertJsonResponseAsync(response, HttpStatusCode.OK, """[{"id":1,"name":"test","payload":{"q":"test","tags":["foo","bar","baz"],"session":"sess-123","xCorrelationId":"corr-001"}}]""");
+    }
+
+    // Round-trips reserved characters INSIDE array element values: the client percent-encodes the values
+    // (["a b","a/b"] -> tags=a%20b%7Ca%2Fb, %7C being the literal pipe delimiter), ASP.NET decodes the
+    // whole query value, and the server splits on the delimiter to recover the original values. This is
+    // the encode-on-write / decode-on-read contract that the bytes-native compound-param encoding relies
+    // on (the older raw serialization would have emitted an invalid URL with literal spaces).
+    [TestMethod]
+    public async Task SearchItems_WithReservedCharsInTagValues_RoundTrips()
+    {
+        HttpResponseMessage response = await Client.SendAsync(CreateSearchRequest("/search?q=test&tags=a%20b%7Ca%2Fb"));
+        await AssertJsonResponseAsync(response, HttpStatusCode.OK, """[{"id":1,"name":"test","payload":{"q":"test","tags":["a b","a/b"],"session":"sess-123","xCorrelationId":"corr-001"}}]""");
     }
 
     [TestMethod]

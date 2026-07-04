@@ -116,9 +116,23 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        // Scroll into view
+        // Bring the active link into view WITHIN the sidebar's own scroll
+        // container only. scrollIntoView() scrolls every scrollable ancestor
+        // including the window, which on load leaves the page scrolled down a
+        // few px so content sits under the sticky header — so scroll the
+        // sidebar's scroll container directly and never touch window scroll.
         requestAnimationFrame(() => {
-          link.scrollIntoView({ block: 'center', behavior: 'instant' });
+          let scroller = link.parentElement;
+          while (scroller && scroller !== document.body) {
+            const oy = getComputedStyle(scroller).overflowY;
+            if ((oy === 'auto' || oy === 'scroll') && scroller.scrollHeight > scroller.clientHeight) {
+              const lr = link.getBoundingClientRect();
+              const sr = scroller.getBoundingClientRect();
+              scroller.scrollTop += (lr.top - sr.top) - (scroller.clientHeight - link.offsetHeight) / 2;
+              break;
+            }
+            scroller = scroller.parentElement;
+          }
         });
       }
     });

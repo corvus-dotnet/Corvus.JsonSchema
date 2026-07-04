@@ -1,0 +1,6 @@
+{ "title": "Employee", "type": "object",
+  "$defs": { "person": { "title": "Person", "type": "object", "required": ["name"],
+      "properties": { "name": { "type": "string" }, "email": { "type": "string", "format": "email" } } } },
+  "allOf": [ { "$ref": "#/$defs/person" } ],
+  "required": ["employeeId"],
+  "properties": { "employeeId": { "type": "string" }, "department": { "type": "string" } } }

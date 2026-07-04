@@ -1,0 +1,51 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: TypeScript
+Navigation:
+  Title: TypeScript
+  Description: "Generate idiomatic, high-performance TypeScript from JSON Schema — install the tools, define a schema, generate a module, and build, validate, and read values."
+  Parent: /
+  Url: /typescript/index.html
+  Rank: 2
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "TypeScript — Corvus.Text.Json"
+  Description: "Generate idiomatic, high-performance TypeScript from JSON Schema: a readonly type surface, AOT-compiled validators, and a byte-level construction and mutation API. Step-by-step guide to installing the tools, defining a schema, generating a module, and using the generated types."
+  Keywords: [TypeScript, JSON Schema, code generation, validation, getting started, tutorial, corvusjson]
+OpenGraph:
+  Title: "TypeScript — Corvus.Text.Json"
+  Description: "Generate idiomatic, high-performance TypeScript from JSON Schema with Corvus.Text.Json."
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Introduction
+    Spec:
+      Path: ../../content/TypeScript/Introduction.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Install
+    Spec:
+      Path: ../../content/TypeScript/Install.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: DefineSchema
+    Spec:
+      Path: ../../content/TypeScript/DefineSchema.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Generate
+    Spec:
+      Path: ../../content/TypeScript/Generate.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: UseGeneratedTypes
+    Spec:
+      Path: ../../content/TypeScript/UseGeneratedTypes.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: RuntimeAndOptions
+    Spec:
+      Path: ../../content/TypeScript/RuntimeAndOptions.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: WhereNext
+    Spec:
+      Path: ../../content/TypeScript/WhereNext.md

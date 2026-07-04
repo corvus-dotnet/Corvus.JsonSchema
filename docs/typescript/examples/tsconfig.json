@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "outDir": "dist",
+    "rootDir": ".",
+    "skipLibCheck": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmitOnError": true
+  },
+  "include": ["globals.d.ts", "corvus-runtime.ts", "*/generated.ts", "*/demo.ts"]
+}

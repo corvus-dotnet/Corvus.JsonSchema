@@ -39,6 +39,9 @@ $SkipPublish = $false
 
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @()
+# npm package(s) the PublishNpmPackages task pushes to npmjs.org on release-tag builds (see PostPublish).
+# Both are scoped to the @endjin org (publishConfig.access: public); the task versions each to the release tag.
+$NpmPackagesToPublish = @("packages/corvus-json-runtime", "packages/corvus-json-client-runtime")
 $NugetPublishSource = property ZF_NUGET_PUBLISH_SOURCE "$here/_local-nuget-feed"
 $IncludeAssembliesInCodeCoverage = @()
 $ExcludeAssembliesInCodeCoverage = @()
@@ -113,7 +116,7 @@ task PostTest {
 # task PrePackage {}
 # task PostPackage {}
 # task PrePublish {}
-# task PostPublish {}
+task PostPublish PublishNpmPackages
 # task RunLast {}
 
 # Custom tasks
@@ -149,3 +152,42 @@ task BuildWebsite {
 }
 # Synopsis: Wrapper task to enable running the standalone BuildWebsite task for local builds
 task BuildWebSiteLocal -If { $BuildWebsite } BuildWebsite
+
+# Synopsis: Publishes the npm runtime package(s) to npmjs.org. Mirrors the NuGet publish gate -- runs only
+# from a release-tag build (refs/tags/X.Y.Z), versions each package to that tag, is idempotent (skips a
+# version already on the registry), and authenticates via NPM_AUTH_TOKEN (wired from the NPM_TOKEN repo
+# secret in build.yml). Uses the repo's direct '& npm' invocation pattern (as the docs-website build does).
+task PublishNpmPackages -If { $NpmPackagesToPublish -and ($env:GITHUB_REF -like 'refs/tags/*') } {
+    if (-not $env:NPM_AUTH_TOKEN) { throw "NPM_AUTH_TOKEN is required to publish npm packages on a release build." }
+    $version = $env:GITHUB_REF_NAME
+    $env:NODE_AUTH_TOKEN = $env:NPM_AUTH_TOKEN
+    try {
+        foreach ($relativePath in $NpmPackagesToPublish) {
+            $packageDir = (Resolve-Path (Join-Path $here $relativePath)).Path
+            $packageName = (Get-Content (Join-Path $packageDir "package.json") -Raw | ConvertFrom-Json).name
+            Write-Build White "Publishing $packageName@$version (from $relativePath)"
+            Push-Location $packageDir
+            try {
+                # npm reads the token from $env:NODE_AUTH_TOKEN at publish time; it is never written to disk.
+                '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' | Set-Content -Path ".npmrc" -NoNewline
+                if ((& npm view "$packageName@$version" version 2>$null) -eq $version) {
+                    Write-Build Yellow "  $packageName@$version is already on npm - skipping."
+                }
+                else {
+                    exec { & npm version $version --no-git-tag-version --allow-same-version | Out-Null }
+                    exec { & npm ci --no-audit --no-fund }
+                    exec { & npm run build }
+                    exec { & npm test }
+                    exec { & npm publish --provenance }
+                }
+            }
+            finally {
+                Remove-Item ".npmrc" -ErrorAction SilentlyContinue
+                Pop-Location
+            }
+        }
+    }
+    finally {
+        $env:NODE_AUTH_TOKEN = $null
+    }
+}

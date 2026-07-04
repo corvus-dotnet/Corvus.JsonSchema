@@ -26,6 +26,12 @@ site/taxonomy/docs/
 # Examples content and taxonomy
 site/content/Examples/
 site/taxonomy/examples/
+# TypeScript generated guide + recipe pages (build.ps1 step 5b; hand-authored landing blocks + the two index.yml are kept)
+site/content/TypeScript/Generated_*.md
+site/taxonomy/typescript-examples/*
+!site/taxonomy/typescript-examples/index.yml
+site/taxonomy/typescript-guides/*
+!site/taxonomy/typescript-guides/index.yml
 # Legacy unversioned paths (no longer used)
 site/content/Api/
 site/theme/corvus/views/Shared/_ApiSidebar.cshtml

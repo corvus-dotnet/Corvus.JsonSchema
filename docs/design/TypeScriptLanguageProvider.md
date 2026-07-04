@@ -1,0 +1,2139 @@
+# Design: A High-Performance, Idiomatic TypeScript Language Provider
+
+> **Status:** Draft for review · **Author:** generated research + design · **Scope:** a new
+> `ILanguageProvider` (written in C#) that plugs into the existing language‑neutral code‑generation
+> core and emits idiomatic, high‑performance TypeScript with the same *kind* of performance
+> characteristics and the same JSON Schema compliance as the V5 C# language provider.
+
+> **Note on code samples.** The C# and TypeScript blocks in this document are *illustrative design
+> sketches* of code that does not exist yet. They are deliberately excluded from the documentation
+> code‑sample catalog gate (they are not compile‑verifiable against the current tree). Mark them
+> `category: fragment` if/when this file is committed.
+
+---
+
+## 1. Goal and the central reconciliation
+
+We want a generator that, given a JSON Schema, produces **strongly‑typed, validated TypeScript**
+that is both *idiomatic* (what a TS engineer would hand‑write in 2026) and *high‑performance* (the
+same engineering philosophy that makes the V5 C# output fast), with **full JSON Schema compliance**
+(drafts 4/6/7/2019‑09/2020‑12 plus OpenAPI 3.0/3.1), verified against the official test suite.
+
+The generator itself is **written in C#**, as a new `TypeScriptLanguageProvider :
+IHierarchicalLanguageProvider` that reuses the entire language‑neutral core in
+`src-v4/Corvus.Json.CodeGeneration` — exactly parallel to today's
+`src/Corvus.Text.Json.CodeGeneration/CSharpLanguageProvider.cs`.
+
+### 1.1 The one decision that shapes everything: the generated runtime model
+
+V5's defining performance trick in .NET is the **bytes‑backed, zero‑allocation document**: each
+generated type is a two‑field `readonly struct (IJsonDocument _parent, int _idx)` that decodes
+values lazily from a pooled UTF‑8 buffer, with `static abstract` CRTP factories for
+virtual‑call‑free generic dispatch.
+
+**The bytes‑backed model transfers to V8 — but conditionally, and the conditions are exactly the
+ones Corvus already enforces.** An earlier draft of this section claimed "V8's generational GC
+neutralises the rationale." **That was wrong, and is corrected here.** The honest, evidence‑backed
+position (see §4 for citations):
+
+* **The .NET allocation‑rate → GC‑frequency mechanism holds in V8 too.** Per‑scavenge cost is
+  survivor‑bound, but scavenge *frequency* is allocation‑rate‑bound (a minor GC fires whenever the
+  New Space bump pointer hits the end), and a high allocation rate causes **premature promotion**
+  (objects copied to Old Space, escalating cheap minor GC into expensive mark‑sweep). Under
+  *sustained throughput* this drives main‑thread pause time and tail latency just as it does in
+  .NET — the same reason Corvus pools in the first place. Production write‑ups (Plaid 30→2% scavenge
+  CPU; Node core +18% from semi‑space tuning) and V8's own team chasing allocation/copy reduction
+  inside native C++ (`JSON.stringify` >2× from a non‑reallocating output buffer) confirm minor‑GC
+  cost is *not* negligible under load.
+* **A bytes‑native, lazy, parse‑over‑spans model genuinely wins — measured, not just theorised.**
+  simdjson's Node bindings beat native `JSON.parse` by **~2.1× on large documents when access stays
+  lazy/zero‑copy** (e.g. 189 MB payloads). This is the direct JS analog of Corvus's
+  `Utf8JsonReader`‑over‑pooled‑bytes thesis, and it works in V8.
+* **But the win is narrower and more conditional than in .NET, for three JS‑specific reasons.**
+  (1) The baseline is lower — bump‑pointer young‑gen allocation is cheaper than .NET gen‑0, and V8's
+  native `JSON.parse` (tuned C++, faster than the equivalent JS literal) is hard to beat on raw
+  parse cost. (2) **Escape analysis can make a short‑lived wrapper's allocation vanish entirely** in
+  warm, monomorphic JIT code — which is *why microbenchmarks systematically under‑report* the
+  allocation cost you are eliminating. (3) A deopt hazard with no .NET equivalent: **reusing mutable
+  pooled objects churns hidden classes and can tip call sites megamorphic/dictionary‑mode**, making
+  naïve pooling net‑negative.
+* **The crossover is sharp.** For **small/medium, fully‑materialised** documents, native
+  `JSON.parse` + the C++→JS realisation tax beats a JS‑side reader (simdjson‑Node *loses* on
+  citm_catalog/twitter). The bytes model wins when documents are **large or partially accessed**,
+  access stays **lazy** (you don't materialise the whole object graph), the hot path is
+  **shape‑stable**, and you're **past JIT warm‑up** — and any shared/generic `getField(name)` reader
+  that sees every schema's shape will go **megamorphic** and erase the win.
+
+So a faithful port of V5's bytes‑native *lazy‑read* model is defensible only in the
+large‑payload/partial‑read corner, and is net worse for the small whole‑document case. But the
+stated target workload here is the **read‑modify‑write (RMW)** cycle (`read bytes → validate/access
+some fields → modify a few → write bytes back`), and **RMW is not that corner** — it reads *and*
+writes the whole document, so lazy‑read buys nothing on the write side. The part of the Corvus model
+that *actually* maps onto JSON RMW is not the immutable‑struct reader; it is the **mutable‑builder
+partial‑update** pattern ("patch a builder, `Set` only changed fields, never read‑all + rebuild" —
+cf. the existing `JsonWorkspace`/`JsonDocumentBuilder` design). Its JS analog is a **structural‑sharing
+patch model over the original bytes** (Model C, §1.2/§4.2): keep the `Uint8Array`, index only what
+you need, leave unchanged members as byte‑slices, and on write copy untouched ranges through verbatim
+while re‑serialising only the fields that changed. That is where a bytes‑backed design genuinely
+earns its keep in V8, because RMW's mandatory whole‑document *write* is exactly the operation where
+"copy unchanged bytes through" beats "realise → re‑serialise everything".
+
+Independently of which document model wins, V5's *performance philosophy* transfers perfectly and is
+exactly what the **fastest** JS schema tools already do:
+
+| V5 philosophy pillar | .NET mechanism | Idiomatic JS realisation |
+|---|---|---|
+| Codegen‑time specialisation, **no runtime schema interpretation** | emitted `Evaluate` per type | AOT‑emitted monomorphic `evaluate{Type}()` functions (cf. `ajv/standalone`, typia) |
+| Kind‑first dispatch, fail‑fast | `switch (JsonTokenType)` + `if (!ctx.HasCollector) return` | `switch (typeof v)` / `Array.isArray` first; early‑return without a collector |
+| Avoid allocation / re‑decoding | structs + UTF‑8 + pooling | monomorphic generated code; avoid string materialisation on the hot path *where free*; don't fight the native parser |
+| Static dispatch (CRTP) | `static abstract CreateInstance` | per‑schema functions with statically‑named call sites; **never** a generic key reader |
+
+The common ground, whatever the document model, is: **AOT‑compiled, monomorphic, specialised
+validation + access code with zero runtime schema interpretation.** That is the engine of the
+performance, and it is shared by both models below.
+
+### 1.2 Recommended runtime model (the headline decision)
+
+**These are not three rival runtimes you pick between by speed — they are complementary layers for
+different jobs.** The idiomatic types + AOT validators (the §5 surface) are the *baseline every consumer
+uses* to **read / validate / consume** parsed JSON — that is what "Model B" names, and it is not a slower
+competitor to C for the same task. Our type model is **mutable** (the V5 `JsonDocumentBuilder` analog): reads use the readonly view, and **mutations go through Model C** — the structural-sharing byte-patch engine (§5.7), proven best for read-modify-write / live editing (§13.7-13.9). **Model A** is a niche
+lazy-read fast path. So: everyone gets the typed surface + validators; consumers that mutate/edit also
+use Model C; almost nobody needs A. The benchmark "Model C wins" is specifically the *RMW round-trip* —
+for pure consumption there is nothing to beat, you just read a validated plain object.
+
+All models share one AOT validator skeleton; they differ only in the *value‑access / write* layer
+(`emitModel: B | C | A | combinations`). Given the stated target workload is **read‑modify‑write**,
+the engineering priority is B (default) and **C** (the RMW path), with A reserved for a separate
+lazy‑read need.
+
+1. **Model B — parse‑then‑validate over plain values (the default, and possibly all you need).**
+   Consumers `JSON.parse` (or pass an already‑parsed value); we validate with AOT‑generated
+   monomorphic code and expose a **type‑only** surface (`readonly` interfaces, discriminated unions,
+   branded formats). **Wins the common case** — small/medium, fully‑read bodies/config/messages —
+   where native `JSON.parse` + stable monomorphic shapes beat any JS‑side byte reader, and the
+   round‑trip is `parse → mutate object → JSON.stringify`. Most idiomatic, most tree‑shakeable.
+2. **Model C — structural‑sharing patch model over the original bytes (the RMW‑optimised path; the
+   one to engineer carefully).** The JS port of Corvus's *mutable‑builder partial‑update*, not its
+   immutable‑struct reader. Keep the original `Uint8Array`; parse only enough to locate top‑level
+   (and on‑demand nested) members into a fixed‑shape **index/token table**; unchanged members stay as
+   **byte‑slices into the original buffer**; changed members hold new values. On write, **stream the
+   output**: copy untouched member byte‑ranges directly buffer→buffer (no decode, no JS‑string, no
+   re‑serialise) and serialise only the fields that actually changed; re‑validate only the change
+   set. This is the one place a bytes‑backed design genuinely earns its keep in V8 — RMW's mandatory
+   whole‑document write is exactly where "copy unchanged bytes through" beats "realise →
+   re‑serialise". **Measured (§13.7/§13.8): wins for large or non‑ASCII payloads and for incremental editing;
+   the ASCII full‑round‑trip crossover is non‑monotonic** — Model C wins small (~360 B) and large
+   (≥256 KB) ASCII but native's C++ parser leads the mid‑range (~4–64 KB) — and native's small, confined mid-range lead does not justify a runtime model-switching fallback, so Model C is used across the board (the ~1.6x ASCII mid-range dip is accepted).
+3. **Model A — bytes‑native *lazy‑read* views (a separate opt‑in, only for large/partial *read*).**
+   The faithful immutable‑struct port; genuinely wins (~2.1×, §4) **only** when you touch a few
+   fields of a large/streamed document and never materialise the rest. Net worse for
+   full‑materialisation and irrelevant to RMW's write side. Build only if lazy partial *read* over
+   large payloads is its own named target.
+4. **The transferable V5 lesson is the *discipline*, not the bytes.** Ports to all models:
+   codegen‑time specialisation, **don't materialise/re‑serialise what you don't touch**, kind‑first
+   dispatch, **monomorphic accessors**. Do **not** port a bytes document merely because it is
+   "faithful to V5" — in .NET it wins broadly (higher GC floor, no escape analysis); in V8 the floor
+   is lower and escape analysis erases temporaries, so a bytes design pays off only in the RMW‑write
+   (C) and large/lazy‑read (A) corners.
+
+> **⛳ Decisions to confirm.**
+> • **Default model:** I recommend **Model B** as the default emit.
+> • **The RMW path:** the **stated killer app — editing a live JSON document in a VS Code extension —
+>   is an RMW workload**, so this is now a *named, concrete* requirement, not a hypothetical. I
+>   recommend **engineering Model C** (the structural‑sharing patch model, §4.2) as the
+>   high‑performance path — it maps onto the part of the Corvus C# design
+>   (`JsonWorkspace`/`JsonDocumentBuilder` partial update) that actually fits JSON RMW, and it emits
+>   exactly the `{offset,length,content}`/`TextEdit` shape VS Code consumes.
+> • **Dual‑offset is required, not optional:** because the editor boundary (LSP) is **UTF‑16** while
+>   persistence/wire is **UTF‑8**, Model C's index table must carry both offset spaces from one scan
+>   (§4.2). "Faithful UTF‑8 bytes everywhere" is the wrong call *specifically at the editor boundary*.
+> • **Model A:** defer unless lazy partial *read* over large payloads is independently a target.
+> • **Acceptance gate for C and A:** a **sustained‑throughput** benchmark (allocation rate / GC
+>   frequency / p99), never a microbenchmark — V8's escape analysis flatters low‑load microbenchmarks
+>   into reporting allocation as free.
+
+---
+
+## 2. Background: the engine we are extending
+
+The code‑generation stack is two assemblies joined by one project reference
+(`src/Corvus.Text.Json.CodeGeneration.csproj` → `src-v4/.../Corvus.Json.CodeGeneration.csproj`).
+
+```
+                         LANGUAGE‑NEUTRAL CORE                     LANGUAGE PROVIDER
+            (src-v4/Corvus.Json.CodeGeneration, reuse 100%)   (src/Corvus.Text.Json.CodeGeneration)
+ schema ──► JsonSchemaTypeBuilder.AddTypeDeclarationsAsync ──► (graph of TypeDeclaration)
+            ├─ IDocumentResolver  (file/http/compound)              CSharpLanguageProvider
+            ├─ VocabularyRegistry (draft 4/6/7/2019/2020, OAS)      ├─ ICodeFileBuilder × 3
+            ├─ JsonSchemaRegistry (load, $id/$anchor/$ref/scope)    ├─ IKeywordValidationHandler × N  (emit C#)
+            ├─ TypeDeclaration graph + reduction/dedup              ├─ INameHeuristic × ~15
+            └─ CodeGenerator (indent/line‑ending text buffer)       ├─ INameCollisionResolver
+ GenerateCodeUsing(provider, roots) ──► provider hooks ──►          ├─ FormatHandlerRegistry
+            IReadOnlyCollection<GeneratedCodeFile> {Name, Content}  ├─ CSharpMemberName : MemberName
+                                                                    └─ CodeGeneratorExtensions.*  (C# syntax)
+```
+
+**Verified reusable, unchanged, by a TS provider:** schema loading; `$ref`/`$dynamicRef`/
+`$recursiveRef`/anchor/scope resolution; the `TypeDeclaration` graph; **structural reduction/dedup**
+(N schemas with the same effective shape collapse to one type); the keyword + vocabulary model (~90
+keyword interfaces, all *data/analysis*, with **zero** code‑emission coupling — grep‑verified); the
+`JsonSchemaTypeBuilder` orchestration; the seam interfaces (`ILanguageProvider`,
+`IHierarchicalLanguageProvider`, the `IKeywordValidationHandler`/`IChildValidationHandler` family,
+`ICodeFileBuilder`, `INameHeuristic`); the registries; and **`CodeGenerator`** — a genuinely
+language‑agnostic indented text buffer (`indentSequence`, `instancesPerIndent`, `lineEndSequence`
+are constructor params; no braces or C# syntax baked in).
+
+**What is C#‑specific and must be re‑implemented for TS (all already isolated in
+`src/Corvus.Text.Json.CodeGeneration`):** the `CSharpLanguageProvider`; the metadata‑bag extension
+methods that store `CSharp_DotnetTypeName`/`DotnetNamespace`/accessibility on `TypeDeclaration`; the
+concrete validation handlers (they emit literal C#); the code‑file builders (`CorePartial`,
+`MutableCorePartial`, `JsonSchemaPartial`); `CodeGeneratorExtensions.*` (C# syntax); name
+heuristics' built‑in‑type mapping; collision resolver; format handlers; `CSharpMemberName`;
+`EcmaRegexTranslator`; `StandaloneEvaluatorGenerator`.
+
+There is **no neutral intermediate representation** between keyword data and emitted text — handlers
+go straight from `IKeyword`/`TypeDeclaration` to language strings. So the TS provider does not
+*translate an IR*; it re‑implements the "what to write for keyword X" mapping against a TS runtime
+of our design. The core hands us a fully resolved, deduplicated, on‑demand‑named type graph plus a
+priority‑ordered handler‑dispatch framework and a text buffer.
+
+> The **Roslyn source generator** (`IncrementalSourceGenerator`, `[Generator(LanguageNames.CSharp)]`)
+> is **not** an attach point — it emits into a C# compilation, where TS output is meaningless. The TS
+> provider is a **CLI / standalone** concern only.
+
+---
+
+## 3. Capability parity target
+
+“Equivalent capability to V5” means matching this matrix (all confirmed present in V5):
+
+* **Dialects:** Draft 2020‑12 (decomposed into its 8 sub‑vocabularies), 2019‑09 (6 vocabularies),
+  7, 6, 4; OpenAPI 3.0 (Draft‑4‑based) and 3.1 (→ 2020‑12); the Corvus extension vocabulary.
+  Fallback for schema‑less documents defaults to **2020‑12** (configurable).
+* **Keywords:** `type`/`enum`/`const`; `properties`/`patternProperties`/`additionalProperties`/
+  `propertyNames`/`required`/`min`‑`maxProperties`; `dependentRequired`/`dependentSchemas`/
+  `dependencies`; `allOf`/`anyOf`/`oneOf`/`not`; `if`/`then`/`else`; `items`/`prefixItems`/
+  `additionalItems`/`contains`/`min`‑`maxContains`/`min`‑`maxItems`/`uniqueItems`; numeric
+  `minimum`/`maximum`/`exclusive*`/`multipleOf`; string `minLength`/`maxLength`/`pattern`;
+  `unevaluatedProperties`/`unevaluatedItems`; `$ref`/`$dynamicRef`/`$dynamicAnchor`/`$recursiveRef`/
+  `$recursiveAnchor`/`$id`/`$anchor`/`$defs`. Annotation keywords: `title`/`description`/`default`/
+  `examples`/`deprecated`/`readOnly`/`writeOnly`/`format` (annotation‑only by default in 2020‑12)/
+  content keywords. OpenAPI `nullable`/`discriminator`/`example`.
+* **Formats** with dedicated typed treatment: `date`, `date-time`, `time`, `duration`, `email`,
+  `hostname`, `ipv4`, `ipv6`, `uuid`, `uri`(+`-reference`/`-template`), `iri`, `json-pointer`,
+  `regex`; numeric formats (`int16/32/64/128`, `uint*`, `half/single/double/decimal`, `byte`).
+  Assertion modes **assert / disable / warning** resolved at **codegen time** (no runtime branch).
+* **Codegen modes:** `TypeGeneration`, `SchemaEvaluationOnly` (standalone evaluator), `Both`;
+  annotation collection in verbose mode.
+* **Regex:** ECMA‑262 patterns; V5 *translates* ECMA→.NET. TS is native ECMA, so we **drop the
+  translator** but **keep the classifier** (`Noop`/`NonEmpty`/`Prefix`/`Range`/`FullRegex`
+  short‑circuits).
+* **Determinism:** type/file names deterministic across OSes (issue #825). Inherited free **iff** TS
+  naming uses the same heuristic ordering (`OrderBy(LocatedSchema.Location)`).
+
+---
+
+## 4. The runtime model in depth (evidence)
+
+Why both models are first‑class, when each wins, and the honest crossover. *(This section was
+revised after a follow‑up research pass corrected an earlier over‑strong "the GC neutralises it"
+verdict.)*
+
+**The allocation‑rate → GC‑frequency mechanism that justifies pooling in .NET holds in V8 under
+sustained load.** Per‑scavenge cost is survivor‑bound, but a minor GC *fires* whenever the New Space
+bump pointer fills, so allocation **rate** sets GC **frequency**; a high rate also causes **premature
+promotion** (survivors copied to Old Space → cheap minor GC escalates into expensive mark‑sweep).
+Evidence it bites under throughput: Plaid cut scavenge **30%→2% of CPU**; Node core measured
+**+18%** throughput from semi‑space tuning (Nearform +20–27%); reducing per‑op allocation directly
+(fast‑json‑stringify ~2×, JSONStream ~5×, buffer reuse +278% at 1 KB); and V8's own team made
+`JSON.stringify` **>2× faster** by replacing a reallocating output buffer, and *halved* scavenge
+main‑thread time in Orinoco — neither worth doing if minor‑GC cost were negligible. *(v8.dev
+trash‑talk / orinoco‑parallel‑scavenger / json‑stringify; v8‑perf/gc.md; engineering.plaid.com;
+nodejs/node#42511; nearform semi‑space study; fastify/fast‑json‑stringify; puzpuzpuz/nbufpool.)*
+
+**A bytes‑native, lazy, zero‑copy model genuinely wins — measured.** simdjson's Node bindings beat
+native `JSON.parse` by **~2.1× on large documents when access stays lazy/zero‑copy** (e.g. 189 MB
+cityLots, github_events). This is the direct JS analog of Corvus's `Utf8JsonReader`‑over‑pooled‑bytes
+design, and it wins in V8 — not only in .NET. Decoding UTF‑8→string is itself a real, measured cost
+(`Buffer.toString` ~2.9× faster than `TextDecoder.decode`, independently re‑confirmed), so a view
+that compares **raw bytes without materialising strings** (key matching, enum/format checks, ASCII
+content) avoids a cost the parse‑then‑validate path always pays. `Uint8Array`/`DataView` byte access
+is fully optimised today (DataView ≈ TypedArray after TurboFan inlining). *(luizperes/simdjson_nodejs;
+nodejs/performance#18; node#39879; v8.dev/blog/dataview.)*
+
+**But the win is narrower and more conditional than in .NET — three JS‑specific reasons.**
+(1) **Lower floor:** bump‑pointer young‑gen allocation is cheaper than .NET gen‑0, and V8's native
+`JSON.parse` is *faster than the equivalent JS literal* (~1.7×) and unbeatable in JS (only native
+SIMD rewrites beat it). (2) **Escape analysis can erase a wrapper's allocation entirely** in warm,
+monomorphic JIT code — which is *why microbenchmarks systematically under‑report* the allocation cost
+you are eliminating, and why the proof must be a **sustained‑throughput** benchmark. (3) **A deopt
+hazard with no .NET equivalent:** reusing *mutable* pooled objects churns hidden classes and can tip
+call sites megamorphic/dictionary‑mode — so naïve pooling is more often an anti‑pattern in JS.
+*(v8.dev cost‑of‑javascript‑2019 / v8‑release‑71 / fast‑properties; kipp.ly escape‑analysis;
+mrale.ph monomorphism.)*
+
+**The crossover is sharp, and it sets the decision rule.** For **small/medium, fully‑materialised**
+documents, native `JSON.parse` + the C++→JS realisation tax beats a JS‑side reader (simdjson‑Node
+*loses* on citm_catalog/twitter). The bytes model (A) wins when documents are **large or partially
+accessed**, access stays **lazy** (no full object‑graph materialisation), the hot path is
+**shape‑stable**, you're **past warm‑up**, and accessors are **per‑schema monomorphic** (a shared
+`getField(name)` reader goes megamorphic and erases the win). The parse‑then‑validate model (B) wins
+for the small whole‑document case and is the more idiomatic surface. A pragmatic Node‑only lever
+worth documenting: `--max-semi-space-size` captures much of the allocation‑rate win without code
+changes.
+
+**WASM verdict:** emit JavaScript, not WASM. WASM can't touch JS strings/objects directly; every
+string crossing costs a copy + O(n) UTF‑16↔UTF‑8 transcode that repeatedly erases any parser win.
+The whole JS perf frontier (Ajv, typia, simdjson‑in‑JS) competes by emitting *better JS* that V8 JITs
+to monomorphic machine code. *(Mozilla Hacks JS↔WASM; dev.to “16 patterns”; simdjson.org.)*
+
+**Honest caveats carried into the plan:** the strongest direct evidence (simdjson‑Node ~2.1×) is one
+project's benchmarks; there is no clean V8‑specific write‑barrier overhead figure; and the nbufpool
+278% number is self‑described as "really‑really unfair." The directional conclusion — the
+allocation‑rate mechanism is real and a bytes‑native *lazy* model wins for large/partial/high‑throughput
+workloads, but loses for small full‑materialisation — is consistent across Node core, V8's own blog,
+and production write‑ups. **Model A must still be validated with our own sustained‑throughput +
+allocation benchmark before its perf claims are published**, precisely because escape analysis makes
+microbenchmarks lie in its favour at low load and against it is irrelevant at high load.
+
+### 4.1 Numeric precision — a compliance subtlety that touches the model
+
+JS `number` is IEEE-754 double — lossy beyond 2^53 and for most decimals. V5 validates numeric
+keywords against the number's **ASCII/text representation** (its `BigNumber`/`BigInteger`), never a
+binary double, which is why it gets `multipleOf`, large-integer `const`/`enum`, and high-precision
+bounds exactly. **The TS provider mirrors this: numeric validation operates on the number token's
+source text, not the parsed JS double.**
+
+* **Validation — exact, zero-dependency, on the token text.** Parse the decimal literal to a scaled
+  integer (sign, `BigInt` mantissa, base-10 exponent) and do exact arithmetic with native `BigInt`:
+  `multipleOf` = scale both to a common exponent and test `vInt % dInt === 0n`; bounds = cross-scaled
+  `BigInt` compare; numeric `const`/`enum` equality = compare the mathematical value (so `1.0` === `1`,
+  and integers beyond 2^53 compare correctly). This is the C# ASCII-number approach with **no
+  third-party dependency** — exactly what the suite's `multipleOf`/large-integer cases require.
+  (Proven runnable: `prototypes/number-exact.mjs`.)
+* **Where the text comes from.** The bytes models (A/C) retain the token bytes natively (§4.2). Model B
+  parses to a lossy double, so exact numeric validation there needs the **source literal** via
+  `JSON.parse(text, reviver)` source-text access (TC39 Stage-4, V8) — so full numeric compliance pushes
+  even Model B to keep a number's source text. A fast double path is used only where the schema's
+  numeric constraints are exactly representable in a double.
+* **Value accessor — `number` default + a pluggable exact fallback.** The generated accessor returns
+  `number` by default (fast, possibly lossy); for exact reads it offers a fallback returning an
+  arbitrary-precision value from a **third-party big-number library** via a small adapter seam
+  (`BigNumberAdapter`). JS has no native arbitrary-precision decimal, so the runtime does not hard-depend
+  on one — the default adapter targets a well-known lib (`bignumber.js`/`decimal.js`-style) and consumers
+  can swap it. Integer-only formats beyond the safe range return native `bigint`.
+
+This is the second place (with the `Undefined` sentinel, §5.1) where faithful C# behaviour and full
+compliance pull the design toward retaining source text rather than the convenient JS value.
+
+### 4.2 Model C — the structural‑sharing patch model for RMW (concrete shape)
+
+The RMW‑optimised path. Engineered to make the *write* side cheap by never realising or
+re‑serialising the unchanged majority of the document. This is the JS realisation of Corvus's
+mutable‑builder partial‑update.
+
+* **Index/token table (the only mandatory parse work) — dual‑offset.** On `read`, scan the
+  `Uint8Array` *once* to record, per object, each member's name/value spans in **both byte offsets
+  *and* UTF‑16 code‑unit offsets**. Store as a **fixed‑shape, per‑schema structure** — e.g. parallel
+  typed arrays of `(nameByteStart, nameByteEnd, valByteStart, valByteEnd, nameU16Start, …)` indexed by
+  a statically‑known member slot — *not* a `Map<string, …>` or a mutated bag (which would churn hidden
+  classes / go megamorphic). For schema‑shaped JSON the member set is known at codegen time, so each
+  member gets a fixed slot and a statically‑named accessor. **The dual offset is not optional for the
+  killer app** (see the VS Code bullet): byte offsets drive the server‑side/wire/persistence RMW path;
+  UTF‑16 code‑unit offsets drive the editor path — computing both in one scan avoids an O(scan)
+  conversion on every edit.
+* **VS Code / LSP projection (the stated killer app: editing a live JSON document in an extension).**
+  VS Code's `TextDocument`/`TextEdit` model is **UTF‑16, not UTF‑8** — LSP positions are UTF‑16
+  code‑unit offsets (e.g. in `"a𐐀b"`, `b` is at offset 3, because `𐐀` is two code units). A
+  byte‑native core therefore needs a **UTF‑16 projection**: emit edits as `TextEdit{range, newText}`
+  using the table's UTF‑16 offsets. This is a *lookup*, not a rescan, precisely because the table is
+  dual‑offset — and the `{offset, length, content}` edit shape is exactly what VS Code consumes (it is
+  why `jsonc-parser`, our patch‑write template, was built for VS Code). One byte‑native scan thus
+  serves both the wire RMW path and live‑document editing.
+* **Read accessors (per‑schema, monomorphic).** `getName()` returns either the decoded value
+  (cached) or decodes its byte range on demand; format/enum checks compare raw bytes (no string).
+  Never a generic `get(name)`.
+* **Change set (fixed‑shape overlay).** A modification records `(slot → newValue)` in a fixed‑shape
+  overlay (parallel array / struct‑of‑slices keyed by slot), never via `delete`/property addition on
+  a pooled object. "Unchanged" = slot absent from the overlay → its original byte range.
+* **Write (stream, copy‑through).** Walk the member slots in canonical order; for each: if unchanged,
+  `output.set(original.subarray(valueStart, valueEnd))` — a raw buffer→buffer copy, no decode/encode;
+  if changed, serialise the new value. Added members are appended; removed members are skipped.
+  Object framing (`{`, `,`, `:`, `}`) is emitted by the generated writer.
+* **Validation scoping.** Unchanged members were proven valid on read; re‑validate only the change
+  set (+ any cross‑field constraints the change can affect). The RMW analog of "validate only the
+  patched fields".
+* **No runtime model-switching fallback — Model C uses its byte path for all sizes.** A *runtime* size/content heuristic that switched to native `JSON.parse`+`JSON.stringify` for some inputs would add per-call branching plus a second code path, to reclaim native's only edge: the mid-range ASCII (~4-64 KB) full-round-trip band, where it leads by just ~1.2-1.6x and at ~10x the allocation (§13.7/§13.8). That dip is not worth the overhead, so no fallback is emitted.
+
+Open sub‑questions to settle when specifying C in detail: the exact index‑table encoding (parallel
+typed arrays vs packed `Int32Array`), nested‑descent laziness policy, canonicalisation/key‑order
+handling on write (Corvus already has add‑order + on‑the‑fly sort precedent), and whether to lean on
+existing JS edit‑range libraries (`jsonc-parser` edit APIs, `json-source-map`) for the index layer or
+generate it. These are deliberately deferred until the RMW target is confirmed. **§12 has the full
+build‑vs‑reuse breakdown with licenses** — note in particular that the unchanged‑*subtree* passthrough
+is our own byte‑range copy, because the native `JSON.rawJSON` primitive is **primitives‑only** and
+cannot carry an object/array subtree as one raw blob.
+
+---
+
+## 5. Generated TypeScript: the output contract
+
+Side‑by‑side with V5 C#. **TS surface is type‑only where possible (erased at runtime), with
+co‑located AOT validators that are tree‑shakeable.**
+
+> **Validated.** The output shapes in §5.1-§5.3 are hand-written to match the proposed generated code and **type-checked under `tsc --strict --exactOptionalPropertyTypes`** (`prototypes/ts-output-shape/*.ts` compiles clean; `@ts-expect-error` markers prove the compiler rejects wrong-branch access, explicit `undefined` on optional props, missing required props, bad enum values, and spoofed format brands).
+
+### 5.1 Objects
+
+**V5 C#:** `readonly partial struct Person : IJsonElement<Person>` with `_parent/_idx`, UTF‑8 keyed
+getters, `Undefined` for absence, `Source`/`Build` factories.
+
+**TS (Model B):** an idiomatic `readonly` interface + an AOT validator + (optional) a typed parse
+entry point.
+
+```ts
+// person.ts  — generated
+export interface Person {
+  readonly name: PersonName;          // required → non-optional
+  readonly age?: number;              // optional → `?:`  (NOT a custom Undefined sentinel)
+  readonly competedIn?: readonly Year[];
+}
+
+// AOT validator: monomorphic, kind-first, fail-fast (verbose mode adds a collector arg)
+export function isPerson(v: unknown): v is Person { return validatePerson(v) === undefined; }
+export function validatePerson(v: unknown, ctx?: EvalContext): Failure | undefined {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return fail(ctx, "type", "object");
+  const o = v as Record<string, unknown>;
+  // required-set tracked with a small bitmask; property dispatch: ≤3 inline ifs, ≥4 via a static lookup
+  if (!("name" in o)) return fail(ctx, "required", "name");
+  const e0 = validatePersonName(o.name, ctx); if (e0) return e0;
+  if ("age" in o) { const e1 = validateInteger(o.age, ctx); if (e1) return e1; }
+  return undefined;
+}
+```
+
+Key choices, justified:
+
+* **`Undefined` sentinel is dropped.** TS idiom for “absent” is the `?:` optional modifier +
+  `in`/`hasOwnProperty`, ideally with `exactOptionalPropertyTypes` so `age?: number` means exactly
+  “number or absent”. A dedicated `Undefined` JSON‑value‑kind would fight the language. *(This is the
+  single biggest, deliberate divergence from the C# model.)* The mapping is mechanical:
+  not‑in‑`required` → `prop?: T`; in‑`required` → `prop: T`.
+* **`readonly` interfaces, not classes**, for the default surface — zero runtime cost, fully
+  tree‑shakeable, idiomatic. Classes appear only for Model A views (which *need* getters) and for the
+  `match()` helper objects on non‑discriminated unions.
+* **Construction:** no `Source`/`Build`/`TContext` ref‑struct machinery (a .NET zero‑alloc concern).
+  Idiomatic TS construction is an object literal typed as the interface; for *writing* large payloads
+  efficiently, offer a builder that streams directly into a `Utf8` output buffer (the spiritual
+  analog of `Build<TContext>`), as a runtime‑library helper — not per‑type generated noise. Type-checked: `prototypes/ts-output-shape/object-model.ts`.
+
+### 5.2 Unions (`oneOf` / `anyOf`)
+
+**V5 C#:** `Match(...)` overloads + `TryGetAs{Branch}` + `Branch.From(this)`; discriminator
+fast‑path.
+
+**TS — two cases (type-checked: `prototypes/ts-output-shape/union-model.ts`):**
+
+*Discriminated* (shared literal `const` discriminant, incl. OpenAPI `discriminator`): emit a genuine
+**discriminated union** — the type system narrows for free. The `Match()` analog dispatches on the
+discriminant (the discriminator fast-path), one typed handler per branch, exhaustive via `assertNever`;
+consumers can equally just `switch (s.kind)`. *(Closes the `json-schema-to-typescript` gap, which
+collapses `oneOf`->`anyOf` and loses discriminated-union semantics.)*
+
+```ts
+export interface Circle    { readonly kind: "circle";    readonly radius: number; }
+export interface Rectangle { readonly kind: "rectangle"; readonly width: number; readonly height: number; }
+export type Shape = Circle | Rectangle;
+
+export function matchShape<R>(value: Shape, cases: {
+  circle: (v: Circle) => R;
+  rectangle: (v: Rectangle) => R;
+}): R {
+  switch (value.kind) {
+    case "circle":    return cases.circle(value);
+    case "rectangle": return cases.rectangle(value);
+    default:          return assertNever(value);   // add a variant -> build breaks here
+  }
+}
+```
+
+*Non-discriminated* `oneOf`/`anyOf`: TS can't express XOR in a type, so the **type** is a plain union
+`A | B` and runtime **guards** (the generated branch validators) narrow it — the literal analog of V5's
+`Match()`. `oneOf` (exactly-one) / `anyOf` (>=one) cardinality is enforced by the **validator**, not the
+type (a deliberate, documented limitation).
+
+```ts
+export type FullName = string | PersonName;
+
+export function isStringName(v: FullName): v is string { return typeof v === "string"; }       // = V5 TryGetAs{Branch}
+export function isStructuredName(v: FullName): v is PersonName { return typeof v === "object" && v !== null; }
+
+export function matchFullName<R>(value: FullName, cases: {
+  string: (v: string) => R; name: (v: PersonName) => R; fallback?: (v: FullName) => R;
+}): R {
+  if (isStringName(value))     return cases.string(value);
+  if (isStructuredName(value)) return cases.name(value);
+  if (cases.fallback)          return cases.fallback(value);
+  throw new Error("no oneOf branch matched");
+}
+```
+
+**V5 -> TS mapping:** `Match(...matchers, defaultMatch)` -> `matchX(value, { branch..., fallback? })`;
+`TryGetAs{Branch}(out T)` -> `isX(v): v is X`; `Branch.From(this)` -> free (the value already *is* the
+branch after narrowing); discriminator fast-path -> `switch` on the discriminant.
+
+### 5.3 The full recognised‑pattern catalogue → idiomatic TS
+
+*(every shape in this catalogue is type-checked under `tsc --strict`: `prototypes/ts-output-shape/{object,union,enum-const,format-brand,array-tuple,map-object,conditional}-model.ts`.)*
+
+The core already *classifies* each schema into a recognised shape (the language‑neutral side is the
+same one V5 consumes). The TS provider's job is to give each of those shapes its **idiomatic TS
+rendering**, mechanically. The authoritative enumeration is
+[`docs/CodeGenerationPatternDiscovery.md`](../CodeGenerationPatternDiscovery.md); the table below maps
+every shape it lists to the TS we emit, with the core symbol that triggers it. The shapes in §5.1/§5.2
+(objects, discriminated/non‑discriminated unions) are not repeated here.
+
+| Recognised shape (core symbol / trigger) | Idiomatic TS surface | Notes |
+|---|---|---|
+| **Pure tuple** (`TupleTypeDeclaration`; `prefixItems`, or draft‑7 array‑form `items`, with no extra items) | **fixed‑length readonly tuple type** `readonly [A, B, C]` | TS tuples are a first‑class, zero‑runtime type — a *much* better fit than C#'s `Item0/Item1` struct. Element access is `t[0]` (typed per position). |
+| **Array with prefix tuple** (prefix `prefixItems` + an `items`/`additionalItems` tail schema) | **labelled head + rest** `readonly [A, B, ...Rest[]]` | TS variadic‑tuple types express "first N are typed, the rest are `Rest`" natively. |
+| **Plain (homogeneous) array** (`ArrayItemsTypeDeclaration`; single‑schema `items`) | `readonly T[]` (`ReadonlyArray<T>`) | Validator runs one monomorphic element loop + `contains`/length/`uniqueItems`. |
+| **Fixed‑size / numeric array (tensor)** (`IsFixedSizeArray()`/`ArrayDimension()`/`IsNumericArray()`) | `readonly [number, number, number]` for a known length; nested tuples for multi‑dimension; optionally a `Float64Array`/typed‑array view in Model A/C for numeric hot paths | Fixed length → fixed‑length tuple; numeric leaf → consider a typed array for byte‑level work. |
+| **Map / dictionary object** (`FallbackObjectPropertyType` / `additionalProperties` / `patternProperties` / `unevaluatedProperties`) | `interface` with declared `properties` **plus** an index signature `readonly [key: string]: T` (when a single fallback type), or a `Readonly<Record<string, T>>` for a pure map | `patternProperties` → keep the index signature broad in the *type* and enforce the regex‑keyed value schema in the *validator*; expose a typed `entries()`/`get(key)` runtime helper rather than C#'s `TryGetProperty`. |
+| **Single core‑type wrapper** (`ImpliedCoreTypes().CountTypes() == 1` + constraints/format) | a **branded alias** of the base primitive — `type AccountId = Brand<string, "AccountId">` / `type Port = Brand<number, "Port">` | The JS analog of V5's single‑value struct‑with‑conversions. No wrapper object; the brand carries the constraint identity, the validator/factory enforces it. |
+| **Const** (`SingleConstantValue()`; `const`) | the **literal type** of the value — any JSON type: `"create"`, `42`, `true`, `null`; an object/array const → a literal object/tuple type (`{readonly x:0}`, `readonly [1]`) | Validator **deep-equals** the exact value: exact numeric compare (§4.1) for numbers, deep structural equality for object/array. The TYPE is best-effort; the VALIDATOR is authoritative (rejects extra props structural typing would allow). |
+| **Enum / `anyOf` of consts** (any JSON values — *not just strings*) | **union of literal types of whatever JSON types the values hold** — `"a" \| "b"`, `1 \| 2 \| 3`, `"auto" \| 0 \| false \| null` (mixed); object/array values → literal object/tuple types | **Never** a TS `enum`. Validation = JSON **deep-equality** vs the allowed values (exact numeric §4.1 for numbers, deep structural for object/array); all-string enums keep a `Set`/byte-membership fast path. Type-checked: `enum-const-model.ts`. |
+| **String formats** (`WellKnownStringFormatHandler`) | **branded string** + optional richer parse helper | `uuid`/`email`/`hostname`/`ipv4`/`ipv6`/`json-pointer`/`regex`/`uri*`/`iri*` → `Brand<string, "Uuid">` etc., minted only in validating factories; `date`/`date-time`/`time`/`duration` additionally offer `toDate(s): Date` (the JS analog of V5's NodaTime conversions). |
+| **Numeric formats** (`WellKnownNumericFormatHandler`) | `number`, **branded** where range matters, and **`bigint`** for 64‑bit+ | `int16/int32`, `uint16/…`, `half/single/double/decimal`, `byte` → `number` (with a range‑checking validator and an optional brand); **`int64/uint64/int128/uint128`** → `bigint` (exceeds JS safe‑integer range — see §4.1). |
+| **Type reduction** (`ReducedTypeDeclaration`; annotation‑only schema) | **no type emitted** — it aliases the reduced target | Annotation‑only schemas (`description` with no constraints) and structurally‑identical schemas collapse to one type *in the core* — the TS provider inherits this for free (the dedup that makes the output small). Emit a `type Alias = Target` only when a distinct name is wanted. |
+| **`if`/`then`/`else`** (conditional) | type stays the base shape; **validator** applies the conditional | TS can't express "if matches I then must match T"; encode it in the AOT validator (§5.4), not the type. |
+
+#### 5.3.1 Shape‑based conversions (the `From`/`As` model) — the one V5 feature with a real TS analog
+
+V5 generates implicit/explicit conversion operators and `From<T>()` factories so a value can be viewed
+**as** any structurally‑compatible composition member (driven by `AllOfCompositionTypes()` /
+`AnyOfCompositionTypes()` / `OneOfCompositionTypes()` in
+`CodeGeneratorExtensions.Conversions.cs`). TS is **structurally typed**, so much of this is *free*: a
+value that satisfies an `allOf` member's shape **already is** that type — no conversion call needed,
+which is strictly more ergonomic than C#. The provider should therefore emit **conversions only where
+structural typing doesn't already give them**:
+
+* **`allOf` (intersection).** Emit `type T = A & B & C`. A `T` is assignable to `A`/`B`/`C`
+  automatically (structural) — the V5 `implicit operator A(T)` is unnecessary. Provide typed
+  *narrowing* helpers (`asA(t: T): A` is just `t`) only as documentation/ergonomic sugar, zero runtime.
+* **`anyOf`/`oneOf` (union).** Emit `type T = A | B`. Going *from* a `T` to a branch needs a guard, not a
+  cast — emit `isA(v): v is A` / `matchT(...)` (§5.2). Going *to* `T` from an `A` is free (widening).
+* **Brand/format conversions** are the genuine V5 conversions worth porting: `asUuid`, `toDate`,
+  `toBigInt` — validating factories that mint the branded/parsed form (§5.3 table). These are the TS
+  equivalent of V5's `implicit operator Guid(Uuid)`.
+
+The rule: **lean on structural typing; emit a runtime conversion only when a brand, a parse, or a
+union‑narrowing guard is actually required.** This is both more idiomatic and more tree‑shakeable than
+mechanically porting every C# operator.
+
+### 5.4 Validation emission (the high‑performance core)
+
+Mirror V5's `Evaluate` architecture as straight‑line, monomorphic JS — this *is* the performance
+story, and it is the same approach as `ajv/standalone` and typia.
+
+* **One `evaluate{Type}(value, ctx?)` function per subschema**, chained by composition — directly
+  modelled on `StandaloneEvaluatorGenerator` (subschema discovery → property‑matcher infra →
+  per‑subschema methods).
+* **Kind‑first dispatch:** `switch (typeof v)` / `Array.isArray` before any keyword work; skip
+  keywords irrelevant to the actual kind (report `ignoredKeyword` only when a collector is attached).
+* **Fail‑fast without a collector** (`if (!ctx?.collector) return failure`), full annotation walk in
+  verbose/collector mode — the two‑mode design V5 uses.
+* **Property dispatch:** ≤3 properties → `if/else` chain; ≥4 → a static lookup (object literal /
+  `Map`) for O(1) dispatch (the V5 hash‑matcher analog).
+* **Required‑set tracking** via a small integer bitmask (`Span<uint>` analog).
+* **Array‑shape dispatch (mirrors the §5.3 catalogue):** *pure tuple* → fixed‑count positional
+  checks (`v.length === N` then `evaluateA(v[0])`, `evaluateB(v[1])`, … — fully unrolled, monomorphic,
+  no loop); *prefix tuple + tail* → positional checks for the head then one element loop over the rest;
+  *plain array* → a single element loop. `contains`/`minContains`/`maxContains`, length, and
+  `uniqueItems` are layered on; `uniqueItems` uses a `Set` of canonicalised values.
+* **`if`/`then`/`else`:** evaluate the `if` schema collecting *no* failures (it's a predicate); branch
+  to `then` or `else` accordingly — the type surface stays the base shape (§5.3), the constraint lives
+  here.
+* **`unevaluatedProperties`/`unevaluatedItems`:** thread an evaluated‑keys/indices set through the
+  context, populated by applicators, consumed last — same priority ordering as V5
+  (`First → CoreType → Default → Composition → AfterComposition → Last`).
+* **Discriminator fast‑path** for OpenAPI‑style `oneOf`: switch on the discriminant before evaluating
+  branches.
+* **Regex:** classify at codegen time; emit `startsWith`/range/length checks or a hoisted, lazily
+  compiled `RegExp` (module‑scope `const`, built once). No ECMA→.NET translation needed.
+* **Annotation collection** (`SchemaEvaluationOnly`/`Both` + verbose): an `EvalContext` carrying a
+  results collector, evaluated‑props/items, and path tracking — the TS analog of `JsonSchemaContext`.
+
+### 5.5 Format validation (must pass the suite)
+
+`format` is annotation-only by default in 2020-12; when assertion is enabled (the per-format
+assert/disable/warning mode is resolved at **codegen time**, §3), the emitted checks must be
+**RFC-accurate and pass the JSON-Schema-Test-Suite `optional/format/` cases** — the bar the C# library
+clears via Bowtie.
+
+* **Runtime format validators, zero-dependency, RFC-accurate.** Port the C# format semantics into
+  `@endjin/corvus-json-runtime`: `date`/`date-time`/`time`/`duration` (RFC 3339), `email`/`idn-email`
+  (RFC 5321/5322 + IDN), `hostname`/`idn-hostname` (RFC 1123 + IDNA/UTS-46), `ipv4`/`ipv6` (incl. zone),
+  `uri`/`uri-reference`/`iri`/`iri-reference` (RFC 3986/3987), `uri-template` (RFC 6570),
+  `json-pointer`/`relative-json-pointer` (RFC 6901), `uuid` (RFC 4122), `regex` (ECMA-262).
+* **Regex is native** — `regex` format and the `pattern` keyword compile straight to JS `RegExp`, no
+  ECMA->.NET translation (unlike C#); keep only the classifier (Noop/Prefix/Range short-circuits).
+* **The hard ones, flagged honestly.** `idn-hostname`/`idn-email`/`iri`/`iri-reference` need Unicode
+  normalisation + IDNA (UTS-46) and are where format compliance usually breaks; budget for careful
+  Unicode handling (the C# library carries IDN/Unicode polyfills for exactly this). `email` quoted local
+  parts and `ipv6` edge cases are similarly fiddly.
+* **Date/time/duration — the highest-risk format family, and it needs a NodaTime-grade value model.**
+  Two concerns: (a) **validation** must be RFC 3339-exact and pass the suite's `date`/`date-time`/`time`/
+  `duration` cases (date validity, leap-second `:60`, offsets, fractional seconds, `T`/`Z` casing) —
+  zero-dependency validators verified against the suite; (b) the **rich value accessor / parse + emission**
+  wants offset/zone-preserving, sub-millisecond, `Period`/`Duration`-aware types — `Date` is too lossy (a
+  UTC instant only; drops the original offset; no `LocalDate`/`Period`). The NodaTime analog in JS is
+  **`Temporal`** (`PlainDate`≈`LocalDate`, `PlainTime`, `ZonedDateTime`/`Instant`+offset≈`OffsetDateTime`,
+  `Duration`≈`Period`), with `Intl` for localisation and the runtime IANA tz database for time zones. The
+  accessor returns `Temporal` types via a **pluggable adapter** (same seam as the big-number adapter,
+  §4.1): native `Temporal` where present, the official `@js-temporal/polyfill` otherwise, `Date` as a
+  last-resort fallback. Model C bonus: an *unchanged* date-time is copied through verbatim as bytes,
+  sidestepping any re-emission / round-trip canonicalisation.
+* **Verification is the gate** — each validator is checked against `optional/format/<name>.json` through
+  the codegen-aware harness (§8). "Passes the suite", not "looks right", is the acceptance criterion,
+  with the same documented exclusions the C# engine uses.
+
+### 5.6 Schema location & evaluation path ($dynamicRef/$recursiveRef + spec output)
+
+The core engine already resolves `$ref`/`$dynamicRef`/`$dynamicAnchor`/`$recursiveRef`/`$recursiveAnchor`
+structurally (scope stack + dynamic-scope graph, §2) — the TS provider does **not** re-implement dynamic
+resolution. What it must do is **generate the same location metadata the C# library emits**, so output
+and dynamic scope are correct:
+
+* **Per-subschema location constants** — emit, per subschema, the **schema location** (absolute keyword
+  URI) and the **evaluation path** (JSON-Pointer keyword path) as module-scope constants: the TS analog
+  of the C# `{Name}SchemaPath`/`{Name}EvaluationPath` statics (`EmitPathProviderFields` in
+  `StandaloneEvaluatorGenerator`).
+* **Thread them through `EvalContext`** — as each `evaluate{Type}` descends it pushes the current keyword
+  location (the analog of `JsonSchemaContext`), so errors/annotations carry the spec output format's
+  **`instanceLocation` / `keywordLocation` / `absoluteKeywordLocation`** — what the suite's output tests
+  and Bowtie check.
+* **$dynamicRef/$recursiveRef** — the engine resolves the dynamic anchor against the dynamic scope into
+  the type graph; the generated code carries the location identifiers and threads the dynamic scope
+  through the context exactly as C# does (location-keyed dispatch, not a new scheme), keeping recursive/
+  dynamic schemas (e.g. a meta-schema's `$dynamicAnchor: meta`) resolving and reporting identically.
+
+### 5.7 The mutable type model — mutation via Model C (the V5 `JsonDocumentBuilder` analog)
+
+The type model is **mutable**, mirroring V5 (a readonly element + a `Mutable` partial +
+`JsonDocumentBuilder`; "patch a builder, `Set` only changed fields, never read-all + rebuild"). The TS
+split is the same:
+
+* **Read view** — the `readonly` interface (§5.1). Pure-consumption consumers parse + validate + read
+  plain objects and never instantiate any mutation machinery (zero overhead — this is the only thing
+  "Model B" ever was).
+* **Mutation** — a generated mutation API whose edits are applied as a **Model C structural-sharing
+  byte patch**: set only the changed fields, copy unchanged bytes through verbatim, never rebuild or
+  re-`stringify` the whole document. This is *the* place Model C lives — it is the **engine of the
+  mutable model**, not an optional bolt-on, and it is the proven-best path for mutation (wire RMW
+  2.4-34x §13.9; incremental editing 100x-5900x/edit §13.8).
+* **API shape (decided): idiomatic immer-style `produce`.** `produce(doc, d => { d.age = 31; d.address.city = "X" })`
+  returns a *new* immutable document — you write plain "mutations" on a typed `Draft<T>` (immer's `Draft`)
+  and get an immutable result, the established TS pattern. The recorded change-set is the **universal
+  currency**: it lowers to a Model C structural-sharing **byte patch** (set only changed fields, unchanged
+  bytes copied verbatim), and the *same* change-set is **RFC 6902 JSON Patch** and the basis for minimal
+  LSP `TextEdit`s (§5.6). **Zero-dependency:** we don't need immer (its value is object-level structural
+  sharing; ours is byte-level via Model C), so a tiny `Proxy` change-recorder suffices; a per-type
+  convenience method `doc.produce(recipe)` lowers to the same thing. Proven: typed surface + safety in
+  `prototypes/ts-output-shape/mutation-model.ts` (type-checked), and mechanism -> RFC 6902 -> byte patch in
+  `prototypes/rmw-scanner/produce.mjs` (runnable, 11/11).
+* **Construction (`build`) is at the native floor.** `build<T>(props)` returns bytes from a full typed
+  value via **one `JSON.stringify` + one UTF-8 encode** (caller key order) — `build` cannot beat native
+  serialisation, so it *is* native (e2e benchmark `RMW-BENCH.md`: ~1.0×). An earlier top-level-only
+  key-sort was dropped: it is a half-measure (nested objects keep caller order, so it gives no true
+  determinism) and cost a few % at small sizes.
+* **TODO (roadmap) — standalone full canonicalisation writer.** Deterministic/canonical byte output is a
+  **separate, deliberate, opt-in** feature, *not* the `build` default: a recursive canonical writer
+  (recursive key-sort + canonical number/string forms), mirroring the **C# canonicaliser**, emitted as
+  e.g. `writeCanonical<T>` / `buildCanonical<T>`. Use cases: content-addressing, hashing/digests, cache
+  keys, signatures, golden-file determinism. Build it as its own method so the fast `build` path stays at
+  the native floor.
+
+So **"native parse beats the byte path" does not apply to the mutable model**: pure reads are just plain
+reads (no Model C in play), and *mutation* is Model C, which wins. The only result where native led was
+the **un-optimised, full-round-trip-per-edit** RMW — eliminated by the early-stop optimisation (§13.9)
+and irrelevant to the realistic incremental-edit pattern (§13.8), both of which put Model C ahead.
+
+---
+
+## 6. The runtime support library (`@endjin/corvus-json-runtime`, working name)
+
+A small, **zero‑dependency, ESM‑first, stateless** package that generated code imports. Tree‑shake
+to near‑zero for type‑only consumers.
+
+Contents:
+
+* `EvalContext`, `Failure`/error types, `FormatError`, `assertNever`.
+* Format predicates/parsers (uuid/date‑time/email/ipv4/ipv6/hostname/uri/json‑pointer…), each
+  independently importable (tree‑shakeable).
+* Numeric helpers: exact `multipleOf`/bounds via `bigint`/source‑text (for §4.1 compliance), plus the
+  fast double path; base64/base64url via feature‑detected TC39 `Uint8Array.fromBase64` with a
+  `Buffer` (Node) / `atob` (browser) fallback.
+* Brand helper types.
+* (Model C — RMW patch) shared bytes infrastructure in a **separate entry point** (so Model B
+  consumers never pull it in): a tokenizer/index‑table scanner, the fixed‑shape change‑set overlay
+  primitives, and a streaming copy‑through writer (`writeUnchanged(out, src, start, end)` +
+  per‑value serialisers). The generated per‑schema view/patch classes build on these.
+* (Model A — lazy read) the same bytes/index infrastructure plus lazy per‑schema view base classes;
+  shares the tokenizer with C.
+
+Packaging (research‑backed):
+
+* `"type": "module"`, `"sideEffects": false`, ship compiled `.js` + `.d.ts` (never raw `.ts`).
+* `exports` with `"types"` first in each entry; ESM‑only is viable (stateless + zero‑dep ⇒ no
+  dual‑package hazard; `require(esm)` covers CJS consumers on Node ≥20.19/22).
+* tsconfig: `module: nodenext`, `declaration`, `declarationMap`, `verbatimModuleSyntax`,
+  `exactOptionalPropertyTypes`.
+* Validate with `@arethetypeswrong/cli` + `publint` in CI.
+* Web‑standard `TextEncoder`/`TextDecoder` unconditionally; Node `Buffer` fast paths behind a `node`
+  export condition.
+
+---
+
+## 7. The provider implementation (C#)
+
+A new project **`Corvus.Text.Json.TypeScript.CodeGeneration`** (mirroring
+`Corvus.Text.Json.CodeGeneration`), referencing the same `src-v4/Corvus.Json.CodeGeneration` core.
+
+### 7.1 `TypeScriptLanguageProvider : IHierarchicalLanguageProvider`
+
+Implements the pipeline callbacks the core invokes (in order): `IdentifyNonGeneratedType` →
+(`SetParent` for nesting) → `SetNamesBeforeSubschema` / `SetNamesAfterSubschema` → `ShouldGenerate`
+→ `GenerateCodeFor`, plus the registration pass‑throughs and `TryGetValidationHandlersFor`. Owns four
+registries (validation handlers, code‑file builders, name heuristics, collision resolvers), exactly
+like `CSharpLanguageProvider`. Implement `IHierarchicalLanguageProvider` because TS modules/types
+nest (and to inherit the core's parent‑setting pass).
+
+```csharp
+// illustrative
+public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
+{
+    public static TypeScriptLanguageProvider DefaultWithOptions(Options options) => CreateDefault(options);
+
+    private static TypeScriptLanguageProvider CreateDefault(Options o)
+    {
+        var p = new TypeScriptLanguageProvider(o);
+        p.RegisterCodeFileBuilders(new TypeScriptModuleBuilder());        // see §7.4
+        p.RegisterValidationHandlers(/* TS-emitting handler set, §7.5 */);
+        p.RegisterNameHeuristics(/* reuse structural heuristics; TS built-in mapping */);
+        p.RegisterNameCollisionResolvers(new TypeScriptNameCollisionResolver());
+        return p;
+    }
+}
+```
+
+### 7.2 `Options` (mirror, pruned/reinterpreted)
+
+Keep: `defaultNamespace` (→ module/package root), `namedTypes`, `namespaces`,
+`useOptionalNameHeuristics`/`disabledNamingHeuristics`, `alwaysAssertFormat`/`formatModeOverrides`,
+`codeGenerationMode`, `fileExtension = ".ts"`, `lineEndSequence`. **Drop** C#‑runtime‑specific
+options: `useImplicitOperatorString`, `addExplicitUsings`, `buildParametersThreshold`,
+`optionalAsNullable`/`excludeNonNullDefaulted` (re‑interpret as the §5.1 optional mapping).
+**Reinterpret** `defaultAccessibility` as TS export visibility (`export` vs module‑private). Add TS
+knobs: `runtimeModuleSpecifier` (import path for `@endjin/corvus-json-runtime`), `emitModel`
+(`B` default | `C` RMW patch | `A` lazy‑read | combinations), `indentWidth` (default 2), `moduleStyle`.
+
+### 7.3 Naming: `TypeScriptMemberName : MemberName` + collision resolver
+
+Override `BuildName()` for TS identifier rules: **PascalCase** types/interfaces, **camelCase**
+members, reserved‑word avoidance, leading‑digit handling, sanitisation. Reuse the *structural* name
+heuristics from the core ordering (path/title/required‑property/const/etc.) so cross‑OS determinism
+(#825) is inherited; supply only the TS built‑in‑type mapping (`string`/`number`/`boolean`/`unknown`/
+`bigint`) and a TS collision resolver (suffix by kind, as C# does).
+
+### 7.4 Emission: `TypeScriptCodeGeneratorExtensions` + code‑file builders
+
+Construct the core `CodeGenerator` with `indentSequence: " "`, `instancesPerIndent: 2`, configured
+`lineEndSequence`. Write a parallel set of extension methods that emit TS syntax via the neutral
+primitives (`AppendLineIndent`, `PushIndent`/`PopIndent`, `PushMemberScope`/`PopMemberScope`,
+`BeginFile`/`EndFile`, `GetOrAddMemberName`): `BeginExportInterface`, `BeginExportClass`,
+`AppendImportType`, `AppendUnionType`, `AppendJsDoc`, brace open/close, etc.
+
+**File‑set per type.** TS has no `partial` types, so V5's three partials (`CorePartial`,
+`MutableCorePartial`, `JsonSchemaPartial`) collapse. Recommended: **one `.ts` module per generated
+type**, containing the type/interface, its validator, and its helpers, plus a generated **barrel
+`index.ts`** that re‑exports. (A second module per type — e.g. `{type}.schema.ts` for the
+evaluator — is an option for `SchemaEvaluationOnly`, but co‑location + tree‑shaking makes one module
+preferable.) Choose `FileExtension = ".ts"`; reuse the global/shared‑helpers file concept for
+once‑emitted named types.
+
+### 7.5 Validation handlers (the bulk of the work)
+
+Re‑implement the handler families against TS, reusing the core's keyword classification, priority
+ordering, and child‑handler composition. Each handler still self‑selects via `HandlesKeyword(keyword
+is I…ValidationKeyword)` and emits TS instead of C#:
+
+`Type`, `Format`, `Number`, `String`, `Const/Enum`, `Composition{AllOf,AnyOf,OneOf,Not}`,
+`TernaryIf`, `Object` (+ child handlers: properties, patternProperties, additionalProperties,
+required, propertyNames, dependent*), `Array` (+ child handlers: items, prefixItems, contains,
+counts, uniqueItems), and the `unevaluated*` "Last" handlers. The composition model (priority‑ordered
+prepend/append of children around a parent body; emit‑then‑trim for optional children) carries over
+unchanged — only the emitted text differs.
+
+### 7.6 Driver wiring (where it attaches)
+
+**Decision (revised during the build-out): TypeScript is a third generation *engine*, not a language
+flag.** There are three peer engines — V4 (C#), V5 (C#), and TypeScript — so `Engine` gains a `TypeScript`
+member and the existing `--engine TypeScript` option selects it (no new flag, no `--language`).
+`GenerationDriver.GenerateTypes` dispatches it to a peer **`GenerationDriverTypeScript`**, alongside
+`GenerationDriverV4`/`GenerationDriverV5`:
+
+```csharp
+Engine.V4         => GenerationDriverV4.GenerateTypes(config, ct),
+Engine.V5         => GenerationDriverV5.GenerateTypes(config, mode, ct),
+Engine.TypeScript => GenerationDriverTypeScript.GenerateTypes(config, mode, ct),
+```
+
+`GenerationDriverTypeScript` reuses the V5 engine's **language-neutral** machinery (made `internal`):
+`RegisterAdditionalFiles`, `RegisterVocabularies`, `GetFallbackVocabulary`, and `WriteFiles`. Its
+`ExecuteTask` is a *simpler* sibling of V5's — schema-load + `AddTypeDeclarationsAsync` +
+`GenerateCodeUsing(TypeScriptLanguageProvider…)` + `WriteFiles` — and skips the .NET
+named-types/namespace/accessibility machinery that V5 needs. It appends a stable `evaluateRoot` export
+(aliasing the root type's validator). `GeneratedCodeFile` is just name + content, so `WriteFiles` is
+provider-agnostic; `--rootNamespace` is made optional for the TS engine. **Not** wired into the Roslyn
+source generator.
+
+---
+
+### 7.8 Benchmark — fastest *and* most complete (Sourcemeta dataset)
+
+The production CLI's output was benchmarked against the fastest JS/TS validators over the
+[Sourcemeta `jsonschema-benchmark`](https://github.com/sourcemeta-research/jsonschema-benchmark) dataset
+(37 real-world schemas, 35,407 instances; warm validation time, compile excluded; identical `JSON.parse`'d
+input; `prototypes/ts-bench`). Geometric mean ns/instance (lower is better):
+
+| Validator | ns/instance | Schemas handled |
+|---|---:|:---:|
+| **corvus-ts** | **2,301** | **37 / 37** |
+| @exodus/schemasafe | 2,312 | 29 / 37 |
+| ajv | 2,393 | 35 / 37 |
+| @hyperjump/json-schema | 29,506 | 35 / 37 |
+
+**corvus-ts has the best geomean throughput AND is the only validator that compiles all 37 schemas**
+(schemasafe fails 8; ajv/hyperjump fail 2; hyperjump is ~13x slower). On correctness, corvus-ts agrees
+with the majority on every cross-check disagreement (the lone hard case is the OpenAPI 3.1 `$dynamicRef`
+metaschema, where ajv/hyperjump themselves disagree 0-vs-107). The benchmark also surfaced + fixed a real
+generator bug — the `pattern`-keyword `u`-flag regex crash on identity escapes (`[^\&\%]`, krakend),
+which every other validator in the set also hits; corvus now compiles patterns through a cached `__re`
+helper with a `u`->non-`u` fallback while keeping `format: regex` strict. See
+`prototypes/ts-bench/README.md`.
+
+---
+
+## 8. Compliance & testing strategy
+
+Match V5's two independent gates, both driven by the official `JSON-Schema-Test-Suite` submodule.
+
+1. **Codegen‑aware suite tests (primary, strongest).** A TS analog of
+   `Common/tests/TestUtilities/TestJsonSchemaCodeGenerator`: for each suite schema, run
+   `TypeScriptLanguageProvider`, emit `.ts`, then **compile and run it** — the analog of the Roslyn
+   `DynamicCompiler` — via `tsc`/`esbuild` + Node, asserting each case's boolean expectation (and
+   annotation output for the evaluator/annotation suites). Reuse the existing `appsettings.json`
+   collection + hierarchical exclusion model and the suite's `remotes/` resolution; wire into (or
+   alongside) `update-json-schema-test-suite.ps1`, e.g. a `--language ts` mode of the existing
+   test‑class generator. **This proves the *generator* is correct, not a generic runtime validator.**
+2. **Bowtie cross‑implementation conformance.** Bowtie is language‑agnostic and already has JS/TS
+   harnesses (ajv, hyperjump). Add a Node/TS harness that imports our generated‑then‑compiled
+   validators and speaks Bowtie's JSON‑over‑stdio (IHOP) protocol, plus a sibling patcher in
+   `configure-bowtie-for-local-development.ps1` that `npm`/`pnpm install`s the local TS package
+   (instead of injecting a local NuGet feed). Run `bowtie suite -i … 2020-12 | bowtie summary`.
+3. **Performance gate (sustained‑throughput, not microbenchmark).** A throughput + allocation +
+   tail‑latency benchmark under *sustained load* (validate + access, varied payload sizes/shapes,
+   varied fraction‑of‑fields‑accessed, **and an explicit read‑modify‑write axis**), comparing
+   Model B, Model C (RMW patch), Model A (if built), Ajv‑standalone and TypeBox. This benchmark
+   **substantiates the perf claims and sets the crossover thresholds** — and it must run under load
+   precisely because escape analysis flatters low‑load microbenchmarks into reporting allocation as
+   free (§4). Expected/measured shape (the run is in §13.7/§13.8): Model C ahead for non-ASCII at every size and for ASCII RMW of large / low-change-ratio documents (skips realise+re-serialise of unchanged fields); native ahead only for the mid-range ASCII (~4-64 KB) full-round-trip band (at ~10x the allocation); Model A relevant only for large/partial pure-read. Native leads only the mid-range ASCII band, by ~1.2-1.6x at ~10x allocation — too small to justify a runtime model-switching fallback (§13.8), so Model C is used across the board.
+4. **Type‑level tests** (`tsd`/`expect-type`) asserting the generated types narrow correctly
+   (discriminated unions, brands, optionality), and `@arethetypeswrong/cli` + `publint` on the
+   runtime package.
+
+---
+
+## 9. Phasing
+
+| Phase | Deliverable |
+|---|---|
+| **0 — Scaffold** | New project + `TypeScriptLanguageProvider` skeleton, `Options`, `TypeScriptMemberName`, `TypeScriptCodeGeneratorExtensions`; `--language ts` wired into the CLI; emit interfaces for simple objects. End‑to‑end "schema → `.ts`" smoke test. |
+| **1 — Type surface** | Objects (optional/required mapping), arrays, enums/consts (literal unions), formats (brands), `$ref`, nested types, barrel `index.ts`. Idiomatic, no validators yet. |
+| **2 — AOT validators** | Per‑type `evaluate` functions; kind‑first dispatch; property‑matcher dispatch; required bitmask; numeric/string/array/object keyword handlers; format modes; regex classification. Draft 2020‑12 core. |
+| **3 — Full keyword + dialect coverage** | Composition (`allOf`/`anyOf`/`oneOf`/`not`/`if`‑`then`‑`else`), discriminated‑union + `match`, `unevaluated*`, `$dynamicRef`/`$recursiveRef`; drafts 4/6/7/2019‑09 + OpenAPI 3.0/3.1; numeric‑precision compliance (§4.1). |
+| **4 — Evaluator modes** | `SchemaEvaluationOnly` + annotation collection (verbose/collector). |
+| **5 — Compliance** | Codegen‑aware TS suite harness + Bowtie TS harness; drive to full pass (matching V5's exclusion set, with reasons). |
+| **6 — RMW path (Model C)** | RMW is the confirmed target (VS Code killer app). Per the **§13 source‑grounded plan**: dual‑offset (byte+UTF‑16) scanner ported from jsonc-parser; packed‑`Int32Array` index table + monomorphic per‑member accessors; fixed‑shape change‑set overlay; streaming copy‑through writer; `applyEdits` byte port; LSP `TextEdit` projection; change-set-scoped re-validation (no runtime model-switching fallback — §13.8). Start with the §13.6 prototype. |
+| **7 — Perf gate + (optional) Model A** | The §13.6 sustained‑load RMW benchmark — **prototyped & run (§13.7, §13.8)**: Model C wins large/non‑ASCII wire RMW (≤5.6×), incremental editing 100×–5900×/edit zero‑alloc, 4–13× less GC; loses **mid‑range ASCII (~4–64 KB)** full‑round‑trip (native's C++ parser, at ~10× the allocation) → native leads only that small band (~1.2-1.6x), not worth a runtime model-switching fallback, so Model C is used across the board. Remaining: multi‑tenant concurrent GC contention + a live LSP round‑trip; then runtime‑library hardening; Model A lazy‑read *only if* large‑payload partial read is independently a target. |
+| **Cross‑cutting** | Package `@endjin/corvus-json-runtime` (ESM, tree‑shakeable); docs + a playground. |
+
+---
+
+## 10. Risks & open questions
+
+* **Runtime‑model decisions (§1.2)** — the load‑bearing choices: confirm **Model B** default; confirm
+  **RMW** (not lazy partial read) is the workload to optimise → engineer **Model C** (structural‑sharing
+  patch, §4.2); defer **Model A** unless lazy large‑payload read is its own target.
+* **Model C correctness/perf risks** — the change‑set carrier and index table must be **fixed‑shape**
+  (no `delete`/property churn) and accessors **per‑schema monomorphic**, or the deopt erases the win;
+  the size/content crossover was measured (§13.8) — native leads only a small mid-range-ASCII band, not worth a runtime fallback; write‑side
+  canonicalisation/key‑order must be defined; perf proven under **sustained load**, not microbench.
+* **Numeric precision (§4.1)** — full compliance requires exact numeric validation; design the
+  runtime numeric helpers (source‑text/`bigint`) early; decide a default policy for `number` vs exact.
+* **`oneOf` XOR in a structural type system** — the *type* is a union; XOR is enforced only by the
+  validator. Acceptable and standard, but document it.
+* **Recursive / `$dynamicRef` types** — express as named interfaces referencing themselves; ensure the
+  emitter handles cycles (the core graph already resolves them; emission must not infinite‑loop).
+* **Megamorphism discipline (Model A)** — enforce per‑schema monomorphic accessors; lint/benchmark.
+* **`exactOptionalPropertyTypes`** — recommend it for consumers; the generated types assume it for the
+  cleanest optional semantics.
+* **Determinism** — verify cross‑OS file/name stability uses the same ordering as #825.
+* **Source generator** — out of scope (C#‑only); the TS provider is CLI/standalone. If a "watch /
+  build‑time" TS experience is wanted later, that's an esbuild/tsc plugin or CLI watch, not Roslyn.
+
+---
+
+## 11. Appendix — reuse map
+
+| Concern | Source | TS provider action |
+|---|---|---|
+| Schema load, `$id`/`$anchor`/`$ref`/`$dynamicRef`/scope | `src-v4` core | **reuse unchanged** |
+| `TypeDeclaration` graph + reduction/dedup | `src-v4` core | **reuse unchanged** |
+| Keyword + vocabulary model (~90 ifaces, all dialects) | `src-v4` core + dialect assemblies | **reuse unchanged** |
+| `JsonSchemaTypeBuilder` orchestration | `src-v4` core | **reuse unchanged** |
+| `CodeGenerator` text buffer | `src-v4` core | **reuse** (indent=2 spaces, TS line endings) |
+| Seam interfaces + registries | `src-v4` core | **reuse unchanged** |
+| Document resolvers, `PathTruncator`, file writing, `--outputMapFile`, #825 determinism | `src-v4` core + `GenerationDriverV5` | **reuse unchanged** |
+| Name heuristics (structural ordering) | `src/...NameHeuristics` | **reuse ordering**; new built‑in‑type mapping |
+| `CSharpLanguageProvider` | `src/...CSharpLanguageProvider.cs` | **new** `TypeScriptLanguageProvider` (template) |
+| Metadata‑bag extensions (`CSharp_*`) | `src/...TypeDeclarationExtensions.cs` | **new** `Ts_*` extensions |
+| Validation handlers | `src/...ValidationHandlers` | **new** TS‑emitting set (reuse classification/priority/composition) |
+| Code‑file builders (3 partials) | `src/...CodeFileBuilders` | **new** 1‑module‑per‑type builder |
+| `CodeGeneratorExtensions.*` (C# syntax) | `src/...` | **new** `TypeScriptCodeGeneratorExtensions` |
+| `CSharpMemberName` | `src/...` | **new** `TypeScriptMemberName` |
+| Format handlers | `src/...FormatHandlers` | **new** TS format handlers (brands + predicates) |
+| `EcmaRegexTranslator` | `src/...` | **drop** (TS is native ECMA); keep the **classifier** |
+| `StandaloneEvaluatorGenerator` | `src/...` | **port** the architecture to TS emission |
+| Roslyn source generator | `src/...SourceGenerator` | **not applicable** |
+| Conformance (test‑suite harness + Bowtie) | `Common/tests/...`, Bowtie harness, `*.ps1` | **new** TS analogs over the same submodule |
+
+---
+
+## 12. OSS foundations & build‑vs‑reuse (RMW + validation pipeline)
+
+**Strategic finding:** the byte‑range structural‑sharing RMW model (§4.2) **does not exist as a
+shipping JS/Node library** — the niche is genuinely unoccupied (even at the C++ layer: all simdjson
+bindings inherit a read‑only On‑Demand path). Existing RMW tools are either UTF‑16 string/CST‑based
+or share at the parsed‑object level (immer/Immutable.js). So Model C is net‑new, but it can be
+*assembled* from proven, permissively‑licensed pieces rather than built from zero. *(License/maint.
+facts below were research‑verified; re‑check at integration time — "no library exists" is
+absence‑of‑evidence, not proof.)*
+
+| Pipeline stage | Best existing art | License | Decision |
+|---|---|---|---|
+| **Patch‑write algorithm** (the core of C) | **jsonc‑parser** `modify`→`Edit{offset,length,content}`→`applyEdits` (VS Code settings editor) | MIT | **Reimplement the design over UTF‑8 byte offsets** (it's UTF‑16/string‑bound; too widely depended‑on to retrofit). This *is* the proven copy‑through splice. |
+| **Pointer→source‑range locator** | **json‑cst** (CST with `range{start,end}`) + **jsonpos** (RFC 6901 pointer→range), same author | MIT | **Fork/build on** (both dormant since 2022‑23 → you'd own them; char offsets need byte conversion). |
+| **Lossless RMW CST reference** | **@croct/json5‑parser** — only *actively maintained* pure‑TS lossless RMW CST | MIT | **Study / possibly contribute** a byte‑output mode (pre‑1.0, tiny team → adoption risk). |
+| **Verbatim leaf emission** | **`JSON.rawJSON`** (TC39 Stage 4, Node 22+) | native | **Use for unchanged leaf *primitives* only** — it is **primitives‑only** (objects/arrays throw), so unchanged *subtree* passthrough is our own byte‑range copy, not `rawJSON`. TS lib types not yet shipped → local `.d.ts`. |
+| **`Uint8Array`‑native codecs / sidecar ideas** | **json‑joy** `@jsonjoy.com/json-pack`,`/json-pointer`,`/util` | **Apache‑2.0** (sub‑pkgs) | **Reuse the Apache‑2.0 sub‑packages + design ideas only.** ⚠️ Umbrella `json-joy` + CRDT core are **AGPL‑3.0‑only** — do not fork those. |
+| **Codegen‑baked parse+validate seam** | **@exodus/schemasafe** — generates standalone validator *and parser* modules from schema | MIT, zero‑dep | **Top study target** (closest existing "validate‑during‑parse" seam; small community = room to contribute). |
+| **Changed‑field serializer codegen** | **fast‑json-stringify** (Fastify) | MIT | **Mirror the per‑schema stringifier codegen.** Its weak spot is large arrays/payloads (native `JSON.stringify` wins there) — exactly where C's write‑through‑unchanged‑bytes beats it. |
+| **Validation‑codegen architecture + dual‑mode** | **TypeBox `TypeCompiler`** (JIT + interpreter fallback) | MIT | **Architecture reference** for the validator emitter. |
+| **AOT/types‑as‑source analog** | **typia** | MIT | Validator output liftable; stringifier output runtime‑coupled (re‑implement, don't embed). |
+| **Lazy read‑only front end** | **everything‑json** (simdjson tape, lazy `.get()`/`.path()`) | ISC | Only relevant if Model A (lazy read) is built; no byte offsets / no write side. |
+
+**Two consequences for the design:**
+
+* **We are inherently CSP / edge‑runtime safe.** We emit *static `.ts` source compiled ahead of
+  time* — no runtime `new Function`/`eval` (unlike Ajv's default runtime codegen). This is a genuine
+  advantage in CSP contexts and Cloudflare Workers/Deno Deploy, matching `ajv/standalone` and typia.
+  (Keep this property: never emit code that needs runtime `Function` construction.)
+* **The fastest validators can't be out‑validated on their own turf** (Ajv/typia/TypeBox JIT
+  object‑walks at 100M+ ops/s). The only structural way to win is the seam none of them occupy —
+  **validate during parse / over bytes**, and for RMW, **write unchanged bytes through**. That seam,
+  not raw validator micro‑perf, is the design's performance thesis.
+
+**Recommended permissive‑license assembly for Model C:** port jsonc‑parser's `applyEdits` to UTF‑8
+byte offsets (patch‑write core) · borrow json‑cst/jsonpos's pointer→range locator · `JSON.rawJSON`
+for verbatim leaf primitives + our own byte‑range pass for subtree passthrough · mirror
+fast‑json-stringify for the changed‑field serialiser (and beat it on large output) · study
+@exodus/schemasafe for the codegen‑baked parse+validate seam. **One trap to avoid: json‑joy's
+AGPL‑licensed core.**
+
+### 12.1 Source‑level port effort & the VS Code/LSP boundary
+
+Pulling the actual source of the top candidates tightens the estimates and confirms the seam:
+
+* **jsonc‑parser — moderate, well‑bounded port (not a research project).** The edit core is literally
+  `text.slice(0, off) + content + text.slice(off + len)` over an `Edit{offset,length,content}[]` — **encoding‑agnostic, carries over near‑verbatim.** The real work is the **scanner** (~35–40%
+  encoding‑specific: `charCodeAt`→`Uint8Array` indexing, UTF‑8 multi‑byte decode in `scanString`,
+  `\uXXXX` escapes, line/char→byte tracking); ~60–65% (bracket matching, state) is structural and
+  ports unchanged. Estimate ~1–2k LOC concentrated in the scanner. **Clean‑room port, dual‑offset,
+  MIT‑clean — do not fork** (UTF‑16‑bound; 47M weekly downloads of dependents make upstream retrofit
+  impossible).
+* **json‑cst + jsonpos — low effort to adopt, but subsumed by the jsonc‑parser port.** Clean CST with
+  per‑node `range` + raw‑token retention, but **no write/serialise API (confirmed absent)** and
+  char‑based offsets. Use only as a quick RFC 6901 pointer→range accelerator; otherwise the scanner
+  port gives the same ranges plus the edit model json‑cst lacks.
+* **@exodus/schemasafe `parser()` — study, don't build RMW on it.** Generates a self‑contained,
+  zero‑dep module that parses a **string** and validates in **one pass** → `{valid, value}`. But it
+  **materialises a full POJO** and is **string‑only (no `Buffer`/bytes)** — i.e. fused
+  parse‑then‑wrap, not byte‑slice retention. Ideal template for the **validation leaf and the
+  small‑doc Model‑B default**; not the RMW model.
+* **fast‑json-stringify — mirror the codegen; it confirms the seam.** Per‑schema `new Function`
+  serialiser, but **always re‑encodes — "input JS objects are never emitted as raw bytes."** Our RMW
+  writer = its codegen for *changed* fields **+ raw byte‑range copy for unchanged** ones (the thing it
+  structurally cannot do, and where it's weakest — large arrays/payloads).
+* **The VS Code/LSP boundary is UTF‑16 — this is the single most important architectural
+  consequence.** LSP `TextEdit`/`TextDocument` positions are UTF‑16 code‑unit offsets. So Model C is a
+  **byte‑native core with a UTF‑16 projection**: the dual‑offset table (§4.2) lets one scan serve both
+  the server‑side/wire byte path and the editor path, and edits project to LSP `TextEdit` by lookup,
+  not rescan. (A naïve byte‑only model would pay an O(scan) byte→UTF‑16 conversion per edit, defeating
+  the point.)
+
+**Per‑stage port‑effort summary:** scanner (dual‑offset) = *moderate*; member‑location / pointer→range
+= *low* (rides the scan); edit/patch model + `applyEdits` = *low* (near‑verbatim); changed‑field
+serialiser = *moderate* (our codegen, fast‑json-stringify‑style); unchanged‑subtree passthrough =
+*moderate, net‑new* (the differentiator); validation leaf / small‑doc default = *low* (embed/template
+schemasafe‑style output); VS Code projection = *low* (lookup on the dual‑offset table). License path is
+clean (all MIT; only json‑joy's AGPL core is off‑limits). **§13 is the source‑grounded implementation
+plan that validates this estimate against the real `microsoft/node-jsonc-parser` source.**
+
+---
+
+## 13. Model C implementation plan — the dual‑offset scanner (source‑grounded)
+
+Verified against the live `microsoft/node-jsonc-parser` `main` source (`src/impl/scanner.ts`,
+`src/impl/edit.ts`, `src/main.ts`). **Headline: the "moderate effort" estimate holds.** ~40% of
+`createScanner` (~80 of ~200 lines) is encoding‑specific; the structural ~60% ports unchanged because
+**every JSON structural character (`{ } [ ] : , "`, digits, keyword letters) is ASCII**, so a byte‑level
+state machine is identical to jsonc-parser's char‑code one. `applyEdit`/`applyEdits` port near‑verbatim.
+The only genuinely subtle code (~10 lines) is the dual‑offset lockstep across 4‑byte/surrogate content.
+
+### 13.1 Scanner anatomy (what changes)
+
+`createScanner` is a closure over UTF‑16‑offset state (`pos`, `tokenOffset`, `lineNumber`,
+`lineStartOffset`, …). Encoding‑specific operations to rewrite for `Uint8Array`: `charCodeAt(pos)` →
+byte indexing (~40 call sites repo‑wide); `text.substring(start,pos)` → byte‑span capture;
+`String.fromCharCode` escape decoding; `scanString`'s `\u` handling; line/column tracking → dual
+counters. Structural (ports unchanged): the `scanNext` dispatch `switch`, string/number/keyword state
+machines, `scanNumber` leading‑zero→fraction→exponent logic, `scanHexDigits` accumulation, comment/
+trivia handling, error states. **Free correctness upgrade:** jsonc-parser's `scanString` decodes `\uXXXX`
+as a single `String.fromCharCode` with *no surrogate‑pair combining* (BMP‑only — a known source
+limitation). We never decode escapes for the index table (we retain byte spans) and decode raw UTF‑8 via
+`TextDecoder` only at materialisation, which handles non‑BMP correctly — so we sidestep the bug.
+
+### 13.2 The dual‑offset lockstep (the crux)
+
+Maintain two counters over the UTF‑8 `Uint8Array`: `byteOff` (array index) and `u16Off` (the UTF‑16
+code‑unit offset an equivalent JS string would have — the **LSP coordinate**). Advance per lead byte:
+
+| Lead byte | Codepoint range | Δbyte | Δu16 |
+|---|---|---|---|
+| `0xxxxxxx` (`<0x80`) ASCII | U+0000–007F | +1 | +1 |
+| `110xxxxx` (`0xC0–DF`) | U+0080–07FF | +2 | +1 |
+| `1110xxxx` (`0xE0–EF`) | U+0800–FFFF | +3 | +1 |
+| `11110xxx` (`0xF0–F7`) | U+10000–10FFFF | +4 | **+2** (surrogate pair) |
+| `10xxxxxx` (`0x80–BF`) | continuation | — | malformed if seen as lead |
+
+**Key insight that makes this cheap and correct:** the LSP `TextEdit` coordinate is an offset into the
+**source text**, not into the decoded string value. JSON escapes (`\n`, `\uXXXX`) are ASCII *in the
+source*, so they advance **both** counters by their source width (`\n` = +2/+2, `\uXXXX` = +6/+6).
+Therefore `byteOff` and `u16Off` **stay equal across all‑ASCII regions (including all escapes) and
+diverge only on raw non‑ASCII content bytes.** For a pure‑ASCII document `byteOff === u16Off`
+everywhere → the dual‑offset machinery costs nothing on the common case; only the 4‑byte→+2 astral case
+is non‑trivial (exactly the `"a𐐀b"` surrogate case LSP calls out).
+
+```ts
+// advance one codepoint, updating both offsets; returns the lead byte for the state machine.
+// the dispatcher works on bytes — every JSON structural char is ASCII (<0x80).
+function advance(): number {
+  const b = buf[byteOff];
+  if (b < 0x80) { byteOff += 1; u16Off += 1; return b; } // ASCII (incl. structure + escapes)
+  if (b < 0xE0) { byteOff += 2; u16Off += 1; return b; } // 2-byte
+  if (b < 0xF0) { byteOff += 3; u16Off += 1; return b; } // 3-byte
+                  byteOff += 4; u16Off += 2; return b;    // 4-byte → surrogate pair
+}
+// scanString records name/value spans in BOTH offset spaces; escapes are consumed, not decoded:
+//   '\\' then letter → advance() twice (ASCII); '\u' → advance() ×4 more (hex digits, all ASCII)
+//   ordinary char → advance() (table handles multibyte u16).  No String materialisation.
+```
+
+### 13.3 Index table — packed `Int32Array`, monomorphic accessors
+
+Per member, store 8 `Int32` in one contiguous `Int32Array` indexed `slot*8 + field`:
+`[nameByteStart, nameByteEnd, valByteStart, valByteEnd, nameU16Start, nameU16End, valU16Start, valU16End]`
+= **32 bytes/member, one allocation, cache‑local, no objects → no hidden‑class/megamorphism risk.**
+(`Int32` caps docs at 2 GiB; use `Float64Array` only if >2 GiB is a target.) The u16 ends are stored
+flat rather than recomputed (the delta needs the non‑ASCII content count anyway; the branch costs more
+than 8 bytes). **The generator emits a fixed, statically‑named accessor per member** —
+`getName() { return decode(buf, tbl[K_NAME_VS], tbl[K_NAME_VE]); }` with codegen‑baked literal indices.
+**No generic `get(key)` reader** — that is the single make‑or‑break monomorphism rule. **Lazy nested
+descent:** the top scan records only top‑level member spans and skips object/array values by
+bracket‑depth counting (ASCII, cheap); a nested member's sub‑table is built on first access and cached.
+
+### 13.4 Patch / write / LSP projection
+
+* **`applyEdit` / `applyEdits` port verbatim** (confirmed from source). `applyEdit` = `prefix + content
+  + suffix`; the byte form uses `Uint8Array.subarray`/`set`. `applyEdits` = **sort by offset asc then
+  length asc; apply right‑to‑left so earlier offsets stay valid; throw on overlap**
+  (`e.offset + e.length <= lastModifiedOffset`). Pure `number→number` arithmetic — encoding‑agnostic.
+* **Streaming copy‑through writer (the differentiator, not in jsonc-parser):** walk members in canonical
+  order; unchanged member → `out.set(buf.subarray(valByteStart, valByteEnd))` (raw memcpy, no
+  decode/encode); changed → serialise the new value; framing (`{ , : }`) emitted by the generated
+  writer. This is why C beats parse‑then‑`stringify`: the unchanged majority is a `Uint8Array.set`.
+* **LSP `TextEdit` projection = lookup, not rescan:** read the affected member's stored u16 offsets and
+  convert u16→`Position{line,character}` via a per‑line u16 start table (O(log lines) binary search).
+* **`JSON.rawJSON` (leaf‑only):** useful only in a hybrid where changed fields are built with native
+  `JSON.stringify` and unchanged *leaves* are spliced in; unchanged *subtree* passthrough is our byte
+  copy (rawJSON throws on objects/arrays).
+
+### 13.5 Edge cases & guardrails
+
+Malformed UTF‑8 / continuation‑byte‑as‑lead / invalid leads (`0xF5–0xFF`) → `ScanError`, stop the scan
+(don't desync counters); strict reject for wire, lenient `TextDecoder({fatal:false})` only at
+materialisation. Skip a leading UTF‑8 BOM but **count its bytes** so offsets stay document‑absolute and
+agree with VS Code's view. **Exact numeric validation (§4.1) is free here:** the table already retains
+the number token's `valByteStart/End`, so `multipleOf`/bounds read the original token bytes — strictly
+better than parse‑then‑validate (which already lost precision to a JS `number`). Default write order =
+**preserve original document order** (trivially correct copy‑through, minimal editor diff); canonical
+sort opt‑in. Megamorphism guardrails (make‑or‑break): no generic reader; typed‑array index table;
+fixed‑shape change‑set overlay (no `delete`/dynamic keys); fixed‑method per‑schema view classes.
+
+### 13.6 Prototype + sustained‑load benchmark (the acceptance gate)
+
+**Prototype (~250–400 LOC for the scanner):** dual‑offset `scanDocument(buf) → Int32Array` top‑level
+index + one‑level lazy descent; a single fixed schema (~12–20 fields, mixed string/number/nested);
+hand‑written per‑member monomorphic accessors + fixed‑shape change‑set overlay + streaming copy‑through
+writer; `byteEditToTextEdit` LSP projection; change‑set‑scoped re‑validation.
+
+**Benchmark (sustained load, NOT microbench — escape analysis makes microbenchmarks lie):** RMW loop
+(read → modify `k` of `N` → write) for 30–60 s to steady state. Axes: doc size {~300 B, 4 KB, 64 KB,
+1 MB} × change ratio {1 field, 10%, 50%, 100%} × content {ASCII‑only, non‑ASCII‑heavy}. Metrics:
+throughput, **allocation rate** (bytes/op via `--trace-gc`/`memoryUsage` deltas), **minor‑GC
+frequency**, **p99** per op. Baselines: (a) native `JSON.parse`→mutate→`JSON.stringify` (the one to
+beat); (b) jsonc-parser `modify`+`applyEdits` (UTF‑16 string reference — isolates the byte‑vs‑string
+win). Run at default and tuned `--max-semi-space-size`.
+
+**Falsifiable thesis.** *Predicted:* C **loses** for small docs / high change ratio (bookkeeping
+unamortised → must fall back to B below a size/change‑ratio threshold) and **wins** for medium/large
+docs at low change ratio, margin ∝ `(1 − k/N) × size`. *Confirmed if:* at medium+ size and low change
+ratio, C shows higher throughput **and** lower allocation rate **and** lower p99 than both baselines
+under sustained load, **and** the advantage vanishes/reverses for small/high‑change‑ratio (proving the
+crossover and the necessity of the B fallback). *Refuted if:* native parse+stringify matches/beats C
+across all axes (native parser+GC dominate even copy‑through), **or** C's allocation rate isn't lower
+(an accidental‑materialisation or megamorphism bug to hunt).
+
+### 13.7 Prototype benchmark results (measured)
+
+A working prototype of §13.6 was built and run — the dual‑offset scanner (`scanInto` →
+pooled `Int32Array`), the copy‑through `applyEditsBytes`, the synthetic doc generator, and a
+sustained‑load harness that **verifies every variant produces equivalent JSON before timing**.
+(Prototype: `prototypes/rmw-scanner/`, plain ES modules, zero‑dependency, `node --expose-gc
+bench.mjs`. Node 20, WSL2, one run — indicative, not definitive.) Variants: **C** Model C
+(scan + copy‑through byte splice), **N** native (decode+`JSON.parse`+mutate+`JSON.stringify`+encode),
+**S** string‑splice over bytes; editor (string→string): **NS** native, **SS** string‑splice
+(no transcode), **CS** Model C via transcode. Metric `g` = GC events / 1000 ops (allocation‑rate
+proxy). RMW = read → modify k fields → write.
+
+**Headline result — allocation/GC pressure (the core thesis), Model C vs native:**
+
+| doc | C `g` | N `g` | native allocates |
+|---|---|---|---|
+| ASCII 64 KB | 2.3 | 30.3 | **~13× more** |
+| ASCII 256 KB | 8.5 | 46.9 | ~5.5× more |
+| Unicode 64 KB | 2.1 | 13.4 | ~6.5× more |
+| Unicode 256 KB | 7.8 | 35.2 | ~4.5× more |
+
+Model C generates **5–13× fewer GC events** across all mid/large docs, ASCII and Unicode alike —
+*even in the cases where native is faster on single‑thread throughput*. This is the
+sustained‑load argument made concrete: native buys its raw speed with allocation the prototype's
+single‑threaded loop doesn't punish, but a multi‑tenant server would (GC contention → p99). The
+benchmark **under‑states** Model C's advantage because it measures isolated throughput, not
+concurrent heap pressure.
+
+**Throughput — wire (bytes→bytes), Model C / native (C/N):**
+
+| content | ~360 B | ~4 KB | ~64 KB | ~256 KB |
+|---|---|---|---|---|
+| ASCII | 1.6× | 0.8× | **0.5×** | 1.1× |
+| Unicode | 2.0× | 4.1× | 3.9× | **5.6×** |
+
+* **Non‑ASCII content: Model C wins everywhere (2–5.6×), margin growing with size** — native pays a
+  heavy UTF‑8↔UTF‑16 transcode (`TextDecoder`/`TextEncoder`) on top of parse/stringify; Model C never
+  decodes the unchanged bytes.
+* **ASCII: native's tuned C++ parse+stringify wins the mid‑range (4–64 KB)**; Model C wins at small
+  (~360 B) and very large (256 KB, where the copy‑through `memcpy` of the huge unchanged region
+  dominates). The predicted size/content crossover is real, but native's lead there is small (~1.2-1.6x) and confined to one band — **not worth a runtime model-switching fallback** (§13.8).
+
+**Throughput — editor (string→string), the VS Code in‑memory case:**
+
+* When the document is already a JS string, the byte core via transcode (**CS**) loses everywhere
+  (0.14–0.86× of native) — **forcing bytes in the editor is the wrong move**.
+* The fair analog is the **no‑transcode string‑splice (SS)**: it beats native (NS) only for small
+  docs (and a few Unicode mid cases); native parse+stringify wins for mid/large **full round‑trips**.
+
+**Verdict against the §13.6 thesis:**
+* **Confirmed (allocation):** Model C's allocation/GC pressure is dramatically lower (5–13×) across
+  all mid/large docs in every content type — the strongest, most consistent result, and the one that
+  matters under concurrent load.
+* **Confirmed (throughput) for the headline regime:** bytes→bytes RMW of **large and/or non‑ASCII**
+  documents — Model C wins, up to 5.6×.
+* **Refined (throughput):** for **ASCII mid-size bytes (~4-64 KB)**, native parse+stringify wins on raw throughput — but only by ~1.2-1.6x, while allocating ~13x more. The deciding axes are content ASCII-ness and the bytes-vs-string contract, not just size; and the margin is small enough that a runtime model-switching fallback is not worth its overhead.
+* **New finding — the editor (string) contract is where the throughput win is weakest.** For the VS
+  Code killer app specifically, Model C's value is **not** full‑round‑trip throughput; it is (a) the
+  5–13× lower GC pressure, (b) **incremental‑edit amortisation** — scan once, apply many cheap
+  `applyEdits` producing minimal LSP `TextEdit`s, never re‑parsing/re‑stringifying the whole document
+  (the pattern this full‑round‑trip benchmark does **not** measure, and the one editors actually use),
+  and (c) the dual‑offset LSP projection. A follow‑up benchmark should measure the incremental‑edit
+  loop and concurrent‑load GC contention, where the prototype says the real wins live.
+
+**Net:** Model C is **strongly justified** for wire/persistence RMW of large or non-ASCII payloads and anywhere sustained-load allocation pressure matters; for the editor it is used in its **incremental** mode (scan-once, many edits), which §13.8 measures. Native leads only the mid-range ASCII full-round-trip band by a small margin — not enough to justify a runtime fallback, so Model C is used across the board.
+
+### 13.8 Round 2 — incremental editing & tail latency (measured)
+
+The two patterns §13.7 said it under‑measured were then built and benchmarked
+(`prototypes/rmw-scanner/bench2.mjs` + `editor.mjs`; the incremental session verifies its final
+document equals native applying the same edits). **Both confirm the thesis decisively.**
+
+**Part A — incremental editor session (open once, then M edits; the real VS Code pattern).**
+Per‑edit cost (µs) and GC events / 1000 edits; native re‑stringifies the whole doc per edit because
+`JSON.parse` keeps no source positions:
+
+| doc | C emit (VS Code owns text) | C splice (materialise bytes) | native (re‑stringify) | native ÷ emit |
+|---|---|---|---|---|
+| 4 KB | **0.03 µs, 0 GC** | 1.5 µs | 3.5 µs | **101×** |
+| 64 KB | **0.03 µs, 0 GC** | 7.4 µs | 45 µs | **1380×** |
+| 256 KB | **0.03 µs, 0 GC** | 28 µs | 187 µs | **5879×** |
+
+Emit‑only incremental editing is **constant‑time (~0.03 µs) regardless of document size and allocates
+nothing** — it is an O(members) offset fixup plus a minimal `TextEdit`, never touching the unchanged
+bulk. Native scales O(n) per edit with heavy GC. **For the killer app, Model C's incremental mode is
+100×–5900× cheaper per edit and allocation‑free.** This is the result that matters for VS Code, and it
+*reverses* §13.7's full‑round‑trip editor finding — because the real editor pattern is incremental, not
+re‑serialise‑per‑edit (§13.7 measured the wrong pattern, as flagged).
+
+**Part B — tail latency under sustained load (20 000 full RMW ops, per‑op latency, 64 KB).**
+
+| | p50 µs | p99 µs | max µs | GC pause | GC count |
+|---|---|---|---|---|---|
+| ASCII — Model C | 130 | 219 | 915 | **21 ms** | **40** |
+| ASCII — native | 78 | 311 | **2911** | 89 ms | 393 |
+| Unicode — Model C | 52 | 99 | 2152 | **20 ms** | **40** |
+| Unicode — native | 246 | 572 | 1874 | 113 ms | 254 |
+
+Native's allocation rate drives **4.3–5.7× more total GC pause time and 6–10× more collections**. That
+shows up in the tail: ASCII native has a *better median* (its C++ parser is fast on ASCII) but a **3.2×
+worse max** (914 µs → 2911 µs — GC‑pause spikes land in the tail); Unicode Model C wins outright (p99
+5.8× better). **Honest caveat:** in this single‑threaded, low‑retained‑heap microbench the tail gap is
+modest and native's median sometimes wins; the GC‑pause gap would *amplify* under real concurrency and a
+larger retained working set (more to scan per GC), so this still **under‑states** the production tail
+impact — but the allocation→GC→tail mechanism is now measured, not asserted.
+
+**Combined verdict (rounds 1 + 2).** The Model C thesis holds where the design claims it: (i) wire RMW
+of **large or non‑ASCII** payloads — up to 5.6× throughput (§13.7); (ii) **incremental editing** — the
+killer‑app pattern — 100×–5900× per edit, zero‑alloc (§13.8 Part A); (iii) **sustained‑load allocation
+pressure** — 4–13× less GC across the board (§13.7, §13.8 Part B). It is **not** a throughput win for **mid-range ASCII (~4-64 KB)** full-round-trip work, where native's C++ parser leads — but only by ~1.2-1.6x and at ~10x the allocation (a lead that erodes under concurrency). The ASCII wire crossover is **non-monotonic**: Model C wins small (~360 B, ~1.5-1.7x) *and* large (>=256 KB, ~1.1-1.2x); native wins only the 4-64 KB middle band (C/N ~0.6-0.85). Because native's sole advantage is this small, confined band, **a runtime model-switching heuristic is not worth its overhead — don't ship one; standardize on Model C.** Net: **build Model C for the editor (incremental mode) and wire RMW generally; use Model B (parse-then-validate) where only the idiomatic type-only surface is needed; no runtime model-switching — the small mid-range-ASCII dip is accepted.** Remaining unmeasured: true multi‑tenant
+concurrent GC contention (expected to widen Model C's lead), and a real LSP `TextEdit` round‑trip in a
+live extension. **Update: §13.9 optimises the scanner and removes the mid‑range‑ASCII native‑win band
+entirely — after optimisation native wins nowhere on the wire path, which makes "no runtime fallback"
+not just acceptable but obvious.**
+
+### 13.9 Model C optimisation — early‑stop + `indexOf` + byte‑only (measured)
+
+The §13.7/§13.8 prototype had one self‑inflicted inefficiency: `scanInto` scanned the *whole* document
+(including the large unedited trailing field) and tracked UTF‑16 offsets even on the wire path where
+they're unused. Three changes (`scanner.mjs scanTargets` / `rmw.mjs rmwModelCOpt`) fix it, exactly
+along Model C's own "don't touch what you don't read" principle:
+
+1. **Early‑stop targeted scan** — locate *only* the edited fields (match member names against the
+   codegen‑known set) and **stop once all are found**; the unscanned tail is copied verbatim by
+   `applyEditsBytes` (one native memcpy), never parsed. `JSON.parse` structurally cannot do this.
+2. **`Uint8Array.indexOf` string‑skipping** — jump to a string value's closing quote in native code
+   (honouring escapes by counting preceding backslashes) instead of a JS per‑byte loop. This also
+   speeds the *worst* case (an edit in the big trailing field), where the scan can't stop early.
+3. **Byte‑only on the wire path** — drop the UTF‑16 counter (needed only for the editor/LSP
+   projection). Two scan modes result: **targeted byte‑only** (wire RMW) and **full dual‑offset**
+   (editor incremental, which must track every member to emit subsequent `TextEdit`s).
+
+**Measured (optimised Copt vs native, wire bytes→bytes; "early" = edits before the big field,
+"late" = rewrite the big trailing field — Copt's worst case):**
+
+| | ASCII 4 KB | ASCII 64 KB | ASCII 256 KB | Unicode 64 KB |
+|---|---|---|---|---|
+| **Copt/N, early** | **2.9×** | **6.5×** | **8.9×** | **24×** |
+| **Copt/N, late** | 2.4× | 3.8× | 6.9× | 11× |
+| was (unoptimised C/N) | 0.80× | 0.61× | 1.13× | 3.9× |
+
+`Copt` also speeds Model C itself by up to **9×** (`Copt/C`) and keeps GC ~10–20× below native (64 KB:
+gc/1k Copt 2.0 vs native 39). **The two ASCII mid‑range cases native used to win (0.80×, 0.61×) flip to
+Model C winning 2.9× and 6.5×; native wins at no size or content on the wire path, and even Copt's
+worst case (rewrite the big field) wins 2.4–6.9× because `indexOf` skips the interior natively.**
+
+**Revised conclusion (supersedes the §13.7/§13.8 native‑win finding).** With the optimised scanner,
+Model C wins the wire RMW path **across the board** (1.7×–34× faster, ~10–20× less GC) on top of the
+editor incremental win (100×–5900×/edit, §13.8). The fallback‑to‑native question is moot. Honest
+caveats: the early‑stop win is largest when edits precede a large trailing blob (common for
+append‑style payloads), but `indexOf` keeps even the worst case ahead; changed‑field content is
+pre‑encoded once; single machine / single run — indicative. True unknowns unchanged: multi‑tenant
+concurrent GC contention and a live LSP round‑trip.
+
+**Future optimisation path (not pursued — already well ahead).** Two further levers remain if a
+workload ever needs them, both widening Model C's lead rather than changing the conclusion:
+* **Output‑buffer pooling.** `applyEditsBytes` still allocates one output `Uint8Array` per op — the
+  last meaningful allocation, and what keeps `Copt`'s gc/1k at ~2–8 on large docs. Pooling a reusable
+  output and returning a view (caller consumes before the next op, e.g. writes to a socket) would cut
+  it further. Notably this is something Model C *can* do and native largely *cannot* (native must
+  allocate a fresh string), so it only widens the gap. Left out here because it changes the
+  benchmark's fairness contract.
+* **Single‑edit `applyEdits` specialisation** — skip the sort/loop for the common k=1 case (micro).
+These are recorded as a deliberate future path; the current optimised Model C (across‑the‑board wire
+win + 100×–5900×/edit incremental + ~10–20× less GC) is the point at which this comparison wraps.
+
+> **Note (spike removed):** the feasibility spike (a standalone prototype project formerly under
+> `prototypes/`) referenced throughout §13.10–13.15 has been **deleted** now that its purpose is served.
+> Its harnesses were graduated into standalone, spike-free, CI-runnable form under
+> `prototypes/ts-bench/compliance/` (the
+> full-suite JSON-Schema-Test-Suite validation harness, `run-compliance.sh`) and
+> `prototypes/ts-bench/compliance/access/` (the generated-accessor "access" suites, `run-access.sh`); the
+> Model C RMW benchmark lives at `prototypes/ts-bench/rmw-e2e.bench.mjs` (`run-rmw-bench.sh`). The sections
+> below are retained as the historical validation record; "the spike" now means that deleted prototype.
+
+### 13.10 Provider integration spike (validated with running code)
+
+The runtime model (§13.1–13.9) was proven by benchmark; the *provider‑side* premise of §7 — that a new
+C# `ILanguageProvider` plugs into the existing language‑neutral core and emits TypeScript end‑to‑end —
+was only asserted from code‑reading. It is now **validated with running code**: the spike was a minimal
+real `TypeScriptLanguageProviderSpike : ILanguageProvider`
+that references *only* the core (`src-v4/Corvus.Json.CodeGeneration`) + the 2020‑12 dialect, bootstraps
+`JsonSchemaTypeBuilder` exactly as `GenerationDriverV5` does, and calls `GenerateCodeUsing(provider, …)`
+on a real schema. It compiles and runs, emitting an `export interface` per type. Confirmed against the
+design's claims:
+
+* **The seam compiles from a fresh external project** — `ILanguageProvider`, `TypeDeclaration`,
+  `GeneratedCodeFile`, `PropertyDeclaration`, `VocabularyRegistry`, the document resolvers, and
+  `JsonReference` are all consumable with two project references; no core change needed.
+* **The full pipeline runs** — parse → build graph → **reduce** → name → the provider's hooks
+  (`SetNamesBeforeSubschema`, `ShouldGenerate`, `GenerateCodeFor`) are invoked in order, as §2/§7
+  describe.
+* **The real type model is readable** — walking `PropertyDeclarations` yielded the actual property
+  names, and the nested object subschema was generated as its own type (the graph + reduction work).
+* **`AddMetaschema` is not required** for a self‑contained schema (the analyser matches `$schema` by
+  URI string) — one fewer dependency than the CLI path uses.
+
+Scope (deliberately minimal — this validates *integration*, not feature completeness): names default to
+`Entity/Entity2…` because the spike registers no name heuristics; scalar leaf types emit as empty
+interfaces because it implements no `IdentifyNonGeneratedType`/built‑in mapping; property types are
+`unknown` (no type‑reference resolution); no validation. Each of those is a known §5/§7 work item, not a
+surprise — the seam itself is proven. This is the concrete starting point for Phase 0 (§9).
+
+### 13.11 Validator emission spike (validated end-to-end)
+
+The biggest pre-implementation unknown — *can a TS provider emit a working validator from the core,
+and does it compile + run correctly?* — is now **proven end-to-end** (the spike, extended;
+`TypeScriptLanguageProviderSpike` + `validate-test.mjs`). The provider walks the core type
+graph `StandaloneEvaluator`-style (one `evaluate{Type}` per subschema, recursing via
+`PropertyDeclaration.ReducedPropertyType`), reads the constraint model, and emits real AOT TypeScript
+validators. For a schema exercising `type` / `required` / nested `properties` / `minLength` / `pattern`
+/ `minimum` / `integer` / `enum`, the emitted code:
+
+* **compiles under `tsc --strict`** (`--noEmit` exit 0) and to ESM JS;
+* **runs and validates correctly** — `12/12` valid/invalid instances (missing-required, wrong-type,
+  too-short, negative, non-integer, bad-enum, pattern-fail all rejected; valid + minimal-valid accepted).
+
+Confirmed by this spike:
+* **The constraint model is drivable** — `type`, `required` (`RequiredOrOptional`), per-property value
+  types (`ReducedPropertyType`), and leaf constraints are all readable to drive emission.
+* **Emission path — corrected (per review).** Walk-the-model proved the mechanism *fast*, but the
+  **production validator wires the `IKeywordValidationHandler` composition framework** (§7.5), because
+  that registry — `RegisterValidationHandlers` + keyword->handler dispatch + `IChildValidationHandler`
+  composition — is the **extensibility seam**: user/third-party **custom keywords and vocabularies** plug
+  in there (exactly how the OpenApi/AsyncApi providers extend the C# engine). A monolithic walk-the-model
+  emitter cannot accept extensions. (The `SchemaEvaluationOnly` standalone-evaluator *mode* may still walk
+  the model, as C# does.)
+* **Native ECMA regex confirmed** — `pattern` emits `new RegExp(<json-string>, "u")` and runs; no
+  ECMA→.NET translation (production hoists the `RegExp`).
+* **Code-point length** — `minLength`/`maxLength` use `[...value].length` (Unicode code points), not
+  UTF-16 `.length`.
+
+Scope/known gaps (the spike proves the *mechanism*, full compliance is the implementation): the spike
+uses JS numeric compare (production uses exact §4.1), `JSON.stringify` enum/const equality (production
+uses exact numeric + deep structural §5.3), and no `allOf`/`anyOf`/`oneOf`/`unevaluated*`/`$dynamicRef`
+yet — all designed (§5.4/§5.6), not yet emitted. **Net: the validation engine is demonstrated, not
+assumed; the three pre-implementation spikes (integration §13.10, mutation API §5.7, validator §13.11)
+are all green.**
+
+### 13.12 Mutation API benchmark (measured)
+
+Benchmarked the `produce` mutation API itself (`prototypes/rmw-scanner/produce-bench.mjs`), not just the
+engine — with a **non-cloning** recorder (the §5.7 spike's `structuredClone` was a correctness shortcut
+that would defeat Model C; the production recorder must capture the change-set without materialising the
+document). `produce` vs raw Model C vs native (ops/s):
+
+| | ASCII 360 B | 4 KB | 64 KB | 256 KB | uni 64 KB |
+|---|---|---|---|---|---|
+| produce / native | 0.5x | 1.9x | 7.4x | 5.8x | 14.5x |
+| produce / raw Model C | 0.24x | 0.40x | 0.56x | 0.75x | 0.84x |
+
+Honest read: the API layer is **not free** — the `Proxy` recorder + per-op change-set allocation costs
+0.24-0.84x of the raw engine, worst at small docs (fixed overhead dominates), amortising as size grows.
+The full `produce` path still **beats native for medium/large docs and all non-ASCII** (the
+Model-C-favourable regime), losing only at the smallest ASCII doc. Clear optimisation headroom (pool the
+target/edit arrays, avoid per-op re-allocation, skip the `Proxy` for shallow recipes) to close the
+produce<->raw gap — a Phase-0 task, flagged not hand-waved.
+
+**Optimisation measured — pool the target/edit arrays (+ draft, patches, name-bytes cache)**
+(`prototypes/rmw-scanner/produce-pool-bench.mjs`). Reusing those across calls gives **+3-52% throughput
+and ~halves GC events**, and brings pooled `produce` to **parity with the raw Model C engine for
+medium/large docs** (pooled/raw 0.85-1.13x at >=64 KB), while it still beats native everywhere except the
+tiniest ASCII doc (pooled/native 1.7-31x from 4 KB up; 0.67x at 360 B). The residual gap at **small** docs
+(pooled/raw ~0.3-0.46x) is **inherent per-op cost** -- recording the recipe + encoding the changed
+*values* (rawC pre-encodes fixed values, so it is a floor, not a fair small-doc target) -- not array
+allocation; closing it further means skipping the `Proxy` for shallow recipes, bounded by the unavoidable
+value-encode. Verdict: pooling is a clear, cheap win (throughput + GC) and the mutation API reaches engine
+parity exactly where Model C matters (larger payloads / sustained load); small-doc mutation is the one
+spot where the recorder cost shows, and there native is already competitive anyway.
+
+### 13.13 Handler-framework validator + extensibility (validated)
+
+Per review (§13.11), the production validator drives emission through the **real core handler registry**,
+not a hard-coded walk-the-model — now proven (the spike, evolved). The provider
+holds a `KeywordValidationHandlerRegistry`; `RegisterValidationHandlers` populates it; each
+`evaluate{Type}` body is composed purely from the handlers the registry **dispatches** for that type's
+keywords (`TryGetHandlersFor`, ordered by `ValidationHandlerPriority`). Handlers implement the core
+`IKeywordValidationHandler` (dispatch: `HandlesKeyword` + priority) plus a small `ITsKeywordEmitter`
+(emit TS). Base set: type / properties+required / minLength-maxLength / minimum-maximum / pattern / enum.
+
+* **Same correctness as the walk-the-model spike** — registry-composed validators type-check
+  (`tsc --strict`) and validate **12/12** instances.
+* **Extensibility proven end-to-end.** The base provider has no `multipleOf` handler. Registering a
+  custom `TsMultipleOfHandler` at runtime via `RegisterValidationHandlers` — *with no change to the
+  provider* — makes the core registry dispatch to it: the **only** diff between base and extended output
+  is the emitted `multipleOf` check, and at runtime the base validator accepts `price: 0.3` while the
+  extended one rejects it (`extension-test.mjs`, 4/4). This is exactly how OpenApi/AsyncApi (and a user's
+  custom keyword) extend the engine.
+
+The validator architecture is therefore the **extensible registry path**; §13.11's walk-the-model remains
+only as the initial fast feasibility proof. (A fully *non-standard* keyword additionally needs a custom
+vocabulary so the core surfaces the `IKeyword`; the handler-dispatch half — proven here — is identical.)
+
+### 13.14 Phase 0 - idiomatic type surface (implemented)
+
+Phase 0 (§9) graduated the spike to an idiomatic type surface on top of the registry-driven validators.
+For `person.json` the provider now emits:
+
+```ts
+export interface Person {
+  readonly address: Address;
+  readonly age?: number;
+  readonly name: string;
+  readonly price?: number;
+  readonly status?: Status;
+}
+export interface Address { readonly postcode: string; readonly street?: string; }
+export type Status = "active" | "archived" | "deleted";
+```
+
+-- real names (from `title` / property name), built-in scalar mapping (`string`/`number`, not empty
+interfaces), property type-references, required-vs-`?`-optional, named enum unions, unquoted identifiers.
+Type-checks `tsc --strict`; the registry-composed validators (incl. the runtime extension) still pass
+(12/12 + 4/4). Emission per type: object -> `interface`, enum -> `type X = ...`, scalar/array -> referenced
+inline; every type still gets an `evaluate{Name}` so validator recursion resolves.
+
+**Phase-0 done:** real naming, built-in type mapping, property type-refs, named enums, handler-framework
+validators, extensibility. **Phase-1 remaining:** array element typing (currently `readonly unknown[]`),
+format brands + date/time Temporal accessors (§5.5), `$ref` across files + barrel `index.ts`, composition
+(`allOf`/`anyOf`/`oneOf` -> discriminated unions), `unevaluated*`/`$dynamicRef` + location threading (§5.6),
+and the codegen-aware compliance harness (§8) over the JSON-Schema-Test-Suite. **Solution integration:**
+graduate the prototype to a real `Corvus.Text.Json.TypeScript.CodeGeneration` project and wire
+`--language ts` into `GenerationDriverV5`.
+
+### 13.15 Compliance harness (built; 97% on the supported keyword subset)
+
+The codegen-aware compliance harness (§8) is built (originally the spike's `--suite` mode +
+`SuiteHarness.cs` + `suite-runner.mjs`; now graduated to `prototypes/ts-bench/compliance/`): for each
+JSON-Schema-Test-Suite (draft 2020-12) schema-group in
+the targeted keyword files it runs the provider -> emits a TS module per group -> compiles all under
+`tsc --strict` -> runs every case in Node and asserts the boolean expectation, tallying per keyword.
+
+Over the implemented keyword set (type / required / properties / minLength / maxLength / minimum /
+maximum / enum / pattern): **216/222 cases pass (97.3%)**, and all 48 generated modules type-check
+`tsc --strict` clean. type, required, minLength, maxLength, minimum, maximum, enum, pattern are each
+**100%**; properties is 22/28.
+
+The 6 remaining failures are all **genuine unsupported-keyword gaps** (the `properties` +
+`patternProperties` + `additionalProperties` interaction, and boolean property schemas) -- Phase-1 work,
+not bugs. The harness itself caught and drove three real fixes: (1) presence checks must use
+`Object.prototype.hasOwnProperty.call`, not `in` (prototype chain: `"toString" in {}` is `true`) -- 5
+cases; (2) `minLength`/`maxLength` may be decimal-valued integers (`2.0`), read as a number not `Int32`
+-- 2 cases; (3) empty/object-valued `enum` type aliases (`never` / `unknown`, with an annotated
+`allowed` array). The harness is reusable infrastructure that grows as handlers are added; the pass rate
+is the gate that turns "looks right" into "passes the suite", exactly how the C# engine is gated.
+
+### 13.16 `properties` failures closed -> 100% on the keyword subset
+
+The 6 `properties` failures from §13.15 are closed by three new handlers plus a boolean-schema rule,
+bringing the subset to **222/222 (100%)**, all 48 modules `tsc --strict` clean, regressions intact:
+
+* **boolean property schemas** -- a `false` schema's `evaluate` returns `false` (rejects any value),
+  `true` accepts; fixes "properties with boolean schema".
+* **`patternProperties`** -- every own key matching a pattern validates against that pattern's subschema
+  (`td.PatternProperties()` -> `PatternPropertyDeclaration {Pattern, ReducedPatternPropertyType}`; native
+  `RegExp`, hoisted in production).
+* **`additionalProperties`** -- every own key not in `properties` and not matching any pattern validates
+  against the additionalProperties subschema (`td.LocalEvaluatedPropertyType()`); when it is `false` that
+  subschema's validator rejects (re-using the boolean rule).
+* **`minItems`/`maxItems`** -- the interaction schema's array subschemas needed item-count checks.
+
+Per keyword: type 80/80, required 18/18, **properties 28/28**, minLength/maxLength/minimum/maximum 100%,
+enum 51/51, pattern 12/12. Every handler plugs into the same registry, so each is independently testable
+and user-overridable (§13.13).
+
+### 13.17 Capability-interface matching + broadened coverage (636/637, 99.8%)
+
+The handlers were reworked to select on the keyword's CAPABILITY INTERFACES, never the keyword text --
+the same discipline the C# provider uses (`keyword is ICoreTypeValidationKeyword` / `INumberConstantValidationKeyword`
+/ `IStringRegexValidationProviderKeyword` / ...), reading the constraint THROUGH the interface
+(`AllowedCoreTypes`, `TryGetOperator` + `TryGetValidationConstants`, `RequiresUniqueItems`,
+`TryGetConstantValue`, ...) rather than re-reading raw schema JSON by keyword name. This makes the
+provider vocabulary-independent: one numeric handler covers `minimum`/`maximum`/`exclusiveMinimum`/
+`exclusiveMaximum`/`multipleOf` across every draft -- including draft-4's boolean `exclusiveMinimum` --
+because they all surface the same `Operator` (GreaterThan / LessThanOrEquals / MultipleOf / ...). Likewise
+`enum`+`const` share one membership handler (both expose constants via `IValidationConstantProviderKeyword`);
+the numeric/length bounds are excluded from it because they are `INumber`/`IIntegerConstantValidationKeyword`.
+(Tuple/items use `ExplicitTupleType` and `ExplicitNonTupleItemsType` -- `TupleType`/`ArrayItemsType` are
+null once the array allows items beyond the tuple, e.g. `items:false`.)
+
+The keyword surface was broadened from 9 to 25 test files. Over them the suite passes **636/637 (99.8%)**,
+all generated modules `tsc --strict` clean. Every keyword is at 100% except `ref` (76/77):
+
+| keywords | pass |
+|---|---|
+| type, required, properties, minLength, maxLength, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, const, pattern, minProperties, maxProperties, uniqueItems, allOf, anyOf, oneOf, items, prefixItems, propertyNames, dependentRequired, if-then-else | 100% |
+| ref | 76/77 |
+
+* The 1 failure is annotation visibility across a `$ref` boundary (a `$ref` adjacent to `properties` whose
+  referenced subschema must not see the parent's annotations) -- advanced `unevaluated*`-style annotation
+  scoping, deferred.
+* 2 groups (4 cases) are excluded because they resolve the remote 2020-12 metaschema, which the offline
+  prototype harness does not register (a harness/resolver limitation, not a provider gap; the C# suite
+  registers it).
+
+Base handlers (all interface-matched): type; numeric bounds (min/max/exclusive/multipleOf); string-length;
+array-length; property-count; uniqueItems; enum/const membership; pattern; properties; required;
+patternProperties; additionalProperties; allOf; anyOf; oneOf; prefixItems; items (incl. `items:false`);
+propertyNames; dependentRequired; if/then/else. `format` remains the registered EXTENSION example (a
+capability the base omits), matched by `IFormatProviderKeyword`.
+
+### 13.18 Unevaluated properties/items -- low-allocation evaluation tracking (from the C# generator)
+
+`unevaluatedProperties`/`unevaluatedItems` must know which properties/items an instance was already
+evaluated against by *adjacent* keywords (`properties`, `patternProperties`, `additionalProperties`,
+`items`, `prefixItems`, `contains`) AND by *in-place applicators* (`allOf`/`anyOf`/`oneOf`/
+`if`-`then`-`else`/`$ref`/`$dynamicRef`) -- but only for applicator branches that MATCHED. The naive
+implementation allocates a `Set<string>` of evaluated property names per validation; the C# generator
+(`JsonSchemaContext`) avoids that entirely, and we mirror its scheme:
+
+* **Evaluated state is an index bitmask, not a name set.** The instance is enumerated once; property/
+  item *position* `i` is marked by setting bit `i`. C# stores this in a `Span<int>` -- 8 ints = 256 bits
+  inline (no heap), `ArrayPool`-rented up to 65,536 bits beyond, bit `i` at `int[i >> 5] & (1 << (i & 31))`.
+  The TS equivalent is a `number` for the first 32 positions (zero extra allocation) widening to a
+  `Uint32Array` beyond -- one typed-array allocation per tracked instance, never per property.
+* **Local vs applied.** Two masks: `local` (this schema's own keyword evaluations) and `applied`
+  (merged from matched in-place applicators); `unevaluated*` checks `HasLocalOrAppliedEvaluated(i)`.
+* **Conditional merge.** An in-place applicator validates its branch against a child tracker and
+  OR-merges the child's bits into the parent ONLY if the branch matched (`CommitChildContext(isMatch)`).
+  In TS that is `parent |= child` (or an element-wise OR over the `Uint32Array`); C# vectorises the same
+  OR with `Vector<int>`.
+* **Gated -- most validators pay nothing.** Tracking is threaded only when
+  `RequiresPropertyEvaluationTracking(td)` / `RequiresItemsEvaluationTracking(td)` is true (it propagates
+  up through in-place applicators to the member types that must report their evaluations). Every other
+  validator keeps the plain `(value) => boolean` shape with no tracker and no marking code. This is the
+  key to "no large allocations": the cost exists only on the schemas that actually use `unevaluated*`.
+
+Threading model: a tracking type's validator creates one tracker, threads the SAME tracker into its
+in-place applicator members (so their matched evaluations accumulate), passes a no-op sentinel to
+sub-instance children (a property value / array item is a different instance with its own scope), and
+reads the tracker in the `unevaluated*` step, which runs last (highest handler priority). The fallback
+subschema comes from `LocalAndAppliedEvaluatedPropertyType()` / `ExplicitUnevaluatedItemsType()`. The
+simpler adjacent keywords that remain (`not` via the not-subschema type, `contains`/`minContains`/
+`maxContains` via the contains type + an int count, `dependentSchemas` via `DependentSchemasSubschemaTypes()`)
+need no tracker and slot in as ordinary interface-matched handlers.
+
+### 13.19 Evaluation tracking implemented -- 918/920 (99.8%) over 31 keyword files
+
+The §13.18 scheme is implemented in the spike and verified against the suite. Over 31 keyword files
+(adding unevaluatedProperties, unevaluatedItems, contains, dependentSchemas, minContains, maxContains):
+**918/920 cases pass (99.8%)**, all generated modules `tsc --strict` clean, person.json regressions
+(validate + extension) intact. Every keyword is 100% except unevaluatedProperties (128/129) and
+unevaluatedItems (70/71) -- both single misses are `$dynamicRef` (dynamic-scope resolution, not yet
+implemented). The two metaschema-resolving groups remain excluded (offline harness).
+
+Five subtleties the suite forced out, each a small, principled fix:
+
+* **Mark unconditionally.** Object/array keywords mark evaluated indices into the passed tracker even
+  when the owner type does not itself track -- otherwise an in-place applicator member (e.g. an anyOf
+  branch) fails to credit its evaluations to the parent. Mirrors the C# generator's unconditional
+  `AddLocalEvaluatedProperty` (the runtime no-op `NOEV` makes it free when nothing reads it).
+* **Merge unconditionally.** anyOf/oneOf/if-then-else always evaluate each branch against a child
+  tracker and OR-merge matched branches into the parent, because an ancestor reached through in-place
+  applicators may track even when the immediate owner does not.
+* **Per-branch tracker (cousin scope).** Each in-place branch (allOf/dependentSchemas/then/else) gets
+  its OWN child tracker merged up on match -- NOT a single shared tracker. A branch's own
+  `unevaluatedProperties` must see only its own subtree, never a cousin branch's evaluations.
+* **Local properties only.** The `properties`/`additionalProperties` handlers mark only
+  `LocalOrComposed.Local` properties; properties hoisted into `PropertyDeclarations` from
+  dependentSchemas/allOf are validated and credited by their own subschema, not at this level.
+* **contains marks matched items**, and minContains/maxContains read the count via the same
+  `Operator` interface as the other bounds.
+
+### 13.20 $dynamicRef + harness parity with the C# runner -- 968/968 (100%) over 33 keyword files
+
+`$ref`/`$dynamicRef`/`$recursiveRef` are resolved by the engine during type building (the hard work is
+already done): `IReferenceKeyword : IAllOfSubschemaValidationKeyword` and
+`IDynamicReferenceKeyword : IReferenceKeyword`, so references flow through the allOf handler / structural
+reduction with the engine's (including dynamic-scope) resolution baked in -- no bespoke reference handler
+is needed in the provider. Two things were required to realise it:
+
+1. **Set the harness up exactly like the C# test runner** (`TestJsonSchemaCodeGenerator`):
+   `CompoundDocumentResolver(FakeWebDocumentResolver(remotes), FileSystemDocumentResolver())` + the
+   draft 2020-12 metaschema; register each test schema on the builder under a normalised path INSIDE the
+   remotes namespace (`builder.AddDocument(path, doc)` where `path = Path.Combine(remotes, name)` via
+   `SchemaReferenceNormalization`), then `AddTypeDeclarationsAsync(new JsonReference(path), vocab,
+   rebaseAsRoot: true)`. `FakeWebDocumentResolver` serves `http://localhost:1234/...` from the suite's
+   `remotes/`. This eliminated all 7 build errors (remote `$ref`s + metaschema).
+2. **Use the REDUCED root for the entry point**: `root.ReducedTypeDeclaration().ReducedType`, exactly as
+   the C# runner does. The unreduced root (e.g. a bare `{$ref:"list"}`) is not in the emitted type set, so
+   naming it fell through to a fallback that pointed `evaluateRoot` at the wrong type -- which masked the
+   (correct) dynamic resolution.
+
+Result: **968/968 (100%)** across all 33 keyword files, 0 errored, all generated modules `tsc --strict`
+clean, regressions intact. `$dynamicRef` 44/44 (incl. dynamic-scope, bookending, intermediate scopes,
+remote/extended cases), `ref` 79/79, `defs` 2/2, `unevaluatedProperties` 129/129, `unevaluatedItems`
+71/71, every other keyword 100%.
+
+### 13.21 All five dialects -- 4199/4199 (100%) just by adding their test suites
+
+Because handlers match on capability INTERFACES, not keyword text (§13.17), the same handler set is
+vocabulary-independent. Expanding the harness to draft 4 / 6 / 7 / 2019-09 / 2020-12 -- registering all
+five `VocabularyAnalyser`s, a per-dialect fallback vocabulary, and the full metaschema set -- needed NO
+dialect-specific handler code. Two general additions and one principled correction closed the long tail:
+
+* **`not`** -- one interface-matched handler (`INotValidationKeyword.TryGetNotType`). The not-subschema
+  gets its OWN tracker via `SubEv` (its internal `unevaluated*` works) and is never merged into the parent
+  (`not` discards its annotations).
+* **Exact numeric validation on the number's TEXT, not the JS double (§4.1).** Reverted an ad-hoc
+  float/scale hack in favour of the designed approach (ported from `prototypes/number-exact.mjs`):
+  `__dec` parses a decimal literal to `sign * mantissa * 10^exp` (BigInt); bounds are a cross-scaled
+  `BigInt` compare (`__cmp(String(value), <literal>)`), `multipleOf` a scaled `BigInt` modulo. The schema
+  operand uses its exact source literal; the instance uses `String(value)` (round-trips JSON numbers;
+  production retains the true source token via the §4.1 reviver/bytes). No epsilon, no special-casing --
+  `multipleOf` of `0.0075 / 0.0001` and "any integer is a multiple of 1e-8" pass exactly. (Length/count
+  bounds keep plain JS: they compare small safe integers.)
+
+Result over **1226 generated modules across 5 dialects**: **4199/4199 (100%)**, 0 errored, all modules
+`tsc --strict` clean, person.json regressions intact:
+
+| dialect | pass |
+|---|---|
+| draft4 | 556/556 |
+| draft6 | 735/735 |
+| draft7 | 775/775 |
+| draft2019-09 | 1056/1056 |
+| draft2020-12 | 1077/1077 |
+
+The generator setup is identical to the C# test runner (FakeWebDocumentResolver + metaschema + all
+analysers + `rebaseAsRoot` + reduced root); only the emitted language differs. This is the strongest
+possible evidence for the design: one C# provider over the existing core, emitting idiomatic
+`tsc --strict`-clean TypeScript, is fully JSON-Schema-compliant across every supported dialect.
+
+### 13.22 Entire suite incl. optional + format -- 7844/7849 (99.9%); every format 100%
+
+The harness now runs the WHOLE JSON-Schema-Test-Suite for all five dialects: top-level + `optional/*`
++ `optional/format/*` (1688 modules). Result at this milestone: **7844/7849 (99.9%)** (now **7848/7849**
+after the §13.24 fix below), all modules `tsc --strict` clean;
+draft6 / draft7 / 2019-09 are 100%. **Every one of the 21 format files passes 100%** across all dialects
+(uri, uri-reference, iri, iri-reference, uri-template, email, idn-email, hostname, idn-hostname, ipv4,
+ipv6, uuid, date, time, date-time, duration, json-pointer, relative-json-pointer, regex, ecmascript-regex).
+
+Format validation is parse-based (not regex), packaged via `@js-temporal/polyfill` (the duration *type*),
+`tr46` (UTS-46), and `lossless-json` (source-text numbers), per §5.5/§4.1. `content` (contentEncoding
+base64 + contentMediaType application/json) is asserted in the optional/content suite.
+
+Five cases remained at this milestone; two were `format-assertion` vocabulary cases and two were the
+`$dynamicRef` cross-resource case, both resolved next (see below + §13.24), leaving a **single residual**
+at **7848/7849**:
+* draft-4 `1.0` is-not-an-integer -- draft-4-specific integer semantics (draft-6+ treats `1.0` as an
+  integer; the core surfaces `CoreTypes.Integer` either way, so the capability interface does not expose
+  the distinction).
+
+(The `format-assertion` vocabulary cases were initially miscounted as edges: both the `true` and `false`
+cases expect format ASSERTED -- `false` means the vocabulary is optional, not "annotate" -- so they pass
+once `optional/format-assertion.json` is routed through the assertion provider, like `optional/format`.
+The `$dynamicRef` cross-resource case was also NOT a runtime-threading gap as first framed here -- it is
+a static shared-core scope-resolution bug, fixed in §13.24.)
+
+This validates the full design end-to-end: one C# provider over the existing core, capability-interface
+matched, emitting idiomatic `tsc --strict`-clean TypeScript that imports a shared `@endjin/corvus-json-runtime`,
+validating Model-C source-text instances (exact numerics) -- is essentially fully JSON-Schema-compliant
+(every keyword + every format) across draft 4/6/7/2019-09/2020-12.
+
+### 13.23 Output-shape behaviour tests — access / conversions / matching / mutations (runnable)
+
+The §5 reference shapes in `prototypes/ts-output-shape/*.ts` were previously type-checked only. They are
+now also **runtime behaviour-verified**: the three `declare` stubs were given runnable bodies
+(`validatePerson`, `validatePayment`, and the `produce`/`Draft`/`JsonDocument` mutation runtime moved into
+`runtime.ts` per §5.7 as a runtime-library helper), and four suites — organised by the operations a
+consumer performs — assert behaviour across every type pattern (`harness.ts` + `*.test.ts`, run via
+`tsconfig.run.json` → CommonJS → node):
+
+* **access** (31) — object required/optional/nested props; homogeneous array, pure tuple, labelled, 1-D
+  fixed (Vec3), **multi-dimensional nested-tuple matrices (Mat3 / rectangular Mat2x3) and a Float64Array
+  numeric-leaf tensor view**; map `get`/index-signature; **`allOf` intersection read as both members**.
+* **conversions** (10) — brand/format factories (`asUuid` mint + reject, `asDateTime`, `toDate` → instant),
+  a **range-checked numeric brand (`asPort`)**, 64-bit → `bigint` precision, free union widening.
+* **matching** (30) — discriminated `matchShape`/`area`, non-discriminated `matchFullName` + `isX` guards,
+  enum membership guards + exhaustive mixed-type `switch`, **object/array `const` deep-equality guards**,
+  conditional refined discriminated union.
+* **mutations** (11) — immer-style `produce`: edits apply, the original is untouched (immutability), and
+  the recorded change-set is RFC 6902 JSON Patch (the §5.7 universal currency).
+
+**82/82 pass**, and the `tsc --strict --exactOptionalPropertyTypes` type-check gate (`tsconfig.json`) still
+passes with the new files (the `@ts-expect-error` negative cases remain the type-safety proof). This is the
+reference-shape half of the test plan; the provider's *real emitted* objects/enums/validators are covered
+by the validator suite (§13.15-§13.22) plus a typed-access test, and the provider's emission of the
+remaining patterns (match/conversions/mutation/array/tuple/map/brand) is then gated by these behaviour
+tests as it is built out.
+
+### 13.24 $dynamicRef across a resource boundary — shared-core fix (suite 7848/7849; C# 7989/7989)
+
+The lone `$dynamicRef` failure (`optional/dynamicRef.json`: a `$ref "bar#/$defs/item"` pointer reference
+*into* the embedded `item` resource) was NOT a runtime-threading gap as §13.22 first framed it. Researching
+how the *generated C# code* actually resolves `$dynamicRef` showed it is resolved **statically at
+type-build time** in the shared core (`DollarDynamicRefKeyword.BuildSubschemaTypes` →
+`References.ResolveDynamicReference` → `Anchors.TryGetScopeForFirstDynamicAnchor` walking the builder's
+scope stack) — there is no runtime dynamic-anchor stack. The bug: a merely *passed-through* container
+resource (`bar`) was left in the dynamic scope, so `#content` resolved to bar's `content` `$dynamicAnchor`
+(string) instead of `item`'s own `defaultContent` (integer).
+
+Spec basis (2020-12 Core — derived, there is no single "skip intermediate resources" clause): §8.2.3.2
+resolves to the **outermost schema RESOURCE in the dynamic scope**; §8.2.1/§4.3.5 make an `$id` a distinct
+embedded resource; §7.1 makes the dynamic scope the *validation path of schemas actually evaluated* (bar is
+only the URI base, never evaluated). **Fix:** `TryGetScopeForFirstDynamicAnchor` skips a pointer-navigation
+scope when the next-inner scope is a *different* resource's own root (the embedded resource entered through
+it); a pointer reference into a non-`$id` subschema keeps its containing resource in scope (the "avoids the
+root of each schema, but scopes are still registered" main-suite case proves the lookahead is required, not
+a blunt "skip all non-root scopes").
+
+The previously-excluded `optional/dynamicRef.json` (a bare, reason-less exclusion = excluded because it
+failed) was **un-excluded** in the generator's `appsettings.json` and the suite regenerated — it now exists
+in both the standalone-evaluator and type-based suites. Validation, zero regression: C# full
+StandaloneEvaluator **7989/7989** (incl. the new case), type-based V5 codegen DynamicRef **50/50** +
+RecursiveRef/Anchor/Ref/Defs **1102/1102**, the TS harness's draft-2020-12 now **100%** (suite 7848/7849),
+warning-free solution build. This is a **shared-core** fix (the C# typed codegen had the same latent bug; it
+just never exercised this optional case), not a TS-provider-only change.
+
+### 13.25 Provider emits typed arrays / tuples / tensors / maps (emission build-out begins)
+
+With the behaviour suite (§13.23) as the acceptance target, the provider starts emitting the §5.3 shapes
+it previously stubbed. The array/tuple/map **type surface** is first (the provider used to inline
+`readonly unknown[]` for any array and emit no map index/Record type): `TsTypeRef` now emits plain
+`readonly T[]`, pure tuple `readonly [A,B,C]` (`items:false` closes it with no tail), prefix+tail variadic
+`readonly [A, ...T[]]`, and **recurses for multi-dimensional tensors** `readonly (readonly number[])[]`
+— guarded against recursive array schemas (a revisited type degrades to `readonly unknown[]`, so cyclic
+`items:{$ref:'#'}` schemas still compile). A **pure map** (additionalProperties value type, no declared
+properties) becomes an `interface` with a string index signature (`readonly [key: string]: T`).
+
+Verified on a `Container` schema covering all five shapes: `arrays-access.test.ts` (11/11) validates an
+instance with the emitted validator, then consumes `tags`/`triple`/`labelled`/`matrix`/`scores` through the
+emitted typed surface under `tsc --strict` — so these patterns are now behaviour-verified on the provider's
+REAL output, not just the reference shapes. The full suite is unchanged at **7848/7849** with all 1688
+modules `tsc --strict` clean (the type-surface change is validation-neutral). Still pending: union
+`match`/guards, `From`/brand conversions, and the `produce`/mutation surface.
+
+### 13.26 Provider emits unions (oneOf/anyOf): type + guards + match (§5.2)
+
+The provider now emits the union surface for `oneOf`/`anyOf`: a `type X = A | B` alias, per-member type
+guards `isM(v: unknown): v is M` (the V5 `TryGetAs{Branch}` analog, backed by the member validator), and a
+guard-based `matchX(value, cases)` (the V5 `Match()` analog; guard order suffices — the discriminator
+fast-path is an optimization, not required for correctness). Verified on a discriminated
+`Shape = Circle | Rectangle`: `union-access.test.ts` (8/8) validates with the emitted `oneOf` validator,
+then exercises the guards + `matchShape` + narrowed branch access under `tsc --strict`.
+
+Two correctness guards were required for the recursive `$recursiveRef` schemas in the suite:
+* **module-scoped guard names** — a module with several unions can share a member name, which would emit
+  duplicate top-level `is{Member}` functions (TS2323/TS2393);
+* **no circular type aliases** — a member whose ref is the union's OWN name is dropped (`type X = ... | X`
+  is circular, TS2456), and pure maps emit an `interface` (index signature) rather than
+  `type X = Readonly<Record<...>>`, because a `Record`-mapped-type alias cannot anchor a recursive cycle
+  but an interface (object type) can. The validator still enforces the recursive branch in both cases.
+
+Full suite **7848/7849**, all 1688 modules `tsc --strict` clean, 0 errored groups (validation-neutral).
+Still pending: `From`/brand conversions and the `produce`/mutation surface.
+
+### 13.27 Provider emits brand/format conversions (§5.3.1)
+
+The provider now emits the brand/format surface. A well-known **string format** (uuid, email, idn-email,
+hostname, idn-hostname, ipv4/ipv6, uri/uri-reference/uri-template, iri/iri-reference, date, date-time,
+time, duration, json-pointer, relative-json-pointer, regex) becomes a branded alias
+`type X = Brand<string, "format">` plus a validating factory `asX(value: string): X` that mints the brand
+only after `__fmt` passes (else throws `FormatError`) — the JS analog of V5's conversion operators. A
+64-bit+ **integer format** (int64/uint64/int128/uint128) maps to `bigint` (§4.1). `Brand<T,B>`
+(un-spoofable via a phantom unique-symbol, zero runtime cost) and `FormatError` live in the shared
+runtime; the brand factory always validates, independent of the annotate/assert format mode.
+
+Verified on an `Account` schema (`formats-access.test.ts`, 6/6): `asId`/`asOwner` mint valid input and
+reject invalid, a branded field reads as its base string, `balance` is `bigint`. The earlier
+provider-output tests still pass (`person.json`'s `contact` is now `Contact` (email-branded)). Full suite
+**7848/7849**, all 1688 modules `tsc --strict` clean, 0 errored. Still pending: the `produce`/mutation
+surface.
+
+### 13.28 Provider emits the mutation surface (produce/Draft/JsonDocument) — §5.7
+
+The last §5.x output pattern: the mutation runtime. `produce`/`recordChanges`/`Draft<T>`/`JsonDocument<T>`/
+`JsonPatchOp` are GENERIC helpers, so they live in the shared runtime (`corvus-runtime`), NOT per-type
+generated code — a consumer pairs `produce` with the emitted readonly interface. `produce` runs the recipe
+over a Proxy change-recorder on a structural clone; the change-set is RFC 6902 JSON Patch (and lowers to a
+Model C byte patch). Verified on a `Doc` schema (`mutation-access.test.ts`, 10/10): scalar/nested/array edits
+apply, the original document is untouched (immutability), patches are RFC 6902. Full suite **7848/7849**, all
+1688 modules `tsc --strict` clean, 0 errored.
+
+**Emission build-out complete.** Every recognised §5.2/§5.3/§5.7 output pattern the provider was stubbing is
+now emitted and behaviour-verified on the provider's REAL output, in addition to the §13.23 reference-shape
+suite: objects/enums (§13.14), arrays/tuples/multi-dim tensors/maps (§13.25), `oneOf`/`anyOf` unions with
+guards + `match` (§13.26), brand/format conversions + `bigint` (§13.27), and `produce`/mutation (this
+section). The provider-real-output tests total **44** across the patterns (`provider-access` 9, `arrays-access`
+11, `union-access` 8, `formats-access` 6, `mutation-access` 10), all `tsc --strict`-clean against generated
+code; the validator suite remains **7848/7849** across five dialects. The remaining open items are the
+documented residual (draft-4 `1.0`-integer) and solution integration (a real `Corvus.Text.Json.TypeScript.
+CodeGeneration` project + `--language ts` in `GenerationDriverV5`).
+
+### 7.7 Production migration — `--engine TypeScript` (implemented)
+
+The spike graduated into the production layout. New project
+**`src/Corvus.Text.Json.TypeScript.CodeGeneration`** (net9/net10, refs the core only — not the
+netstandard2.0 source generator) holds `TypeScriptLanguageProvider` (already an
+`IHierarchicalLanguageProvider`) + the handler set; the emit dispatch interface `ITsKeywordEmitter` is
+public so consumer-supplied handlers work across assemblies (proven by the spike's extension test). The
+TypeScript engine is wired per §7.6. End-to-end: `corvus jsonschema <schema> --engine TypeScript
+--outputPath <dir>` emits `generated.ts` (types + AOT validators + brands + `evaluateRoot`) +
+`corvus-runtime.ts`; the output is `tsc --strict`-clean and validates correctly. The whole solution builds
+**warning-free** (the gate), and the full JSON-Schema-Test-Suite still passes **7848/7849** through the
+migrated provider. Pragmatic scope: the project builds clean without the full StyleCop/XML-doc polish
+(a tracked follow-up); the §7.2 `Options` surface is minimal (`AlwaysAssertFormat`). Next: the Sourcemeta
+benchmark uses this CLI.
+
+---
+
+## 14. Gap matrix — implementation backlog
+
+Writing the documentation and the 19 worked examples (`docs/typescript/`) was a forcing
+function: producing exhaustive, *runnable* coverage of every construct surfaced every place the
+engine is not yet complete. This section consolidates those findings — together with the remaining
+items from §9 (Phasing) and §10 (Open questions) — into one prioritised backlog to work through.
+
+**Not in scope here:** validation correctness. The generated validators are 100% on the JSON Schema
+Test Suite across all five dialects (draft 4/6/7/2019‑09/2020‑12). Every gap below is in the
+*type‑surface polish, value‑type richness, evaluator output modes, annotations, or delivery* — not
+in whether a value is judged valid.
+
+Severity = impact on a production‑quality engine. Effort = S / M / L.
+
+> **Status reconciliation (2026‑06‑27).** A code‑level audit found this matrix had drifted from the
+> implementation:
+> - **Built since this matrix was written (these "Now" cells are stale):** the whole results‑collector
+>   family — **D1** (the collector is threaded through every `evaluate{Type}`), **D2**
+>   (`instanceLocation`/`keywordLocation`/`absoluteKeywordLocation`, correct through `$ref`), **D4**
+>   (verbose annotation collection), and `toOutput` (standardized basic/detailed JSON‑Schema output) —
+>   i.e. **§15 is IMPLEMENTED, not a forward design**. Also done: **F2** (`applyTo{T}`), **G1** (the
+>   `@endjin/corvus-json-runtime` package + its release‑publish), **G3** (compliance suite in CI via the
+>   `typescript-compliance` job), **G4** (the Bowtie stdio harness). **F3**'s change‑set is a public
+>   runtime API (`recordChanges`/`JsonPatchOp`), not internal‑only. **C1–C4** (built 2026‑06‑27): JSDoc
+>   is now emitted on interfaces & properties from `title`/`description`, with
+>   `@deprecated`/`@example`/`@readonly`/`@writeonly`.
+> - **Partial:** **D1** records a single composite failure (not per‑branch sub‑failures) under
+>   `anyOf`/`oneOf`/`if`; **B4** emits `bigint` for 64/128‑bit but no int16/32 range check; **G2** is
+>   broadly wired (residue = the unhonoured `codeGenerationMode`, i.e. **D3**, plus per‑format/naming
+>   options not threaded into the provider `Options`); **G6** has a `docs/typescript/` tree but no
+>   bundler/tsconfig guide.
+> - **Genuinely outstanding** (the real backlog): **A1**
+>   (multi‑file/barrel), **A2–A6**, **B1/B2/B3/B5**, **D3**, **E1** (OpenAPI `nullable`), **F1**
+>   (canonical write), **G5** (permanent benchmark), **G7** (playground). **H1/H2** stay deferred.
+
+> **Update (2026‑06‑28).** The value/dialect batch has since landed: **B1** (`default` applied via a
+> `withDefaults` helper + JSDoc), **B4** (`int16/32`/`uint16/32` range‑checked brands), **B2** (Temporal
+> value accessors), **E1** (OpenAPI `nullable` → `T | null`), and **D3** (the `codeGenerationMode` is now
+> honoured — `SchemaEvaluationOnly` emits a validators‑only module, `TypeGeneration`/`Both` the full
+> surface). Remaining backlog: **A1** (multi‑file/barrel), **A2–A6**, **B3/B5**, **F1** (canonical write),
+> **G5** (permanent benchmark), **G7** (playground); **H1/H2** stay deferred.
+
+> **Update (2026‑06‑28b).** **A1** has landed as an opt‑in: the `--tsModulePerType` CLI flag
+> (`Options.ModulePerType`) emits one module per generated type + a barrel `index.ts` that re‑exports them,
+> with cross‑module imports computed by scanning each module for the identifiers a sibling owns (validators
+> import each other's `evaluate{Type}`; interfaces/unions import sibling type names). Recursive schemas
+> (circular module imports) compile and validate. The single‑file `generated.ts` stays the default, so every
+> harness/example is unchanged. Remaining backlog: **A2–A6**, **B3/B5**, **F1** (canonical write), **G5**
+> (permanent benchmark), **G7** (playground); **H1/H2** stay deferred.
+
+> **Update (2026‑06‑28c).** **F1** has landed: the provider emits an opt‑in `buildCanonical{Type}` alongside
+> the native‑floor `build{Type}`, backed by the shared‑runtime `canonicalize` — RFC 8785 (JCS): object keys
+> recursively sorted by UTF‑16 code unit, ECMAScript number forms, minimal string escaping, mirroring the C#
+> `JsonCanonicalizer`. (Keys are emitted by hand, not via `JSON.stringify` of a key‑sorted object, because a
+> plain object forces integer‑like keys `"2"`/`"10"` into numeric order and would break JCS ordering.) Covered
+> by a runtime test + the `canonical-access` suite. Remaining backlog: **A2–A6**, **B3/B5**, **G5** (permanent
+> benchmark), **G7** (playground); **H1/H2** stay deferred.
+
+> **Update (2026‑06‑28d).** **G5** has landed: `prototypes/ts-bench/validate-sustained.bench.mjs` +
+> `run-validate-bench.sh` are the permanent **sustained‑load validation** benchmark (the validation analog of
+> `rmw-e2e.bench.mjs`) — throughput + minor‑GC event count/pause for `parse-only` / `validate-only` /
+> `parse+validate` across sizes and ascii/non‑ascii, correctness‑gated, with a checked‑in `RESULTS-validate.txt`.
+> Finding on the "remaining validator‑allocation cuts": under sustained load `validate-only` is ~2× faster than
+> `JSON.parse` and triggers ~half the minor GCs, so the validator is already **leaner than the parse** on the
+> validate path — no pressing allocation cut to chase. Remaining backlog: **A2–A6**, **B3/B5**, **G7**
+> (playground); **H1/H2** stay deferred.
+
+> **Update (2026‑06‑28e).** **B5 + B3** have landed (exotic numerics). **B5**: the numeric‑format brand family
+> (B4) is extended to the full C# `WellKnownNumericFormatHandler` set — `byte`/`sbyte` (integer+range),
+> `half` (range), `single`/`double` (unbounded type tags), `decimal` (range) — each a `Brand<number,"fmt">` +
+> `as{Name}` factory, with the brand‑side and validator‑side ranges kept in sync (`KnownFloatFormats` ↔
+> `TsFormatHandler.FloatFormatRanges`). Numeric‑only: an explicitly string‑typed `format:byte` (OpenAPI base64)
+> is NOT number‑branded. **B3**: a zero‑dependency big‑number seam — runtime `exactNumber` + re‑exported
+> `parseLossless` surface exact decimal digits as a string, and `decimal` fields get `{name}AsExact` (the plug
+> point for decimal.js/bignumber.js; no bundled dep). Covered by a runtime test + the `numformat-access` suite.
+> Remaining backlog: **A2–A6**, **G7** (playground); **H1/H2** stay deferred.
+
+> **Update (2026‑06‑28f).** The **A2–A6** surface‑polish sweep is resolved. **A2** (real, done): a conditional
+> `if`/`then`/`else` subschema is now validator‑only — its `evaluate{Type}` is emitted but no interface (gated so
+> a `$ref` shared with a real value type still keeps its surface), so `If`/`Then`/`Else` no longer appear in the
+> consumer API. **A6** (done): runtime `toFloat64Array`/`toFloat32Array`/`toInt32Array` opt‑in typed‑array views.
+> **A3** + **A4** were found **already handled** (their "Now" cells were stale): non‑identifier property names are
+> already quoted/bracket‑accessed, and a constraint‑only `oneOf` already resolves to a structural union. **A5**
+> (qualified names) is **deferred** — the numeric suffixes are correct and OS‑deterministic (#825); a renaming
+> heuristic is subjective, Low‑value, and risks that determinism, and A2 already removes the worst offenders.
+> Remaining backlog: **G7** (playground); **A5** deferred; **H1/H2** stay deferred.
+
+### A — Type surface & output structure
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| A1 | **Multi‑file output / barrel `index.ts`** | ✅ **done (2026‑06‑28, opt‑in)** — `--tsModulePerType` emits one module per type + a barrel `index.ts` with computed cross‑module imports (recursive/circular schemas verified); single‑file `generated.ts` stays the default | (default flip + cross‑*file* `$ref` are follow‑ups) | High | L |
+| A2 | **`if`/`then`/`else` subschemas reified as named types** | ✅ **done (2026‑06‑28)** — a conditional subschema (not value‑referenced) is validator‑only: its `evaluate{Type}` is emitted but no interface/aliases, so `If`/`Then`/`Else` no longer pollute the surface | — | Med | M |
+| A3 | **Reserved‑word / global‑shadow property names** | ✅ **already handled (verified 2026‑06‑28)** — non‑identifier property names are already quoted (`readonly "weird-name"?: …`) and accessed via brackets (`changes["weird-name"]`); reserved words like `class` are valid as property names in TS. (the "Now" cell was stale) | — | Low | S |
+| A4 | **Combined `oneOf` + `allOf` + `type:[…]`** | ✅ **already handled (verified 2026‑06‑28)** — a `oneOf` of constraint‑only branches already resolves to the structural union (`type V = string \| number`); the only residue is a multi‑type array branch (`type:[string,array]` → `… \| readonly unknown[]`), the documented core‑limited non‑gap below that matches C# fidelity | — | Low | M |
+| A5 | **Collision/fallback name polish** | **deferred** — numeric suffixes (`evaluateKind2`) are correct + deterministic across OSes (#825); a qualified/hierarchical‑name heuristic is subjective, Low‑value, and risks regressing that determinism. A2 already removes the worst offenders (the reified `If`/`Then`/`Else`) | qualified/hierarchical names | Low | M |
+| A6 | **Numeric typed‑array views** | ✅ **done (2026‑06‑28)** — runtime `toFloat64Array`/`toFloat32Array`/`toInt32Array` give an opt‑in typed‑array view over a numeric array; the generated type stays `readonly number[]` so nothing is forced on consumers | — | Low | M |
+
+> Not a gap: a multi‑type array branch stays `readonly unknown[]` (the core exposes no
+> `ArrayItemsType` for a non‑pure‑array schema) — this matches the C# engine's fidelity.
+
+### B — Value types
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| B1 | **`default` not applied** | annotation‑only: the property is made optional, the value is not surfaced | apply defaults on read/build (or a `withDefaults` helper); at minimum a JSDoc note | Med | S |
+| B2 | **Temporal value accessors** | date/time/duration are branded *strings* (Temporal is used internally for validation only) | generated accessors returning `Temporal.PlainDate` / `ZonedDateTime` / `Duration` via a pluggable adapter (§5.3.1) | Med | M |
+| B3 | **Arbitrary‑precision number value** | ✅ **done (2026‑06‑28, zero‑dep seam)** — runtime `exactNumber` + re‑exported `parseLossless` surface the exact decimal digits as a string; `decimal`‑format fields get a `{name}AsExact` accessor — the plug point for decimal.js/bignumber.js (no bundled dependency, per the zero‑dep ethos) | — | Low | M |
+| B4 | **Smaller numeric formats** | `int64`/`uint64`/`int128`/`uint128` → `bigint` (done) | `int16`/`int32`/`uint16`/`uint32` → `number` + range brand & check; currently no range emitted | Med | M |
+| B5 | **Exotic numeric formats** | ✅ **done (2026‑06‑28)** — `byte`/`sbyte` (integer+range brands), `half` (range brand), `single`/`double` (unbounded type‑tag brands), `decimal` (range brand + `AsExact`), mirroring the C# `WellKnownNumericFormatHandler`; brand + validator ranges in sync; numeric‑only (a string `format:byte` is left alone) | — | Low | M |
+
+### C — Annotations & developer experience
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| C1 | **`description`/`title` → JSDoc** | not emitted (IDE hover is empty) | `/** … */` on interfaces & properties from `description` | High | M |
+| C2 | **`deprecated` → `@deprecated`** | not emitted | `@deprecated` JSDoc tag so call sites warn | Med | S |
+| C3 | **`readOnly` / `writeOnly`** | not reflected | reflect in JSDoc and/or split read/write types | Med | M |
+| C4 | **`examples` → `@example`** | not emitted | `@example` JSDoc from the schema's examples | Low | S |
+
+### D — Evaluator output modes (the results‑collector family)
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| D1 | **Results collector** | `evaluateRoot` / `evaluate{Type}` are boolean‑only; `Ev` tracks only evaluated props/items for `unevaluated*` | an optional collector that records *why* a value failed (per‑keyword failures) — the `evaluateRoot(value, results?)` the user has flagged; the TS analog of C#'s `JsonSchemaContext` | High | M‑L |
+| D2 | **Spec‑output location constants** | none emitted | per‑subschema schema‑location + evaluation‑path constants (the analog of `EmitPathProviderFields`) so failures/annotations carry `instanceLocation`/`keywordLocation`/`absoluteKeywordLocation` (§5.6). Prerequisite for D1 locations, D4, and Bowtie | High | M |
+| D3 | **`SchemaEvaluationOnly` / `Both` modes** | ✅ **done (2026‑06‑28)** — the CLI `codeGenerationMode` is honoured: `SchemaEvaluationOnly` emits a validators‑only module (`evaluate{Type}` + `evaluateRoot`, no type surface); `TypeGeneration`/`Both` keep the full surface (the engine always emits the validators, so those two collapse to one output) | — | Med | S |
+| D4 | **Annotation collection (verbose)** | none | collect annotations (title/default/examples…) during evaluation in verbose mode | Med | S‑M |
+
+### E — Dialects
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| E1 | **OpenAPI 3.0/3.1** | `discriminator` works via `oneOf`+`match`; `nullable` likely falls through composition (unverified); OpenAPI vocabularies not explicitly wired for TS | explicit `nullable` → `T \| null`; confirm OpenAPI 3.0/3.1 end‑to‑end | Med | M |
+
+### F — Mutation & write
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| F1 | **Canonical write** | ✅ **done (2026‑06‑28)** — opt‑in `buildCanonical{Type}` (RFC 8785 / JCS via runtime `canonicalize`: recursive UTF‑16 key sort + ECMAScript number forms, mirroring the C# `JsonCanonicalizer`); `build` stays at the native floor (caller key order) | — | Med | M |
+| F2 | **`applyTo` mixin helper** | emits `applyTo{T}(source, A \| B)` for allOf mixins — clunky signature | smoother composition/apply ergonomics | Low | M |
+| F3 | **Change‑set as RFC 6902** | recorded internally, not a public API | surface the recorded change‑set as JSON Patch | Low | S |
+
+### G — Delivery: packaging, tooling, CI, playground
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| G1 | **`@endjin/corvus-json-runtime` as an npm package** | `corvus-runtime.ts` is re‑emitted source (the examples share one copy by hand) | a real publishable ESM package (own `package.json`, `exports`, `.d.ts`, tree‑shakeable, peer deps lossless‑json/tr46/temporal); generated modules `import` from it | High | M |
+| G2 | **CLI `Options` wiring** | `AlwaysAssertFormat` + `RuntimeModuleSpecifier` + `codeGenerationMode` (D3) wired; `outputPath`/format‑mode/naming/file options still ignored or hard‑coded | wire the full options surface (§7.2) from the CLI config | Med | S |
+| G3 | **Compliance harness in CI** | graduated out of the spike into `prototypes/ts-bench/compliance/` (`run-compliance.sh`); not yet a `tests/` project | a graduated `tests/` project that runs the suite (all 5 dialects) in CI with the exclusion model | High | M‑L |
+| G4 | **Bowtie TS harness** | none | a Node/TS harness speaking Bowtie's stdio protocol for cross‑implementation conformance (§8) | Med | M |
+| G5 | **Sustained‑load benchmark, permanent** | ✅ **done (2026‑06‑28)** — RMW (`rmw-e2e.bench.mjs`) + now **validation** (`validate-sustained.bench.mjs` + `run-validate-bench.sh`): throughput + minor‑GC pressure across sizes/content, correctness‑gated, `RESULTS-validate.txt` checked in | — | Med | M |
+| G6 | **Consumer build story** | minimal example tsconfig; runtime inline | documented tsconfig/bundler guidance, `.d.ts`/source‑map story, consumption pattern (once G1 lands) | Med | S |
+| G7 | **Blazor‑WASM playground** | none (the other six engines have one) | a playground that runs the codegen in‑browser AND *runs* the emitted JS — paste schema → generated TS → live evaluate/mutate (the differentiator the C# playground can't match) | Med | L |
+
+### H — Deferred by design
+
+| # | Item | Note |
+|---|------|------|
+| H1 | LSP / UTF‑16 dual‑offset projection | the editor path (§13); engineer when the VS Code use case is taken up |
+| H2 | Model A lazy‑read views | only if large‑payload *partial* read becomes an independent target (§7 of §9) |
+
+### Suggested order to work through
+
+1. **Foundational / unblocking** — G1 (`@endjin/corvus-json-runtime` package), G2 (CLI options),
+   D2 (location‑path constants). G1 unblocks consumption + the playground; D2 unblocks D1/D4/G4.
+2. **High DX / high value** — C1 (`description` → JSDoc), D1 (results collector), A1 (multi‑file +
+   barrel), G3 (compliance harness in CI).
+3. **Value‑type completeness** — B1 (defaults), B2 (Temporal accessors), B4 (int16/32 + range),
+   C2/C3/C4 (deprecated/readOnly/examples).
+4. **Polish** — A2/A5 (naming artifacts), A3 (reserved words), A4/A6, B3/B5, E1 (OpenAPI nullable),
+   F1 (canonical write) / F2 / F3, D3 (eval‑only mode), G4 (Bowtie), G5 (benchmark), G6 (consumer docs).
+5. **Showcase** — G7 (playground).
+6. **Deferred** — H1 (LSP), H2 (Model A), unless their use case is taken up.
+
+---
+
+## 15. Results collector (gaps D1+D2) — design
+
+> **Implemented (2026‑06‑27).** This section records the *design*; it has since been built and is
+> CI‑tested (`prototypes/ts-bench/compliance/access/suites/collector.test.ts`) — `evaluate{Type}`
+> threads the collector, the three spec locations are emitted (correct through `$ref`), and verbose
+> annotation collection + `toOutput` work. The one unbuilt piece is per‑branch sub‑failures under
+> `anyOf`/`oneOf`/`if` (those selectors probe branches boolean‑only). See §14's status reconciliation.
+
+The decision (2026-06-26) is to fold **D2** (location data) into **D1** (the collector): the per-subschema
+location is only useful when an evaluator threads it into a collector, so they ship as one feature. The
+goal: an optional collector passed to `evaluateRoot(value, results?)` that records **why** a value failed —
+per-keyword `Failure`s carrying `instanceLocation` / `keywordLocation` / `absoluteKeywordLocation` (the JSON
+Schema output formats + Bowtie). The boolean fast path must stay **zero-overhead** when no collector is passed.
+
+### Three modes — and the hard constraint
+
+A collector argument selects the mode, keyed on `ev.r`:
+
+- **Boolean** (`results` omitted → `ev.r === null`): the hot path. It must pay **nothing** for collection —
+  no `Results` allocation, **no string building** (no `instanceLocation` concatenation, no `Failure`), and it
+  **returns early** on the first failure (short-circuit).
+- **Detailed** (`new Results()`): collect every **failure**. It **must not return early** — keep evaluating
+  after a failure so all failures are gathered.
+- **Verbose** (`new Results(true)`): collect failures **and** successes/annotations. Also no early return.
+
+### Runtime (`@endjin/corvus-json-runtime`)
+
+```ts
+export interface Failure { keywordLocation: string; instanceLocation: string; absoluteKeywordLocation?: string; }
+export class Results {
+  readonly failures: Failure[] = [];
+  constructor(readonly verbose = false) {}        // verbose -> also record successes/annotations
+  get valid() { return this.failures.length === 0; }
+  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void {
+    this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }
+}
+```
+
+`Ev` gains `r: Results | null = null` (null = boolean mode).
+
+### The shape of an emitted check — all three modes from ONE function
+
+The boolean path short-circuits with no work; the collecting paths record and fall through. One emitted
+function serves all three, branching on `ev.r`:
+
+```ts
+function evaluateName(value: unknown, ev: Ev, il: string): boolean {
+  let ok = true;
+  if (!__isStr(value))     { if (ev.r === null) return false; ev.r.fail("<kw>/type",      il, "<akw>/type");      ok = false; }
+  if ([...value].length < 3) { if (ev.r === null) return false; ev.r.fail("<kw>/minLength", il, "<akw>/minLength"); ok = false; }
+  return ok;
+}
+```
+
+- **Boolean** (`ev.r === null`): each check's `if (ev.r === null) return false` short-circuits on the first
+  failure; `il` is never concatenated (see below); `return ok` is `return true` on a clean pass. The only
+  added cost vs. today is one `ev.r === null` compare per check — no allocation, no strings.
+- **Detailed/Verbose** (`ev.r` set): the guard is false, so we `ev.r.fail(...)`, set `ok = false`, and
+  **fall through** to the remaining checks. `return ok` at the end carries the verdict.
+
+### Instance location — concatenated ONLY when collecting
+
+`evaluate{Type}(value, ev, il = "")` carries the instance JSON Pointer, but a structural handler must not
+build it on the boolean path. Gate every concat on `ev.r`:
+
+```ts
+evaluateName(o[k],     subEv, ev.r === null ? il : il + "/" + __ptr(k));   // properties
+evaluateItem(value[i], subEv, ev.r === null ? il : il + "/" + i);          // items
+```
+
+When `ev.r === null`, `il` flows through unchanged (it stays `""` all the way down — **zero string building**).
+When collecting, each level appends its RFC 6901-escaped segment, so a recorded `instanceLocation` is correct.
+Keyword/absolute locations are inline string **literals** (from `td.LocatedSchema.Location` + its fragment +
+`"/<keyword>"`) — free, and only *referenced* inside the `ev.r !== null` branch.
+
+`evaluateRoot(value, results?)` seeds a fresh `Ev` with `ev.r = results ?? null`, `il = ""`.
+
+### Increments (execution order)
+
+1. **Runtime + entry + the check shape** — `Failure`/`Results`/`Ev.r`; `evaluate{Type}(value, ev, il = "")`;
+   the `let ok = true; … if (ev.r === null) return false; … return ok;` restructure with `il` gated to `""`
+   everywhere; `evaluateRoot(value, results?)`. No behaviour change on the boolean path; all suites green.
+2. **Leaf handlers** — type / numeric+length bounds / membership / regex / format emit the
+   `ev.r === null ? early-return : record + ok=false` shape with their keyword/absolute location.
+3. **Structural handlers** — properties / patternProperties / additionalProperties / required / items /
+   prefixItems / contains / not / unevaluated*: gated `il` threading + the same shape. **Composition must NOT
+   short-circuit when collecting** — `anyOf`/`oneOf`/`if` evaluate all branches under a collector (the boolean
+   path keeps its `||` short-circuit). The bulk.
+4. **Spec output + Bowtie** — render `Results.failures` as the JSON Schema basic/detailed output; a Node/TS
+   Bowtie harness (gap G4).
+5. **Verbose successes / annotation collection (D4)** — record successes + annotations when `results.verbose`.
+
+### Risks
+
+- **The boolean path must build NO strings.** Every `il` concat and `fail()` call sits inside an
+  `ev.r === null ? … : …` guard or after an `if (ev.r === null) return false`. Gate on the sustained-load
+  bench that the no-collector path is unregressed vs. today (the bitmask `Ev` is unchanged; `r` is one extra
+  null field; per-check cost is one null compare).
+- **No early return when collecting.** Detailed/verbose fall through every check AND every composition branch;
+  only the boolean path short-circuits. The `ok` accumulator carries the verdict.
+- **Pointer escaping.** `__ptr` RFC 6901-escapes segments: `~`→`~0`, `/`→`~1`.
+- **`$dynamicRef`.** `keywordLocation` follows the dynamic path; `absoluteKeywordLocation` is the resolved
+  `$id` URI — they diverge through dynamic refs (the core distinguishes them in the location).
+
+### inc 4: full path-taken keywordLocation (the three locations, $ref-correct)
+
+Mirrors the C# `ValidationContext` 3-tuple `(ValidationLocation, SchemaLocation, DocumentLocation)`:
+
+- **instanceLocation** = `il` (already threaded).
+- **absoluteKeywordLocation** = the per-type CONSTANT `td.LocatedSchema.Location` (the resolved location); jump
+  to it at each `evaluate{Type}` (C# `PushSchemaLocation`). Append `/<keyword>` at the fail point.
+- **keywordLocation (path taken)** = a SEPARATELY-THREADED `kl` param, built by appending the child's
+  **path modifier** at each descent — which INCLUDES the `$ref` step (baked into the child
+  `ReducedTypeDeclaration.ReducedPathModifier`). This is how kl diverges from absoluteKeywordLocation through
+  `$ref`. Append `/<keyword>` at the fail point.
+
+Signature becomes `evaluate{Type}(value, ev, il = "", kl = "", r = null)`. FailShape(td, keyword):
+`r.fail(kl + "/<keyword>", il, "<td.Location>/<keyword>")`. Child descent appends the path modifier to kl
+(gated on r): `kl + "<stripHash(pathModifier)>"`.
+
+Path modifier per applicator (all return `#/…`; strip the leading `#`; `$ref` already baked in):
+- properties: `property.KeywordPathModifier` (e.g. `#/properties/name`, `#/properties/name/$ref`)
+- patternProperties: `((IObjectPatternPropertyValidationKeyword)kw).GetPathModifier(pattern, reducedType)`
+- additionalProperties / unevaluatedProperties: `#/additionalProperties` / `#/unevaluatedProperties` + child ReducedPathModifier
+- items: `#/items` + RPM; prefixItems: `#/prefixItems/<i>` + RPM; unevaluatedItems: `#/unevaluatedItems` + RPM
+- allOf/anyOf/oneOf member i: `((I{X}SubschemaValidationKeyword)kw).GetPathModifier(member, i)` → `#/allOf/0` (+`/$ref`)
+- if/then/else/propertyNames/not/contains: `GetPathModifier` → `#/then` (+`/$ref`)
+- dependentSchemas: `GetPathModifier(reducedType, propName)` → `#/dependentSchemas/<prop>`
+
+Keyword name for the `/<keyword>` segment: `keyword.Keyword` (IKeyword) where it varies (bounds/membership);
+hardcoded where fixed (type/required/anyOf/not/format/...). Boolean hot path: kl defaults "" and is never
+concatenated when r === null → zero string building, byte-identical to today.

@@ -57,6 +57,8 @@ jobs:
           BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"
         secretsYaml: |
           NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+          # Only populated on release-tag builds; the PublishNpmPackages ZeroFailed task gates on the same tag.
+          NPM_AUTH_TOKEN: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NPM_TOKEN || '' }}"
           # TODO: Review approach to enable Vellum to be downloaded
           VELLUM_DOWNLOAD_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
@@ -229,6 +231,190 @@ jobs:
           name: Integration Test Results
           path: '**/integration-tests.trx'
           reporter: dotnet-trx
+
+  typescript-compliance:
+    name: TypeScript Engine Compliance
+    needs:
+      - build
+      - setCachePathsConfig
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: |
+            10.0.x
+            9.0.x
+
+      - name: Restore build cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            .nuget-packages
+            Solutions
+            solutions
+            ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      # ubuntu-latest ships Node 20 + npm; the compliance/access runners use esbuild and the generated-code
+      # runtime deps (lossless-json / @js-temporal/polyfill / tr46) from prototypes/ts-bench/node_modules.
+      - name: Install TypeScript harness dependencies
+        run: npm ci
+        working-directory: prototypes/ts-bench
+        timeout-minutes: 5
+
+      # Each TypeScript playground vendors a bundled corvus-runtime.js (and the OpenAPI one a
+      # corvus-client-runtime.js) built from packages/corvus-json-*-runtime by its regenerate-vendored-assets.ps1.
+      # That regeneration is manual and per-playground, so a runtime change (e.g. new exports) can leave a
+      # committed bundle stale and silently break the deployed playground (its generated code imports symbols the
+      # stale bundle lacks). Re-bundle from source here (esbuild is installed above, same one the scripts use) and
+      # fail if any committed copy drifted — turning silent staleness into a build failure.
+      - name: Playground vendored runtime bundles are current
+        shell: pwsh
+        run: |
+          ./docs/playground-typescript/regenerate-vendored-assets.ps1 -Check
+          ./docs/playground-openapi-typescript/regenerate-vendored-assets.ps1 -Check
+        timeout-minutes: 3
+
+      # Full JSON-Schema-Test-Suite: codegen every test-group (in-process, public codegen libs),
+      # esbuild-transpile, validate, and assert the pass/errored thresholds. Exits non-zero on any
+      # non-allow-listed failure (KNOWN_FAILURES gates exactly one pre-existing engine gap, always printed).
+      - name: JSON-Schema-Test-Suite compliance
+        run: bash run-compliance.sh
+        working-directory: prototypes/ts-bench/compliance
+        timeout-minutes: 25
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+      # Generated-code accessor suites (produce / RMW / build / collector / ...); exits non-zero on any failure.
+      - name: Generated-code access tests
+        run: bash run-access.sh
+        working-directory: prototypes/ts-bench/compliance/access
+        timeout-minutes: 15
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+      # The @endjin/corvus-json-runtime package's own unit tests, including the RFC 6902 / 7396 JSON Patch
+      # conformance suite (the tests/json-patch-tests submodule). Builds the package (tsc) then runs node --test.
+      # The package-lock is gitignored (see the package's .gitignore), so npm install (not npm ci).
+      - name: Runtime package tests
+        run: npm install && npm run build && node --test
+        working-directory: packages/corvus-json-runtime
+        timeout-minutes: 5
+
+      # ── OpenAPI client generator (the byte-native TypeScript OpenAPI client epic) ──
+
+      # The @endjin/corvus-json-client-runtime package's unit tests: transports, middleware, auth, and the
+      # serializer oracles (parameter styles, form-urlencoded, multipart, header parsing, JSON pointer,
+      # SSE/NDJSON streaming). Builds the package (tsc) then runs node --test. The package-lock is
+      # gitignored, so npm install (not npm ci).
+      - name: OpenAPI client-runtime package tests
+        run: npm install && npm run build && node --test
+        working-directory: packages/corvus-json-client-runtime
+        timeout-minutes: 5
+
+      # The OpenAPI client recipes import the generated model runtime's third-party deps
+      # (lossless-json / @js-temporal/polyfill / tr46) and tsc; the package-lock is gitignored.
+      - name: Install OpenAPI client examples dependencies
+        run: npm install
+        working-directory: docs/typescript/openapi-examples
+        timeout-minutes: 5
+
+      # The load-bearing emitted-code gate: regenerate every petstore-*/client from its spec via the
+      # production CLI (openapi-client --engine TypeScript) and strict-type-check the whole tree.
+      - name: OpenAPI client recipes - generate + strict tsc
+        run: pwsh -File ./regenerate.ps1
+        working-directory: docs/typescript/openapi-examples
+        timeout-minutes: 15
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+      # Runtime conformance: regenerate an executable client copy (package-name runtime import), compile it,
+      # and run the node:test suite that drives composed requests / decomposed responses through a mock
+      # transport (path/query/header/cookie styles, every body category, streaming, headers, links).
+      - name: OpenAPI client conformance suite
+        run: pwsh -File ./conformance.ps1
+        working-directory: docs/typescript/openapi-examples
+        timeout-minutes: 15
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+  python-compliance:
+    name: Python Engine Compliance
+    needs:
+      - build
+      - setCachePathsConfig
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: |
+            10.0.x
+            9.0.x
+
+      - name: Restore build cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            .nuget-packages
+            Solutions
+            solutions
+            ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      # A managed Python 3.12 venv (uv, installed via its standalone script so no action pin is needed) with the
+      # pure-Python runtime installed editable plus its dev tools (mypy + pyright + type stubs). The runtime must
+      # be importable by the compliance runner and the demos; mypy/pyright are the load-bearing type-check gate
+      # on the generated Python. The venv's bin goes on PATH so `pyright` resolves in the docs gate below.
+      - name: Set up Python 3.12 + the runtime and type-check tools
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          uv venv --python 3.12 "$GITHUB_WORKSPACE/.venv-py"
+          uv pip install --python "$GITHUB_WORKSPACE/.venv-py" -e packages/corvus-json-runtime-py[dev]
+          echo "$GITHUB_WORKSPACE/.venv-py/bin" >> "$GITHUB_PATH"
+
+      # The pure-Python runtime's own strict type-check + unit tests.
+      - name: Python runtime type-check + unit tests
+        run: |
+          python -m mypy --strict src/corvus_json_runtime
+          python -m unittest discover -s tests
+        working-directory: packages/corvus-json-runtime-py
+        timeout-minutes: 5
+
+      # Full JSON-Schema-Test-Suite against the generated Python: codegen every test-group (ComplianceGenerator),
+      # import each package's evaluate, tally per dialect. Exits non-zero on any non-allow-listed failure.
+      - name: Python JSON-Schema-Test-Suite compliance
+        run: bash run-compliance.sh
+        working-directory: prototypes/py-compliance
+        timeout-minutes: 25
+        env:
+          COMPLIANCE_PYTHON: ${{ github.workspace }}/.venv-py/bin/python
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+      # The documentation recipes: regenerate every recipe from its schema via the CLI, then type-check each with
+      # mypy --strict + pyright and run its demo.
+      - name: Python docs recipes generate + type-check + run
+        shell: pwsh
+        run: ./regenerate.ps1 -Check
+        working-directory: docs/python/examples
+        timeout-minutes: 15
+        env:
+          CORVUS_PYTHON: ${{ github.workspace }}/.venv-py/bin/python
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
   deploy-docs:
     name: Deploy Documentation

@@ -10,9 +10,11 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi.TypeScript.CodeGeneration;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi32;
+using Corvus.Text.Json.TypeScript.CodeGeneration;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -65,6 +67,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             return 1;
         }
 
+        Engine engine = settings.Engine ?? Engine.V5;
+
+        // --rootNamespace is optional for the TypeScript engine (TypeScript has no namespaces); fall
+        // back to the conventional default so the lock-file identity is still stable across runs.
         string rootNamespace = settings.RootNamespace ?? "GeneratedApi";
         string outputPath = settings.OutputPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Generated");
         string specFilePath = Path.GetFullPath(settings.SpecFile);
@@ -115,7 +121,12 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         try
         {
             IReadOnlyList<GeneratedFile> files;
-            string modelsPath = Path.Combine(outputPath, "Models");
+
+            // The C# engine writes models under "Models"; the TypeScript engine writes them under
+            // "models" (the lower-case relative module path the generated client imports from).
+            bool isTypeScript = engine == Engine.TypeScript;
+            string modelsDir = isTypeScript ? "models" : "Models";
+            string modelsPath = Path.Combine(outputPath, modelsDir);
             IReadOnlyList<string>? modelFileNames = null;
 
             if (specVersion is "3.2")
@@ -127,9 +138,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = null;
+                Dictionary<string, string>? typeReferenceMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
+                    (schemaTypeMap, typeReferenceMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -138,12 +150,24 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
                 }
 
-                OpenApi32CodeGenerator generator = new(
-                    rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>(),
-                    settings.ClientName,
-                    settings.IgnoreEmptyFormUrlEncodedBody);
-                files = generator.Generate(specRoot, filter, referenceResolver);
+                if (isTypeScript)
+                {
+                    OpenApi32CodeGenerator generator = new(
+                        rootNamespace,
+                        new TypeScriptSchemaTypeResolver(schemaTypeMap ?? new Dictionary<string, string>()),
+                        settings.ClientName,
+                        settings.IgnoreEmptyFormUrlEncodedBody);
+                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap, typeReferenceMap), specRoot, filter, referenceResolver);
+                }
+                else
+                {
+                    OpenApi32CodeGenerator generator = new(
+                        rootNamespace,
+                        schemaTypeMap ?? new Dictionary<string, string>(),
+                        settings.ClientName,
+                        settings.IgnoreEmptyFormUrlEncodedBody);
+                    files = generator.Generate(specRoot, filter, referenceResolver);
+                }
             }
             else if (specVersion is "3.1" or not "3.0")
             {
@@ -154,9 +178,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = null;
+                Dictionary<string, string>? typeReferenceMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
+                    (schemaTypeMap, typeReferenceMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -165,12 +190,24 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
                 }
 
-                OpenApi31CodeGenerator generator = new(
-                    rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>(),
-                    settings.ClientName,
-                    settings.IgnoreEmptyFormUrlEncodedBody);
-                files = generator.Generate(specRoot, filter, referenceResolver);
+                if (isTypeScript)
+                {
+                    OpenApi31CodeGenerator generator = new(
+                        rootNamespace,
+                        new TypeScriptSchemaTypeResolver(schemaTypeMap ?? new Dictionary<string, string>()),
+                        settings.ClientName,
+                        settings.IgnoreEmptyFormUrlEncodedBody);
+                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap, typeReferenceMap), specRoot, filter, referenceResolver);
+                }
+                else
+                {
+                    OpenApi31CodeGenerator generator = new(
+                        rootNamespace,
+                        schemaTypeMap ?? new Dictionary<string, string>(),
+                        settings.ClientName,
+                        settings.IgnoreEmptyFormUrlEncodedBody);
+                    files = generator.Generate(specRoot, filter, referenceResolver);
+                }
             }
             else
             {
@@ -181,9 +218,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = null;
+                Dictionary<string, string>? typeReferenceMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, cancellationToken)
+                    (schemaTypeMap, typeReferenceMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -192,12 +230,24 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
                 }
 
-                OpenApi30CodeGenerator generator = new(
-                    rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>(),
-                    settings.ClientName,
-                    settings.IgnoreEmptyFormUrlEncodedBody);
-                files = generator.Generate(specRoot, filter, referenceResolver);
+                if (isTypeScript)
+                {
+                    OpenApi30CodeGenerator generator = new(
+                        rootNamespace,
+                        new TypeScriptSchemaTypeResolver(schemaTypeMap ?? new Dictionary<string, string>()),
+                        settings.ClientName,
+                        settings.IgnoreEmptyFormUrlEncodedBody);
+                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap, typeReferenceMap), specRoot, filter, referenceResolver);
+                }
+                else
+                {
+                    OpenApi30CodeGenerator generator = new(
+                        rootNamespace,
+                        schemaTypeMap ?? new Dictionary<string, string>(),
+                        settings.ClientName,
+                        settings.IgnoreEmptyFormUrlEncodedBody);
+                    files = generator.Generate(specRoot, filter, referenceResolver);
+                }
             }
 
             AnsiConsole.MarkupLine($"[green]Files:[/] {files.Count}");
@@ -215,12 +265,12 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 generatedFileNames.Add(file.FileName);
             }
 
-            // Include model files with relative Models/ prefix
+            // Include model files with the relative models-directory prefix.
             if (modelFileNames is not null)
             {
                 foreach (string modelFile in modelFileNames)
                 {
-                    generatedFileNames.Add(Path.Combine("Models", modelFile));
+                    generatedFileNames.Add(Path.Combine(modelsDir, modelFile));
                 }
             }
 
@@ -246,14 +296,16 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         }
     }
 
-    private static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
+    private static async Task<(Dictionary<string, string> SchemaTypeMap, Dictionary<string, string> TypeReferenceMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
         string specFile,
         string specVersion,
+        Engine engine,
         string rootNamespace,
         string outputPath,
         SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
         bool useYaml,
+        OpenApiGenerateSettings settings,
         CancellationToken cancellationToken)
     {
         string specFilePath = Path.GetFullPath(specFile);
@@ -336,10 +388,36 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
         AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
 
-        // Generate code — register OpenAPI naming heuristic for contextual inline schema names
-        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
-        CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
-        languageProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
+        bool isTypeScript = engine == Engine.TypeScript;
+
+        // Generate code — register the OpenAPI naming heuristic for contextual inline schema names. For
+        // C# the V5 provider emits idiomatic C# under <rootNamespace>.Models; for TypeScript the
+        // TypeScript provider emits idiomatic TS (types + AOT validators) + the shared model runtime.
+        ILanguageProvider languageProvider;
+        if (isTypeScript)
+        {
+            string runtimeModule =
+                settings.TsRuntimeModule is { Length: > 0 } configured
+                    ? configured
+                    : "./corvus-runtime.js";
+
+            TypeScriptLanguageProvider tsProvider = TypeScriptLanguageProvider.DefaultWithOptions(
+                new TypeScriptLanguageProvider.Options(
+                    AlwaysAssertFormat: true,
+                    RuntimeModuleSpecifier: runtimeModule,
+                    EmitTypeSurface: true,
+                    ModulePerType: settings.TsModulePerType ?? false));
+            tsProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
+            languageProvider = tsProvider;
+        }
+        else
+        {
+            CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
+            CSharpLanguageProvider csProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+            csProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
+            languageProvider = csProvider;
+        }
+
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(languageProvider, typesToGenerate, cancellationToken);
 
@@ -361,37 +439,108 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
         AnsiConsole.MarkupLine($"[green]Generated {schemaFileNames.Count} schema type files[/]");
 
-        // Build the pointer → fully qualified type name map
+        // Build the pointer → type name map. For C# this is the fully qualified .NET type name; for
+        // TypeScript it is the type's Ts_FinalName metadata (assigned during code generation above).
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        // The TypeScript type-reference map (pointer -> Ts_TypeRef): the annotation used for a value of
+        // the type, distinct from the final name (which doubles as the value companion). Empty for C#.
+        Dictionary<string, string> typeReferenceMap = new(StringComparer.Ordinal);
 
         foreach ((string pointerStr, TypeDeclaration td) in pointerToType)
         {
             TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
 
-            if (reduced.HasDotnetTypeName())
+            if (TryGetTargetTypeName(reduced, isTypeScript, out string? typeName))
             {
-                schemaTypeMap[pointerStr] = reduced.FullyQualifiedDotnetTypeName();
+                schemaTypeMap[pointerStr] = typeName;
+            }
+
+            if (isTypeScript
+                && reduced.TryGetMetadata(TypeScriptTypeRefMetadataKey, out string? typeRef)
+                && !string.IsNullOrEmpty(typeRef))
+            {
+                typeReferenceMap[pointerStr] = typeRef;
             }
 
             // Also add child types (items, additionalProperties, etc.) so that
             // deeply nested header/parameter element types can be resolved.
-            AddChildTypesToMap(reduced, schemaTypeMap);
+            AddChildTypesToMap(reduced, isTypeScript, schemaTypeMap, typeReferenceMap);
         }
 
-        return (schemaTypeMap, schemaFileNames);
+        return (schemaTypeMap, typeReferenceMap, schemaFileNames);
+    }
+
+    private const string TypeScriptFinalNameMetadataKey = "Ts_FinalName";
+
+    private const string TypeScriptTypeRefMetadataKey = "Ts_TypeRef";
+
+    /// <summary>
+    /// Creates the TypeScript client emitter, wiring the client runtime module specifier (the
+    /// byte-native transport runtime) and the generated-model module path (<c>./models/...</c>).
+    /// </summary>
+    private static TypeScriptApiEmitter CreateTypeScriptEmitter(OpenApiGenerateSettings settings, Dictionary<string, string>? schemaTypeMap, Dictionary<string, string>? typeReferenceMap)
+    {
+        string clientRuntimeModule =
+            settings.TsClientRuntimeModule is { Length: > 0 } configured
+                ? configured
+                : "@endjin/corvus-json-client-runtime";
+
+        // The generated client imports models from ./models. The model engine writes a single
+        // generated.ts barrel by default, or an index.ts barrel when --tsModulePerType is set.
+        string modelsModule = (settings.TsModulePerType ?? false)
+            ? "./models/index.js"
+            : "./models/generated.js";
+
+        return new TypeScriptApiEmitter(
+            new TypeScriptSchemaTypeResolver(
+                schemaTypeMap ?? new Dictionary<string, string>(),
+                typeReferenceMap ?? new Dictionary<string, string>()),
+            new TypeScriptApiEmitterOptions(clientRuntimeModule, modelsModule),
+            settings.ClientName);
+    }
+
+    /// <summary>
+    /// Resolves a type declaration to its target-language type name: the TypeScript final name (from
+    /// the <c>Ts_FinalName</c> metadata) when generating TypeScript, otherwise the fully qualified
+    /// .NET type name.
+    /// </summary>
+    private static bool TryGetTargetTypeName(TypeDeclaration reduced, bool isTypeScript, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? typeName)
+    {
+        if (isTypeScript)
+        {
+            if (reduced.TryGetMetadata(TypeScriptFinalNameMetadataKey, out string? finalName)
+                && !string.IsNullOrEmpty(finalName))
+            {
+                typeName = finalName;
+                return true;
+            }
+
+            typeName = null;
+            return false;
+        }
+
+        if (reduced.HasDotnetTypeName())
+        {
+            typeName = reduced.FullyQualifiedDotnetTypeName();
+            return true;
+        }
+
+        typeName = null;
+        return false;
     }
 
     /// <summary>
     /// Recursively walks child type declarations and adds their pointer mappings to the schema type map.
     /// This ensures sub-schema types (e.g., array items, additionalProperties) are resolvable by pointer.
     /// </summary>
-    private static void AddChildTypesToMap(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap)
+    private static void AddChildTypesToMap(TypeDeclaration parentType, bool isTypeScript, Dictionary<string, string> schemaTypeMap, Dictionary<string, string> typeReferenceMap)
     {
         HashSet<TypeDeclaration> visited = [];
-        AddChildTypesToMapCore(parentType, schemaTypeMap, visited);
+        AddChildTypesToMapCore(parentType, isTypeScript, schemaTypeMap, typeReferenceMap, visited);
     }
 
-    private static void AddChildTypesToMapCore(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap, HashSet<TypeDeclaration> visited)
+    private static void AddChildTypesToMapCore(TypeDeclaration parentType, bool isTypeScript, Dictionary<string, string> schemaTypeMap, Dictionary<string, string> typeReferenceMap, HashSet<TypeDeclaration> visited)
     {
         foreach (TypeDeclaration child in parentType.Children())
         {
@@ -402,17 +551,26 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 continue;
             }
 
-            if (reducedChild.HasDotnetTypeName()
-                && reducedChild.LocatedSchema.RootDocumentPointer is { Length: > 0 } rootPointer)
+            if (reducedChild.LocatedSchema.RootDocumentPointer is { Length: > 0 } rootPointer)
             {
                 string key = "#" + rootPointer;
 
-                // Don't overwrite existing entries (root pointers take precedence)
-                schemaTypeMap.TryAdd(key, reducedChild.FullyQualifiedDotnetTypeName());
+                if (TryGetTargetTypeName(reducedChild, isTypeScript, out string? childTypeName))
+                {
+                    // Don't overwrite existing entries (root pointers take precedence)
+                    schemaTypeMap.TryAdd(key, childTypeName);
+                }
+
+                if (isTypeScript
+                    && reducedChild.TryGetMetadata(TypeScriptTypeRefMetadataKey, out string? childTypeRef)
+                    && !string.IsNullOrEmpty(childTypeRef))
+                {
+                    typeReferenceMap.TryAdd(key, childTypeRef);
+                }
             }
 
             // Recurse into grandchildren
-            AddChildTypesToMapCore(reducedChild, schemaTypeMap, visited);
+            AddChildTypesToMapCore(reducedChild, isTypeScript, schemaTypeMap, typeReferenceMap, visited);
         }
     }
 

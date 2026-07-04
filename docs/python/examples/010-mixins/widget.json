@@ -1,0 +1,6 @@
+{ "title": "Widget", "type": "object",
+  "$defs": {
+    "named": { "title": "Named", "type": "object", "required": ["name"], "properties": { "name": { "type": "string" } } },
+    "timestamped": { "title": "Timestamped", "type": "object", "properties": { "createdAt": { "type": "string", "format": "date-time" } } } },
+  "allOf": [ { "$ref": "#/$defs/named" }, { "$ref": "#/$defs/timestamped" } ],
+  "properties": { "id": { "type": "string" } } }

@@ -1,0 +1,13 @@
+FROM docker.io/library/node:20-slim
+WORKDIR /opt/harness
+COPY package.json ./
+RUN npm install --no-audit --no-fund --loglevel=error
+COPY bowtie-harness.mjs bowtie-globals.d.ts ./
+# the codegen-worker (harness tooling) + its bundled metaschema/ directory
+COPY worker/ /opt/worker/
+# the executable bit is lost copying through the WSL 9p mount
+RUN chmod +x /opt/worker/corvus-ts-bowtie-worker
+ENV CORVUS_WORKER=/opt/worker/corvus-ts-bowtie-worker
+# self-contained .NET on Debian-slim: run invariant so no system libicu is required
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+ENTRYPOINT ["node", "bowtie-harness.mjs"]
