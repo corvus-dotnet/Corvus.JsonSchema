@@ -608,7 +608,7 @@ composes directly (as the demo page does) — there is no separate packaged cred
 ### Credentials, access, permissions, environments & promotion surfaces (Layer-1, host-composed)
 These ship as Layer-1 components rather than packaged Layer-2 panels — the host (or the demo page) composes them, one
 per tab:
-- **Sources** — `<arazzo-credentials-table>` (status worklist) paired with `<arazzo-credential-dialog>` for
+- **Connections** — `<arazzo-credentials-table>` (status worklist) paired with `<arazzo-credential-dialog>` for
   create/edit/rotate (`credentials:read`/`write`).
 - **Access** — `<arazzo-access-requests>` for the §16.5 request/approval surface (My requests + the approver queue).
 - **Permissions** — `<arazzo-grants-panel>` + `<arazzo-rules-panel>` for the §14.2 reach vocabulary
@@ -745,7 +745,7 @@ live *on the workflow*, not in standalone, deployment-wide tabs.
    a workflow dropdown that does not scale) is removed; the §15 administrator set is an authz-gated **Security**
    section on `<arazzo-catalog-detail>`, keyed by the version's `baseWorkflowId`, editable only with
    `administrators:write` (read-only / `403` otherwise — the panel already degrades).
-2. **#1 — Pagination for the Sources (`/credentials`) list — IN THE STORES (keyset).** Unlike Runs/Catalog (which
+2. **#1 — Pagination for the Connections (`/credentials`) list — IN THE STORES (keyset).** Unlike Runs/Catalog (which
    keyset-page in the store), `/credentials` returns everything in one call; at the thousands-to-millions of
    bindings a deployment accrues over time that does not scale. **Design decision (corrected) — pagination is
    pushed into every backend, not layered in the handler.** Reach is evaluated in-memory, but it is a *per-row
@@ -795,7 +795,7 @@ delivered full-stack (API-first → 10 durability backends + conformance → han
 - **Readiness as a hard gate** — the wizard refuses to register a build-from-docs workflow unless every source has a
   usable credential in some environment (usability per §13 `IsUsableBy`, not mere presence); the upload path defers to
   the **CLI** `catalog add`, which runs the same gate.
-- The demo composes these as the **Runners / Sources / Environments / Access / Permissions / Promotions** tabs (plus Runs and Catalog).
+- The demo composes these as the **Runners / Connections / Environments / Access / Permissions / Promotions** tabs (plus Runs and Catalog).
 - **Promotion matrix** — `<arazzo-availability-matrix>` (the `(version × environment)` rollout grid, with direct
   make/withdraw + request-promotion) is embedded in the catalog version detail.
 
