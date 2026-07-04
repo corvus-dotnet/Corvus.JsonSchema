@@ -191,6 +191,40 @@ class ArazzoExpressionInput extends ArazzoElement {
       { tag: t.operator, color: 'var(--arazzo-muted, #6b7280)' },
       { tag: t.punctuation, color: 'var(--arazzo-muted, #6b7280)' },
     ]));
+    // Editor + tooltip chrome themed by the kit tokens — CM6's defaults assume a light page, so
+    // without this the completion popup is white-on-white in dark mode and the caret vanishes.
+    const chrome = view.EditorView.theme({
+      '.cm-content': { caretColor: 'var(--arazzo-text, #1c2024)' },
+      '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--arazzo-text, #1c2024)' },
+      '.cm-selectionBackground, &.cm-focused > .cm-scroller .cm-selectionLayer .cm-selectionBackground': {
+        background: 'color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 28%, transparent)',
+      },
+      '.cm-placeholder': { color: 'var(--arazzo-muted, #6b7280)' },
+      '.cm-tooltip': {
+        background: 'var(--arazzo-bg, #fff)',
+        color: 'var(--arazzo-text, #1c2024)',
+        border: '1px solid var(--arazzo-border, #e3e6ea)',
+        borderRadius: 'var(--arazzo-radius, 8px)',
+        boxShadow: '0 6px 24px rgba(0, 0, 0, 0.18)',
+        overflow: 'hidden',
+      },
+      '.cm-tooltip.cm-tooltip-autocomplete > ul': {
+        font: '12px ui-monospace, SFMono-Regular, Menlo, monospace',
+        maxHeight: '200px',
+      },
+      '.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '4px 8px 4px 4px' },
+      '.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]': {
+        background: 'var(--arazzo-accent, #3b6cf6)',
+        color: '#fff',
+      },
+      '.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail': {
+        color: 'rgba(255, 255, 255, 0.85)',
+      },
+      '.cm-completionDetail': {
+        color: 'var(--arazzo-muted, #6b7280)', fontStyle: 'italic', marginLeft: '0.7em',
+      },
+      '.cm-completionIcon': { color: 'var(--arazzo-muted, #6b7280)' },
+    });
     const singleLine = state.EditorState.transactionFilter.of(
       (tr) => (tr.newDoc.lines > 1 ? [] : tr),
     );
@@ -210,6 +244,7 @@ class ArazzoExpressionInput extends ArazzoElement {
         extensions: [
           lang,
           highlight,
+          chrome,
           singleLine,
           autocomplete.autocompletion({ override: [completionSource], activateOnTyping: true }),
           commands.history(),
