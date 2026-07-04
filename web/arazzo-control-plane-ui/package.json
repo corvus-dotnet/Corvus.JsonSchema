@@ -44,7 +44,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "node --test test/client.test.mjs test/conformance.test.mjs",
+    "test": "node --test test/client.test.mjs test/conformance.test.mjs test/workflow-graph.test.mjs test/workflow-layout.test.mjs",
     "test:components": "web-test-runner --config test/web-test-runner.config.mjs",
     "test:smoke": "playwright test --config test/playwright.config.mjs",
     "test:browser": "npm run test:components && npm run test:smoke",
