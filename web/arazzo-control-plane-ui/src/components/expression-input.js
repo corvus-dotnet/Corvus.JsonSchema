@@ -79,15 +79,19 @@ class ArazzoExpressionInput extends ArazzoElement {
   get usingFallback() { return !this._view; }
 
   get value() {
-    return this._view ? this._view.state.doc.toString() : (this.$('input')?.value ?? '');
+    if (this._view) return this._view.state.doc.toString();
+    if (this._built) return this.$('input')?.value ?? '';
+    return this._pending ?? (this.getAttribute('value') || '');
   }
 
   set value(text) {
     const v = String(text ?? '');
     if (this._view) {
       this._view.dispatch({ changes: { from: 0, to: this._view.state.doc.length, insert: v } });
-    } else if (this.$('input')) {
+    } else if (this._built) {
       this.$('input').value = v;
+    } else {
+      this._pending = v; // set before connection — applied when the shell renders
     }
     this._scheduleValidate();
   }
@@ -109,6 +113,8 @@ class ArazzoExpressionInput extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    const initial = this._pending ?? this.getAttribute('value') ?? '';
+    delete this._pending;
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
@@ -130,7 +136,7 @@ class ArazzoExpressionInput extends ArazzoElement {
       </style>
       <div class="xin" part="input">
         <input type="text" spellcheck="false" autocomplete="off"
-               value="${this.getAttribute('value') ? escapeAttr(this.getAttribute('value')) : ''}"
+               value="${escapeAttr(initial)}"
                placeholder="${escapeAttr(this.getAttribute('placeholder') || '')}">
         <div class="err" hidden part="error"></div>
       </div>

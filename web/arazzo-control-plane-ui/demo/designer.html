@@ -40,6 +40,7 @@
     <aside>
       <section>
         <h2>Selection</h2>
+        <div id="inspector" style="padding: 10px; display: grid; gap: 8px;"></div>
         <pre id="selection">(nothing selected)</pre>
       </section>
       <section>
@@ -64,6 +65,8 @@
     import { EXPRESSION_ROOTS } from '../src/expression-language.js';
     import '../src/components/design-surface.js';
     import '../src/components/expression-input.js';
+    import '../src/components/criteria-editor.js';
+    import '../src/components/action-editor.js';
 
     const surface = document.getElementById('surface');
     const select = document.getElementById('workflow');
@@ -94,19 +97,84 @@
       surface.addEventListener(type, (e) => logEvent(type, e.detail));
     }
 
-    surface.addEventListener('selection-changed', (e) => {
-      const sel = e.detail.selection;
+    // The inspector: selection drives a real editor with write-back into the document — the
+    // drop → select → conditions flow. Edits re-project with positions preserved and never
+    // rebuild the editor mid-typing (only a selection change does).
+    const inspector = document.getElementById('inspector');
+    const heading = (text) => {
+      const h = document.createElement('div');
+      h.style.cssText = 'font-size:11px; color: var(--arazzo-muted, #6b7280); font-weight:600;';
+      h.textContent = text;
+      return h;
+    };
+    function reproject(keepSelection) {
+      surface.layoutOverrides = surface.positions;
+      project();
+      if (keepSelection) surface.selection = keepSelection;
+    }
+    surface.addEventListener('selection-changed', (e) => showSelection(e.detail.selection));
+    function showSelection(sel) {
+      inspector.replaceChildren();
+      selectionPre.textContent = '';
       if (!sel) { selectionPre.textContent = '(nothing selected)'; return; }
-      if (sel.type === 'node') {
-        const wf = doc.workflows.find((w) => w.workflowId === select.value);
-        selectionPre.textContent = JSON.stringify(wf.steps.find((s) => s.stepId === sel.id), null, 2);
-      } else if (sel.type === 'defaults') {
-        const wf = doc.workflows.find((w) => w.workflowId === select.value);
-        selectionPre.textContent = JSON.stringify({ successActions: wf.successActions || [], failureActions: wf.failureActions || [] }, null, 2);
-      } else {
-        selectionPre.textContent = JSON.stringify(sel, null, 2);
+      const wf = doc.workflows.find((w) => w.workflowId === select.value);
+
+      if (sel.type === 'node' && sel.id === '#start') {
+        selectionPre.textContent = JSON.stringify({ inputs: wf.inputs || {} }, null, 2);
+        return;
       }
-    });
+      if (sel.type === 'node' && sel.id === '#end') {
+        selectionPre.textContent = JSON.stringify({ outputs: wf.outputs || {} }, null, 2);
+        return;
+      }
+      if (sel.type === 'node') {
+        const step = wf.steps.find((s) => s.stepId === sel.id);
+        const ed = document.createElement('arazzo-criteria-editor');
+        ed.completionContext = expr.completionContext;
+        ed.value = step.successCriteria || [];
+        inspector.append(heading(`successCriteria — ${sel.id}`), ed);
+        ed.addEventListener('criteria-changed', (ev) => {
+          if (ev.detail.criteria.length) step.successCriteria = ev.detail.criteria;
+          else delete step.successCriteria;
+          reproject(sel);
+        });
+        selectionPre.textContent = JSON.stringify(step, null, 2);
+        return;
+      }
+      if (sel.type === 'edge') {
+        const edge = surface.graph.edges.find((x) => x.id === sel.id);
+        if (!edge || edge.kind === 'seq') {
+          selectionPre.textContent = 'implicit sequence edge — document order, not an action';
+          return;
+        }
+        if (edge.reusable) {
+          selectionPre.textContent = 'reusable action ($components reference) — edit it in the components library';
+          return;
+        }
+        const step = wf.steps.find((s) => s.stepId === edge.from);
+        const list = edge.kind === 'success' ? 'onSuccess' : 'onFailure';
+        const idx = (step?.[list] || []).findIndex((a) => a && a.name === edge.actionName);
+        if (idx < 0) { selectionPre.textContent = '(action not found)'; return; }
+        const ed = document.createElement('arazzo-action-editor');
+        ed.kind = edge.kind;
+        ed.stepIds = wf.steps.map((s) => s.stepId).filter((id) => id !== edge.from);
+        ed.completionContext = expr.completionContext;
+        ed.value = step[list][idx];
+        inspector.append(heading(`${edge.from} · ${list}[${idx}]`), ed);
+        ed.addEventListener('action-changed', (ev) => {
+          step[list][idx] = ev.detail.action;
+          reproject(null);
+          const renamed = surface.graph.edges.find((x) =>
+            x.from === edge.from && x.kind === edge.kind && x.actionName === ev.detail.action.name);
+          if (renamed) surface.selection = { type: 'edge', id: renamed.id };
+        });
+        return;
+      }
+      // defaults layer (and anything else): the raw view
+      selectionPre.textContent = sel.type === 'defaults'
+        ? JSON.stringify({ successActions: wf.successActions || [], failureActions: wf.failureActions || [] }, null, 2)
+        : JSON.stringify(sel, null, 2);
+    }
 
     // Round-trip: drawing an edge writes a goto action — or, dropped on the end terminal, an
     // end action — into the document, re-projects, and SELECTS the new edge (the designer's
