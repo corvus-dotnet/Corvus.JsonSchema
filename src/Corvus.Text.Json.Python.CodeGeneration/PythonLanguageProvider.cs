@@ -452,6 +452,17 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         mod.Typing.Add("cast");
         mod.Body.Append("\n\ndef parse_").Append(module).Append("(data: bytes | str) -> ").Append(typeRef).Append(":\n");
         mod.Body.Append("    return cast(\"").Append(typeRef).Append("\", ").Append(mod.Rt("decode_and_parse")).Append("(data))\n");
+
+        // RFC 7396 merge patch (runtime-ready). apply returns canonical bytes; create returns the patch value.
+        // Each side accepts a decoded value or the wire bytes, decoding via decode_and_parse (the byte-native seam).
+        string decodeDoc = mod.Rt("decode_and_parse") + "(doc) if isinstance(doc, bytes) else doc";
+        mod.Body.Append("\n\ndef apply_merge_patch_").Append(module).Append("(doc: ").Append(typeRef).Append(" | bytes, merge_patch: object) -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("canonicalize")).Append("(").Append(mod.Rt("apply_merge_patch")).Append("(").Append(decodeDoc).Append(", merge_patch))\n");
+        mod.Body.Append("\n\ndef create_merge_patch_").Append(module).Append("(source: ").Append(typeRef).Append(" | bytes, target: ").Append(typeRef).Append(" | bytes) -> object:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("create_merge_patch")).Append("(\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(source) if isinstance(source, bytes) else source,\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(target) if isinstance(target, bytes) else target,\n");
+        mod.Body.Append("    )\n");
     }
 
     private static string AssembleHeader(PyModule mod)
