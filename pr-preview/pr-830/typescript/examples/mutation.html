@@ -196,7 +196,7 @@
 <li><strong><code>{Type}.produce(source, recipe)</code></strong>: an immer-style recipe over a typed, mutable <code>Draft&lt;T&gt;</code> for nested and array edits; the recorded change-set lowers to the same byte-level patch.</li>
 </ul>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/docs/typescript/examples/016-mutation/document.json"><code>document.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/dd3d89a1b032b3093919966ed2280233c2088625/docs/typescript/examples/016-mutation/document.json"><code>document.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Document&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;title&quot;],
   &quot;properties&quot;: {
     &quot;title&quot;: { &quot;type&quot;: &quot;string&quot; },
@@ -205,7 +205,7 @@
     &quot;version&quot;: { &quot;type&quot;: &quot;integer&quot; } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/docs/typescript/examples/016-mutation/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/dd3d89a1b032b3093919966ed2280233c2088625/docs/typescript/examples/016-mutation/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const bytes = Document.build({ title: &quot;Draft&quot;, owner: { name: &quot;Ada&quot;, email: &quot;ada@x.com&quot; }, tags: [&quot;wip&quot;], version: 1 });
 
 Document.patch(bytes, { version: 2 });           // only &quot;version&quot; is rewritten
