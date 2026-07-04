@@ -27,7 +27,8 @@ describe('<arazzo-access-overview>', () => {
     await waitFor(() => el.shadowRoot.querySelector('.grant'));
     ok([...el.shadowRoot.querySelectorAll('.grant .claim')].some((c) => c.textContent.includes('sub = u-1042')), 'shows the sub=u-1042 reach grant');
     ok([...el.shadowRoot.querySelectorAll('[data-workflow]')].some((b) => b.dataset.workflow === 'nightly-reconcile'), 'shows administered nightly-reconcile');
-    ok([...el.shadowRoot.querySelectorAll('[data-cred]')].some((b) => b.dataset.cred === 'billing@staging'), 'shows usable billing@staging');
+    // Only the identity-scoped credential — shared credentials (usable by any run) are omitted (design §6.1).
+    equal([...el.shadowRoot.querySelectorAll('[data-cred]')].map((b) => b.dataset.cred).join(','), 'billing@staging', 'shows only the identity-scoped credential');
     ok(el.shadowRoot.querySelector('[data-revoke]'), 'revoke shown with security:write');
     ok(el.shadowRoot.querySelector('.who .gchip'), 'grantee chip shown');
   });
