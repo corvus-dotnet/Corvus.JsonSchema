@@ -552,7 +552,8 @@ test('getAccessGrants for Ada projects her binding, administered workflow, and u
   const { bindings, administers, credentialUsage } = await c.getAccessGrants(grantee);
   assert.ok(bindings.some((b) => b.claimType === 'sub' && b.claimValue === 'u-1042'), 'her sub binding is projected');
   assert.ok(administers.some((a) => a.baseWorkflowId === 'nightly-reconcile'), 'the workflow she administers is projected');
-  assert.ok(credentialUsage.some((u) => u.sourceName === 'billing' && u.environment === 'staging'), 'her usage-restricted credential is projected');
+  // Only the credential scoped to her identity — shared bindings (usable by any run) are omitted (design §6.1).
+  assert.deepEqual(credentialUsage, [{ sourceName: 'billing', environment: 'staging' }]);
 });
 
 test('getAccessGrants for the payments team projects the team binding', async () => {
