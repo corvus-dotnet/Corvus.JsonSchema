@@ -473,6 +473,13 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(target) if isinstance(target, bytes) else target,\n");
         mod.Body.Append("    )\n");
 
+        // produce: run a recipe that mutates a decoded draft in place, returning canonical bytes (the Pythonic
+        // whole-value transform; the byte-native patch above is the targeted, splice-only counterpart).
+        mod.NeedsCallable = true;
+        mod.Typing.Add("cast");
+        mod.Body.Append("\n\ndef produce_").Append(module).Append("(source: bytes, recipe: Callable[[").Append(typeRef).Append("], None]) -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("produce")).Append("(source, cast(\"Callable[[object], None]\", recipe))\n");
+
         // Model C: byte-native partial update. Each changed member's value bytes are SPLICED into the source
         // document and every other byte copied through verbatim (no full parse + re-serialise) - the runtime
         // rmw path. `changes` upserts members; `removals` deletes named members. Array-element edits + the

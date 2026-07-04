@@ -12,7 +12,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import NamedTuple, TypedDict
 
-from .core import build
+from .core import build, canonicalize, decode_and_parse
 
 _QUOTE = 0x22
 _BACKSLASH = 0x5C
@@ -403,6 +403,12 @@ def rmw_produce_full(
 
 
 def produce(source: bytes, recipe: Callable[[object], None]) -> bytes:
-    """Record mutations on a typed draft of the parsed ``source`` and lower them to a byte patch (a later slice)."""
-    del source, recipe
-    raise NotImplementedError("produce (draft recipe, Model C) is a later slice")
+    """Apply ``recipe`` to a mutable parsed draft of ``source``, returning the result as canonical bytes.
+
+    ``recipe`` mutates the decoded value in place (e.g. ``draft["k"] = v``). This is the recipe-driven
+    whole-value transform, the idiomatic-Python counterpart to the TypeScript immer draft (which the byte-native
+    ``patch`` path already covers for targeted, splice-only edits).
+    """
+    draft = decode_and_parse(source)
+    recipe(draft)
+    return canonicalize(draft)
