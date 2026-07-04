@@ -471,9 +471,20 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         List<PropertyDeclaration> props = [.. td.PropertyDeclarations];
         if (props.Count > 0)
         {
+            bool hasArrayProps = false;
+            foreach (PropertyDeclaration p in props)
+            {
+                if (IsArrayType(p.ReducedPropertyType))
+                {
+                    hasArrayProps = true;
+                    break;
+                }
+            }
+
             mod.NeedsMapping = true;
             mod.NeedsSequence = true;
-            mod.Body.Append("\n\ndef patch_").Append(module).Append("(source: bytes, changes: Mapping[str, object], removals: Sequence[str] | None = None) -> bytes:\n");
+            string arraysParam = hasArrayProps ? ", arrays: Mapping[str, " + mod.Rt("RmwArrayOps") + "] | None = None" : string.Empty;
+            mod.Body.Append("\n\ndef patch_").Append(module).Append("(source: bytes, changes: Mapping[str, object], removals: Sequence[str] | None = None").Append(arraysParam).Append(") -> bytes:\n");
             mod.Body.Append("    targets: list[").Append(mod.Rt("RmwTarget")).Append("] = []\n");
             foreach (PropertyDeclaration p in props)
             {
@@ -482,10 +493,41 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
                 mod.Body.Append("        targets.append(").Append(mod.Rt("RmwTarget")).Append('(').Append(nameLit).Append(".encode(), ").Append(mod.Rt("build")).Append("(changes[").Append(nameLit).Append("])))\n");
             }
 
-            mod.Body.Append("    if removals:\n");
-            mod.Body.Append("        return ").Append(mod.Rt("rmw_produce_full")).Append("(source, targets, [n.encode() for n in removals], [])\n");
-            mod.Body.Append("    return ").Append(mod.Rt("rmw_upsert")).Append("(source, targets)\n");
+            if (hasArrayProps)
+            {
+                mod.Body.Append("    array_edits: list[").Append(mod.Rt("RmwArrayEdit")).Append("] = []\n");
+                mod.Body.Append("    if arrays is not None:\n");
+                foreach (PropertyDeclaration p in props)
+                {
+                    if (!IsArrayType(p.ReducedPropertyType))
+                    {
+                        continue;
+                    }
+
+                    string nameLit = PyEmit.Str(p.JsonPropertyName);
+                    mod.Body.Append("        if ").Append(nameLit).Append(" in arrays:\n");
+                    mod.Body.Append("            array_edits.append(").Append(mod.Rt("RmwArrayEdit")).Append('(').Append(nameLit).Append(".encode(), arrays[").Append(nameLit).Append("], 0))\n");
+                }
+
+                mod.Body.Append("    if removals or array_edits:\n");
+                mod.Body.Append("        return ").Append(mod.Rt("rmw_produce_full")).Append("(source, targets, [n.encode() for n in removals] if removals else [], array_edits)\n");
+                mod.Body.Append("    return ").Append(mod.Rt("rmw_upsert")).Append("(source, targets)\n");
+            }
+            else
+            {
+                mod.Body.Append("    if removals:\n");
+                mod.Body.Append("        return ").Append(mod.Rt("rmw_produce_full")).Append("(source, targets, [n.encode() for n in removals], [])\n");
+                mod.Body.Append("    return ").Append(mod.Rt("rmw_upsert")).Append("(source, targets)\n");
+            }
         }
+    }
+
+    // A property whose reduced type is an array (a plain items array or a tuple/prefixItems array): the members
+    // that gain byte-native array-element edits in patch_<t>.
+    private static bool IsArrayType(TypeDeclaration td)
+    {
+        TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
+        return SchemaTypes(reduced).Contains("array") || (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType()) is not null;
     }
 
     private static string AssembleHeader(PyModule mod)

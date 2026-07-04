@@ -19,7 +19,7 @@ from .patch import (
     create_merge_patch,
     create_patch,
 )
-from .produce import RmwTarget, produce, rmw_produce_full, rmw_upsert
+from .produce import ListOps, RmwArrayEdit, RmwArrayOps, RmwTarget, produce, rmw_produce_full, rmw_upsert
 from .results import NOEV, Annotation, Ev, Failure, Results, fresh
 from .temporal import to_duration, to_instant, to_plain_date, to_plain_time
 
@@ -34,7 +34,10 @@ __all__ = [
     "Time",
     "TimeDelta",
     "JsonPatchError",
+    "ListOps",
     "Results",
+    "RmwArrayEdit",
+    "RmwArrayOps",
     "RmwTarget",
     "apply_merge_patch",
     "apply_patch",
