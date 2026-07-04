@@ -153,6 +153,18 @@ test('an unknown workflowId projects empty with a problem', () => {
   assert.equal(g.problems.length, 1);
 });
 
+test('identically-named actions still yield unique edge ids', () => {
+  const doc = structuredClone(designerFixture);
+  doc.workflows[0].steps[0].onSuccess = [
+    { name: 'jump', type: 'goto', stepId: 'manual-review', criteria: [{ condition: '$statusCode == 200' }] },
+    { name: 'jump', type: 'goto', stepId: 'manual-review', criteria: [{ condition: '$statusCode == 202' }] },
+  ];
+  const g = projectWorkflow(doc, 'place-order');
+  const jumps = g.edges.filter((e) => e.actionName === 'jump');
+  assert.equal(jumps.length, 2);
+  assert.notEqual(jumps[0].id, jumps[1].id, 'ids deduplicated');
+});
+
 test('a cross-workflow goto becomes an exit edge to a workflow: target', () => {
   const doc = structuredClone(designerFixture);
   doc.workflows[0].steps[0].onSuccess = [{ name: 'handoff', type: 'goto', workflowId: 'order-with-compensation' }];

@@ -107,18 +107,35 @@
     });
 
     // Round-trip: drawing an edge writes a goto action — or, dropped on the end terminal, an
-    // end action — into the document and re-projects.
+    // end action — into the document, re-projects, and SELECTS the new edge (the designer's
+    // drop → select → edit-criteria flow; the inspector will open on the action's conditions).
+    // An identical unconditional duplicate is meaningless, so it selects the existing edge instead.
     surface.addEventListener('edge-created', (e) => {
       const { from, to, kind } = e.detail;
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       const step = wf.steps.find((s) => s.stepId === from);
       const list = kind === 'success' ? 'onSuccess' : 'onFailure';
+      const actions = step[list] || [];
+
+      const existing = surface.graph.edges.find((x) =>
+        x.from === from && x.to === to && x.kind === kind && !x.criteriaSummary);
+      if (existing) {
+        surface.selection = { type: 'edge', id: existing.id };
+        logEvent('edge-exists', { id: existing.id, note: 'identical unconditional edge — selected it instead' });
+        return;
+      }
+
+      const baseName = to === '#end' ? `end-on-${kind}` : `goto-${to}`;
+      let name = baseName;
+      for (let n = 2; actions.some((a) => a.name === name); n++) name = `${baseName}-${n}`;
       const action = to === '#end'
-        ? { name: `end-on-${kind}`, type: 'end' }
-        : { name: `goto-${to}`, type: 'goto', stepId: to };
-      step[list] = [...(step[list] || []), action];
+        ? { name, type: 'end' }
+        : { name, type: 'goto', stepId: to };
+      step[list] = [...actions, action];
       surface.layoutOverrides = surface.positions; // keep the canvas stable across the re-projection
       project();
+      const created = surface.graph.edges.find((x) => x.from === from && x.actionName === name);
+      if (created) surface.selection = { type: 'edge', id: created.id };
     });
 
     // A canned debug-session trace: the declined-payment path into manual review.
