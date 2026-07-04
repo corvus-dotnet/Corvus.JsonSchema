@@ -145,12 +145,15 @@ class ArazzoStepInspector extends ArazzoElement {
       </div>
 
       <h3>success criteria</h3>
+      <div class="hint">the verdict: ALL must match for the step to succeed — failing them is what makes it fail</div>
       <div class="template-slot"></div>
       <div class="crit"></div>
 
       <h3>on success</h3>
+      <div class="hint">routing when it succeeded — first match wins; nothing matching falls through to the next step</div>
       <div class="onsuccess"></div>
       <h3>on failure</h3>
+      <div class="hint">routing when it failed — first match wins; nothing matching falls back to the workflow defaults, then faults</div>
       <div class="onfailure"></div>
       <div class="localize-slot"></div>
 
