@@ -464,6 +464,15 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(target) if isinstance(target, bytes) else target,\n");
         mod.Body.Append("    )\n");
 
+        // RFC 6902 JSON Patch (runtime-ready). apply returns canonical bytes; create returns the ops list.
+        mod.Body.Append("\n\ndef apply_patch_").Append(module).Append("(doc: ").Append(typeRef).Append(" | bytes, patch: object) -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("canonicalize")).Append("(").Append(mod.Rt("apply_patch")).Append("(").Append(decodeDoc).Append(", patch))\n");
+        mod.Body.Append("\n\ndef create_patch_").Append(module).Append("(source: ").Append(typeRef).Append(" | bytes, target: ").Append(typeRef).Append(" | bytes) -> object:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("create_patch")).Append("(\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(source) if isinstance(source, bytes) else source,\n");
+        mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(target) if isinstance(target, bytes) else target,\n");
+        mod.Body.Append("    )\n");
+
         // Model C: byte-native partial update. Each changed member's value bytes are SPLICED into the source
         // document and every other byte copied through verbatim (no full parse + re-serialise) - the runtime
         // rmw path. `changes` upserts members; `removals` deletes named members. Array-element edits + the
