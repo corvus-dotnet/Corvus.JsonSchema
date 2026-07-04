@@ -32,7 +32,7 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
   calls it a *security binding*". Sweep `access-model.md`, `ui-design.md`, `ux-review.md` for stray
   "grant" / "claim→rule binding" variants.
 
-- [ ] **3. "Sources" tab → "Connections"** (decision C). The demo tab named "Sources" manages
+- [x] **3. "Sources" tab → "Connections"** (decision C). The demo tab named "Sources" manages
   source *credentials* (the rotation worklist), not the `/sources` registry. Rename the tab in the
   demo and its references in `ui-design.md` / `ux-review.md`. Elsewhere use the three precise
   terms: *source description* (in-document), *source document* (the file), *registered source*
