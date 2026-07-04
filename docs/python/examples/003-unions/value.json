@@ -1,0 +1,8 @@
+{
+  "title": "Value",
+  "oneOf": [
+    { "type": "string" },
+    { "type": "number" },
+    { "type": "boolean" }
+  ]
+}

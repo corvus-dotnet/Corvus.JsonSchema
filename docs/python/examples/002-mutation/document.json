@@ -1,0 +1,11 @@
+{
+  "title": "Document",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string", "default": "Untitled" },
+    "version": { "type": "integer", "default": 1 },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}
