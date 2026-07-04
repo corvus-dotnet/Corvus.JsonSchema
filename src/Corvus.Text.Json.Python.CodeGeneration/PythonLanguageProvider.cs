@@ -463,6 +463,29 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(source) if isinstance(source, bytes) else source,\n");
         mod.Body.Append("        ").Append(mod.Rt("decode_and_parse")).Append("(target) if isinstance(target, bytes) else target,\n");
         mod.Body.Append("    )\n");
+
+        // Model C: byte-native partial update. Each changed member's value bytes are SPLICED into the source
+        // document and every other byte copied through verbatim (no full parse + re-serialise) - the runtime
+        // rmw path. `changes` upserts members; `removals` deletes named members. Array-element edits + the
+        // draft-recipe `produce` are later slices.
+        List<PropertyDeclaration> props = [.. td.PropertyDeclarations];
+        if (props.Count > 0)
+        {
+            mod.NeedsMapping = true;
+            mod.NeedsSequence = true;
+            mod.Body.Append("\n\ndef patch_").Append(module).Append("(source: bytes, changes: Mapping[str, object], removals: Sequence[str] | None = None) -> bytes:\n");
+            mod.Body.Append("    targets: list[").Append(mod.Rt("RmwTarget")).Append("] = []\n");
+            foreach (PropertyDeclaration p in props)
+            {
+                string nameLit = PyEmit.Str(p.JsonPropertyName);
+                mod.Body.Append("    if ").Append(nameLit).Append(" in changes:\n");
+                mod.Body.Append("        targets.append(").Append(mod.Rt("RmwTarget")).Append('(').Append(nameLit).Append(".encode(), ").Append(mod.Rt("build")).Append("(changes[").Append(nameLit).Append("])))\n");
+            }
+
+            mod.Body.Append("    if removals:\n");
+            mod.Body.Append("        return ").Append(mod.Rt("rmw_produce_full")).Append("(source, targets, [n.encode() for n in removals], [])\n");
+            mod.Body.Append("    return ").Append(mod.Rt("rmw_upsert")).Append("(source, targets)\n");
+        }
     }
 
     private static string AssembleHeader(PyModule mod)
@@ -475,9 +498,20 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
             h.Append("import json\n");
         }
 
+        var abc = new List<string>();
+        if (mod.NeedsMapping)
+        {
+            abc.Add("Mapping");
+        }
+
         if (mod.NeedsSequence)
         {
-            h.Append("from collections.abc import Sequence\n");
+            abc.Add("Sequence");
+        }
+
+        if (abc.Count > 0)
+        {
+            h.Append("from collections.abc import ").Append(string.Join(", ", abc)).Append('\n');
         }
 
         if (mod.Typing.Count > 0)

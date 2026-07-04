@@ -1,32 +1,281 @@
 """The immer-style ``produce`` and the byte-native read-modify-write helpers (Model C).
 
-These are the differentiator path and land in Phase 6 (byte-native RMW). The signatures are fixed here so
-the public surface is stable; the bodies raise ``NotImplementedError`` until then.
+The differentiator path: a partial update is applied by SPLICING the changed members' value bytes into the
+source document, copying every other byte through verbatim, rather than parsing + re-serialising the whole
+value. A faithful port of the TypeScript runtime's Model C (scan / edit / rmw functions). ``produce`` (the
+draft-proxy recipe) and array-element edits are later slices and still raise ``NotImplementedError``.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
+from typing import NamedTuple
+
+_QUOTE = 0x22
+_BACKSLASH = 0x5C
+_COMMA = 0x2C
+_COLON = 0x3A
+_LBRACE = 0x7B
+_RBRACE = 0x7D
+_LBRACK = 0x5B
+_RBRACK = 0x5D
 
 
-def produce(source: bytes, recipe: Callable[[object], None]) -> bytes:
-    """Record mutations on a typed draft of the parsed ``source`` and lower them to a byte patch (Phase 1)."""
-    del source, recipe
-    raise NotImplementedError("produce (Model C) is Phase 1")
+def _is_ws(b: int) -> bool:
+    return b == 0x20 or b == 0x09 or b == 0x0A or b == 0x0D
 
 
-def rmw_upsert(source: bytes, targets: Sequence[object]) -> bytes:
-    """Splice changed members' value bytes into ``source``, copying the rest through verbatim (Phase 1)."""
-    del source, targets
-    raise NotImplementedError("rmw_upsert (Model C) is Phase 1")
+@dataclass
+class RmwTarget:
+    """A member to upsert: ``name`` (raw UTF-8, unquoted) and its new value ``content`` (JSON bytes). ``vbs`` /
+    ``vbe`` are the source value-byte span found by :func:`scan_targets` (``-1`` = not present)."""
+
+    name: bytes
+    content: bytes
+    vbs: int = field(default=-1)
+    vbe: int = field(default=-1)
+
+
+class RmwMember(NamedTuple):
+    """A scanned object member: name span [ns, ne) (INCLUDING the quotes) and value span [vs, ve)."""
+
+    ns: int
+    ne: int
+    vs: int
+    ve: int
+
+
+def _skip_string_from(buf: bytes, i: int) -> int:
+    i += 1
+    while True:
+        q = buf.find(b'"', i)
+        if q < 0:
+            raise ValueError("unterminated string")
+        b, bs = q - 1, 0
+        while b >= 0 and buf[b] == _BACKSLASH:
+            bs += 1
+            b -= 1
+        i = q + 1
+        if (bs & 1) == 0:
+            return i
+
+
+def _skip_container_from(buf: bytes, i: int, length: int) -> int:
+    depth = 0
+    while True:
+        if i >= length:
+            raise ValueError("unterminated container")
+        b = buf[i]
+        if b == _QUOTE:
+            i = _skip_string_from(buf, i)
+            continue
+        if b == _LBRACE or b == _LBRACK:
+            depth += 1
+            i += 1
+            continue
+        if b == _RBRACE or b == _RBRACK:
+            depth -= 1
+            i += 1
+            if depth == 0:
+                return i
+            continue
+        i += 1
+
+
+def _skip_value_from(buf: bytes, i: int, length: int) -> int:
+    b = buf[i]
+    if b == _QUOTE:
+        return _skip_string_from(buf, i)
+    if b == _LBRACE or b == _LBRACK:
+        return _skip_container_from(buf, i, length)
+    while i < length:
+        c = buf[i]
+        if c == _COMMA or c == _RBRACE or c == _RBRACK or _is_ws(c):
+            break
+        i += 1
+    return i
+
+
+def _eq_name(buf: bytes, start: int, end: int, name: bytes) -> bool:
+    return buf[start:end] == name
+
+
+def scan_targets(buf: bytes, targets: Sequence[RmwTarget]) -> bool:
+    """Locate each target's value-byte span in ``buf``, setting ``vbs``/``vbe`` (``-1`` if absent). Returns
+    True when every target was found (the fast in-place upsert path)."""
+    length = len(buf)
+    i = 0
+    remaining = len(targets)
+    for t in targets:
+        t.vbs = -1
+    if length >= 3 and buf[0] == 0xEF and buf[1] == 0xBB and buf[2] == 0xBF:
+        i = 3
+    while i < length and _is_ws(buf[i]):
+        i += 1
+    i += 1
+    while remaining > 0 and i < length:
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        if i >= length or buf[i] == _RBRACE:
+            break
+        ns = i + 1
+        i = _skip_string_from(buf, i)
+        ne = i - 1
+        hit = -1
+        for k, t in enumerate(targets):
+            if t.vbs == -1 and _eq_name(buf, ns, ne, t.name):
+                hit = k
+                break
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        i += 1
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        vs = i
+        i = _skip_value_from(buf, i, length)
+        if hit >= 0:
+            targets[hit].vbs = vs
+            targets[hit].vbe = i
+            remaining -= 1
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        if i < length and buf[i] == _COMMA:
+            i += 1
+            continue
+        if i < length and buf[i] == _RBRACE:
+            break
+    return remaining == 0
+
+
+def apply_edits_bytes(buf: bytes, edits: list[tuple[int, int, bytes]]) -> bytes:
+    """Apply non-overlapping ``(offset, length, content)`` edits to ``buf``, copying the rest through."""
+    edits.sort(key=lambda e: e[0])
+    out = bytearray()
+    src = 0
+    for offset, length, content in edits:
+        out += buf[src:offset]
+        out += content
+        src = offset + length
+    out += buf[src:]
+    return bytes(out)
+
+
+def scan_all(buf: bytes) -> tuple[list[RmwMember], int]:
+    """Scan every top-level object member; returns the members and the offset of the closing ``}``."""
+    length = len(buf)
+    i = 0
+    if length >= 3 and buf[0] == 0xEF and buf[1] == 0xBB and buf[2] == 0xBF:
+        i = 3
+    while i < length and _is_ws(buf[i]):
+        i += 1
+    i += 1
+    out: list[RmwMember] = []
+    while True:
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        if i >= length or buf[i] == _RBRACE:
+            break
+        ns = i
+        i = _skip_string_from(buf, i)
+        ne = i
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        i += 1
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        vs = i
+        i = _skip_value_from(buf, i, length)
+        out.append(RmwMember(ns, ne, vs, i))
+        while i < length and _is_ws(buf[i]):
+            i += 1
+        if i < length and buf[i] == _COMMA:
+            i += 1
+            continue
+        if i < length and buf[i] == _RBRACE:
+            break
+    return out, i
+
+
+def find_member(buf: bytes, members: Sequence[RmwMember], name: bytes) -> int:
+    for k, m in enumerate(members):
+        if _eq_name(buf, m.ns + 1, m.ne - 1, name):
+            return k
+    return -1
+
+
+def member_bytes(name: bytes, content: bytes) -> bytes:
+    return b'"' + name + b'":' + content
+
+
+def rmw_upsert(source: bytes, targets: Sequence[RmwTarget]) -> bytes:
+    """Splice changed members' value bytes into ``source``, copying the rest through verbatim."""
+    if len(targets) == 0:
+        return source
+    scan_targets(source, targets)
+    if all(t.vbs >= 0 for t in targets):
+        edits = [(t.vbs, t.vbe - t.vbs, t.content) for t in targets]
+        return apply_edits_bytes(source, edits)
+    return rmw_produce_full(source, targets, [], [])
 
 
 def rmw_produce_full(
     source: bytes,
-    targets: Sequence[object],
-    removals: Sequence[bytes],
+    set_targets: Sequence[RmwTarget],
+    remove_names: Sequence[bytes],
     array_edits: Sequence[object],
 ) -> bytes:
-    """Produce a new document applying upserts, removals, and array edits over ``source`` bytes (Phase 1)."""
-    del source, targets, removals, array_edits
-    raise NotImplementedError("rmw_produce_full (Model C) is Phase 1")
+    """Produce a new document applying upserts + removals over ``source`` bytes (array edits: Phase 2)."""
+    if array_edits:
+        raise NotImplementedError("rmw array-element edits (Model C) are a later slice")
+    members, close = scan_all(source)
+    n = len(members)
+    edits: list[tuple[int, int, bytes]] = []
+    adds: list[RmwTarget] = []
+    for t in set_targets:
+        i = find_member(source, members, t.name)
+        if i < 0:
+            adds.append(t)
+        else:
+            edits.append((members[i].vs, members[i].ve - members[i].vs, t.content))
+    removed = [False] * n
+    for name in remove_names:
+        i = find_member(source, members, name)
+        if i < 0:
+            raise ValueError("patch: removed member not present in source")
+        removed[i] = True
+    comma = b","
+    j = 0
+    while j < n:
+        if not removed[j]:
+            j += 1
+            continue
+        hi = j
+        while hi + 1 < n and removed[hi + 1]:
+            hi += 1
+        if j == 0 and hi == n - 1:
+            edits.append((members[0].ns, members[n - 1].ve - members[0].ns, b""))
+        elif j == 0:
+            edits.append((members[0].ns, members[hi + 1].ns - members[0].ns, b""))
+        elif hi == n - 1:
+            edits.append((members[j - 1].ve, members[n - 1].ve - members[j - 1].ve, b""))
+        else:
+            edits.append((members[j - 1].ve, members[hi + 1].ns - members[j - 1].ve, comma))
+        j = hi + 1
+    if adds:
+        surviving = sum(1 for k in range(n) if not removed[k])
+        parts: list[bytes] = []
+        for a, add in enumerate(adds):
+            if a > 0 or surviving > 0:
+                parts.append(comma)
+            parts.append(member_bytes(add.name, add.content))
+        edits.append((close, 0, b"".join(parts)))
+    if not edits:
+        return source
+    return apply_edits_bytes(source, edits)
+
+
+def produce(source: bytes, recipe: Callable[[object], None]) -> bytes:
+    """Record mutations on a typed draft of the parsed ``source`` and lower them to a byte patch (a later slice)."""
+    del source, recipe
+    raise NotImplementedError("produce (draft recipe, Model C) is a later slice")

@@ -43,6 +43,9 @@ internal sealed class PyModule(string runtimeModule)
     /// <summary>Gets or sets a value indicating whether the module imports <c>Sequence</c>.</summary>
     public bool NeedsSequence { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether the module imports <c>Mapping</c>.</summary>
+    public bool NeedsMapping { get; set; }
+
     /// <summary>Records a runtime name as used and returns it (for inline composition).</summary>
     /// <param name="name">The runtime name to import.</param>
     /// <returns>The name.</returns>
