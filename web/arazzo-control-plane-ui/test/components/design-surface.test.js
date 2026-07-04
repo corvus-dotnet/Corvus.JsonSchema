@@ -155,13 +155,16 @@ describe('<arazzo-design-surface>', () => {
     const done = nextEvent(el, 'edge-created');
     pointer('pointerdown', port, { clientX: portBox.left + 2, clientY: portBox.top + 2 });
     pointer('pointermove', svg, target);
+    const rubber = el.shadowRoot.querySelector('.rubber');
+    ok(!rubber.hasAttribute('hidden'), 'rubber band is VISIBLE while drawing (attribute, not the HTML-only property)');
+    ok(rubber.classList.contains('rubber-success'), 'rubber band coloured by the edge kind');
     await waitFor(() => node('manual-review').classList.contains('link-target'));
     pointer('pointerup', svg, target);
     const e = await done;
     equal(e.detail.from, 'validate-order');
     equal(e.detail.to, 'manual-review');
     equal(e.detail.kind, 'success');
-    ok(el.shadowRoot.querySelector('.rubber').hidden, 'rubber band hidden again');
+    ok(rubber.hasAttribute('hidden'), 'rubber band hidden again');
   });
 
   it('a goto to another workflow renders an exit chip', () => {
