@@ -27,7 +27,7 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
   `<arazzo-scopes-panel>` as a deprecated alias (`define()` both against the same class) so kit
   consumers don't break. Use "scoped reach" for the per-verb grant value formerly written "Scoped".
 
-- [ ] **2. Grant object naming** (decision B). Canonical term in docs/UI: **grant binding**. Where
+- [x] **2. Grant object naming** (decision B). Canonical term in docs/UI: **grant binding**. Where
   the API/wire name appears (`listSecurityBindings`, …), keep it but introduce it once as "the API
   calls it a *security binding*". Sweep `access-model.md`, `ui-design.md`, `ux-review.md` for stray
   "grant" / "claim→rule binding" variants.
