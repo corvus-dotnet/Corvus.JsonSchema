@@ -541,6 +541,11 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         }
 
         var abc = new List<string>();
+        if (mod.NeedsCallable)
+        {
+            abc.Add("Callable");
+        }
+
         if (mod.NeedsMapping)
         {
             abc.Add("Mapping");
@@ -796,6 +801,7 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         // deadlocks on a recursive/circular schema.
         mod.Body.Append("type ").Append(name).Append(" = ").Append(string.Join(" | ", refs)).Append('\n');
 
+        var matchCases = new List<(string Guard, string Kwarg, string Ref)>();
         foreach (TypeDeclaration m in members)
         {
             TypeDeclaration reduced = m.ReducedTypeDeclaration().ReducedType;
@@ -810,9 +816,18 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
                 continue;
             }
 
+            string kwarg = Snake(TypeNameOf(reduced));
+            string guard = "is_" + kwarg;
+
+            // Collect every guarded member for the match dispatcher (even one whose guard function was already
+            // emitted by another union — the function still exists to call).
+            if (!matchCases.Any(c => c.Guard == guard))
+            {
+                matchCases.Add((guard, kwarg, rf));
+            }
+
             // Dedup guard functions across the WHOLE single file — the same member type reached from two
             // different unions must define `is_<name>` only once (the guard body is identical).
-            string guard = "is_" + Snake(TypeNameOf(reduced));
             if (!mod.EmittedGuards.Add(guard))
             {
                 continue;
@@ -821,6 +836,27 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
             mod.Typing.Add("TypeGuard");
             mod.Body.Append("\n\ndef ").Append(guard).Append("(value: object) -> TypeGuard[").Append(rf).Append("]:\n")
                     .Append("    return ").Append(EvalNameOf(reduced)).Append("(value, ").Append(mod.Rt("fresh")).Append("(), None)\n");
+        }
+
+        // A guard-based match dispatcher (the V5 Match() / TS matchX analog): a PEP 695 generic that tries each
+        // member guard in order and invokes the matching keyword-only handler, raising if nothing matched (a
+        // well-formed union value always matches a branch).
+        if (matchCases.Count > 0)
+        {
+            mod.NeedsCallable = true;
+            mod.Body.Append("\n\ndef match_").Append(ModuleNameOf(td)).Append("[R](value: ").Append(name).Append(", *");
+            foreach ((string _, string kwarg, string rf) in matchCases)
+            {
+                mod.Body.Append(", ").Append(kwarg).Append(": Callable[[").Append(rf).Append("], R]");
+            }
+
+            mod.Body.Append(") -> R:\n");
+            foreach ((string guard, string kwarg, string _) in matchCases)
+            {
+                mod.Body.Append("    if ").Append(guard).Append("(value):\n        return ").Append(kwarg).Append("(value)\n");
+            }
+
+            mod.Body.Append("    raise ValueError(").Append(PyEmit.Str("no " + name + " branch matched")).Append(")\n");
         }
     }
 
