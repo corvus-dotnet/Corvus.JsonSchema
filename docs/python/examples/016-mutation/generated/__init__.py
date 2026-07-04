@@ -17,13 +17,13 @@ def _eval_document(value: object, ev: Ev, r: Results | None) -> bool:
     if not (is_obj(value)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/type")
         ok = False
     if is_obj(value):
         if "id" not in value:
             if r is None:
                 return False
-            r.fail("/required", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/required")
+            r.fail("/required", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/required")
             ok = False
     if is_obj(value):
         _track = not ev.n
@@ -36,7 +36,7 @@ def _eval_document(value: object, ev: Ev, r: Results | None) -> bool:
                 if not (isinstance(_v, str)):
                     if r is None:
                         return False
-                    r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/id/type")
+                    r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/id/type")
                     ok = False
                 if r is not None: r.leave()
                 if _track: ev.mark_prop(_i)
@@ -55,7 +55,7 @@ def _eval_document(value: object, ev: Ev, r: Results | None) -> bool:
                 if not (isinstance(_v, str)):
                     if r is None:
                         return False
-                    r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/title/type")
+                    r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/title/type")
                     ok = False
                 if r is not None: r.leave()
                 if _track: ev.mark_prop(_i)
@@ -65,12 +65,12 @@ def _eval_document(value: object, ev: Ev, r: Results | None) -> bool:
                 if not (is_int(_v)):
                     if r is None:
                         return False
-                    r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/version/type")
+                    r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/version/type")
                     ok = False
                 if r is not None: r.leave()
                 if _track: ev.mark_prop(_i)
     if r is not None and r.verbose and ok:
-        r.annotate("title", "Document", "/title", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/title")
+        r.annotate("title", "Document", "/title", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/title")
     return ok
 
 
@@ -135,7 +135,7 @@ def _eval_id(value: object, ev: Ev, r: Results | None) -> bool:
     if not (isinstance(value, str)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/id/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/id/type")
         ok = False
     return ok
 
@@ -149,7 +149,7 @@ def _eval_tags(value: object, ev: Ev, r: Results | None) -> bool:
     if not (is_arr(value)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/tags/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/tags/type")
         ok = False
     if is_arr(value):
         _track = not ev.n
@@ -159,7 +159,7 @@ def _eval_tags(value: object, ev: Ev, r: Results | None) -> bool:
             if not (isinstance(_v, str)):
                 if r is None:
                     return False
-                r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/tags/items/type")
+                r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/tags/items/type")
                 ok = False
             if r is not None: r.leave()
             if _track: ev.mark_item(_idx)
@@ -175,7 +175,7 @@ def _eval_items(value: object, ev: Ev, r: Results | None) -> bool:
     if not (isinstance(value, str)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/tags/items/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/tags/items/type")
         ok = False
     return ok
 
@@ -189,10 +189,10 @@ def _eval_title(value: object, ev: Ev, r: Results | None) -> bool:
     if not (isinstance(value, str)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/title/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/title/type")
         ok = False
     if r is not None and r.verbose and ok:
-        r.annotate("default", "Untitled", "/default", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/title/default")
+        r.annotate("default", "Untitled", "/default", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/title/default")
     return ok
 
 
@@ -205,10 +205,10 @@ def _eval_version(value: object, ev: Ev, r: Results | None) -> bool:
     if not (is_int(value)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/version/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/version/type")
         ok = False
     if r is not None and r.verbose and ok:
-        r.annotate("default", 1, "/default", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/002-mutation/document.json#/properties/version/default")
+        r.annotate("default", 1, "/default", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/016-mutation/document.json#/properties/version/default")
     return ok
 
 

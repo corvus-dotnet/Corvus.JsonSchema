@@ -1,4 +1,4 @@
-"""Runnable demo for recipe 003, untagged unions.
+"""Runnable demo for recipe 011, untagged unions.
 
 Run it from ``docs/python/examples`` (see ../README.md). The regenerate.ps1 gate type-checks this with
 mypy --strict and pyright, then executes it.

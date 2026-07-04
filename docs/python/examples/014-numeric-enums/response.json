@@ -1,0 +1,2 @@
+{ "title": "Response", "type": "object", "required": ["status"],
+  "properties": { "status": { "enum": [200, 404, 500] } } }

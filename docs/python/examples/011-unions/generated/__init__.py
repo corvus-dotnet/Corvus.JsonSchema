@@ -74,12 +74,12 @@ def _eval_value(value: object, ev: Ev, r: Results | None) -> bool:
         if _onesubs is not None and _onec == 0:
             for _s in _onesubs:
                 r.merge(_s)
-        r.fail("/oneOf", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/003-unions/value.json#/oneOf")
+        r.fail("/oneOf", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/011-unions/value.json#/oneOf")
         ok = False
     ev.merge_props(_oneacc)
     ev.merge_items(_oneacc)
     if r is not None and r.verbose and ok:
-        r.annotate("title", "Value", "/title", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/003-unions/value.json#/title")
+        r.annotate("title", "Value", "/title", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/011-unions/value.json#/title")
     return ok
 
 
@@ -92,7 +92,7 @@ def _eval_one_of(value: object, ev: Ev, r: Results | None) -> bool:
     if not (isinstance(value, str)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/003-unions/value.json#/oneOf/0/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/011-unions/value.json#/oneOf/0/type")
         ok = False
     return ok
 
@@ -106,7 +106,7 @@ def _eval_one_of2(value: object, ev: Ev, r: Results | None) -> bool:
     if not (is_num(value)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/003-unions/value.json#/oneOf/1/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/011-unions/value.json#/oneOf/1/type")
         ok = False
     return ok
 
@@ -120,7 +120,7 @@ def _eval_one_of3(value: object, ev: Ev, r: Results | None) -> bool:
     if not (isinstance(value, bool)):
         if r is None:
             return False
-        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/003-unions/value.json#/oneOf/2/type")
+        r.fail("/type", "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/python/examples/011-unions/value.json#/oneOf/2/type")
         ok = False
     return ok
 

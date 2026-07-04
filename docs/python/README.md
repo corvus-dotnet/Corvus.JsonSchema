@@ -48,5 +48,31 @@ walkthrough README. Regenerate every recipe and run its checks (`mypy --strict`,
 | # | Recipe | JSON Schema construct |
 |---|--------|-----------------------|
 | 001 | [data-object](./examples/001-data-object/) | object, required/optional, scalar + `format` brand |
-| 002 | [mutation](./examples/002-mutation/) | `build` / `patch` (members + arrays) / `with_defaults` |
-| 003 | [unions](./examples/003-unions/) | `oneOf` + `match` (untagged) |
+| 002 | [validation](./examples/002-validation/) | `minLength` / `minimum` / `pattern` / `format` constraints |
+| 003 | [references](./examples/003-references/) | `$ref`, `$defs` |
+| 004 | [open-and-closed](./examples/004-open-and-closed/) | `additionalProperties`, `unevaluatedProperties: false` |
+| 005 | [extending](./examples/005-extending/) | `allOf` (base + extension) |
+| 006 | [constraining](./examples/006-constraining/) | `allOf` (constrain a base) |
+| 007 | [arrays](./examples/007-arrays/) | `items` (homogeneous) |
+| 008 | [nested-arrays](./examples/008-nested-arrays/) | arrays of higher rank |
+| 009 | [tuples](./examples/009-tuples/) | `prefixItems` / positional `items` |
+| 010 | [mixins](./examples/010-mixins/) | `allOf` (multiple bases) |
+| 011 | [unions](./examples/011-unions/) | `oneOf` + `match` (untagged) |
+| 012 | [discriminated-unions](./examples/012-discriminated-unions/) | `oneOf` + `const` discriminator |
+| 013 | [string-enums](./examples/013-string-enums/) | `enum` to `Literal[...]` |
+| 014 | [numeric-enums](./examples/014-numeric-enums/) | numeric `enum` |
+| 015 | [maps](./examples/015-maps/) | `additionalProperties` map |
+| 016 | [mutation](./examples/016-mutation/) | `build` / `patch` (members + arrays) / `with_defaults` |
+| 017 | [conditional](./examples/017-conditional/) | `if` / `then` / `else` |
+| 018 | [defaults](./examples/018-defaults/) | `default` |
+| 019 | [formats](./examples/019-formats/) | `format` brands + `to_temporal` / `to_exact` |
+| 020 | [json-patch](./examples/020-json-patch/) | RFC 7396 merge patch |
+
+## Guides
+
+- [reading-and-validating](./reading-and-validating.md) — `evaluate`, `parse`, the boolean/no-exception model
+- [the-type-surface](./the-type-surface.md) — the full JSON-Schema-to-Python type mapping
+- [mutation](./mutation.md) — `build` / `build_canonical` / byte-native `patch` / `with_defaults`
+- [json-patch](./json-patch.md) — RFC 7396 merge patch (and the RFC 6902 gap)
+- [code-generation](./code-generation.md) — the CLI, output layout, and the type-check gate
+- [runtime](./runtime.md) — the `corvus_json_runtime` package

@@ -1,0 +1,2 @@
+{ "title": "Task", "type": "object", "required": ["status"],
+  "properties": { "status": { "enum": ["todo", "in_progress", "done"] }, "priority": { "enum": ["low", "medium", "high"] } } }

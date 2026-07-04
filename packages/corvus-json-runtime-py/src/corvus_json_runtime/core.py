@@ -105,7 +105,7 @@ def _dump(value: object, sort_keys: bool) -> str:
         return repr(value)
     if isinstance(value, str):
         return json.dumps(value)
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         return "[" + ",".join(_dump(item, sort_keys) for item in value) + "]"
     if isinstance(value, dict):
         items = sorted(value.items(), key=lambda kv: kv[0]) if sort_keys else list(value.items())

@@ -1,0 +1,2 @@
+{ "title": "Account", "type": "object", "required": ["id"],
+  "properties": { "id": { "type": "string", "format": "uuid" }, "website": { "type": "string", "format": "uri" }, "created": { "type": "string", "format": "date-time" } } }

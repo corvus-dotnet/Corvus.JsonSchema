@@ -8,8 +8,10 @@ exact-number primitives (validation on a number's decimal value, never a lossy f
 tracker and spec-output failure collector, temporal conversions over `whenever`, the JSON Pointer and
 deep-equality helpers, the format checks, and the JSON Patch / Merge Patch surface.
 
-This is the Phase 0 skeleton. The evaluate/parse/build core is implemented; the full format family, the
-RFC 6902 patch, the immer-style `produce`, and the byte-native read-modify-write helpers land in later
-phases and currently raise `NotImplementedError`.
+Implemented: the full evaluate/parse/build core, the format family, temporal conversions, RFC 7396 merge
+patch (`apply_merge_patch` / `create_merge_patch`), and the byte-native read-modify-write helpers
+(`rmw_upsert` / `rmw_produce_full`, member and array-element splicing). The RFC 6902 JSON Patch
+(`apply_patch` / `create_patch`) and the immer-style `produce` draft are not yet implemented and currently
+raise `NotImplementedError`.
 
-Sole third-party dependency: `whenever`.
+Third-party dependencies: `whenever` (temporal), `regex` (ECMA-compatible regex), `idna` (IDN hostnames/emails).
