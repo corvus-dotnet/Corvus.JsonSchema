@@ -131,7 +131,9 @@ run milliseconds and exactly reproducible. The UX exploits that:
 - **Run / Pause / Step / Run-to-here / Breakpoints / Stop.** Set breakpoints on steps; run a
   scenario (or an ad-hoc setup); the active step pulses; taken edges light as criteria evaluate
   (success green / failure red); untaken branches dim. While running, the run control is **Pause**
-  (halts before the next step); **Stop** terminates the session and clears the overlay. **Step**
+  (halts before the next step); **Stop** terminates a live session and clears the overlay. A
+  *completed* run deliberately keeps its overlay for inspection — **Clear** is the explicit return
+  to the clean editing surface (starting a new run also replaces it). **Step**
   executes exactly the next step and pauses again — invoked from idle it starts the session paused
   before the first step; "run to here" targets a step. *Every* pause — breakpoint, manual pause,
   or step — hands the paused context to the context explorer and expression console below for
