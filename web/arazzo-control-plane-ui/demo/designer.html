@@ -41,6 +41,15 @@
         <pre id="selection">(nothing selected)</pre>
       </section>
       <section>
+        <h2>Expression console (CM6)</h2>
+        <div style="padding: 10px;">
+          <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
+          <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280); margin-top: 6px;">
+            Completions from the fixture schema — try <code>$st</code> then <code>.</code>
+          </div>
+        </div>
+      </section>
+      <section>
         <h2>Events</h2>
         <pre id="log"></pre>
       </section>
@@ -50,7 +59,9 @@
   <script type="module">
     import { designerFixture } from './designer-fixture.js';
     import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
+    import { EXPRESSION_ROOTS } from '../src/expression-language.js';
     import '../src/components/design-surface.js';
+    import '../src/components/expression-input.js';
 
     const surface = document.getElementById('surface');
     const select = document.getElementById('workflow');
@@ -130,6 +141,27 @@
       }, 900);
       logEvent('simulate', { scenario: 'payment-declined → manual review' });
     });
+
+    // Expression console: completions from the fixture's schema surface, validation of $roots.
+    const expr = document.getElementById('expr');
+    const wf = designerFixture.workflows[0];
+    expr.completionContext = {
+      inputs: Object.keys(wf.inputs?.properties || {}),
+      outputs: Object.keys(wf.outputs || {}),
+      steps: Object.fromEntries(wf.steps.map((s) => [s.stepId, {
+        outputs: Object.keys(s.outputs || {}),
+        summary: s.description,
+      }])),
+    };
+    expr.validator = async (value) => {
+      const bad = [...value.matchAll(/\$[A-Za-z_][A-Za-z0-9_]*/g)]
+        .map((m) => m[0])
+        .filter((root) => !EXPRESSION_ROOTS.includes(root));
+      return bad.length
+        ? { valid: false, errors: bad.map((b) => ({ message: `unknown root '${b}'` })) }
+        : { valid: true };
+    };
+    expr.addEventListener('commit', (e) => logEvent('expression-commit', e.detail));
 
     document.getElementById('fit').addEventListener('click', () => surface.fit());
     document.getElementById('relayout').addEventListener('click', () => { surface.layoutOverrides = {}; surface.fit(); });
