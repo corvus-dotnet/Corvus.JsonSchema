@@ -1,16 +1,17 @@
-// <arazzo-scopes-panel> — manage reusable reach RULES (design §14.2): named row-filter expressions a grant binds per
-// verb. "Rule" is the user-facing term (it matches the API's security rule); the tag stays `arazzo-scopes-panel` for
-// compatibility. A rule is reach (which rows), never capability (which operations) — that lives in the token (§14.1).
+// <arazzo-rules-panel> — manage reusable reach RULES (design §14.2): named row-filter expressions a grant binds per
+// verb. "Rule" is the user-facing term (it matches the API's security rule). Registered as `arazzo-rules-panel`
+// (primary); `arazzo-scopes-panel` is kept as a deprecated alias so kit consumers don't break. A rule is reach (which
+// rows), never capability (which operations) — that lives in the token (§14.1).
 //
-//   <arazzo-scopes-panel base-url="/arazzo/v1" scopes="security:read security:write"></arazzo-scopes-panel>
+//   <arazzo-rules-panel base-url="/arazzo/v1" scopes="security:read security:write"></arazzo-rules-panel>
 //
 // Attributes : base-url, scopes (gates the mutating controls)
 // Properties : .client
 // Events     : scopes-changed {scopes}, loaded {count}, error {problem}
 // Parts      : panel, list, row, detail
 //
-// A master-detail over the scope list (the same shape as the Grants / Catalog / Sources surfaces): a selectable list on
-// the left, a detail pane on the right that AUTHORS the selected scope in place — no modal. A scope is
+// A master-detail over the rule list (the same shape as the Grants / Catalog / Connections surfaces): a selectable list on
+// the left, a detail pane on the right that AUTHORS the selected rule in place — no modal. A rule is
 // { name, expression } over the row-filter grammar. Authoring is template-first: pick a goal and the template writes the
 // expression with a live preview; "Advanced" reveals the raw grammar. The name is the immutable key (read-only on edit).
 
@@ -194,13 +195,13 @@ class ArazzoScopesPanel extends ArazzoElement {
     const form = this._form;
     const expression = this.previewExpression();
     const description = (form.fields.description || '').trim();
-    if (!expression) { form.formError = { title: 'The scope expression is empty.' }; this.renderDetail(); return; }
+    if (!expression) { form.formError = { title: 'The rule expression is empty.' }; this.renderDetail(); return; }
     try {
       if (form.mode === 'edit') {
         await this.client.updateSecurityRule(form.editName, { expression, description: description || undefined });
       } else {
         const name = (form.name || '').trim();
-        if (!name) { form.formError = { title: 'A scope name is required.' }; this.renderDetail(); return; }
+        if (!name) { form.formError = { title: 'A rule name is required.' }; this.renderDetail(); return; }
         await this.client.createSecurityRule({ name, expression, description: description || undefined });
       }
       this.clearDetail();
@@ -455,7 +456,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     pane.querySelector('.confirm').addEventListener('click', () => this.submitForm());
     pane.querySelector('.del')?.addEventListener('click', () => this.deleteScope(f.editName));
 
-    // Scope honesty: a caller without security:write views the scope read-only — inputs disabled, no Save/Delete.
+    // Scope honesty: a caller without security:write views the rule read-only — inputs disabled, no Save/Delete.
     if (!this.canWrite) {
       pane.querySelectorAll('input, select, textarea').forEach((c) => { c.disabled = true; });
       pane.querySelector('.confirm')?.remove();
@@ -465,5 +466,8 @@ class ArazzoScopesPanel extends ArazzoElement {
   }
 }
 
-define('arazzo-scopes-panel', ArazzoScopesPanel);
+define('arazzo-rules-panel', ArazzoScopesPanel);
+// Deprecated alias — the panel manages security *rules*; kit consumers may still use the old tag (normalization A). A
+// trivial subclass is required because one constructor cannot be registered under two tag names.
+define('arazzo-scopes-panel', class ArazzoScopesPanelAlias extends ArazzoScopesPanel {});
 export { ArazzoScopesPanel };

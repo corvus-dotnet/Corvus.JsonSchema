@@ -91,7 +91,7 @@
 
     <div id="view-permissions" role="tabpanel" hidden>
       <arazzo-grants-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-grants-panel>
-      <arazzo-scopes-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write" style="margin-top: 16px;"></arazzo-scopes-panel>
+      <arazzo-rules-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write" style="margin-top: 16px;"></arazzo-rules-panel>
     </div>
 
     <div id="view-promotions" role="tabpanel" hidden>
@@ -138,7 +138,7 @@
     const access = document.querySelector('arazzo-access-requests');
     const overview = document.querySelector('arazzo-access-overview');
     const promotions = document.querySelector('arazzo-availability-requests');
-    const reach = document.querySelector('arazzo-scopes-panel');
+    const reach = document.querySelector('arazzo-rules-panel');
     const bindings = document.querySelector('arazzo-grants-panel');
     const environments = document.querySelector('arazzo-environments');
     const runnersPanel = document.querySelector('arazzo-runners');

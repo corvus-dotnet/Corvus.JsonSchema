@@ -27,37 +27,37 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
   `<arazzo-scopes-panel>` as a deprecated alias (`define()` both against the same class) so kit
   consumers don't break. Use "scoped reach" for the per-verb grant value formerly written "Scoped".
 
-- [x] **2. Grant object naming** (decision B). Canonical term in docs/UI: **grant binding**. Where
+- [ ] **2. Grant object naming** (decision B). Canonical term in docs/UI: **grant binding**. Where
   the API/wire name appears (`listSecurityBindings`, …), keep it but introduce it once as "the API
   calls it a *security binding*". Sweep `access-model.md`, `ui-design.md`, `ux-review.md` for stray
   "grant" / "claim→rule binding" variants.
 
-- [x] **3. "Sources" tab → "Connections"** (decision C). The demo tab named "Sources" manages
+- [ ] **3. "Sources" tab → "Connections"** (decision C). The demo tab named "Sources" manages
   source *credentials* (the rotation worklist), not the `/sources` registry. Rename the tab in the
   demo and its references in `ui-design.md` / `ux-review.md`. Elsewhere use the three precise
   terms: *source description* (in-document), *source document* (the file), *registered source*
   (a `/sources` entry) — never bare "source" where ambiguous.
 
-- [x] **4. Allocation-campaign "draft" jargon** (decision D). "Draft" is now a lifecycle term (a
+- [ ] **4. Allocation-campaign "draft" jargon** (decision D). "Draft" is now a lifecycle term (a
   catalog version not yet available in any environment). In `allocation-protocol.md` /
   `allocation-matrix.md` prose, qualify the pooled write-leaf document as **write draft** going
   forward; historical matrix rows need not be mass-edited. Leave code symbols (e.g.
   `ValidateDraft`) alone unless touched anyway.
 
-- [x] **5. "publish/hosting service" → "hosting service"** (decision E). In `catalog-design.md`'s
+- [ ] **5. "publish/hosting service" → "hosting service"** (decision E). In `catalog-design.md`'s
   future-phase section: *publish* is reserved for minting a catalog version from a working copy;
   the endpoint-serving service is the *hosting service*.
 
-- [x] **6. Qualify bare "tags"** (decision F). Always **user tags** (free-form metadata) /
+- [ ] **6. Qualify bare "tags"** (decision F). Always **user tags** (free-form metadata) /
   **security tags** (versions, runs) / **management tags** (environments, sources, credentials);
   **reach labels** is the umbrella. Fix the ambiguous spots in `execution-host-design.md` §14.2,
   `ui-design.md`, `ux-review.md` — prioritize any sentence where a reader could mistake which kind
   is meant.
 
-- [x] **7. "Reach scopes" → "reach rules"** (decision G). The Access-area label in `ux-review.md`
+- [ ] **7. "Reach scopes" → "reach rules"** (decision G). The Access-area label in `ux-review.md`
   re-fuses the two planes; fix it.
 
-- [x] **8. Readiness is a hard gate** (decision H). Fix the `ux-review.md` spot (~line 278) that
+- [ ] **8. Readiness is a hard gate** (decision H). Fix the `ux-review.md` spot (~line 278) that
   calls readiness "a readiness check, not a hard gate": views may *display* readiness, but
   promotion and the add-workflow wizard never bypass it.
 
