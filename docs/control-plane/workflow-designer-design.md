@@ -8,7 +8,8 @@ workflow interactively against a mock transport and virtual clock, captures that
 scenarios, and publishes to the catalog with the evidence of successful validation. Terms are as
 defined in [`UBIQUITOUSLANGUAGE.md`](./UBIQUITOUSLANGUAGE.md).
 
-Status: **design**. Nothing in this document is built; §14 sequences the delivery.
+Status: **in delivery**. §14 sequences the slices and carries per-slice status; slice 1
+(workspace core: CRUD, validate, workspace table, designer shell) is built.
 
 ## 1. Goals & non-goals
 
@@ -647,9 +648,14 @@ compile; it serves recorded fixtures, clearly marked).
    `dependsOn`, criterion syntax via the runtime's own `CompiledCriterion`, runtime-expression
    syntax, reusable component references, duplicate ids, and first-match-wins reachability.
    Source-dependent checks (operationId/channelPath resolution) arrive with attached sources
-   (slice 2), the schemas endpoint alongside them; the workspace table/designer shell is the next
-   increment. Create-from-version currently requires an explicit `fromVersionNumber`
-   (latest-defaulting arrives with scenario carry-over).*
+   (slice 2), the schemas endpoint alongside them. `<arazzo-workspace-table>` and the designer
+   shell are BUILT: the demo boots into the workspace view, opens a working copy through
+   `model.reset()` (in-place load — no broadcast, history cleared), tracks dirty state, saves with
+   the `expectedEtag` it read (409 surfaces as "a collaborator saved first"), and Validate
+   (saving first when dirty — validation runs on the stored document) renders the Problems tray;
+   clicking a finding reveals the pointed workflow/step on the canvas and in the text tab.
+   Create-from-version currently requires an explicit `fromVersionNumber` (latest-defaulting
+   arrives with scenario carry-over).*
 2. **Operation surface & sources.** `listSourceOperations` (+ registry variant), attach/upload,
    `fetchSourceDocument` (authenticated URL); operation browser + acquisition dialog; step
    creation via inspector (form-first, still no canvas).

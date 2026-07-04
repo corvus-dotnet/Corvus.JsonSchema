@@ -89,6 +89,21 @@ export class WorkflowDocumentModel extends EventTarget {
   }
 
   /**
+   * Replace the document and designer state wholesale — opening a working copy. Mutates IN PLACE
+   * (existing references to `model.document` stay valid), clears undo/redo (a load is not an
+   * edit), and emits `document-changed` with `origin: 'load'` and no ops. Nothing rides the `ops`
+   * transport seam: a load is this participant catching up, not an edit to broadcast.
+   */
+  reset(document, designerState = {}) {
+    replaceContents(this._document, structuredClone(document ?? {}));
+    replaceContents(this._designerState, structuredClone(designerState ?? {}));
+    this._undo.length = 0;
+    this._redo.length = 0;
+    this._lastEdit = null;
+    this._emitChanged({ origin: 'load', label: 'open', actor: this._actor, ops: [] });
+  }
+
+  /**
    * Apply an edit to the DESIGNER STATE (node positions etc.) through the same op pipeline as
    * document edits: the diff's ops are flagged `d: 'designer'`, so they land on the same undo/redo
    * stack (layout moves undo in gesture order, interleaved with document edits) and the same `ops`
@@ -208,6 +223,13 @@ export class WorkflowDocumentModel extends EventTarget {
       detail: { actor: this._actor, seq: ++this._seq, label, ops: structuredClone(ops) },
     }));
   }
+}
+
+// Replaces an object's contents in place (delete all keys, copy the new ones), so references held
+// by editors stay valid across a wholesale load.
+function replaceContents(target, source) {
+  for (const key of Object.keys(target)) delete target[key];
+  Object.assign(target, source);
 }
 
 // ── Path addressing ───────────────────────────────────────────────────────────────────────────
