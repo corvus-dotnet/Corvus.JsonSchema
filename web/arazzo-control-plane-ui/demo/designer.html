@@ -106,27 +106,31 @@
       }
     });
 
-    // Round-trip: drawing an edge writes a goto action into the document and re-projects.
+    // Round-trip: drawing an edge writes a goto action — or, dropped on the end terminal, an
+    // end action — into the document and re-projects.
     surface.addEventListener('edge-created', (e) => {
       const { from, to, kind } = e.detail;
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       const step = wf.steps.find((s) => s.stepId === from);
       const list = kind === 'success' ? 'onSuccess' : 'onFailure';
-      step[list] = [...(step[list] || []), { name: `goto-${to}`, type: 'goto', stepId: to }];
+      const action = to === '#end'
+        ? { name: `end-on-${kind}`, type: 'end' }
+        : { name: `goto-${to}`, type: 'goto', stepId: to };
+      step[list] = [...(step[list] || []), action];
       project();
     });
 
     // A canned debug-session trace: the declined-payment path into manual review.
     const trace = [
-      { active: 'validate-order', steps: {}, edges: [] },
-      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:validate-order'] },
-      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:validate-order'] }, // retry ↻
+      { active: 'validate-order', steps: {}, edges: ['seq:#start'] },
+      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:#start', 'seq:validate-order'] },
+      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:#start', 'seq:validate-order'] }, // retry ↻
       { active: 'manual-review',
         steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped' },
-        edges: ['seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure'] },
+        edges: ['seq:#start', 'seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure'] },
       { active: null,
-        steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped', 'manual-review': 'done-success' },
-        edges: ['seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure'] },
+        steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped', 'manual-review': 'done-success', '#end': 'done-success' },
+        edges: ['seq:#start', 'seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure', 'end:manual-review:halt-after-review:success'] },
     ];
     let timer = null;
     document.getElementById('simulate').addEventListener('click', () => {

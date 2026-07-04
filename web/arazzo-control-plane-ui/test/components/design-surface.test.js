@@ -27,12 +27,19 @@ describe('<arazzo-design-surface>', () => {
     return { clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 };
   };
 
-  it('renders one node per step with kind classes, chips, and the defaults card', () => {
+  it('renders one node per step plus start/end pseudo-nodes, kind classes, chips, defaults card', () => {
     make();
-    equal(el.shadowRoot.querySelectorAll('.node').length, 5, 'five steps');
+    equal(el.shadowRoot.querySelectorAll('.node').length, 7, 'five steps + start + end');
     ok(node('validate-order').classList.contains('kind-operation'), 'operation kind');
     ok(node('await-confirmation').classList.contains('kind-channel'), 'channel kind');
-    ok(node('capture-payment').textContent.includes('■ end'), 'end marker chip');
+    const start = node('#start');
+    const end = node('#end');
+    ok(start.classList.contains('pseudo') && start.querySelector('circle.card'), 'start pseudo circle');
+    ok(end.classList.contains('pseudo') && end.querySelector('circle.card'), 'end pseudo circle');
+    ok(start.textContent.includes('3 inputs'), 'start badges the workflow inputs');
+    ok(end.textContent.includes('1 output'), 'end badges the workflow outputs');
+    ok(!start.querySelector('.port') && !start.querySelector('.bp'), 'pseudo-nodes have no ports/breakpoints');
+    ok(el.shadowRoot.querySelector('.edge[data-id="end:capture-payment:done:success"]'), 'end action is an edge to the terminal');
     ok(node('authorize-payment').textContent.includes('↻'), 'retry chip');
     ok(node('validate-order').textContent.includes('⌁ defaults'), 'ghost defaults chip on inheriting step');
     ok(!node('authorize-payment').textContent.includes('⌁ defaults'), 'no ghost chip when overridden');
@@ -43,7 +50,7 @@ describe('<arazzo-design-surface>', () => {
 
   it('renders sequence, failure, and reusable edges from the projection', () => {
     make();
-    equal(el.shadowRoot.querySelectorAll('.edge-seq').length, 3, 'three sequence edges (end elides the last)');
+    equal(el.shadowRoot.querySelectorAll('.edge-seq').length, 4, 'entry + three step sequence edges (ends elide the rest)');
     const failures = [...el.shadowRoot.querySelectorAll('.edge-failure')];
     equal(failures.length, 2, 'decline goto + reusable escalate');
     ok(failures.some((e) => e.classList.contains('reusable')), 'reusable action edge is marked');

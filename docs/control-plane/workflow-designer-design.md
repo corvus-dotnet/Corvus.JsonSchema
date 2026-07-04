@@ -96,10 +96,15 @@ beyond that model rather than copying it:
   "+ Step") to create a step bound to it, pre-populated with required parameters from the operation
   descriptor. Steps render as cards: method/channel badge, `stepId`, source name, a one-line
   operation summary, and status chips (breakpoint, problems, outputs count).
-- **Edges are semantics, not decoration.** The sequential flow is implicit (Arazzo executes steps in
-  order); `goto`/`retry`/`end` actions are explicit, directional edges/markers. Success edges and
-  failure edges are visually distinct (colour + pattern, not colour alone). Retry renders as a
-  self-loop badge carrying `retryAfter`/`retryLimit`. `end` renders as a terminal marker.
+- **Edges are semantics, not decoration — one grammar: an action is an edge to a target.**
+  **Start and end render as pseudo-nodes** (projection-only, reserved ids `#start`/`#end`, never
+  written into the document): the entry edge leaves start; every `end` action *and* the implicit
+  fall-off-the-last-step completion land on the end terminal, so "how can this workflow finish?"
+  is always visible. Sequence flow is muted; `goto` and `end` actions are explicit directional
+  edges carrying their criteria labels, success/failure distinct by colour + pattern (never colour
+  alone). Retry renders as a self-badge with `retryAfter`/`retryLimit`. Dragging a port onto the
+  end terminal authors an `end` action; the start node is never an action target. Workflow
+  `inputs` anchor to start and `outputs` to end — selecting them opens the matching inspector.
 - **Inherited vs local handling is a visible layer.** Workflow-level `successActions`/
   `failureActions` render as a "defaults" layer (a halo/lane at the surface edge). A step with no
   local handlers shows ghosted inherited markers; clicking one offers **"localize here"** (copy to
@@ -412,13 +417,21 @@ runtime and single-maintainer risk consciously at that point.
 
 ### 6.2 Graph projection rules (library-independent)
 
-- Node per step, in declared order; lanes/columns follow layout, not semantics.
-- Implicit sequence edges step→next-step (muted); explicit action edges (`goto` success/failure)
-  distinct by colour *and* line pattern; `retry` a self-badge; `end` a terminal marker.
+- Node per step, in declared order, bracketed by the **start/end pseudo-nodes** (reserved ids
+  `#start`/`#end`; projection artifacts only — never written into the Arazzo document). Start
+  anchors the workflow `inputs`, end anchors its `outputs`.
+- Implicit sequence edges (muted): start → first step, step → next step, last step → end; elided
+  after a step whose unconditional success action ends or gotos.
+- Explicit action edges: `goto` to a step, `end` to the end terminal — success/failure distinct by
+  colour *and* line pattern, criteria summarized on the label; `retry` a self-badge. One end
+  terminal, not a success/failure pair: the edge's kind already carries that context without
+  inventing outcome semantics Arazzo does not define.
 - The workflow-defaults layer renders inherited actions once (edge halo) + ghosted per-step markers.
 - Sub-workflow steps (workflowId binding) render as openable composite nodes.
-- Debug overlay states: `idle | active(pulse) | done-success | done-failure | skipped | breakpoint`.
-- Selection model: node, edge, defaults-layer, or background (→ workflow inspector).
+- Debug overlay states: `idle | active(pulse) | done-success | done-failure | skipped | breakpoint`;
+  the end terminal lights with the run outcome.
+- Selection model: node, edge, defaults-layer, start (→ inputs), end (→ outputs), or background
+  (→ workflow inspector).
 
 ### 6.3 Surface architecture (why bespoke stays clean)
 
