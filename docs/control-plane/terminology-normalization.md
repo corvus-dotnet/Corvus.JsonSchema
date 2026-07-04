@@ -44,7 +44,7 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
   forward; historical matrix rows need not be mass-edited. Leave code symbols (e.g.
   `ValidateDraft`) alone unless touched anyway.
 
-- [ ] **5. "publish/hosting service" → "hosting service"** (decision E). In `catalog-design.md`'s
+- [x] **5. "publish/hosting service" → "hosting service"** (decision E). In `catalog-design.md`'s
   future-phase section: *publish* is reserved for minting a catalog version from a working copy;
   the endpoint-serving service is the *hosting service*.
 
