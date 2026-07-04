@@ -155,7 +155,7 @@ ask for run access. *Approver:* clear the inbox of requests they can act on.
 ### 6.2 Author a grant (give an identity reach)
 1. **Open Access → Grants** and **search** (server-side + `Load more`).
 2. **`New grant` → WHO:** use the **grantee picker** to find a team/role. *(Pick a person and the form refuses it and points you at the access-request flow; a partial identity is flagged.)*
-3. **WHERE:** for each of **read / write / purge** choose `Denied`, `Unrestricted`, or `Scoped`; for `Scoped`, add one or more scopes via the **server-backed typeahead** (each becomes a removable chip).
+3. **WHERE:** for each of **read / write / purge** choose `Denied`, `Unrestricted`, or **scoped reach**; for scoped reach, add one or more rules via the **server-backed typeahead** (each becomes a removable chip).
 4. **`Create`.** (Editing locks the claim *type*; the value stays editable.)
 
 ### 6.3 Request access (requester)
@@ -199,7 +199,7 @@ ask for run access. *Approver:* clear the inbox of requests they can act on.
 10. **Untyped "extra config" rows** on credentials aren't validated against what the runner expects — easy to mistype a key.
 
 ### 7.3 Terminology (a cross-cutting note)
-The UI deliberately renames API concepts for users — **Scopes** = security *rules*, **Sources** = source *credentials* / connections, **Grants** = *bindings*. The renames are reasonable (more human), but a one-line glossary somewhere in-product (or a tooltip) would help operators who also read the API/CLI, where the original names surface. Worth a deliberate decision rather than drift.
+The UI uses the canonical vocabulary (see [`UBIQUITOUSLANGUAGE.md`](./UBIQUITOUSLANGUAGE.md)) where it reads more human than the API/wire name — **Rules** (the API calls them security *rules*), **Connections** (the tab that manages source *credentials*), **grant bindings** (the API calls them *security bindings*). A one-line in-product glossary or tooltip still helps operators who also read the API/CLI, where the wire names surface.
 
 ### 7.4 Tenant is the ambient boundary, not a user-facing dimension (P1, conceptual)
 Tenant isolation is **system-enforced and ambient**: the deployment's row-security policy stamps the caller's
@@ -400,7 +400,7 @@ is, where its value comes from).
 | 2 | **Recover faulted runs — one realistic case per mode** | ✅ recorded (`ux-clips/2-recover-faulted-run.webm`) | Four *different* faulted runs, each restarted in turn: **Retry** (502 transient blip) → **Rewind** (region quota — region fixed upstream, rewind to `createAccount`) → **Skip + recorded outputs** (KYC unreadable, verified by hand — record schema-typed outputs) → **State-patch** (missing `adopter.email` — patch the context, retry) |
 | 3 | **Register a connection safely** | ✅ recorded (`ux-clips/3-register-connection.webm`) | "References, never secrets" → field-by-field identity → walk the Key Vault reference (vault / secret / version → composed `keyvault://…`) → **"grant the runner's own identity read on the secret (§13.5); writing it is a separate CI/IaC identity; the control plane never reads the store"** → config → whose runs may use it → "Created" |
 | 4 | **Publish a workflow** | ☐ to record | "Add workflow → choose the document" → "Its sources are detected" → "Seed administrators" → "Owner + tags → Add" → "Published; bind its credentials" |
-| 5 | **Author a scope, then grant it** | ☐ to record | "New scope → pick a goal; the expression writes itself" → "New grant → pick a team (not a person)" → "Scoped read via that scope" |
+| 5 | **Author a rule, then grant it** | ☐ to record | "New rule → pick a goal; the expression writes itself" → "New grant → pick a team (not a person)" → "scoped-reach read via that rule" |
 | 6 | **Request access (requester)** | ☐ to record | "Request access — pick a workflow + scopes" → "write auto-includes read" → "Submitted; track or withdraw" |
 
 Each clip is a Playwright run against the in-browser mock (no server), with a caption banner injected per step and
