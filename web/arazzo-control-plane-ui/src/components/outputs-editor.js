@@ -50,6 +50,7 @@ class ArazzoOutputsEditor extends ArazzoElement {
         :host { display: block; }
         .rows { display: grid; gap: 6px; }
         .orow { display: grid; grid-template-columns: minmax(90px, 2fr) 3fr auto; gap: 6px; align-items: center; }
+        .orow > * { min-width: 0; }
         input.oname {
           width: 100%; box-sizing: border-box; font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
           padding: 7px 9px; border: 1px solid var(--_border); border-radius: var(--_radius);

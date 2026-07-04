@@ -79,7 +79,8 @@ export function buildActionList({ actions, kind, stepIds, completionContext, onC
 
 /** The CSS both inspectors include alongside SHARED_CSS for these sections. */
 export const ACTION_LIST_CSS = `
-  .action-list { display: grid; gap: 6px; }
+  .action-list { display: grid; gap: 6px; min-width: 0; }
+  .action-list details, .action-list details > arazzo-action-editor { min-width: 0; }
   .action-list details { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 0; }
   .action-list summary { cursor: pointer; padding: 7px 10px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
   .action-list.success summary::before { content: '✓ '; color: var(--arazzo-status-completed, #2a8a4a); }

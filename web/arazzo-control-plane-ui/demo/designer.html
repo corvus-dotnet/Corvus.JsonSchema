@@ -14,7 +14,8 @@
     main { display: grid; grid-template-columns: 1fr 320px; gap: 12px; padding: 12px 14px; height: calc(100vh - 100px); box-sizing: border-box; }
     arazzo-design-surface { height: 100%; }
     aside { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-    aside section { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    aside section { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+    #inspector, #inspector > * { min-width: 0; }
     aside h2 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); }
     aside pre { margin: 0; padding: 10px; font: 11px ui-monospace, Menlo, monospace; overflow: auto; flex: 1; min-height: 0; }
     #log { max-height: 40vh; }

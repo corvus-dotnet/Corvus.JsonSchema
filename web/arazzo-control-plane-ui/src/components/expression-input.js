@@ -119,7 +119,9 @@ class ArazzoExpressionInput extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; }
-        .xin { position: relative; }
+        .xin { position: relative; min-width: 0; }
+        :host { min-width: 0; }
+        .cm-scroller { overflow-x: auto; }
         input, .cm-editor {
           width: 100%; box-sizing: border-box;
           font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;

@@ -53,7 +53,8 @@ class ArazzoCriteriaEditor extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; }
-        .rows { display: grid; gap: 10px; }
+        .rows { display: grid; gap: 10px; min-width: 0; }
+        .row, .row > div { min-width: 0; }
         .row { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; background: var(--_surface); }
         .head { display: flex; gap: 6px; align-items: center; }
         .head select { font-size: 12px; padding: 4px 26px 4px 8px; }

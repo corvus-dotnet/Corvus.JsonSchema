@@ -66,6 +66,7 @@ class ArazzoActionEditor extends ArazzoElement {
         ${SHARED_CSS}
         :host { display: block; }
         .form { display: grid; gap: 10px; }
+        .form > *, .pair > * { min-width: 0; }
         label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
         input[type="text"], input[type="number"] {
           width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
