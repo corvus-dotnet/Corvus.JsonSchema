@@ -127,8 +127,9 @@ Both must pass.
 
 ## Normalization decisions
 
-Conflicts found by the 2026-07 docs sweep, and the canonical resolutions. Renames marked ⚠ are
-pending fixes in the named surfaces.
+Conflicts found by the 2026-07 docs sweep, and the canonical resolutions. Renames were marked ⚠
+while pending; the 2026-07 normalization pass ([`terminology-normalization.md`](./terminology-normalization.md))
+has since applied them all, so no ⚠ remain.
 
 | # | Conflict | Resolution |
 |---|----------|------------|
