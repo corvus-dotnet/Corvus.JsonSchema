@@ -19,7 +19,7 @@ The kit composes into a four-tab console (`demo/index.html`):
 |---|---|---|
 | **Runs** | Live run management — monitor, diagnose, recover | `arazzo-control-plane` (runs-table, run-detail, resume/cancel/purge dialogs, status-badge) |
 | **Catalog** | The workflow registry + per-workflow administration | `arazzo-catalog` (catalog-table, catalog-detail, add-dialog, administrators-panel, workflow-id / step pickers) |
-| **Sources** | The source credentials ("connections") a run uses | `credentials-table`, `credential-dialog`, `grantee-picker` |
+| **Connections** | The source credentials a run uses | `credentials-table`, `credential-dialog`, `grantee-picker` |
 | **Access** | Reach scopes, grants, and the approval inbox | `grants-panel`, `scopes-panel`, `access-requests-panel`, `grantee-picker`, `access-request-dialog` |
 
 Each tab is a self-contained web component that takes a `base-url` + `scopes` and is permission-gated: a control
@@ -34,8 +34,8 @@ is set). The whole kit is theme-token driven (light/dark/auto).
 |---|---|---|
 | **Operator / SRE** | Runs | Keep workflow runs healthy; find and recover faulted runs fast |
 | **Workflow publisher / owner** | Catalog | Publish and curate workflow versions; hand off administration |
-| **Platform / connections admin** | Sources | Register the credentials a workflow's runs need; control who may use them |
-| **Security admin** | Access → Scopes + Grants | Define the reusable reach vocabulary and grant reach to identities |
+| **Platform / connections admin** | Connections | Register the credentials a workflow's runs need; control who may use them |
+| **Security admin** | Access → Rules + Grants | Define the reusable reach vocabulary and grant reach to identities |
 | **Workflow administrator (approver)** | Access → Approver queue | Clear the inbox of access requests for the workflows they administer |
 | **Requester (any authenticated user)** | Access → My requests | Ask for run access to a workflow and track the outcome |
 
@@ -122,7 +122,7 @@ workflow) safely; retire or delete versions; control *who* may publish further v
 secrets); keep them rotated and visible (expiry); say which identity's runs may use each one.
 
 ### 5.1 Browse & monitor
-1. **Open the Sources tab.** A table of credential bindings with a colour-coded validity status, the secret reference (read-only), the resolved usage grantee, and an expiry countdown.
+1. **Open the Connections tab.** A table of credential bindings with a colour-coded validity status, the secret reference (read-only), the resolved usage grantee, and an expiry countdown.
 2. **Filter** by status (`all / valid / expiring soon / expired`) and source-name substring.
 3. **`Load more`** to page (keyset).
 
@@ -188,7 +188,7 @@ ask for run access. *Approver:* clear the inbox of requests they can act on.
 3. **Scope typeahead silently discards a free-typed value on Enter** if it isn't already in the datalist — type-ahead-then-Enter feels broken. Either accept a server round-trip on commit, or show "no such scope".
 
 **P2 — consistency & scale**
-4. **Two paging idioms.** Runs and Catalog use `‹ Prev / Next ›`; Sources, Access, Scopes, Grants use `Load more`. Pick one model for the console (Load-more reads better for action lists; Prev/Next for dense tables — but be deliberate, not accidental).
+4. **Two paging idioms.** Runs and Catalog use `‹ Prev / Next ›`; Connections, Access, Rules, Grants use `Load more`. Pick one model for the console (Load-more reads better for action lists; Prev/Next for dense tables — but be deliberate, not accidental).
 5. **Catalog list groups client-side.** It fetches versions and groups by base id in the browser, so its search/filter runs over the fetched slice rather than server-side like the rest of the kit (which the paging campaign just made server-paged). At many workflows this is the odd one out; consider a server-side base-workflow search to match.
 6. **Purge dialog forgets the last cutoff** (resets to "30 days ago" each open) — minor repeated tax for routine reaping.
 
@@ -222,7 +222,7 @@ system concept into the user surface and is wrong for multi-tenant SaaS. Two con
 and run labels by domain rather than tenant — so the walkthroughs show the product as a tenant actually experiences it.
 
 ### 7.5 Credential creation is rooted in the wrong place (P1, conceptual)
-A standalone **Sources → New credential** that asks the operator to free-type a **source name** and **auth kind** is
+A standalone **Connections → New credential** that asks the operator to free-type a **source name** and **auth kind** is
 back-to-front. The source name *must* match a `sourceDescriptions` entry in a workflow — un-guessable from the Sources
 tab — and the auth kind plus where the secret goes (header/query name, token URL, scopes) are not guesses either: they
 are declared in the source's **OpenAPI/AsyncAPI** document. A credential is, in effect, *a named secret bound to a
@@ -233,7 +233,7 @@ specific source* — so the act of binding belongs where the source (and its aut
 "derived from …" note; the catalog detail's per-workflow Sources panel lists each source's existing bindings and a
 "Set up credential…" that fetches the source doc and opens the derived dialog; the **add-workflow** dialog surfaces
 each source's existing bindings (reuse, default off) or nudges when none (default on) and derives auth from the
-uploaded source document; the Sources tab dropped free-typed create and gained **Duplicate to environment**. *(Demo
+uploaded source document; the Connections tab dropped free-typed create and gained **Duplicate to environment**. *(Demo
 sources carry real `securitySchemes`; clip 3 is recorded from the catalog-detail flow.)*
 
 **Corrected model (as built):**
@@ -246,7 +246,7 @@ sources carry real `securitySchemes`; clip 3 is recorded from the catalog-detail
 - **Reuse, don't recreate.** A credential is bound to a *source*, not a workflow, so the same binding serves every
   workflow that references that source. The per-source step therefore offers **select an existing binding for this
   source that you have access to** *or* set up a new one — you don't rebuild credentials per workflow.
-- **The Sources tab is management, not creation.** Remove the free-typed **New credential** entirely; the tab is
+- **The Connections tab is management, not creation.** Remove the free-typed **New credential** entirely; the tab is
   rotate (re-point the reference), revoke (delete — currently missing, finding #8), grant who-may-use, and watch
   validity/expiry across all bindings. The one create-shaped action that belongs here is **Duplicate to another
   environment** — clone an existing binding's source name + derived auth/config into a new `environment`, pointing at
@@ -332,7 +332,7 @@ This threads everywhere:
 - **Sources/credentials are set up per environment, explicitly** (UI + CLI over the back-end API), visible to anyone
   with reach into that environment. *This revises §7.5's "no standalone create": explicit per-environment source setup
   is legitimate because it is rooted in a **registered source** × a **governed environment you can act in** — not a
-  free-typed tuple. The Sources surface becomes "set up / manage a source's credential in an environment you administer".*
+  free-typed tuple. The Connections surface becomes "set up / manage a source's credential in an environment you administer".*
 - **Readiness is computed only for environments you can act in** — a full source-credential set per such environment.
 
 Implication for the model: an **environment is a first-class, reach-scoped, governed resource** (administrators + audit,
