@@ -192,12 +192,12 @@
 <p>A <code>format</code> (e.g. <code>uuid</code>, <code>uri</code>, <code>date-time</code>) generates a branded type (<code>type Id = Brand&lt;string, &quot;uuid&quot;&gt;</code>) and a factory <code>Id.from(value): Id</code> that checks the format and throws <code>FormatError</code> on failure. The brand means a raw <code>string</code> is <em>not</em> assignable where an <code>Id</code> is expected. You go through the factory, so a value's format is guaranteed by its type. <code>Account.evaluate</code> also checks formats as part of whole-document evaluation.</p>
 <p>A branded value is still a <code>string</code> (or <code>number</code>) at runtime, so it serializes and prints as-is. When you need a <em>strong</em> runtime value, a calendar or instant type for a date, or the exact digits of an arbitrary-precision number, the companion carries a conversion accessor (see <a href="#getting-strong-values-out">Getting strong values out</a>).</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a2dc17a9a359a2a8703d8fc34b75d2025a2e8ea6/docs/typescript/examples/019-formats/account.json"><code>account.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/019-formats/account.json"><code>account.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Account&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;id&quot;],
   &quot;properties&quot;: { &quot;id&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uuid&quot; }, &quot;website&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uri&quot; }, &quot;created&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date-time&quot; } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a2dc17a9a359a2a8703d8fc34b75d2025a2e8ea6/docs/typescript/examples/019-formats/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/019-formats/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">Account.build({
   id: Id.from(&quot;6f9619ff-8b86-d011-b42d-00cf4fc964ff&quot;),
   website: Website.from(&quot;https://example.com&quot;),

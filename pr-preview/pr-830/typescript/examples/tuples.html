@@ -191,14 +191,14 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p><code>prefixItems</code> types each position; <code>items: false</code> forbids anything beyond them, and <code>minItems</code> requires them all to be present. Together they generate a tuple (<code>readonly [number, number, number]</code>) which destructures and indexes positionally with full types.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a2dc17a9a359a2a8703d8fc34b75d2025a2e8ea6/docs/typescript/examples/009-tuples/point3d.json"><code>point3d.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/009-tuples/point3d.json"><code>point3d.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Point3D&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;coord&quot;],
   &quot;properties&quot;: { &quot;coord&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;minItems&quot;: 3,
       &quot;prefixItems&quot;: [ { &quot;type&quot;: &quot;number&quot; }, { &quot;type&quot;: &quot;number&quot; }, { &quot;type&quot;: &quot;number&quot; } ], &quot;items&quot;: false } } }
 </code></pre>
 <p>The generated <code>interface Point3D</code> has <code>coord: readonly [number, number, number]</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a2dc17a9a359a2a8703d8fc34b75d2025a2e8ea6/docs/typescript/examples/009-tuples/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/009-tuples/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const [x, y, z] = p.coord;                  // positional, each typed number
 Point3D.evaluate({ coord: [1, 2] });            // false — minItems 3
 Point3D.evaluate({ coord: [1, 2, 3, 4] });      // false — items: false (no fourth element)
