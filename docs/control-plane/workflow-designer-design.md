@@ -131,10 +131,12 @@ run milliseconds and exactly reproducible. The UX exploits that:
 - **Run / Pause / Step / Run-to-here / Breakpoints / Stop.** Set breakpoints on steps; run a
   scenario (or an ad-hoc setup); the active step pulses; taken edges light as criteria evaluate
   (success green / failure red); untaken branches dim. While running, the run control is **Pause**
-  (halts before the next step); **Stop** terminates the session and clears the overlay. "Step"
-  advances one step; "run to here" targets a step. *Every* pause — breakpoint, manual pause, or
-  step — hands the paused context to the context explorer and expression console below for
-  inspection; resuming is a §8.2 replay with the next stop condition.
+  (halts before the next step); **Stop** terminates the session and clears the overlay. **Step**
+  executes exactly the next step and pauses again — invoked from idle it starts the session paused
+  before the first step; "run to here" targets a step. *Every* pause — breakpoint, manual pause,
+  or step — hands the paused context to the context explorer and expression console below for
+  inspection; step and resume are both §8.2 replays, differing only in how far the stop condition
+  advances (one step vs. the next breakpoint/end).
 - **Virtual clock as a control.** When the run suspends on a timer, the debug controls show the
   wait and offer "advance to due" / "+1s / +1m / +1h"; retries with `retryAfter` show the same.
   Nothing waits in real time.
