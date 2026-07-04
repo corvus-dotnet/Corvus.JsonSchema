@@ -429,6 +429,29 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
 
         mod.Body.Append("\n\n");
         this.EmitValidator(td, mod);
+        EmitConstruction(td, mod);
+    }
+
+    // The construction surface a named type exposes alongside its validator (the Python peer of the TypeScript
+    // companion's build/buildCanonical). An object serialises its TypedDict props to JSON bytes — at the native
+    // floor (`build`, caller key order) or canonically (`canonicalize`, RFC 8785 recursive key sort). produce /
+    // patch (Model C) and the RFC-patch wrappers await the runtime's Phase-1 byte primitives.
+    private static void EmitConstruction(TypeDeclaration td, PyModule mod)
+    {
+        if (!IsObject(td))
+        {
+            return;
+        }
+
+        string module = ModuleNameOf(td);
+        string typeRef = TypeNameOf(td);
+        mod.Body.Append("\n\n\ndef build_").Append(module).Append("(value: ").Append(typeRef).Append(") -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("build")).Append("(value)\n");
+        mod.Body.Append("\n\ndef build_canonical_").Append(module).Append("(value: ").Append(typeRef).Append(") -> bytes:\n");
+        mod.Body.Append("    return ").Append(mod.Rt("canonicalize")).Append("(value)\n");
+        mod.Typing.Add("cast");
+        mod.Body.Append("\n\ndef parse_").Append(module).Append("(data: bytes | str) -> ").Append(typeRef).Append(":\n");
+        mod.Body.Append("    return cast(\"").Append(typeRef).Append("\", ").Append(mod.Rt("decode_and_parse")).Append("(data))\n");
     }
 
     private static string AssembleHeader(PyModule mod)
@@ -547,13 +570,18 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         string rootEv = td.RequiresPropertyEvaluationTracking() || td.RequiresItemsEvaluationTracking()
             ? mod.Rt("fresh") + "()"
             : mod.Rt("NOEV");
+
+        // Byte-native entry: a Uint8Array-equivalent (bytes) is decoded to a Python value first, mirroring the
+        // TypeScript companion's `v instanceof Uint8Array ? decodeAndParse(v) : v`, so evaluate/parse accept
+        // both a decoded value and the wire bytes produced by build/build_canonical.
         mod.Body.Append("\n\n\ndef evaluate(value: object, results: ").Append(mod.Rt("Results")).Append(" | None = None) -> bool:\n");
+        mod.Body.Append("    if isinstance(value, bytes):\n");
+        mod.Body.Append("        value = ").Append(mod.Rt("decode_and_parse")).Append("(value)\n");
         mod.Body.Append("    return ").Append(EvalNameOf(td)).Append("(value, ").Append(rootEv).Append(", results)\n");
 
-        mod.NeedsJson = true;
         mod.Typing.Add("cast");
         mod.Body.Append("\n\ndef parse(data: bytes | str) -> ").Append(name).Append(":\n");
-        mod.Body.Append("    return cast(\"").Append(name).Append("\", json.loads(data))\n");
+        mod.Body.Append("    return cast(\"").Append(name).Append("\", ").Append(mod.Rt("decode_and_parse")).Append("(data))\n");
     }
 
     private static void EmitObjectSurface(TypeDeclaration td, PyModule mod)
