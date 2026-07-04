@@ -46,7 +46,10 @@ warrants it. Backends are enumerated per seam as a **leaf-realisation** column (
 
 `record` = hand-rolled struct/record input · `draft` = already passes a generated CTJ document ·
 `params` = loose scalar params · `list` = collection seam · `bytes` = opaque/0-copy.
-A `draft` shape still requires the full process above — it is *not* presumed minimal.
+A `draft` shape still requires the full process above — it is *not* presumed minimal. (This campaign
+`draft` is a **write draft** — the pooled CTJ document built at a store's write leaf; it is unrelated
+to the lifecycle *Draft*, a catalog version not yet available in any environment. Historical rows and
+`*.Draft()` code symbols keep the bare name; new prose says "write draft".)
 
 ---
 
