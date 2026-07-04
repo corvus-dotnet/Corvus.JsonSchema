@@ -635,6 +635,14 @@ compile; it serves recorded fixtures, clearly marked).
 1. **Workspace core.** Working-copy CRUD + validate + schemas; `<arazzo-workspace-table>`; designer
    shell with **text mode only** (CM6, markers, save/dirty/etag). Create-from-version (documents
    only). *The designer is useful from slice 1.*
+   *Status: CRUD is BUILT end-to-end — the `/workspace/workflows` contract group
+   (`workspace:read`/`workspace:write`, `expectedEtag`-guarded saves → 409), the id-keyed
+   `IWorkspaceWorkflowStore` (+ in-memory reference and conformance suite), the
+   `ArazzoControlPlaneWorkspaceHandler` (create from document / catalog version / blank skeleton,
+   name derivation, reach stamping + escalation guard), server API tests, and the JS client/mock
+   parity. Validate/schemas endpoints and the workspace table/designer shell are the next
+   increments; create-from-version currently requires an explicit `fromVersionNumber`
+   (latest-defaulting arrives with scenario carry-over).*
 2. **Operation surface & sources.** `listSourceOperations` (+ registry variant), attach/upload,
    `fetchSourceDocument` (authenticated URL); operation browser + acquisition dialog; step
    creation via inspector (form-first, still no canvas).

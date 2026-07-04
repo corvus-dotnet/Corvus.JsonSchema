@@ -65,6 +65,12 @@ public static class ControlPlaneScopes
     /// <summary>Register, update, and delete sources (reach-scoped).</summary>
     public const string SourcesWrite = "sources:write";
 
+    /// <summary>The scope permitting listing and reading designer working copies.</summary>
+    public const string WorkspaceRead = "workspace:read";
+
+    /// <summary>The scope permitting creating, saving, and deleting designer working copies.</summary>
+    public const string WorkspaceWrite = "workspace:write";
+
     /// <summary>List where workflow versions are available across environments (reach-scoped).</summary>
     public const string AvailabilityRead = "availability:read";
 
@@ -72,7 +78,7 @@ public static class ControlPlaneScopes
     public const string AvailabilityWrite = "availability:write";
 
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, AvailabilityRead, AvailabilityWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, WorkspaceRead, WorkspaceWrite, AvailabilityRead, AvailabilityWrite];
 }
 
 /// <summary>

@@ -900,3 +900,74 @@ test('persona enforcement: a non-administrator has an empty runner-authorization
   assert.ok((await c.listRunnerAuthorizations()).authorizations.some((a) => a.runnerId === 'runner-us-1'));
   assert.equal((await c.authorizeRunner('production', 'runner-us-1')).status, 'Authorized');
 });
+
+// ---- designer workspace (workflow-designer design §4.1) --------------------------------------------
+
+test('createWorkingCopy round-trips the document and designer state, and list omits them', async () => {
+  const c = makeClient();
+  const created = await c.createWorkingCopy({
+    name: 'retry tuning',
+    document: { arazzo: '1.1.0', info: { title: 'Nightly' }, workflows: [{ workflowId: 'nightly-reconcile', steps: [] }] },
+    designerState: { nodes: { 'step-1': { x: 40, y: 80 } } },
+  });
+  assert.ok(created.id);
+  assert.ok(created.etag);
+  assert.equal(created.name, 'retry tuning');
+  assert.equal(created.document.info.title, 'Nightly');
+  assert.equal(created.designerState.nodes['step-1'].x, 40);
+
+  const single = await c.getWorkingCopy(created.id);
+  assert.equal(single.document.info.title, 'Nightly');
+
+  const { workingCopies } = await c.listWorkingCopies();
+  const entry = workingCopies.find((w) => w.id === created.id);
+  assert.equal(entry.name, 'retry tuning');
+  assert.equal(entry.document, undefined);
+  assert.equal(entry.designerState, undefined);
+});
+
+test('createWorkingCopy derives the name from the first workflowId, or untitled with a skeleton', async () => {
+  const c = makeClient();
+  const derived = await c.createWorkingCopy({ document: { arazzo: '1.1.0', workflows: [{ workflowId: 'pay-invoice', steps: [] }] } });
+  assert.equal(derived.name, 'pay-invoice');
+
+  const blank = await c.createWorkingCopy();
+  assert.equal(blank.name, 'untitled');
+  assert.equal(blank.document.arazzo, '1.1.0');
+  assert.equal(blank.document.info.title, 'untitled');
+});
+
+test('saveWorkingCopy is etag-guarded: a stale save 409s and clobbers nothing', async () => {
+  const c = makeClient();
+  const created = await c.createWorkingCopy({ name: 'wc', document: { arazzo: '1.1.0', 'x-rev': 1 } });
+
+  const saved = await c.saveWorkingCopy(created.id, { document: { arazzo: '1.1.0', 'x-rev': 2 }, expectedEtag: created.etag });
+  assert.equal(saved.document['x-rev'], 2);
+  assert.notEqual(saved.etag, created.etag);
+  assert.ok(saved.lastUpdatedBy);
+
+  // A collaborator saving with the etag they read earlier conflicts.
+  await assert.rejects(
+    () => c.saveWorkingCopy(created.id, { document: { arazzo: '1.1.0', 'x-rev': 3 }, expectedEtag: created.etag }),
+    (e) => e instanceof ProblemError && e.status === 409);
+  assert.equal((await c.getWorkingCopy(created.id)).document['x-rev'], 2);
+
+  // The etag is not optional.
+  assert.throws(() => c.saveWorkingCopy(created.id, { document: { arazzo: '1.1.0' } }), TypeError);
+});
+
+test('deleteWorkingCopy removes it and a later get 404s', async () => {
+  const c = makeClient();
+  const created = await c.createWorkingCopy({ name: 'wc', document: { arazzo: '1.1.0' } });
+  await c.deleteWorkingCopy(created.id);
+  await assert.rejects(() => c.getWorkingCopy(created.id), (e) => e instanceof ProblemError && e.status === 404);
+});
+
+test('listWorkingCopiesPaged walks every page via the token', async () => {
+  const c = makeClient();
+  for (let i = 0; i < 5; i++) await c.createWorkingCopy({ name: `wc ${i}`, document: { arazzo: '1.1.0' } });
+  let total = 0; let pages = 0;
+  for await (const page of c.listWorkingCopiesPaged({ limit: 2 })) { total += page.workingCopies.length; pages++; }
+  assert.equal(total, 5);
+  assert.equal(pages, 3);
+});

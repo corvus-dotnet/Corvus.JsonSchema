@@ -10,6 +10,7 @@ using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
+using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,7 +79,7 @@ public static class ControlPlaneEndpointExtensions
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IWorkspaceWorkflowStore? workspaceWorkflowStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -160,6 +161,8 @@ public static class ControlPlaneEndpointExtensions
         // membership is the management gate. Defaults to an in-memory store so the endpoints function in development.
         ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
         var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access);
+        IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
+        var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(wcStore, access, catalog);
 
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
@@ -188,6 +191,7 @@ public static class ControlPlaneEndpointExtensions
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore),
             availabilityHandler,
             credentialsHandler,
+            workspaceHandler,
             environmentsHandler,
             runnerAuthorizationsHandler,
             sourcesHandler,

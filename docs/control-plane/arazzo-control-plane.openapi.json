@@ -57,6 +57,10 @@
     "name": "sources",
     "description": "Manage first-class, reach-scoped source registrations (design §7.6): register/list/read/update/delete the OpenAPI/AsyncAPI documents a workflow references by name in its sourceDescriptions. A source is registered once and resolved immutably by the catalog; its per-environment credentials are managed separately (the credentials surface). Reach-scoped management — there is no administrator set; reach membership is the gate (capability scopes sources:read / sources:write). The registered document is returned only on read of a single source, never in the list."
   },
+{
+    "name": "workspace",
+    "description": "Designer working copies (workflow-designer design §4.1): mutable Arazzo documents saved during development without minting catalog versions. Reach-scoped, etag-guarded; publish mints an immutable catalog version."
+  },
   {
     "name": "availability",
     "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7). Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
@@ -1504,6 +1508,245 @@
         }
       }
     },
+    "/workspace/workflows": {
+      "get": {
+        "operationId": "listWorkspaceWorkflows",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List working copies",
+        "description": "Lists the working copies in the caller's reach, keyset-paged and ordered by id. Entries omit the document and designer state.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitQuery"
+          },
+          {
+            "$ref": "#/components/parameters/PageTokenQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of working copies.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopyList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Create a working copy",
+        "description": "Creates a working copy from a supplied Arazzo document, from a catalog version (the carry-over: fromBaseWorkflowId + fromVersionNumber), or blank. The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkingCopyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created working copy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopy"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}": {
+      "get": {
+        "operationId": "getWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Get a working copy",
+        "description": "Returns one working copy including its document and designer state. The working copy must be in the caller's reach (404 otherwise).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The working copy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopy"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Save a working copy",
+        "description": "Saves the working copy: replaces the document (and optionally the name/designer state). The save presents the etag it read (expectedEtag) and conflicts (409) when stale — a collaborator saved first; re-fetch and reconcile. Never mints a catalog version.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkingCopyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The saved working copy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopy"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Delete a working copy",
+        "description": "Deletes a working copy. Unconditional (a working copy is development state; the catalog is the durable record). 404 when absent or out of reach.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/environments": {
       "get": {
         "operationId": "listEnvironments",
@@ -2463,6 +2706,8 @@
               "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
               "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
               "sources:write": "Register, update, and delete sources (reach-scoped).",
+              "workspace:read": "List and read designer working copies.",
+              "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
               "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
             }
@@ -2486,6 +2731,8 @@
               "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
               "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
               "sources:write": "Register, update, and delete sources (reach-scoped).",
+              "workspace:read": "List and read designer working copies.",
+              "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
               "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
             }
@@ -2630,6 +2877,15 @@
         "required": true,
         "description": "The runner's stable identifier.",
         "schema": { "type": "string" }
+      },
+      "WorkingCopyIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The server-assigned working-copy id.",
+        "schema": {
+          "type": "string"
+        }
       },
       "SourceNamePath": {
         "name": "name",
@@ -3635,6 +3891,212 @@
         },
         "required": [
           "bindings"
+        ]
+      },
+      "WorkspaceSecurityTag": {
+        "type": "object",
+        "description": "A security label (KVP) scoping a working copy for row authorization (§14.2).",
+        "required": [
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The label key (e.g. tenant)."
+          },
+          "value": {
+            "type": "string",
+            "description": "The label value (e.g. acme)."
+          }
+        }
+      },
+      "WorkingCopyDocument": {
+        "type": "object",
+        "description": "The Arazzo document under edit, stored and returned verbatim. The control plane validates it on demand, never silently rewrites it.",
+        "additionalProperties": true
+      },
+      "WorkingCopyDesignerState": {
+        "type": "object",
+        "description": "Designer UI state (node positions and similar) — a sibling of the document, never written into it and never packaged (workflow-designer design §5.2).",
+        "additionalProperties": true
+      },
+      "WorkingCopy": {
+        "type": "object",
+        "description": "A designer working copy: the mutable Arazzo document (plus designer UI state) under development. Saving never mints a catalog version; publish does.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The server-assigned working-copy id."
+          },
+          "name": {
+            "type": "string",
+            "description": "A human-friendly display name."
+          },
+          "baseWorkflowId": {
+            "type": "string",
+            "description": "Provenance: the catalog base workflow this working copy was opened from, if any."
+          },
+          "basedOnVersion": {
+            "type": "integer",
+            "description": "Provenance: the catalog version the document was copied from, if any."
+          },
+          "document": {
+            "$ref": "#/components/schemas/WorkingCopyDocument"
+          },
+          "designerState": {
+            "$ref": "#/components/schemas/WorkingCopyDesignerState"
+          },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags scoping who may MANAGE and SEE this working copy (§14.2).",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceSecurityTag"
+            }
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUpdatedBy": {
+            "type": "string"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string",
+            "description": "The optimistic-concurrency token; saves present the etag they read and conflict (409) when stale."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "document",
+          "createdBy",
+          "createdAt",
+          "etag"
+        ]
+      },
+      "WorkingCopySummary": {
+        "type": "object",
+        "description": "A working copy without its document/designer state: the list projection.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "baseWorkflowId": {
+            "type": "string"
+          },
+          "basedOnVersion": {
+            "type": "integer"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUpdatedBy": {
+            "type": "string"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string",
+            "description": "The optimistic-concurrency token; saves present the etag they read and conflict (409) when stale."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdBy",
+          "createdAt",
+          "etag"
+        ]
+      },
+      "WorkingCopyCreate": {
+        "type": "object",
+        "description": "Creates a working copy: from a supplied document, from a catalog version (fromBaseWorkflowId + fromVersionNumber — copies that version's workflow document; the carry-over), or blank (a minimal Arazzo skeleton). Supplying both a document and a from-version is rejected (400).",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "A display name; defaults to the document's first workflowId, or 'untitled'."
+          },
+          "document": {
+            "$ref": "#/components/schemas/WorkingCopyDocument"
+          },
+          "fromBaseWorkflowId": {
+            "type": "string",
+            "description": "Open from this catalog base workflow…"
+          },
+          "fromVersionNumber": {
+            "type": "integer",
+            "description": "…at this version. Required when fromBaseWorkflowId is supplied (latest-version defaulting arrives with scenario carry-over)."
+          },
+          "designerState": {
+            "$ref": "#/components/schemas/WorkingCopyDesignerState"
+          },
+          "managementTags": {
+            "type": "array",
+            "description": "Non-internal reach labels; the deployment stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit.",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceSecurityTag"
+            }
+          }
+        }
+      },
+      "WorkingCopyUpdate": {
+        "type": "object",
+        "description": "A save: replaces the document (and optionally the name/designer state) of an existing working copy. expectedEtag is the etag the client read; a stale save conflicts (409) rather than clobbering a collaborator's work. Provenance, managementTags, and created-* audit fields are immutable.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "A replacement display name; absent leaves it unchanged."
+          },
+          "document": {
+            "$ref": "#/components/schemas/WorkingCopyDocument"
+          },
+          "designerState": {
+            "$ref": "#/components/schemas/WorkingCopyDesignerState"
+          },
+          "expectedEtag": {
+            "type": "string",
+            "description": "The etag the client read (409 when stale)."
+          }
+        },
+        "required": [
+          "document",
+          "expectedEtag"
+        ]
+      },
+      "WorkingCopyList": {
+        "type": "object",
+        "description": "A page of working copies, ordered by id. Entries omit the document and designer state.",
+        "properties": {
+          "workingCopies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkingCopySummary"
+            }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "An opaque token to fetch the next page, or null/absent if this is the last page."
+          }
+        },
+        "required": [
+          "workingCopies"
         ]
       },
       "SourceCredentialKind": {

@@ -1,0 +1,345 @@
+// <copyright file="ControlPlaneWorkspaceApiTests.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
+using Stj = System.Text.Json;
+
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
+
+/// <summary>
+/// Tests the control-plane workspace API (workflow-designer design §4.1): designer working copies over
+/// <c>/workspace/workflows</c>, gated by the <c>workspace:read</c>/<c>workspace:write</c> scopes. A working copy is a
+/// mutable Arazzo document saved as many times as needed during development without minting catalog versions; a save is
+/// etag-guarded (<c>expectedEtag</c>) so a stale save conflicts rather than clobbering a collaborator's work.
+/// </summary>
+[TestClass]
+public sealed class ControlPlaneWorkspaceApiTests
+{
+    private const string Write = "workspace:write";
+    private const string Read = "workspace:read";
+
+    private const string CreateBody =
+        """{"name":"retry tuning","document":{"arazzo":"1.1.0","info":{"title":"Nightly reconcile"},"workflows":[{"workflowId":"nightly-reconcile","steps":[]}]},"designerState":{"nodes":{"step-1":{"x":40,"y":80}}}}""";
+
+    [TestMethod]
+    public async Task A_working_copy_has_a_full_create_get_list_save_delete_lifecycle()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        HttpResponseMessage created = await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", CreateBody, Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string id;
+        string etag;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            id = doc.RootElement.GetProperty("id").GetString()!;
+            etag = doc.RootElement.GetProperty("etag").GetString()!;
+            id.ShouldNotBeNullOrEmpty();
+            etag.ShouldNotBeNullOrEmpty();
+            doc.RootElement.GetProperty("name").GetString().ShouldBe("retry tuning");
+            doc.RootElement.GetProperty("createdBy").GetString().ShouldNotBeNullOrEmpty();
+
+            // The create response is the full working copy — the document and designer state round-trip verbatim.
+            doc.RootElement.GetProperty("document").GetProperty("info").GetProperty("title").GetString().ShouldBe("Nightly reconcile");
+            doc.RootElement.GetProperty("designerState").GetProperty("nodes").GetProperty("step-1").GetProperty("x").GetInt32().ShouldBe(40);
+        }
+
+        (await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The list entry is a summary: the document and designer state are omitted (the design's key projection decision).
+        using (Stj.JsonDocument list = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/workspace/workflows", Read)))
+        {
+            Stj.JsonElement entry = list.RootElement.GetProperty("workingCopies").EnumerateArray().Single();
+            entry.GetProperty("id").GetString().ShouldBe(id);
+            entry.GetProperty("name").GetString().ShouldBe("retry tuning");
+            entry.TryGetProperty("document", out _).ShouldBeFalse();
+            entry.TryGetProperty("designerState", out _).ShouldBeFalse();
+        }
+
+        // A save replaces the document (and here the name), presenting the etag it read.
+        HttpResponseMessage saved = await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}",
+            $$"""{"name":"retry tuning (v2)","document":{"arazzo":"1.1.0","info":{"title":"Nightly reconcile v2"},"workflows":[]},"expectedEtag":"{{etag}}"}""",
+            Write);
+        saved.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(saved))
+        {
+            doc.RootElement.GetProperty("name").GetString().ShouldBe("retry tuning (v2)");
+            doc.RootElement.GetProperty("document").GetProperty("info").GetProperty("title").GetString().ShouldBe("Nightly reconcile v2");
+            doc.RootElement.GetProperty("lastUpdatedBy").GetString().ShouldNotBeNullOrEmpty();
+            doc.RootElement.GetProperty("etag").GetString().ShouldNotBe(etag);
+
+            // The designer state was not resupplied — carried forward unchanged.
+            doc.RootElement.GetProperty("designerState").GetProperty("nodes").GetProperty("step-1").GetProperty("y").GetInt32().ShouldBe(80);
+        }
+
+        (await host.SendAsync(HttpMethod.Delete, $"/workspace/workflows/{id}", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task A_stale_save_conflicts_and_a_save_without_the_etag_is_rejected()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (string id, string etag) = await CreateAsync(host);
+
+        // First save wins and advances the etag.
+        (await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}",
+            $$"""{"document":{"arazzo":"1.1.0","x-rev":2},"expectedEtag":"{{etag}}"}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // A collaborator saving with the etag they read earlier conflicts — nothing is clobbered.
+        HttpResponseMessage stale = await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}",
+            $$"""{"document":{"arazzo":"1.1.0","x-rev":3},"expectedEtag":"{{etag}}"}""",
+            Write);
+        stale.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        using (Stj.JsonDocument current = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}", Read)))
+        {
+            current.RootElement.GetProperty("document").GetProperty("x-rev").GetInt32().ShouldBe(2);
+        }
+
+        // The etag is not optional — a save that omits it is rejected outright.
+        (await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}",
+            """{"document":{"arazzo":"1.1.0","x-rev":4}}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task Creating_with_both_a_document_and_a_from_version_is_rejected()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/workspace/workflows",
+            """{"document":{"arazzo":"1.1.0"},"fromBaseWorkflowId":"flow-1","fromVersionNumber":1}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task A_blank_create_gets_a_skeleton_document_and_the_name_derives_from_the_document()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // Nothing supplied → an 'untitled' skeleton the designer can open (deliberately not yet a valid Arazzo document —
+        // working copies hold work in progress; validation is on demand).
+        using (Stj.JsonDocument blank = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", "{}", Write)))
+        {
+            blank.RootElement.GetProperty("name").GetString().ShouldBe("untitled");
+            blank.RootElement.GetProperty("document").GetProperty("arazzo").GetString().ShouldBe("1.1.0");
+            blank.RootElement.GetProperty("document").GetProperty("info").GetProperty("title").GetString().ShouldBe("untitled");
+        }
+
+        // A document with no explicit name → the first workflowId names the working copy.
+        using (Stj.JsonDocument derived = await ReadJsonAsync(await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/workspace/workflows",
+            """{"document":{"arazzo":"1.1.0","workflows":[{"workflowId":"pay-invoice","steps":[]}]}}""",
+            Write)))
+        {
+            derived.RootElement.GetProperty("name").GetString().ShouldBe("pay-invoice");
+        }
+    }
+
+    [TestMethod]
+    public async Task Opening_from_a_catalog_version_copies_the_document_and_records_provenance()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        await host.Catalog.SeedVersionAsync("flow-1");
+
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/workspace/workflows",
+            """{"fromBaseWorkflowId":"flow-1","fromVersionNumber":1}""",
+            Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("baseWorkflowId").GetString().ShouldBe("flow-1");
+            doc.RootElement.GetProperty("basedOnVersion").GetInt32().ShouldBe(1);
+
+            // The catalog version's workflow document was copied in as the starting point.
+            doc.RootElement.GetProperty("document").GetProperty("arazzo").GetString().ShouldBe("1.1.0");
+            doc.RootElement.GetProperty("document").TryGetProperty("workflows", out _).ShouldBeTrue();
+        }
+
+        // The version number is required with the base workflow id...
+        (await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", """{"fromBaseWorkflowId":"flow-1"}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // ...and a version that does not exist is not found.
+        (await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", """{"fromBaseWorkflowId":"flow-1","fromVersionNumber":99}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task Listing_keyset_pages_with_a_continuation_token()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        for (int i = 0; i < 3; i++)
+        {
+            (await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", $$"""{"document":{"arazzo":"1.1.0"},"name":"wc {{i}}"}""", Write))
+                .StatusCode.ShouldBe(HttpStatusCode.Created);
+        }
+
+        string token;
+        using (Stj.JsonDocument first = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/workspace/workflows?limit=2", Read)))
+        {
+            first.RootElement.GetProperty("workingCopies").GetArrayLength().ShouldBe(2);
+            token = first.RootElement.GetProperty("nextPageToken").GetString()!;
+            token.ShouldNotBeNullOrEmpty();
+        }
+
+        using (Stj.JsonDocument second = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows?limit=2&pageToken={Uri.EscapeDataString(token)}", Read)))
+        {
+            second.RootElement.GetProperty("workingCopies").GetArrayLength().ShouldBe(1);
+            second.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
+    public async Task The_scopes_are_enforced()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // No scope → unauthenticated → 401.
+        (await host.SendAsync(HttpMethod.Get, "/workspace/workflows", null)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        // A read scope cannot write → 403.
+        (await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", CreateBody, Read)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // A write scope cannot read in this fixture (distinct scopes) → 403 on the read endpoint.
+        (await host.SendAsync(HttpMethod.Get, "/workspace/workflows", Write)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    private static async Task<(string Id, string Etag)> CreateAsync(Scoped host)
+    {
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", CreateBody, Write));
+        return (doc.RootElement.GetProperty("id").GetString()!, doc.RootElement.GetProperty("etag").GetString()!);
+    }
+
+    private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
+        => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null)
+    {
+        var store = new InMemoryWorkflowStateStore();
+        var management = new SecuredWorkflowManagement(store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        builder.Services
+            .AddAuthentication(ScopeAuthHandler.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, ScopeAuthHandler>(ScopeAuthHandler.SchemeName, _ => { });
+        builder.Services.AddArazzoControlPlaneAuthorization();
+        builder.Services.AddHttpContextAccessor();
+
+        WebApplication app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped, rowSecurity: rowSecurity);
+        await app.StartAsync();
+
+        return new Scoped(app, app.GetTestClient(), new CatalogSeeder(catalog));
+    }
+
+    /// <summary>A scoped policy giving every caller full reach (so working copies are visible) and a fixed deployment
+    /// identity <c>sys:tenant=acme</c> (stamped onto working copies' management tags).</summary>
+    private sealed class TenantPolicy : ControlPlaneRowSecurityPolicy
+    {
+        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
+
+        public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal) => [new SecurityTag("sys:tenant", "acme")];
+    }
+
+    /// <summary>Publishes minimal catalog versions directly through the secured catalog, so from-version creates have
+    /// something to carry over.</summary>
+    private sealed class CatalogSeeder(ISecuredWorkflowCatalog catalog)
+    {
+        public async Task SeedVersionAsync(string workflowId)
+        {
+            byte[] workflow = Encoding.UTF8.GetBytes($$"""
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "Flow", "description": "A flow." },
+              "sourceDescriptions": [],
+              "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
+            }
+            """);
+            ReadOnlyMemory<byte> package = CatalogPackage.Build(workflow, []);
+            using ParsedJsonDocument<CatalogVersion> version = await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, default);
+        }
+    }
+
+    private sealed class Scoped(WebApplication app, HttpClient client, CatalogSeeder catalog) : IAsyncDisposable
+    {
+        public CatalogSeeder Catalog { get; } = catalog;
+
+        public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope)
+            => this.SendCoreAsync(new HttpRequestMessage(method, path), scope);
+
+        public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope)
+            => this.SendCoreAsync(new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, scope);
+
+        public async ValueTask DisposeAsync()
+        {
+            client.Dispose();
+            await app.DisposeAsync();
+        }
+
+        private async Task<HttpResponseMessage> SendCoreAsync(HttpRequestMessage request, string? scope)
+        {
+            using (request)
+            {
+                if (scope is not null)
+                {
+                    request.Headers.Add(ScopeAuthHandler.ScopeHeader, scope);
+                }
+
+                return await client.SendAsync(request);
+            }
+        }
+    }
+
+    private sealed class ScopeAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
+        : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    {
+        public const string SchemeName = "Scopes";
+        public const string ScopeHeader = "X-Scopes";
+
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            if (!this.Request.Headers.TryGetValue(ScopeHeader, out Microsoft.Extensions.Primitives.StringValues values))
+            {
+                return Task.FromResult(AuthenticateResult.NoResult());
+            }
+
+            var identity = new ClaimsIdentity(SchemeName);
+            identity.AddClaim(new Claim("scope", values.ToString()));
+            return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
+        }
+    }
+}
