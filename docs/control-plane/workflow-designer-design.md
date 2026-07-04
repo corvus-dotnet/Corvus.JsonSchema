@@ -128,9 +128,13 @@ beyond that model rather than copying it:
 Deterministic simulation (compiled executor + scripted mock transport + virtual clock) makes a full
 run milliseconds and exactly reproducible. The UX exploits that:
 
-- **Run / Step / Run-to-here / Breakpoints.** Set breakpoints on steps; run a scenario (or an ad-hoc
-  setup); the active step pulses; taken edges light as criteria evaluate (success green /
-  failure red); untaken branches dim. "Step" advances one step; "run to here" targets a step.
+- **Run / Pause / Step / Run-to-here / Breakpoints / Stop.** Set breakpoints on steps; run a
+  scenario (or an ad-hoc setup); the active step pulses; taken edges light as criteria evaluate
+  (success green / failure red); untaken branches dim. While running, the run control is **Pause**
+  (halts before the next step); **Stop** terminates the session and clears the overlay. "Step"
+  advances one step; "run to here" targets a step. *Every* pause — breakpoint, manual pause, or
+  step — hands the paused context to the context explorer and expression console below for
+  inspection; resuming is a §8.2 replay with the next stop condition.
 - **Virtual clock as a control.** When the run suspends on a timer, the debug controls show the
   wait and offer "advance to due" / "+1s / +1m / +1h"; retries with `retryAfter` show the same.
   Nothing waits in real time.
@@ -355,7 +359,7 @@ loading/empty/error states; scope-gated actions. (Attribute/event tables in the 
 | `<arazzo-action-editor>` | One success/failure action: type (`end`/`goto`/`retry`), target step/workflow picker, retry settings, criteria; "localize/revert to inherited" affordances. |
 | `<arazzo-scenario-panel>` | Scenario suite: list + per-scenario status chips, run one/all, open editor, "save session as scenario". |
 | `<arazzo-scenario-editor>` | Typed scenario editing: inputs (typed form from the workflow inputs schema), mocks (per-operation response scripting, response bodies typed from the *source* schemas), triggers, clock, expectations (criteria editors). |
-| `<arazzo-debug-controls>` | Run/step/run-to/continue, breakpoint list, virtual-clock control (advance to due / +Δ), trigger injection, session status. |
+| `<arazzo-debug-controls>` | Run/pause/step/run-to/continue/stop, breakpoint list, virtual-clock control (advance to due / +Δ), trigger injection, session status. |
 | `<arazzo-context-explorer>` | Paused-context tree (`$inputs`, `$steps.*`, request/response) + the expression console. |
 | `<arazzo-trace-viewer>` | The recorded trace: step timeline with per-step request/response and criterion truth tables; the time-travel scrubber; click-to-navigate to canvas/inspector. |
 | `<arazzo-evidence-badge>` | Evidence summary for a catalog version (suite verdict, count, at); embedded by `<arazzo-catalog-detail>`. |

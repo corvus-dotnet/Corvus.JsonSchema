@@ -29,6 +29,7 @@
     <button id="fit">Fit</button>
     <button id="relayout">Auto-layout</button>
     <button id="simulate">▶ Simulate (canned trace)</button>
+    <button id="stop" hidden>■ Stop</button>
     <label class="chk"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
     <button id="theme">Toggle theme</button>
@@ -150,22 +151,36 @@
         steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped', 'manual-review': 'done-success', '#end': 'done-success' },
         edges: ['seq:#start', 'seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure', 'end:manual-review:halt-after-review:success'] },
     ];
-    // A tiny trace player standing in for the real replay-based debug session (design §8.2):
-    // entering a breakpointed step pauses playback; the button becomes Resume.
+    // A tiny trace player standing in for the real replay-based debug session (design §8.2/§3.3):
+    // run → the button becomes Pause (halts before the next step); breakpoints pause on entry;
+    // Resume continues; Stop terminates the session and clears the overlay.
     const simBtn = document.getElementById('simulate');
+    const stopBtn = document.getElementById('stop');
     const SIM_LABEL = '▶ Simulate (canned trace)';
     let player = null; // { i, timer, paused }
 
+    function setUi() {
+      stopBtn.hidden = !player;
+      simBtn.textContent = !player
+        ? SIM_LABEL
+        : player.paused
+          ? `⏵ Resume (paused at ${trace[player.i].active ?? 'end'})`
+          : '⏸ Pause';
+    }
+    function pausePlayer(detail) {
+      if (!player || player.paused) return;
+      clearInterval(player.timer);
+      player.timer = null;
+      player.paused = true;
+      logEvent('debug-paused', detail);
+      setUi();
+    }
     function applyFrame() {
       const frame = trace[player.i];
       surface.debugState = frame;
       const entered = frame.active && frame.active !== trace[player.i - 1]?.active;
       if (entered && surface.breakpoints.has(frame.active)) {
-        clearInterval(player.timer);
-        player.timer = null;
-        player.paused = true;
-        simBtn.textContent = `⏵ Resume (paused at ${frame.active})`;
-        logEvent('debug-paused', { stepId: frame.active, note: 'breakpoint hit' });
+        pausePlayer({ stepId: frame.active, note: 'breakpoint hit' });
       }
     }
     function tick() {
@@ -173,27 +188,37 @@
       if (player.i >= trace.length) {
         clearInterval(player.timer);
         player = null;
-        simBtn.textContent = SIM_LABEL;
+        setUi();
         return;
       }
       applyFrame();
     }
     simBtn.addEventListener('click', () => {
+      if (player && !player.paused) {
+        pausePlayer({ note: 'paused by user — before the next step' });
+        return;
+      }
       if (player?.paused) {
         player.paused = false;
-        simBtn.textContent = '⏸ running…';
         logEvent('debug-resumed', {});
+        setUi();
         player.timer = setInterval(tick, 900);
         return;
       }
-      if (player?.timer) clearInterval(player.timer);
       select.value = 'place-order';
       project();
       player = { i: 0, timer: null, paused: false };
-      simBtn.textContent = '⏸ running…';
       logEvent('simulate', { scenario: 'payment-declined → manual review' });
       applyFrame(); // frame 0 can itself hit a breakpoint
-      if (!player.paused) player.timer = setInterval(tick, 900);
+      setUi();
+      if (player && !player.paused) player.timer = setInterval(tick, 900);
+    });
+    stopBtn.addEventListener('click', () => {
+      if (player?.timer) clearInterval(player.timer);
+      player = null;
+      surface.debugState = null;
+      logEvent('debug-stopped', {});
+      setUi();
     });
 
     // Expression console: completions from the fixture's schema surface, validation of $roots.
