@@ -113,6 +113,12 @@ beyond that model rather than copying it:
 - **Criteria on edges.** An action's `criteria` summarize on the edge label; an explicit action
   edge with no criteria is labelled *always* (ghost style) — unconditional behaviour is visible,
   not silent. Clicking the edge opens the criteria editor in the inspector.
+- **Verdict vs routing — why success carries an extra layer.** `successCriteria` is the *verdict*:
+  all must match for the step to succeed, and failure is defined as its complement (there is no
+  `failureCriteria` — one boundary, authored once, no overlaps or gaps). `onSuccess`/`onFailure`
+  are *routing* given that verdict, and at that layer the two sides are structurally identical;
+  per-action criteria choose *which reaction applies*, never whether the step succeeded. The
+  inspector captions each section with its role so the model is legible in-product.
 - **Action order is semantics: first-match-wins.** Arazzo dispatches the *first* action in
   declaration order whose criteria all match (the runtime's `ControlFlowEmitter` emits exactly
   this; step-level actions take precedence over workflow-level defaults), so an action with no
