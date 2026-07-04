@@ -14,11 +14,25 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './expression-input.js';
 
-const TYPES = ['simple', 'regex', 'jsonpath', 'xpath'];
+// The types the runtime evaluates. xpath is schema-valid Arazzo and round-trips untouched, but the
+// runtime does not evaluate it — so it is never OFFERED for new criteria (scope honesty), only
+// preserved and flagged when a document already carries it.
+const TYPES = ['simple', 'regex', 'jsonpath'];
+const UNSUPPORTED = new Set(['xpath']);
 const VERSIONS = {
   jsonpath: ['draft-goessner-dispatch-jsonpath-00'],
   xpath: ['xpath-30', 'xpath-20', 'xpath-10'],
 };
+const PLACEHOLDERS = {
+  simple: '$statusCode == 200',
+  regex: '^created$',
+  jsonpath: '$[?@.status == "authorized"]',
+  xpath: '//status[text()="ok"]',
+};
+
+/** A version picker is only worth pixels when there is a real choice (xpath); jsonpath has
+ *  exactly one spec-defined version, which the plain string `type` already implies. */
+const hasVersionChoice = (type) => (VERSIONS[type]?.length ?? 0) > 1;
 
 class ArazzoCriteriaEditor extends ArazzoElement {
   constructor() {
@@ -59,6 +73,9 @@ class ArazzoCriteriaEditor extends ArazzoElement {
         .head { display: flex; gap: 6px; align-items: center; }
         .head select { font-size: 12px; padding: 4px 26px 4px 8px; }
         .head .grow { flex: 1; }
+        .vwrap { display: inline-flex; gap: 5px; align-items: center; font-size: 11px; color: var(--_muted); min-width: 0; }
+        .vwrap select { max-width: 130px; }
+        .unsupported { font-size: 11px; color: var(--arazzo-status-suspended, #b07d18); }
         label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
         .add { margin-top: 8px; font-size: 12px; }
         .empty { padding: 10px; font-size: 12px; text-align: left; }
@@ -93,14 +110,18 @@ class ArazzoCriteriaEditor extends ArazzoElement {
     row.innerHTML = `
       <div class="head">
         <select class="type" title="Criterion type">
-          ${TYPES.map((t) => `<option value="${t}" ${t === type ? 'selected' : ''}>${t}</option>`).join('')}
+          ${[...TYPES, ...(UNSUPPORTED.has(type) ? [type] : [])]
+            .map((t) => `<option value="${t}" ${t === type ? 'selected' : ''}>${t}${UNSUPPORTED.has(t) ? ' (unsupported)' : ''}</option>`).join('')}
         </select>
-        <select class="version" title="Expression-language version" ${VERSIONS[type] ? '' : 'hidden'}>
-          ${(VERSIONS[type] || []).map((v) => `<option ${v === version ? 'selected' : ''}>${v}</option>`).join('')}
-        </select>
+        <span class="vwrap" ${hasVersionChoice(type) ? '' : 'hidden'}>version
+          <select class="version" aria-label="Expression-language version">
+            ${(VERSIONS[type] || []).map((v) => `<option ${v === version ? 'selected' : ''}>${v}</option>`).join('')}
+          </select>
+        </span>
         <span class="grow"></span>
         <button class="close" type="button" title="Remove criterion">✕</button>
       </div>
+      ${UNSUPPORTED.has(type) ? '<div class="unsupported">⚠ the runtime does not evaluate xpath criteria yet — this criterion is preserved but will not run</div>' : ''}
       <div class="ctx" ${type === 'simple' ? 'hidden' : ''}>
         <label>context (runtime expression)</label>
       </div>
@@ -118,7 +139,7 @@ class ArazzoCriteriaEditor extends ArazzoElement {
 
     const condInput = document.createElement('arazzo-expression-input');
     condInput.className = 'cond';
-    condInput.setAttribute('placeholder', type === 'regex' ? '^created$' : '$statusCode == 200');
+    condInput.setAttribute('placeholder', PLACEHOLDERS[type]);
     condInput.value = criterion.condition || '';
     condInput.completionContext = this._completionContext;
     row.children[2].append(condInput);
@@ -163,10 +184,10 @@ class ArazzoCriteriaEditor extends ArazzoElement {
       criterion.type = type;
     }
     // A typed criterion requires a context (schema: `type` requires `context`).
-    const versionSel = row.querySelector('.version');
-    versionSel.hidden = !VERSIONS[type];
-    versionSel.innerHTML = (VERSIONS[type] || []).map((v) => `<option>${v}</option>`).join('');
+    row.querySelector('.vwrap').hidden = !hasVersionChoice(type);
+    row.querySelector('.version').innerHTML = (VERSIONS[type] || []).map((v) => `<option>${v}</option>`).join('');
     row.querySelector('.ctx').hidden = type === 'simple';
+    row.querySelector('.cond').setAttribute('placeholder', PLACEHOLDERS[type]);
     this._emit();
   }
 
