@@ -1,15 +1,15 @@
 # The control-plane access model: capability vs reach
 
 Every access decision in the control plane is **WHO can do WHAT, WHERE**. Two independent systems
-answer the WHAT and the WHERE, and they are easy to conflate. A **grant** configures only one of
-them (the WHERE). This note exists because the `read` / `write` / `purge` verbs on a grant are a
+answer the WHAT and the WHERE, and they are easy to conflate. A **grant binding** configures only one of
+them (the WHERE). This note exists because the `read` / `write` / `purge` verbs on a grant binding are a
 recurring source of confusion: they look like they should be scopes, and they are not.
 
 ## Two planes
 
 There are two separate permission systems. Both must pass for an action to succeed.
 
-| | Capability (scopes) | Reach (grants + rules) |
+| | Capability (scopes) | Reach (grant bindings + rules) |
 |---|---|---|
 | Question it answers | Which operations may you call. | Which data rows may you touch. |
 | Examples | `catalog:read`, `runs:write`, `security:write`. | Rows where `domain == payments`. |
@@ -22,9 +22,9 @@ platform administrator. Reach is finer and shifts with team membership and per-r
 Keeping them separate is what lets two people who both hold `catalog:write` have completely
 different row reach.
 
-## What a grant is
+## What a grant binding is
 
-A grant (the API calls it a **security binding**, §14.2) is a **claim to reach** mapping. In one
+A grant binding (the API calls it a **security binding**, §14.2) is a **claim to reach** mapping. In one
 sentence: a caller carrying claim `team = payments` gets, per verb, this much reach over the rows.
 
 ```mermaid
@@ -45,7 +45,7 @@ It has two parts:
   or scoped to one or more named **rules**. A rule is a reusable row-filter expression such as
   `domain == payments`.
 
-So a grant is `claim -> { read: <rows>, write: <rows>, purge: <rows> }`. The verb is the key; the
+So a grant binding is `claim -> { read: <rows>, write: <rows>, purge: <rows> }`. The verb is the key; the
 value is the set of rows that verb may touch.
 
 ## Why read / write / purge, and not scopes
@@ -58,11 +58,11 @@ The three verbs are the three levels of access to a data **row**.
 
 Each gets its own row set because they genuinely vary. You might let the payments team read every
 payments row, write a subset of them, and purge none. That independence is the point of reach, and
-it is why a grant is expressed as three row sets rather than as scopes.
+it is why a grant binding is expressed as three row sets rather than as scopes.
 
 Scopes (`catalog:read`, `runs:write`, ...) answer a different question, "which API may you invoke",
-and they live in the caller's token, not in a grant. A grant never widens or narrows a scope. If
-you go looking for `catalog:write`-style entries on a grant you will not find them, because that
+and they live in the caller's token, not in a grant binding. A grant binding never widens or narrows a scope. If
+you go looking for `catalog:write`-style entries on a grant binding you will not find them, because that
 plane is configured upstream in the IdP and the role mapping, not here.
 
 ## How they compose
@@ -75,7 +75,7 @@ reach admit it).
 flowchart TD
   Req["Request: modify catalog version X"] --> Cap{"Capability plane (§14.1)<br/>is catalog:write in the token?"}
   Cap -- "no" --> F["403 Forbidden<br/>you may not call this operation"]
-  Cap -- "yes" --> Reach{"Reach plane (§14.2, via a grant)<br/>does write reach admit row X's tags?"}
+  Cap -- "yes" --> Reach{"Reach plane (§14.2, via a grant binding)<br/>does write reach admit row X's tags?"}
   Reach -- "no" --> Abs["Absent / 404<br/>non-disclosing"]
   Reach -- "yes" --> Ok["Allowed"]
 ```
@@ -241,6 +241,6 @@ implementation changes only this handler, and hardens it in three ways.
 
 ## Where reach is authored
 
-Reach (grants and rules) is authored in the security UI. Grants bind a claim to per-verb reach; rules
-are the reusable WHERE vocabulary a grant points at. See the grants and rules panels, and the access
+Reach (grant bindings and rules) is authored in the security UI. Grant bindings bind a claim to per-verb reach; rules
+are the reusable WHERE vocabulary a grant binding points at. See the grants and rules panels, and the access
 overview, in [`security-ui-design.md`](./security-ui-design.md).
