@@ -97,6 +97,10 @@ class ArazzoDesignSurface extends ArazzoElement {
     this._applyDebug();
   }
 
+  /** The current world positions of every node — hand back as `layoutOverrides` before replacing
+   *  `.graph` to keep the canvas stable across a re-projection (no surprise reflow on edit). */
+  get positions() { return { ...this._positions }; }
+
   /** Fit the whole graph into the viewport with a margin. */
   fit() {
     const svg = this.$('svg');
@@ -193,8 +197,10 @@ class ArazzoDesignSurface extends ArazzoElement {
         marker.m-success path { fill: var(--arazzo-status-completed, #2a8a4a); }
         marker.m-failure path { fill: var(--arazzo-status-faulted, #d4351c); }
 
-        /* Rubber band while drawing an edge */
-        .rubber { fill: none; stroke: var(--_accent); stroke-width: 1.75; stroke-dasharray: 5 4; }
+        /* Rubber band while drawing an edge (coloured by the edge kind being drawn) */
+        .rubber { fill: none; stroke: var(--_accent); stroke-width: 2; stroke-dasharray: 5 4; pointer-events: none; }
+        .rubber.rubber-success { stroke: var(--arazzo-status-completed, #2a8a4a); }
+        .rubber.rubber-failure { stroke: var(--arazzo-status-faulted, #d4351c); }
         .node.link-target .card { stroke: var(--_accent); stroke-width: 2.5; }
 
         /* Exit chips (goto another workflow) */
@@ -514,9 +520,18 @@ class ArazzoDesignSurface extends ArazzoElement {
       svg.setPointerCapture(e.pointerId);
       if (hit?.port && !this.readonly) {
         this._gesture = { type: 'draw', from: hit.id, kind: hit.port, moved: false };
-        const p = this._toWorld(e);
-        this.$('.rubber').setAttribute('d', `M ${p.x} ${p.y} L ${p.x} ${p.y}`);
-        this.$('.rubber').hidden = false;
+        const from = this._positions[hit.id];
+        const origin = {
+          x: from.x + NODE_WIDTH * (hit.port === 'success' ? 0.65 : 0.35),
+          y: from.y + NODE_HEIGHT,
+        };
+        this._gesture.origin = origin;
+        const rubber = this.$('.rubber');
+        rubber.setAttribute('d', `M ${origin.x} ${origin.y} L ${origin.x} ${origin.y}`);
+        rubber.classList.toggle('rubber-success', hit.port === 'success');
+        rubber.classList.toggle('rubber-failure', hit.port === 'failure');
+        // NB: SVG elements have no `hidden` IDL property — toggle the attribute, never the property.
+        rubber.removeAttribute('hidden');
       } else if (hit?.bp) {
         this._gesture = { type: 'bp', id: hit.id };
       } else if (hit?.type === 'node') {
@@ -549,9 +564,8 @@ class ArazzoDesignSurface extends ArazzoElement {
       } else if (g.type === 'draw') {
         g.moved = true;
         const p = this._toWorld(e);
-        const from = this._positions[g.from];
         const rubber = this.$('.rubber');
-        rubber.setAttribute('d', `M ${from.x + NODE_WIDTH / 2} ${from.y + NODE_HEIGHT} L ${p.x} ${p.y}`);
+        rubber.setAttribute('d', `M ${g.origin.x} ${g.origin.y} L ${p.x} ${p.y}`);
         const over = this._nodeAt(p, g.from);
         for (const el of this.$$('.node')) el.classList.toggle('link-target', over === el.getAttribute('data-id'));
         g.over = over;
@@ -576,7 +590,7 @@ class ArazzoDesignSurface extends ArazzoElement {
       } else if (g.type === 'click') {
         this._select(g.hit.type === 'exit' ? { type: 'edge', id: g.hit.id } : { type: g.hit.type, id: g.hit.id });
       } else if (g.type === 'draw') {
-        this.$('.rubber').hidden = true;
+        this.$('.rubber').setAttribute('hidden', '');
         for (const el of this.$$('.node.link-target')) el.classList.remove('link-target');
         // The start node is never a valid action target; dropping on the end terminal authors
         // an `end` action (the host writes it — one grammar, every action is an edge).
@@ -589,7 +603,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     svg.addEventListener('pointercancel', () => {
       this._gesture = null;
       svg.classList.remove('panning');
-      this.$('.rubber').hidden = true;
+      this.$('.rubber').setAttribute('hidden', '');
     });
 
     svg.addEventListener('wheel', (e) => {
@@ -614,7 +628,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     svg.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this._gesture = null;
-        this.$('.rubber').hidden = true;
+        this.$('.rubber').setAttribute('hidden', '');
         this._select(null);
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && this._selection && !this.readonly) {
         e.preventDefault();

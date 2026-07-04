@@ -117,6 +117,7 @@
         ? { name: `end-on-${kind}`, type: 'end' }
         : { name: `goto-${to}`, type: 'goto', stepId: to };
       step[list] = [...(step[list] || []), action];
+      surface.layoutOverrides = surface.positions; // keep the canvas stable across the re-projection
       project();
     });
 
@@ -150,12 +151,31 @@
     const expr = document.getElementById('expr');
     const wf = designerFixture.workflows[0];
     expr.completionContext = {
-      inputs: Object.keys(wf.inputs?.properties || {}),
+      inputs: wf.inputs, // a JSON Schema: names + type details, pointer descent below
       outputs: Object.keys(wf.outputs || {}),
       steps: Object.fromEntries(wf.steps.map((s) => [s.stepId, {
         outputs: Object.keys(s.outputs || {}),
         summary: s.description,
       }])),
+      // In the real designer these come from the selected step's operation via the baked schemas;
+      // the demo stands in with the authorize-payment shapes so `$response.body#/…` completes.
+      response: {
+        body: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            authorizationId: { type: 'string' },
+            card: { type: 'object', properties: { last4: { type: 'string' }, brand: { type: 'string' } } },
+            receipt: { type: 'object', properties: { id: { type: 'string' }, total: { type: 'number' } } },
+          },
+        },
+      },
+      message: {
+        payload: {
+          type: 'object',
+          properties: { confirmed: { type: 'boolean' }, at: { type: 'string', format: 'date-time' } },
+        },
+      },
     };
     expr.validator = async (value) => {
       const bad = [...value.matchAll(/\$[A-Za-z_][A-Za-z0-9_]*/g)]
