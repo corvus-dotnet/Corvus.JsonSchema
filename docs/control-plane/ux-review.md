@@ -20,7 +20,7 @@ The kit composes into a four-tab console (`demo/index.html`):
 | **Runs** | Live run management — monitor, diagnose, recover | `arazzo-control-plane` (runs-table, run-detail, resume/cancel/purge dialogs, status-badge) |
 | **Catalog** | The workflow registry + per-workflow administration | `arazzo-catalog` (catalog-table, catalog-detail, add-dialog, administrators-panel, workflow-id / step pickers) |
 | **Connections** | The source credentials a run uses | `credentials-table`, `credential-dialog`, `grantee-picker` |
-| **Access** | Reach scopes, grants, and the approval inbox | `grants-panel`, `scopes-panel`, `access-requests-panel`, `grantee-picker`, `access-request-dialog` |
+| **Access** | Reach rules, grants, and the approval inbox | `grants-panel`, `rules-panel`, `access-requests-panel`, `grantee-picker`, `access-request-dialog` |
 
 Each tab is a self-contained web component that takes a `base-url` + `scopes` and is permission-gated: a control
 the caller's scopes don't allow is hidden (or shown disabled with a `Requires …` tooltip when `show-forbidden`
@@ -275,9 +275,10 @@ disagree with the auth those credentials assume. The fix is to make a **source f
   a credential (the run identity matches the binding's `usageGrantee`; the runner resolves the secret as its own
   identity, §13.5). The rule:
   - **Hard gate:** a workflow may reference only sources in the author's reach (so the wizard lists only those).
-  - **Credential presence is a readiness check, not a hard gate.** Per source/environment the wizard shows whether a
-    usable credential exists *where the author can see it*; missing → "needs a credential before runs succeed" (create
-    now if you have `credentials:write` + reach, or defer to whoever owns it).
+  - **Credential presence is displayed here; readiness is a hard gate on promotion.** Per source/environment the wizard
+    shows whether a usable credential exists *where the author can see it*; missing → "needs a credential before runs
+    succeed" (create now if you have `credentials:write` + reach, or defer to whoever owns it). Views may *display*
+    readiness, but promotion and the add-workflow wizard never make a version available in an environment that is not ready.
   - **Divergence is about visibility, never about whether existing runs work.** Source-in-reach + credentials you can't
     manage → "available; credentials managed elsewhere" (proceed). Credentials you can see + source not in reach → the
     source isn't offered for new workflows (the orphaned binding shows only under Sources management). Revoking an
