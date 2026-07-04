@@ -7,24 +7,30 @@
   <link rel="icon" href="./favicon.svg">
   <link rel="stylesheet" href="../src/arazzo-kit.css">
   <style>
-    body { margin: 0; font: 14px var(--arazzo-font, system-ui, sans-serif); background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); }
-    header { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); flex-wrap: wrap; }
+    /* App shell: the toolbar takes its natural height (it may wrap); the row below fills the
+       remaining viewport exactly; the canvas and the sidebar scroll INDEPENDENTLY — the page
+       itself never scrolls. */
+    html, body { height: 100%; }
+    body { margin: 0; display: flex; flex-direction: column; overflow: hidden;
+           font: 14px var(--arazzo-font, system-ui, sans-serif); background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); }
+    header { flex: none; display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); flex-wrap: wrap; }
     header h1 { font-size: 15px; margin: 0 12px 0 0; }
     header .spacer { flex: 1; }
-    main { display: grid; grid-template-columns: 1fr 360px; gap: 12px; padding: 12px 14px; height: calc(100vh - 100px); box-sizing: border-box; }
+    main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; padding: 12px 14px; box-sizing: border-box; }
     #center { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 8px; }
-    .tabs { display: flex; gap: 4px; }
+    .tabs { display: flex; gap: 4px; flex: none; }
     .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 4px 14px; font-size: 12px; opacity: 0.7; }
     .tabs button.active { opacity: 1; border-color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
     arazzo-design-surface, arazzo-text-editor { flex: 1; min-height: 0; }
     /* Custom elements set :host{display:block}, which beats the UA [hidden] rule. */
     #center > [hidden] { display: none !important; }
-    aside { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-    aside section { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+    /* The sidebar is one independent scroll region; sections take their natural height. */
+    aside { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; overflow-y: auto; padding-right: 2px; }
+    aside section { flex: none; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
     #inspector, #inspector > * { min-width: 0; }
     aside h2 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); }
-    aside pre { margin: 0; padding: 10px; font: 11px ui-monospace, Menlo, monospace; overflow: auto; flex: 1; min-height: 0; }
-    #log { max-height: 40vh; }
+    aside pre { margin: 0; padding: 10px; font: 11px ui-monospace, Menlo, monospace; overflow: auto; max-height: 32vh; }
+    #log { max-height: 22vh; }
     button, select { font: inherit; padding: 5px 10px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: inherit; cursor: pointer; }
     label.chk { display: inline-flex; gap: 6px; align-items: center; }
   </style>
