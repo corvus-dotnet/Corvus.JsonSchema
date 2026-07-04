@@ -115,6 +115,61 @@ describe('<arazzo-step-inspector>', () => {
     ok(!el.shadowRoot.querySelector('.body-template'), 'affordance gone once a payload exists');
   });
 
+  it('templating with an existing catch-all inserts above it and adds no second fallback', async () => {
+    make({
+      stepId: 'x',
+      operationId: 'op',
+      onFailure: [{ name: 'give-up-here', type: 'end' }], // an existing criteria-less catch-all
+    });
+    el.operationResponses = ['200', '404'];
+    const changed = nextEvent(el, 'step-changed');
+    el.shadowRoot.querySelector('.template').click();
+    const step = (await changed).detail.step;
+    equal(step.onFailure.map((a) => a.name).join(','), 'on-404,give-up-here',
+      'criteria’d template above the catch-all; unexpected-failure skipped');
+  });
+
+  it('reorders actions with catch-alls pinned last', async () => {
+    make({
+      stepId: 'x',
+      operationId: 'op',
+      onFailure: [
+        { name: 'a', type: 'end', criteria: [{ condition: '$statusCode == 401' }] },
+        { name: 'b', type: 'end', criteria: [{ condition: '$statusCode == 402' }] },
+        { name: 'fallback', type: 'end' },
+      ],
+    });
+    const rows = el.shadowRoot.querySelectorAll('.onfailure details');
+    ok(rows[2].querySelector('summary').textContent.includes('catch-all'), 'catch-all labelled');
+    ok(!rows[2].querySelector('.move'), 'catch-all has no reorder controls');
+    const [up, down] = rows[0].querySelectorAll('.move');
+    ok(up.disabled, 'first action cannot move up');
+    ok(!down.disabled, 'can move down within the criteria’d section');
+    equal(rows[1].querySelectorAll('.move')[1].disabled, true, 'cannot move below the pinned catch-all');
+
+    const changed = nextEvent(el, 'step-changed');
+    down.click();
+    const step = (await changed).detail.step;
+    equal(step.onFailure.map((a) => a.name).join(','), 'b,a,fallback', 'swap emitted');
+  });
+
+  it('an action that loses its criteria becomes a catch-all and moves to the end', async () => {
+    make({
+      stepId: 'x',
+      operationId: 'op',
+      onFailure: [
+        { name: 'was-criteriad', type: 'end', criteria: [{ condition: '$statusCode == 401' }] },
+        { name: 'other', type: 'end', criteria: [{ condition: '$statusCode == 402' }] },
+      ],
+    });
+    const firstEditor = el.shadowRoot.querySelector('.onfailure details arazzo-action-editor');
+    const criteria = firstEditor.shadowRoot.querySelector('arazzo-criteria-editor');
+    const changed = nextEvent(el, 'step-changed');
+    criteria.shadowRoot.querySelector('.row .close').click(); // remove its only criterion
+    const step = (await changed).detail.step;
+    equal(step.onFailure.map((a) => a.name).join(','), 'other,was-criteriad', 'new catch-all pinned last');
+  });
+
   it('adding a parameter emits and focuses the new row', async () => {
     make();
     const changed = nextEvent(el, 'step-changed');

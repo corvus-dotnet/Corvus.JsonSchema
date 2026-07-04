@@ -1,10 +1,20 @@
 // buildActionList — the shared "list of success/failure actions" section used by the step
 // inspector (local onSuccess/onFailure) and the workflow inspector (the inherited-defaults layer).
-// Each action is a collapsible <details> row hosting an <arazzo-action-editor>; add/remove mutate
-// the list and call back. A DOM-building helper, not a component: both inspectors own the
+// Each action is a collapsible <details> row hosting an <arazzo-action-editor>; add/remove/reorder
+// mutate the list and call back. A DOM-building helper, not a component: both inspectors own the
 // surrounding form and just mount these sections.
+//
+// ORDER IS SEMANTICS: Arazzo dispatch is first-match-wins in declaration order, and an action
+// with no criteria (a catch-all) always matches. The list therefore makes order first-class:
+// ▲▼ reorder criteria'd actions; catch-alls are PINNED to the end (no reorder controls, criteria'd
+// actions cannot move below them, additions insert above them); an action that loses its last
+// criterion becomes a catch-all and moves to the end; anything that still ends up after a
+// catch-all (e.g. a hand-authored document) is flagged unreachable rather than silently rewritten.
 
 import './action-editor.js';
+
+/** An action with no criteria always matches — the list's catch-all. */
+const isCatchAll = (a) => a && typeof a.reference !== 'string' && !(a.criteria?.length);
 
 /**
  * @param {object} opts
@@ -12,15 +22,24 @@ import './action-editor.js';
  * @param {'success'|'failure'} opts.kind
  * @param {string[]} opts.stepIds        Goto targets offered by the embedded editors.
  * @param {object} opts.completionContext
- * @param {() => void} opts.onChange     Called after any mutation (edit, add, remove).
+ * @param {() => void} opts.onChange     Called after any mutation (edit, add, remove, reorder).
  * @returns {HTMLElement}
  */
 export function buildActionList({ actions, kind, stepIds, completionContext, onChange }) {
   const root = document.createElement('div');
   root.className = `action-list ${kind}`;
 
+  const summaryText = (action) =>
+    `${action.name || '(unnamed)'} · ${action.type}${action.stepId ? ` → ${action.stepId}` : ''}${isCatchAll(action) ? ' · catch-all' : ''}`;
+
+  const firstCatchAllIndex = () => {
+    const i = actions.findIndex(isCatchAll);
+    return i < 0 ? actions.length : i;
+  };
+
   const render = () => {
     root.replaceChildren();
+    let sawCatchAll = false;
     actions.forEach((action, i) => {
       if (action && typeof action.reference === 'string') {
         const row = document.createElement('div');
@@ -29,9 +48,47 @@ export function buildActionList({ actions, kind, stepIds, completionContext, onC
         root.append(row);
         return;
       }
+      const unreachable = sawCatchAll;
+      if (isCatchAll(action)) sawCatchAll = true;
+
       const details = document.createElement('details');
       const summary = document.createElement('summary');
-      summary.textContent = `${action.name || '(unnamed)'} · ${action.type}${action.stepId ? ` → ${action.stepId}` : ''}`;
+      const title = document.createElement('span');
+      title.className = 'atitle';
+      title.textContent = summaryText(action);
+      summary.append(title);
+
+      // Reorder: criteria'd actions move among themselves; catch-alls stay pinned at the end.
+      if (!isCatchAll(action)) {
+        const pin = firstCatchAllIndex();
+        const controls = document.createElement('span');
+        controls.className = 'reorder';
+        for (const [glyph, delta, disabled] of [['▲', -1, i === 0], ['▼', +1, i + 1 >= Math.min(pin, actions.length)]]) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'ghost move';
+          btn.textContent = glyph;
+          btn.title = delta < 0 ? 'Match earlier' : 'Match later';
+          btn.disabled = disabled;
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // don't toggle the <details>
+            const j = i + delta;
+            [actions[i], actions[j]] = [actions[j], actions[i]];
+            render();
+            onChange();
+          });
+          controls.append(btn);
+        }
+        summary.append(controls);
+      }
+      if (unreachable) {
+        const warn = document.createElement('span');
+        warn.className = 'dead';
+        warn.title = 'A catch-all (no criteria) appears earlier in the list and always matches first.';
+        warn.textContent = '⚠ unreachable';
+        summary.append(warn);
+      }
       details.append(summary);
 
       const editor = document.createElement('arazzo-action-editor');
@@ -41,8 +98,16 @@ export function buildActionList({ actions, kind, stepIds, completionContext, onC
       editor.value = action;
       editor.addEventListener('action-changed', (e) => {
         e.stopPropagation();
+        const wasCatchAll = isCatchAll(actions[i]);
         actions[i] = e.detail.action;
-        summary.textContent = `${e.detail.action.name || '(unnamed)'} · ${e.detail.action.type}${e.detail.action.stepId ? ` → ${e.detail.action.stepId}` : ''}`;
+        title.textContent = summaryText(e.detail.action);
+        // Crossing the catch-all boundary repositions the action: a new catch-all pins to the
+        // end; one that gained criteria rejoins the ordered section.
+        if (isCatchAll(e.detail.action) !== wasCatchAll) {
+          const [moved] = actions.splice(i, 1);
+          actions.splice(isCatchAll(moved) ? actions.length : firstCatchAllIndex(), 0, moved);
+          render();
+        }
         onChange();
       });
 
@@ -65,6 +130,7 @@ export function buildActionList({ actions, kind, stepIds, completionContext, onC
     add.className = 'ghost add-action';
     add.textContent = `+ Add ${kind} action`;
     add.addEventListener('click', () => {
+      // A fresh action starts criteria-less (a catch-all), so it belongs at the end anyway.
       actions.push({ name: '', type: 'end' });
       render();
       root.querySelector('details:last-of-type')?.setAttribute('open', '');
@@ -82,9 +148,13 @@ export const ACTION_LIST_CSS = `
   .action-list { display: grid; gap: 6px; min-width: 0; }
   .action-list details, .action-list details > arazzo-action-editor { min-width: 0; }
   .action-list details { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 0; }
-  .action-list summary { cursor: pointer; padding: 7px 10px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
-  .action-list.success summary::before { content: '✓ '; color: var(--arazzo-status-completed, #2a8a4a); }
-  .action-list.failure summary::before { content: '✗ '; color: var(--arazzo-status-faulted, #d4351c); }
+  .action-list summary { cursor: pointer; padding: 7px 10px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; display: flex; align-items: center; gap: 6px; }
+  .action-list summary .atitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .action-list.success summary::before { content: '✓'; color: var(--arazzo-status-completed, #2a8a4a); }
+  .action-list.failure summary::before { content: '✗'; color: var(--arazzo-status-faulted, #d4351c); }
+  .action-list .reorder { display: inline-flex; gap: 2px; }
+  .action-list .move { font-size: 10px; padding: 1px 6px; }
+  .action-list .dead { font-size: 11px; color: var(--arazzo-status-suspended, #b07d18); flex: none; }
   .action-list details[open] { padding-bottom: 10px; }
   .action-list details > arazzo-action-editor { display: block; padding: 4px 10px 6px; }
   .action-list .remove { margin: 0 10px; font-size: 11px; }

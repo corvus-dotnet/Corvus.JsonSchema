@@ -113,6 +113,16 @@ beyond that model rather than copying it:
 - **Criteria on edges.** An action's `criteria` summarize on the edge label; an explicit action
   edge with no criteria is labelled *always* (ghost style) — unconditional behaviour is visible,
   not silent. Clicking the edge opens the criteria editor in the inspector.
+- **Action order is semantics: first-match-wins.** Arazzo dispatches the *first* action in
+  declaration order whose criteria all match (the runtime's `ControlFlowEmitter` emits exactly
+  this; step-level actions take precedence over workflow-level defaults), so an action with no
+  criteria — a **catch-all** — always matches and everything after it is dead. The designer makes
+  this legible and safe: action lists reorder (▲▼) with **catch-alls pinned to the end** (no
+  reorder controls, criteria'd actions cannot move below them, insertions land above them, an
+  action that loses its last criterion repositions to the end); edge labels lead with their
+  precedence (`1·`, `2·`) when a step has several same-kind actions; and anything that still ends
+  up after a catch-all (e.g. a hand-authored document) is **flagged unreachable** — a projection
+  problem, a struck-through dimmed edge, and a ⚠ row marker — never silently rewritten.
 - **Drop → select → conditions.** Drawing an edge writes the action, auto-selects the new edge,
   and the inspector opens on its criteria — conditions are one keystroke away without a modal
   interrupting bulk authoring. Dropping an *identical unconditional* duplicate selects the

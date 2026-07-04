@@ -191,6 +191,9 @@ class ArazzoDesignSurface extends ArazzoElement {
         .edge-success .line { stroke: var(--arazzo-status-completed, #2a8a4a); }
         .edge-failure .line { stroke: var(--arazzo-status-faulted, #d4351c); }
         .edge.reusable .line { stroke-dasharray: 8 3; }
+        /* An action after a criteria-less catch-all can never fire (first-match-wins). */
+        .edge.unreachable { opacity: 0.35; }
+        .edge.unreachable .elabel { text-decoration: line-through; }
         .elabel { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted);
                   paint-order: stroke; stroke: var(--_surface); stroke-width: 3; }
         .elabel.ghost { font-style: italic; opacity: 0.8; }
@@ -350,13 +353,15 @@ class ArazzoDesignSurface extends ArazzoElement {
   /** @private */
   _buildEdge(edge) {
     const el = document.createElementNS(SVG, 'g');
-    el.setAttribute('class', `edge edge-${edge.kind}${edge.reusable ? ' reusable' : ''}`);
+    el.setAttribute('class', `edge edge-${edge.kind}${edge.reusable ? ' reusable' : ''}${edge.unreachable ? ' unreachable' : ''}`);
     el.setAttribute('data-id', edge.id);
     const d = this._edgePath(edge);
     const mid = this._edgeMid(edge);
     // An explicit action edge with no criteria fires unconditionally — say so, visibly and
-    // clickably, instead of leaving the missing conditions silent.
-    const label = edge.criteriaSummary ?? (edge.kind !== 'seq' ? 'always' : undefined);
+    // clickably, instead of leaving the missing conditions silent. Dispatch is first-match-wins,
+    // so when a step has several same-kind actions the label leads with its precedence.
+    let label = edge.criteriaSummary ?? (edge.kind !== 'seq' ? 'always' : undefined);
+    if (label && edge.orderCount > 1) label = `${edge.order}· ${label}`;
     el.innerHTML = `
       <path class="hit" d="${d}"></path>
       <path class="line" d="${d}" marker-end="url(#arr-${edge.kind === 'seq' ? 'seq' : edge.kind})"></path>
