@@ -55,7 +55,7 @@
       <button id="tab-runs" role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
       <button id="tab-runners" role="tab" aria-selected="false" aria-controls="view-runners">Runners</button>
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
-      <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Sources</button>
+      <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Connections</button>
       <button id="tab-environments" role="tab" aria-selected="false" aria-controls="view-environments">Environments</button>
       <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
       <button id="tab-permissions" role="tab" aria-selected="false" aria-controls="view-permissions">Permissions</button>
@@ -153,7 +153,7 @@
     runnersPanel.client = client;
     runnerAuth.client = client;
 
-    // Credentials: the Sources tab is a MANAGEMENT master-detail surface — select a row to open its record on the RHS and
+    // Credentials: the Connections tab is a MANAGEMENT master-detail surface — select a row to open its record on the RHS and
     // view/rotate/edit/duplicate/revoke there (no dialog on select). Creating a credential is rooted in the catalog's
     // per-workflow Sources panel (where the source + its auth are known), not here. (§7.5)
 

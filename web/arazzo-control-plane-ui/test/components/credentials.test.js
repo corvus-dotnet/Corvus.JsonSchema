@@ -1,4 +1,4 @@
-// Tier 3 — <arazzo-credentials>: the Sources master-detail surface (list + RHS detail pane) over the in-memory mock.
+// Tier 3 — <arazzo-credentials>: the Connections master-detail surface (list + RHS detail pane) over the in-memory mock.
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/credentials.js';
@@ -24,7 +24,7 @@ async function selectRow(el, key = 'petstore@production') {
   return waitFor(() => detail(el) && detail(el).shadowRoot.querySelector('[part="meta"]'));
 }
 
-describe('<arazzo-credentials> (Sources master-detail)', () => {
+describe('<arazzo-credentials> (Connections master-detail)', () => {
   let el;
   afterEach(() => el?.remove());
 
