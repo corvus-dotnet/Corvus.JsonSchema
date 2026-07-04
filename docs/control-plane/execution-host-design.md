@@ -265,7 +265,7 @@ execution capacity (every caller sees every runner).
 **How dispatch composes (§7.1).** The store-as-queue dispatch already filters claimable `Pending` runs by reach +
 hosted version. Add the environment predicate: a `Pending` run pinned to environment *E* is claimable only by a
 runner that is (a) `Authorized` + live for *E*, (b) hosting the version, (c) within the caller/run reach — which,
-because the runner inherited *E*'s tags, is automatically true for runners of *E*. The credential binder the
+because the runner inherited *E*'s management tags, is automatically true for runners of *E*. The credential binder the
 winning runner builds is already per-environment, so the loop closes: a production run can only land on a runner
 provisioned for, and authorized in, production.
 
@@ -939,7 +939,7 @@ Row authorization decides **which** workflows (catalog versions) and runs a prin
   (unprefixed) tags on a **catalog version** are user-owned: supplied on the add request (`addCatalogVersion`'s
   `securityTags` part) and re-tagged later by a workflow administrator via the metadata patch
   (`CatalogMetadataPatch.securityTags`) — a governed, audited edit, not immutable. **Internal** (reserved-prefix)
-  tags remain deployment-owned and never user-settable (see below). A run inherits its version's tags at trigger.
+  tags remain deployment-owned and never user-settable (see below). A run inherits its version's security tags at trigger.
 - **Tag rules** are boolean expressions over those labels, written in (a reuse of) the **Arazzo `simple`
   criterion grammar** — the same `==`/`!=`/`<`/`<=`/`>`/`>=`, `&&`/`||`/`!`/grouping engine already inlined for
   step criteria (`SimpleConditionEvaluator` runtime + `SimpleCriterionInliner` codegen, over `Comparand`).
@@ -978,7 +978,7 @@ mapping model for the security API itself (below).
 ### 14.3 Deployment access-control shell — mandated filters + internal tags
 
 A deployment can **wrap** the row-security model so its own constraints are inescapable — e.g. mandate that
-every principal is filtered to its own tenant/customer/organization. Users author their tags and rules
+every principal is filtered to its own tenant/customer/organization. Users author their security tags and rules
 *within* that shell; they cannot reach outside it. This is what keeps one shared-hosting tenant from leaking
 into another even if a user rule is misconfigured.
 

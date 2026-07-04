@@ -92,8 +92,8 @@ workflow) safely; retire or delete versions; control *who* may publish further v
 
 ### 4.1 Browse & inspect
 1. **Open the Catalog tab.** One row per base workflow (latest version as the representative).
-2. **Filter** by status chip (`All`/`Active`/`Obsolete`) and the title/owner/tags search inputs.
-3. **Click a row.** The detail pane shows the version's description, content hash (copyable), tags, owner (name/email/team/url), full audit trail, the source descriptions (each downloadable), and `Package (.awp)` / `Workflow (.json)` downloads.
+2. **Filter** by status chip (`All`/`Active`/`Obsolete`) and the title/owner/user-tags search inputs.
+3. **Click a row.** The detail pane shows the version's description, content hash (copyable), user tags, owner (name/email/team/url), full audit trail, the source descriptions (each downloadable), and `Package (.awp)` / `Workflow (.json)` downloads.
 4. **Switch versions** with the header version dropdown.
 
 ### 4.2 Publish a new workflow / version
@@ -101,7 +101,7 @@ workflow) safely; retire or delete versions; control *who* may publish further v
 2. **Choose `Build from documents`** (default) or `Upload package (.awp)`.
 3. **(Build) Select the Arazzo workflow `.json`.** The dialog reads its `sourceDescriptions` and, per source, asks for the source document **and shows the credentials that source already has** (a binding serves every workflow that references it — reuse, default off) or warns when none and nudges to set one up (default on).
 4. **Seed administrators.** The workflow's own identity is pre-filled (removable); add more via the `{workflow | tenant}` dimension picker + `+ Add administrator`.
-5. **Fill owner** (name + email required) and optional tags.
+5. **Fill owner** (name + email required) and optional user tags.
 6. **Click `Add workflow`.** The version lands, staged administrators apply, and any ticked credential setups open in sequence — each **locked to its source with the auth kind + config derived from the uploaded source document** (§7.5); the new version's detail opens.
 
 ### 4.3 Retire / delete a version
@@ -399,7 +399,7 @@ is, where its value comes from).
 | 1 | **Approve an access request** | ✅ recorded (`ux-clips/1-approve-access-request.webm`) | "Approvals live under Access — your inbox spans every workflow you administer" → "Each row: who asked, the workflow, the scopes" → "Approve with a note for the audit trail" → "Inbox-zero" |
 | 2 | **Recover faulted runs — one realistic case per mode** | ✅ recorded (`ux-clips/2-recover-faulted-run.webm`) | Four *different* faulted runs, each restarted in turn: **Retry** (502 transient blip) → **Rewind** (region quota — region fixed upstream, rewind to `createAccount`) → **Skip + recorded outputs** (KYC unreadable, verified by hand — record schema-typed outputs) → **State-patch** (missing `adopter.email` — patch the context, retry) |
 | 3 | **Register a connection safely** | ✅ recorded (`ux-clips/3-register-connection.webm`) | "References, never secrets" → field-by-field identity → walk the Key Vault reference (vault / secret / version → composed `keyvault://…`) → **"grant the runner's own identity read on the secret (§13.5); writing it is a separate CI/IaC identity; the control plane never reads the store"** → config → whose runs may use it → "Created" |
-| 4 | **Publish a workflow** | ☐ to record | "Add workflow → choose the document" → "Its sources are detected" → "Seed administrators" → "Owner + tags → Add" → "Published; bind its credentials" |
+| 4 | **Publish a workflow** | ☐ to record | "Add workflow → choose the document" → "Its sources are detected" → "Seed administrators" → "Owner + user tags → Add" → "Published; bind its credentials" |
 | 5 | **Author a rule, then grant it** | ☐ to record | "New rule → pick a goal; the expression writes itself" → "New grant → pick a team (not a person)" → "scoped-reach read via that rule" |
 | 6 | **Request access (requester)** | ☐ to record | "Request access — pick a workflow + scopes" → "write auto-includes read" → "Submitted; track or withdraw" |
 
