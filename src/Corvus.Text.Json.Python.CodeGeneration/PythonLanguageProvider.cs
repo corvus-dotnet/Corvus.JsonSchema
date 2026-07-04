@@ -527,7 +527,7 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
     private static bool IsArrayType(TypeDeclaration td)
     {
         TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
-        return SchemaTypes(reduced).Contains("array") || (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType()) is not null;
+        return SchemaTypes(reduced).Contains("array") || reduced.ExplicitTupleType() is not null || (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType()) is not null;
     }
 
     private static string AssembleHeader(PyModule mod)
@@ -844,6 +844,12 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
             return;
         }
 
+        if (IsArrayType(td))
+        {
+            mod.Body.Append("type ").Append(name).Append(" = ").Append(PyArrayTypeRef(td.ReducedTypeDeclaration().ReducedType, mod)).Append('\n');
+            return;
+        }
+
         var prims = new List<string>();
         foreach (string k in SchemaTypes(td))
         {
@@ -892,18 +898,19 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
     private static string PyTypeRef(TypeDeclaration td, PyModule mod)
     {
         TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
-        if ((IsObject(reduced) || IsEnum(reduced) || IsUnion(reduced) || IsBrandedStringFormat(reduced)) && HasModule(reduced))
+
+        // A named type (with a module) is referenced BY NAME — including arrays/tuples, which is also what
+        // breaks a self-referential array/tuple cycle (a recursive `type X` alias is lazy, but building its
+        // element string must resolve the back-reference to the name, not re-inline it).
+        if ((IsObject(reduced) || IsEnum(reduced) || IsUnion(reduced) || IsBrandedStringFormat(reduced) || IsArrayType(reduced)) && HasModule(reduced))
         {
             return TypeNameOf(reduced);
         }
 
         List<string> kinds = SchemaTypes(reduced);
-        if (kinds.Contains("array") || (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType()) is not null)
+        if (kinds.Contains("array") || reduced.ExplicitTupleType() is not null || (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType()) is not null)
         {
-            mod.NeedsSequence = true;
-            TypeDeclaration? elem = (reduced.ExplicitNonTupleItemsType() ?? reduced.ArrayItemsType())?.ReducedType;
-            string elemRef = elem is not null ? PyTypeRef(elem, mod) : Any(mod);
-            return "Sequence[" + elemRef + "]";
+            return PyArrayTypeRef(reduced, mod);
         }
 
         var prims = new List<string>();
@@ -916,6 +923,36 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
         }
 
         return prims.Count > 0 ? string.Join(" | ", prims) : Any(mod);
+    }
+
+    // Array/tuple element typing (design §5.3), the port of TsArrayTypeRef: a pure tuple `tuple[A, B]`, a
+    // prefix + variadic tail `tuple[A, *tuple[T, ...]]` (prefixItems with a tail schema; `items: false` closes
+    // the tuple), else a plain `Sequence[T]`.
+    private static string PyArrayTypeRef(TypeDeclaration td, PyModule mod)
+    {
+        TupleTypeDeclaration? tuple = td.ExplicitTupleType();
+        ArrayItemsTypeDeclaration? items = td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType();
+        if (tuple is not null)
+        {
+            var parts = new List<string>();
+            foreach (var it in tuple.ItemsTypes)
+            {
+                parts.Add(PyTypeRef(it.ReducedType, mod));
+            }
+
+            if (items is not null && items.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+            {
+                parts.Add("*tuple[" + PyTypeRef(items.ReducedType, mod) + ", ...]");
+            }
+
+            if (parts.Count > 0)
+            {
+                return "tuple[" + string.Join(", ", parts) + "]";
+            }
+        }
+
+        mod.NeedsSequence = true;
+        return "Sequence[" + (items is not null ? PyTypeRef(items.ReducedType, mod) : Any(mod)) + "]";
     }
 
     private static string Any(PyModule mod)
