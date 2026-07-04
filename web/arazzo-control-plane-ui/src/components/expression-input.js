@@ -121,7 +121,10 @@ class ArazzoExpressionInput extends ArazzoElement {
         :host { display: block; }
         .xin { position: relative; min-width: 0; }
         :host { min-width: 0; }
-        .cm-scroller { overflow-x: auto; }
+        /* Single-line fields scroll like a native input: content moves with the caret, no visible
+           scrollbar strip. */
+        .cm-scroller { overflow-x: auto; scrollbar-width: none; }
+        .cm-scroller::-webkit-scrollbar { display: none; }
         input, .cm-editor {
           width: 100%; box-sizing: border-box;
           font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;

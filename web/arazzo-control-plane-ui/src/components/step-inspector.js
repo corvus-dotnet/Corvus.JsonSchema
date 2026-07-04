@@ -78,9 +78,13 @@ class ArazzoStepInspector extends ArazzoElement {
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
         textarea.invalid { border-color: var(--_danger); }
         .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .prow { display: grid; grid-template-columns: minmax(80px, 2fr) auto 3fr auto; gap: 6px; align-items: center; }
+        /* A parameter is a small card: name + in + remove on the head line, the value expression
+           full-width beneath — a narrow inspector rail never squeezes the editor. */
+        .prow { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 8px; display: grid; gap: 6px; }
+        .prow .phead { display: grid; grid-template-columns: minmax(80px, 1fr) auto auto; gap: 6px; align-items: center; }
+        .prow .phead > * { min-width: 0; }
         .prow input.pname { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .params { display: grid; gap: 6px; }
+        .params { display: grid; gap: 8px; }
         .addp { font-size: 12px; justify-self: start; }
         .localize { font-size: 12px; }
         .hint { font-size: 11px; color: var(--_muted); }
@@ -310,10 +314,12 @@ class ArazzoStepInspector extends ArazzoElement {
       const row = document.createElement('div');
       row.className = 'prow';
       row.innerHTML = `
-        <input class="pname" type="text" placeholder="name" value="${escapeHtml(p.name || '')}">
-        <select class="pin">${PARAM_IN.map((v) => `<option ${v === p.in ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <div class="phead">
+          <input class="pname" type="text" placeholder="name" value="${escapeHtml(p.name || '')}">
+          <select class="pin">${PARAM_IN.map((v) => `<option ${v === p.in ? 'selected' : ''}>${v}</option>`).join('')}</select>
+          <button class="close" type="button" title="Remove parameter">✕</button>
+        </div>
         <span class="pval-slot"></span>
-        <button class="close" type="button" title="Remove parameter">✕</button>
       `;
       const val = document.createElement('arazzo-expression-input');
       val.setAttribute('placeholder', '$inputs.orderId');
