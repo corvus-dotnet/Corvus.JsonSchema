@@ -520,6 +520,94 @@ public sealed class PythonLanguageProvider : IHierarchicalLanguageProvider
                 mod.Body.Append("    return ").Append(mod.Rt("rmw_upsert")).Append("(source, targets)\n");
             }
         }
+
+        EmitWithDefaults(td, mod);
+    }
+
+    // with_defaults_<t>: return a shallow clone of the value with every ABSENT property that declares a `default`
+    // filled in, recursing into present nested objects / arrays-of-object whose own type carries defaults (the
+    // TS EmitWithDefaults port). Emitted only when the subtree can actually fill a default (tree-shaken).
+    private static void EmitWithDefaults(TypeDeclaration td, PyModule mod)
+    {
+        if (!td.HasPropertyDeclarations || !SubtreeHasDefault(td, new HashSet<TypeDeclaration>()))
+        {
+            return;
+        }
+
+        string name = TypeNameOf(td);
+        mod.Typing.Add("cast");
+        mod.Body.Append("\n\ndef with_defaults_").Append(ModuleNameOf(td)).Append("(value: ").Append(name).Append(") -> ").Append(name).Append(":\n");
+        mod.Body.Append("    out: dict[str, object] = dict(value)\n");
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            string k = PyEmit.Str(p.JsonPropertyName);
+            if (TryGetPropertyDefault(p, out JsonElement def))
+            {
+                mod.Body.Append("    if ").Append(k).Append(" not in value:\n        out[").Append(k).Append("] = ").Append(PyEmit.Literal(def)).Append('\n');
+            }
+
+            TypeDeclaration propType = p.ReducedPropertyType;
+            if (IsObject(propType) && SubtreeHasDefault(propType, new HashSet<TypeDeclaration>()))
+            {
+                mod.Body.Append("    if ").Append(k).Append(" in value:\n        _v = out[").Append(k).Append("]\n        if isinstance(_v, dict):\n");
+                mod.Body.Append("            out[").Append(k).Append("] = with_defaults_").Append(ModuleNameOf(propType)).Append("(cast(\"").Append(TypeNameOf(propType)).Append("\", _v))\n");
+            }
+            else if (ArrayElementType(propType) is TypeDeclaration elem && IsObject(elem) && SubtreeHasDefault(elem, new HashSet<TypeDeclaration>()))
+            {
+                mod.Body.Append("    if ").Append(k).Append(" in value:\n        _v = out[").Append(k).Append("]\n        if isinstance(_v, list):\n");
+                mod.Body.Append("            out[").Append(k).Append("] = [with_defaults_").Append(ModuleNameOf(elem)).Append("(cast(\"").Append(TypeNameOf(elem)).Append("\", e)) if isinstance(e, dict) else e for e in cast(\"list[object]\", _v)]\n");
+            }
+        }
+
+        mod.Body.Append("    return cast(\"").Append(name).Append("\", out)\n");
+    }
+
+    private static bool TryGetPropertyDefault(PropertyDeclaration p, out JsonElement defaultValue)
+    {
+        JsonElement schema = p.UnreducedPropertyType.LocatedSchema.Schema;
+        if (schema.ValueKind == JsonValueKind.Object && schema.TryGetProperty("default", out JsonElement d))
+        {
+            defaultValue = d;
+            return true;
+        }
+
+        defaultValue = default;
+        return false;
+    }
+
+    private static TypeDeclaration? ArrayElementType(TypeDeclaration td)
+    {
+        ArrayItemsTypeDeclaration? items = td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType();
+        return items?.ReducedType;
+    }
+
+    private static bool SubtreeHasDefault(TypeDeclaration td, HashSet<TypeDeclaration> visited)
+    {
+        if (!visited.Add(td) || !IsObject(td))
+        {
+            return false;
+        }
+
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (TryGetPropertyDefault(p, out _))
+            {
+                return true;
+            }
+
+            TypeDeclaration propType = p.ReducedPropertyType;
+            if (IsObject(propType) && SubtreeHasDefault(propType, visited))
+            {
+                return true;
+            }
+
+            if (ArrayElementType(propType) is TypeDeclaration elem && IsObject(elem) && SubtreeHasDefault(elem, visited))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // A property whose reduced type is an array (a plain items array or a tuple/prefixItems array): the members
