@@ -232,6 +232,6 @@ the assembly digest must match the manifest's `assemblyDigest` (`sha256:<hex>`) 
 must match the catalog version's content hash. This binds the assembly to the exact version by content digest.
 
 **Still design-only.** A *cryptographic signature* over the assembly/package (the current binding is a SHA-256
-digest, not a signature); and a dedicated **publish/hosting service** that loads a version's assembly and serves
+digest, not a signature); and a dedicated **hosting service** that loads a version's assembly and serves
 the workflow at a configured, secured endpoint (the loader primitive and the run-trigger exist; a standalone
 published-endpoint hosting service does not yet). These extend the existing shape rather than reshape it.
