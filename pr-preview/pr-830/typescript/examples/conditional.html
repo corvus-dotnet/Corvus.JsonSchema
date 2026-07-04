@@ -191,14 +191,14 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p><code>if</code>/<code>then</code>/<code>else</code> makes a constraint depend on the data. When the <code>if</code> subschema matches, <code>then</code> must also hold (otherwise <code>else</code>). Here, when <code>method</code> is <code>&quot;card&quot;</code>, <code>cardNumber</code> becomes required. This is a <em>constraint</em>, not a shape change. The generated <code>interface</code> keeps <code>cardNumber</code> optional, and <code>Payment.evaluate</code> enforces the conditional requirement.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0075d259572e894465cb08eb4714a440a2670de4/docs/typescript/examples/017-conditional/payment.json"><code>payment.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2151550b9901650ffa1ce6300c0c6d9907dd0387/docs/typescript/examples/017-conditional/payment.json"><code>payment.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Payment&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;method&quot;],
   &quot;properties&quot;: { &quot;method&quot;: { &quot;enum&quot;: [&quot;card&quot;, &quot;cash&quot;] }, &quot;cardNumber&quot;: { &quot;type&quot;: &quot;string&quot; } },
   &quot;if&quot;: { &quot;properties&quot;: { &quot;method&quot;: { &quot;const&quot;: &quot;card&quot; } } },
   &quot;then&quot;: { &quot;required&quot;: [&quot;cardNumber&quot;] } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0075d259572e894465cb08eb4714a440a2670de4/docs/typescript/examples/017-conditional/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2151550b9901650ffa1ce6300c0c6d9907dd0387/docs/typescript/examples/017-conditional/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">Payment.evaluate({ method: &quot;cash&quot; });                            // true
 Payment.evaluate({ method: &quot;card&quot;, cardNumber: &quot;4111 …&quot; });      // true
 Payment.evaluate({ method: &quot;card&quot; });                            // false — then-clause requires cardNumber
