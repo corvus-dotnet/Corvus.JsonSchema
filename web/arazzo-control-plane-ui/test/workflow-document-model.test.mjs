@@ -191,3 +191,23 @@ test('layout ops ride the transport seam and converge on a collaborator model', 
   assert.ok(!b.canUndo, 'a remote move never enters the local undo stack');
   assert.equal(b.text, a.text, 'documents stay identical');
 });
+
+test('reset opens a new document in place: references survive, history clears, nothing broadcast', () => {
+  const model = makeModel();
+  const docRef = model.document;
+  model.update((d) => { d.workflows[0].summary = 'edited'; });
+  let broadcast = 0;
+  model.addEventListener('ops', () => broadcast++);
+  let loadEvent = null;
+  model.addEventListener('document-changed', (e) => { loadEvent = e.detail; });
+
+  model.reset({ arazzo: '1.1.0', workflows: [{ workflowId: 'fresh', steps: [] }] }, { nodes: { a: { x: 1, y: 2 } } });
+
+  assert.equal(model.document, docRef, 'the document reference is stable');
+  assert.equal(docRef.workflows[0].workflowId, 'fresh', 'contents replaced in place');
+  assert.equal(docRef.info, undefined, 'old keys are gone');
+  assert.deepEqual(model.designerState.nodes.a, { x: 1, y: 2 });
+  assert.ok(!model.canUndo && !model.canRedo, 'a load is not an edit');
+  assert.equal(broadcast, 0, 'a load does not ride the transport seam');
+  assert.equal(loadEvent.origin, 'load');
+});
