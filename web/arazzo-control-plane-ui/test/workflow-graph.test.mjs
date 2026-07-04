@@ -13,12 +13,20 @@ test('listWorkflows names every workflow with its summary', () => {
   assert.ok(workflows[0].summary.length > 0);
 });
 
-test('one node per step, in declared order', () => {
+test('one node per step in declared order, bracketed by the start/end pseudo-nodes', () => {
   const g = graph();
   assert.deepEqual(
     g.nodes.map((n) => n.id),
-    ['validate-order', 'authorize-payment', 'await-confirmation', 'capture-payment', 'manual-review'],
+    ['#start', 'validate-order', 'authorize-payment', 'await-confirmation', 'capture-payment', 'manual-review', '#end'],
   );
+  const start = g.nodes[0];
+  const end = g.nodes.at(-1);
+  assert.equal(start.pseudo, true);
+  assert.equal(start.kind, 'start');
+  assert.equal(start.inputCount, 3, 'start anchors the workflow inputs');
+  assert.equal(end.pseudo, true);
+  assert.equal(end.kind, 'end');
+  assert.equal(end.outputCount, 1, 'end anchors the workflow outputs');
 });
 
 test('binding kinds: operation, channel, and sub-workflow', () => {
@@ -35,13 +43,32 @@ test('binding kinds: operation, channel, and sub-workflow', () => {
   assert.equal(sub.nodes.find((n) => n.id === 'run-order').binding.workflowId, 'place-order');
 });
 
-test('sequence edges connect consecutive steps but stop at unconditional end/goto', () => {
+test('sequence edges run entry → steps → end but stop at unconditional end/goto', () => {
   const g = graph();
   const seq = g.edges.filter((e) => e.kind === 'seq');
-  // capture-payment has an unconditional local `end`, so no fall-through to manual-review.
+  // capture-payment and manual-review both end unconditionally: no fall-throughs from them.
   assert.deepEqual(
     seq.map((e) => `${e.from}->${e.to}`),
-    ['validate-order->authorize-payment', 'authorize-payment->await-confirmation', 'await-confirmation->capture-payment'],
+    ['#start->validate-order', 'validate-order->authorize-payment', 'authorize-payment->await-confirmation', 'await-confirmation->capture-payment'],
+  );
+});
+
+test('end actions become edges to the end terminal', () => {
+  const g = graph();
+  const ends = g.edges.filter((e) => e.to === '#end' && e.kind !== 'seq');
+  assert.deepEqual(
+    ends.map((e) => `${e.from}:${e.actionName}:${e.kind}`).sort(),
+    ['capture-payment:done:success', 'manual-review:halt-after-review:success'],
+  );
+});
+
+test('a workflow whose last step falls through gets an implicit completion edge to end', () => {
+  const doc = structuredClone(designerFixture);
+  delete doc.workflows[0].steps.at(-1).onSuccess; // manual-review no longer ends explicitly
+  const g = projectWorkflow(doc, 'place-order');
+  assert.ok(
+    g.edges.some((e) => e.kind === 'seq' && e.from === 'manual-review' && e.to === '#end'),
+    'implicit final completion is a visible sequence edge into end',
   );
 });
 
@@ -116,7 +143,7 @@ test('a step with no binding is a problem with kind unknown', () => {
   const doc = structuredClone(designerFixture);
   delete doc.workflows[0].steps[0].operationId;
   const g = projectWorkflow(doc, 'place-order');
-  assert.equal(g.nodes[0].kind, 'unknown');
+  assert.equal(g.nodes[1].kind, 'unknown'); // nodes[0] is #start
   assert.ok(g.problems.some((p) => p.stepId === 'validate-order' && /no operation/.test(p.message)));
 });
 

@@ -24,6 +24,9 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { layoutGraph, NODE_WIDTH, NODE_HEIGHT } from '../workflow-layout.js';
+import { START_ID } from '../workflow-graph.js';
+
+const PSEUDO_R = 17; // radius of the start/end pseudo-node circles
 
 const SVG = 'http://www.w3.org/2000/svg';
 const PORT_KINDS = { 'port-success': 'success', 'port-failure': 'failure' };
@@ -142,7 +145,7 @@ class ArazzoDesignSurface extends ArazzoElement {
         .node { cursor: pointer; }
         .node .card { fill: var(--_bg); stroke: var(--_border); stroke-width: 1.25; rx: 10; }
         .node:hover .card { stroke: var(--_accent); }
-        .node.selected .card { stroke: var(--_accent); stroke-width: 2; }
+        .node.selected rect.card, .node.selected circle.card { stroke: var(--_accent); stroke-width: 2; }
         .node .label { font: 600 13px var(--_font); fill: var(--_text); }
         .node .sub { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted); }
         .node .kbadge { rx: 4; }
@@ -154,6 +157,15 @@ class ArazzoDesignSurface extends ArazzoElement {
         .chip { font: 10px var(--_font); fill: var(--_muted); }
         .chip.ghost { font-style: italic; opacity: 0.75; }
         .chip.end { fill: var(--_text); font-weight: 700; }
+
+        /* Start/end pseudo-nodes (projection-only; never in the document) */
+        .node.pseudo circle.card { fill: var(--_surface); stroke-width: 2; }
+        .node.kind-start circle.card { stroke: var(--_accent); }
+        .node.kind-end circle.card { stroke: var(--_muted); }
+        .node.pseudo .glyph { font: 700 10px var(--_font); fill: var(--_accent); }
+        .node.pseudo .inner { fill: var(--_muted); }
+        .node.pseudo .plabel { font: 700 10px var(--_font); fill: var(--_muted);
+                               text-transform: uppercase; letter-spacing: 0.06em; }
 
         /* Breakpoint dot */
         .bp { fill: transparent; stroke: var(--_muted); stroke-width: 1; cursor: pointer; }
@@ -201,11 +213,12 @@ class ArazzoDesignSurface extends ArazzoElement {
         svg.debugging .node:not(.st-active):not(.st-done-success):not(.st-done-failure) { opacity: 0.45; }
         svg.debugging .edge { opacity: 0.3; }
         svg.debugging .edge.lit { opacity: 1; }
-        .node.st-done-success .card { stroke: var(--arazzo-status-completed, #2a8a4a); stroke-width: 2; }
-        .node.st-done-failure .card { stroke: var(--arazzo-status-faulted, #d4351c); stroke-width: 2; }
+        /* Element-qualified so these beat the pseudo-node base strokes (.node.kind-end circle.card). */
+        .node.st-done-success rect.card, .node.st-done-success circle.card { stroke: var(--arazzo-status-completed, #2a8a4a); stroke-width: 2; }
+        .node.st-done-failure rect.card, .node.st-done-failure circle.card { stroke: var(--arazzo-status-faulted, #d4351c); stroke-width: 2; }
         .node.st-skipped { opacity: 0.45; }
         .node.st-active { opacity: 1; }
-        .node.st-active .card { stroke: var(--_accent); stroke-width: 2.5; animation: arazzo-pulse 1.1s ease-in-out infinite; }
+        .node.st-active rect.card, .node.st-active circle.card { stroke: var(--_accent); stroke-width: 2.5; animation: arazzo-pulse 1.1s ease-in-out infinite; }
         @keyframes arazzo-pulse {
           0%, 100% { stroke-opacity: 1; }
           50% { stroke-opacity: 0.35; }
@@ -254,6 +267,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     for (const ids of groups.values()) {
       ids.forEach((id, i) => this._parallel.set(id, { i, n: ids.length }));
     }
+    this._pseudoIds = new Set(g.nodes.filter((n) => n.pseudo).map((n) => n.id));
 
     // Exit chips (edges targeting `workflow:<id>`) get synthetic positions next to their source.
     this._exitPositions = {};
@@ -283,9 +297,26 @@ class ArazzoDesignSurface extends ArazzoElement {
   _buildNode(node) {
     const pos = this._positions[node.id];
     const el = document.createElementNS(SVG, 'g');
-    el.setAttribute('class', `node kind-${node.kind}`);
+    el.setAttribute('class', `node${node.pseudo ? ' pseudo' : ''} kind-${node.kind}`);
     el.setAttribute('data-id', node.id);
     el.setAttribute('transform', `translate(${pos.x} ${pos.y})`);
+
+    if (node.pseudo) {
+      const cx = NODE_WIDTH / 2;
+      const cy = NODE_HEIGHT / 2;
+      const badge = node.kind === 'start'
+        ? (node.inputCount ? `⇥ ${node.inputCount} input${node.inputCount === 1 ? '' : 's'}` : '')
+        : (node.outputCount ? `→ ${node.outputCount} output${node.outputCount === 1 ? '' : 's'}` : '');
+      el.innerHTML = `
+        <circle class="card" cx="${cx}" cy="${cy}" r="${PSEUDO_R}"></circle>
+        ${node.kind === 'start'
+          ? `<text class="glyph" x="${cx}" y="${cy + 3.5}" text-anchor="middle">▶</text>`
+          : `<circle class="inner" cx="${cx}" cy="${cy}" r="6"></circle>`}
+        <text class="plabel" x="${cx}" y="${cy + PSEUDO_R + 14}" text-anchor="middle">${escapeHtml(node.label)}</text>
+        ${badge ? `<text class="chip" x="${cx}" y="${cy + PSEUDO_R + 28}" text-anchor="middle">${escapeHtml(badge)}</text>` : ''}
+      `;
+      return el;
+    }
 
     const chips = [];
     if (node.criteriaCount) chips.push({ text: `✓ ${node.criteriaCount}` });
@@ -303,7 +334,6 @@ class ArazzoDesignSurface extends ArazzoElement {
       <text class="label" x="46" y="22">${escapeHtml(truncate(node.label, 20))}</text>
       <text class="sub" x="12" y="42">${escapeHtml(truncate(node.sublabel, 30))}</text>
       <text class="chips" x="12" y="62">${chips.map((c) => `<tspan class="chip${c.cls || ''}" dx="0 6">${escapeHtml(c.text)}</tspan>`).join('<tspan dx="8"> </tspan>')}</text>
-      ${node.end ? `<text class="chip end" x="${NODE_WIDTH - 12}" y="62" text-anchor="end">■ end</text>` : ''}
       <circle class="port port-failure" cx="${NODE_WIDTH * 0.35}" cy="${NODE_HEIGHT}" r="5"><title>Draw a failure edge</title></circle>
       <circle class="port port-success" cx="${NODE_WIDTH * 0.65}" cy="${NODE_HEIGHT}" r="5"><title>Draw a success edge</title></circle>
     `;
@@ -368,6 +398,25 @@ class ArazzoDesignSurface extends ArazzoElement {
     return p ? (p.i - (p.n - 1) / 2) * 30 : 0;
   }
 
+  /** @private — where edges attach on a node: card borders, or the pseudo-node circle. */
+  _anchors(id) {
+    const pos = this._positions[id];
+    if (this._pseudoIds?.has(id)) {
+      const cx = pos.x + NODE_WIDTH / 2;
+      const cy = pos.y + NODE_HEIGHT / 2;
+      return {
+        top: { x: cx, y: cy - PSEUDO_R },
+        bottom: { x: cx, y: cy + PSEUDO_R },
+        right: { x: cx + PSEUDO_R, y: cy },
+      };
+    }
+    return {
+      top: { x: pos.x + NODE_WIDTH / 2, y: pos.y },
+      bottom: { x: pos.x + NODE_WIDTH / 2, y: pos.y + NODE_HEIGHT },
+      right: { x: pos.x + NODE_WIDTH, y: pos.y + NODE_HEIGHT / 2 },
+    };
+  }
+
   /** @private — smooth cubic between node borders; backward/sideways edges bow out to the side. */
   _edgePath(edge) {
     const a = this._positions[edge.from];
@@ -379,20 +428,22 @@ class ArazzoDesignSurface extends ArazzoElement {
       const y1 = a.y + NODE_HEIGHT / 2;
       return `M ${x1} ${y1} C ${x1 + 28} ${y1}, ${b.x - 28} ${b.y + 13}, ${b.x} ${b.y + 13}`;
     }
+    const from = this._anchors(edge.from);
+    const to = this._anchors(edge.to);
     const down = b.y > a.y + NODE_HEIGHT / 2;
     if (down) {
-      const x1 = a.x + NODE_WIDTH / 2 + fan;
-      const y1 = a.y + NODE_HEIGHT;
-      const x2 = b.x + NODE_WIDTH / 2 + fan;
-      const y2 = b.y;
+      const x1 = from.bottom.x + fan;
+      const y1 = from.bottom.y;
+      const x2 = to.top.x + fan;
+      const y2 = to.top.y;
       const c = Math.max(24, (y2 - y1) / 2);
       return `M ${x1} ${y1} C ${x1 + fan} ${y1 + c}, ${x2 + fan} ${y2 - c}, ${x2} ${y2}`;
     }
     // Upward or same-rank: route around the right side.
-    const x1 = a.x + NODE_WIDTH;
-    const y1 = a.y + NODE_HEIGHT / 2;
-    const x2 = b.x + NODE_WIDTH;
-    const y2 = b.y + NODE_HEIGHT / 2;
+    const x1 = from.right.x;
+    const y1 = from.right.y;
+    const x2 = to.right.x;
+    const y2 = to.right.y;
     const bow = 70 + Math.abs(y2 - y1) * 0.08 + Math.abs(fan);
     return `M ${x1} ${y1} C ${x1 + bow} ${y1}, ${x2 + bow} ${y2}, ${x2} ${y2}`;
   }
@@ -527,7 +578,9 @@ class ArazzoDesignSurface extends ArazzoElement {
       } else if (g.type === 'draw') {
         this.$('.rubber').hidden = true;
         for (const el of this.$$('.node.link-target')) el.classList.remove('link-target');
-        if (g.over && g.over !== g.from) {
+        // The start node is never a valid action target; dropping on the end terminal authors
+        // an `end` action (the host writes it — one grammar, every action is an edge).
+        if (g.over && g.over !== g.from && g.over !== START_ID) {
           this.emit('edge-created', { from: g.from, to: g.over, kind: g.kind });
         }
       }

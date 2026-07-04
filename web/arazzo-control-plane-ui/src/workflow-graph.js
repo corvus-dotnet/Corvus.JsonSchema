@@ -38,6 +38,15 @@
  * @property {boolean} [reusable]        True when the action came from a `$components` reference.
  */
 
+/**
+ * Reserved ids for the start/end pseudo-nodes. Projection-only artifacts (`#` cannot appear in a
+ * stepId): the start node anchors the workflow's inputs and the entry edge; the end terminal is
+ * the target of every `end` action edge and of the implicit fall-off-the-last-step completion.
+ * They are never written into the Arazzo document.
+ */
+export const START_ID = '#start';
+export const END_ID = '#end';
+
 /** List the workflows in a document as `{workflowId, summary}` (for the designer's switcher). */
 export function listWorkflows(doc) {
   return (doc?.workflows || []).map((w) => ({ workflowId: w.workflowId, summary: w.summary || '' }));
@@ -69,24 +78,82 @@ export function projectWorkflow(doc, workflowId) {
   const steps = workflow.steps || [];
   const stepIds = new Set(steps.map((s) => s.stepId));
 
-  const nodes = steps.map((step) => projectNode(doc, workflow, step, problems));
+  // Start/end pseudo-nodes bracket the step nodes: start carries the workflow's typed inputs,
+  // end carries its outputs. Projection-only — see START_ID/END_ID.
+  const nodes = [
+    {
+      id: START_ID,
+      kind: 'start',
+      pseudo: true,
+      label: 'start',
+      sublabel: '',
+      binding: {},
+      criteriaCount: 0,
+      retry: null,
+      localSuccessCount: 0,
+      localFailureCount: 0,
+      usesDefaultSuccess: false,
+      usesDefaultFailure: false,
+      outputCount: 0,
+      inputCount: Object.keys(workflow.inputs?.properties || {}).length,
+    },
+    ...steps.map((step) => projectNode(doc, workflow, step, problems)),
+    {
+      id: END_ID,
+      kind: 'end',
+      pseudo: true,
+      label: 'end',
+      sublabel: '',
+      binding: {},
+      criteriaCount: 0,
+      retry: null,
+      localSuccessCount: 0,
+      localFailureCount: 0,
+      usesDefaultSuccess: false,
+      usesDefaultFailure: false,
+      outputCount: Object.keys(workflow.outputs || {}).length,
+      inputCount: 0,
+    },
+  ];
   const edges = [];
 
-  // Implicit sequence edges: step i → i+1, muted. A step whose *unconditional* local success action
-  // is `end` or `goto` never falls through, so the sequence edge is elided for it.
-  for (let i = 0; i < steps.length - 1; i++) {
-    const from = steps[i];
-    const actions = resolveActions(doc, from.onSuccess, problems, from.stepId);
-    const diverts = actions.some((a) => (a.type === 'end' || a.type === 'goto') && !(a.criteria?.length));
-    if (!diverts) {
-      edges.push({ id: `seq:${from.stepId}`, from: from.stepId, to: steps[i + 1].stepId, kind: 'seq' });
+  const divertsAfterSuccess = (step) => {
+    const actions = resolveActions(doc, step.onSuccess, problems, step.stepId);
+    return actions.some((a) => (a.type === 'end' || a.type === 'goto') && !(a.criteria?.length));
+  };
+
+  // Implicit sequence edges: entry → first step, step i → i+1, last step → end; all muted. A step
+  // whose *unconditional* local success action is `end` or `goto` never falls through, so its
+  // sequence edge is elided.
+  if (steps.length) {
+    edges.push({ id: `seq:${START_ID}`, from: START_ID, to: steps[0].stepId, kind: 'seq' });
+    for (let i = 0; i < steps.length; i++) {
+      if (divertsAfterSuccess(steps[i])) continue;
+      edges.push({
+        id: `seq:${steps[i].stepId}`,
+        from: steps[i].stepId,
+        to: i < steps.length - 1 ? steps[i + 1].stepId : END_ID,
+        kind: 'seq',
+      });
     }
   }
 
-  // Explicit action edges: local goto actions, success and failure.
+  // Explicit action edges: local goto and end actions, success and failure.
   for (const step of steps) {
     for (const [list, kind] of [[step.onSuccess, 'success'], [step.onFailure, 'failure']]) {
       for (const action of resolveActions(doc, list, problems, step.stepId)) {
+        if (action.type === 'end') {
+          edges.push({
+            id: `end:${step.stepId}:${action.name || 'end'}:${kind}`,
+            from: step.stepId,
+            to: END_ID,
+            kind,
+            actionName: action.name,
+            criteriaSummary: summarizeCriteria(action.criteria),
+            reusable: action.__reusable || undefined,
+          });
+          continue;
+        }
         if (action.type !== 'goto') continue;
         if (action.workflowId) {
           // A goto to another workflow: no in-graph target; surfaced as a problem-free badge case
