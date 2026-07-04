@@ -138,10 +138,27 @@ export function projectWorkflow(doc, workflowId) {
     }
   }
 
-  // Explicit action edges: local goto and end actions, success and failure.
+  // Explicit action edges: local goto and end actions, success and failure. Arazzo dispatch is
+  // FIRST-MATCH-WINS in declaration order (ControlFlowEmitter), so each edge carries its order,
+  // and any action following a criteria-less catch-all is flagged unreachable.
   for (const step of steps) {
-    for (const [list, kind] of [[step.onSuccess, 'success'], [step.onFailure, 'failure']]) {
-      for (const action of resolveActions(doc, list, problems, step.stepId)) {
+    for (const [list, kind, listName] of [[step.onSuccess, 'success', 'onSuccess'], [step.onFailure, 'failure', 'onFailure']]) {
+      const actions = resolveActions(doc, list, problems, step.stepId);
+      let catchAllName = null;
+      for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
+        const unreachable = catchAllName != null;
+        if (unreachable) {
+          problems.push({
+            stepId: step.stepId,
+            message: `${listName} action '${action.name || action.type}' in '${step.stepId}' is unreachable — '${catchAllName}' has no criteria and always matches first.`,
+          });
+        }
+        if (!(action.criteria?.length) && catchAllName == null) {
+          catchAllName = action.name || action.type;
+        }
+        const orderInfo = actions.length > 1 ? { order: i + 1, orderCount: actions.length } : {};
+        if (unreachable) orderInfo.unreachable = true;
         if (action.type === 'end') {
           edges.push({
             id: `end:${step.stepId}:${action.name || 'end'}:${kind}`,
@@ -151,6 +168,7 @@ export function projectWorkflow(doc, workflowId) {
             actionName: action.name,
             criteriaSummary: summarizeCriteria(action.criteria),
             reusable: action.__reusable || undefined,
+            ...orderInfo,
           });
           continue;
         }
@@ -166,6 +184,7 @@ export function projectWorkflow(doc, workflowId) {
             actionName: action.name,
             criteriaSummary: summarizeCriteria(action.criteria),
             reusable: action.__reusable || undefined,
+            ...orderInfo,
           });
           continue;
         }
@@ -181,8 +200,26 @@ export function projectWorkflow(doc, workflowId) {
           actionName: action.name,
           criteriaSummary: summarizeCriteria(action.criteria),
           reusable: action.__reusable || undefined,
+          ...orderInfo,
         });
       }
+    }
+  }
+
+  // The same first-match rule governs the workflow-level defaults lists.
+  const defaults = {
+    successActions: resolveActions(doc, workflow.successActions, problems),
+    failureActions: resolveActions(doc, workflow.failureActions, problems),
+  };
+  for (const [actions, listName] of [[defaults.successActions, 'successActions'], [defaults.failureActions, 'failureActions']]) {
+    let catchAllName = null;
+    for (const action of actions) {
+      if (catchAllName != null) {
+        problems.push({
+          message: `workflow ${listName} action '${action.name || action.type}' is unreachable — '${catchAllName}' has no criteria and always matches first.`,
+        });
+      }
+      if (!(action.criteria?.length) && catchAllName == null) catchAllName = action.name || action.type;
     }
   }
 
@@ -200,10 +237,7 @@ export function projectWorkflow(doc, workflowId) {
     summary: workflow.summary || '',
     nodes,
     edges,
-    defaults: {
-      successActions: resolveActions(doc, workflow.successActions, problems),
-      failureActions: resolveActions(doc, workflow.failureActions, problems),
-    },
+    defaults,
     problems,
   };
 }

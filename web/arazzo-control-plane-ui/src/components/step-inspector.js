@@ -403,9 +403,21 @@ class ArazzoStepInspector extends ArazzoElement {
       if (!this._step.successCriteria?.length && templates.successCriteria.length) {
         this._step.successCriteria = templates.successCriteria;
       }
-      const existing = new Set((this._step.onFailure || []).map((a) => a?.name));
-      const fresh = templates.failureActions.filter((a) => !existing.has(a.name));
-      if (fresh.length) this._step.onFailure = [...(this._step.onFailure || []), ...fresh];
+      // First-match-wins: criteria'd templates insert ABOVE any existing catch-all (else they
+      // could never fire), and the template's own fallback is skipped when a catch-all exists.
+      const list = [...(this._step.onFailure || [])];
+      const names = new Set(list.map((a) => a?.name));
+      const isCatchAll = (a) => a && typeof a.reference !== 'string' && !(a.criteria?.length);
+      const hasCatchAll = list.some(isCatchAll);
+      const fresh = templates.failureActions.filter((a) =>
+        !names.has(a.name) && (a.criteria?.length || !hasCatchAll));
+      if (fresh.length) {
+        const pin = list.findIndex(isCatchAll);
+        const at = pin < 0 ? list.length : pin;
+        list.splice(at, 0, ...fresh.filter((a) => a.criteria?.length));
+        list.push(...fresh.filter((a) => !(a.criteria?.length)));
+        this._step.onFailure = list;
+      }
       this.renderForm();
       this._emit();
     });
