@@ -345,6 +345,77 @@ jobs:
         env:
           NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
+  python-compliance:
+    name: Python Engine Compliance
+    needs:
+      - build
+      - setCachePathsConfig
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: |
+            10.0.x
+            9.0.x
+
+      - name: Restore build cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            .nuget-packages
+            Solutions
+            solutions
+            ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      # A managed Python 3.12 venv (uv, installed via its standalone script so no action pin is needed) with the
+      # pure-Python runtime installed editable plus its dev tools (mypy + pyright + type stubs). The runtime must
+      # be importable by the compliance runner and the demos; mypy/pyright are the load-bearing type-check gate
+      # on the generated Python. The venv's bin goes on PATH so `pyright` resolves in the docs gate below.
+      - name: Set up Python 3.12 + the runtime and type-check tools
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          uv venv --python 3.12 "$GITHUB_WORKSPACE/.venv-py"
+          uv pip install --python "$GITHUB_WORKSPACE/.venv-py" -e packages/corvus-json-runtime-py[dev]
+          echo "$GITHUB_WORKSPACE/.venv-py/bin" >> "$GITHUB_PATH"
+
+      # The pure-Python runtime's own strict type-check + unit tests.
+      - name: Python runtime type-check + unit tests
+        run: |
+          python -m mypy --strict src/corvus_json_runtime
+          python -m unittest discover -s tests
+        working-directory: packages/corvus-json-runtime-py
+        timeout-minutes: 5
+
+      # Full JSON-Schema-Test-Suite against the generated Python: codegen every test-group (ComplianceGenerator),
+      # import each package's evaluate, tally per dialect. Exits non-zero on any non-allow-listed failure.
+      - name: Python JSON-Schema-Test-Suite compliance
+        run: bash run-compliance.sh
+        working-directory: prototypes/py-compliance
+        timeout-minutes: 25
+        env:
+          COMPLIANCE_PYTHON: ${{ github.workspace }}/.venv-py/bin/python
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+      # The documentation recipes: regenerate every recipe from its schema via the CLI, then type-check each with
+      # mypy --strict + pyright and run its demo.
+      - name: Python docs recipes generate + type-check + run
+        shell: pwsh
+        run: ./regenerate.ps1 -Check
+        working-directory: docs/python/examples
+        timeout-minutes: 15
+        env:
+          CORVUS_PYTHON: ${{ github.workspace }}/.venv-py/bin/python
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
   deploy-docs:
     name: Deploy Documentation
     needs:
