@@ -162,9 +162,11 @@
     let player = null; // { i, timer, paused }
 
     function setUi() {
+      // States: idle (null) · running · paused · done ({done:true} — overlay kept for inspection).
       stopBtn.hidden = !player;
-      stepBtn.hidden = !!player && !player.paused; // step is for idle (start paused) or paused
-      simBtn.textContent = !player
+      stopBtn.textContent = player?.done ? '✕ Clear' : '■ Stop';
+      stepBtn.hidden = !!player && !player.paused && !player.done;
+      simBtn.textContent = !player || player.done
         ? SIM_LABEL
         : player.paused
           ? `⏵ Resume (paused at ${trace[player.i].active ?? 'end'})`
@@ -190,13 +192,15 @@
       player.i++;
       if (player.i >= trace.length) {
         clearInterval(player.timer);
-        player = null;
+        player = { done: true }; // keep the outcome overlay; ✕ Clear returns to the clean surface
+        logEvent('debug-finished', { note: 'overlay kept for inspection — Clear to reset' });
         setUi();
         return;
       }
       applyFrame();
     }
     simBtn.addEventListener('click', () => {
+      if (player?.done) player = null; // a finished run restarts cleanly
       if (player && !player.paused) {
         pausePlayer({ note: 'paused by user — before the next step' });
         return;
@@ -217,6 +221,7 @@
       if (player && !player.paused) player.timer = setInterval(tick, 900);
     });
     stepBtn.addEventListener('click', () => {
+      if (player?.done) player = null; // stepping after a finished run starts a fresh session
       if (!player) {
         // From idle: start the session paused before the first step.
         select.value = 'place-order';
@@ -231,7 +236,8 @@
       // Execute exactly the next step, then stay paused (no breakpoint check — already stepping).
       player.i++;
       if (player.i >= trace.length) {
-        player = null;
+        player = { done: true };
+        logEvent('debug-finished', { note: 'overlay kept for inspection — Clear to reset' });
         setUi();
         return;
       }
