@@ -191,13 +191,13 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p><code>items</code> can itself be an <code>array</code>, recursively. A rank-2 array generates <code>readonly (readonly number[])[]</code>; the nesting continues for rank-N (tensors). Element access is ordinary double-indexing.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/008-nested-arrays/grid.json"><code>grid.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/docs/typescript/examples/008-nested-arrays/grid.json"><code>grid.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Grid&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;cells&quot;],
   &quot;properties&quot;: { &quot;cells&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;number&quot; } } } } }
 </code></pre>
 <p>The generated <code>interface Grid</code> has <code>cells: readonly (readonly number[])[]</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/008-nested-arrays/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/docs/typescript/examples/008-nested-arrays/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const grid = Grid.parse(bytes);
 grid.cells[1][2]; // 6 — typed at every level
 </code></pre>

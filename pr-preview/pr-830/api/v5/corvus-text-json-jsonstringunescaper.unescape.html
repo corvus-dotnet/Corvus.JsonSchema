@@ -117,7 +117,7 @@
 </tbody>
 </table>
 <h2 id="unescape-readonlyspan-byte-span-byte-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L40">JsonStringUnescaper.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L40">JsonStringUnescaper.cs</a></p>
 <p>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The first backslash is located automatically.</p>
 <pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, out int written)
 </code></pre>
@@ -171,7 +171,7 @@
 </table>
 <hr />
 <h2 id="unescape-readonlyspan-byte-span-byte-int-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, int)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L53">JsonStringUnescaper.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L53">JsonStringUnescaper.cs</a></p>
 <p>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The caller provides the index of the first backslash to avoid a redundant scan.</p>
 <pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, int idx, out int written)
 </code></pre>

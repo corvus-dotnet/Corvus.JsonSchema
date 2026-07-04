@@ -191,7 +191,7 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p>An <code>array</code> with an <code>items</code> schema generates <code>readonly T[]</code>, where <code>T</code> is the element type (here a generated <code>LineItem</code> interface). The array is read with ordinary indexing and iteration, evaluated as a whole (including <code>minItems</code>), and appended to with <code>produce</code>.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/007-arrays/cart.json"><code>cart.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/docs/typescript/examples/007-arrays/cart.json"><code>cart.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Cart&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;items&quot;],
   &quot;properties&quot;: { &quot;items&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;minItems&quot;: 1,
       &quot;items&quot;: { &quot;title&quot;: &quot;LineItem&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;sku&quot;, &quot;qty&quot;],
@@ -199,7 +199,7 @@
 </code></pre>
 <p>The generated <code>interface Cart</code> has <code>items: readonly LineItem[]</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/9b302276b704f88575ab1bf7f02db03325ce7dc5/docs/typescript/examples/007-arrays/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/04744a48bbf77558afab6791775fb3f44041e0b4/docs/typescript/examples/007-arrays/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const cart = Cart.parse(bytes);
 cart.items[0].sku;                              // indexed, typed as LineItem
 cart.items.reduce((n, i) =&gt; n + i.qty, 0);      // ordinary array methods
