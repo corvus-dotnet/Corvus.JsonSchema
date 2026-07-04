@@ -139,3 +139,55 @@ test('no-op updates emit nothing', () => {
   assert.equal(events, 0);
   assert.ok(!model.canUndo);
 });
+
+// ---- designer-state domain (layout rides the same stack and stream) ---------------------------
+
+test('layout moves land on the SAME undo/redo stack as document edits, in gesture order', () => {
+  const model = makeModel();
+  model.updateDesignerState((s) => { s.nodes = { 'step-a': { x: 10, y: 20 } }; }, { label: 'move node' });
+  model.update((d) => { d.workflows[0].summary = 'edited'; }, { label: 'edit summary' });
+  model.updateDesignerState((s) => { s.nodes['step-a'] = { x: 99, y: 20 }; }, { label: 'move node' });
+
+  model.undo(); // the second move
+  assert.deepEqual(model.designerState.nodes['step-a'], { x: 10, y: 20 });
+  assert.equal(model.document.workflows[0].summary, 'edited', 'the document edit is untouched');
+
+  model.undo(); // the document edit
+  assert.notEqual(model.document.workflows[0].summary, 'edited');
+  assert.deepEqual(model.designerState.nodes['step-a'], { x: 10, y: 20 }, 'layout is untouched');
+
+  model.undo(); // the first move — unpins the node entirely
+  assert.equal(model.designerState.nodes?.['step-a'], undefined, 'undoing the first move unpins');
+
+  model.redo();
+  assert.deepEqual(model.designerState.nodes['step-a'], { x: 10, y: 20 }, 'redo re-pins');
+});
+
+test('designer-state ops never touch the document or its text form', () => {
+  const model = makeModel();
+  const textBefore = model.text;
+  const result = model.updateDesignerState((s) => { s.nodes = { 'step-a': { x: 1, y: 2 } }; });
+  assert.ok(result.ops.length > 0);
+  assert.ok(result.ops.every((op) => op.d === 'designer'), 'ops are flagged with the designer domain');
+  assert.equal(model.text, textBefore, 'the document text is byte-identical');
+});
+
+test('coalesced move bursts (drag/keyboard nudges) form one undo unit', () => {
+  const model = makeModel();
+  for (const x of [10, 20, 30]) {
+    model.updateDesignerState((s) => { s.nodes = { 'step-a': { x, y: 0 } }; }, { label: 'move node', coalesce: true });
+  }
+  model.undo();
+  assert.equal(model.designerState.nodes?.['step-a'], undefined, 'one undo reverts the whole burst');
+});
+
+test('layout ops ride the transport seam and converge on a collaborator model', () => {
+  const a = makeModel('alice');
+  const b = makeModel('bob');
+  a.addEventListener('ops', (e) => b.applyRemote(e.detail));
+  a.updateDesignerState((s) => { s.nodes = { 'step-a': { x: 5, y: 7 } }; }, { label: 'move node' });
+
+  assert.deepEqual(b.designerState.nodes['step-a'], { x: 5, y: 7 }, 'the collaborator sees the move');
+  assert.ok(!b.canUndo, 'a remote move never enters the local undo stack');
+  assert.equal(b.text, a.text, 'documents stay identical');
+});
