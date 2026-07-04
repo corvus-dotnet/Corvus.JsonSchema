@@ -659,6 +659,23 @@ compile; it serves recorded fixtures, clearly marked).
 2. **Operation surface & sources.** `listSourceOperations` (+ registry variant), attach/upload,
    `fetchSourceDocument` (authenticated URL); operation browser + acquisition dialog; step
    creation via inspector (form-first, still no canvas).
+   *Status: the API half is BUILT — working-copy attachments
+   (`PUT`/`GET`/`DELETE /workspace/workflows/{id}/sources[/{name}]`: registry reference resolved
+   reach-checked at read time, or inline document stored so the working copy resolves like a
+   package; attach/detach save under the etag they read, and the attach response carries the
+   working copy's NEW etag so the designer's next save doesn't false-conflict), plus
+   `listWorkingCopySourceOperations` and `listRegisteredSourceOperations` projecting the
+   operation surface via `SourceOperationSurface` (CodeGeneration): raw-JSON-Schema
+   request/parameter/response shapes with local `$ref`s inlined to a bounded depth, OpenAPI
+   paths×methods and AsyncAPI 2.x/3.0 (publish/subscribe → receive/send exactly as the code
+   generator maps them). JS client + mock parity done. The workspace seams passed the
+   allocation-campaign protocol (ownership ledger + measured before→after, handler→InMemory
+   benchmarks in `WorkspaceApiBenchmarks`): attach RMW 12.93→4.86 KB, operation surface
+   16.26→3.77 KB (single-pass write-through, no descriptor records), blank create 2.21→1.77 KB
+   (pooled create draft, no name string / skeleton buffer), validate 5.27→3.88 KB (pointer
+   strings only at finding sites), CRUD paths already conformant (2.2–3.7 KB). Still to come in
+   this slice: `fetchSourceDocument` (§4.4), the operation browser rail + acquisition dialog, and
+   step creation from operations.*
 3. **Design surface v1.** Graph projection + chosen canvas technology: render, select, inspector
    wiring, add/move/connect/delete, defaults layer, auto-layout, `designerState` persistence.
 4. **Inspectors complete.** Step/workflow/document inspectors, criteria/action editors,

@@ -32,17 +32,17 @@ public static class ApiEndpointRegistration
     /// <param name="availabilityHandler">The handler for ApiAvailability operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
     /// <param name="workspaceHandler">The handler for ApiWorkspace operations.</param>
+    /// <param name="sourcesHandler">The handler for ApiSources operations.</param>
     /// <param name="environmentsHandler">The handler for ApiEnvironments operations.</param>
     /// <param name="runnerAuthorizationsHandler">The handler for ApiRunnerAuthorizations operations.</param>
-    /// <param name="sourcesHandler">The handler for ApiSources operations.</param>
     /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
     /// <param name="accessRequestsHandler">The handler for ApiAccessRequests operations.</param>
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSourcesHandler sourcesHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
     {
-        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, credentialsHandler, workspaceHandler, environmentsHandler, runnerAuthorizationsHandler, sourcesHandler, administratorsHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, credentialsHandler, workspaceHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, administratorsHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
     }
 
     /// <summary>
@@ -56,16 +56,16 @@ public static class ApiEndpointRegistration
     /// <param name="availabilityHandler">The handler for ApiAvailability operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
     /// <param name="workspaceHandler">The handler for ApiWorkspace operations.</param>
+    /// <param name="sourcesHandler">The handler for ApiSources operations.</param>
     /// <param name="environmentsHandler">The handler for ApiEnvironments operations.</param>
     /// <param name="runnerAuthorizationsHandler">The handler for ApiRunnerAuthorizations operations.</param>
-    /// <param name="sourcesHandler">The handler for ApiSources operations.</param>
     /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
     /// <param name="accessRequestsHandler">The handler for ApiAccessRequests operations.</param>
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiSourcesHandler sourcesHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
     {
 
         IEndpointConventionBuilder __GetAccessGrantsEndpoint = app.MapGet("/access/grants", async (HttpContext context) =>
@@ -5009,6 +5009,918 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ValidateWorkspaceWorkflowEndpoint);
 
+        IEndpointConventionBuilder __ListWorkingCopySourcesEndpoint = app.MapGet("/workspace/workflows/{id}/sources", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                ListWorkingCopySourcesParams parameters = new()
+                {
+                    Id = IdValue,
+                }
+                ;
+
+                ListWorkingCopySourcesResult result = await workspaceHandler.HandleListWorkingCopySourcesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listWorkingCopySources",
+                methodName: "ListWorkingCopySources",
+                httpMethod: "GET",
+                routeTemplate: "/workspace/workflows/{id}/sources",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListWorkingCopySourcesEndpoint);
+
+        IEndpointConventionBuilder __AttachWorkingCopySourceEndpoint = app.MapPut("/workspace/workflows/{id}/sources/{name}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AttachSourceRequest>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AttachSourceRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                AttachWorkingCopySourceParams parameters = new()
+                {
+                    Id = IdValue,
+                    Name = NameValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                AttachWorkingCopySourceResult result = await workspaceHandler.HandleAttachWorkingCopySourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "attachWorkingCopySource",
+                methodName: "AttachWorkingCopySource",
+                httpMethod: "PUT",
+                routeTemplate: "/workspace/workflows/{id}/sources/{name}",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __AttachWorkingCopySourceEndpoint);
+
+        IEndpointConventionBuilder __DetachWorkingCopySourceEndpoint = app.MapDelete("/workspace/workflows/{id}/sources/{name}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                DetachWorkingCopySourceParams parameters = new()
+                {
+                    Id = IdValue,
+                    Name = NameValue,
+                }
+                ;
+
+                DetachWorkingCopySourceResult result = await workspaceHandler.HandleDetachWorkingCopySourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "detachWorkingCopySource",
+                methodName: "DetachWorkingCopySource",
+                httpMethod: "DELETE",
+                routeTemplate: "/workspace/workflows/{id}/sources/{name}",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __DetachWorkingCopySourceEndpoint);
+
+        IEndpointConventionBuilder __ListWorkingCopySourceOperationsEndpoint = app.MapGet("/workspace/workflows/{id}/sources/{name}/operations", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                ListWorkingCopySourceOperationsParams parameters = new()
+                {
+                    Id = IdValue,
+                    Name = NameValue,
+                }
+                ;
+
+                ListWorkingCopySourceOperationsResult result = await workspaceHandler.HandleListWorkingCopySourceOperationsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listWorkingCopySourceOperations",
+                methodName: "ListWorkingCopySourceOperations",
+                httpMethod: "GET",
+                routeTemplate: "/workspace/workflows/{id}/sources/{name}/operations",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListWorkingCopySourceOperationsEndpoint);
+
+        IEndpointConventionBuilder __ListRegisteredSourceOperationsEndpoint = app.MapGet("/sources/{name}/operations", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                ListRegisteredSourceOperationsParams parameters = new()
+                {
+                    Name = NameValue,
+                }
+                ;
+
+                ListRegisteredSourceOperationsResult result = await sourcesHandler.HandleListRegisteredSourceOperationsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listRegisteredSourceOperations",
+                methodName: "ListRegisteredSourceOperations",
+                httpMethod: "GET",
+                routeTemplate: "/sources/{name}/operations",
+                tags: new[] { "sources" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListRegisteredSourceOperationsEndpoint);
+
+        IEndpointConventionBuilder __ListSourcesEndpoint = app.MapGet("/sources", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
+                if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
+                {
+                    string LimitRaw = LimitQueryVal[0]!;
+                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit>(LimitRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageTokenValue = default;
+                if (context.Request.Query.TryGetValue("pageToken", out var PageTokenQueryVal) && PageTokenQueryVal.Count > 0)
+                {
+                    string PageTokenRaw = PageTokenQueryVal[0]!;
+                    PageTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PageTokenRaw, workspace);
+                }
+
+                if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'limit' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PageTokenValue.IsUndefined() && !PageTokenValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'pageToken' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                ListSourcesParams parameters = new()
+                {
+                    Limit = LimitValue,
+                    PageToken = PageTokenValue,
+                }
+                ;
+
+                ListSourcesResult result = await sourcesHandler.HandleListSourcesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "listSources",
+                methodName: "ListSources",
+                httpMethod: "GET",
+                routeTemplate: "/sources",
+                tags: new[] { "sources" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ListSourcesEndpoint);
+
+        IEndpointConventionBuilder __CreateSourceEndpoint = app.MapPost("/sources", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCreate>? bodyDoc = null;
+            try
+            {
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CreateSourceParams parameters = new()
+                {
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                CreateSourceResult result = await sourcesHandler.HandleCreateSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "createSource",
+                methodName: "CreateSource",
+                httpMethod: "POST",
+                routeTemplate: "/sources",
+                tags: new[] { "sources" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CreateSourceEndpoint);
+
+        IEndpointConventionBuilder __GetSourceEndpoint = app.MapGet("/sources/{name}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetSourceParams parameters = new()
+                {
+                    Name = NameValue,
+                }
+                ;
+
+                GetSourceResult result = await sourcesHandler.HandleGetSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getSource",
+                methodName: "GetSource",
+                httpMethod: "GET",
+                routeTemplate: "/sources/{name}",
+                tags: new[] { "sources" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetSourceEndpoint);
+
+        IEndpointConventionBuilder __UpdateSourceEndpoint = app.MapPut("/sources/{name}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceUpdate>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceUpdate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                UpdateSourceParams parameters = new()
+                {
+                    Name = NameValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                UpdateSourceResult result = await sourcesHandler.HandleUpdateSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "updateSource",
+                methodName: "UpdateSource",
+                httpMethod: "PUT",
+                routeTemplate: "/sources/{name}",
+                tags: new[] { "sources" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __UpdateSourceEndpoint);
+
+        IEndpointConventionBuilder __DeleteSourceEndpoint = app.MapDelete("/sources/{name}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                DeleteSourceParams parameters = new()
+                {
+                    Name = NameValue,
+                }
+                ;
+
+                DeleteSourceResult result = await sourcesHandler.HandleDeleteSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "deleteSource",
+                methodName: "DeleteSource",
+                httpMethod: "DELETE",
+                routeTemplate: "/sources/{name}",
+                tags: new[] { "sources" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __DeleteSourceEndpoint);
+
         IEndpointConventionBuilder __ListEnvironmentsEndpoint = app.MapGet("/environments", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -6322,433 +7234,6 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", System.Array.Empty<string>(), "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", System.Array.Empty<string>(), "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ListRunnerAuthorizationsEndpoint);
-
-        IEndpointConventionBuilder __ListSourcesEndpoint = app.MapGet("/sources", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
-                if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
-                {
-                    string LimitRaw = LimitQueryVal[0]!;
-                    LimitValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit>(LimitRaw, workspace);
-                }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageTokenValue = default;
-                if (context.Request.Query.TryGetValue("pageToken", out var PageTokenQueryVal) && PageTokenQueryVal.Count > 0)
-                {
-                    string PageTokenRaw = PageTokenQueryVal[0]!;
-                    PageTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PageTokenRaw, workspace);
-                }
-
-                if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'limit' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!PageTokenValue.IsUndefined() && !PageTokenValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'pageToken' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                ListSourcesParams parameters = new()
-                {
-                    Limit = LimitValue,
-                    PageToken = PageTokenValue,
-                }
-                ;
-
-                ListSourcesResult result = await sourcesHandler.HandleListSourcesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "listSources",
-                methodName: "ListSources",
-                httpMethod: "GET",
-                routeTemplate: "/sources",
-                tags: new[] { "sources" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __ListSourcesEndpoint);
-
-        IEndpointConventionBuilder __CreateSourceEndpoint = app.MapPost("/sources", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCreate>? bodyDoc = null;
-            try
-            {
-                try
-                {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
-                }
-                catch
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!bodyDoc!.RootElement.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                CreateSourceParams parameters = new()
-                {
-                    Body = bodyDoc!.RootElement,
-                }
-                ;
-
-                CreateSourceResult result = await sourcesHandler.HandleCreateSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-                bodyDoc?.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "createSource",
-                methodName: "CreateSource",
-                httpMethod: "POST",
-                routeTemplate: "/sources",
-                tags: new[] { "sources" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __CreateSourceEndpoint);
-
-        IEndpointConventionBuilder __GetSourceEndpoint = app.MapGet("/sources/{name}", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
-                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
-                {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
-                }
-
-                if (NameValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                GetSourceParams parameters = new()
-                {
-                    Name = NameValue,
-                }
-                ;
-
-                GetSourceResult result = await sourcesHandler.HandleGetSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "getSource",
-                methodName: "GetSource",
-                httpMethod: "GET",
-                routeTemplate: "/sources/{name}",
-                tags: new[] { "sources" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __GetSourceEndpoint);
-
-        IEndpointConventionBuilder __UpdateSourceEndpoint = app.MapPut("/sources/{name}", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceUpdate>? bodyDoc = null;
-            try
-            {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
-                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
-                {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
-                }
-
-                if (NameValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                try
-                {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceUpdate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
-                }
-                catch
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!bodyDoc!.RootElement.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                UpdateSourceParams parameters = new()
-                {
-                    Name = NameValue,
-                    Body = bodyDoc!.RootElement,
-                }
-                ;
-
-                UpdateSourceResult result = await sourcesHandler.HandleUpdateSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-                bodyDoc?.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "updateSource",
-                methodName: "UpdateSource",
-                httpMethod: "PUT",
-                routeTemplate: "/sources/{name}",
-                tags: new[] { "sources" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __UpdateSourceEndpoint);
-
-        IEndpointConventionBuilder __DeleteSourceEndpoint = app.MapDelete("/sources/{name}", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
-                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
-                {
-                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
-                }
-
-                if (NameValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                DeleteSourceParams parameters = new()
-                {
-                    Name = NameValue,
-                }
-                ;
-
-                DeleteSourceResult result = await sourcesHandler.HandleDeleteSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "deleteSource",
-                methodName: "DeleteSource",
-                httpMethod: "DELETE",
-                routeTemplate: "/sources/{name}",
-                tags: new[] { "sources" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __DeleteSourceEndpoint);
 
         IEndpointConventionBuilder __ListAdministratorsEndpoint = app.MapGet("/administrators/{baseWorkflowId}", async (HttpContext context) =>
         {
@@ -9363,6 +9848,56 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>ValidateWorkspaceWorkflow</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] ValidateWorkspaceWorkflowOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySources</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourcesOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySources</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourcesOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>AttachWorkingCopySource</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] AttachWorkingCopySourceOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>AttachWorkingCopySource</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] AttachWorkingCopySourceOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DetachWorkingCopySource</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] DetachWorkingCopySourceOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DetachWorkingCopySource</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] DetachWorkingCopySourceOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySourceOperations</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourceOperationsOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListWorkingCopySourceOperations</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListWorkingCopySourceOperationsOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListRegisteredSourceOperations</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRegisteredSourceOperationsOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListRegisteredSourceOperations</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRegisteredSourceOperationsOpenIdConnectScopes = ["sources:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>ListEnvironments</c> for the <c>Oauth2</c> scheme.

@@ -273,6 +273,50 @@ public abstract class WorkspaceWorkflowStoreConformance
         (await store.GetAsync(globexId, Scope("globex"), default)).ShouldNotBeNull().Dispose();
     }
 
+    [TestMethod]
+    public async Task Attached_sources_replace_when_a_draft_supplies_them_and_carry_forward_when_omitted()
+    {
+        IWorkspaceWorkflowStore store = await this.NewStoreAsync();
+        string id;
+        WorkflowEtag etag;
+        using (ParsedJsonDocument<WorkspaceWorkflow> seed = WorkspaceWorkflow.Draft("wc", DocUtf8("v1"), default, null, null, default))
+        using (ParsedJsonDocument<WorkspaceWorkflow> added = await store.AddAsync(seed.RootElement, "alice", default))
+        {
+            id = added.RootElement.IdValue;
+            etag = added.RootElement.EtagValue;
+            added.RootElement.Sources.IsNotUndefined().ShouldBeFalse();
+        }
+
+        // An attach-shaped draft supplies ONLY the replacement attachment set.
+        using (ParsedJsonDocument<JsonElement> attachments = ParsedJsonDocument<JsonElement>.Parse(
+            Encoding.UTF8.GetBytes("""[{"name":"pets","kind":"inline","type":"openapi","document":{"openapi":"3.1.0"},"attachedBy":"alice","attachedAt":"2026-07-04T00:00:00Z"}]""")))
+        using (ParsedJsonDocument<WorkspaceWorkflow> attach = WorkspaceWorkflow.Draft(default, default, default, default, default, attachments.RootElement, default))
+        using (ParsedJsonDocument<WorkspaceWorkflow>? attached = await store.UpdateAsync(id, attach.RootElement, etag, "alice", AccessContext.System, default))
+        {
+            attached.ShouldNotBeNull();
+            attached!.RootElement.Sources.GetArrayLength().ShouldBe(1);
+            DocJson(attached.RootElement).ShouldContain("v1"); // the document carried forward untouched
+            etag = attached.RootElement.EtagValue;
+        }
+
+        // A plain save (document only) carries the attachments forward.
+        using (ParsedJsonDocument<WorkspaceWorkflow> save = WorkspaceWorkflow.Draft("wc", DocUtf8("v2"), default, null, null, default))
+        using (ParsedJsonDocument<WorkspaceWorkflow>? saved = await store.UpdateAsync(id, save.RootElement, etag, "bob", AccessContext.System, default))
+        {
+            saved.ShouldNotBeNull();
+            saved!.RootElement.Sources.GetArrayLength().ShouldBe(1);
+            DocJson(saved.RootElement).ShouldContain("v2");
+            etag = saved.RootElement.EtagValue;
+        }
+
+        // A detach-shaped draft supplies the (now empty) replacement set.
+        using ParsedJsonDocument<JsonElement> empty = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("[]"));
+        using ParsedJsonDocument<WorkspaceWorkflow> detach = WorkspaceWorkflow.Draft(default, default, default, default, default, empty.RootElement, default);
+        using ParsedJsonDocument<WorkspaceWorkflow>? detached = await store.UpdateAsync(id, detach.RootElement, etag, "alice", AccessContext.System, default);
+        detached.ShouldNotBeNull();
+        detached!.RootElement.Sources.GetArrayLength().ShouldBe(0);
+    }
+
     // A minimal, marker-bearing Arazzo document for round-trip / replacement assertions.
     private static ReadOnlyMemory<byte> DocUtf8(string marker)
         => Encoding.UTF8.GetBytes($$"""{"arazzo":"1.1.0","x-marker":"{{marker}}"}""");
