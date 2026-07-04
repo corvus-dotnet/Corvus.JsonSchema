@@ -39,7 +39,9 @@
 </head>
 <body>
   <header>
-    <h1>Design-surface spike</h1>
+    <h1>Workflow designer</h1>
+    <button id="back" title="Back to the workspace" hidden>⌂ Workspace</button>
+    <span id="wc-name" class="muted" hidden></span>
     <select id="workflow"></select>
     <button id="undo" title="Undo (this actor's last edit)" disabled>↩ Undo</button>
     <button id="redo" title="Redo" disabled>↪ Redo</button>
@@ -50,9 +52,16 @@
     <button id="stop" hidden>■ Stop</button>
     <label class="chk"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
+    <span id="save-status" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
+    <button id="save" disabled>💾 Save</button>
+    <button id="validate">✓ Validate</button>
     <button id="theme">Toggle theme</button>
   </header>
-  <main>
+  <div id="workspace-view" style="padding: 18px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; overflow-y: auto;">
+    <arazzo-workspace-table id="wctable" selectable can-write></arazzo-workspace-table>
+    <p class="muted" style="font-size: 12px;">Open a working copy to design it; saves never mint catalog versions.</p>
+  </div>
+  <main hidden>
     <div id="center">
       <div class="tabs">
         <button id="tab-design" class="active">Design</button>
@@ -77,6 +86,10 @@
         </div>
       </section>
       <section>
+        <h2>Problems</h2>
+        <div id="problems" style="padding: 8px 10px; font-size: 12px; display: grid; gap: 6px;">(not validated yet)</div>
+      </section>
+      <section>
         <h2>Events</h2>
         <pre id="log"></pre>
       </section>
@@ -95,6 +108,14 @@
     import '../src/components/step-inspector.js';
     import '../src/components/workflow-inspector.js';
     import '../src/components/text-editor.js';
+    import '../src/components/workspace-table.js';
+    import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
+    import { createMockControlPlane } from './mock-api.js';
+
+    // The demo runs standalone against the in-memory mock control plane; a real deployment sets a
+    // base-url instead. One working copy from the fixture is seeded so the workspace is not empty.
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
 
     const surface = document.getElementById('surface');
     const textEditor = document.getElementById('text');
@@ -139,19 +160,147 @@
       },
     };
 
-    for (const w of listWorkflows(doc)) {
-      const opt = document.createElement('option');
-      opt.value = w.workflowId;
-      opt.textContent = w.workflowId;
-      select.append(opt);
+    function refreshWorkflowOptions() {
+      select.innerHTML = '';
+      for (const w of listWorkflows(doc)) {
+        const opt = document.createElement('option');
+        opt.value = w.workflowId;
+        opt.textContent = w.workflowId;
+        select.append(opt);
+      }
+      if (select.options.length) select.value = select.options[0].value;
     }
+    refreshWorkflowOptions();
 
     function project() {
       surface.graph = projectWorkflow(doc, select.value);
     }
     select.addEventListener('change', () => { project(); surface.fit(); });
-    select.value = 'place-order';
+    if ([...select.options].some((o) => o.value === 'place-order')) select.value = 'place-order';
     project();
+
+    // ── the workspace shell: open/save/validate against the control plane ──────────────────────
+    // The designer edits ONE working copy at a time; opening another resets the same model in
+    // place (references everywhere stay valid) and clears history — a load is not an edit.
+    const workspaceView = document.getElementById('workspace-view');
+    const designerView = document.querySelector('main');
+    const wctable = document.getElementById('wctable');
+    const backBtn = document.getElementById('back');
+    const wcName = document.getElementById('wc-name');
+    const saveBtn = document.getElementById('save');
+    const validateBtn = document.getElementById('validate');
+    const saveStatus = document.getElementById('save-status');
+    const problemsEl = document.getElementById('problems');
+    wctable.client = client;
+
+    const shell = { id: null, etag: null, name: null, dirty: false };
+
+    function showView(which) {
+      workspaceView.hidden = which !== 'workspace';
+      designerView.hidden = which !== 'designer';
+      backBtn.hidden = which !== 'designer';
+      wcName.hidden = which !== 'designer';
+      if (which === 'workspace') wctable.refresh();
+    }
+
+    function setSaveUi(status = '') {
+      saveBtn.disabled = !shell.dirty || !shell.id;
+      saveStatus.textContent = status || (shell.dirty ? 'unsaved changes' : '');
+    }
+
+    async function openWorkingCopy(id) {
+      const wc = await client.getWorkingCopy(id);
+      shell.id = wc.id;
+      shell.etag = wc.etag;
+      shell.name = wc.name;
+      shell.dirty = false;
+      model.reset(wc.document, wc.designerState ?? { nodes: {} });
+      wcName.textContent = wc.name;
+      refreshWorkflowOptions();
+      project();
+      problemsEl.textContent = '(not validated yet)';
+      showView('designer');
+      surface.fit();
+      setSaveUi('opened');
+    }
+
+    async function saveWorkingCopy() {
+      if (!shell.id) return false;
+      try {
+        const saved = await client.saveWorkingCopy(shell.id, {
+          name: shell.name,
+          document: model.document,
+          designerState: model.designerState,
+          expectedEtag: shell.etag,
+        });
+        shell.etag = saved.etag;
+        shell.dirty = false;
+        setSaveUi('saved');
+        return true;
+      } catch (err) {
+        // A stale etag means a collaborator saved first: nothing was clobbered — re-open to reconcile.
+        setSaveUi(err.status === 409 ? 'conflict — a collaborator saved first; go back and re-open' : `save failed: ${err.message}`);
+        return false;
+      }
+    }
+
+    async function validateWorkingCopy() {
+      if (!shell.id) return;
+      if (shell.dirty && !(await saveWorkingCopy())) return; // validate runs on the STORED document
+      try {
+        const outcome = await client.validateWorkingCopy(shell.id);
+        renderProblems(outcome);
+      } catch (err) {
+        problemsEl.textContent = `validation failed: ${err.message}`;
+      }
+    }
+
+    const SEVERITY_ICON = { error: '⛔', warning: '⚠️', info: 'ℹ️' };
+
+    function renderProblems(outcome) {
+      problemsEl.innerHTML = '';
+      if (outcome.diagnostics.length === 0) {
+        problemsEl.textContent = '✅ no findings — the document is valid';
+        return;
+      }
+      for (const d of outcome.diagnostics) {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.style.cssText = 'display:block; text-align:left; border:none; background:none; padding:2px 0; cursor:pointer; font:inherit; color:inherit;';
+        row.textContent = `${SEVERITY_ICON[d.severity] ?? ''} [${d.category}] ${d.instancePath || '/'} — ${d.message}`;
+        row.addEventListener('click', () => revealFinding(d));
+        problemsEl.append(row);
+      }
+    }
+
+    // Click a finding → put the designer on it: switch to the pointed workflow, select the pointed
+    // step on the canvas, and reveal it in the text tab when that is what's showing.
+    function revealFinding(d) {
+      const m = /^\/workflows\/(\d+)(?:\/steps\/(\d+))?/.exec(d.instancePath || '');
+      if (!m) return;
+      const workflow = doc.workflows?.[Number(m[1])];
+      if (!workflow?.workflowId) return;
+      if (select.value !== workflow.workflowId) {
+        select.value = workflow.workflowId;
+        project();
+      }
+      const stepId = m[2] != null ? workflow.steps?.[Number(m[2])]?.stepId : null;
+      if (stepId) {
+        surface.selection = { type: 'node', id: stepId };
+        showSelection(surface.selection);
+        if (!textEditor.hidden) textEditor.revealStep(stepId);
+      }
+    }
+
+    saveBtn.addEventListener('click', saveWorkingCopy);
+    validateBtn.addEventListener('click', validateWorkingCopy);
+    backBtn.addEventListener('click', () => showView('workspace'));
+    wctable.addEventListener('working-copy-selected', (e) => openWorkingCopy(e.detail.workingCopy.id));
+    wctable.addEventListener('working-copy-created', (e) => openWorkingCopy(e.detail.workingCopy.id));
+
+    // Seed one working copy from the fixture so the standalone demo has something to open.
+    client.createWorkingCopy({ name: 'place-order (fixture)', document: designerFixture, designerState: { nodes: {} } })
+      .then(() => wctable.reload());
 
     const logEvent = (type, detail) => {
       log.textContent = `${type} ${JSON.stringify(detail)}\n${log.textContent}`.slice(0, 4000);
@@ -184,6 +333,10 @@
     // stay auto-layout); the text tab refreshes unless it made the edit; the inspector rebuilds
     // only for edits it did NOT make (focus survives typing).
     model.addEventListener('document-changed', (e) => {
+      if (e.detail.origin !== 'load') {
+        shell.dirty = true;
+        setSaveUi();
+      }
       surface.layoutOverrides = structuredClone(model.designerState.nodes ?? {});
       project();
       if (e.detail.origin !== 'text' && !textEditor.hidden) {
