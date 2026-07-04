@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arazzo Workflow Designer — design-surface spike</title>
+  <link rel="icon" href="./favicon.svg">
+  <link rel="stylesheet" href="../src/arazzo-kit.css">
+  <style>
+    body { margin: 0; font: 14px var(--arazzo-font, system-ui, sans-serif); background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); }
+    header { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); flex-wrap: wrap; }
+    header h1 { font-size: 15px; margin: 0 12px 0 0; }
+    header .spacer { flex: 1; }
+    main { display: grid; grid-template-columns: 1fr 320px; gap: 12px; padding: 12px 14px; height: calc(100vh - 100px); box-sizing: border-box; }
+    arazzo-design-surface { height: 100%; }
+    aside { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    aside section { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    aside h2 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); }
+    aside pre { margin: 0; padding: 10px; font: 11px ui-monospace, Menlo, monospace; overflow: auto; flex: 1; min-height: 0; }
+    #log { max-height: 40vh; }
+    button, select { font: inherit; padding: 5px 10px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: inherit; cursor: pointer; }
+    label.chk { display: inline-flex; gap: 6px; align-items: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Design-surface spike</h1>
+    <select id="workflow"></select>
+    <button id="fit">Fit</button>
+    <button id="relayout">Auto-layout</button>
+    <button id="simulate">▶ Simulate (canned trace)</button>
+    <label class="chk"><input type="checkbox" id="readonly"> read-only</label>
+    <span class="spacer"></span>
+    <button id="theme">Toggle theme</button>
+  </header>
+  <main>
+    <arazzo-design-surface id="surface"></arazzo-design-surface>
+    <aside>
+      <section>
+        <h2>Selection</h2>
+        <pre id="selection">(nothing selected)</pre>
+      </section>
+      <section>
+        <h2>Events</h2>
+        <pre id="log"></pre>
+      </section>
+    </aside>
+  </main>
+
+  <script type="module">
+    import { designerFixture } from './designer-fixture.js';
+    import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
+    import '../src/components/design-surface.js';
+
+    const surface = document.getElementById('surface');
+    const select = document.getElementById('workflow');
+    const selectionPre = document.getElementById('selection');
+    const log = document.getElementById('log');
+
+    // The demo owns a mutable copy of the fixture so edge-created can round-trip into the document.
+    const doc = structuredClone(designerFixture);
+
+    for (const w of listWorkflows(doc)) {
+      const opt = document.createElement('option');
+      opt.value = w.workflowId;
+      opt.textContent = w.workflowId;
+      select.append(opt);
+    }
+
+    function project() {
+      surface.graph = projectWorkflow(doc, select.value);
+    }
+    select.addEventListener('change', () => { project(); surface.fit(); });
+    select.value = 'place-order';
+    project();
+
+    const logEvent = (type, detail) => {
+      log.textContent = `${type} ${JSON.stringify(detail)}\n${log.textContent}`.slice(0, 4000);
+    };
+    for (const type of ['selection-changed', 'layout-changed', 'edge-created', 'breakpoint-toggled', 'node-activated', 'delete-requested']) {
+      surface.addEventListener(type, (e) => logEvent(type, e.detail));
+    }
+
+    surface.addEventListener('selection-changed', (e) => {
+      const sel = e.detail.selection;
+      if (!sel) { selectionPre.textContent = '(nothing selected)'; return; }
+      if (sel.type === 'node') {
+        const wf = doc.workflows.find((w) => w.workflowId === select.value);
+        selectionPre.textContent = JSON.stringify(wf.steps.find((s) => s.stepId === sel.id), null, 2);
+      } else if (sel.type === 'defaults') {
+        const wf = doc.workflows.find((w) => w.workflowId === select.value);
+        selectionPre.textContent = JSON.stringify({ successActions: wf.successActions || [], failureActions: wf.failureActions || [] }, null, 2);
+      } else {
+        selectionPre.textContent = JSON.stringify(sel, null, 2);
+      }
+    });
+
+    // Round-trip: drawing an edge writes a goto action into the document and re-projects.
+    surface.addEventListener('edge-created', (e) => {
+      const { from, to, kind } = e.detail;
+      const wf = doc.workflows.find((w) => w.workflowId === select.value);
+      const step = wf.steps.find((s) => s.stepId === from);
+      const list = kind === 'success' ? 'onSuccess' : 'onFailure';
+      step[list] = [...(step[list] || []), { name: `goto-${to}`, type: 'goto', stepId: to }];
+      project();
+    });
+
+    // A canned debug-session trace: the declined-payment path into manual review.
+    const trace = [
+      { active: 'validate-order', steps: {}, edges: [] },
+      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:validate-order'] },
+      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:validate-order'] }, // retry ↻
+      { active: 'manual-review',
+        steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped' },
+        edges: ['seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure'] },
+      { active: null,
+        steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped', 'manual-review': 'done-success' },
+        edges: ['seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure'] },
+    ];
+    let timer = null;
+    document.getElementById('simulate').addEventListener('click', () => {
+      clearInterval(timer);
+      select.value = 'place-order';
+      project();
+      let i = 0;
+      surface.debugState = trace[i++];
+      timer = setInterval(() => {
+        if (i >= trace.length) { clearInterval(timer); return; }
+        surface.debugState = trace[i++];
+      }, 900);
+      logEvent('simulate', { scenario: 'payment-declined → manual review' });
+    });
+
+    document.getElementById('fit').addEventListener('click', () => surface.fit());
+    document.getElementById('relayout').addEventListener('click', () => { surface.layoutOverrides = {}; surface.fit(); });
+    document.getElementById('readonly').addEventListener('change', (e) => {
+      surface.toggleAttribute('readonly', e.target.checked);
+    });
+    document.getElementById('theme').addEventListener('click', () => {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    });
+  </script>
+</body>
+</html>
