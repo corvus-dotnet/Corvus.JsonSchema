@@ -912,12 +912,12 @@ function seedRunnerAuthorizations() {
 // (§15/§7.7), so alice@ops (seeded on every resource) administers everything, omar@ops (seeded on onboard-customer +
 // staging) administers only those, and vera/pat administer nothing. A real deployment derives all this from the
 // principal's token; here the demo selects an identity. `administrator` is the default so existing tests are unchanged.
-const READ_ALL_SCOPES = 'runs:read catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read';
+const READ_ALL_SCOPES = 'runs:read catalog:read credentials:read sources:read workspace:read environments:read availability:read administrators:read security:read';
 export const DEMO_PERSONAS = {
   administrator: {
     label: 'Administrator — alice@ops (administers everything)',
     subject: 'alice@ops',
-    scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
+    scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write workspace:read workspace:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
     reach: 'all',
   },
   operator: {
@@ -927,7 +927,7 @@ export const DEMO_PERSONAS = {
     // the requests in the environments he administers, but cannot promote directly.
     label: 'Operator — omar@ops (administers onboard-customer + staging)',
     subject: 'omar@ops',
-    scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
+    scopes: 'runs:read runs:write catalog:read credentials:read sources:read workspace:read workspace:write environments:read availability:read administrators:read security:read',
     reach: 'all',
   },
   viewer: {
@@ -946,7 +946,7 @@ export const DEMO_PERSONAS = {
     // scopes isolates capability. See the demo's tab gating (index.html) for how a missing read scope hides a surface.
     label: 'Payments read-only — pat@payments (reach: domain=payments)',
     subject: 'pat@payments',
-    scopes: 'runs:read catalog:read credentials:read sources:read environments:read availability:read',
+    scopes: 'runs:read catalog:read credentials:read sources:read workspace:read environments:read availability:read',
     reach: { readDomain: 'payments' },
   },
 };
@@ -1023,6 +1023,7 @@ export function createMockControlPlane(options = {}) {
     if (path.includes('/credentials')) return 'credentials:write';
     if (path.includes('/environments')) return 'environments:write'; // incl. env-admin governance (§7.7)
     if (path.includes('/sources')) return 'sources:write';
+    if (path.includes('/workspace')) return 'workspace:write';
     if (path.includes('/security')) return 'security:write';
     if (path.includes('/administrators')) return 'administrators:write';
     if (path.includes('/runs')) return method === 'PURGE' || method === 'DELETE' ? 'runs:purge' : 'runs:write';
@@ -1136,6 +1137,9 @@ export function createMockControlPlane(options = {}) {
 
     const sourcesResponse = handleSources(path, method, u.searchParams, body);
     if (sourcesResponse) return sourcesResponse;
+
+    const workspaceResponse = handleWorkspace(path, method, u.searchParams, body);
+    if (workspaceResponse) return workspaceResponse;
 
     const administratorsResponse = handleAdministrators(path, method, body);
     if (administratorsResponse) return administratorsResponse;
@@ -2078,6 +2082,81 @@ export function createMockControlPlane(options = {}) {
     if (body?.description !== undefined) s.description = body.description;
     s.lastUpdatedBy = actingSubject(); s.lastUpdatedAt = iso(0); s.etag = nextEtag();
     return json(structuredClone(s));
+  }
+
+  // ---- designer workspace (workflow-designer design §4.1) -----------------------------------------
+  // Working copies: mutable Arazzo documents saved during development without minting catalog versions. Keyed by a
+  // server-minted id; a save presents the etag it read (expectedEtag) and conflicts (409) when stale. The list returns
+  // summaries (no document/designer state). The demo mock does not support the from-catalog-version carry-over.
+
+  const workingCopies = [];
+  let workingCopySeq = 0;
+
+  function handleWorkspace(fullPath, method, params, body) {
+    const m = fullPath.match(/\/workspace\/workflows(?:\/([^/]+))?\/?$/);
+    if (!m) return null;
+    const id = m[1] ? decodeURIComponent(m[1]) : null;
+    if (!id) {
+      if (method === 'GET') return listWorkingCopiesPage(params);
+      if (method === 'POST') return createWorkingCopy(body);
+      return problem(405, 'Method not allowed');
+    }
+    const wc = workingCopies.find((x) => x.id === id);
+    if (!wc) return problem(404, 'Working copy not found', `No working copy '${id}' exists, or it is outside your reach.`);
+    if (method === 'GET') return json(structuredClone(wc));
+    if (method === 'PUT') return saveWorkingCopy(wc, body);
+    if (method === 'DELETE') {
+      workingCopies.splice(workingCopies.indexOf(wc), 1);
+      return new Response(null, { status: 204 });
+    }
+    return problem(405, 'Method not allowed');
+  }
+
+  function listWorkingCopiesPage(params) {
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const sorted = [...workingCopies].sort((a, b) => a.id.localeCompare(b.id));
+    const offset = Number(params.get('pageToken')) || 0;
+    // The list omits each working copy's document and designer state (returned only on a single read).
+    const pageItems = sorted.slice(offset, offset + limit).map(({ document, designerState, ...rest }) => structuredClone(rest));
+    const nextPageToken = offset + limit < sorted.length ? String(offset + limit) : null;
+    return json({ workingCopies: pageItems, nextPageToken });
+  }
+
+  function createWorkingCopy(body) {
+    if (body?.fromBaseWorkflowId) {
+      if (body.document != null) return problem(400, 'Invalid working copy', 'Supply a document OR a from-version, not both.');
+      return problem(400, 'Carry-over unavailable', 'The demo mock does not offer catalog carry-over.');
+    }
+    const name = body?.name
+      || body?.document?.workflows?.[0]?.workflowId
+      || 'untitled';
+    const document = body?.document != null ? body.document : {
+      arazzo: '1.1.0', info: { title: name, version: '0.1.0' }, sourceDescriptions: [], workflows: [],
+    };
+    const wc = {
+      id: `wc-${String(++workingCopySeq).padStart(10, '0')}`,
+      name,
+      document,
+      ...(body?.designerState != null ? { designerState: body.designerState } : {}),
+      managementTags: body?.managementTags ?? [],
+      createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
+    };
+    workingCopies.push(wc);
+    return json(structuredClone(wc), 201);
+  }
+
+  function saveWorkingCopy(wc, body) {
+    if (body?.document == null) return problem(400, 'Invalid working copy', "A save requires the 'document'.");
+    if (!body.expectedEtag) return problem(400, 'Invalid working copy', "A save requires the 'expectedEtag' it read (optimistic concurrency).");
+    if (body.expectedEtag !== wc.etag) {
+      return problem(409, 'Save conflict', `Expected etag ${body.expectedEtag} no longer matches. Re-fetch the working copy and reconcile.`);
+    }
+    // The id, provenance, tags, and created-* audit are immutable; document/name/designer state are replaced when supplied.
+    wc.document = body.document;
+    if (body.name !== undefined) wc.name = body.name;
+    if (body.designerState !== undefined) wc.designerState = body.designerState;
+    wc.lastUpdatedBy = actingSubject(); wc.lastUpdatedAt = iso(0); wc.etag = nextEtag();
+    return json(structuredClone(wc));
   }
 
   // ---- deployment environments (§7.7) -----------------------------------------------------------

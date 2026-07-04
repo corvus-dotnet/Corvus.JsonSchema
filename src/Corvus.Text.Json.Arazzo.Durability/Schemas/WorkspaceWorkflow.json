@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkspaceWorkflow",
+  "description": "The persisted form of a designer working copy (workflow-designer design §4.1): a mutable Arazzo document (plus its designer UI state) saved as many times as needed during development without ever minting a catalog version. Reach-scoped via management tags like a registered source; publish mints an immutable catalog version from it. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["id", "name", "document", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The server-assigned working-copy identity (opaque; stable for the working copy's lifetime)."
+    },
+    "name": {
+      "type": "string",
+      "description": "A human-friendly display name for the working copy (e.g. 'nightly-reconcile — retry tuning'). Mutable."
+    },
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "Provenance: the catalog base workflow this working copy was opened from, if any."
+    },
+    "basedOnVersion": {
+      "type": "integer",
+      "description": "Provenance: the catalog version number the document (and its scenarios) were copied from, if any."
+    },
+    "document": {
+      "type": "object",
+      "description": "The Arazzo document under edit, stored and returned verbatim. The control plane validates it on demand (validateWorkingCopy), never silently rewrites it.",
+      "additionalProperties": true
+    },
+    "designerState": {
+      "type": "object",
+      "description": "Designer UI state (node positions and similar) — a sibling of the document, never written into it and never packaged (design §5.2). Stored and returned verbatim.",
+      "additionalProperties": true
+    },
+    "managementTags": {
+      "type": "array",
+      "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this working copy (§14.2). Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update.",
+      "items": { "$ref": "#/$defs/SecurityTagInfo" }
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that created the working copy."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the working copy was created."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last saved the working copy, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the working copy was last saved, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token; a save presents the etag it read and conflicts (409) when stale."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "SecurityTagInfo": {
+      "title": "SecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) scoping the working copy for row authorization (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
