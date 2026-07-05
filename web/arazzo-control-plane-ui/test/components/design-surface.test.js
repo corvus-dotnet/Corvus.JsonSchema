@@ -38,7 +38,9 @@ describe('<arazzo-design-surface>', () => {
     ok(end.classList.contains('pseudo') && end.querySelector('circle.card'), 'end pseudo circle');
     ok(start.textContent.includes('3 inputs'), 'start badges the workflow inputs');
     ok(end.textContent.includes('1 output'), 'end badges the workflow outputs');
-    ok(!start.querySelector('.port') && !start.querySelector('.bp'), 'pseudo-nodes have no ports/breakpoints');
+    ok(!start.querySelector('.port-success') && !start.querySelector('.port-failure') && !start.querySelector('.bp')
+      && start.querySelector('.port-entry'), 'start carries ONLY the entry port — no action ports or breakpoint');
+    ok(!end.querySelector('.port') && !end.querySelector('.bp'), 'the end terminal has no ports or breakpoints');
     ok(el.shadowRoot.querySelector('.edge[data-id="end:capture-payment:done:success"]'), 'end action is an edge to the terminal');
     ok(node('authorize-payment').textContent.includes('↻'), 'retry chip');
     ok(node('validate-order').textContent.includes('⌁ defaults'), 'ghost defaults chip on inheriting step');
@@ -217,5 +219,35 @@ describe('<arazzo-design-surface>', () => {
     svg.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true, cancelable: true, clientX: 100, clientY: 100 }));
     await new Promise((r) => setTimeout(r, 30));
     ok(!over.defaultPrevented && !fired, 'readonly surfaces reject the gesture entirely');
+  });
+
+  it('dragging from the start entry port onto a step emits entry-changed', async () => {
+    el = make();
+    const svg = el.shadowRoot.querySelector('svg');
+    const port = node('#start').querySelector('.port-entry');
+    ok(port, 'the start node renders an entry port');
+    const portBox = port.getBoundingClientRect();
+    const target = centerOf('capture-payment');
+    const done = nextEvent(el, 'entry-changed');
+    pointer('pointerdown', port, { clientX: portBox.left + 2, clientY: portBox.top + 2 });
+    pointer('pointermove', svg, target);
+    ok(el.shadowRoot.querySelector('.rubber').classList.contains('rubber-entry'), 'rubber band coloured as the entry edge');
+    pointer('pointerup', svg, target);
+    equal((await done).detail.stepId, 'capture-payment');
+  });
+
+  it('an entry drag onto a pseudo node emits nothing', async () => {
+    el = make();
+    const svg = el.shadowRoot.querySelector('svg');
+    const port = node('#start').querySelector('.port-entry');
+    const portBox = port.getBoundingClientRect();
+    let fired = false;
+    el.addEventListener('entry-changed', () => { fired = true; });
+    const target = centerOf('#end');
+    pointer('pointerdown', port, { clientX: portBox.left + 2, clientY: portBox.top + 2 });
+    pointer('pointermove', svg, target);
+    pointer('pointerup', svg, target);
+    await new Promise((r) => setTimeout(r, 30));
+    ok(!fired, 'start → end is not a meaningful entry');
   });
 });
