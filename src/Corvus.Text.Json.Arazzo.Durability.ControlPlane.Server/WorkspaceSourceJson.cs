@@ -160,9 +160,9 @@ internal static class WorkspaceSourceJson
     /// <param name="basedOnVersion">Carry-over provenance, when present.</param>
     /// <param name="managementTags">The resolved management tags.</param>
     /// <returns>A pooled draft; dispose once the store call returns (the store reads it synchronously).</returns>
-    public static ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> CreateDraft(in JsonElement name, in JsonElement document, ReadOnlyMemory<byte> catalogDocumentUtf8, in JsonElement designerState, string? baseWorkflowId, int? basedOnVersion, SecurityTagSet managementTags)
+    public static ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> CreateDraft(in JsonElement name, in JsonElement document, ReadOnlyMemory<byte> catalogDocumentUtf8, in JsonElement designerState, string? baseWorkflowId, int? basedOnVersion, SecurityTagSet managementTags, ReadOnlyMemory<byte> carriedScenariosUtf8 = default)
     {
-        var state = new CreateState(name, document, catalogDocumentUtf8, designerState, baseWorkflowId, basedOnVersion, managementTags);
+        var state = new CreateState(name, document, catalogDocumentUtf8, designerState, baseWorkflowId, basedOnVersion, managementTags, carriedScenariosUtf8);
         return PersistedJson.ToPooledDocument<WorkspaceWorkflows.WorkspaceWorkflow, CreateState>(
             state,
             static (Utf8JsonWriter writer, in CreateState s) =>
@@ -239,6 +239,14 @@ internal static class WorkspaceSourceJson
                 {
                     writer.WritePropertyName("designerState"u8);
                     s.DesignerState.WriteTo(writer);
+                }
+
+                // Scenario carry-over (§9): a working copy created from a published version inherits
+                // that version's scenario set (metadata/scenarios.json), so its tests travel forward.
+                if (!s.CarriedScenarios.IsEmpty)
+                {
+                    writer.WritePropertyName("scenarios"u8);
+                    writer.WriteRawValue(s.CarriedScenarios.Span);
                 }
 
                 if (!s.Tags.IsEmpty)
@@ -372,7 +380,7 @@ internal static class WorkspaceSourceJson
             && n.ValueEquals(name);
 
     // The create draft's write context.
-    private readonly struct CreateState(JsonElement name, JsonElement document, ReadOnlyMemory<byte> catalogDocument, JsonElement designerState, string? baseWorkflowId, int? basedOnVersion, SecurityTagSet tags)
+    private readonly struct CreateState(JsonElement name, JsonElement document, ReadOnlyMemory<byte> catalogDocument, JsonElement designerState, string? baseWorkflowId, int? basedOnVersion, SecurityTagSet tags, ReadOnlyMemory<byte> carriedScenarios)
     {
         public JsonElement Name { get; } = name;
 
@@ -387,6 +395,8 @@ internal static class WorkspaceSourceJson
         public int? BasedOnVersion { get; } = basedOnVersion;
 
         public SecurityTagSet Tags { get; } = tags;
+
+        public ReadOnlyMemory<byte> CarriedScenarios { get; } = carriedScenarios;
     }
 
     // The attach draft's write context: the current attachments plus the new entry's fields.
