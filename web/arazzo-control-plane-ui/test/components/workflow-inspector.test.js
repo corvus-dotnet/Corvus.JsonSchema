@@ -102,4 +102,29 @@ describe('<arazzo-workflow-inspector>', () => {
     equal(el.shadowRoot.querySelectorAll('.wdependson .chip').length, 1, 'the real dependency renders as a pill');
   });
 
+
+  it('the only-filter scopes the form to the named sections (canvas anchors)', async () => {
+    el = make();
+    el.only = ['inputs'];
+    el.value = el.value; // rebuild
+    ok(el.shadowRoot.querySelector('.inputs'), 'the inputs editor renders');
+    ok(!el.shadowRoot.querySelector('.wouts'), 'no outputs section on the start anchor');
+    ok(!el.shadowRoot.querySelector('.summary'), 'no summary fields either');
+
+    // Scoped edits still round-trip the WHOLE workflow object.
+    const area = el.shadowRoot.querySelector('.inputs');
+    area.value = '{"type":"object"}';
+    const changed = nextEvent(el, 'workflow-changed');
+    area.dispatchEvent(new Event('input'));
+    const wf = (await changed).detail.workflow;
+    equal(wf.inputs.type, 'object');
+    ok(wf.workflowId, 'the untouched rest of the workflow survives the scoped edit');
+
+    el.only = ['outputs'];
+    ok(el.shadowRoot.querySelector('.wouts'), 'the end anchor shows outputs');
+    ok(!el.shadowRoot.querySelector('.inputs'), 'and no inputs');
+
+    el.only = null;
+    ok(el.shadowRoot.querySelector('.inputs') && el.shadowRoot.querySelector('.wouts'), 'null restores the full form');
+  });
 });
