@@ -1038,3 +1038,15 @@ test('sources attach inline or by registry reference, list without documents, an
   assert.throws(() => c.attachWorkingCopySource(wc.id, 'x', {}), TypeError);
   assert.throws(() => c.attachWorkingCopySource(wc.id, 'x', { sourceName: 'a', document: {} }), TypeError);
 });
+
+test('fetchSourceDocument returns the validated document with detected type and digest', async () => {
+  const c = makeClient();
+  const fetched = await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json' });
+  assert.equal(fetched.url, 'https://specs.example/petstore.json');
+  assert.ok(['openapi', 'asyncapi', 'arazzo'].includes(fetched.type));
+  assert.ok(fetched.digest);
+  assert.ok(fetched.document);
+
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'http://insecure.example/x.json' }), (e) => e.status === 400);
+  assert.throws(() => c.fetchSourceDocument({}), TypeError);
+});

@@ -50,6 +50,38 @@ public sealed class ApiSourcesClient : IApiSourcesClient
     }
 
     /// <summary>
+    /// Fetch a source document from a web endpoint
+    /// </summary>
+    /// <remarks>
+    /// Fetches an OpenAPI/AsyncAPI/Arazzo document server-side (no browser CORS), optionally authenticating with a registered source credential referenced by (sourceName, environment). Returns the validated document with its detected type/version and content digest; the caller then attaches it to a working copy or registers it. 400 when the URL/scheme is not permitted, the payload is not a parseable JSON/YAML document, it declares no recognisable type, or fetching is not configured in this deployment; 404 when the referenced credential is absent or out of reach; 502 when the upstream endpoint fails.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<FetchSourceDocumentResponse> FetchSourceDocumentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.CreateBuilder(workspace, body, 30).RootElement;
+        FetchSourceDocumentRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<FetchSourceDocumentRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest, FetchSourceDocumentResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List registered sources
     /// </summary>
     /// <remarks>

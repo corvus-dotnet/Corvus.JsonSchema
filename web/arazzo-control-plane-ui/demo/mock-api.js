@@ -2016,6 +2016,22 @@ export function createMockControlPlane(options = {}) {
   // catalog's per-version embedded source (/catalog/.../sources/{n}) is a different endpoint, handled earlier.
 
   function handleSources(fullPath, method, params, body) {
+    if (/\/sources\/fetch\/?$/.test(fullPath) && !fullPath.includes('/workspace/')) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      if (!body?.url) return problem(400, 'Invalid fetch', "A 'url' is required.");
+      if (!/^https:/.test(body.url)) return problem(400, 'Invalid fetch', 'Only https URLs are permitted.');
+      // The demo mock serves a canned petstore for any https URL (a real deployment fetches server-side).
+      const document = structuredClone(sourceRegistry[0]?.document ?? { openapi: '3.1.0', info: { title: 'Fetched', version: '1.0' }, paths: {} });
+      return json({
+        url: body.url,
+        type: document.openapi ? 'openapi' : document.asyncapi ? 'asyncapi' : 'arazzo',
+        version: document.openapi ?? document.asyncapi ?? document.arazzo,
+        digest: 'demo-digest-0000000000000000000000000000000000000000000000000000000000',
+        contentType: 'application/json',
+        document,
+      });
+    }
+
     const ops = fullPath.match(/\/sources\/([^/]+)\/operations\/?$/);
     if (ops && !fullPath.includes('/catalog/') && !fullPath.includes('/workspace/')) {
       const s = sourceRegistry.find((x) => x.name === decodeURIComponent(ops[1]));
