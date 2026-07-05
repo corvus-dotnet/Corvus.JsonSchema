@@ -21,7 +21,7 @@ design lands.
 | **Source document** | The actual OpenAPI/AsyncAPI/Arazzo file a workflow's steps bind against; stored inside the package as `sources/<name>.json`. |
 | **Operation surface** | The set of operations (OpenAPI) or channel operations (AsyncAPI) a source document exposes; what a user browses to create steps. Described by `OperationDescriptor` / `AsyncApiChannelDescriptor`. |
 | **Runtime expression** | An Arazzo `$…` expression (`$inputs`, `$steps`, `$outputs`, `$response`, `$statusCode`, …) evaluated during execution; parsed by `ArazzoExpression`. |
-| **Criterion** | A success/assertion condition (`simple`, `regex`, `jsonpath`, `xpath`) with optional `context` runtime expression. Used in step `successCriteria`, in action `criteria`, and (proposed) in scenario expectations. |
+| **Criterion** | A success/assertion condition (`simple`, `regex`, `jsonpath`, `xpath`) with optional `context` runtime expression. Used in step `successCriteria`, in action `criteria`, and in scenario `$outputs` expectations (judged by the same compiler). |
 | **Action** | A success action (`end`, `goto`) or failure action (`end`, `goto`, `retry` with `retryAfter`/`retryLimit`), attached to a step or inherited from the workflow level. |
 | **Components** | The document's reusable library (`inputs`, `parameters`, `successActions`, `failureActions`) referenced via reusable objects. |
 
