@@ -62,4 +62,41 @@ describe('<arazzo-workflow-inspector>', () => {
     el.setAttribute('focus-section', 'inputs');
     equal(el.shadowRoot.querySelector('h3.focused').dataset.section, 'inputs');
   });
+
+  it('workflow parameters add, edit, and prune', async () => {
+    el = make();
+    el.shadowRoot.querySelector('.addwp').click();
+    const name = el.shadowRoot.querySelector('.wparams .wpname');
+    name.value = 'tenant';
+    let changed = nextEvent(el, 'workflow-changed');
+    name.dispatchEvent(new Event('input'));
+    let wf = (await changed).detail.workflow;
+    equal(wf.parameters[0].name, 'tenant');
+
+    const where = el.shadowRoot.querySelector('.wparams .wpin');
+    where.value = 'header';
+    changed = nextEvent(el, 'workflow-changed');
+    where.dispatchEvent(new Event('change'));
+    wf = (await changed).detail.workflow;
+    equal(wf.parameters[0].in, 'header');
+
+    changed = nextEvent(el, 'workflow-changed');
+    el.shadowRoot.querySelector('.wparams .wpdel').click();
+    wf = (await changed).detail.workflow;
+    equal(wf.parameters, undefined, 'empty prunes the property');
+  });
+
+  it('workflow dependsOn chips toggle over the document\'s other workflows', async () => {
+    el = make();
+    el.workflowIds = ['first', 'second'];
+    el.value = el.value; // rebuild with the ids
+    const chips = [...el.shadowRoot.querySelectorAll('.wdependson .chip')];
+    equal(chips.length, 2);
+
+    const changed = nextEvent(el, 'workflow-changed');
+    chips[1].click();
+    const wf = (await changed).detail.workflow;
+    equal(wf.dependsOn[0], 'second');
+  });
+
 });

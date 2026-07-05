@@ -28,7 +28,7 @@ describe('<arazzo-action-editor>', () => {
     equal(types.join(','), 'end,goto,retry', 'failure actions offer retry');
     equal(el.shadowRoot.querySelector('.atype').value, 'goto');
     ok(!el.shadowRoot.querySelector('.target').hidden);
-    equal(el.shadowRoot.querySelector('.step').value, 'manual-review');
+    equal(el.shadowRoot.querySelector('.step').value, 'step:manual-review');
     equal(el.shadowRoot.querySelector('arazzo-criteria-editor').value.length, 1);
   });
 
@@ -38,7 +38,7 @@ describe('<arazzo-action-editor>', () => {
     equal(types.join(','), 'end,goto');
   });
 
-  it('switching goto → retry prunes the target and emits retry fields', async () => {
+  it('switching goto → retry keeps the target as retry-from; end prunes it', async () => {
     make();
     const typeSel = el.shadowRoot.querySelector('.atype');
     const changed = nextEvent(el, 'action-changed');
@@ -46,8 +46,14 @@ describe('<arazzo-action-editor>', () => {
     typeSel.dispatchEvent(new Event('change', { bubbles: true }));
     const a1 = (await changed).detail.action;
     equal(a1.type, 'retry');
-    equal(a1.stepId, undefined, 'goto target pruned');
+    equal(a1.stepId, 'manual-review', 'the target survives as the retry-from step (schema allows it)');
     ok(!el.shadowRoot.querySelector('.retry').hidden);
+
+    const ended = nextEvent(el, 'action-changed');
+    const typeSel2 = el.shadowRoot.querySelector('.atype');
+    typeSel2.value = 'end';
+    typeSel2.dispatchEvent(new Event('change', { bubbles: true }));
+    equal((await ended).detail.action.stepId, undefined, 'end prunes the target');
 
     const after = nextEvent(el, 'action-changed');
     const rafter = el.shadowRoot.querySelector('.rafter');
@@ -70,4 +76,48 @@ describe('<arazzo-action-editor>', () => {
     const a = (await changed).detail.action;
     equal(a.criteria.length, 2, 'criteria list propagated onto the action');
   });
+
+  it('goto can target another workflow, and switching back prunes workflowId', async () => {
+    el = document.createElement('arazzo-action-editor');
+    el.kind = 'failure';
+    el.stepIds = ['step-a'];
+    el.workflowIds = ['refund-order'];
+    mount(el);
+    el.value = { name: 'jump', type: 'goto', stepId: 'step-a' };
+
+    const select = el.shadowRoot.querySelector('.step');
+    let changed = nextEvent(el, 'action-changed');
+    select.value = 'workflow:refund-order';
+    select.dispatchEvent(new Event('change'));
+    let action = (await changed).detail.action;
+    equal(action.workflowId, 'refund-order');
+    equal(action.stepId, undefined, 'a workflow target replaces the step target');
+
+    changed = nextEvent(el, 'action-changed');
+    select.value = 'step:step-a';
+    select.dispatchEvent(new Event('change'));
+    action = (await changed).detail.action;
+    equal(action.stepId, 'step-a');
+    equal(action.workflowId, undefined);
+  });
+
+  it('retry offers an optional target: blank re-runs this step, a step re-runs from there', async () => {
+    el = document.createElement('arazzo-action-editor');
+    el.kind = 'failure';
+    el.stepIds = ['step-a'];
+    mount(el);
+    el.value = { name: 'again', type: 'retry', retryAfter: 5, retryLimit: 2, stepId: 'step-a' };
+
+    ok(!el.shadowRoot.querySelector('.target').hidden, 'retry shows the optional target');
+    const select = el.shadowRoot.querySelector('.step');
+    equal(select.value, 'step:step-a', 'the existing retry-from target renders');
+
+    const changed = nextEvent(el, 'action-changed');
+    select.value = '';
+    select.dispatchEvent(new Event('change'));
+    const action = (await changed).detail.action;
+    equal(action.stepId, undefined, 'blank means re-run this step');
+    equal(action.retryAfter, 5, 'retry settings survive');
+  });
+
 });

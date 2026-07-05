@@ -22,6 +22,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
     /** @private */ this._workflow = { workflowId: '', steps: [] };
     /** @private */ this._completionContext = {};
     /** @private */ this._stepIds = [];
+    /** @private */ this._workflowIds = [];
   }
 
   connectedCallback() {
@@ -41,6 +42,9 @@ class ArazzoWorkflowInspector extends ArazzoElement {
   }
 
   set stepIds(ids) { this._stepIds = [...(ids || [])]; }
+
+  /** The document's OTHER workflowIds — dependsOn choices and cross-workflow action targets. */
+  set workflowIds(ids) { this._workflowIds = [...(ids || [])]; }
   set completionContext(ctx) { this._completionContext = ctx || {}; }
   get completionContext() { return this._completionContext; }
 
@@ -65,6 +69,9 @@ class ArazzoWorkflowInspector extends ArazzoElement {
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
         textarea.invalid { border-color: var(--_danger); }
         .hint { font-size: 11px; color: var(--_muted); }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+        .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
       </style>
       <div class="form" part="form"></div>
     `;
@@ -84,6 +91,15 @@ class ArazzoWorkflowInspector extends ArazzoElement {
         <input class="wdesc" type="text" value="${escapeHtml(w.description || '')}">
       </div>
 
+      <h3 data-section="dependson">depends on</h3>
+      <div class="hint">workflows that must complete before this one starts</div>
+      <div class="wdependson chips"></div>
+
+      <h3 data-section="parameters">parameters</h3>
+      <div class="hint">applied to every step in this workflow (a step's own parameter with the same name and location wins)</div>
+      <div class="wparams"></div>
+      <button class="addwp ghost" type="button" style="font-size:12px; justify-self:start;">+ Add parameter</button>
+
       <h3 data-section="inputs">inputs (JSON Schema)</h3>
       <div>
         <textarea class="inputs" rows="6" spellcheck="false">${w.inputs !== undefined ? escapeHtml(JSON.stringify(w.inputs, null, 2)) : ''}</textarea>
@@ -99,6 +115,8 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       <div class="wouts"></div>
     `;
 
+    this._renderDependsOn();
+    this._renderParameters();
     this._mountActionList('wsuccess', 'successActions', 'success');
     this._mountActionList('wfailure', 'failureActions', 'failure');
 
@@ -148,6 +166,75 @@ class ArazzoWorkflowInspector extends ArazzoElement {
     this._applyFocus();
   }
 
+  /** @private — toggle chips over the document's other workflows; empty prunes the property. */
+  _renderDependsOn() {
+    const box = this.$('.wdependson');
+    if (!this._workflowIds.length) {
+      box.innerHTML = '<span class="hint">no other workflows in this document</span>';
+      return;
+    }
+
+    const current = new Set(this._workflow.dependsOn || []);
+    box.innerHTML = this._workflowIds.map((id) => `
+      <button type="button" class="chip ghost${current.has(id) ? ' on' : ''}" data-id="${escapeHtml(id)}"
+        aria-pressed="${current.has(id)}">${escapeHtml(id)}</button>`).join('');
+    box.querySelectorAll('.chip').forEach((chip) => chip.addEventListener('click', () => {
+      const set = new Set(this._workflow.dependsOn || []);
+      if (set.has(chip.dataset.id)) set.delete(chip.dataset.id);
+      else set.add(chip.dataset.id);
+      const ordered = this._workflowIds.filter((id) => set.has(id));
+      if (ordered.length) this._workflow.dependsOn = ordered;
+      else delete this._workflow.dependsOn;
+      this._renderDependsOn();
+      this._emit();
+    }));
+  }
+
+  /** @private — the workflow-level parameters (name/in/value; a reusable reference renders read-only). */
+  _renderParameters() {
+    const box = this.$('.wparams');
+    const parameters = this._workflow.parameters || [];
+    box.innerHTML = '';
+    parameters.forEach((param, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:grid; grid-template-columns: 1fr auto auto auto; gap:6px; align-items:center; margin-bottom:6px;';
+      if (param.reference != null) {
+        row.style.gridTemplateColumns = '1fr auto';
+        row.innerHTML = `<span class="hint">↺ ${escapeHtml(param.reference)} <em>reusable — edit in components</em></span>
+          <button class="wpdel ghost" type="button" title="Remove">✕</button>`;
+      } else {
+        row.innerHTML = `
+          <input class="wpname" type="text" placeholder="name" value="${escapeHtml(param.name ?? '')}">
+          <select class="wpin">
+            ${['', 'path', 'query', 'header', 'cookie', 'querystring'].map((v) => `<option value="${v}" ${v === (param.in ?? '') ? 'selected' : ''}>${v || '(in)'}</option>`).join('')}
+          </select>
+          <input class="wpvalue" type="text" placeholder="value or $expression" value="${escapeHtml(typeof param.value === 'string' ? param.value : JSON.stringify(param.value ?? ''))}">
+          <button class="wpdel ghost" type="button" title="Remove">✕</button>`;
+        row.querySelector('.wpname').addEventListener('input', (e) => { param.name = e.target.value; this._emit(); });
+        row.querySelector('.wpin').addEventListener('change', (e) => {
+          if (e.target.value) param.in = e.target.value;
+          else delete param.in;
+          this._emit();
+        });
+        row.querySelector('.wpvalue').addEventListener('input', (e) => { param.value = e.target.value; this._emit(); });
+      }
+
+      row.querySelector('.wpdel').addEventListener('click', () => {
+        parameters.splice(i, 1);
+        if (!parameters.length) delete this._workflow.parameters;
+        this._renderParameters();
+        this._emit();
+      });
+      box.append(row);
+    });
+    this.$('.addwp').onclick = () => {
+      (this._workflow.parameters ??= []).push({ name: '', value: '' });
+      this._renderParameters();
+      box.querySelector('div:last-child .wpname')?.focus();
+      this._emit();
+    };
+  }
+
   /** @private */
   _mountActionList(slotClass, listName, kind) {
     const actions = (this._workflow[listName] ??= []);
@@ -155,6 +242,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       actions,
       kind,
       stepIds: this._stepIds,
+      workflowIds: this._workflowIds,
       completionContext: this._completionContext,
       onChange: () => {
         if (!actions.length) delete this._workflow[listName];
