@@ -231,6 +231,9 @@ public sealed class ControlPlaneWorkspaceApiTests
         }
         """);
 
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+
         using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
         outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeTrue();
         outcome.RootElement.GetProperty("diagnostics").GetArrayLength().ShouldBe(0);
@@ -279,6 +282,9 @@ public sealed class ControlPlaneWorkspaceApiTests
         }
         """);
 
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+
         using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
         outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
         Stj.JsonElement finding = outcome.RootElement.GetProperty("diagnostics").EnumerateArray().Single();
@@ -308,6 +314,9 @@ public sealed class ControlPlaneWorkspaceApiTests
           }]
         }
         """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
 
         using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
         outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeTrue();
@@ -453,6 +462,36 @@ public sealed class ControlPlaneWorkspaceApiTests
 
         // A write scope cannot read in this fixture (distinct scopes) → 403 on the read endpoint.
         (await host.SendAsync(HttpMethod.Get, "/workspace/workflows", Write)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [TestMethod]
+    public async Task Validate_flags_source_integrity_drift_between_document_and_attachments()
+    {
+        await using Scoped host = await StartAsync();
+
+        // Declared 'ghost' has no attachment; attached 'petstore' is undeclared; 'noSuchOp'
+        // resolves against no attached surface. All three drift findings must fire.
+        const string driftDoc = """{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"sourceDescriptions":[{"name":"ghost","url":"./ghost.json","type":"openapi"}],"workflows":[{"workflowId":"wf","steps":[{"stepId":"a","operationId":"noSuchOp"}]}]}""";
+        string id = await CreateWithDocumentAsync(host, driftDoc);
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/petstore", $$"""{"document":{{PetstoreDoc}}}""", Write))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument report = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", "{}", Read));
+        var findings = report.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Where(d => d.GetProperty("category").GetString() == "workspace-sources")
+            .Select(d => (Severity: d.GetProperty("severity").GetString(), Message: d.GetProperty("message").GetString()!))
+            .ToList();
+        findings.ShouldContain(f => f.Severity == "warning" && f.Message.Contains("'ghost' has no attachment"));
+        findings.ShouldContain(f => f.Severity == "info" && f.Message.Contains("'petstore' is not declared"));
+        findings.ShouldContain(f => f.Severity == "warning" && f.Message.Contains("'noSuchOp' is not found"));
+
+        // Steps bind operations with NO sourceDescriptions at all → an error; the document is invalid.
+        const string bareDoc = """{"arazzo":"1.1.0","info":{"title":"t","version":"1"},"workflows":[{"workflowId":"wf","steps":[{"stepId":"a","operationId":"x"}]}]}""";
+        string bare = await CreateWithDocumentAsync(host, bareDoc);
+        using Stj.JsonDocument bareReport = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{bare}/validate", "{}", Read));
+        bareReport.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        bareReport.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .ShouldContain(d => d.GetProperty("category").GetString() == "workspace-sources" && d.GetProperty("severity").GetString() == "error");
     }
 
     private static async Task<(string Id, string Etag)> CreateAsync(Scoped host)

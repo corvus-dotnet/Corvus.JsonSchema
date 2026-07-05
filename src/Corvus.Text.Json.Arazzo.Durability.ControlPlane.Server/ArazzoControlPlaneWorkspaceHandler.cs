@@ -374,6 +374,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 SchemaLocation: null));
         }
 
+        // 3 — workspace-level source integrity: the document's operation bindings cross-checked
+        //     against the working copy's ATTACHED sources. Document-local passes cannot see the
+        //     attachments, so "delete a declared source that steps still use" surfaces HERE.
+        await this.CheckSourceIntegrityAsync(document, (Corvus.Text.Json.JsonElement)w.RootElement.Sources, findings, cancellationToken).ConfigureAwait(false);
+
         bool valid = true;
         foreach (Finding finding in findings)
         {
@@ -676,6 +681,174 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 ?? throw new InvalidOperationException($"The embedded Arazzo meta-schema '{name}' is missing.");
             using var reader = new StreamReader(stream, Encoding.UTF8);
             return ValidatorSchema.FromText(reader.ReadToEnd(), canonicalUri);
+        }
+    }
+
+    /// <summary>Collects an attached source document's operation identities (OpenAPI operationIds, AsyncAPI operation names and channel keys).</summary>
+    private static void CollectOperationIdentities(in JsonElement sourceDocument, HashSet<string> operations, HashSet<string> channels)
+    {
+        if (sourceDocument.TryGetProperty("paths"u8, out JsonElement paths) && paths.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> path in paths.EnumerateObject())
+            {
+                if (path.Value.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                foreach (JsonProperty<JsonElement> operation in path.Value.EnumerateObject())
+                {
+                    if (operation.Value.ValueKind == JsonValueKind.Object
+                        && operation.Value.TryGetProperty("operationId"u8, out JsonElement id)
+                        && id.GetString() is { Length: > 0 } value)
+                    {
+                        operations.Add(value);
+                    }
+                }
+            }
+        }
+
+        if (sourceDocument.TryGetProperty("channels"u8, out JsonElement channelMap) && channelMap.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> channel in channelMap.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString name = channel.Utf8NameSpan;
+                channels.Add(Encoding.UTF8.GetString(name.Span));
+            }
+        }
+
+        if (sourceDocument.TryGetProperty("operations"u8, out JsonElement asyncOps) && asyncOps.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> operation in asyncOps.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString name = operation.Utf8NameSpan;
+                operations.Add(Encoding.UTF8.GetString(name.Span));
+            }
+        }
+    }
+
+    /// <summary>
+    /// The workspace-level pass over declared sourceDescriptions vs the working copy's attachments:
+    /// declared-but-unattached (warning — operations cannot resolve), attached-but-undeclared
+    /// (info), operation bindings absent from every resolvable surface (warning), and steps binding
+    /// operations with no sourceDescriptions at all (error).
+    /// </summary>
+    private async ValueTask CheckSourceIntegrityAsync(JsonElement document, JsonElement attachments, List<Finding> findings, CancellationToken cancellationToken)
+    {
+        var declared = new List<string>();
+        if (document.TryGetProperty("sourceDescriptions"u8, out JsonElement sourceDescriptions) && sourceDescriptions.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement source in sourceDescriptions.EnumerateArray())
+            {
+                if (source.TryGetProperty("name"u8, out JsonElement name) && name.GetString() is { Length: > 0 } value)
+                {
+                    declared.Add(value);
+                }
+            }
+        }
+
+        var attachedNames = new HashSet<string>(StringComparer.Ordinal);
+        var operations = new HashSet<string>(StringComparer.Ordinal);
+        var channels = new HashSet<string>(StringComparer.Ordinal);
+        bool anySurfaceResolved = false;
+        if (attachments.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement attachment in attachments.EnumerateArray())
+            {
+                if (!attachment.TryGetProperty("name"u8, out JsonElement name) || name.GetString() is not { Length: > 0 } attachedName)
+                {
+                    continue;
+                }
+
+                attachedNames.Add(attachedName);
+                if (!declared.Contains(attachedName))
+                {
+                    findings.Add(new("info", "workspace-sources", "/sourceDescriptions", $"Attached source '{attachedName}' is not declared in sourceDescriptions — the document cannot reference its operations.", null));
+                }
+
+                if (attachment.TryGetProperty("document"u8, out JsonElement inline) && inline.ValueKind == JsonValueKind.Object)
+                {
+                    CollectOperationIdentities(inline, operations, channels);
+                    anySurfaceResolved = true;
+                }
+                else if (this.sources is not null
+                    && attachment.TryGetProperty("sourceName"u8, out JsonElement sn)
+                    && sn.GetString() is { Length: > 0 } registryName)
+                {
+                    using ParsedJsonDocument<RegisteredSource>? registered = await this.sources.GetAsync(registryName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+                    if (registered is { } r)
+                    {
+                        CollectOperationIdentities((JsonElement)r.RootElement.Document, operations, channels);
+                        anySurfaceResolved = true;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < declared.Count; i++)
+        {
+            if (!attachedNames.Contains(declared[i]))
+            {
+                findings.Add(new("warning", "workspace-sources", $"/sourceDescriptions/{i}", $"Declared source '{declared[i]}' has no attachment in this working copy — its operations cannot resolve here.", null));
+            }
+        }
+
+        if (!document.TryGetProperty("workflows"u8, out JsonElement workflows) || workflows.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        int workflowIndex = -1;
+        foreach (JsonElement workflow in workflows.EnumerateArray())
+        {
+            workflowIndex++;
+            if (!workflow.TryGetProperty("steps"u8, out JsonElement steps) || steps.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            int stepIndex = -1;
+            foreach (JsonElement step in steps.EnumerateArray())
+            {
+                stepIndex++;
+                bool bindsOperation = step.TryGetProperty("operationId"u8, out JsonElement operationId)
+                    && operationId.GetString() is { Length: > 0 };
+                bool bindsChannel = step.TryGetProperty("channelPath"u8, out JsonElement channelPath)
+                    && channelPath.GetString() is { Length: > 0 };
+                if (!bindsOperation && !bindsChannel)
+                {
+                    continue;
+                }
+
+                if (declared.Count == 0)
+                {
+                    findings.Add(new("error", "workspace-sources", "/sourceDescriptions", "Steps bind operations but the document declares no sourceDescriptions — nothing can resolve them.", null));
+                    return; // one document-level error says it all
+                }
+
+                if (!anySurfaceResolved)
+                {
+                    continue; // no surface to check against; the declared-but-unattached warnings already fired
+                }
+
+                if (bindsOperation)
+                {
+                    string op = operationId.GetString()!;
+                    if (!op.StartsWith("$sourceDescriptions.", StringComparison.Ordinal) && !operations.Contains(op))
+                    {
+                        findings.Add(new("warning", "workspace-sources", $"/workflows/{workflowIndex}/steps/{stepIndex}/operationId", $"Operation '{op}' is not found in any attached source — did its source description get removed?", null));
+                    }
+                }
+
+                if (bindsChannel)
+                {
+                    string channel = channelPath.GetString()!;
+                    if (!channels.Contains(channel))
+                    {
+                        findings.Add(new("warning", "workspace-sources", $"/workflows/{workflowIndex}/steps/{stepIndex}/channelPath", $"Channel '{channel}' is not found in any attached source.", null));
+                    }
+                }
+            }
         }
     }
 

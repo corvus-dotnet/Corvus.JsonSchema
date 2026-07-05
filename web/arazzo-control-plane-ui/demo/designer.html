@@ -38,29 +38,45 @@
     aside pre { margin: 0; padding: 10px; font: 11px ui-monospace, Menlo, monospace; overflow: auto; max-height: 32vh; }
     #log { max-height: 22vh; }
     button, select { font: inherit; padding: 5px 10px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: inherit; cursor: pointer; }
+    /* Toolbar icon buttons: compact, with UNMISTAKABLE hover/press/focus feedback. */
+    header button.tb { width: 34px; height: 30px; padding: 0; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    header button:hover:not(:disabled), header select:hover {
+      border-color: var(--arazzo-accent, #3b6cf6);
+      background: color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 10%, var(--arazzo-bg, #fff)); }
+    header button:active:not(:disabled) { transform: translateY(1px); background: color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 18%, var(--arazzo-bg, #fff)); }
+    header button:focus-visible, header select:focus-visible { outline: 2px solid var(--arazzo-accent, #3b6cf6); outline-offset: 1px; }
+    header button:disabled { opacity: 0.45; cursor: default; }
+    .tb-sep { width: 1px; height: 20px; background: var(--arazzo-border, #e3e6ea); margin: 0 2px; }
+    #wc-name { font-weight: 600; font-size: 14px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     label.chk { display: inline-flex; gap: 6px; align-items: center; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Workflow designer</h1>
-    <button id="back" title="Back to the workspace" hidden>⌂ Workspace</button>
-    <span id="wc-name" class="muted" hidden></span>
-    <select id="workflow" class="designer-only"></select>
-    <button id="docbtn" class="designer-only" title="Edit info, source descriptions, workflows, and the reusable components library">⚙ Document</button>
-    <button id="undo" class="designer-only" title="Undo (this actor's last edit)" disabled>↩ Undo</button>
-    <button id="redo" class="designer-only" title="Redo" disabled>↪ Redo</button>
-    <button id="fit" class="designer-only">Fit</button>
-    <button id="relayout" class="designer-only">Auto-layout</button>
-    <button id="simulate" class="designer-only">▶ Simulate (canned trace)</button>
-    <button id="step" class="designer-only">⏭ Step</button>
-    <button id="stop" hidden>■ Stop</button>
-    <label class="chk designer-only"><input type="checkbox" id="readonly"> read-only</label>
+    <!-- Grouped left→right in the conventional order for design tools:
+         context (back · document name · workflow · document settings) | edit (undo/redo)
+         | view (fit/auto-layout) | run (simulate/step/stop/read-only) | status · validate · theme.
+         Icon buttons with tooltips; the document autosaves (undo/redo is the safety net),
+         so there is no Save button — the status chip narrates saving/saved/conflict. -->
+    <button id="back" class="tb" title="Back to the workspace" hidden>⌂</button>
+    <span id="wc-name" title="The open working copy — saves never mint catalog versions" hidden></span>
+    <select id="workflow" class="designer-only" title="Which workflow of this document to edit"></select>
+    <button id="docbtn" class="tb designer-only" title="Document settings: info, source descriptions, workflows, reusable components">⚙</button>
+    <span class="tb-sep designer-only"></span>
+    <button id="undo" class="tb designer-only" title="Undo (Ctrl+Z)" disabled>↶</button>
+    <button id="redo" class="tb designer-only" title="Redo (Ctrl+Y)" disabled>↷</button>
+    <span class="tb-sep designer-only"></span>
+    <button id="fit" class="tb designer-only" title="Fit the diagram to the window">⛶</button>
+    <button id="relayout" class="tb designer-only" title="Auto-layout (clears manual positions)">▦</button>
+    <span class="tb-sep designer-only"></span>
+    <button id="simulate" class="tb designer-only" title="Simulate (canned trace)">▶</button>
+    <button id="step" class="tb designer-only" title="Step through the trace">⏭</button>
+    <button id="stop" class="tb" title="Stop and clear the overlay" hidden>■</button>
+    <label class="chk designer-only" title="Read-only: mutation gestures off; pan/zoom/select still work"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
-    <button id="save" class="designer-only" disabled>💾 Save</button>
-    <button id="validate" class="designer-only">✓ Validate</button>
-    <button id="theme">Toggle theme</button>
+    <button id="validate" class="tb designer-only" title="Validate the working copy">✓</button>
+    <button id="theme" class="tb" title="Toggle theme">🌙</button>
   </header>
   <div id="workspace-view" style="padding: 18px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; overflow-y: auto;">
     <arazzo-workspace-table id="wctable" selectable can-write></arazzo-workspace-table>
@@ -189,7 +205,7 @@
     const wctable = document.getElementById('wctable');
     const backBtn = document.getElementById('back');
     const wcName = document.getElementById('wc-name');
-    const saveBtn = document.getElementById('save');
+    let autosaveTimer = 0;
     const validateBtn = document.getElementById('validate');
     const saveStatus = document.getElementById('save-status');
     const problemsEl = document.getElementById('problems');
@@ -208,8 +224,20 @@
     }
 
     function setSaveUi(status = '') {
-      saveBtn.disabled = !shell.dirty || !shell.id;
-      saveStatus.textContent = status || (shell.dirty ? 'unsaved changes' : '');
+      saveStatus.textContent = status || (shell.dirty ? 'unsaved…' : '');
+    }
+
+    // Autosave (undo/redo is the editing safety net; an explicit Save button is ceremony):
+    // a short debounce after the last change, flushed when leaving the designer. A 409 pauses
+    // autosaving — a collaborator saved first, and re-opening is the reconciliation.
+    function scheduleAutosave() {
+      clearTimeout(autosaveTimer);
+      if (!shell.dirty || !shell.id || shell.conflicted) return;
+      autosaveTimer = setTimeout(async () => {
+        if (!shell.dirty || shell.conflicted) return;
+        setSaveUi('saving…');
+        await saveWorkingCopy();
+      }, 900);
     }
 
     async function openWorkingCopy(id) {
@@ -226,6 +254,7 @@
       problemsEl.textContent = '(not validated yet)';
       showView('designer');
       surface.fit();
+      shell.conflicted = false;
       setSaveUi('opened');
     }
 
@@ -240,11 +269,12 @@
         });
         shell.etag = saved.etag;
         shell.dirty = false;
-        setSaveUi('saved');
+        setSaveUi(`saved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
         return true;
       } catch (err) {
         // A stale etag means a collaborator saved first: nothing was clobbered — re-open to reconcile.
-        setSaveUi(err.status === 409 ? 'conflict — a collaborator saved first; go back and re-open' : `save failed: ${err.message}`);
+        if (err.status === 409) shell.conflicted = true;
+        setSaveUi(err.status === 409 ? '⚠ conflict — a collaborator saved first; go back and re-open' : `save failed: ${err.message}`);
         return false;
       }
     }
@@ -319,7 +349,7 @@
     // Step creation (design §3.2): DRAG an operation onto the surface (the drop point pins the
     // node); keyboard activation in the rail creates at the auto-layout position. Both paths make
     // a step bound to the operation, required parameters pre-populated, model-routed and selected.
-    function createStepFromOperation(operation, position) {
+    function createStepFromOperation(operation, position, sourceName) {
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       if (!wf) return;
       const base = (operation.operationId ?? operation.channelPath ?? 'step')
@@ -332,6 +362,13 @@
       const required = (operation.parameters ?? []).filter((x) => x.required);
       if (required.length) step.parameters = required.map((x) => ({ name: x.name, in: x.in, value: '' }));
       model.update((d) => {
+        // The step's source must be DECLARED for its operations to resolve (§4.1): dropping an
+        // operation auto-declares its sourceDescription in the same undo unit as the step.
+        if (sourceName && !(d.sourceDescriptions ?? []).some((x) => x.name === sourceName)) {
+          d.sourceDescriptions = [...(d.sourceDescriptions ?? []),
+            { name: sourceName, url: `./sources/${sourceName}.json`, type: operation.kind === 'asyncapi' ? 'asyncapi' : 'openapi' }];
+        }
+
         const w = d.workflows.find((x) => x.workflowId === select.value);
         w.steps.push(step);
       }, { origin: 'canvas', label: `add step ${stepId}` });
@@ -347,8 +384,8 @@
       logEvent('step-created', { stepId, from: operation.operationId ?? operation.channelPath, dropped: !!position });
     }
 
-    opBrowser.addEventListener('operation-selected', (e) => createStepFromOperation(e.detail.operation));
-    surface.addEventListener('operation-dropped', (e) => createStepFromOperation(e.detail.operation, e.detail.position));
+    opBrowser.addEventListener('operation-selected', (e) => createStepFromOperation(e.detail.operation, undefined, e.detail.sourceName));
+    surface.addEventListener('operation-dropped', (e) => createStepFromOperation(e.detail.operation, e.detail.position, e.detail.sourceName));
 
     // Dragging from the start node's entry port onto a step makes it the workflow's FIRST step —
     // in Arazzo the entry point IS steps[0], so this is a reorder, not an action edge.
@@ -394,8 +431,30 @@
       });
     }
     document.getElementById('docbtn').addEventListener('click', showDocumentInspector);
+    textEditor.addEventListener('undo-requested', () => { if (model.canUndo) model.undo(); });
+    textEditor.addEventListener('redo-requested', () => { if (model.canRedo) model.redo(); });
 
-    saveBtn.addEventListener('click', saveWorkingCopy);
+    // Ctrl/Cmd-Z and Ctrl-Y / Ctrl-Shift-Z drive the DOCUMENT MODEL's undo stack anywhere in the
+    // designer view — except inside text-editing surfaces (inputs, textareas, CM6 editors), where
+    // native/editor keys keep their local meaning. App-shell listener, not the surface's (§6.3).
+    document.addEventListener('keydown', (e) => {
+      if (designerView.hidden || !(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key !== 'z' && key !== 'y') return;
+      const target = e.composedPath()[0];
+      if (target instanceof HTMLElement
+        && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+          || target.closest?.('.cm-editor'))) {
+        return; // the text tab routes through the editor's own keymap into the model
+      }
+
+      const redo = key === 'y' || (key === 'z' && e.shiftKey);
+      e.preventDefault();
+      if (redo) { if (model.canRedo) model.redo(); }
+      else if (model.canUndo) model.undo();
+    });
+
+    backBtn.addEventListener('click', () => { clearTimeout(autosaveTimer); if (shell.dirty && !shell.conflicted) saveWorkingCopy(); }, { capture: true });
     validateBtn.addEventListener('click', validateWorkingCopy);
     backBtn.addEventListener('click', () => showView('workspace'));
     wctable.addEventListener('working-copy-selected', (e) => openWorkingCopy(e.detail.workingCopy.id));
@@ -444,6 +503,7 @@
       if (e.detail.origin !== 'load') {
         shell.dirty = true;
         setSaveUi();
+        scheduleAutosave();
       }
       surface.layoutOverrides = structuredClone(model.designerState.nodes ?? {});
       project();
@@ -785,9 +845,10 @@
     document.getElementById('readonly').addEventListener('change', (e) => {
       surface.toggleAttribute('readonly', e.target.checked);
     });
-    document.getElementById('theme').addEventListener('click', () => {
+    document.getElementById('theme').addEventListener('click', (e) => {
       const html = document.documentElement;
       html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+      e.currentTarget.textContent = html.dataset.theme === 'dark' ? '☀️' : '🌙';
     });
   </script>
 </body>
