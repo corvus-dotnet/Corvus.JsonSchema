@@ -82,6 +82,7 @@
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
     <button id="validate" class="tb designer-only" title="Validate the working copy">✓</button>
+    <button id="git" class="tb designer-only" title="Git — bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">⎇</button>
     <button id="publish" class="tb designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)">🚀</button>
     <button id="theme" class="tb" title="Toggle theme">🌙</button>
   </header>
@@ -154,6 +155,7 @@
     import '../src/components/workspace-table.js';
     import '../src/components/operation-browser.js';
     import '../src/components/source-acquisition-dialog.js';
+    import '../src/components/git-dialog.js';
     import '../src/components/document-inspector.js';
     import '../src/components/debug-tray.js';
     import '../src/components/scenario-panel.js';
@@ -884,6 +886,43 @@
         : { valid: true };
     };
     expr.addEventListener('commit', (e) => logEvent('expression-commit', e.detail));
+
+    // The Git round-trip (§4.7): autosave first (the dialog reads the STORED copy), then bind /
+    // pull / commit through the caller's brokered session. binding-saved and pulled both bump the
+    // etag (refresh the save token); pulled also replaced the document — reload the model like an
+    // open, and let the scenario panel re-read its (possibly replaced) set.
+    const gitDialog = document.createElement('arazzo-git-dialog');
+    gitDialog.client = client;
+    document.body.appendChild(gitDialog);
+    document.getElementById('git').addEventListener('click', async () => {
+      if (!shell.id) return;
+      clearTimeout(autosaveTimer);
+      if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
+      gitDialog.open({ workingCopyId: shell.id });
+      logEvent('git-open', {});
+    });
+    gitDialog.addEventListener('binding-saved', (e) => {
+      shell.etag = e.detail.workingCopy.etag;
+      shell.dirty = false;
+      setSaveUi('git binding saved');
+      logEvent('git-bound', e.detail.workingCopy.gitBinding);
+    });
+    gitDialog.addEventListener('pulled', (e) => {
+      const wc = e.detail.workingCopy;
+      shell.etag = wc.etag;
+      shell.dirty = false;
+      shell.conflicted = false;
+      model.reset(wc.document, wc.designerState ?? { nodes: {} });
+      refreshWorkflowOptions();
+      project();
+      scPanel.refresh();
+      setSaveUi('pulled from GitHub');
+      logEvent('git-pulled', {});
+    });
+    gitDialog.addEventListener('committed', (e) => {
+      setSaveUi('committed to GitHub');
+      logEvent('git-committed', e.detail.result);
+    });
 
     // The deliberate publish act (§4.6): autosave first (publish reads the STORED document), then
     // let the server validate + attest the suite. Refusals land where they are actionable:
