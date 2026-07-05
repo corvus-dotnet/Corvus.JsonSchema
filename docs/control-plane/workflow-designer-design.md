@@ -702,7 +702,7 @@ compile; it serves recorded fixtures, clearly marked).
    reference rows localize (materialise the component inline) or detach. The demo's ⚙ Document
    mode routes document edits through the model (undoable, coalesced); duplicate component names
    flag visibly. Editing-parity exception, deliberate: workflow `inputs` and component input
-   schemas edit as guarded JSON, not a typed schema-authoring form — deferred with §15.*
+   schemas edit as guarded JSON, not a typed schema-authoring form — tracked as §15 item 7.*
 5. **Simulator + debug.** Server `WorkflowSimulator` + trace + stateless stepping; debug controls,
    context explorer, trace viewer, canvas overlay, expression console.
 6. **Scenarios.** Scenario schema + CRUD + run endpoints (run-one and run-all suite report);
@@ -734,3 +734,14 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
 6. **CM6 instead of Monaco** (§7.1) — *Resolved:* CodeMirror 6 for both tiers, for its first-class
    shadow-DOM support (agreed 2026-07-04). The bespoke-SVG design surface (§6.1) was ratified the
    same day, conditional on the §6.3 layering discipline.
+7. **Typed schema-authoring form** — workflow `inputs` and the components library's input schemas
+   currently edit as guarded JSON textareas (parse-gated, last-valid-wins), not a typed
+   JSON-Schema-authoring form. That is the one deliberate exception to the slice-4 "full editing
+   parity" bar. Options when picked up: (a) a purpose-built schema form (property rows,
+   type/format/required toggles, nested objects) — the full answer, but a sizeable component in
+   its own right; (b) reuse the payload-editor's schema-driven form machinery pointed at the
+   JSON-Schema *meta*-schema — cheaper, but meta-schema forms are notoriously clunky; (c) keep
+   guarded JSON and invest instead in inline validation + completions from the CM6 tier.
+   (Recommend: (a) as its own post-slice-8 increment; the guarded JSON editor is honest and
+   lossless meanwhile. Revisit once the simulator's typed inputs form — which CONSUMES these
+   schemas — makes the authoring pain concrete.)
