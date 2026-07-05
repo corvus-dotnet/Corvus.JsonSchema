@@ -40,6 +40,7 @@
     button, select { font: inherit; padding: 5px 10px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: inherit; cursor: pointer; }
     /* Toolbar icon buttons: compact, with UNMISTAKABLE hover/press/focus feedback. */
     header button.tb { width: 34px; height: 30px; padding: 0; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    header [hidden] { display: none !important; }
     header button:hover:not(:disabled), header select:hover {
       border-color: var(--arazzo-accent, #3b6cf6);
       background: color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 10%, var(--arazzo-bg, #fff)); }
@@ -51,7 +52,7 @@
     label.chk { display: inline-flex; gap: 6px; align-items: center; }
   </style>
 </head>
-<body>
+<body data-view="workspace">
   <header>
     <!-- Grouped left→right in the conventional order for design tools:
          context (back · document name · workflow · document settings) | edit (undo/redo)
