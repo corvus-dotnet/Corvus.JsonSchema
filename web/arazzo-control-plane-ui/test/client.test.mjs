@@ -1050,3 +1050,13 @@ test('fetchSourceDocument returns the validated document with detected type and 
   await assert.rejects(() => c.fetchSourceDocument({ url: 'http://insecure.example/x.json' }), (e) => e.status === 400);
   assert.throws(() => c.fetchSourceDocument({}), TypeError);
 });
+
+test('every seeded registry source projects a non-empty operation surface', async () => {
+  const c = makeClient();
+  const { sources } = await c.listSources({ limit: 50 });
+  assert.ok(sources.length >= 3, 'the registry seeds at least three sources');
+  for (const s of sources) {
+    const { operations } = await c.listRegisteredSourceOperations(s.name);
+    assert.ok(operations.length > 0, `seeded source '${s.name}' must list operations — an empty rail after attaching it reads as a bug`);
+  }
+});
