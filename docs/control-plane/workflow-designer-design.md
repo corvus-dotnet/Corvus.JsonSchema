@@ -735,6 +735,15 @@ compile; it serves recorded fixtures, clearly marked).
    scenario panel/editor; session recording; carry-over on create-from-version; **the `scenarios
    run` CLI** (§4.5: standalone in-process + remote modes, globbing, JUnit/JSON reports, CI exit
    codes).
+   *Status: 6a (API) and 6b (panel + recording) BUILT. Scenarios store WITH the working copy and
+   edit as etag-guarded RMW; runs resolve mocks by (source, operationId) through the attached
+   surfaces, execute the §8 simulator, and judge expectations (outcome · exact/subsequence path ·
+   $outputs criteria through the real criterion compiler · per-step reached/attempts); the suite
+   report counts failures with per-verdict detail. The Scenarios sidebar tab lists/runs/edits
+   (guarded JSON v1) and hands any run's trace to the debug tray; "Save as scenario…" captures a
+   debug session with expectations promoted from the observed trace (§3.4). Remaining in this
+   slice: the `scenarios run` CLI (§4.5), carry-over verification on create-from-version, and the
+   typed scenario forms (with the §15 schema-authoring work).*
 7. **Publish with evidence.** Publish endpoint (server-attested suite), package entries, evidence
    badge on catalog detail; optional promotion-readiness extension.
 8. **GitHub.** App broker + session endpoints; bind/pull/commit(+PR) incl. scenario files;
