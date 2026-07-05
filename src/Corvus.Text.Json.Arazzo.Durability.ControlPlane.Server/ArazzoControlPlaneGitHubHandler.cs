@@ -5,6 +5,8 @@
 using System.Security.Claims;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability.Sources;
+using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -28,20 +30,41 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     private readonly ControlPlaneAccess access;
     private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext;
     private readonly string subjectClaimType;
+    private readonly IWorkspaceWorkflowStore? workspaceStore;
+    private readonly ISourceStore? sources;
+    private readonly string actor;
+    private readonly TimeProvider timeProvider;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneGitHubHandler"/> class.</summary>
     /// <param name="broker">The deployment's GitHub broker; <see langword="null"/> refuses every operation (fails closed).</param>
     /// <param name="access">Resolves the caller's identity (the token-custody key).</param>
     /// <param name="httpContext">Reads the authenticated principal in the modes whose access binding carries none (ScopesOnly).</param>
     /// <param name="subjectClaimType">The claim naming the authenticated subject (the custody key's fallback dimension).</param>
-    internal ArazzoControlPlaneGitHubHandler(GitHubBroker? broker, ControlPlaneAccess access, Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext = null, string subjectClaimType = "sub")
+    /// <param name="workspaceStore">The working-copy store the Git round-trip (§4.7 pull/commit) reads and saves.</param>
+    /// <param name="sources">The source registry (resolves registry attachments at commit).</param>
+    /// <param name="actor">The audit actor recorded on pull saves.</param>
+    /// <param name="timeProvider">The clock (attachment audit stamps).</param>
+    internal ArazzoControlPlaneGitHubHandler(
+        GitHubBroker? broker,
+        ControlPlaneAccess access,
+        Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext = null,
+        string subjectClaimType = "sub",
+        IWorkspaceWorkflowStore? workspaceStore = null,
+        ISourceStore? sources = null,
+        string actor = "control-plane",
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(access);
         ArgumentNullException.ThrowIfNull(subjectClaimType);
+        ArgumentNullException.ThrowIfNull(actor);
         this.broker = broker;
         this.access = access;
         this.httpContext = httpContext;
         this.subjectClaimType = subjectClaimType;
+        this.workspaceStore = workspaceStore;
+        this.sources = sources;
+        this.actor = actor;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <inheritdoc/>
@@ -202,6 +225,264 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<PullWorkingCopyResult> HandlePullWorkingCopyAsync(PullWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        if (this.broker is not { } github || this.workspaceStore is not { } store)
+        {
+            return PullWorkingCopyResult.BadRequest(NotBrokeredProblem(), workspace);
+        }
+
+        if (this.PrincipalKey() is not { } principal)
+        {
+            return PullWorkingCopyResult.BadRequest(
+                Problem("github-identity-unresolvable", "Identity unresolvable", 400, "A GitHub session binds to the calling principal, but no stable principal identity resolves for this caller."), workspace);
+        }
+
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return PullWorkingCopyResult.NotFound(
+                Problem("working-copy-not-found", "Working copy not found", 404, $"No working copy '{id}' exists, or it is outside your reach."), workspace);
+        }
+
+        JsonElement root = (JsonElement)w.RootElement;
+        if (!root.TryGetProperty("gitBinding"u8, out JsonElement binding) || binding.ValueKind != JsonValueKind.Object)
+        {
+            return PullWorkingCopyResult.BadRequest(NotBoundProblem(id), workspace);
+        }
+
+        (string owner, string repo, string branch, string path) = ReadBinding(binding);
+
+        // Fetch everything FIRST — a pull applies fully or not at all. Every pooled payload stays
+        // alive until the one draft write below completes.
+        (GitHubBroker.ReadOutcome documentOutcome, byte[]? documentBytes) = await this.FetchFileAsync(github, principal, owner, repo, path, branch, cancellationToken).ConfigureAwait(false);
+        if (MapPullFetch(documentOutcome, owner, repo, path, workspace) is { } documentRefusal)
+        {
+            return documentRefusal;
+        }
+
+        var specs = new List<(string Name, ParsedJsonDocument<JsonElement> Document)>();
+        var scenarioDocs = new List<ParsedJsonDocument<JsonElement>>();
+        try
+        {
+            using var pulledDocument = ParsedJsonDocument<JsonElement>.Parse(documentBytes!);
+            if (binding.TryGetProperty("specPaths"u8, out JsonElement specPaths) && specPaths.ValueKind == JsonValueKind.Object)
+            {
+                foreach (JsonProperty<JsonElement> spec in specPaths.EnumerateObject())
+                {
+                    string specName;
+                    using (UnescapedUtf8JsonString name = spec.Utf8NameSpan)
+                    {
+                        specName = System.Text.Encoding.UTF8.GetString(name.Span);
+                    }
+
+                    string specPath = spec.Value.GetString() ?? string.Empty;
+                    (GitHubBroker.ReadOutcome outcome, byte[]? bytes) = await this.FetchFileAsync(github, principal, owner, repo, specPath, branch, cancellationToken).ConfigureAwait(false);
+                    if (MapPullFetch(outcome, owner, repo, specPath, workspace) is { } specRefusal)
+                    {
+                        return specRefusal;
+                    }
+
+                    specs.Add((specName, ParsedJsonDocument<JsonElement>.Parse(bytes!)));
+                }
+            }
+
+            bool scenariosBound = binding.TryGetProperty("scenariosDir"u8, out JsonElement scenariosDir) && scenariosDir.GetString() is { Length: > 0 };
+            if (scenariosBound)
+            {
+                string dir = scenariosDir.GetString()!.TrimEnd('/');
+                (GitHubBroker.ReadOutcome outcome, ParsedJsonDocument<JsonElement>? listing) = await github.BrowseAsync(principal, owner, repo, dir, branch, cancellationToken).ConfigureAwait(false);
+                using ParsedJsonDocument<JsonElement>? heldListing = listing;
+                if (MapPullFetch(outcome, owner, repo, dir, workspace) is { } dirRefusal)
+                {
+                    return dirRefusal;
+                }
+
+                if (listing!.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement entry in listing.RootElement.EnumerateArray())
+                    {
+                        if (entry.TryGetProperty("type"u8, out JsonElement type) && type.ValueEquals("file")
+                            && entry.TryGetProperty("name"u8, out JsonElement fileName) && fileName.GetString() is { } n
+                            && n.EndsWith(".scenario.json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            (GitHubBroker.ReadOutcome fileOutcome, byte[]? bytes) = await this.FetchFileAsync(github, principal, owner, repo, $"{dir}/{n}", branch, cancellationToken).ConfigureAwait(false);
+                            if (MapPullFetch(fileOutcome, owner, repo, $"{dir}/{n}", workspace) is { } fileRefusal)
+                            {
+                                return fileRefusal;
+                            }
+
+                            scenarioDocs.Add(ParsedJsonDocument<JsonElement>.Parse(bytes!));
+                        }
+                    }
+                }
+            }
+
+            // One etag-guarded save: the pulled document, the replacement inline attachment set (only
+            // when specs are bound), and the replacement scenario set (only when the directory is bound).
+            using ParsedJsonDocument<JsonElement>? sourcesDoc = specs.Count > 0 ? this.WriteInlineAttachments(specs) : null;
+            using ParsedJsonDocument<JsonElement>? scenariosDoc = scenariosBound ? WriteScenarioSet(scenarioDocs) : null;
+            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceWorkflow.Draft(
+                default,
+                default,
+                default,
+                pulledDocument.RootElement,
+                default,
+                sourcesDoc is { } s ? s.RootElement : default,
+                SecurityTagSet.Empty,
+                scenarios: scenariosDoc is { } sc ? sc.RootElement : default);
+            ParsedJsonDocument<WorkspaceWorkflow>? saved = await store.UpdateAsync(id, draft.RootElement, new WorkflowEtag((string)parameters.Body.ExpectedEtag), this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (saved is not { } updated)
+            {
+                return PullWorkingCopyResult.NotFound(
+                    Problem("working-copy-not-found", "Working copy not found", 404, $"No working copy '{id}' exists, or it is outside your reach."), workspace);
+            }
+
+            workspace.TakeOwnership(updated);
+            return PullWorkingCopyResult.Ok(Models.WorkingCopy.From(updated.RootElement), workspace);
+        }
+        catch (WorkspaceWorkflowConflictException ex)
+        {
+            return PullWorkingCopyResult.Conflict(
+                Problem("save-conflict", "Save conflict", 409, ex.Message + " Re-fetch and pull against the fresh state."), workspace);
+        }
+        catch (JsonException)
+        {
+            return PullWorkingCopyResult.BadRequest(
+                Problem("github-content-invalid", "Content invalid", 400, $"A bound file in '{owner}/{repo}@{branch}' is not valid JSON; fix it in the repository and pull again."), workspace);
+        }
+        finally
+        {
+            foreach ((string _, ParsedJsonDocument<JsonElement> doc) in specs)
+            {
+                doc.Dispose();
+            }
+
+            foreach (ParsedJsonDocument<JsonElement> doc in scenarioDocs)
+            {
+                doc.Dispose();
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CommitWorkingCopyResult> HandleCommitWorkingCopyAsync(CommitWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        if (this.broker is not { } github || this.workspaceStore is not { } store)
+        {
+            return CommitWorkingCopyResult.BadRequest(NotBrokeredProblem(), workspace);
+        }
+
+        if (this.PrincipalKey() is not { } principal)
+        {
+            return CommitWorkingCopyResult.BadRequest(
+                Problem("github-identity-unresolvable", "Identity unresolvable", 400, "A GitHub session binds to the calling principal, but no stable principal identity resolves for this caller."), workspace);
+        }
+
+        if (!parameters.Body.Message.IsNotUndefined() || ((string)parameters.Body.Message).Length == 0)
+        {
+            return CommitWorkingCopyResult.BadRequest(
+                Problem("invalid-commit", "Invalid commit", 400, "A commit requires a 'message'."), workspace);
+        }
+
+        string message = (string)parameters.Body.Message;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return CommitWorkingCopyResult.NotFound(
+                Problem("working-copy-not-found", "Working copy not found", 404, $"No working copy '{id}' exists, or it is outside your reach."), workspace);
+        }
+
+        JsonElement root = (JsonElement)w.RootElement;
+        if (!root.TryGetProperty("gitBinding"u8, out JsonElement binding) || binding.ValueKind != JsonValueKind.Object)
+        {
+            return CommitWorkingCopyResult.BadRequest(NotBoundProblem(id), workspace);
+        }
+
+        (string owner, string repo, string branch, string path) = ReadBinding(binding);
+
+        // The files, in deterministic order: the document, the bound specs, the scenario files.
+        List<(string Path, byte[] Bytes)>? files = await this.CollectCommitFilesAsync(root, binding, path, cancellationToken).ConfigureAwait(false);
+        if (files is null)
+        {
+            return CommitWorkingCopyResult.BadRequest(
+                Problem("github-spec-unresolvable", "Spec unresolvable", 400, "A bound specPaths entry names no attached (or resolvable registry) source on this working copy."), workspace);
+        }
+
+        // Contents PUTs, each read-sha-then-write, authored as the signed-in user (§4.7): the broker
+        // composes no author/committer — GitHub stamps the token's user.
+        var written = new List<(string Path, string? Sha)>();
+        foreach ((string filePath, byte[] bytes) in files)
+        {
+            (GitHubBroker.ReadOutcome shaOutcome, ParsedJsonDocument<JsonElement>? current) = await github.BrowseAsync(principal, owner, repo, filePath, branch, cancellationToken).ConfigureAwait(false);
+            string? existingSha = null;
+            if (shaOutcome == GitHubBroker.ReadOutcome.NotConnected)
+            {
+                current?.Dispose();
+                return CommitWorkingCopyResult.Conflict(NotConnectedProblem(), workspace);
+            }
+
+            if (shaOutcome == GitHubBroker.ReadOutcome.Success && current is not null)
+            {
+                using (current)
+                {
+                    if (current.RootElement.ValueKind == JsonValueKind.Object && current.RootElement.TryGetProperty("sha"u8, out JsonElement sha))
+                    {
+                        existingSha = sha.GetString();
+                    }
+                }
+            }
+
+            (GitHubBroker.WriteOutcome outcome, string? contentSha) = await github.PutContentAsync(principal, owner, repo, filePath, branch, message, bytes, existingSha, cancellationToken).ConfigureAwait(false);
+            switch (outcome)
+            {
+                case GitHubBroker.WriteOutcome.NotConnected:
+                    return CommitWorkingCopyResult.Conflict(NotConnectedProblem(), workspace);
+                case GitHubBroker.WriteOutcome.NotFound:
+                    return CommitWorkingCopyResult.NotFound(
+                        Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}@{branch}' is not reachable through the user ∩ installation intersection."), workspace);
+                case GitHubBroker.WriteOutcome.Refused:
+                    return CommitWorkingCopyResult.Conflict(
+                        Problem("github-commit-refused", "Commit refused", 409, $"GitHub refused writing '{filePath}' (a concurrent change on '{branch}'?). Pull, reconcile, and commit again."), workspace);
+                default:
+                    written.Add((filePath, contentSha));
+                    break;
+            }
+        }
+
+        // Optionally open the pull request FROM the bound branch (draft → the review flow).
+        (long Number, string Url)? pullRequest = null;
+        if (parameters.Body.PullRequest.IsNotUndefined())
+        {
+            var pr = (JsonElement)parameters.Body.PullRequest;
+            string baseBranch = pr.TryGetProperty("base"u8, out JsonElement b) ? b.GetString() ?? string.Empty : string.Empty;
+            string title = pr.TryGetProperty("title"u8, out JsonElement t) && t.GetString() is { Length: > 0 } declared ? declared : message;
+            bool draft = pr.TryGetProperty("draft"u8, out JsonElement d) && d.ValueKind == JsonValueKind.True;
+            (GitHubBroker.WriteOutcome outcome, long number, string? url) = await github.CreatePullRequestAsync(principal, owner, repo, branch, baseBranch, title, draft, cancellationToken).ConfigureAwait(false);
+            switch (outcome)
+            {
+                case GitHubBroker.WriteOutcome.NotConnected:
+                    return CommitWorkingCopyResult.Conflict(NotConnectedProblem(), workspace);
+                case GitHubBroker.WriteOutcome.NotFound:
+                    return CommitWorkingCopyResult.NotFound(
+                        Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}' is not reachable through the user ∩ installation intersection."), workspace);
+                case GitHubBroker.WriteOutcome.Refused:
+                    return CommitWorkingCopyResult.Conflict(
+                        Problem("github-pr-refused", "Pull request refused", 409, $"GitHub refused the pull request from '{branch}' onto '{baseBranch}' — one may already exist for this branch."), workspace);
+                default:
+                    pullRequest = (number, url ?? string.Empty);
+                    break;
+            }
+        }
+
+        ParsedJsonDocument<Models.GitCommitResult> body = WriteCommitResult(written, pullRequest);
+        workspace.TakeOwnership(body);
+        return CommitWorkingCopyResult.Ok(Models.GitCommitResult.From(body.RootElement), workspace);
+    }
+
     // Projects GET /user (+ installations + per-installation repositories) into the contract's
     // GitHubStatus in one pooled write, field-selecting from the GitHub payloads bytes-native.
     private static ParsedJsonDocument<Models.GitHubStatus> WriteStatus(
@@ -337,6 +618,200 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             value.WriteTo(writer);
         }
     }
+
+    // The binding's coordinates (validated present by the contract's required set).
+    private static (string Owner, string Repo, string Branch, string Path) ReadBinding(in JsonElement binding)
+        => (binding.TryGetProperty("owner"u8, out JsonElement o) ? o.GetString() ?? string.Empty : string.Empty,
+            binding.TryGetProperty("repo"u8, out JsonElement r) ? r.GetString() ?? string.Empty : string.Empty,
+            binding.TryGetProperty("branch"u8, out JsonElement b) ? b.GetString() ?? string.Empty : string.Empty,
+            binding.TryGetProperty("path"u8, out JsonElement p) ? p.GetString() ?? string.Empty : string.Empty);
+
+    // Maps a pull-phase fetch outcome to its refusal (null = success, keep going). Nothing is
+    // partially applied: any missing bound file refuses the whole pull.
+    private static PullWorkingCopyResult? MapPullFetch(GitHubBroker.ReadOutcome outcome, string owner, string repo, string path, JsonWorkspace workspace)
+        => outcome switch
+        {
+            GitHubBroker.ReadOutcome.Success => null,
+            GitHubBroker.ReadOutcome.NotConnected => PullWorkingCopyResult.Conflict(NotConnectedProblem(), workspace),
+            _ => PullWorkingCopyResult.NotFound(
+                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}/{path}' does not exist on the bound branch, or is outside the user ∩ installation intersection."), workspace),
+        };
+
+    // One file's content through the contents proxy (base64-decoded); NotFound when the path is a
+    // directory where a file was expected.
+    private async ValueTask<(GitHubBroker.ReadOutcome Outcome, byte[]? Bytes)> FetchFileAsync(GitHubBroker github, string principal, string owner, string repo, string path, string branch, CancellationToken cancellationToken)
+    {
+        (GitHubBroker.ReadOutcome outcome, ParsedJsonDocument<JsonElement>? payload) = await github.BrowseAsync(principal, owner, repo, path, branch, cancellationToken).ConfigureAwait(false);
+        if (outcome != GitHubBroker.ReadOutcome.Success || payload is null)
+        {
+            payload?.Dispose();
+            return (outcome, null);
+        }
+
+        using (payload)
+        {
+            JsonElement p = payload.RootElement;
+            if (p.ValueKind != JsonValueKind.Object || !p.TryGetProperty("content"u8, out JsonElement content) || content.GetString() is not { } base64)
+            {
+                return (GitHubBroker.ReadOutcome.NotFound, null);
+            }
+
+            return (GitHubBroker.ReadOutcome.Success, Convert.FromBase64String(base64));
+        }
+    }
+
+    // The replacement inline attachment set a pull writes: one inline entry per bound spec, typed by
+    // the document's own top-level field, audit-stamped as the pull.
+    private ParsedJsonDocument<JsonElement> WriteInlineAttachments(List<(string Name, ParsedJsonDocument<JsonElement> Document)> specs)
+    {
+        return PersistedJson.ToPooledDocument<JsonElement, (List<(string Name, ParsedJsonDocument<JsonElement> Document)> Specs, string Actor, DateTimeOffset At)>(
+            (specs, this.actor, this.timeProvider.GetUtcNow()),
+            static (Utf8JsonWriter writer, in (List<(string Name, ParsedJsonDocument<JsonElement> Document)> Specs, string Actor, DateTimeOffset At) s) =>
+            {
+                writer.WriteStartArray();
+                foreach ((string name, ParsedJsonDocument<JsonElement> document) in s.Specs)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("name"u8, name);
+                    writer.WriteString("kind"u8, "inline"u8);
+                    if (DetectType(document.RootElement) is { } type)
+                    {
+                        writer.WriteString("type"u8, type);
+                    }
+
+                    writer.WritePropertyName("document"u8);
+                    document.RootElement.WriteTo(writer);
+                    writer.WriteString("attachedBy"u8, s.Actor);
+                    writer.WriteString("attachedAt"u8, s.At);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+            });
+    }
+
+    // The replacement scenario set a pull writes (the <name>.scenario.json values, in listing order).
+    private static ParsedJsonDocument<JsonElement> WriteScenarioSet(List<ParsedJsonDocument<JsonElement>> scenarios)
+    {
+        return PersistedJson.ToPooledDocument<JsonElement, List<ParsedJsonDocument<JsonElement>>>(
+            scenarios,
+            static (Utf8JsonWriter writer, in List<ParsedJsonDocument<JsonElement>> all) =>
+            {
+                writer.WriteStartArray();
+                foreach (ParsedJsonDocument<JsonElement> scenario in all)
+                {
+                    scenario.RootElement.WriteTo(writer);
+                }
+
+                writer.WriteEndArray();
+            });
+    }
+
+    // The files a commit writes, in deterministic order: the document, each bound spec (inline
+    // attachments, or registry attachments re-resolved), then one <name>.scenario.json per scenario.
+    // Null when a bound spec cannot be resolved (the commit refuses rather than writing a subset).
+    private async ValueTask<List<(string Path, byte[] Bytes)>?> CollectCommitFilesAsync(JsonElement root, JsonElement binding, string documentPath, CancellationToken cancellationToken)
+    {
+        var files = new List<(string Path, byte[] Bytes)>();
+        root.TryGetProperty("document"u8, out JsonElement document);
+        files.Add((documentPath, PersistedJson.ToArray(document, static (Utf8JsonWriter writer, in JsonElement d) => d.WriteTo(writer))));
+
+        if (binding.TryGetProperty("specPaths"u8, out JsonElement specPaths) && specPaths.ValueKind == JsonValueKind.Object)
+        {
+            root.TryGetProperty("sources"u8, out JsonElement attachments);
+            foreach (JsonProperty<JsonElement> spec in specPaths.EnumerateObject())
+            {
+                string specName;
+                using (UnescapedUtf8JsonString name = spec.Utf8NameSpan)
+                {
+                    specName = System.Text.Encoding.UTF8.GetString(name.Span);
+                }
+
+                string specPath = spec.Value.GetString() ?? string.Empty;
+                JsonElement attachment = WorkspaceSourceJson.FindAttachment(attachments, specName);
+                if (attachment.TryGetProperty("document"u8, out JsonElement inline) && inline.ValueKind == JsonValueKind.Object)
+                {
+                    files.Add((specPath, PersistedJson.ToArray(inline, static (Utf8JsonWriter writer, in JsonElement d) => d.WriteTo(writer))));
+                    continue;
+                }
+
+                if (this.sources is { } registry
+                    && attachment.TryGetProperty("sourceName"u8, out JsonElement sn) && sn.GetString() is { Length: > 0 } registryName)
+                {
+                    using ParsedJsonDocument<RegisteredSource>? registered = await registry.GetAsync(registryName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+                    if (registered is { } resolved)
+                    {
+                        var registeredDocument = (JsonElement)resolved.RootElement.Document;
+                        files.Add((specPath, PersistedJson.ToArray(registeredDocument, static (Utf8JsonWriter writer, in JsonElement d) => d.WriteTo(writer))));
+                        continue;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        if (binding.TryGetProperty("scenariosDir"u8, out JsonElement scenariosDir) && scenariosDir.GetString() is { Length: > 0 } dir
+            && root.TryGetProperty("scenarios"u8, out JsonElement scenarios) && scenarios.ValueKind == JsonValueKind.Array)
+        {
+            string trimmed = dir.TrimEnd('/');
+            foreach (JsonElement scenario in scenarios.EnumerateArray())
+            {
+                if (scenario.TryGetProperty("name"u8, out JsonElement n) && n.GetString() is { Length: > 0 } scenarioName)
+                {
+                    files.Add(($"{trimmed}/{scenarioName}.scenario.json", PersistedJson.ToArray(scenario, static (Utf8JsonWriter writer, in JsonElement s) => s.WriteTo(writer))));
+                }
+            }
+        }
+
+        return files;
+    }
+
+    // The commit response: what was written, plus the pull request when one was opened.
+    private static ParsedJsonDocument<Models.GitCommitResult> WriteCommitResult(List<(string Path, string? Sha)> written, (long Number, string Url)? pullRequest)
+    {
+        return PersistedJson.ToPooledDocument<Models.GitCommitResult, (List<(string Path, string? Sha)> Files, (long Number, string Url)? Pr)>(
+            (written, pullRequest),
+            static (Utf8JsonWriter writer, in (List<(string Path, string? Sha)> Files, (long Number, string Url)? Pr) s) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteStartArray("files"u8);
+                foreach ((string path, string? sha) in s.Files)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("path"u8, path);
+                    if (sha is not null)
+                    {
+                        writer.WriteString("sha"u8, sha);
+                    }
+
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+                if (s.Pr is { } pr)
+                {
+                    writer.WriteStartObject("pullRequest"u8);
+                    writer.WriteNumber("number"u8, pr.Number);
+                    writer.WriteString("url"u8, pr.Url);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndObject();
+            });
+    }
+
+    private static string? DetectType(in JsonElement document)
+        => document.TryGetProperty("openapi"u8, out _) ? "openapi"
+        : document.TryGetProperty("asyncapi"u8, out _) ? "asyncapi"
+        : document.TryGetProperty("arazzo"u8, out _) ? "arazzo"
+        : null;
+
+    private static Models.ProblemDetails.Source NotBoundProblem(string id)
+        => Problem("github-not-bound", "Not Git-bound", 400, $"Working copy '{id}' has no gitBinding; save one first (§4.7).");
+
+    private static Models.ProblemDetails.Source NotConnectedProblem()
+        => Problem("github-not-connected", "GitHub not connected", 409, "The caller has no GitHub session (or it is no longer valid); begin the sign-in first.");
 
     private static GetGitHubStatusResult Disconnected(JsonWorkspace workspace)
         => GetGitHubStatusResult.Ok(new((ref Models.GitHubStatus.Builder b) => b.Create(connected: false)), workspace);

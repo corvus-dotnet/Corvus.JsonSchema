@@ -1249,3 +1249,41 @@ test('persona enforcement: a viewer cannot begin the GitHub sign-in (workspace:w
   mock.setPersona('viewer');
   await assert.rejects(() => c.beginGitHubAuth(), (e) => e.status === 403);
 });
+
+test('a Git-bound working copy commits to and pulls from its branch (§4.7)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+  // Connect, then bind a working copy (document + one scenario) to a branch.
+  const { authorizeUrl } = await c.beginGitHubAuth();
+  await mock.fetch(authorizeUrl);
+  const wc = await c.createWorkingCopy({ name: 'adopt', document: { arazzo: '1.1.0', info: { title: 'Adopt', version: '1' }, workflows: [{ workflowId: 'adopt', steps: [] }] } });
+  await c.putScenario(wc.id, { name: 'happy', expect: { outcome: 'completed' } });
+  const fresh = await c.getWorkingCopy(wc.id);
+  const bound = await c.saveWorkingCopy(wc.id, {
+    document: fresh.document,
+    expectedEtag: fresh.etag,
+    gitBinding: { owner: 'acme-org', repo: 'specs', branch: 'feature/adopt', path: 'flows/adopt.arazzo.json', scenariosDir: 'scenarios/adopt' },
+  });
+  assert.equal(bound.gitBinding.branch, 'feature/adopt', 'the binding persists on save');
+
+  // Commit: the document and the scenario file land in the repo; the draft PR opens from the branch.
+  const committed = await c.commitWorkingCopy(wc.id, { message: 'sync', pullRequest: { base: 'main', draft: true } });
+  assert.deepEqual(committed.files.map((f) => f.path), ['flows/adopt.arazzo.json', 'scenarios/adopt/happy.scenario.json']);
+  assert.ok(committed.pullRequest.url.includes('/pull/'), 'the pull request opened');
+  const committedDoc = await c.browseRepo('acme-org', 'specs', { path: 'flows/adopt.arazzo.json' });
+  assert.equal(JSON.parse(Buffer.from(committedDoc.file.content, 'base64').toString()).info.title, 'Adopt');
+
+  // A repo-side edit pulls back in under the etag guard.
+  const scenario = await c.browseRepo('acme-org', 'specs', { path: 'scenarios/adopt/happy.scenario.json' });
+  assert.ok(scenario.kind === 'file', 'the scenario file landed');
+  const pulled = await c.pullWorkingCopy(wc.id, { expectedEtag: bound.etag });
+  assert.equal(pulled.document.info.title, 'Adopt', 'pull round-trips the committed document');
+  await assert.rejects(() => c.pullWorkingCopy(wc.id, { expectedEtag: bound.etag }), (e) => e.status === 409, 'a stale etag conflicts');
+
+  // Unbound copies refuse; disconnected sessions conflict.
+  const unbound = await c.createWorkingCopy({ name: 'plain', document: { arazzo: '1.1.0', info: { title: 'x', version: '1' }, workflows: [] } });
+  await assert.rejects(() => c.commitWorkingCopy(unbound.id, { message: 'x' }), (e) => e.status === 400);
+  await c.deleteGitHubSession();
+  await assert.rejects(() => c.commitWorkingCopy(wc.id, { message: 'x' }), (e) => e.status === 409);
+});

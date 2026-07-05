@@ -32,18 +32,18 @@ public static class ApiEndpointRegistration
     /// <param name="availabilityHandler">The handler for ApiAvailability operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
     /// <param name="workspaceHandler">The handler for ApiWorkspace operations.</param>
+    /// <param name="githubHandler">The handler for ApiGithub operations.</param>
     /// <param name="sourcesHandler">The handler for ApiSources operations.</param>
     /// <param name="environmentsHandler">The handler for ApiEnvironments operations.</param>
     /// <param name="runnerAuthorizationsHandler">The handler for ApiRunnerAuthorizations operations.</param>
     /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
-    /// <param name="githubHandler">The handler for ApiGithub operations.</param>
     /// <param name="accessRequestsHandler">The handler for ApiAccessRequests operations.</param>
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiAdministratorsHandler administratorsHandler, IApiGithubHandler githubHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
     {
-        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, credentialsHandler, workspaceHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, administratorsHandler, githubHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, credentialsHandler, workspaceHandler, githubHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, administratorsHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
     }
 
     /// <summary>
@@ -57,17 +57,17 @@ public static class ApiEndpointRegistration
     /// <param name="availabilityHandler">The handler for ApiAvailability operations.</param>
     /// <param name="credentialsHandler">The handler for ApiCredentials operations.</param>
     /// <param name="workspaceHandler">The handler for ApiWorkspace operations.</param>
+    /// <param name="githubHandler">The handler for ApiGithub operations.</param>
     /// <param name="sourcesHandler">The handler for ApiSources operations.</param>
     /// <param name="environmentsHandler">The handler for ApiEnvironments operations.</param>
     /// <param name="runnerAuthorizationsHandler">The handler for ApiRunnerAuthorizations operations.</param>
     /// <param name="administratorsHandler">The handler for ApiAdministrators operations.</param>
-    /// <param name="githubHandler">The handler for ApiGithub operations.</param>
     /// <param name="accessRequestsHandler">The handler for ApiAccessRequests operations.</param>
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiAdministratorsHandler administratorsHandler, IApiGithubHandler githubHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiAdministratorsHandler administratorsHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
     {
 
         IEndpointConventionBuilder __GetAccessGrantsEndpoint = app.MapGet("/access/grants", async (HttpContext context) =>
@@ -6209,6 +6209,605 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ListWorkingCopySourceOperationsEndpoint);
 
+        IEndpointConventionBuilder __PullWorkingCopyEndpoint = app.MapPost("/workspace/workflows/{id}/git/pull", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitPullBody>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitPullBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                PullWorkingCopyParams parameters = new()
+                {
+                    Id = IdValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                PullWorkingCopyResult result = await githubHandler.HandlePullWorkingCopyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "pullWorkingCopy",
+                methodName: "PullWorkingCopy",
+                httpMethod: "POST",
+                routeTemplate: "/workspace/workflows/{id}/git/pull",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __PullWorkingCopyEndpoint);
+
+        IEndpointConventionBuilder __CommitWorkingCopyEndpoint = app.MapPost("/workspace/workflows/{id}/git/commit", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitCommitBody>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitCommitBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CommitWorkingCopyParams parameters = new()
+                {
+                    Id = IdValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                CommitWorkingCopyResult result = await githubHandler.HandleCommitWorkingCopyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "commitWorkingCopy",
+                methodName: "CommitWorkingCopy",
+                httpMethod: "POST",
+                routeTemplate: "/workspace/workflows/{id}/git/commit",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CommitWorkingCopyEndpoint);
+
+        IEndpointConventionBuilder __BeginGitHubAuthEndpoint = app.MapPost("/github/auth", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                BeginGitHubAuthParams parameters = new();
+
+                BeginGitHubAuthResult result = await githubHandler.HandleBeginGitHubAuthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "beginGitHubAuth",
+                methodName: "BeginGitHubAuth",
+                httpMethod: "POST",
+                routeTemplate: "/github/auth",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __BeginGitHubAuthEndpoint);
+
+        IEndpointConventionBuilder __CompleteGitHubAuthEndpoint = app.MapGet("/github/auth/callback", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CodeValue = default;
+                if (context.Request.Query.TryGetValue("code", out var CodeQueryVal) && CodeQueryVal.Count > 0)
+                {
+                    string CodeRaw = CodeQueryVal[0]!;
+                    CodeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(CodeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString StateValue = default;
+                if (context.Request.Query.TryGetValue("state", out var StateQueryVal) && StateQueryVal.Count > 0)
+                {
+                    string StateRaw = StateQueryVal[0]!;
+                    StateValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(StateRaw, workspace);
+                }
+
+                if (CodeValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'code' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (StateValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'state' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CodeValue.IsUndefined() && !CodeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'code' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!StateValue.IsUndefined() && !StateValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'state' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CompleteGitHubAuthParams parameters = new()
+                {
+                    Code = CodeValue,
+                    State = StateValue,
+                }
+                ;
+
+                CompleteGitHubAuthResult result = await githubHandler.HandleCompleteGitHubAuthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "completeGitHubAuth",
+                methodName: "CompleteGitHubAuth",
+                httpMethod: "GET",
+                routeTemplate: "/github/auth/callback",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(System.Array.Empty<EndpointSecurityRequirement>(), true) }),
+            __CompleteGitHubAuthEndpoint);
+
+        IEndpointConventionBuilder __GetGitHubStatusEndpoint = app.MapGet("/github/session", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                GetGitHubStatusParams parameters = new();
+
+                GetGitHubStatusResult result = await githubHandler.HandleGetGitHubStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getGitHubStatus",
+                methodName: "GetGitHubStatus",
+                httpMethod: "GET",
+                routeTemplate: "/github/session",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetGitHubStatusEndpoint);
+
+        IEndpointConventionBuilder __DeleteGitHubSessionEndpoint = app.MapDelete("/github/session", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                DeleteGitHubSessionParams parameters = new();
+
+                DeleteGitHubSessionResult result = await githubHandler.HandleDeleteGitHubSessionAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "deleteGitHubSession",
+                methodName: "DeleteGitHubSession",
+                httpMethod: "DELETE",
+                routeTemplate: "/github/session",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __DeleteGitHubSessionEndpoint);
+
+        IEndpointConventionBuilder __BrowseRepoEndpoint = app.MapGet("/github/repos/{owner}/{repo}/contents", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString OwnerValue = default;
+                if (context.Request.RouteValues.TryGetValue("owner", out object? OwnerRouteVal) && OwnerRouteVal is string OwnerRaw)
+                {
+                    OwnerValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(OwnerRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RepoValue = default;
+                if (context.Request.RouteValues.TryGetValue("repo", out object? RepoRouteVal) && RepoRouteVal is string RepoRaw)
+                {
+                    RepoValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RepoRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PathValue = default;
+                if (context.Request.Query.TryGetValue("path", out var PathQueryVal) && PathQueryVal.Count > 0)
+                {
+                    string PathRaw = PathQueryVal[0]!;
+                    PathValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PathRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RefValue = default;
+                if (context.Request.Query.TryGetValue("ref", out var RefQueryVal) && RefQueryVal.Count > 0)
+                {
+                    string RefRaw = RefQueryVal[0]!;
+                    RefValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RefRaw, workspace);
+                }
+
+                if (OwnerValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'owner' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (RepoValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'repo' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!OwnerValue.IsUndefined() && !OwnerValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'owner' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!RepoValue.IsUndefined() && !RepoValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'repo' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PathValue.IsUndefined() && !PathValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'path' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!RefValue.IsUndefined() && !RefValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'ref' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                BrowseRepoParams parameters = new()
+                {
+                    Owner = OwnerValue,
+                    Repo = RepoValue,
+                    Path = PathValue,
+                    Ref = RefValue,
+                }
+                ;
+
+                BrowseRepoResult result = await githubHandler.HandleBrowseRepoAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "browseRepo",
+                methodName: "BrowseRepo",
+                httpMethod: "GET",
+                routeTemplate: "/github/repos/{owner}/{repo}/contents",
+                tags: new[] { "github" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __BrowseRepoEndpoint);
+
         IEndpointConventionBuilder __ListRegisteredSourceOperationsEndpoint = app.MapGet("/sources/{name}/operations", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -8493,399 +9092,6 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "administrators:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "administrators:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __RemoveAdministratorEndpoint);
-
-        IEndpointConventionBuilder __BeginGitHubAuthEndpoint = app.MapPost("/github/auth", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-
-                BeginGitHubAuthParams parameters = new();
-
-                BeginGitHubAuthResult result = await githubHandler.HandleBeginGitHubAuthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "beginGitHubAuth",
-                methodName: "BeginGitHubAuth",
-                httpMethod: "POST",
-                routeTemplate: "/github/auth",
-                tags: new[] { "github" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __BeginGitHubAuthEndpoint);
-
-        IEndpointConventionBuilder __CompleteGitHubAuthEndpoint = app.MapGet("/github/auth/callback", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CodeValue = default;
-                if (context.Request.Query.TryGetValue("code", out var CodeQueryVal) && CodeQueryVal.Count > 0)
-                {
-                    string CodeRaw = CodeQueryVal[0]!;
-                    CodeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(CodeRaw, workspace);
-                }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString StateValue = default;
-                if (context.Request.Query.TryGetValue("state", out var StateQueryVal) && StateQueryVal.Count > 0)
-                {
-                    string StateRaw = StateQueryVal[0]!;
-                    StateValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(StateRaw, workspace);
-                }
-
-                if (CodeValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'code' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (StateValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'state' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!CodeValue.IsUndefined() && !CodeValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'code' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!StateValue.IsUndefined() && !StateValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'state' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                CompleteGitHubAuthParams parameters = new()
-                {
-                    Code = CodeValue,
-                    State = StateValue,
-                }
-                ;
-
-                CompleteGitHubAuthResult result = await githubHandler.HandleCompleteGitHubAuthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "completeGitHubAuth",
-                methodName: "CompleteGitHubAuth",
-                httpMethod: "GET",
-                routeTemplate: "/github/auth/callback",
-                tags: new[] { "github" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(System.Array.Empty<EndpointSecurityRequirement>(), true) }),
-            __CompleteGitHubAuthEndpoint);
-
-        IEndpointConventionBuilder __GetGitHubStatusEndpoint = app.MapGet("/github/session", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-
-                GetGitHubStatusParams parameters = new();
-
-                GetGitHubStatusResult result = await githubHandler.HandleGetGitHubStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "getGitHubStatus",
-                methodName: "GetGitHubStatus",
-                httpMethod: "GET",
-                routeTemplate: "/github/session",
-                tags: new[] { "github" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __GetGitHubStatusEndpoint);
-
-        IEndpointConventionBuilder __DeleteGitHubSessionEndpoint = app.MapDelete("/github/session", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-
-                DeleteGitHubSessionParams parameters = new();
-
-                DeleteGitHubSessionResult result = await githubHandler.HandleDeleteGitHubSessionAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "deleteGitHubSession",
-                methodName: "DeleteGitHubSession",
-                httpMethod: "DELETE",
-                routeTemplate: "/github/session",
-                tags: new[] { "github" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __DeleteGitHubSessionEndpoint);
-
-        IEndpointConventionBuilder __BrowseRepoEndpoint = app.MapGet("/github/repos/{owner}/{repo}/contents", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            try
-            {
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString OwnerValue = default;
-                if (context.Request.RouteValues.TryGetValue("owner", out object? OwnerRouteVal) && OwnerRouteVal is string OwnerRaw)
-                {
-                    OwnerValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(OwnerRaw, workspace);
-                }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RepoValue = default;
-                if (context.Request.RouteValues.TryGetValue("repo", out object? RepoRouteVal) && RepoRouteVal is string RepoRaw)
-                {
-                    RepoValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RepoRaw, workspace);
-                }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PathValue = default;
-                if (context.Request.Query.TryGetValue("path", out var PathQueryVal) && PathQueryVal.Count > 0)
-                {
-                    string PathRaw = PathQueryVal[0]!;
-                    PathValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(PathRaw, workspace);
-                }
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RefValue = default;
-                if (context.Request.Query.TryGetValue("ref", out var RefQueryVal) && RefQueryVal.Count > 0)
-                {
-                    string RefRaw = RefQueryVal[0]!;
-                    RefValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RefRaw, workspace);
-                }
-
-                if (OwnerValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'owner' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (RepoValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'repo' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!OwnerValue.IsUndefined() && !OwnerValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'owner' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!RepoValue.IsUndefined() && !RepoValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'repo' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!PathValue.IsUndefined() && !PathValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'path' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!RefValue.IsUndefined() && !RefValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'ref' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                BrowseRepoParams parameters = new()
-                {
-                    Owner = OwnerValue,
-                    Repo = RepoValue,
-                    Path = PathValue,
-                    Ref = RefValue,
-                }
-                ;
-
-                BrowseRepoResult result = await githubHandler.HandleBrowseRepoAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "browseRepo",
-                methodName: "BrowseRepo",
-                httpMethod: "GET",
-                routeTemplate: "/github/repos/{owner}/{repo}/contents",
-                tags: new[] { "github" },
-                isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __BrowseRepoEndpoint);
 
         IEndpointConventionBuilder __ListAccessRequestsEndpoint = app.MapGet("/accessRequests", async (HttpContext context) =>
         {
@@ -11184,6 +11390,26 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>PublishWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] PublishWorkingCopyOpenIdConnectScopes = ["catalog:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PullWorkingCopy</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PullWorkingCopyOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PullWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] PullWorkingCopyOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CommitWorkingCopy</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CommitWorkingCopyOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CommitWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CommitWorkingCopyOpenIdConnectScopes = ["workspace:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>Oauth2</c> scheme.
