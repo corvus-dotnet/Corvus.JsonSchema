@@ -717,6 +717,25 @@ test('makeVersionAvailable is readiness-gated (409) and 404s for an unknown envi
   await assert.rejects(() => c.makeVersionAvailable('adopt-pet', 1, 'no-such-env'), (e) => e.status === 404);
 });
 
+test('makeVersionAvailable is evidence-gated where the environment requires it (§4.6)', async () => {
+  const c = makeClient();
+  await c.createEnvironment({ name: 'prod-eu', requireEvidence: true });
+  // Credential the sources first so the §7.7 credential gate passes and the evidence gate is what decides.
+  await c.createCredential({ sourceName: 'petstore', environment: 'prod-eu', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://pets-eu' }] });
+  await c.createCredential({ sourceName: 'billing', environment: 'prod-eu', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://billing-eu' }] });
+
+  // adopt-pet v1 carries a RED seeded suite (1/2 passed) → refused; nightly-reconcile v3 is GREEN → admitted.
+  await assert.rejects(
+    () => c.makeVersionAvailable('adopt-pet', 1, 'prod-eu'),
+    (e) => e.status === 409 && /evidence/i.test(e.problem?.title ?? e.message));
+  // nightly-reconcile v1 predates evidence entirely → refused the same way.
+  await assert.rejects(
+    () => c.makeVersionAvailable('nightly-reconcile', 1, 'prod-eu'),
+    (e) => e.status === 409 && /evidence/i.test(e.problem?.title ?? e.message));
+  const made = await c.makeVersionAvailable('nightly-reconcile', 3, 'prod-eu');
+  assert.equal(made.environment, 'prod-eu', 'a green attested suite promotes');
+});
+
 test('deleteVersionAvailability 404s when the version is not available in that environment', async () => {
   const c = makeClient();
   await assert.rejects(() => c.deleteVersionAvailability('adopt-pet', 1, 'staging'), (e) => e.status === 404);

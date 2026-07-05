@@ -35,6 +35,7 @@ public readonly partial struct EnvironmentUpdate
         private static readonly JsonSchemaPathProvider DescriptionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/description"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DisplayNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/displayName"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ManagementTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/managementTags"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RequireEvidenceSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requireEvidence"u8, buffer, out written);
 
         private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
@@ -81,12 +82,28 @@ public readonly partial struct EnvironmentUpdate
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
+        private static void MatchRequireEvidence(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext3 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RequireEvidenceUtf8,
+                    evaluationPath: RequireEvidenceSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+        }
+
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
                 (static () => JsonPropertyNames.DescriptionUtf8, MatchDescription),
                 (static () => JsonPropertyNames.DisplayNameUtf8, MatchDisplayName),
                 (static () => JsonPropertyNames.ManagementTagsUtf8, MatchManagementTags),
+                (static () => JsonPropertyNames.RequireEvidenceUtf8, MatchRequireEvidence),
             ]);
         }
 

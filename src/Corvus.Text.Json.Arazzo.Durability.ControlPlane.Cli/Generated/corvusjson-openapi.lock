@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-05T14:58:40.1180658\u002B00:00",
+  "generatedAt": "2026-07-05T15:59:36.4284849\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -1109,9 +1109,9 @@
     "Models/PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B90be1bb0b681a56a17eaa49a0e7657d52498ec5f",
+  "generatorVersion": "1.0.0\u002B235e9490afdbc486028987ee602fcb61ee5edfeb",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "769c3e9a889d4bc114060deeb64550dd35f59f9108196163caed14abff79f249",
+  "specFileHash": "d2b8280d8eedb279e3056db07a3eb1d9c895b509c8ee0e3844e510f85b91dfc4",
   "specVersion": "3.2"
 }

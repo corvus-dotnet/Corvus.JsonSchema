@@ -63,7 +63,7 @@
   },
   {
     "name": "availability",
-    "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7). Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
+    "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7), and, where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite is green. Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
   },
   {
     "name": "accessRequests",
@@ -803,7 +803,7 @@
         ],
         "tags": ["availability"],
         "summary": "Make a workflow version available in an environment",
-        "description": "Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources. Idempotent — making an already-available version available again returns the existing entry (200).",
+        "description": "Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources; and where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite must be green, else 409 (evidence-required). Idempotent — making an already-available version available again returns the existing entry (200).",
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" },
@@ -3296,7 +3296,7 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["availabilityRequests"],
         "summary": "Approve an availability request",
-        "description": "Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7) — is rejected (409).",
+        "description": "Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).",
         "requestBody": {
           "required": false,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestDecisionNote" } } }
@@ -6119,6 +6119,7 @@
           "name": { "type": "string", "description": "The environment's stable name and identity (e.g. production, staging, DEV-MWA-1); credentials and runs key on it." },
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
           "description": { "type": "string", "description": "An optional human description." },
+          "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6): when true, a version may be made available here only if its server-attested scenario suite passed at publish. Absent/false preserves the default behaviour — unevidenced versions may be promoted." },
           "managementTags": {
             "type": "array",
             "description": "Security tags (§14.2) scoping who may MANAGE and SEE this environment. The reserved internal-tag prefix is not allowed here.",
@@ -6133,6 +6134,7 @@
         "properties": {
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
           "description": { "type": "string", "description": "An optional human description." },
+          "requireEvidence": { "type": "boolean", "description": "Replacement promotion-readiness requirement (workflow-designer design §4.6); absent leaves the environment's requirement unchanged." },
           "managementTags": { "type": "array", "description": "Replacement non-internal security tags (§14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.", "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" } }
         }
       },
@@ -6143,6 +6145,7 @@
           "name": { "type": "string" },
           "displayName": { "type": "string" },
           "description": { "type": "string" },
+          "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6). Absent means false — unevidenced versions may be promoted." },
           "managementTags": {
             "type": "array",
             "description": "Security tags scoping who may MANAGE and SEE this environment (§14.2).",

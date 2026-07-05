@@ -76,6 +76,46 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
+    public async Task The_require_evidence_flag_round_trips_and_survives_updates_that_omit_it()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // Created with the promotion-readiness requirement (workflow-designer design §4.6).
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"production","requireEvidence":true}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("requireEvidence").GetBoolean().ShouldBeTrue();
+        }
+
+        // An update that omits the flag leaves the requirement unchanged.
+        HttpResponseMessage updated = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/production", """{"displayName":"Prod"}""", Write);
+        updated.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(updated))
+        {
+            doc.RootElement.GetProperty("requireEvidence").GetBoolean().ShouldBeTrue();
+        }
+
+        // An update that includes it replaces the requirement.
+        HttpResponseMessage relaxed = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/production", """{"requireEvidence":false}""", Write);
+        relaxed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(relaxed))
+        {
+            doc.RootElement.GetProperty("requireEvidence").GetBoolean().ShouldBeFalse();
+        }
+
+        // Environments never asked carry no flag at all — the default-off shape.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"staging"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/staging", Read)))
+        {
+            doc.RootElement.TryGetProperty("requireEvidence", out _).ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
     public async Task Creating_a_duplicate_environment_conflicts()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
