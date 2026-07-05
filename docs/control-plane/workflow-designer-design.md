@@ -825,9 +825,14 @@ compile; it serves recorded fixtures, clearly marked).
    applies; commitWorkingCopy = read-sha-then-write contents PUTs in deterministic order
    (document, bound specs — inline or registry-resolved — then scenario files), each carrying
    message/branch/content and NO author/committer (the §4.7 identity rule, asserted on the wire
-   in tests), with an optional draft pull request FROM the bound branch. Remaining: 8c connect UI
-   + import-from-repo in the acquisition dialog + bind/pull/commit designer UI, and the GitHub
-   Action wrapper (blocked on publishing the CLI as a dotnet tool).*
+   in tests), with an optional draft pull request FROM the bound branch. 8c (the UI) BUILT:
+   `<arazzo-github-connect>` (the popup flow — the opener polls the session and closes the popup;
+   injectable for tests), the acquisition dialog's fourth mode (GitHub: repo picker from the
+   user ∩ installation intersection, contents browser, picked spec attaches through the same
+   inline seam), and `<arazzo-git-dialog>` on the designer toolbar (⎇): binding form, Pull, and
+   Commit + optional draft PR, the result naming the signed-in identity. Remaining: the GitHub
+   Action wrapper — blocked on publishing the CLI as a dotnet tool (release engineering, not this
+   branch).*
 
 Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, catalog gate, demo).
 
