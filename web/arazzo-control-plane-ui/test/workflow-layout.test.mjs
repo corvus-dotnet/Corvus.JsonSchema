@@ -69,3 +69,49 @@ test('deterministic: same input, same output', () => {
   const graph = projectWorkflow(designerFixture, 'place-order');
   assert.deepEqual(layoutGraph(graph), layoutGraph(graph));
 });
+
+test('a step appended last but wired into the middle of the flow ranks where the flow puts it', () => {
+  // The reported case: add a second validate step, divert validate-order to it unconditionally,
+  // then goto BACK to authorize-payment (declared earlier). Declaration order: validate-order,
+  // authorize-payment, validate-order-2. Flow order: validate-order → validate-order-2 →
+  // authorize-payment. The old declaration-order ranking treated the backward goto as invisible
+  // and stacked validate-order-2 at the bottom.
+  const doc = {
+    arazzo: '1.1.0',
+    info: { title: 't', version: '1' },
+    sourceDescriptions: [],
+    workflows: [{
+      workflowId: 'wf',
+      steps: [
+        { stepId: 'validate-order', operationId: 'a', onSuccess: [{ name: 'next', type: 'goto', stepId: 'validate-order-2' }] },
+        { stepId: 'authorize-payment', operationId: 'b' },
+        { stepId: 'validate-order-2', operationId: 'c', onSuccess: [{ name: 'onward', type: 'goto', stepId: 'authorize-payment' }] },
+      ],
+    }],
+  };
+  const graph = projectWorkflow(doc, 'wf');
+  const positions = layoutGraph(graph);
+  assert.ok(positions['validate-order'].y < positions['validate-order-2'].y,
+    'the new step sits below its flow predecessor');
+  assert.ok(positions['validate-order-2'].y < positions['authorize-payment'].y,
+    'authorize-payment sits below the step that flows into it, despite earlier declaration');
+});
+
+test('a retry loop back up the flow does not destroy the ranking', () => {
+  const doc = {
+    arazzo: '1.1.0',
+    info: { title: 't', version: '1' },
+    sourceDescriptions: [],
+    workflows: [{
+      workflowId: 'wf',
+      steps: [
+        { stepId: 'first', operationId: 'a' },
+        { stepId: 'second', operationId: 'b', onFailure: [{ name: 'again', type: 'goto', stepId: 'first', criteria: [{ condition: '$statusCode == 429' }] }] },
+        { stepId: 'third', operationId: 'c' },
+      ],
+    }],
+  };
+  const positions = layoutGraph(projectWorkflow(doc, 'wf'));
+  assert.ok(positions.first.y < positions.second.y && positions.second.y < positions.third.y,
+    'the loop edge is drawn but never ranks a predecessor below its successor');
+});

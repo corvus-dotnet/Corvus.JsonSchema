@@ -73,6 +73,8 @@ class ArazzoWorkflowInspector extends ArazzoElement {
         textarea.invalid { border-color: var(--_danger); }
         .hint { font-size: 11px; color: var(--_muted); }
         .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .wparams { min-width: 0; }
+        .wparams > div > * { min-width: 0; }
         .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
         .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
       </style>
