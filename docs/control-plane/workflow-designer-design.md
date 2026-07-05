@@ -345,6 +345,29 @@ pushing the published package inputs + evidence to a release branch/tag at publi
 Server is configuration (base URL), not new design. The kit never sees a GitHub credential; it calls
 the control plane.
 
+**Identity rules (ratified).** Authorship is the signed-in user's GitHub-held git identity,
+stamped by GitHub rather than composed by us; token custody is server-side per control-plane
+principal; unattended actions use the App's bot identity or don't happen. Concretely:
+
+- **Attribution — the user's.** Every user-initiated pull/commit/PR runs on that user's
+  user-to-server token, so commits are authored by the human (with the "via App" badge and
+  GitHub's web-flow signature on contents-endpoint commits). Never a shared service account.
+- **Git identity is GitHub-held, never composed.** Commit-writing API calls **omit
+  `author`/`committer`** so GitHub stamps the account's display name and configured commit email —
+  respecting commit-email privacy (the `noreply` address still links to the account). The control
+  plane never sets an email itself (a composed address either leaks a private one or breaks
+  attribution), and the designer never offers a free-form git-identity field (self-asserted
+  identity is forgeable; identity comes resolved from the authenticated principal).
+- **Reach is the intersection** of the user's own repo access ∧ the App installation's repo
+  selection ∧ the App's fine-grained permissions (contents, pull requests — nothing more).
+- **Custody — the server's, keyed by principal.** GitHub's token exchange has no CORS, so the
+  exchange must happen server-side; the user token is held per control-plane principal (session,
+  or encrypted at rest with a KMS ref), unreachable from any other principal's session, and never
+  sent to the browser.
+- **No impersonation in either direction.** Machine work never wears a human's git identity: any
+  future unattended path (e.g. pushing the published package + evidence to a release branch)
+  commits as the App's own bot identity via an installation token, clearly machine-attributed.
+
 ## 5. Kit architecture (Layer 0 / 0.5 / 1 / 2)
 
 ### 5.1 Layer 0 — client extensions
