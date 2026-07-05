@@ -692,6 +692,17 @@ compile; it serves recorded fixtures, clearly marked).
 4. **Inspectors complete.** Step/workflow/document inspectors, criteria/action editors,
    expression inputs with highlighting + completions; full Arazzo 1.1 editing parity (the §1
    coverage checklist holds from this slice on).
+   *Status: BUILT. 4a added the missing editing paths against a gap analysis of Arazzo11.json —
+   `requestBody.replacements`, `dependsOn` on both levels (execution-order chips), workflow-level
+   `parameters`, and cross-workflow `goto`/`retry` targets (retry also regained its optional
+   retry-from step, which the old editor silently pruned). 4b added
+   `<arazzo-document-inspector>` (info · sourceDescriptions · workflows add/remove · the
+   components reusable library with embedded per-kind editors) and reusable-reference authoring:
+   step parameters and both action lists offer "+ Add reference…" against the library, and
+   reference rows localize (materialise the component inline) or detach. The demo's ⚙ Document
+   mode routes document edits through the model (undoable, coalesced); duplicate component names
+   flag visibly. Editing-parity exception, deliberate: workflow `inputs` and component input
+   schemas edit as guarded JSON, not a typed schema-authoring form — deferred with §15.*
 5. **Simulator + debug.** Server `WorkflowSimulator` + trace + stateless stepping; debug controls,
    context explorer, trace viewer, canvas overlay, expression console.
 6. **Scenarios.** Scenario schema + CRUD + run endpoints (run-one and run-all suite report);

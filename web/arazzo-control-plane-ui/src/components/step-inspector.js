@@ -37,6 +37,7 @@ class ArazzoStepInspector extends ArazzoElement {
     /** @private */ this._step = { stepId: '' };
     /** @private */ this._stepIds = [];
     /** @private */ this._workflowIds = [];
+    /** @private */ this._components = {};
     /** @private */ this._defaults = { successActions: [], failureActions: [] };
     /** @private */ this._completionContext = {};
   }
@@ -55,6 +56,12 @@ class ArazzoStepInspector extends ArazzoElement {
 
   set stepIds(ids) { this._stepIds = [...(ids || [])]; }
   set workflowIds(ids) { this._workflowIds = [...(ids || [])]; }
+
+  /** The document's components object — enables $components references and localize. */
+  set components(value) {
+    this._components = value || {};
+    if (this.isConnected && this._built) this.renderForm();
+  }
   /** The bound operation's documented response codes (from the operation surface); enables the
    *  "template criteria from responses" affordance. */
   set operationResponses(responses) {
@@ -136,7 +143,10 @@ class ArazzoStepInspector extends ArazzoElement {
 
       <h3>parameters</h3>
       <div class="params"></div>
-      <button class="addp ghost" type="button">+ Add parameter</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="addp ghost" type="button">+ Add parameter</button>
+        <select class="addpref" hidden style="font-size:12px;"></select>
+      </div>
 
       <h3>request body</h3>
       <div class="body-template-slot"></div>
@@ -336,8 +346,42 @@ class ArazzoStepInspector extends ArazzoElement {
     (s.parameters || []).forEach((p, i) => {
       if (p && typeof p.reference === 'string') {
         const row = document.createElement('div');
-        row.className = 'hint';
-        row.textContent = `↺ ${p.reference} (reusable)`;
+        row.className = 'hint refrow';
+        row.style.cssText = 'display:flex; align-items:center; gap:6px;';
+        const label = document.createElement('span');
+        label.style.cssText = 'flex:1; min-width:0;';
+        label.textContent = `↺ ${p.reference} (reusable — edit in components)`;
+        row.append(label);
+        const key = p.reference.split('.').pop();
+        const resolved = this._components?.parameters?.[key];
+        if (resolved) {
+          const localize = document.createElement('button');
+          localize.type = 'button';
+          localize.className = 'ghost';
+          localize.style.fontSize = '11px';
+          localize.textContent = 'localize';
+          localize.title = 'Copy the reusable parameter inline so this step can edit it independently';
+          localize.addEventListener('click', () => {
+            s.parameters[i] = structuredClone(resolved);
+            this._renderParams();
+            this._emit();
+          });
+          row.append(localize);
+        }
+
+        const drop = document.createElement('button');
+        drop.type = 'button';
+        drop.className = 'ghost';
+        drop.style.fontSize = '11px';
+        drop.textContent = '✕';
+        drop.title = 'Remove the reference';
+        drop.addEventListener('click', () => {
+          s.parameters.splice(i, 1);
+          if (!s.parameters.length) delete s.parameters;
+          this._renderParams();
+          this._emit();
+        });
+        row.append(drop);
         box.append(row);
         return;
       }
@@ -374,6 +418,20 @@ class ArazzoStepInspector extends ArazzoElement {
       this.$$('.prow .pname').at(-1)?.focus();
       this._emit();
     };
+
+    const refSelect = this.$('.addpref');
+    const keys = Object.keys(this._components?.parameters || {});
+    refSelect.hidden = !keys.length;
+    if (keys.length) {
+      refSelect.innerHTML = `<option value="">+ Add reference…</option>`
+        + keys.map((k) => `<option value="${escapeHtml(k)}">$components.parameters.${escapeHtml(k)}</option>`).join('');
+      refSelect.onchange = () => {
+        if (!refSelect.value) return;
+        (s.parameters ??= []).push({ reference: `$components.parameters.${refSelect.value}` });
+        this._renderParams();
+        this._emit();
+      };
+    }
   }
 
   /** @private — toggle chips over the workflow's other steps; empty prunes the property. */
@@ -454,6 +512,7 @@ class ArazzoStepInspector extends ArazzoElement {
       kind,
       stepIds: this._stepIds.filter((id) => id !== this._step.stepId),
       workflowIds: this._workflowIds,
+      components: this._components?.[kind === 'success' ? 'successActions' : 'failureActions'],
       completionContext: this._completionContext,
       onChange: () => {
         if (!actions.length) delete this._step[listName];
