@@ -2224,6 +2224,14 @@ export function createMockControlPlane(options = {}) {
       return json({ sources: (wc.sources ?? []).map(({ document, ...rest }) => structuredClone(rest)) });
     }
 
+    const simulate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/simulate\/?$/);
+    if (simulate) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(simulate[1]));
+      if (!wc) return problem(404, 'Working copy not found', `No working copy '${simulate[1]}' exists, or it is outside your reach.`);
+      return simulateDocument(wc.document, body ?? {});
+    }
+
     const validate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/validate\/?$/);
     if (validate) {
       if (method !== 'POST') return problem(405, 'Method not allowed');
@@ -2370,6 +2378,143 @@ export function createMockControlPlane(options = {}) {
     wc.etag = nextEtag();
     const { document, ...rest } = entry;
     return json({ ...structuredClone(rest), etag: wc.etag });
+  }
+
+  // A light stand-in for the server's deterministic simulator (§8): the REAL server compiles and
+  // executes the workflow; the demo walks the steps with first-match-wins semantics over the
+  // request's scripted mocks, evaluating only `$statusCode ==/!= N` conditions (other conditions
+  // count as satisfied when the status is 2xx). Approximate by design — good enough to drive the
+  // debug UI's overlay, truth tables, and stepping against the mock control plane.
+  function simulateDocument(doc, request) {
+    const wf = (doc.workflows ?? []).find((w) => !request.workflowId || w.workflowId === request.workflowId)
+      ?? (request.workflowId ? null : doc.workflows?.[0]);
+    if (request.workflowId && !doc.workflows?.some((w) => w.workflowId === request.workflowId)) {
+      return problem(400, 'Unknown workflow', `The document declares no workflow '${request.workflowId}'.`);
+    }
+    if (!wf || !(wf.steps ?? []).length) return problem(422, 'Not executable', 'The document does not compile to an executable workflow.');
+
+    const scenario = request.scenario ?? {};
+    const routes = new Map();
+    for (const m of scenario.mocks ?? []) {
+      const key = `${(m.method || '').toLowerCase()} ${m.path}`;
+      if (!routes.has(key)) routes.set(key, []);
+      routes.get(key).push(m);
+    }
+    const takeResponse = (op) => {
+      const key = `${(op?.method || 'get').toLowerCase()} ${op?.path ?? ''}`;
+      const queue = routes.get(key);
+      if (!queue || !queue.length) return { status: 404, body: undefined };
+      const next = queue.length > 1 ? queue.shift() : queue[0];
+      return { status: next.status, body: next.body };
+    };
+    // Bind steps to method/path via the ATTACHED sources' operation surfaces when available.
+    const wcSources = (workingCopies.find((x) => x.document === doc)?.sources) ?? [];
+    const surface = [];
+    for (const att of wcSources) {
+      const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+      if (d) surface.push(...projectOperationSurface(d));
+    }
+    const bindingOf = (step) => surface.find((o) => o.operationId && o.operationId === step.operationId) ?? null;
+
+    const until = request.until ?? {};
+    const breakpoints = new Set(until.breakpoints ?? []);
+    const maxSteps = Math.min(request.budget?.maxSteps ?? 256, 1024);
+    const clockStart = Date.parse('2020-01-01T00:00:00Z');
+    let clockMs = 0;
+
+    const evalCriterion = (condition, status) => {
+      const m = /^\s*\$statusCode\s*(==|!=)\s*(\d+)\s*$/.exec(condition ?? '');
+      if (!m) return status >= 200 && status < 300;
+      return m[1] === '==' ? status === Number(m[2]) : status !== Number(m[2]);
+    };
+
+    const steps = [];
+    const clockAdvances = [];
+    const arrivals = new Map();
+    const retries = new Map();
+    let outcome = 'completed';
+    let pausedBefore;
+    let fault;
+    let index = 0;
+    let executed = 0;
+
+    while (index >= 0 && index < wf.steps.length) {
+      const step = wf.steps[index];
+      const arrival = (arrivals.get(step.stepId) ?? 0) + 1;
+      arrivals.set(step.stepId, arrival);
+      if (breakpoints.has(step.stepId) || (until.beforeStepId === step.stepId && arrival === (until.occurrence ?? 1))) {
+        outcome = 'paused';
+        pausedBefore = step.stepId;
+        break;
+      }
+      if (++executed > maxSteps) { outcome = 'budgetExhausted'; break; }
+
+      const op = bindingOf(step);
+      const { status, body: respBody } = takeResponse(op ?? { method: 'get', path: `/${step.stepId}` });
+      const attempt = retries.get(step.stepId) ?? 0;
+      const criteria = (step.successCriteria ?? []).map((c) => ({ condition: c.condition, satisfied: evalCriterion(c.condition, status) }));
+      const ok = criteria.length ? criteria.every((c) => c.satisfied) : (status >= 200 && status < 300);
+
+      const record = {
+        stepId: step.stepId, status: 'completed', attempt,
+        requests: [{ method: (op?.method ?? 'GET').toLowerCase(), path: op?.path ?? `/${step.stepId}`, status, ...(respBody !== undefined ? { responseBody: respBody } : {}) }],
+        ...(criteria.length ? { successCriteria: criteria } : {}),
+      };
+
+      const actions = ok
+        ? (step.onSuccess?.length ? step.onSuccess : wf.successActions ?? [])
+        : (step.onFailure?.length ? step.onFailure : wf.failureActions ?? []);
+      const fired = actions.map((a) => (a.reference ? resolveComponentAction(doc, a.reference) : a)).filter(Boolean)
+        .find((a) => (a.criteria ?? []).every((c) => evalCriterion(c.condition, status)));
+
+      if (fired) {
+        record.actionTaken = { type: fired.type, ...(fired.name ? { name: fired.name } : {}), ...(fired.stepId ? { target: fired.stepId } : {}) };
+        steps.push(record);
+        if (fired.type === 'end') { index = -1; break; }
+        if (fired.type === 'goto') { index = wf.steps.findIndex((x) => x.stepId === fired.stepId); continue; }
+        if (fired.type === 'retry') {
+          const used = retries.get(step.stepId) ?? 0;
+          if (used >= (fired.retryLimit ?? 1)) {
+            outcome = 'faulted';
+            fault = { stepId: step.stepId, attempt: used + 1, error: `Step '${step.stepId}' exhausted its retries.` };
+            record.status = 'faulted';
+            break;
+          }
+          retries.set(step.stepId, used + 1);
+          if (fired.retryAfter) {
+            clockMs += fired.retryAfter * 1000;
+            clockAdvances.push({ to: new Date(clockStart + clockMs).toISOString(), reason: 'timer due' });
+          }
+          continue; // re-enter the same step
+        }
+      } else if (!ok) {
+        outcome = 'faulted';
+        fault = { stepId: step.stepId, attempt: attempt + 1, error: `Step '${step.stepId}' did not satisfy its success criteria.` };
+        record.status = 'faulted';
+        record.actionTaken = { type: 'fault' };
+        steps.push(record);
+        break;
+      } else {
+        record.actionTaken = { type: 'fallThrough' };
+        steps.push(record);
+      }
+
+      index += 1;
+    }
+
+    return json({
+      outcome,
+      ...(pausedBefore ? { pausedBefore } : {}),
+      ...(fault ? { fault } : {}),
+      steps,
+      ...(clockAdvances.length ? { clockAdvances } : {}),
+      stepsExecuted: executed > maxSteps ? maxSteps : steps.length,
+    });
+  }
+
+  function resolveComponentAction(doc, reference) {
+    const m = /^\$components\.(successActions|failureActions)\.(.+)$/.exec(reference ?? '');
+    return m ? doc.components?.[m[1]]?.[m[2]] ?? null : null;
   }
 
   // A light stand-in for the server's operation-surface projection: OpenAPI paths×methods with

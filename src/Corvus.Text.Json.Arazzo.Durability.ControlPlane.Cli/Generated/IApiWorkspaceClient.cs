@@ -158,6 +158,16 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] ValidateWorkspaceWorkflowOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SimulateWorkingCopyOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] SimulateWorkingCopyOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ListWorkingCopySources</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ListWorkingCopySourcesOauth2Scopes = ["workspace:read"];
@@ -269,6 +279,17 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="id">The id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ValidateWorkspaceWorkflowResponse> ValidateWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Simulate a working copy deterministically
+    /// </summary>
+    /// <remarks>
+    /// Compiles the working copy's document (with its attached sources) and executes it against the scripted mock transport and a virtual clock, returning the structured trace up to the stop condition. Stateless interactive stepping: there is no debug-session resource — every command replays from the start (determinism makes the replay exact), so 'step' is this call with `until` one step further and time-travel scrubbing needs no further calls. Simulation never touches real credentials or endpoints; the mock transport is the only I/O surface. 200 with the trace (a faulted workflow is a successful simulation); 400 when this deployment offers no simulation or the scenario is unusable; 404 when the working copy is absent or out of reach; 422 when the document does not compile to an executable workflow.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SimulateWorkingCopyResponse> SimulateWorkingCopyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List a working copy's attached sources

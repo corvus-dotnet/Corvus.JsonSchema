@@ -35,6 +35,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.SourceCredentials.Http\Corvus.Text.Json.Arazzo.SourceCredentials.Http.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Yaml\Corvus.Text.Json.Yaml.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

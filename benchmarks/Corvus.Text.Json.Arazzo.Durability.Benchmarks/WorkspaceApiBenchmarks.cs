@@ -89,12 +89,63 @@ public class WorkspaceApiBenchmarks
         }
         """u8.ToArray();
 
+    // An EXECUTABLE workflow + source for the simulate benchmark (the shared ArazzoDocJson is a
+    // representative editing document, not a compilable one — updatePet's path parameter is unbound).
+    private static readonly byte[] SimArazzoDocJson =
+        """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Adopt", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "petstore", "url": "./petstore.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "adopt",
+            "steps": [
+              { "stepId": "get-pet", "operationId": "getPet",
+                "parameters": [{ "name": "petId", "in": "path", "value": "$inputs.petId" }],
+                "successCriteria": [{ "condition": "$statusCode == 200" }],
+                "outputs": { "petName": "$response.body#/name" } },
+              { "stepId": "adopt-pet", "operationId": "adoptPet",
+                "parameters": [{ "name": "petId", "in": "path", "value": "$inputs.petId" }],
+                "successCriteria": [{ "condition": "$statusCode == 200" }] }
+            ],
+            "outputs": { "name": "$steps.get-pet.outputs.petName" }
+          }]
+        }
+        """u8.ToArray();
+
+    private static readonly byte[] SimAttachBodyJson =
+        """
+        {"document":{
+          "openapi": "3.1.0",
+          "info": { "title": "Pets", "version": "1.0.0" },
+          "paths": {
+            "/pets/{petId}": { "get": { "operationId": "getPet",
+              "parameters": [{ "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }],
+              "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" } } } } } }, "default": { "description": "unexpected" } } } },
+            "/pets/{petId}/adopt": { "post": { "operationId": "adoptPet",
+              "parameters": [{ "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } }],
+              "responses": { "200": { "description": "adopted" } } } }
+          }
+        }}
+        """u8.ToArray();
+
+    private static readonly byte[] SimulateBodyJson =
+        """
+        {"scenario":{"inputs":{"petId":"42"},"mocks":[
+          {"method":"get","path":"/pets/{petId}","status":200,"body":{"name":"Fido"}},
+          {"method":"post","path":"/pets/{petId}/adopt","status":200}
+        ]}}
+        """u8.ToArray();
+
     private static readonly byte[] CreateBodyJson = BuildCreateBody();
     private static readonly byte[] SaveBodyJson = BuildSaveBody();
     private static readonly byte[] AttachBodyJson = BuildAttachBody();
 
     private ArazzoControlPlaneWorkspaceHandler sharedHandler = null!;
     private ArazzoControlPlaneSourcesHandler fetchHandler = null!;
+    private ArazzoControlPlaneWorkspaceHandler simulateHandler = null!;
+    private string simulateId = null!;
+    private ParsedJsonDocument<Models.SimulateRequest> simulateBody = null!;
     private ParsedJsonDocument<Models.FetchSourceRequest> fetchBody = null!;
     private string sharedId = null!;
     private ParsedJsonDocument<Models.WorkingCopyCreate> createBody = null!;
@@ -128,6 +179,29 @@ public class WorkspaceApiBenchmarks
         this.fetchHandler = CreateFetchHandler(new SourceDocumentFetcher(new HttpClient(new StubSpecHandler())));
         this.fetchBody = ParsedJsonDocument<Models.FetchSourceRequest>.Parse("{\"url\":\"https://specs.example/petstore.json\"}"u8.ToArray());
 
+        // The simulate benchmark: an executable working copy over the REAL compile path (durable
+        // executor). Setup pays the one Roslyn compile (content-hash cached); the measured op is
+        // the pure stateless replay — executor invoke, trace capture, post-hoc truth tables, and
+        // the pooled trace write.
+        var simulator = new Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator(new Corvus.Text.Json.Arazzo.Generation.WorkflowExecutorProvider(durable: true));
+        this.simulateHandler = new ArazzoControlPlaneWorkspaceHandler(store, actor: Actor, simulator: simulator);
+        using (ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceWorkflow.Draft("sim", SimArazzoDocJson, default, null, null, default))
+        using (ParsedJsonDocument<WorkspaceWorkflow> added = store.AddAsync(draft.RootElement, Actor, default).AsTask().GetAwaiter().GetResult())
+        {
+            this.simulateId = added.RootElement.IdValue;
+        }
+
+        using (JsonWorkspace ws = JsonWorkspace.Create())
+        using (var attach = ParsedJsonDocument<Models.AttachSourceRequest>.Parse(SimAttachBodyJson))
+        using (ParsedJsonDocument<Models.JsonString> simIdValue = ParseString(this.simulateId))
+        using (ParsedJsonDocument<Models.JsonString> simNameValue = ParseString("petstore"))
+        {
+            _ = this.simulateHandler.HandleAttachWorkingCopySourceAsync(new AttachWorkingCopySourceParams { Id = simIdValue.RootElement, Name = simNameValue.RootElement, Body = attach.RootElement }, ws).GetAwaiter().GetResult();
+        }
+
+        this.simulateBody = ParsedJsonDocument<Models.SimulateRequest>.Parse(SimulateBodyJson);
+        this.Simulate_Replay().GetAwaiter().GetResult(); // pay the compile in setup, not in the measurement
+
         // Seed the shared working copy's attachment once (the attach benchmark then replaces it each op).
         this.Attach_Inline().GetAwaiter().GetResult();
     }
@@ -135,6 +209,7 @@ public class WorkspaceApiBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
+        this.simulateBody.Dispose();
         this.fetchBody.Dispose();
         this.createBody.Dispose();
         this.blankCreateBody.Dispose();
@@ -224,6 +299,18 @@ public class WorkspaceApiBenchmarks
         using ParsedJsonDocument<Models.JsonString> nameValue = ParseString("pets");
         var parameters = new ListWorkingCopySourceOperationsParams { Id = idValue.RootElement, Name = nameValue.RootElement };
         ListWorkingCopySourceOperationsResult result = await this.sharedHandler.HandleListWorkingCopySourceOperationsAsync(parameters, workspace, default);
+        _ = result.StatusCode;
+    }
+
+    /// <summary>POST /workspace/workflows/{id}/simulate → one stateless debug command over the
+    /// CACHED executor: replay, trace capture, post-hoc truth tables, pooled trace write.</summary>
+    [Benchmark]
+    public async Task Simulate_Replay()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<Models.JsonString> idValue = ParseString(this.simulateId);
+        var parameters = new SimulateWorkingCopyParams { Id = idValue.RootElement, Body = this.simulateBody.RootElement };
+        SimulateWorkingCopyResult result = await this.simulateHandler.HandleSimulateWorkingCopyAsync(parameters, workspace, default);
         _ = result.StatusCode;
     }
 

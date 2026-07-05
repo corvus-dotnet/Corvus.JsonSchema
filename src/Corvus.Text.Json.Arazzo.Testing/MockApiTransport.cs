@@ -20,6 +20,7 @@ public sealed class MockApiTransport : IApiTransport
 {
     private readonly Dictionary<RouteKey, Queue<MockResponse>> routes = new();
     private readonly List<MockApiRequest> requests = [];
+    private readonly List<MockApiExchange> exchanges = [];
     private readonly int defaultStatusCode;
     private TimeSpan responseDelay;
 
@@ -31,6 +32,12 @@ public sealed class MockApiTransport : IApiTransport
 
     /// <summary>Gets the requests observed so far, in order — the workflow's call path.</summary>
     public IReadOnlyList<MockApiRequest> Requests => this.requests;
+
+    /// <summary>
+    /// Gets the full exchanges observed so far, in order: each request paired with the scripted
+    /// response that served it — the simulator's request/response trace source.
+    /// </summary>
+    public IReadOnlyList<MockApiExchange> Exchanges => this.exchanges;
 
     /// <summary>
     /// Sets an artificial delay applied before every response is produced. The delay honours the call's
@@ -153,9 +160,11 @@ public sealed class MockApiTransport : IApiTransport
         where TResponse : struct, IApiResponse<TResponse>
     {
         string template = Encoding.UTF8.GetString(TRequest.PathTemplateUtf8);
-        this.requests.Add(new MockApiRequest(TRequest.Method, ResolvePath(in request)));
+        string resolvedPath = ResolvePath(in request);
+        this.requests.Add(new MockApiRequest(TRequest.Method, resolvedPath));
 
         MockResponse response = this.Match(TRequest.Method, template);
+        this.exchanges.Add(new MockApiExchange(TRequest.Method, resolvedPath, response.StatusCode, response.Body, response.ContentType));
         if (this.responseDelay > TimeSpan.Zero)
         {
             return RespondAfterDelayAsync<TResponse>(this.responseDelay, response, cancellationToken);
