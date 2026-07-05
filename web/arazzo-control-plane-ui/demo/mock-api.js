@@ -1239,6 +1239,47 @@ export function createMockControlPlane(options = {}) {
     'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(workflowDoc('adopt-pet-v1', 'Adopt a Pet', 'Adopt a pet — imported from GitHub.', [{ name: 'petstore', type: 'openapi' }]))),
   };
 
+  // The working-copy variant of schemasFor: RECOMPUTED from the current document + attachments,
+  // like the server's generator — each workflow's inputs schema passes through as its descriptor
+  // (the mock's schemas are already descriptor-shaped), and each step resolves its operation and
+  // per-status response bodies from the attached source documents.
+  function workingCopySchemasFor(wc) {
+    const attachedDocs = {};
+    for (const attachment of wc.sources ?? []) {
+      const doc = attachment.document ?? sourceRegistry.find((s) => s.name === attachment.sourceName)?.document;
+      if (doc) attachedDocs[attachment.name] = doc;
+    }
+
+    const workflows = {};
+    for (const wf of wc.document?.workflows ?? []) {
+      if (!wf.workflowId) continue;
+      const steps = {};
+      for (const step of wf.steps ?? []) {
+        if (!step.stepId) continue;
+        const entry = { outputs: {} };
+        for (const [sourceName, doc] of Object.entries(attachedDocs)) {
+          for (const [pathTemplate, methods] of Object.entries(doc.paths ?? {})) {
+            for (const [method, op] of Object.entries(methods ?? {})) {
+              if (op && typeof op === 'object' && op.operationId && op.operationId === step.operationId) {
+                entry.operation = { source: sourceName, kind: 'openapi', operationId: op.operationId, method, path: pathTemplate };
+                entry.responses = Object.fromEntries(Object.entries(op.responses ?? {}).map(([status, response]) => {
+                  const schema = response?.content?.['application/json']?.schema;
+                  return [status, schema ? { body: schema } : {}];
+                }));
+              }
+            }
+          }
+        }
+
+        steps[step.stepId] = entry;
+      }
+
+      workflows[wf.workflowId] = { inputs: wf.inputs || { type: 'object', properties: {} }, steps };
+    }
+
+    return { formatVersion: 1, workflows };
+  }
+
   // btoa/atob are Latin1-only: decode base64 back through the binary-string route.
   const base64ToUtf8 = (b64) => new TextDecoder().decode(Uint8Array.from(atobSafe(b64), (c) => c.charCodeAt(0)));
 
@@ -2506,6 +2547,14 @@ export function createMockControlPlane(options = {}) {
       const wc = workingCopies.find((x) => x.id === decodeURIComponent(validate[1]));
       if (!wc) return problem(404, 'Working copy not found', `No working copy '${validate[1]}' exists, or it is outside your reach.`);
       return json(validateWorkingCopyDocument(wc.document, wc.sources ?? []));
+    }
+
+    const wcSchemas = fullPath.match(/\/workspace\/workflows\/([^/]+)\/schemas\/?$/);
+    if (wcSchemas) {
+      if (method !== 'GET') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(wcSchemas[1]));
+      if (!wc) return problem(404, 'Working copy not found', `No working copy '${wcSchemas[1]}' exists, or it is outside your reach.`);
+      return json(workingCopySchemasFor(wc));
     }
 
     const m = fullPath.match(/\/workspace\/workflows(?:\/([^/]+))?\/?$/);

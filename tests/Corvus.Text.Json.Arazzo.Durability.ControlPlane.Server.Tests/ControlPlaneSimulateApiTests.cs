@@ -289,6 +289,27 @@ public sealed class ControlPlaneSimulateApiTests
     }
 
     [TestMethod]
+    public async Task The_working_copy_serves_recomputed_schema_metadata_for_typed_forms()
+    {
+        await using Scoped host = await StartAsync(withSimulator: false);
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+
+        HttpResponseMessage response = await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/schemas", "{}", "workspace:read");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using Stj.JsonDocument schemas = Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Stj.JsonElement step = schemas.RootElement.GetProperty("workflows").GetProperty("adopt").GetProperty("steps").GetProperty("get-pet");
+        step.GetProperty("operation").GetProperty("operationId").GetString().ShouldBe("getPet");
+
+        // The typed mock-body editor keys by DECLARED status: 200 carries the pet shape.
+        Stj.JsonElement body = step.GetProperty("responses").GetProperty("200").GetProperty("body");
+        body.GetProperty("type").GetString().ShouldBe("object");
+        body.GetProperty("properties").GetProperty("name").GetProperty("type").GetString().ShouldBe("string");
+
+        // An unknown working copy is not found (non-disclosing).
+        (await host.SendJsonAsync(HttpMethod.Get, "/workspace/workflows/nope/schemas", "{}", "workspace:read")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
     public async Task Version_detail_omits_the_evidence_summary_when_nothing_was_attested()
     {
         await using Scoped host = await StartAsync(withSimulator: true);

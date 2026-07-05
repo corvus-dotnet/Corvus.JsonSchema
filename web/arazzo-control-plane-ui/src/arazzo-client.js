@@ -1102,6 +1102,20 @@ export class ArazzoControlPlaneClient {
     return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/git/commit`, { body, signal });
   }
 
+  /**
+   * `getWorkingCopySchemas` — the schema-metadata document RECOMPUTED for the working copy (the
+   * same shape `getCatalogWorkflowSchemas` serves baked into a package): each workflow's typed
+   * inputs and each step's resolved operation, typed request/responses, and outputs. The
+   * designer's typed forms (scenario inputs, mock bodies by declared status) and expression
+   * completions read this.
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The metadata document ({formatVersion, workflows}).
+   */
+  getWorkingCopySchemas(id, { signal } = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/schemas`, { signal });
+  }
+
   /** `listScenarios` — the working copy's scenario set (design §4.2). */
   listScenarios(id, { signal } = {}) {
     return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/scenarios`, { signal });

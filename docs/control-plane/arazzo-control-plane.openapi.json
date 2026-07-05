@@ -2144,6 +2144,29 @@
         }
       }
     },
+    "/workspace/workflows/{id}/schemas": {
+      "get": {
+        "operationId": "getWorkingCopySchemas",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["workspace"],
+        "summary": "The working copy's schema metadata",
+        "description": "The schema-metadata document RECOMPUTED for the working copy's current document and attached sources (the same shape getCatalogWorkflowSchemas serves baked into a package): each workflow's typed inputs and each step's resolved operation, typed request/responses (or message), and outputs — powering the designer's typed forms (scenario inputs, mock bodies by declared status, expectations) and expression completions.",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The schema-metadata document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/workspace/workflows/{id}/git/pull": {
       "post": {
         "operationId": "pullWorkingCopy",
