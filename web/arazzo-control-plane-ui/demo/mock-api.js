@@ -468,17 +468,85 @@ const SOURCE_DOCS = {
   petstore: {
     openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' },
     servers: [{ url: 'https://petstore.example.com/v1' }],
-    components: { securitySchemes: { apiKey: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } } },
+    components: {
+      securitySchemes: { apiKey: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } },
+      schemas: {
+        Pet: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, status: { type: 'string', enum: ['available', 'pending', 'adopted'] } } },
+      },
+    },
+    paths: {
+      '/pets': {
+        get: {
+          operationId: 'listPets',
+          summary: 'List pets available for adoption',
+          parameters: [
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['available', 'pending', 'adopted'] } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', maximum: 100 } },
+          ],
+          responses: { 200: { description: 'A page of pets', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Pet' } } } } } },
+        },
+        post: {
+          operationId: 'createPet',
+          summary: 'Register a new pet',
+          requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/Pet' } } } },
+          responses: { 201: { description: 'created' }, 400: { description: 'invalid' } },
+        },
+      },
+      '/pets/{petId}': {
+        parameters: [{ name: 'petId', in: 'path', required: true, schema: { type: 'string' } }],
+        get: {
+          operationId: 'getPet',
+          summary: 'One pet by id',
+          responses: { 200: { description: 'the pet', content: { 'application/json': { schema: { $ref: '#/components/schemas/Pet' } } } }, 404: { description: 'unknown pet' } },
+        },
+      },
+      '/pets/{petId}/adopt': {
+        parameters: [{ name: 'petId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'adoptPet',
+          summary: 'Adopt a pet (the happy ending)',
+          responses: { 200: { description: 'adopted' }, 409: { description: 'already adopted' }, default: { description: 'unexpected' } },
+        },
+      },
+    },
   },
   events: {
     asyncapi: '3.0.0', info: { title: 'Events', version: '1.0.0' },
     servers: { production: { host: 'events.example.com', protocol: 'kafka' } },
     components: { securitySchemes: { tokenAuth: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'events:read': 'Read events' } } } } } },
+    channels: {
+      orderEvents: {
+        address: 'orders/events',
+        messages: { orderEvent: { payload: { type: 'object', properties: { orderId: { type: 'string' }, kind: { type: 'string' }, at: { type: 'string', format: 'date-time' } } } } },
+      },
+    },
+    operations: {
+      onOrderEvent: { action: 'receive', summary: 'Order lifecycle events arrive here', channel: { $ref: '#/channels/orderEvents' } },
+      publishOrderEvent: { action: 'send', summary: 'Emit an order lifecycle event', channel: { $ref: '#/channels/orderEvents' } },
+    },
   },
   billing: {
     openapi: '3.1.0', info: { title: 'Billing', version: '1.0.0' },
     servers: [{ url: 'https://billing.example.com' }],
     components: { securitySchemes: { clientCreds: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'ledger:read': 'Read the ledger' } } } } } },
+    paths: {
+      '/invoices': {
+        get: {
+          operationId: 'listInvoices',
+          summary: 'List invoices for a period',
+          parameters: [{ name: 'period', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { 200: { description: 'invoices' } },
+        },
+      },
+      '/reconciliations': {
+        post: {
+          operationId: 'startReconciliation',
+          summary: 'Kick off a ledger reconciliation',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { period: { type: 'string' }, dryRun: { type: 'boolean' } } } } } },
+          responses: { 202: { description: 'accepted' }, 409: { description: 'already running' } },
+        },
+      },
+    },
   },
 };
 const SOURCE_TYPES = { petstore: 'openapi', events: 'asyncapi', billing: 'openapi' };
