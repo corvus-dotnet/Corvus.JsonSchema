@@ -228,6 +228,30 @@ public readonly partial struct WorkingCopyUpdate
     }
 
     /// <summary>
+    /// Gets the (optional) <c>gitBinding</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A replacement Git binding (&#167;4.7); absent leaves the stored binding unchanged.
+    /// </para>
+    /// <para>
+    /// Binds a working copy to a repository branch (workflow-designer design &#167;4.7): the document — and optionally its spec files and scenario files — round-trips with pull/commit. Branch-per-working-copy is the natural multi-author flow.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding GitBinding
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GitBindingUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>name</c> property.
     /// </summary>
     /// <remarks>
@@ -707,6 +731,11 @@ public readonly partial struct WorkingCopyUpdate
         public const string ExpectedEtag = "expectedEtag";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="GitBinding"/>.
+        /// </summary>
+        public const string GitBinding = "gitBinding";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Name"/>.
         /// </summary>
         public const string Name = "name";
@@ -725,6 +754,11 @@ public readonly partial struct WorkingCopyUpdate
         /// Gets the JSON property name for <see cref="ExpectedEtag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExpectedEtagUtf8 => "expectedEtag"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="GitBinding"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> GitBindingUtf8 => "gitBinding"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Name"/>.
@@ -753,6 +787,11 @@ public readonly partial struct WorkingCopyUpdate
         public static ReadOnlySpan<byte> ExpectedEtag => "expectedEtag"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="GitBinding"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> GitBinding => "gitBinding"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Name => "name"u8;
@@ -778,6 +817,11 @@ public readonly partial struct WorkingCopyUpdate
         /// Gets the pre-baked property name blob for <see cref="ExpectedEtag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExpectedEtag => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x65, 0x63, 0x74, 0x65, 0x64, 0x45, 0x74, 0x61, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="GitBinding"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> GitBinding => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x67, 0x69, 0x74, 0x42, 0x69, 0x6E, 0x64, 0x69, 0x6E, 0x67, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Name"/>.

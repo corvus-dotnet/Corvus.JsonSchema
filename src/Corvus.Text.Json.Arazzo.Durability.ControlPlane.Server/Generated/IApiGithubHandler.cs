@@ -21,6 +21,24 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IApiGithubHandler
 {
     /// <summary>
+    /// Handles POST /workspace/workflows/{id}/git/pull — Pull the working copy from its bound branch
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<PullWorkingCopyResult> HandlePullWorkingCopyAsync(PullWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /workspace/workflows/{id}/git/commit — Commit the working copy to its bound branch
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CommitWorkingCopyResult> HandleCommitWorkingCopyAsync(CommitWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /github/auth — Begin the GitHub sign-in
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

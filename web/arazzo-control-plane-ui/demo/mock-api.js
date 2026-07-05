@@ -1239,6 +1239,53 @@ export function createMockControlPlane(options = {}) {
     'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(workflowDoc('adopt-pet-v1', 'Adopt a Pet', 'Adopt a pet — imported from GitHub.', [{ name: 'petstore', type: 'openapi' }]))),
   };
 
+  // btoa/atob are Latin1-only: decode base64 back through the binary-string route.
+  const base64ToUtf8 = (b64) => new TextDecoder().decode(Uint8Array.from(atobSafe(b64), (c) => c.charCodeAt(0)));
+
+  // The §4.7 Git round-trip on a bound working copy: commit writes the document (+ bound specs +
+  // scenario files) into the fake repo; pull refreshes the working copy from it under the etag guard.
+  function handleWorkingCopyGit(path, method, body) {
+    const gitOp = path.match(/\/workspace\/workflows\/([^/]+)\/git\/(pull|commit)\/?$/);
+    if (!gitOp || method !== 'POST') return null;
+    const wc = workingCopies.find((x) => x.id === decodeURIComponent(gitOp[1]));
+    if (!wc) return problem(404, 'Working copy not found', `No working copy '${decodeURIComponent(gitOp[1])}'.`);
+    if (!wc.gitBinding) return problem(400, 'Not Git-bound', `Working copy '${wc.id}' has no gitBinding; save one first (§4.7).`);
+    if (!gitHubConnected) return problem(409, 'GitHub not connected', 'The caller has no GitHub session; begin the sign-in first.');
+    const binding = wc.gitBinding;
+    const dir = binding.scenariosDir ? binding.scenariosDir.replace(/\/$/, '') : null;
+
+    if (gitOp[2] === 'commit') {
+      if (!body?.message) return problem(400, 'Invalid commit', "A commit requires a 'message'.");
+      const files = [];
+      const write = (p, value) => { gitHubTree[p] = gitHubFile(p, JSON.stringify(value)); files.push({ path: p, sha: gitHubTree[p].file.sha }); };
+      write(binding.path, wc.document);
+      for (const [name, specPath] of Object.entries(binding.specPaths ?? {})) {
+        const attachment = (wc.sources ?? []).find((s) => s.name === name);
+        const doc = attachment?.document ?? sourceRegistry.find((s) => s.name === attachment?.sourceName)?.document;
+        if (!doc) return problem(400, 'Spec unresolvable', `specPaths entry '${name}' names no attached (or resolvable registry) source.`);
+        write(specPath, doc);
+      }
+      if (dir) for (const scenario of wc.scenarios ?? []) write(`${dir}/${scenario.name}.scenario.json`, scenario);
+      const result = { files };
+      if (body.pullRequest) result.pullRequest = { number: 42, url: `https://github.example/${binding.owner}/${binding.repo}/pull/42` };
+      return json(result);
+    }
+
+    if (!body?.expectedEtag) return problem(400, 'Invalid pull', "A pull requires the 'expectedEtag'.");
+    if (body.expectedEtag !== wc.etag) return problem(409, 'Save conflict', 'The working copy changed; re-fetch and pull again.');
+    const documentNode = gitHubTree[binding.path];
+    if (documentNode?.kind !== 'file') return problem(404, 'Not found', `'${binding.owner}/${binding.repo}/${binding.path}' does not exist on the bound branch.`);
+    wc.document = JSON.parse(base64ToUtf8(documentNode.file.content));
+    if (dir) {
+      wc.scenarios = Object.entries(gitHubTree)
+        .filter(([p, node]) => node.kind === 'file' && p.startsWith(`${dir}/`) && p.endsWith('.scenario.json'))
+        .sort(([a], [b2]) => (a < b2 ? -1 : 1))
+        .map(([, node]) => JSON.parse(base64ToUtf8(node.file.content)));
+    }
+    wc.lastUpdatedBy = actingSubject(); wc.lastUpdatedAt = iso(0); wc.etag = nextEtag();
+    return json(structuredClone(wc));
+  }
+
   function handleGitHub(path, method, params, origin) {
     const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/contents)\/?$/);
     if (!m) return null;
@@ -1325,6 +1372,9 @@ export function createMockControlPlane(options = {}) {
 
     const gitHubResponse = handleGitHub(path, method, u.searchParams, u.origin);
     if (gitHubResponse) return gitHubResponse;
+
+    const workingCopyGitResponse = handleWorkingCopyGit(path, method, body);
+    if (workingCopyGitResponse) return workingCopyGitResponse;
 
     const workspaceResponse = handleWorkspace(path, method, u.searchParams, body);
     if (workspaceResponse) return workspaceResponse;
@@ -2520,6 +2570,7 @@ export function createMockControlPlane(options = {}) {
     wc.document = body.document;
     if (body.name !== undefined) wc.name = body.name;
     if (body.designerState !== undefined) wc.designerState = body.designerState;
+    if (body.gitBinding !== undefined) wc.gitBinding = body.gitBinding; // §4.7: present replaces, absent keeps
     wc.lastUpdatedBy = actingSubject(); wc.lastUpdatedAt = iso(0); wc.etag = nextEtag();
     return json(structuredClone(wc));
   }

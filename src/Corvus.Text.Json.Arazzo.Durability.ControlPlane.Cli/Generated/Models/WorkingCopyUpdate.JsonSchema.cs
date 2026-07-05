@@ -49,6 +49,7 @@ public readonly partial struct WorkingCopyUpdate
         private static readonly JsonSchemaPathProvider DesignerStateSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/designerState/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DocumentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/document/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ExpectedEtagSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/expectedEtag"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider GitBindingSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/gitBinding/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider NameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/name"u8, buffer, out written);
 
         private static void MatchDesignerState(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
@@ -110,10 +111,25 @@ public readonly partial struct WorkingCopyUpdate
             requiredBitBuffer[RequiredOffsetForExpectedEtag] |= RequiredBitForExpectedEtag;
         }
 
-        private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchGitBinding(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitBinding.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.GitBindingUtf8,
+                    evaluationPath: GitBindingSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitBinding.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+        }
+
+        private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext4 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -121,8 +137,8 @@ public readonly partial struct WorkingCopyUpdate
                     JsonPropertyNames.NameUtf8,
                     evaluationPath: NameSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
-            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+            context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
@@ -131,6 +147,7 @@ public readonly partial struct WorkingCopyUpdate
                 (static () => JsonPropertyNames.DesignerStateUtf8, MatchDesignerState),
                 (static () => JsonPropertyNames.DocumentUtf8, MatchDocument),
                 (static () => JsonPropertyNames.ExpectedEtagUtf8, MatchExpectedEtag),
+                (static () => JsonPropertyNames.GitBindingUtf8, MatchGitBinding),
                 (static () => JsonPropertyNames.NameUtf8, MatchName),
             ]);
         }

@@ -303,8 +303,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
         var expectedEtag = new WorkflowEtag((string)body.ExpectedEtag);
 
-        // The draft carries the new document (and optionally name/designer state) bytes-to-bytes; the immutable
-        // provenance and tags are carried forward by the store from the stored working copy.
+        // The draft carries the new document (and optionally name/designer state/Git binding, §4.7)
+        // bytes-to-bytes; the immutable provenance and tags are carried forward by the store from the
+        // stored working copy.
         using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceWorkflow.Draft(
             (JsonElement)body.Name,
             default,
@@ -312,7 +313,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             (JsonElement)body.Document,
             (JsonElement)body.DesignerState,
             default,
-            SecurityTagSet.Empty);
+            SecurityTagSet.Empty,
+            gitBinding: (JsonElement)body.GitBinding);
         try
         {
             ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, expectedEtag, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);

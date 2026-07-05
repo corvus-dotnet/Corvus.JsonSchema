@@ -2144,6 +2144,97 @@
         }
       }
     },
+    "/workspace/workflows/{id}/git/pull": {
+      "post": {
+        "operationId": "pullWorkingCopy",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Pull the working copy from its bound branch",
+        "description": "Refreshes the Git-bound working copy from its branch (workflow-designer design §4.7): the document from gitBinding.path, each specPaths entry as an inline source attachment, and — when scenariosDir is bound — the scenario set from its <name>.scenario.json files. The pull is an etag-guarded save (409 when stale). Reads run on the CALLER's brokered token (409 github-not-connected without a session); 400 when the working copy has no binding or the deployment brokers no App; 404 when a bound file is missing (nothing is partially applied).",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "GitPullRequestBody",
+                "properties": {
+                  "expectedEtag": { "type": "string", "description": "The etag the client read (409 when stale)." }
+                },
+                "required": ["expectedEtag"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The refreshed working copy.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkingCopy" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/git/commit": {
+      "post": {
+        "operationId": "commitWorkingCopy",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Commit the working copy to its bound branch",
+        "description": "Writes the Git-bound working copy to its branch (workflow-designer design §4.7): the document to gitBinding.path, each bound spec (specPaths) from its inline attachment, and — when scenariosDir is bound — one <name>.scenario.json per scenario. Commits run on the CALLER's brokered token and are authored as their GitHub-held git identity — the control plane composes no author/committer. Optionally opens a pull request FROM the bound branch (draft → the review flow). 400 unbound/not-brokered; 409 github-not-connected.",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "GitCommitRequestBody",
+                "properties": {
+                  "message": { "type": "string", "description": "The commit message (each written file carries it)." },
+                  "pullRequest": {
+                    "type": "object",
+                    "title": "GitCommitPullRequest",
+                    "description": "Open a pull request from the bound branch after the commit.",
+                    "properties": {
+                      "base": { "type": "string", "description": "The base branch the pull request targets." },
+                      "title": { "type": "string", "description": "The pull request title (default: the commit message)." },
+                      "draft": { "type": "boolean", "description": "Open as a draft (the review flow for workflow development)." }
+                    },
+                    "required": ["base"]
+                  }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was written (and the pull request, when opened).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitCommitResult" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/workspace/workflows/{id}/simulate": {
       "post": {
         "operationId": "simulateWorkingCopy",
@@ -4838,6 +4929,9 @@
           "designerState": {
             "$ref": "#/components/schemas/WorkingCopyDesignerState"
           },
+          "gitBinding": {
+            "$ref": "#/components/schemas/GitBinding"
+          },
           "managementTags": {
             "type": "array",
             "description": "Security tags scoping who may MANAGE and SEE this working copy (§14.2).",
@@ -4961,6 +5055,10 @@
           "designerState": {
             "$ref": "#/components/schemas/WorkingCopyDesignerState"
           },
+          "gitBinding": {
+            "$ref": "#/components/schemas/GitBinding",
+            "description": "A replacement Git binding (§4.7); absent leaves the stored binding unchanged."
+          },
           "expectedEtag": {
             "type": "string",
             "description": "The etag the client read (409 when stale)."
@@ -5026,6 +5124,49 @@
           "instancePath",
           "message"
         ]
+      },
+      "GitBinding": {
+        "type": "object",
+        "title": "GitBinding",
+        "description": "Binds a working copy to a repository branch (workflow-designer design §4.7): the document — and optionally its spec files and scenario files — round-trips with pull/commit. Branch-per-working-copy is the natural multi-author flow.",
+        "properties": {
+          "owner": { "type": "string" },
+          "repo": { "type": "string" },
+          "branch": { "type": "string", "description": "The working branch; a pull request opens FROM this branch." },
+          "path": { "type": "string", "description": "The Arazzo document's path in the repository." },
+          "specPaths": { "type": "object", "description": "sourceDescriptions name → repository path, for the spec files that round-trip with the document (each pulls in as an inline attachment).", "additionalProperties": { "type": "string" } },
+          "scenariosDir": { "type": "string", "description": "The directory holding one <name>.scenario.json per scenario (the §4.5 CI layout)." }
+        },
+        "required": ["owner", "repo", "branch", "path"]
+      },
+      "GitCommitResult": {
+        "type": "object",
+        "title": "GitCommitResult",
+        "description": "What a commit wrote: one entry per file, plus the pull request when one was opened. The commits are authored as the signed-in user's GitHub-held git identity — the control plane composes no author/committer (§4.7).",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "GitCommittedFile",
+              "properties": {
+                "path": { "type": "string" },
+                "sha": { "type": "string", "description": "The written blob's sha." }
+              },
+              "required": ["path"]
+            }
+          },
+          "pullRequest": {
+            "type": "object",
+            "title": "GitPullRequest",
+            "properties": {
+              "number": { "type": "integer", "format": "int64" },
+              "url": { "type": "string" }
+            },
+            "required": ["number", "url"]
+          }
+        },
+        "required": ["files"]
       },
       "GitHubAuthStart": {
         "type": "object",

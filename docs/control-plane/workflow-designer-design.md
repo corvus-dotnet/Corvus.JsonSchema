@@ -336,7 +336,7 @@ user-to-server tokens):
 | `beginGitHubAuth` / `completeGitHubAuth` | `GET /github/auth` → redirect; callback exchanges the code server-side | Standard web-application flow; the control plane holds the App credentials and the user token (server-side session or encrypted at rest with a KMS ref — never in the browser). |
 | `getGitHubStatus` | `GET /github/session` | Signed-in identity + installations + accessible repos. |
 | `browseRepo` | `GET /github/repos/{owner}/{repo}/contents?ref&path` | Proxied browse for the open/import dialogs. |
-| `bind` (on the working copy) | part of `PUT /workspace/workflows/{id}` | `gitBinding: {owner, repo, branch, path, specPaths?, scenarioPaths?}` — a working copy may be **Git-bound**; scenarios round-trip as individual `<name>.scenario.json` files (the §4.5 CI layout). |
+| `bind` (on the working copy) | part of `PUT /workspace/workflows/{id}` | `gitBinding: {owner, repo, branch, path, specPaths?, scenariosDir?}` — a working copy may be **Git-bound**; `specPaths` maps sourceDescriptions names to spec file paths, and scenarios round-trip as individual `<name>.scenario.json` files under `scenariosDir` (the §4.5 CI layout). |
 | `pullWorkingCopy` / `commitWorkingCopy` | `POST /workspace/workflows/{id}/git/{pull,commit}` | Pull: refresh document (+ bound source docs + scenarios) from the branch (etag/merge guard). Commit: write document (+ scenario files) to the branch with a message; optionally open a PR (`draft` → review flow for workflow development). |
 
 Uses: version management of workflows *and* their OpenAPI/AsyncAPI specs during development
@@ -818,8 +818,16 @@ compile; it serves recorded fixtures, clearly marked).
    default; encrypted-at-rest substitutable). Endpoints: getGitHubStatus (identity + installations
    + user ∩ installation repositories), deleteGitHubSession, browseRepo (proxied contents,
    non-disclosing 404). JS client + mock parity (the mock's authorizeUrl points at its own
-   callback, so the demo popup self-completes). Remaining: 8b bind/pull/commit(+PR) with scenario
-   files, import-from-repo in the acquisition dialog + connect UI, the Action wrapper.*
+   callback, so the demo popup self-completes). 8b (the round-trip) BUILT: the working copy's
+   `gitBinding` (save replaces it, omission keeps it; persisted schema + contract + client);
+   pullWorkingCopy = fetch-everything-first (document, specPaths as inline attachments,
+   scenariosDir's `<name>.scenario.json` set), then ONE etag-guarded save — nothing partially
+   applies; commitWorkingCopy = read-sha-then-write contents PUTs in deterministic order
+   (document, bound specs — inline or registry-resolved — then scenario files), each carrying
+   message/branch/content and NO author/committer (the §4.7 identity rule, asserted on the wire
+   in tests), with an optional draft pull request FROM the bound branch. Remaining: 8c connect UI
+   + import-from-repo in the acquisition dialog + bind/pull/commit designer UI, and the GitHub
+   Action wrapper (blocked on publishing the CLI as a dotnet tool).*
 
 Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, catalog gate, demo).
 

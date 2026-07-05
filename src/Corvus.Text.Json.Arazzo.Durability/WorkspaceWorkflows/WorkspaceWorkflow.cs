@@ -63,6 +63,7 @@ public readonly partial struct WorkspaceWorkflow
     /// <param name="designerState">The designer UI state value (or undefined).</param>
     /// <param name="sources">The attached-sources value (or undefined — attachments are edited through their own endpoint; a save that omits them keeps the stored ones).</param>
     /// <param name="scenarios">The scenario-set value (or undefined — scenarios are edited through their own endpoint; a save that omits them keeps the stored ones).</param>
+    /// <param name="gitBinding">The Git-binding value (workflow-designer design §4.7; or undefined — a save that omits it keeps the stored binding).</param>
     /// <param name="managementTags">The resolved management tags (empty for a save).</param>
     /// <returns>A pooled, disposable draft document; <c>using</c> it and pass its
     /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
@@ -74,9 +75,10 @@ public readonly partial struct WorkspaceWorkflow
         in JsonElement designerState,
         in JsonElement sources,
         in SecurityTagSet managementTags,
-        in JsonElement scenarios = default)
+        in JsonElement scenarios = default,
+        in JsonElement gitBinding = default)
     {
-        DraftElements state = new(name, baseWorkflowId, basedOnVersion, document, designerState, sources, scenarios, managementTags);
+        DraftElements state = new(name, baseWorkflowId, basedOnVersion, document, designerState, sources, scenarios, gitBinding, managementTags);
         return PersistedJson.ToPooledDocument<WorkspaceWorkflow, DraftElements>(
             state,
             static (Utf8JsonWriter writer, in DraftElements s) =>
@@ -89,6 +91,7 @@ public readonly partial struct WorkspaceWorkflow
                 WriteValueIfPresent(writer, JsonPropertyNames.DesignerStateUtf8, s.DesignerState);
                 WriteValueIfPresent(writer, JsonPropertyNames.SourcesUtf8, s.Sources);
                 WriteValueIfPresent(writer, JsonPropertyNames.ScenariosUtf8, s.Scenarios);
+                WriteValueIfPresent(writer, JsonPropertyNames.GitBindingUtf8, s.GitBinding);
                 if (!s.ManagementTags.IsEmpty)
                 {
                     writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -172,6 +175,7 @@ public readonly partial struct WorkspaceWorkflow
         WriteValueIfPresent(writer, JsonPropertyNames.DesignerStateUtf8, (JsonElement)draft.DesignerState);
         WriteValueIfPresent(writer, JsonPropertyNames.SourcesUtf8, (JsonElement)draft.Sources);
         WriteValueIfPresent(writer, JsonPropertyNames.ScenariosUtf8, (JsonElement)draft.Scenarios);
+        WriteValueIfPresent(writer, JsonPropertyNames.GitBindingUtf8, (JsonElement)draft.GitBinding);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
@@ -211,6 +215,10 @@ public readonly partial struct WorkspaceWorkflow
         // Scenarios are edited through their own endpoint too (a put/delete supplies the whole
         // replacement set); a plain save omits them and the stored set carries forward.
         WriteValuePreferringDraft(writer, JsonPropertyNames.ScenariosUtf8, (JsonElement)draft.Scenarios, (JsonElement)this.Scenarios);
+
+        // The Git binding (workflow-designer design §4.7): a save that includes it replaces it; one
+        // that omits it carries the stored binding forward.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.GitBindingUtf8, (JsonElement)draft.GitBinding, (JsonElement)this.GitBinding);
 
         // Reach scope (§14.2) is immutable: carried forward from the stored working copy bytes-to-bytes.
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)this.ManagementTags);
@@ -282,6 +290,7 @@ public readonly partial struct WorkspaceWorkflow
         JsonElement designerState,
         JsonElement sources,
         JsonElement scenarios,
+        JsonElement gitBinding,
         SecurityTagSet managementTags)
     {
         public JsonElement Name { get; } = name;
@@ -297,6 +306,8 @@ public readonly partial struct WorkspaceWorkflow
         public JsonElement Sources { get; } = sources;
 
         public JsonElement Scenarios { get; } = scenarios;
+
+        public JsonElement GitBinding { get; } = gitBinding;
 
         public SecurityTagSet ManagementTags { get; } = managementTags;
     }

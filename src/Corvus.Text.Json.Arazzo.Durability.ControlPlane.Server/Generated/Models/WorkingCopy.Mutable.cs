@@ -419,6 +419,27 @@ public readonly partial struct WorkingCopy
         }
 
         /// <summary>
+        /// Gets the (optional) <c>gitBinding</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Binds a working copy to a repository branch (workflow-designer design &#167;4.7): the document — and optionally its spec files and scenario files — round-trips with pull/commit. Branch-per-working-copy is the natural multi-author flow.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Mutable GitBinding
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GitBindingUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>id</c> property.
         /// </summary>
         /// <remarks>
@@ -885,6 +906,87 @@ public readonly partial struct WorkingCopy
             }
 
             _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>gitBinding</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetGitBinding(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.GitBindingUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GitBindingUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GitBinding, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>gitBinding</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetGitBinding<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.GitBindingUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GitBindingUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GitBinding, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>gitBinding</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveGitBinding()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.GitBindingUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -1459,9 +1561,10 @@ public readonly partial struct WorkingCopy
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source _createArg7;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg8;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source _createArg9;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg10;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg11;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source _createArg12;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source _createArg10;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg11;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg12;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source _createArg13;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1476,7 +1579,7 @@ public readonly partial struct WorkingCopy
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source arg12)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source arg13)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1490,6 +1593,7 @@ public readonly partial struct WorkingCopy
             _createArg10 = arg10;
             _createArg11 = arg11;
             _createArg12 = arg12;
+            _createArg13 = arg13;
             _kind = Kind.Create;
         }
 
@@ -1510,7 +1614,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1535,7 +1639,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1560,7 +1664,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1585,7 +1689,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1610,7 +1714,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1647,9 +1751,10 @@ public readonly partial struct WorkingCopy
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source _createArg7;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg8;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> _createArg9;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg10;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg11;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> _createArg12;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> _createArg10;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg11;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg12;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> _createArg13;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1662,7 +1767,7 @@ public readonly partial struct WorkingCopy
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> arg12)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> arg13)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1677,6 +1782,7 @@ public readonly partial struct WorkingCopy
             _createArg10 = arg10;
             _createArg11 = arg11;
             _createArg12 = arg12;
+            _createArg13 = arg13;
             _kind = Kind.Create;
         }
 
@@ -1695,7 +1801,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1720,7 +1826,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1745,7 +1851,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1770,7 +1876,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1795,7 +1901,7 @@ public readonly partial struct WorkingCopy
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1838,6 +1944,7 @@ public readonly partial struct WorkingCopy
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source designerState = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source gitBinding = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source managementTags = default)
@@ -1851,6 +1958,7 @@ public readonly partial struct WorkingCopy
             basedOnVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BasedOnVersion, ref builder);
             baseWorkflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BaseWorkflowId, ref builder);
             designerState.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DesignerState, ref builder);
+            gitBinding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GitBinding, ref builder);
             lastUpdatedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedAt, ref builder);
             lastUpdatedBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedBy, ref builder);
             managementTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ManagementTags, ref builder);
@@ -1869,11 +1977,12 @@ public readonly partial struct WorkingCopy
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source designerState = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source gitBinding = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source managementTags = default)
         {
-            Create(ref _builder, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, lastUpdatedAt, lastUpdatedBy, managementTags);
+            Create(ref _builder, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, gitBinding, lastUpdatedAt, lastUpdatedBy, managementTags);
         }
 
         /// <summary>
@@ -1891,6 +2000,7 @@ public readonly partial struct WorkingCopy
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> designerState = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> gitBinding = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> managementTags = default)
@@ -1907,6 +2017,7 @@ public readonly partial struct WorkingCopy
             basedOnVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BasedOnVersion, ref builder);
             baseWorkflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BaseWorkflowId, ref builder);
             designerState.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DesignerState, ref builder);
+            gitBinding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GitBinding, ref builder);
             lastUpdatedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedAt, ref builder);
             lastUpdatedBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedBy, ref builder);
             managementTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ManagementTags, ref builder);
@@ -1926,6 +2037,7 @@ public readonly partial struct WorkingCopy
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> designerState = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> gitBinding = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> managementTags = default)
@@ -1933,7 +2045,7 @@ public readonly partial struct WorkingCopy
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, lastUpdatedAt, lastUpdatedBy, managementTags);
+            Create(context, ref _builder, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, gitBinding, lastUpdatedAt, lastUpdatedBy, managementTags);
         }
 
         /// <summary>
@@ -2043,11 +2155,12 @@ public readonly partial struct WorkingCopy
         /// <param name="arg10">The value of the property.</param>
         /// <param name="arg11">The value of the property.</param>
         /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source arg12, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source arg13, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
             o.EndObject();
         }
 
@@ -2068,14 +2181,15 @@ public readonly partial struct WorkingCopy
         /// <param name="arg10">The value of the property.</param>
         /// <param name="arg11">The value of the property.</param>
         /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> arg12, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> arg13, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
             o.EndObject();
         }
     }
@@ -2121,13 +2235,14 @@ public readonly partial struct WorkingCopy
     /// <param name="basedOnVersion">The value of the <c>"basedOnVersion"</c> property.</param>
     /// <param name="baseWorkflowId">The value of the <c>"baseWorkflowId"</c> property.</param>
     /// <param name="designerState">The value of the <c>"designerState"</c> property.</param>
+    /// <param name="gitBinding">The value of the <c>"gitBinding"</c> property.</param>
     /// <param name="lastUpdatedAt">The value of the <c>"lastUpdatedAt"</c> property.</param>
     /// <param name="lastUpdatedBy">The value of the <c>"lastUpdatedBy"</c> property.</param>
     /// <param name="managementTags">The value of the <c>"managementTags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source document, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source designerState = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source managementTags = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source document, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source designerState = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source gitBinding = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source managementTags = default)
     {
-        return new Source(createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, lastUpdatedAt, lastUpdatedBy, managementTags);
+        return new Source(createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, gitBinding, lastUpdatedAt, lastUpdatedBy, managementTags);
     }
 
     /// <summary>
@@ -2144,16 +2259,17 @@ public readonly partial struct WorkingCopy
     /// <param name="basedOnVersion">The value of the <c>"basedOnVersion"</c> property.</param>
     /// <param name="baseWorkflowId">The value of the <c>"baseWorkflowId"</c> property.</param>
     /// <param name="designerState">The value of the <c>"designerState"</c> property.</param>
+    /// <param name="gitBinding">The value of the <c>"gitBinding"</c> property.</param>
     /// <param name="lastUpdatedAt">The value of the <c>"lastUpdatedAt"</c> property.</param>
     /// <param name="lastUpdatedBy">The value of the <c>"lastUpdatedBy"</c> property.</param>
     /// <param name="managementTags">The value of the <c>"managementTags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> document, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> designerState = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> managementTags = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> document, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> designerState = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> gitBinding = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> managementTags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, lastUpdatedAt, lastUpdatedBy, managementTags);
+        return new Source<TContext>(context, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, gitBinding, lastUpdatedAt, lastUpdatedBy, managementTags);
     }
 
     /// <summary>
@@ -2258,18 +2374,19 @@ public readonly partial struct WorkingCopy
     /// <param name="basedOnVersion">The value of the property.</param>
     /// <param name="baseWorkflowId">The value of the property.</param>
     /// <param name="designerState">The value of the property.</param>
+    /// <param name="gitBinding">The value of the property.</param>
     /// <param name="lastUpdatedAt">The value of the property.</param>
     /// <param name="lastUpdatedBy">The value of the property.</param>
     /// <param name="managementTags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source document, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source designerState = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source managementTags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source document, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source designerState = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source gitBinding = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source managementTags = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, lastUpdatedAt, lastUpdatedBy, managementTags);
+        ovb.Create(createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, gitBinding, lastUpdatedAt, lastUpdatedBy, managementTags);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2291,12 +2408,13 @@ public readonly partial struct WorkingCopy
     /// <param name="basedOnVersion">The value of the property.</param>
     /// <param name="baseWorkflowId">The value of the property.</param>
     /// <param name="designerState">The value of the property.</param>
+    /// <param name="gitBinding">The value of the property.</param>
     /// <param name="lastUpdatedAt">The value of the property.</param>
     /// <param name="lastUpdatedBy">The value of the property.</param>
     /// <param name="managementTags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> document, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> designerState = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> managementTags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDocument.Source<TContext> document, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source name, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source basedOnVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyDesignerState.Source<TContext> designerState = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitBinding.Source<TContext> gitBinding = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopy.WorkspaceSecurityTagArray.Source<TContext> managementTags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2305,7 +2423,7 @@ public readonly partial struct WorkingCopy
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, lastUpdatedAt, lastUpdatedBy, managementTags);
+        ovb.Create(context, createdAt, createdBy, document, etag, id, name, basedOnVersion, baseWorkflowId, designerState, gitBinding, lastUpdatedAt, lastUpdatedBy, managementTags);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

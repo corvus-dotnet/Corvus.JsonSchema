@@ -83,6 +83,22 @@ public sealed class GitHubBroker
         NotFound,
     }
 
+    /// <summary>The outcome kinds a proxied GitHub write can report.</summary>
+    public enum WriteOutcome
+    {
+        /// <summary>The write succeeded.</summary>
+        Success,
+
+        /// <summary>The principal has no (valid) GitHub session.</summary>
+        NotConnected,
+
+        /// <summary>The target is not reachable through the user ∩ installation intersection (non-disclosing).</summary>
+        NotFound,
+
+        /// <summary>GitHub refused the write (a stale sha, a validation error, or an already-existing pull request).</summary>
+        Refused,
+    }
+
     /// <summary>
     /// Mints a single-use, principal-bound state and composes the authorize URL the kit opens in a
     /// popup. The state authenticates the callback (a top-level navigation carries no bearer
@@ -173,6 +189,138 @@ public sealed class GitHubBroker
         string escapedPath = string.Join('/', (path ?? string.Empty).Split('/', StringSplitOptions.RemoveEmptyEntries).Select(Uri.EscapeDataString));
         string query = string.IsNullOrEmpty(reference) ? string.Empty : $"?ref={Uri.EscapeDataString(reference)}";
         return this.GetAsync(principalKey, $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/contents/{escapedPath}{query}", cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates or updates one file on a branch (<c>PUT /repos/{owner}/{repo}/contents/{path}</c>) on the
+    /// principal's token. The body carries message/branch/content (plus the current sha for an update) and
+    /// — deliberately — <strong>no author/committer</strong>: GitHub stamps the token's user, so the commit
+    /// is authored as the signed-in user's GitHub-held git identity (§4.7).
+    /// </summary>
+    /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="owner">The repository owner.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="path">The file path.</param>
+    /// <param name="branch">The branch to write on.</param>
+    /// <param name="message">The commit message.</param>
+    /// <param name="content">The file content.</param>
+    /// <param name="existingSha">The current blob sha (an update), or <see langword="null"/> (a create).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The outcome and, on success, the written blob's sha.</returns>
+    public async ValueTask<(WriteOutcome Outcome, string? ContentSha)> PutContentAsync(
+        string principalKey, string owner, string repo, string path, string branch, string message, ReadOnlyMemory<byte> content, string? existingSha, CancellationToken cancellationToken)
+    {
+        string? token = await this.CurrentTokenAsync(principalKey, cancellationToken).ConfigureAwait(false);
+        if (token is null)
+        {
+            return (WriteOutcome.NotConnected, null);
+        }
+
+        string escapedPath = string.Join('/', path.Split('/', StringSplitOptions.RemoveEmptyEntries).Select(Uri.EscapeDataString));
+        byte[] body = PersistedJson.ToArray(
+            (Message: message, Branch: branch, Content: content, Sha: existingSha),
+            static (Utf8JsonWriter writer, in (string Message, string Branch, ReadOnlyMemory<byte> Content, string? Sha) s) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("message"u8, s.Message);
+                writer.WriteString("branch"u8, s.Branch);
+                writer.WriteString("content"u8, Convert.ToBase64String(s.Content.Span));
+                if (s.Sha is not null)
+                {
+                    writer.WriteString("sha"u8, s.Sha);
+                }
+
+                writer.WriteEndObject();
+            });
+
+        using var request = new HttpRequestMessage(HttpMethod.Put, $"{this.options.ApiBaseUrl!.TrimEnd('/')}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/contents/{escapedPath}")
+        {
+            Content = new ByteArrayContent(body) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json") } },
+        };
+        AddGitHubHeaders(request, token);
+        using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            this.tokens.Remove(principalKey);
+            return (WriteOutcome.NotConnected, null);
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return (WriteOutcome.NotFound, null);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return (WriteOutcome.Refused, null);
+        }
+
+        byte[] payload = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        using var document = ParsedJsonDocument<JsonElement>.Parse(payload);
+        string? sha = document.RootElement.TryGetProperty("content"u8, out JsonElement written) && written.TryGetProperty("sha"u8, out JsonElement shaElement)
+            ? shaElement.GetString()
+            : null;
+        return (WriteOutcome.Success, sha);
+    }
+
+    /// <summary>Opens a pull request (<c>POST /repos/{owner}/{repo}/pulls</c>) on the principal's token.</summary>
+    /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="owner">The repository owner.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="head">The branch the changes are on (the working copy's bound branch).</param>
+    /// <param name="baseBranch">The branch the pull request targets.</param>
+    /// <param name="title">The pull request title.</param>
+    /// <param name="draft">Open as a draft.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The outcome and, on success, the pull request number and URL.</returns>
+    public async ValueTask<(WriteOutcome Outcome, long Number, string? Url)> CreatePullRequestAsync(
+        string principalKey, string owner, string repo, string head, string baseBranch, string title, bool draft, CancellationToken cancellationToken)
+    {
+        string? token = await this.CurrentTokenAsync(principalKey, cancellationToken).ConfigureAwait(false);
+        if (token is null)
+        {
+            return (WriteOutcome.NotConnected, 0, null);
+        }
+
+        byte[] body = PersistedJson.ToArray(
+            (Title: title, Head: head, Base: baseBranch, Draft: draft),
+            static (Utf8JsonWriter writer, in (string Title, string Head, string Base, bool Draft) s) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("title"u8, s.Title);
+                writer.WriteString("head"u8, s.Head);
+                writer.WriteString("base"u8, s.Base);
+                writer.WriteBoolean("draft"u8, s.Draft);
+                writer.WriteEndObject();
+            });
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{this.options.ApiBaseUrl!.TrimEnd('/')}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/pulls")
+        {
+            Content = new ByteArrayContent(body) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json") } },
+        };
+        AddGitHubHeaders(request, token);
+        using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            this.tokens.Remove(principalKey);
+            return (WriteOutcome.NotConnected, 0, null);
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return (WriteOutcome.NotFound, 0, null);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return (WriteOutcome.Refused, 0, null);
+        }
+
+        byte[] payload = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        using var document = ParsedJsonDocument<JsonElement>.Parse(payload);
+        long number = document.RootElement.TryGetProperty("number"u8, out JsonElement n) && n.ValueKind == JsonValueKind.Number ? n.GetInt64() : 0;
+        string? url = document.RootElement.TryGetProperty("html_url"u8, out JsonElement u) ? u.GetString() : null;
+        return (WriteOutcome.Success, number, url);
     }
 
     private async ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> GetAsync(string principalKey, string pathAndQuery, CancellationToken cancellationToken)

@@ -67,7 +67,7 @@ public sealed class ControlPlaneGitHubApiTests
         using (Stj.JsonDocument dir = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/contents", "workspace:read", "ada")))
         {
             dir.RootElement.GetProperty("kind").GetString().ShouldBe("dir");
-            dir.RootElement.GetProperty("entries").EnumerateArray().Select(e => e.GetProperty("name").GetString()).ShouldBe(["petstore.json", "flows"]);
+            dir.RootElement.GetProperty("entries").EnumerateArray().Select(e => e.GetProperty("name").GetString()).ShouldBe(["flows", "petstore.json"]);
         }
 
         using (Stj.JsonDocument file = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/contents?path=petstore.json", "workspace:read", "ada")))
@@ -118,6 +118,101 @@ public sealed class ControlPlaneGitHubApiTests
         {
             session.RootElement.GetProperty("connected").GetBoolean().ShouldBeFalse();
         }
+    }
+
+    [TestMethod]
+    public async Task A_bound_working_copy_commits_and_pulls_authored_as_the_user()
+    {
+        const string boundDoc = """{"arazzo":"1.1.0","info":{"title":"Adopt","version":"1.0.0"},"sourceDescriptions":[{"name":"petstore","url":"./petstore.json","type":"openapi"}],"workflows":[{"workflowId":"adopt","steps":[]}]}""";
+        await using StubGitHub github = await StubGitHub.StartAsync();
+        await using Scoped host = await StartAsync(github.Url);
+
+        string state = await host.BeginAsync("ada");
+        (await host.SendAnonymousAsync($"/github/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // A working copy with an inline spec attachment and one scenario, then bound to a branch.
+        HttpResponseMessage created = await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", $$"""{"name":"adopt","document":{{boundDoc}}}""", "workspace:write", "ada");
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string id;
+        using (Stj.JsonDocument doc = Stj.JsonDocument.Parse(await created.Content.ReadAsStringAsync()))
+        {
+            id = doc.RootElement.GetProperty("id").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/petstore", """{"document":{"openapi":"3.1.0","info":{"title":"Pets","version":"1"},"paths":{}}}""", "workspace:write", "ada")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/happy", """{"name":"happy","expect":{"outcome":"completed"}}""", "workspace:write", "ada")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        string etag = await host.EtagAsync(id);
+        HttpResponseMessage bound = await host.SendJsonAsync(
+            HttpMethod.Put, $"/workspace/workflows/{id}",
+            $$"""{"document":{{boundDoc}},"expectedEtag":"{{etag}}","gitBinding":{"owner":"acme-org","repo":"specs","branch":"feature/adopt","path":"flows/adopt.arazzo.json","specPaths":{"petstore":"specs/petstore.json"},"scenariosDir":"scenarios/adopt"} }""",
+            "workspace:write", "ada");
+        bound.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument saved = Stj.JsonDocument.Parse(await bound.Content.ReadAsStringAsync()))
+        {
+            saved.RootElement.GetProperty("gitBinding").GetProperty("branch").GetString().ShouldBe("feature/adopt");
+        }
+
+        // Commit: document + bound spec + scenario file, in deterministic order, with an optional draft PR.
+        HttpResponseMessage committed = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/git/commit",
+            """{"message":"sync from designer","pullRequest":{"base":"main","draft":true}}""",
+            "workspace:write", "ada");
+        committed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument result = Stj.JsonDocument.Parse(await committed.Content.ReadAsStringAsync()))
+        {
+            result.RootElement.GetProperty("files").EnumerateArray().Select(f => f.GetProperty("path").GetString())
+                .ShouldBe(["flows/adopt.arazzo.json", "specs/petstore.json", "scenarios/adopt/happy.scenario.json"]);
+            result.RootElement.GetProperty("pullRequest").GetProperty("url").GetString()!.ShouldContain("/pull/");
+        }
+
+        // The §4.7 identity rule, on the wire: every write carries message/branch/content and NO
+        // author/committer — GitHub stamps the signed-in user's git identity, not one we compose.
+        github.ContentPuts.Count.ShouldBe(3);
+        foreach ((string _, string body) in github.ContentPuts)
+        {
+            using Stj.JsonDocument put = Stj.JsonDocument.Parse(body);
+            put.RootElement.TryGetProperty("author", out _).ShouldBeFalse("the control plane composes no git author (§4.7)");
+            put.RootElement.TryGetProperty("committer", out _).ShouldBeFalse("the control plane composes no git committer (§4.7)");
+            put.RootElement.GetProperty("branch").GetString().ShouldBe("feature/adopt");
+            put.RootElement.GetProperty("message").GetString().ShouldBe("sync from designer");
+        }
+
+        using (Stj.JsonDocument pr = Stj.JsonDocument.Parse(github.PullRequests.ShouldHaveSingleItem()))
+        {
+            pr.RootElement.GetProperty("head").GetString().ShouldBe("feature/adopt");
+            pr.RootElement.GetProperty("base").GetString().ShouldBe("main");
+            pr.RootElement.GetProperty("draft").GetBoolean().ShouldBeTrue();
+        }
+
+        // Repo-side edits: the document title changes and a second scenario appears; pull refreshes both
+        // under the etag guard.
+        github.Files["flows/adopt.arazzo.json"] = Encoding.UTF8.GetBytes(boundDoc.Replace("\"title\":\"Adopt\"", "\"title\":\"Adopt v2\""));
+        github.Files["scenarios/adopt/sad.scenario.json"] = Encoding.UTF8.GetBytes("""{"name":"sad","expect":{"outcome":"faulted"}}""");
+        etag = await host.EtagAsync(id);
+        HttpResponseMessage pulled = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/git/pull", $$"""{"expectedEtag":"{{etag}}"}""", "workspace:write", "ada");
+        pulled.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument refreshed = Stj.JsonDocument.Parse(await pulled.Content.ReadAsStringAsync()))
+        {
+            refreshed.RootElement.GetProperty("document").GetProperty("info").GetProperty("title").GetString().ShouldBe("Adopt v2");
+        }
+
+        using (Stj.JsonDocument scenarios = Stj.JsonDocument.Parse(await (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/scenarios", "{}", "workspace:read", "ada")).Content.ReadAsStringAsync()))
+        {
+            scenarios.RootElement.GetProperty("scenarios").EnumerateArray().Select(s => s.GetProperty("name").GetString()).ShouldBe(["happy", "sad"]);
+        }
+
+        // A stale etag conflicts; an unbound copy refuses; a caller without a session conflicts.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/git/pull", $$"""{"expectedEtag":"{{etag}}"}""", "workspace:write", "ada")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/git/commit", """{"message":"x"}""", "workspace:write", "bob")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        HttpResponseMessage unboundCreated = await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", $$"""{"name":"unbound","document":{{boundDoc}}}""", "workspace:write", "ada");
+        string unboundId;
+        using (Stj.JsonDocument doc = Stj.JsonDocument.Parse(await unboundCreated.Content.ReadAsStringAsync()))
+        {
+            unboundId = doc.RootElement.GetProperty("id").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{unboundId}/git/commit", """{"message":"x"}""", "workspace:write", "ada")).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [TestMethod]
@@ -199,6 +294,22 @@ public sealed class ControlPlaneGitHubApiTests
             return await client.SendAsync(request);
         }
 
+        public async Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string scopes, string subject)
+        {
+            using var request = new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+            request.Headers.Add(ScopeSubAuthHandler.ScopeHeader, scopes);
+            request.Headers.Add(ScopeSubAuthHandler.SubjectHeader, subject);
+            return await client.SendAsync(request);
+        }
+
+        public async Task<string> EtagAsync(string id)
+        {
+            HttpResponseMessage fetched = await this.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}", "workspace:read", "ada");
+            fetched.StatusCode.ShouldBe(HttpStatusCode.OK);
+            using Stj.JsonDocument doc = Stj.JsonDocument.Parse(await fetched.Content.ReadAsStringAsync());
+            return doc.RootElement.GetProperty("etag").GetString()!;
+        }
+
         public async Task<HttpResponseMessage> SendAnonymousAsync(string path)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, path);
@@ -237,16 +348,26 @@ public sealed class ControlPlaneGitHubApiTests
         }
     }
 
-    /// <summary>A loopback stub GitHub: the token exchange plus the user/installations/contents reads the broker proxies.</summary>
+    /// <summary>A loopback stub GitHub: the token exchange, the user/installations reads, and a mutable
+    /// repository (contents read/write + pulls) whose write bodies are captured verbatim — the §4.7
+    /// author/committer-omission rule is asserted on the wire.</summary>
     private sealed class StubGitHub : IAsyncDisposable
     {
         private WebApplication? app;
 
         public string Url { get; private set; } = string.Empty;
 
+        public System.Collections.Concurrent.ConcurrentDictionary<string, byte[]> Files { get; } = new();
+
+        public List<(string Path, string Body)> ContentPuts { get; } = [];
+
+        public List<string> PullRequests { get; } = [];
+
         public static async Task<StubGitHub> StartAsync()
         {
             var stub = new StubGitHub();
+            stub.Files["petstore.json"] = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0"}""");
+            stub.Files["flows/existing.arazzo.json"] = Encoding.UTF8.GetBytes("""{"arazzo":"1.1.0"}""");
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.Logging.ClearProviders();
             WebApplication app = builder.Build();
@@ -294,29 +415,87 @@ public sealed class ControlPlaneGitHubApiTests
                     return Results.Unauthorized();
                 }
 
-                if (string.IsNullOrEmpty(path))
-                {
-                    return Results.Json(new object[]
-                    {
-                        new { name = "petstore.json", path = "petstore.json", type = "file", size = 123, sha = "abc123" },
-                        new { name = "flows", path = "flows", type = "dir", sha = "def456" },
-                    });
-                }
-
-                if (path == "petstore.json")
+                string key = path ?? string.Empty;
+                if (stub.Files.TryGetValue(key, out byte[]? file))
                 {
                     return Results.Json(new
                     {
-                        name = "petstore.json",
-                        path = "petstore.json",
-                        sha = "abc123",
-                        size = 123,
+                        name = key.Split('/').Last(),
+                        path = key,
+                        sha = ShaOf(file),
+                        size = file.Length,
                         encoding = "base64",
-                        content = Convert.ToBase64String(Encoding.UTF8.GetBytes("""{"openapi":"3.1.0"}""")),
+                        content = Convert.ToBase64String(file),
                     });
                 }
 
-                return Results.NotFound();
+                // A directory: list the entries directly under it (files and one-level dirs).
+                string prefix = key.Length == 0 ? string.Empty : key + "/";
+                var names = new SortedDictionary<string, bool>(StringComparer.Ordinal);
+                foreach (string candidate in stub.Files.Keys)
+                {
+                    if (!candidate.StartsWith(prefix, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    string rest = candidate[prefix.Length..];
+                    int slash = rest.IndexOf('/', StringComparison.Ordinal);
+                    names[slash < 0 ? rest : rest[..slash]] = slash < 0;
+                }
+
+                if (names.Count == 0)
+                {
+                    return Results.NotFound();
+                }
+
+                return Results.Json(names.Select(n => new
+                {
+                    name = n.Key,
+                    path = prefix + n.Key,
+                    type = n.Value ? "file" : "dir",
+                    size = n.Value ? stub.Files[prefix + n.Key].Length : 0,
+                    sha = n.Value ? ShaOf(stub.Files[prefix + n.Key]) : "dir",
+                }).ToArray());
+            });
+
+            app.MapPut("/repos/acme-org/specs/contents/{*path}", async (HttpContext context, string path) =>
+            {
+                if (!Authorized(context))
+                {
+                    return Results.Unauthorized();
+                }
+
+                using var reader = new StreamReader(context.Request.Body);
+                string body = await reader.ReadToEndAsync();
+                stub.ContentPuts.Add((path, body));
+                using Stj.JsonDocument document = Stj.JsonDocument.Parse(body);
+                byte[] content = Convert.FromBase64String(document.RootElement.GetProperty("content").GetString()!);
+                bool existed = stub.Files.ContainsKey(path);
+                if (existed)
+                {
+                    // An update requires the current sha (the contents-API concurrency check).
+                    if (!document.RootElement.TryGetProperty("sha", out Stj.JsonElement sha) || sha.GetString() != ShaOf(stub.Files[path]))
+                    {
+                        return Results.Conflict();
+                    }
+                }
+
+                stub.Files[path] = content;
+                return Results.Json(new { content = new { sha = ShaOf(content), path } }, statusCode: existed ? 200 : 201);
+            });
+
+            app.MapPost("/repos/acme-org/specs/pulls", async (HttpContext context) =>
+            {
+                if (!Authorized(context))
+                {
+                    return Results.Unauthorized();
+                }
+
+                using var reader = new StreamReader(context.Request.Body);
+                string body = await reader.ReadToEndAsync();
+                stub.PullRequests.Add(body);
+                return Results.Json(new { number = 41 + stub.PullRequests.Count, html_url = $"https://github.example/acme-org/specs/pull/{41 + stub.PullRequests.Count}" }, statusCode: 201);
             });
 
             await app.StartAsync();
@@ -335,5 +514,8 @@ public sealed class ControlPlaneGitHubApiTests
 
         private static bool Authorized(HttpContext context)
             => context.Request.Headers.Authorization.ToString() == $"Bearer {StubToken}";
+
+        private static string ShaOf(byte[] content)
+            => Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(content)).ToLowerInvariant();
     }
 }
