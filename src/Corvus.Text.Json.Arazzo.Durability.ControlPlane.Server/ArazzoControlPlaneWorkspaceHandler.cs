@@ -10,6 +10,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
+using Corvus.Text.Json.Arazzo.Testing;
 using Corvus.Text.Json.Internal;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
@@ -43,6 +44,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     private readonly IWorkspaceWorkflowStore store;
     private readonly ISecuredWorkflowCatalog? catalog;
     private readonly ISourceStore? sources;
+    private readonly Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator;
     private readonly ControlPlaneAccess access;
     private readonly TimeProvider timeProvider;
     private readonly string actor;
@@ -53,9 +55,69 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// <param name="catalog">The secured catalog used to open a working copy from a published version (the carry-over);
     /// creating from a version is unavailable when <see langword="null"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    public ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ISecuredWorkflowCatalog? catalog = null, string actor = "control-plane")
-        : this(store, new ControlPlaneAccess(), catalog, null, null, actor)
+    /// <param name="simulator">The deterministic simulator (design §8); simulation fails closed when <see langword="null"/>.</param>
+    public ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ISecuredWorkflowCatalog? catalog = null, string actor = "control-plane", WorkflowSimulator? simulator = null)
+        : this(store, new ControlPlaneAccess(), catalog, null, null, actor, simulator)
     {
+    }
+
+    /// <summary>
+    /// Simulates the working copy deterministically (design §4.3/§8): compile through the catalog's
+    /// own executor path (content-hash cached), replay against the scripted mock transport and
+    /// virtual clock to the stop condition, and return the structured trace. Stateless: every debug
+    /// command replays from the start. Fails closed when this deployment wires no simulator.
+    /// </summary>
+    /// <param name="parameters">The request parameters.</param>
+    /// <param name="workspace">The response workspace.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The trace, or the problem.</returns>
+    public async ValueTask<SimulateWorkingCopyResult> HandleSimulateWorkingCopyAsync(SimulateWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.simulator is null)
+        {
+            return SimulateWorkingCopyResult.BadRequest(
+                Problem("simulation-not-offered", "Simulation not offered", 400, "This deployment does not offer workflow simulation."),
+                workspace);
+        }
+
+        string id = (string)parameters.Id;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return SimulateWorkingCopyResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        Models.SimulateRequest body = parameters.Body;
+        string? workflowId = body.WorkflowId.IsNotUndefined() ? (string)body.WorkflowId : null;
+        byte[]? documentBytes = WorkspaceSimulationJson.DocumentBytes((JsonElement)w.RootElement.Document, workflowId);
+        if (documentBytes is null)
+        {
+            return SimulateWorkingCopyResult.BadRequest(
+                Problem("unknown-workflow", "Unknown workflow", 400, $"The document declares no workflow '{workflowId}'."),
+                workspace);
+        }
+
+        List<KeyValuePair<string, byte[]>> sourceBytes = await WorkspaceSimulationJson.SourceBytesAsync(
+            (JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
+
+        using SimulationResult result = await this.simulator.SimulateAsync(
+            documentBytes,
+            sourceBytes,
+            WorkspaceSimulationJson.ReadScenario(body),
+            WorkspaceSimulationJson.ReadStop(body),
+            WorkspaceSimulationJson.ReadBudget(body),
+            cancellationToken).ConfigureAwait(false);
+
+        if (result.Outcome == SimulationOutcome.NotExecutable)
+        {
+            return SimulateWorkingCopyResult.UnprocessableEntity(
+                Problem("not-executable", "Not executable", 422, "The document does not compile to an executable workflow (e.g. it references another Arazzo document as a source, or has no workflows)."),
+                workspace);
+        }
+
+        ParsedJsonDocument<Models.SimulationTrace> trace = WorkspaceSimulationJson.TraceResponse(result);
+        workspace.TakeOwnership(trace);
+        return SimulateWorkingCopyResult.Ok(trace.RootElement, workspace);
     }
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneWorkspaceHandler"/> class.</summary>
@@ -68,7 +130,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// (reach-checked); registry attachments are unavailable when <see langword="null"/>.</param>
     /// <param name="timeProvider">The time source stamped onto attachments; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane")
+    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -77,6 +139,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         this.access = access;
         this.catalog = catalog;
         this.sources = sources;
+        this.simulator = simulator;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.actor = actor;
     }

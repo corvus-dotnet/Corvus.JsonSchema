@@ -1792,6 +1792,74 @@
         }
       }
     },
+    "/workspace/workflows/{id}/simulate": {
+      "post": {
+        "operationId": "simulateWorkingCopy",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Simulate a working copy deterministically",
+        "description": "Compiles the working copy's document (with its attached sources) and executes it against the scripted mock transport and a virtual clock, returning the structured trace up to the stop condition. Stateless interactive stepping: there is no debug-session resource — every command replays from the start (determinism makes the replay exact), so 'step' is this call with `until` one step further and time-travel scrubbing needs no further calls. Simulation never touches real credentials or endpoints; the mock transport is the only I/O surface. 200 with the trace (a faulted workflow is a successful simulation); 400 when this deployment offers no simulation or the scenario is unusable; 404 when the working copy is absent or out of reach; 422 when the document does not compile to an executable workflow.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The structured trace up to the stop condition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationTrace"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The document does not compile to an executable workflow (e.g. it references another Arazzo document as a source).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/workspace/workflows/{id}/sources": {
       "get": {
         "operationId": "listWorkingCopySources",
@@ -4495,6 +4563,341 @@
           "category",
           "instancePath",
           "message"
+        ]
+      },
+      "SimulateRequest": {
+        "type": "object",
+        "title": "SimulateRequest",
+        "description": "One deterministic simulation command: the scenario setup (inline in v1; named stored scenarios arrive with the scenario store), an optional stop condition, and an optional budget. The same request shape backs run, step, run-to-here, and re-run-after-edit — only `until` differs.",
+        "properties": {
+          "workflowId": {
+            "type": "string",
+            "description": "Which of the document's workflows to simulate (default: the first)."
+          },
+          "scenario": {
+            "type": "object",
+            "title": "InlineScenario",
+            "description": "The deterministic setup: workflow inputs, scripted mock responses, message triggers, and the virtual-clock policy.",
+            "properties": {
+              "inputs": {
+                "description": "The workflow inputs value."
+              },
+              "mocks": {
+                "type": "array",
+                "description": "Scripted responses for the mock API transport, keyed by method + path template. Repeated entries for one route form a sequence (the last repeats). Unmocked routes return 404.",
+                "items": {
+                  "type": "object",
+                  "title": "MockRoute",
+                  "properties": {
+                    "method": {
+                      "type": "string",
+                      "description": "The HTTP method (e.g. get, post)."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "The OpenAPI path template (e.g. /pets/{petId})."
+                    },
+                    "status": {
+                      "type": "integer",
+                      "description": "The response status code."
+                    },
+                    "body": {
+                      "description": "The response body value, if any."
+                    }
+                  },
+                  "required": [
+                    "method",
+                    "path",
+                    "status"
+                  ]
+                }
+              },
+              "triggers": {
+                "type": "array",
+                "description": "Messages delivered when the run suspends waiting on a channel, in order.",
+                "items": {
+                  "type": "object",
+                  "title": "MessageTrigger",
+                  "properties": {
+                    "channel": {
+                      "type": "string",
+                      "description": "The channel the waiting step listens on."
+                    },
+                    "payload": {
+                      "description": "The message payload value."
+                    },
+                    "correlationId": {
+                      "type": "string",
+                      "description": "The correlation id, when the wait is correlated."
+                    }
+                  },
+                  "required": [
+                    "channel"
+                  ]
+                }
+              },
+              "clock": {
+                "type": "object",
+                "title": "ClockPolicy",
+                "description": "The virtual-clock policy. Nothing ever waits in real time.",
+                "properties": {
+                  "autoAdvance": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Advance the virtual clock to each timer's due moment and resume automatically. When false the trace ends suspended at the first timer with its due time."
+                  }
+                }
+              }
+            }
+          },
+          "until": {
+            "type": "object",
+            "title": "StopCondition",
+            "description": "Where to stop the replay. Omitted: run to completion (or fault/suspend/budget).",
+            "properties": {
+              "beforeStepId": {
+                "type": "string",
+                "description": "Pause before this step executes (the paused context is the state the step will see)."
+              },
+              "occurrence": {
+                "type": "integer",
+                "default": 1,
+                "description": "Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops)."
+              },
+              "breakpoints": {
+                "type": "array",
+                "description": "Pause before ANY of these steps executes (first arrival wins over `beforeStepId` when both match).",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "budget": {
+            "type": "object",
+            "title": "SimulationBudget",
+            "description": "Safety limits (§8.3). The server clamps to its own maxima.",
+            "properties": {
+              "maxSteps": {
+                "type": "integer",
+                "description": "The step-execution budget (default 256)."
+              },
+              "wallClockMs": {
+                "type": "integer",
+                "description": "The real-time execution cap in milliseconds (default 10000)."
+              }
+            }
+          }
+        }
+      },
+      "SimulationTrace": {
+        "type": "object",
+        "title": "SimulationTrace",
+        "description": "The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "faulted",
+              "paused",
+              "suspended",
+              "budgetExhausted"
+            ],
+            "description": "How the replay ended: ran to completion; faulted; paused at the stop condition; suspended awaiting a timer (autoAdvance false) or an undelivered message; or the step budget ran out."
+          },
+          "pausedBefore": {
+            "type": "string",
+            "description": "The step the replay paused before, when `outcome` is `paused`."
+          },
+          "outputs": {
+            "description": "The workflow outputs value, when `outcome` is `completed`."
+          },
+          "fault": {
+            "type": "object",
+            "title": "SimulationFault",
+            "description": "The fault record, when `outcome` is `faulted`.",
+            "properties": {
+              "stepId": {
+                "type": "string"
+              },
+              "attempt": {
+                "type": "integer"
+              },
+              "error": {
+                "type": "string"
+              }
+            }
+          },
+          "wait": {
+            "type": "object",
+            "title": "SimulationWait",
+            "description": "What the run is waiting on, when `outcome` is `suspended`.",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "timer",
+                  "message"
+                ]
+              },
+              "dueAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The virtual-clock due moment, for a timer wait."
+              },
+              "channel": {
+                "type": "string",
+                "description": "The awaited channel, for a message wait."
+              },
+              "correlationId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "description": "One record per executed step, in execution order — a step reached repeatedly appears repeatedly.",
+            "items": {
+              "type": "object",
+              "title": "SimulatedStep",
+              "properties": {
+                "stepId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "completed",
+                    "faulted"
+                  ]
+                },
+                "attempt": {
+                  "type": "integer",
+                  "description": "The retry attempt this record describes (0 = first try)."
+                },
+                "outputs": {
+                  "description": "The step's extracted outputs value, if any."
+                },
+                "requests": {
+                  "type": "array",
+                  "description": "The request/response pairs this step exchanged with the mock transport, in order.",
+                  "items": {
+                    "type": "object",
+                    "title": "SimulatedExchange",
+                    "properties": {
+                      "method": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "The resolved path (parameters substituted, query included)."
+                      },
+                      "status": {
+                        "type": "integer"
+                      },
+                      "requestBody": {
+                        "description": "The request payload value, if one was sent."
+                      },
+                      "responseBody": {
+                        "description": "The mock's response body value, if any."
+                      }
+                    },
+                    "required": [
+                      "method",
+                      "path",
+                      "status"
+                    ]
+                  }
+                },
+                "successCriteria": {
+                  "type": "array",
+                  "description": "The step's success-criterion truth table, re-evaluated against the captured deterministic context (operand-level detail is a documented deferral).",
+                  "items": {
+                    "type": "object",
+                    "title": "CriterionVerdict",
+                    "properties": {
+                      "condition": {
+                        "type": "string"
+                      },
+                      "satisfied": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "condition",
+                      "satisfied"
+                    ]
+                  }
+                },
+                "actionTaken": {
+                  "type": "object",
+                  "title": "ActionTaken",
+                  "description": "The routing decision inferred for this step: the first action whose criteria all passed, or the implicit fall-through/completion.",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "end",
+                        "goto",
+                        "retry",
+                        "fallThrough",
+                        "fault"
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The action's name, for an explicit action."
+                    },
+                    "target": {
+                      "type": "string",
+                      "description": "The goto/retry-from target stepId, when one applies."
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                }
+              },
+              "required": [
+                "stepId",
+                "status",
+                "attempt"
+              ]
+            }
+          },
+          "clockAdvances": {
+            "type": "array",
+            "description": "Every virtual-clock advance, in order (timer auto-advances).",
+            "items": {
+              "type": "object",
+              "title": "ClockAdvance",
+              "properties": {
+                "to": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "to"
+              ]
+            }
+          },
+          "stepsExecuted": {
+            "type": "integer",
+            "description": "The total step executions (retries and revisits included) — what the budget counts."
+          }
+        },
+        "required": [
+          "outcome",
+          "steps",
+          "stepsExecuted"
         ]
       },
       "WorkingCopyDiagnostics": {

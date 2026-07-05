@@ -1060,3 +1060,42 @@ test('every seeded registry source projects a non-empty operation surface', asyn
     assert.ok(operations.length > 0, `seeded source '${s.name}' must list operations — an empty rail after attaching it reads as a bug`);
   }
 });
+
+test('simulateWorkingCopy returns a structured trace from the mock synthesizer', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'sim',
+    document: {
+      arazzo: '1.1.0',
+      info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{
+        workflowId: 'wf',
+        steps: [
+          { stepId: 'a', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] },
+          { stepId: 'b', operationId: 'adoptPet' },
+        ],
+      }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    scenario: { mocks: [
+      { method: 'get', path: '/pets', status: 200, body: [] },
+      { method: 'post', path: '/pets/{petId}/adopt', status: 200 },
+    ] },
+  });
+  assert.equal(trace.outcome, 'completed');
+  assert.equal(trace.steps.length, 2);
+  assert.equal(trace.steps[0].successCriteria[0].satisfied, true);
+
+  // STATELESS stepping: every command re-supplies the whole scenario and replays from the start.
+  const paused = await c.simulateWorkingCopy(wc.id, {
+    scenario: { mocks: [{ method: 'get', path: '/pets', status: 200, body: [] }] },
+    until: { beforeStepId: 'b' },
+  });
+  assert.equal(paused.outcome, 'paused');
+  assert.equal(paused.pausedBefore, 'b');
+  assert.equal(paused.steps.length, 1);
+});

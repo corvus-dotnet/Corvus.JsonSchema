@@ -702,9 +702,25 @@ compile; it serves recorded fixtures, clearly marked).
    reference rows localize (materialise the component inline) or detach. The demo's ⚙ Document
    mode routes document edits through the model (undoable, coalesced); duplicate component names
    flag visibly. Editing-parity exception, deliberate: workflow `inputs` and component input
-   schemas edit as guarded JSON, not a typed schema-authoring form — tracked as §15 item 7.*
+   schemas edit as guarded JSON, not a typed schema-authoring form — tracked as §15 item 8.*
 5. **Simulator + debug.** Server `WorkflowSimulator` + trace + stateless stepping; debug controls,
    context explorer, trace viewer, canvas overlay, expression console.
+   *Status: server half BUILT. `WorkflowSimulator` lives in `Corvus.Text.Json.Arazzo.Testing` (the
+   planned §3.2 facade): compiles through the catalog's own `IWorkflowExecutorProvider` path in
+   DURABLE mode — the generated executor's per-step checkpoint (whose state indices are the
+   step-array indices) is the trace seam, so `TracingWorkflowRun` records step boundaries, outputs,
+   retries, waits, and faults, enforces the step budget, and throws the pause signal for
+   "before step X" stops with nothing half-executed; no code-generator changes. The §8.1
+   content-hash compile cache now exists (bounded LRU over `WorkflowExecutorLoader`). Criterion
+   truth tables and the action-taken inference are computed POST-HOC via `CompiledCriterion` over
+   the captured deterministic context (operand-level values remain a deferral). Timer waits
+   auto-advance a bespoke `ManualTimeProvider` (fixed 2020-01-01 epoch for reproducible traces);
+   message waits deliver the scenario's triggers through the run's own delivered-message seam.
+   `POST /workspace/workflows/{id}/simulate` (workspace:read) with the optional `workflowId`
+   selector (the handler reorders the workflows array — the provider compiles the first);
+   fails closed 400 unwired, 422 not-executable. Measured (in-process ShortRun): one cached-compile
+   replay = 34 µs / 14.7 KB — the §8.2 "milliseconds per command" budget holds with three orders of margin. Remaining: the debug UI (5b — controls, tray, context
+   explorer, trace viewer, canvas overlay, scrubber) and `simulateCatalogVersion`.*
 6. **Scenarios.** Scenario schema + CRUD + run endpoints (run-one and run-all suite report);
    scenario panel/editor; session recording; carry-over on create-from-version; **the `scenarios
    run` CLI** (§4.5: standalone in-process + remote modes, globbing, JUnit/JSON reports, CI exit
@@ -734,7 +750,15 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
 6. **CM6 instead of Monaco** (§7.1) — *Resolved:* CodeMirror 6 for both tiers, for its first-class
    shadow-DOM support (agreed 2026-07-04). The bespoke-SVG design surface (§6.1) was ratified the
    same day, conditional on the §6.3 layering discipline.
-7. **Typed schema-authoring form** — workflow `inputs` and the components library's input schemas
+7. **Step `timeout` vs the virtual clock** — a step's Arazzo `timeout` compiles to a real
+   `CancellationTokenSource.CancelAfter`, not a `TimeProvider`-driven delay, so the simulator's
+   virtual clock cannot deterministically fast-forward a step timeout (a mock `SetResponseDelay`
+   against real time is the only trigger today). Options: teach the emitter to time out via the
+   executor's `TimeProvider`, or accept wall-clock step timeouts in simulation (they still bound
+   runaway steps under the §8.3 wall-clock cap). (Recommend: emitter change, scheduled with the
+   engine's own backlog — it affects production runs too, where a virtual-clock-driven timeout is
+   equally desirable for determinism in tests.)
+8. **Typed schema-authoring form** — workflow `inputs` and the components library's input schemas
    currently edit as guarded JSON textareas (parse-gated, last-valid-wins), not a typed
    JSON-Schema-authoring form. That is the one deliberate exception to the slice-4 "full editing
    parity" bar. Options when picked up: (a) a purpose-built schema form (property rows,
