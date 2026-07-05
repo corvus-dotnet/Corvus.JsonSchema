@@ -5,7 +5,8 @@
 //
 //   const ed = document.createElement('arazzo-action-editor');
 //   ed.kind = 'failure';                       // offers retry
-//   ed.stepIds = ['validate-order', …];        // goto targets
+//   ed.stepIds = ['validate-order', …];        // step targets (this workflow)
+//   ed.workflowIds = ['refund-order', …];      // cross-workflow goto/retry targets
 //   ed.completionContext = { … };
 //   ed.value = step.onFailure[i];
 //   ed.addEventListener('action-changed', (e) => { step.onFailure[i] = e.detail.action; });
@@ -21,6 +22,7 @@ class ArazzoActionEditor extends ArazzoElement {
     /** @private */ this._action = { type: 'end' };
     /** @private */ this._kind = 'success';
     /** @private */ this._stepIds = [];
+    /** @private */ this._workflowIds = [];
     /** @private */ this._completionContext = {};
   }
 
@@ -43,10 +45,17 @@ class ArazzoActionEditor extends ArazzoElement {
     if (this.isConnected && this._built) this.renderForm();
   }
 
-  /** The stepIds offered as goto targets. */
+  /** The stepIds offered as goto/retry targets within this workflow. */
   get stepIds() { return [...this._stepIds]; }
   set stepIds(ids) {
     this._stepIds = [...(ids || [])];
+    if (this.isConnected && this._built) this.renderForm();
+  }
+
+  /** The other workflowIds offered as cross-workflow goto/retry targets. */
+  get workflowIds() { return [...this._workflowIds]; }
+  set workflowIds(ids) {
+    this._workflowIds = [...(ids || [])];
     if (this.isConnected && this._built) this.renderForm();
   }
 
@@ -97,11 +106,9 @@ class ArazzoActionEditor extends ArazzoElement {
           <select class="atype">${types.map((t) => `<option ${t === type ? 'selected' : ''}>${t}</option>`).join('')}</select>
         </div>
       </div>
-      <div class="target" ${type === 'goto' ? '' : 'hidden'}>
-        <label>goto step</label>
-        <select class="step">
-          ${this._stepIds.map((id) => `<option ${id === a.stepId ? 'selected' : ''}>${escapeHtml(id)}</option>`).join('')}
-        </select>
+      <div class="target" ${type === 'goto' || type === 'retry' ? '' : 'hidden'}>
+        <label>${type === 'retry' ? 'retry from (optional — blank re-runs this step)' : 'goto target'}</label>
+        <select class="step">${this._targetOptions(a, type)}</select>
       </div>
       <div class="pair retry" ${type === 'retry' ? '' : 'hidden'}>
         <div>
@@ -132,8 +139,12 @@ class ArazzoActionEditor extends ArazzoElement {
       this._setActionType(e.target.value, form);
     });
     form.querySelector('.step').addEventListener('change', (e) => {
-      this._action.stepId = e.target.value;
+      // Values are 'step:<id>' | 'workflow:<id>' | '' (retry only: re-run this step).
+      const v = e.target.value;
+      delete this._action.stepId;
       delete this._action.workflowId;
+      if (v.startsWith('step:')) this._action.stepId = v.slice('step:'.length);
+      else if (v.startsWith('workflow:')) this._action.workflowId = v.slice('workflow:'.length);
       this._emit();
     });
     form.querySelector('.rafter').addEventListener('input', (e) => {
@@ -154,17 +165,26 @@ class ArazzoActionEditor extends ArazzoElement {
     });
   }
 
+  /** @private — the grouped target options: this workflow's steps, then other workflows. */
+  _targetOptions(a, type) {
+    const selected = a.stepId ? `step:${a.stepId}` : a.workflowId ? `workflow:${a.workflowId}` : '';
+    const optional = type === 'retry' ? `<option value="" ${selected === '' ? 'selected' : ''}>(re-run this step)</option>` : '';
+    const steps = this._stepIds.map((id) => `<option value="step:${escapeHtml(id)}" ${selected === `step:${id}` ? 'selected' : ''}>${escapeHtml(id)}</option>`).join('');
+    const workflows = this._workflowIds.map((id) => `<option value="workflow:${escapeHtml(id)}" ${selected === `workflow:${id}` ? 'selected' : ''}>${escapeHtml(id)}</option>`).join('');
+    return optional
+      + (steps ? `<optgroup label="steps">${steps}</optgroup>` : '')
+      + (workflows ? `<optgroup label="workflows">${workflows}</optgroup>` : '');
+  }
+
   /** @private — change the action type, pruning fields the new type does not carry. */
   _setActionType(type, form) {
     this._action.type = type;
-    if (type !== 'goto') { delete this._action.stepId; delete this._action.workflowId; }
+    if (type !== 'goto' && type !== 'retry') { delete this._action.stepId; delete this._action.workflowId; }
     if (type !== 'retry') { delete this._action.retryAfter; delete this._action.retryLimit; }
-    if (type === 'goto' && !this._action.stepId && this._stepIds.length) {
+    if (type === 'goto' && !this._action.stepId && !this._action.workflowId && this._stepIds.length) {
       this._action.stepId = this._stepIds[0];
-      form.querySelector('.step').value = this._stepIds[0];
     }
-    form.querySelector('.target').hidden = type !== 'goto';
-    form.querySelector('.retry').hidden = type !== 'retry';
+    this.renderForm(); // the target label/options depend on the type
     this._emit();
   }
 

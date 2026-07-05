@@ -103,6 +103,9 @@ class ArazzoStepInspector extends ArazzoElement {
         .addp { font-size: 12px; justify-self: start; }
         .localize { font-size: 12px; }
         .hint { font-size: 11px; color: var(--_muted); }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+        .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
       </style>
       <div class="form" part="form"></div>
     `;
@@ -127,6 +130,10 @@ class ArazzoStepInspector extends ArazzoElement {
       </div>
       <div class="binding"></div>
 
+      <h3>depends on</h3>
+      <div class="hint">steps that must complete before this one runs (Arazzo 1.1 async ordering)</div>
+      <div class="dependson chips"></div>
+
       <h3>parameters</h3>
       <div class="params"></div>
       <button class="addp ghost" type="button">+ Add parameter</button>
@@ -142,6 +149,11 @@ class ArazzoStepInspector extends ArazzoElement {
       <div>
         <label>payload</label>
         <div class="payload-slot"></div>
+      </div>
+      <div>
+        <label>replacements (JSON Pointer → value)</label>
+        <div class="repls"></div>
+        <button class="addr ghost" type="button">+ Add replacement</button>
       </div>
 
       <h3>success criteria</h3>
@@ -162,7 +174,9 @@ class ArazzoStepInspector extends ArazzoElement {
     `;
 
     this._renderBinding(kind);
+    this._renderDependsOn();
     this._renderParams();
+    this._renderReplacements();
 
     // Success criteria (shared editor).
     const criteria = document.createElement('arazzo-criteria-editor');
@@ -362,6 +376,76 @@ class ArazzoStepInspector extends ArazzoElement {
     };
   }
 
+  /** @private — toggle chips over the workflow's other steps; empty prunes the property. */
+  _renderDependsOn() {
+    const box = this.$('.dependson');
+    const others = this._stepIds.filter((id) => id !== this._step.stepId);
+    if (!others.length) {
+      box.innerHTML = '<span class="hint">no other steps yet</span>';
+      return;
+    }
+
+    const current = new Set(this._step.dependsOn || []);
+    box.innerHTML = others.map((id) => `
+      <button type="button" class="chip ghost${current.has(id) ? ' on' : ''}" data-id="${escapeHtml(id)}"
+        aria-pressed="${current.has(id)}">${escapeHtml(id)}</button>`).join('');
+    box.querySelectorAll('.chip').forEach((chip) => chip.addEventListener('click', () => {
+      const set = new Set(this._step.dependsOn || []);
+      if (set.has(chip.dataset.id)) set.delete(chip.dataset.id);
+      else set.add(chip.dataset.id);
+
+      // Preserve step order (dependencies read best in execution order).
+      const ordered = this._stepIds.filter((id) => set.has(id));
+      if (ordered.length) this._step.dependsOn = ordered;
+      else delete this._step.dependsOn;
+      this._renderDependsOn();
+      this._emit();
+    }));
+  }
+
+  /** @private — the requestBody.replacements list: target (JSON Pointer) → expression-capable value. */
+  _renderReplacements() {
+    const box = this.$('.repls');
+    const replacements = this._step.requestBody?.replacements || [];
+    box.innerHTML = '';
+    replacements.forEach((r, i) => {
+      const row = document.createElement('div');
+      row.className = 'rrow';
+      row.style.cssText = 'display:grid; grid-template-columns: 1fr 1fr auto; gap:6px; align-items:center; margin-bottom:6px;';
+      row.innerHTML = `
+        <input class="rtarget" type="text" placeholder="/card/number" value="${escapeHtml(r.target ?? '')}">
+        <div class="rvalue-slot"></div>
+        <button class="rdel ghost" type="button" title="Remove">✕</button>`;
+      const value = document.createElement('arazzo-expression-input');
+      value.completionContext = this._completionContext;
+      value.value = typeof r.value === 'string' ? r.value : JSON.stringify(r.value ?? '');
+      row.querySelector('.rvalue-slot').append(value);
+      row.querySelector('.rtarget').addEventListener('input', (e) => {
+        r.target = e.target.value;
+        this._emit();
+      });
+      value.addEventListener('commit', (e) => {
+        e.stopPropagation();
+        r.value = e.detail.value;
+        this._emit();
+      });
+      row.querySelector('.rdel').addEventListener('click', () => {
+        replacements.splice(i, 1);
+        if (!replacements.length) { delete this._step.requestBody.replacements; this._pruneRequestBody(); }
+        this._renderReplacements();
+        this._emit();
+      });
+      box.append(row);
+    });
+    this.$('.addr').onclick = () => {
+      this._ensureRequestBody();
+      (this._step.requestBody.replacements ??= []).push({ target: '', value: '' });
+      this._renderReplacements();
+      box.querySelector('.rrow:last-child .rtarget')?.focus();
+      this._emit();
+    };
+  }
+
   /** @private */
   _mountActionList(slotClass, listName, kind) {
     const actions = (this._step[listName] ??= []);
@@ -369,6 +453,7 @@ class ArazzoStepInspector extends ArazzoElement {
       actions,
       kind,
       stepIds: this._stepIds.filter((id) => id !== this._step.stepId),
+      workflowIds: this._workflowIds,
       completionContext: this._completionContext,
       onChange: () => {
         if (!actions.length) delete this._step[listName];
