@@ -1113,6 +1113,8 @@ export function createMockControlPlane(options = {}) {
     if (/\/catalog\/[^/]+\/versions\/[^/]+\/availability\/[^/]+$/.test(path)) return 'availability:write';
     if (path.includes('/accessRequests') || path.includes('/availabilityRequests')) return null;
     if (/\/workspace\/workflows\/[^/]+\/publish\/?$/.test(path)) return 'catalog:write'; // publish mints a catalog version (§4.6)
+    if (path.includes('/github/auth/callback')) return null; // the browser callback authenticates by its single-use state (§4.7)
+    if (path.includes('/github')) return 'workspace:write'; // begin sign-in / disconnect (§4.7)
     if (path.includes('/catalog')) return method === 'PURGE' || method === 'DELETE' ? 'catalog:purge' : 'catalog:write';
     if (path.includes('/credentials')) return 'credentials:write';
     if (path.includes('/environments')) return 'environments:write'; // incl. env-admin governance (§7.7)
@@ -1202,6 +1204,95 @@ export function createMockControlPlane(options = {}) {
     return json(structuredClone(r));
   }
 
+  // ---- brokered GitHub (workflow-designer §4.7) --------------------------------------------------
+  // The mock plays BOTH halves: the control-plane broker AND a fake GitHub. beginGitHubAuth returns
+  // an authorizeUrl pointing straight at the mock's own callback, so a popup opened to it completes
+  // the sign-in immediately and the opener's session poll flips to connected — the demo's one-click
+  // flow. State is single-use, like the real broker; contents live in a tiny fixed tree.
+  let gitHubConnected = false;
+  let gitHubStateCounter = 0;
+  const gitHubStates = new Set();
+  // btoa is Latin1-only: route the UTF-8 bytes through a binary string (the GitHub contents shape).
+  const utf8ToBase64 = (s) => {
+    const bytes = new TextEncoder().encode(s);
+    let binary = '';
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoaSafe(binary);
+  };
+  const gitHubFile = (path, content) => ({
+    kind: 'file',
+    file: { name: path.split('/').pop(), path, sha: `sha-${path}`, size: content.length, encoding: 'base64', content: utf8ToBase64(content) },
+  });
+  const gitHubTree = {
+    '': {
+      kind: 'dir',
+      entries: [
+        { name: 'petstore.openapi.json', path: 'petstore.openapi.json', type: 'file', size: 512, sha: 'sha-petstore' },
+        { name: 'flows', path: 'flows', type: 'dir', sha: 'sha-flows' },
+      ],
+    },
+    flows: {
+      kind: 'dir',
+      entries: [{ name: 'adopt.arazzo.json', path: 'flows/adopt.arazzo.json', type: 'file', size: 256, sha: 'sha-adopt' }],
+    },
+    'petstore.openapi.json': gitHubFile('petstore.openapi.json', JSON.stringify(SOURCE_DOCS.petstore)),
+    'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(workflowDoc('adopt-pet-v1', 'Adopt a Pet', 'Adopt a pet — imported from GitHub.', [{ name: 'petstore', type: 'openapi' }]))),
+  };
+
+  function handleGitHub(path, method, params, origin) {
+    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/contents)\/?$/);
+    if (!m) return null;
+    const route = m[1];
+    if (route === 'auth' && method === 'POST') {
+      const state = `mock-state-${++gitHubStateCounter}`;
+      gitHubStates.add(state);
+      const prefix = path.slice(0, path.indexOf('/github'));
+      return json({ authorizeUrl: `${origin}${prefix}/github/auth/callback?code=mock&state=${encodeURIComponent(state)}`, state });
+    }
+
+    if (route === 'auth/callback' && method === 'GET') {
+      const state = params.get('state');
+      if (!state || !gitHubStates.delete(state)) {
+        return problem(400, 'Invalid state', 'The state is unknown, expired, or already used; begin the sign-in again.');
+      }
+
+      gitHubConnected = true;
+      return new Response(null, { status: 200 });
+    }
+
+    if (route === 'session' && method === 'GET') {
+      return gitHubConnected
+        ? json({
+            connected: true,
+            login: 'octo',
+            name: 'Octo Cat',
+            avatarUrl: 'https://avatars.example/octo.png',
+            installations: [{ id: 7, account: 'acme-org', repositories: [{ owner: 'acme-org', name: 'specs', fullName: 'acme-org/specs', defaultBranch: 'main', private: true }] }],
+          })
+        : json({ connected: false });
+    }
+
+    if (route === 'session' && method === 'DELETE') {
+      gitHubConnected = false;
+      return new Response(null, { status: 204 });
+    }
+
+    if (route.startsWith('repos/') && method === 'GET') {
+      if (!gitHubConnected) return problem(409, 'GitHub not connected', 'The caller has no GitHub session; begin the sign-in first.');
+      const owner = decodeURIComponent(m[2]);
+      const repo = decodeURIComponent(m[3]);
+      if (owner !== 'acme-org' || repo !== 'specs') {
+        return problem(404, 'Not found', `'${owner}/${repo}' does not exist, or is outside the user ∩ installation intersection.`);
+      }
+
+      const node = gitHubTree[params.get('path') || ''];
+      if (!node) return problem(404, 'Not found', `'${owner}/${repo}/${params.get('path')}' does not exist.`);
+      return json(node);
+    }
+
+    return null;
+  }
+
   async function handle(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
     const u = new URL(url, 'https://mock');
@@ -1231,6 +1322,9 @@ export function createMockControlPlane(options = {}) {
 
     const sourcesResponse = handleSources(path, method, u.searchParams, body);
     if (sourcesResponse) return sourcesResponse;
+
+    const gitHubResponse = handleGitHub(path, method, u.searchParams, u.origin);
+    if (gitHubResponse) return gitHubResponse;
 
     const workspaceResponse = handleWorkspace(path, method, u.searchParams, body);
     if (workspaceResponse) return workspaceResponse;

@@ -808,6 +808,18 @@ compile; it serves recorded fixtures, clearly marked).
 8. **GitHub.** App broker + session endpoints; bind/pull/commit(+PR) incl. scenario files;
    import-from-repo in the acquisition dialog; **the GitHub Action wrapper** for the scenario
    runner (§4.5).
+   *Status: 8a (the broker) BUILT. `GitHubBroker` (deployment-wired via `MapArazzoControlPlane`,
+   fails closed like the source fetcher; GHES = base-URL configuration): the user-to-server flow
+   with single-use principal-bound state — begin returns `{authorizeUrl, state}` JSON for a POPUP
+   (a bearer SPA cannot carry its token on a top-level navigation; the opener polls the session
+   and closes the popup), the anonymous callback authenticates BY the state and exchanges the code
+   server-side (App secret resolved per exchange via the deployment's secret resolver, never
+   held), tokens refresh on demand and live in a per-principal `IGitHubTokenStore` (in-memory
+   default; encrypted-at-rest substitutable). Endpoints: getGitHubStatus (identity + installations
+   + user ∩ installation repositories), deleteGitHubSession, browseRepo (proxied contents,
+   non-disclosing 404). JS client + mock parity (the mock's authorizeUrl points at its own
+   callback, so the demo popup self-completes). Remaining: 8b bind/pull/commit(+PR) with scenario
+   files, import-from-repo in the acquisition dialog + connect UI, the Action wrapper.*
 
 Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, catalog gate, demo).
 

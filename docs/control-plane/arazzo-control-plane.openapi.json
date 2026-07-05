@@ -62,6 +62,10 @@
     "description": "Designer working copies (workflow-designer design §4.1): mutable Arazzo documents saved during development without minting catalog versions. Reach-scoped, etag-guarded; publish mints an immutable catalog version."
   },
   {
+    "name": "github",
+    "description": "Brokered GitHub integration (workflow-designer design §4.7): the control plane holds a GitHub App's credentials and each principal's short-lived user-to-server token — the kit never sees a GitHub credential. Authorship is the signed-in user's GitHub-held git identity, stamped by GitHub rather than composed by the control plane; reach is the user ∩ installation ∩ App-permission intersection; token custody is server-side, keyed by control-plane principal; unattended actions use the App's bot identity or don't happen. Deployment-configured (a deployment that brokers no App refuses these operations)."
+  },
+  {
     "name": "availability",
     "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7), and, where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite is green. Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
   },
@@ -3053,6 +3057,106 @@
         }
       }
     },
+    "/github/auth": {
+      "post": {
+        "operationId": "beginGitHubAuth",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Begin the GitHub sign-in",
+        "description": "Mints a single-use, principal-bound state and returns the GitHub App authorize URL (workflow-designer design §4.7). The response is JSON rather than a redirect because a bearer-authenticated SPA cannot carry its token on a top-level navigation: the kit opens authorizeUrl in a popup, and when GitHub redirects the popup to the callback, the opener polls the session and closes it. 400 when this deployment brokers no GitHub App.",
+        "responses": {
+          "200": {
+            "description": "Navigate the browser to authorizeUrl to continue at GitHub.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubAuthStart" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/github/auth/callback": {
+      "get": {
+        "operationId": "completeGitHubAuth",
+        "security": [{}],
+        "tags": ["github"],
+        "summary": "Complete the GitHub sign-in (browser callback)",
+        "description": "GitHub redirects the browser (the kit's popup) here with ?code&state. The state — single-use, short-lived, minted by beginGitHubAuth — identifies and authenticates the principal (a top-level navigation carries no bearer token), and the code exchanges server-side; the user token never reaches the browser (workflow-designer design §4.7).",
+        "parameters": [
+          { "name": "code", "in": "query", "required": true, "schema": { "type": "string" }, "description": "The authorization code from GitHub." },
+          { "name": "state", "in": "query", "required": true, "schema": { "type": "string" }, "description": "The single-use state minted by beginGitHubAuth." }
+        ],
+        "responses": {
+          "200": { "description": "Signed in — the popup may close (the opener polls the session)." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/github/session": {
+      "get": {
+        "operationId": "getGitHubStatus",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "The caller's GitHub session",
+        "description": "The signed-in GitHub identity, App installations, and accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no GitHub App.",
+        "responses": {
+          "200": {
+            "description": "The session status.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubStatus" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteGitHubSession",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Disconnect GitHub",
+        "description": "Drops the calling principal's brokered GitHub token. Idempotent.",
+        "responses": {
+          "204": { "description": "Disconnected (or never connected)." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/github/repos/{owner}/{repo}/contents": {
+      "get": {
+        "operationId": "browseRepo",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Browse a repository's contents",
+        "description": "Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is the user ∩ installation ∩ App-permission intersection — a repo the App is not installed on, or the user cannot read, is not found. 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." },
+          { "name": "path", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The path to browse (default: the repository root)." },
+          { "name": "ref", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The branch, tag, or commit (default: the default branch)." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The directory listing or file content.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBrowseResult" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/accessRequests": {
       "post": {
         "operationId": "submitAccessRequest",
@@ -4922,6 +5026,91 @@
           "instancePath",
           "message"
         ]
+      },
+      "GitHubAuthStart": {
+        "type": "object",
+        "title": "GitHubAuthStart",
+        "description": "The begin-auth handshake: navigate the browser to authorizeUrl; the state round-trips through GitHub to the callback, where it identifies the principal (workflow-designer design §4.7).",
+        "properties": {
+          "authorizeUrl": { "type": "string", "description": "The GitHub App authorize URL to navigate to." },
+          "state": { "type": "string", "description": "The single-use, principal-bound state embedded in authorizeUrl." }
+        },
+        "required": ["authorizeUrl", "state"]
+      },
+      "GitHubStatus": {
+        "type": "object",
+        "title": "GitHubStatus",
+        "description": "The calling principal's GitHub session: the signed-in identity and, when connected, the App installations and repositories the user ∩ installation intersection can reach.",
+        "properties": {
+          "connected": { "type": "boolean" },
+          "login": { "type": "string", "description": "The signed-in GitHub login." },
+          "name": { "type": "string", "description": "The signed-in account's display name." },
+          "avatarUrl": { "type": "string" },
+          "installations": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubInstallation" } }
+        },
+        "required": ["connected"]
+      },
+      "GitHubInstallation": {
+        "type": "object",
+        "title": "GitHubInstallation",
+        "description": "One App installation the signed-in user can act through, with the repositories it grants that the user can also reach.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "account": { "type": "string", "description": "The user or organisation the App is installed on." },
+          "repositories": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubRepository" } }
+        },
+        "required": ["id", "account"]
+      },
+      "GitHubRepository": {
+        "type": "object",
+        "title": "GitHubRepository",
+        "description": "A repository reachable through the brokered session.",
+        "properties": {
+          "owner": { "type": "string" },
+          "name": { "type": "string" },
+          "fullName": { "type": "string" },
+          "defaultBranch": { "type": "string" },
+          "private": { "type": "boolean" }
+        },
+        "required": ["owner", "name", "fullName"]
+      },
+      "GitHubBrowseResult": {
+        "type": "object",
+        "title": "GitHubBrowseResult",
+        "description": "A proxied contents read: a directory lists its entries; a file carries its content.",
+        "properties": {
+          "kind": { "type": "string", "enum": ["dir", "file"] },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubContentEntry" }, "description": "The directory's entries (kind: dir)." },
+          "file": { "$ref": "#/components/schemas/GitHubFile", "description": "The file (kind: file)." }
+        },
+        "required": ["kind"]
+      },
+      "GitHubContentEntry": {
+        "type": "object",
+        "title": "GitHubContentEntry",
+        "description": "One directory entry.",
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "type": { "type": "string", "enum": ["file", "dir"] },
+          "size": { "type": "integer", "format": "int64" },
+          "sha": { "type": "string" }
+        },
+        "required": ["name", "path", "type"]
+      },
+      "GitHubFile": {
+        "type": "object",
+        "title": "GitHubFile",
+        "description": "A file's content, base64-encoded (the GitHub contents shape).",
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "sha": { "type": "string" },
+          "size": { "type": "integer", "format": "int64" },
+          "encoding": { "type": "string", "description": "The content encoding (base64)." },
+          "content": { "type": "string", "description": "The base64-encoded file content." }
+        },
+        "required": ["name", "path", "content"]
       },
       "EvidenceSuite": {
         "type": "object",
