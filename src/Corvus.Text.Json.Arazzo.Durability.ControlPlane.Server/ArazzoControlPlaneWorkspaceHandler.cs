@@ -207,6 +207,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         // Resolve the carry-over document when requested; the draft below writes the request document
         // bytes-to-bytes, the carry-over bytes, or an inline blank skeleton — no interim buffers.
         ReadOnlyMemory<byte> catalogDocumentUtf8 = default;
+        ReadOnlyMemory<byte> carriedScenariosUtf8 = default;
         string? baseWorkflowId = null;
         int? basedOnVersion = null;
         if (fromVersion)
@@ -225,15 +226,29 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
             baseWorkflowId = (string)body.FromBaseWorkflowId;
             basedOnVersion = (int)body.FromVersionNumber;
-            ReadOnlyMemory<byte>? copied = await this.catalog.GetDocumentAsync(
-                baseWorkflowId, basedOnVersion.Value, CatalogPackage.WorkflowDocumentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
-            if (copied is not { } workflowDocument)
+
+            // Load the whole package once (owned copy), then slice the workflow document AND the
+            // scenario set from it: both carry forward (§9), so the new working copy inherits the
+            // version's tests. The owned array outlives the draft write, keeping the slices valid.
+            ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(
+                baseWorkflowId, basedOnVersion.Value, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (package is not { } packageBytes)
             {
                 return CreateWorkspaceWorkflowResult.NotFound(
                     Problem("version-not-found", "Catalog version not found", 404, $"No catalog version '{baseWorkflowId}' v{basedOnVersion} exists, or it is outside your reach."), workspace);
             }
 
-            catalogDocumentUtf8 = workflowDocument;
+            var ownedPackage = new ReadOnlyMemory<byte>(packageBytes.ToArray());
+            if (!WorkflowPackage.TryReadEntry(ownedPackage, "workflow.json"u8, out catalogDocumentUtf8))
+            {
+                return CreateWorkspaceWorkflowResult.NotFound(
+                    Problem("version-not-found", "Catalog version not found", 404, $"No catalog version '{baseWorkflowId}' v{basedOnVersion} exists, or it is outside your reach."), workspace);
+            }
+
+            if (WorkflowPackage.TryReadEntry(ownedPackage, "metadata/scenarios.json"u8, out ReadOnlyMemory<byte> scenarios))
+            {
+                carriedScenariosUtf8 = scenarios;
+            }
         }
 
         try
@@ -242,7 +257,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             // 'untitled'), the document (request bytes-to-bytes / carry-over / blank skeleton),
             // designer state, provenance, and tags — writes in ONE pooled pass.
             using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceSourceJson.CreateDraft(
-                (JsonElement)body.Name, (JsonElement)body.Document, catalogDocumentUtf8, (JsonElement)body.DesignerState, baseWorkflowId, basedOnVersion, managementTags);
+                (JsonElement)body.Name, (JsonElement)body.Document, catalogDocumentUtf8, (JsonElement)body.DesignerState, baseWorkflowId, basedOnVersion, managementTags, carriedScenariosUtf8);
             ParsedJsonDocument<WorkspaceWorkflow> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
             // The full working copy (document included) is congruent with the API model — a free whole-document re-wrap.

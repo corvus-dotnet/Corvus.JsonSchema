@@ -310,6 +310,45 @@ public sealed class ControlPlaneSimulateApiTests
     }
 
     [TestMethod]
+    public async Task Scenarios_carry_over_from_a_published_version_into_a_new_working_copy()
+    {
+        await using Scoped host = await StartAsync(withSimulator: true);
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/happy",
+            """{"name":"happy","inputs":{"petId":"42"},"mocks":[{"source":"petstore","operationId":"getPet","responses":[{"status":200,"body":{"name":"Fido"}}]},{"source":"petstore","operationId":"adoptPet","responses":[{"status":200}]}],"expect":{"outcome":"completed"}}""",
+            "workspace:write")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        HttpResponseMessage published = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"}}""", "catalog:write");
+        published.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string baseWorkflowId;
+        int versionNumber;
+        using (Stj.JsonDocument v = Stj.JsonDocument.Parse(await published.Content.ReadAsStringAsync()))
+        {
+            baseWorkflowId = v.RootElement.GetProperty("baseWorkflowId").GetString()!;
+            versionNumber = v.RootElement.GetProperty("versionNumber").GetInt32();
+        }
+
+        // A new working copy created FROM that version inherits its scenario set (§9).
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/workspace/workflows",
+            $$"""{"name":"next","fromBaseWorkflowId":"{{baseWorkflowId}}","fromVersionNumber":{{versionNumber}}}""",
+            "workspace:write");
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string nextId;
+        using (Stj.JsonDocument copy = Stj.JsonDocument.Parse(await created.Content.ReadAsStringAsync()))
+        {
+            nextId = copy.RootElement.GetProperty("id").GetString()!;
+        }
+
+        using Stj.JsonDocument scenarios = Stj.JsonDocument.Parse(
+            await (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{nextId}/scenarios", "{}", "workspace:read")).Content.ReadAsStringAsync());
+        scenarios.RootElement.GetProperty("scenarios").GetArrayLength().ShouldBe(1, "the published scenario carried forward");
+        scenarios.RootElement.GetProperty("scenarios")[0].GetProperty("name").GetString().ShouldBe("happy");
+    }
+
+    [TestMethod]
     public async Task Simulation_fails_closed_when_the_deployment_wires_no_simulator()
     {
         await using Scoped host = await StartAsync(withSimulator: false);
