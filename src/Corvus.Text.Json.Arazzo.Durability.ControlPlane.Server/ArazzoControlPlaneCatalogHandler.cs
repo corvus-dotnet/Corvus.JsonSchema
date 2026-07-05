@@ -187,7 +187,29 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         workspace.TakeOwnership(v);
-        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.access.PublicView(v.RootElement, workspace)), workspace);
+        CatalogVersion view = this.access.PublicView(v.RootElement, workspace);
+
+        // The evidence badge's data (workflow-designer design §4.6): the detail — and only the detail —
+        // projects the publish-evidence summary ({at, suite}) from the package's metadata/evidence.json.
+        // Versions published without scenarios (an empty suite attests nothing), or predating evidence,
+        // simply omit the property — promotion readiness reads absence as unevidenced.
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (package is { } packageBytes && WorkflowPackage.TryReadEntry(packageBytes, "metadata/evidence.json"u8, out ReadOnlyMemory<byte> entry))
+        {
+            // Parse wraps the entry (no copy); the merged write copies the two slices into the pooled
+            // response document before the package memory goes out of scope.
+            using var evidence = ParsedJsonDocument<Models.PublishEvidence>.Parse(entry);
+            var at = (JsonElement)evidence.RootElement.At;
+            Models.EvidenceSuite suite = evidence.RootElement.Suite;
+            if (at.ValueKind == JsonValueKind.String && suite.Total.IsNotUndefined() && (int)suite.Total > 0)
+            {
+                ParsedJsonDocument<Models.CatalogVersionSummary> merged = WithEvidenceSummary((JsonElement)view, at, (JsonElement)suite);
+                workspace.TakeOwnership(merged);
+                return GetCatalogVersionResult.Ok(merged.RootElement, workspace);
+            }
+        }
+
+        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(view), workspace);
     }
 
     /// <inheritdoc/>
@@ -713,6 +735,28 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         workspace.TakeOwnership(evidence);
         return GetCatalogEvidenceResult.Ok(evidence.RootElement, workspace);
     }
+
+    // Builds the detail body: the public view's fields bytes-to-bytes plus the evidence summary
+    // ({at, suite}) sliced from the package's metadata/evidence.json — one pooled write+parse pass.
+    private static ParsedJsonDocument<Models.CatalogVersionSummary> WithEvidenceSummary(in JsonElement view, in JsonElement at, in JsonElement suite)
+        => PersistedJson.ToPooledDocument<Models.CatalogVersionSummary, (JsonElement View, JsonElement At, JsonElement Suite)>(
+            (view, at, suite),
+            static (Utf8JsonWriter writer, in (JsonElement View, JsonElement At, JsonElement Suite) s) =>
+            {
+                writer.WriteStartObject();
+                foreach (JsonProperty<JsonElement> property in s.View.EnumerateObject())
+                {
+                    property.WriteTo(writer);
+                }
+
+                writer.WriteStartObject("evidence"u8);
+                writer.WritePropertyName("at"u8);
+                s.At.WriteTo(writer);
+                writer.WritePropertyName("suite"u8);
+                s.Suite.WriteTo(writer);
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+            });
 
     private static Models.ProblemDetails.Source NotFoundProblem(string baseWorkflowId, int versionNumber)
         => Problem("version-not-found", "Version not found", 404, $"No version {versionNumber} of workflow '{baseWorkflowId}' exists.");

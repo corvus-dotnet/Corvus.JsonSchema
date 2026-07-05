@@ -171,6 +171,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+        .evd { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+        .evd-ok { background: var(--arazzo-status-completed, #2a8a4a); }
+        .evd-bad { background: var(--arazzo-status-faulted, #d4351c); }
         dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
         dt { color: var(--_muted); font-size: 12px; }
         dd { margin: 0; font-size: 13px; }
@@ -297,6 +300,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         <dt>Workflow id</dt><dd class="mono">${escapeHtml(v.workflowId || `${v.baseWorkflowId}-v${v.versionNumber}`)}</dd>
         ${v.description ? `<dt>Description</dt><dd>${escapeHtml(v.description)}</dd>` : ''}
         <dt>Content hash</dt><dd class="mono" part="hash">${escapeHtml(v.hash || '—')}<button class="copy ghost copy-hash" type="button" title="Copy content hash" aria-label="Copy content hash">⧉</button></dd>
+        ${this.renderEvidence(v)}
         ${Array.isArray(v.tags) && v.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${v.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
         ${this.renderSecurityTags(v)}
       </dl>
@@ -360,6 +364,20 @@ class ArazzoCatalogDetail extends ArazzoElement {
       o.url ? `<div class="muted"><a href="${escapeHtml(o.url)}" target="_blank" rel="noopener">${escapeHtml(o.url)}</a></div>` : '',
     ].join('');
     return `<div class="block" part="owner"><h4>Owner (governance)</h4>${rows}</div>`;
+  }
+
+  /**
+   * The publish-evidence badge (workflow-designer design §4.6): the server-attested suite verdict at
+   * publish, from the detail's projected summary. Absent for versions published without scenarios or
+   * predating evidence; the full per-scenario record stays behind the evidence endpoint.
+   */
+  renderEvidence(v) {
+    const suite = v.evidence?.suite;
+    if (!suite || !(suite.total > 0)) return '';
+    const green = (suite.failed ?? 0) === 0;
+    const label = `${suite.passed}/${suite.total} scenario${suite.total === 1 ? '' : 's'} ${green ? '✓' : '✗'}`;
+    const at = v.evidence.at;
+    return `<dt>Evidence</dt><dd part="evidence"><span class="evd ${green ? 'evd-ok' : 'evd-bad'}" title="Server-attested scenario suite at publish">${escapeHtml(label)}</span>${at ? ` <span class="muted" title="${escapeHtml(absoluteTime(at))}">at publish · ${escapeHtml(relativeTime(at))}</span>` : ''}</dd>`;
   }
 
   renderGovernance(v) {

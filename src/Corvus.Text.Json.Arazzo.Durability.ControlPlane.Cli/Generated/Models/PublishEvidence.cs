@@ -234,18 +234,20 @@ public readonly partial struct PublishEvidence
 
     /// <summary>
     /// Gets the <c>suite</c> property.
-    /// EvidenceSuite
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
+    /// <para>
+    /// The suite verdict: how many scenarios ran at publish and how many passed.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceSuite Suite
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite Suite
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceSuite value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite value))
             {
                 return value;
             }

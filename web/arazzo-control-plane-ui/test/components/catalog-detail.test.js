@@ -36,6 +36,29 @@ describe('<arazzo-catalog-detail>', () => {
     equal(el.shadowRoot.querySelector('header .badge').textContent, 'Obsolete', 'status badge reflects the version');
   });
 
+  it('renders the evidence badge from the detail projection (green suite)', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="evidence"]'));
+    equal(dd.querySelector('.evd').textContent, '3/3 scenarios ✓', 'green badge counts the attested suite');
+    ok(dd.querySelector('.evd').classList.contains('evd-ok'), 'a clean suite renders green');
+  });
+
+  it('renders a failing suite red', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="evidence"]'));
+    equal(dd.querySelector('.evd').textContent, '1/2 scenarios ✗', 'partial suite shows the failure');
+    ok(dd.querySelector('.evd').classList.contains('evd-bad'), 'a failing suite renders red');
+  });
+
+  it('omits the evidence row for versions without attested evidence', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('[part="hash"]'));
+    ok(!el.shadowRoot.querySelector('[part="evidence"]'), 'no badge without evidence');
+  });
+
   it('adds a security tag via the editor (Add tag) with catalog:write', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
     mount(el);

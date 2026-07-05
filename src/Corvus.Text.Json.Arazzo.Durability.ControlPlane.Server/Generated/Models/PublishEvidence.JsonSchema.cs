@@ -56,7 +56,7 @@ public readonly partial struct PublishEvidence
         private static readonly JsonSchemaPathProvider EngineVersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/engineVersion"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider PackageHashSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/packageHash"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ScenariosSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/scenarios"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider SuiteSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/suite"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider SuiteSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/suite/$ref"u8, buffer, out written);
 
         private static void MatchAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
@@ -136,14 +136,14 @@ public readonly partial struct PublishEvidence
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.SuiteUtf8,
                     evaluationPath: SuiteSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
 
             if (!context.HasCollector && !context.IsMatch)

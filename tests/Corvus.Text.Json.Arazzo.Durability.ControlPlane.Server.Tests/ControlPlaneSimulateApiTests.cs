@@ -264,6 +264,55 @@ public sealed class ControlPlaneSimulateApiTests
             entry.GetProperty("passed").GetBoolean().ShouldBeTrue();
             entry.GetProperty("pathSummary").GetString()!.ShouldContain("get-pet");
         }
+
+        // The badge's data rides the version DETAIL (§4.6): the summary projected from the package.
+        HttpResponseMessage detail = await host.SendJsonAsync(
+            HttpMethod.Get, $"/catalog/{baseWorkflowId}/versions/{versionNumber}", "{}", "catalog:read");
+        detail.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument summary = Stj.JsonDocument.Parse(await detail.Content.ReadAsStringAsync()))
+        {
+            Stj.JsonElement badge = summary.RootElement.GetProperty("evidence");
+            badge.GetProperty("suite").GetProperty("total").GetInt32().ShouldBe(1);
+            badge.GetProperty("suite").GetProperty("passed").GetInt32().ShouldBe(1);
+            badge.GetProperty("suite").GetProperty("failed").GetInt32().ShouldBe(0);
+            DateTimeOffset.TryParse(badge.GetProperty("at").GetString(), out _).ShouldBeTrue();
+            summary.RootElement.GetProperty("hash").GetString()!.Length.ShouldBe(64, "the projection keeps the record's own fields");
+        }
+
+        // Index pages stay lean: the list rows omit the summary.
+        HttpResponseMessage list = await host.SendJsonAsync(HttpMethod.Get, $"/catalog/{baseWorkflowId}", "{}", "catalog:read");
+        list.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument page = Stj.JsonDocument.Parse(await list.Content.ReadAsStringAsync()))
+        {
+            page.RootElement.GetProperty("versions")[0].TryGetProperty("evidence", out _).ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
+    public async Task Version_detail_omits_the_evidence_summary_when_nothing_was_attested()
+    {
+        await using Scoped host = await StartAsync(withSimulator: true);
+
+        // Published with NO scenarios: the embedded evidence attests nothing (an empty suite), so the
+        // detail omits the summary — promotion readiness reads absence as unevidenced.
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+        HttpResponseMessage published = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"}}""", "catalog:write");
+        published.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string baseWorkflowId;
+        int versionNumber;
+        using (Stj.JsonDocument version = Stj.JsonDocument.Parse(await published.Content.ReadAsStringAsync()))
+        {
+            baseWorkflowId = version.RootElement.GetProperty("baseWorkflowId").GetString()!;
+            versionNumber = version.RootElement.GetProperty("versionNumber").GetInt32();
+        }
+
+        HttpResponseMessage detail = await host.SendJsonAsync(
+            HttpMethod.Get, $"/catalog/{baseWorkflowId}/versions/{versionNumber}", "{}", "catalog:read");
+        detail.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using Stj.JsonDocument summary = Stj.JsonDocument.Parse(await detail.Content.ReadAsStringAsync());
+        summary.RootElement.TryGetProperty("evidence", out _).ShouldBeFalse();
     }
 
     [TestMethod]

@@ -319,7 +319,7 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// Get a workflow version
     /// </summary>
     /// <remarks>
-    /// Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package. The package and its individual documents are fetched via the links.
+    /// Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package — plus, for versions published with scenario evidence, the publish-evidence summary (the badge's data; the full per-scenario record is the evidence endpoint's). The package and its individual documents are fetched via the links.
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
