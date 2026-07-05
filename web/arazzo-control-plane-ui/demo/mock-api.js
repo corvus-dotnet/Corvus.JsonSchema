@@ -2802,6 +2802,9 @@ export function createMockControlPlane(options = {}) {
     const maxSteps = Math.min(request.budget?.maxSteps ?? 256, 1024);
     const clockStart = Date.parse('2020-01-01T00:00:00Z');
     let clockMs = 0;
+    // Scenario triggers (staged or injected mid-session) queue up for the message waits, in order.
+    const triggerQueue = [...(scenario.triggers ?? [])];
+    let wait;
 
     const evalCriterion = (condition, status) => {
       const m = /^\s*\$statusCode\s*(==|!=)\s*(\d+)\s*$/.exec(condition ?? '');
@@ -2831,6 +2834,28 @@ export function createMockControlPlane(options = {}) {
       if (++executed > maxSteps) { outcome = 'budgetExhausted'; break; }
 
       const op = bindingOf(step);
+
+      // A message step (AsyncAPI receive): consume a matching scenario trigger, or SUSPEND on the
+      // wait — the same semantics the real engine gives staged `triggers` and injected ones.
+      if (op?.kind === 'asyncapi' && (op.action ?? 'receive') === 'receive') {
+        const channel = op.channelPath ?? step.channelPath ?? step.operationId;
+        const ti = triggerQueue.findIndex((t) => t.channel === channel);
+        if (ti < 0) {
+          outcome = 'suspended';
+          wait = { kind: 'message', channel };
+          break;
+        }
+
+        const [trigger] = triggerQueue.splice(ti, 1);
+        steps.push({
+          stepId: step.stepId, status: 'completed', attempt: retries.get(step.stepId) ?? 0,
+          requests: [{ method: 'message', path: channel, status: 200, ...(trigger.payload !== undefined ? { responseBody: trigger.payload } : {}) }],
+          actionTaken: { type: 'fallThrough' },
+        });
+        index += 1;
+        continue;
+      }
+
       const { status, body: respBody } = takeResponse(op ?? { method: 'get', path: `/${step.stepId}` });
       const attempt = retries.get(step.stepId) ?? 0;
       const criteria = (step.successCriteria ?? []).map((c) => ({ condition: c.condition, satisfied: evalCriterion(c.condition, status) }));
@@ -2887,6 +2912,7 @@ export function createMockControlPlane(options = {}) {
       outcome,
       ...(pausedBefore ? { pausedBefore } : {}),
       ...(fault ? { fault } : {}),
+      ...(wait ? { wait } : {}),
       steps,
       ...(clockAdvances.length ? { clockAdvances } : {}),
       stepsExecuted: executed > maxSteps ? maxSteps : steps.length,

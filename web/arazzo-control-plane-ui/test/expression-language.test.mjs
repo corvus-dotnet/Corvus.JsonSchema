@@ -2,7 +2,7 @@
 // CM6-shaped StreamParser with a fake stream so no browser is needed.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { expressionStreamParser, completionsFor, EXPRESSION_ROOTS } from '../src/expression-language.js';
+import { expressionStreamParser, completionsFor, resolveAgainstFrame, EXPRESSION_ROOTS } from '../src/expression-language.js';
 
 class FakeStream {
   constructor(s) { this.string = s; this.pos = 0; }
@@ -215,4 +215,36 @@ test('inputs as a JSON Schema: names + details at the first level, pointer desce
 test('step output names fall back to the outputSchemas keys when no list is given', () => {
   const r = scomplete('$steps.authorize-payment.outputs.');
   assert.deepEqual(r.options.map((o) => o.label), ['receipt']);
+});
+
+// ---- resolveAgainstFrame: the paused-context expression console (§3.3) ----------------------------
+
+const FRAME = {
+  inputs: { petId: 'p-1', customer: { email: 'a@b.c' } },
+  outputs: { adopted: true },
+  steps: { 'get-pet': { outputs: { pet: { name: 'Fido', tags: ['calm', 'small'] } } } },
+  current: { statusCode: 200, responseBody: { name: 'Fido', status: 'available' } },
+};
+
+test('resolves inputs, outputs, step outputs, and the current exchange from a frame', () => {
+  assert.deepEqual(resolveAgainstFrame('$inputs.petId', FRAME), { found: true, value: 'p-1' });
+  assert.deepEqual(resolveAgainstFrame('$inputs.customer.email', FRAME), { found: true, value: 'a@b.c' });
+  assert.deepEqual(resolveAgainstFrame('$outputs.adopted', FRAME), { found: true, value: true });
+  assert.deepEqual(resolveAgainstFrame('$steps.get-pet.outputs.pet.name', FRAME), { found: true, value: 'Fido' });
+  assert.deepEqual(resolveAgainstFrame('$statusCode', FRAME), { found: true, value: 200 });
+  assert.deepEqual(resolveAgainstFrame('$response.body', FRAME).value.status, 'available');
+});
+
+test('descends a #/json/pointer suffix, RFC 6901 escapes and array indexes included', () => {
+  assert.deepEqual(resolveAgainstFrame('$steps.get-pet.outputs.pet#/tags/1', FRAME), { found: true, value: 'small' });
+  assert.deepEqual(resolveAgainstFrame('$response.body#/name', FRAME), { found: true, value: 'Fido' });
+  assert.equal(resolveAgainstFrame('$response.body#/missing', FRAME).found, false);
+});
+
+test('unexecuted steps and unrecorded roots explain themselves instead of resolving', () => {
+  const notRun = resolveAgainstFrame('$steps.confirm.outputs.x', FRAME);
+  assert.equal(notRun.found, false);
+  assert.match(notRun.reason, /has not executed/);
+  assert.equal(resolveAgainstFrame('$url', FRAME).found, false);
+  assert.equal(resolveAgainstFrame('nonsense', FRAME).found, false);
 });
