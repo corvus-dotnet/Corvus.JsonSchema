@@ -21,11 +21,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// The proposed time-bound duration in seconds, if any.
-/// </para>
-/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct JsonInt64
 #if NET8_0_OR_GREATER

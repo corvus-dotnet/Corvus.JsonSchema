@@ -1026,6 +1026,50 @@ export class ArazzoControlPlaneClient {
     return this._request('GET', `/catalog/${encodeURIComponent(baseWorkflowId)}/versions/${versionNumber}/evidence`, { signal });
   }
 
+  /**
+   * `beginGitHubAuth` — mint a single-use, principal-bound state and get the GitHub App authorize
+   * URL (workflow-designer §4.7). Open it in a POPUP; when GitHub redirects the popup to the
+   * control plane's callback, poll {@link getGitHubStatus} and close the popup. The kit never sees
+   * a GitHub credential — the token exchanges and stays server-side, keyed by the calling
+   * principal.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{authorizeUrl: string, state: string}>} Throws {@link ProblemError} `400` when the deployment brokers no App.
+   */
+  beginGitHubAuth(opts = {}) {
+    return this._request('POST', '/github/auth', { signal: opts.signal });
+  }
+
+  /**
+   * `getGitHubStatus` — the CALLER's GitHub session: connected flag, signed-in identity, App
+   * installations, and the repositories the user ∩ installation intersection can reach (§4.7).
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} `{connected:false}` when not signed in.
+   */
+  getGitHubStatus(opts = {}) {
+    return this._request('GET', '/github/session', { signal: opts.signal });
+  }
+
+  /** `deleteGitHubSession` — drop the caller's brokered GitHub token. Idempotent. */
+  async deleteGitHubSession(opts = {}) {
+    await this._request('DELETE', '/github/session', { signal: opts.signal });
+  }
+
+  /**
+   * `browseRepo` — a proxied contents read for the open/import dialogs (§4.7): a directory lists
+   * entries; a file returns base64 content. 409 (github-not-connected) without a session.
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ path?: string, ref?: string, signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} `{kind:'dir'|'file', entries?, file?}`.
+   */
+  browseRepo(owner, repo, { path, ref, signal } = {}) {
+    const query = new URLSearchParams();
+    if (path) query.set('path', path);
+    if (ref) query.set('ref', ref);
+    const suffix = query.size > 0 ? `?${query}` : '';
+    return this._request('GET', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents${suffix}`, { signal });
+  }
+
   /** `listScenarios` — the working copy's scenario set (design §4.2). */
   listScenarios(id, { signal } = {}) {
     return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/scenarios`, { signal });

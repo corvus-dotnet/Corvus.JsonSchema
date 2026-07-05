@@ -80,7 +80,8 @@ public static class ControlPlaneEndpointExtensions
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
     public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IWorkspaceWorkflowStore? workspaceWorkflowStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null, SourceDocumentFetcher? sourceFetcher = null,
-        Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? workflowSimulator = null)
+        Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? workflowSimulator = null,
+        GitHubBroker? gitHubBroker = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -185,6 +186,11 @@ public static class ControlPlaneEndpointExtensions
         IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
         var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, environmentAdministration, access, accessRequestSubjectClaimType);
 
+        // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
+        // status, and proxied contents reads. Deployment-configured; fails closed when no broker is
+        // wired. Token custody keys by the same subject claim the request surfaces use.
+        var gitHubHandler = new ArazzoControlPlaneGitHubHandler(gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType);
+
         return endpoints.MapApiEndpoints(
             securityHandler,
             new ArazzoControlPlaneHandler(management, access),
@@ -197,6 +203,7 @@ public static class ControlPlaneEndpointExtensions
             environmentsHandler,
             runnerAuthorizationsHandler,
             administratorsHandler,
+            gitHubHandler,
             accessRequestsHandler,
             availabilityRequestsHandler,
             identityHandler,

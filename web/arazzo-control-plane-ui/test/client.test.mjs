@@ -1207,3 +1207,45 @@ test('publish attests the suite and serves evidence; failures refuse with 422', 
   await c.putScenario(wc.id, { name: 'sad', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 500 }] }], expect: { outcome: 'completed' } });
   await assert.rejects(() => c.publishWorkingCopy(wc.id, { owner: { name: 'T', email: 't@e.com' } }), (e) => e.status === 422);
 });
+
+// ---- brokered GitHub (workflow-designer design §4.7) ----------------------------------------------
+
+test('the brokered GitHub flow: begin → callback (single-use state) → session → browse → disconnect', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+  assert.equal((await c.getGitHubStatus()).connected, false, 'starts disconnected');
+
+  // Begin returns the authorize URL the kit opens in a POPUP; the mock's points at its own callback,
+  // so the "popup navigation" below completes the sign-in immediately.
+  const { authorizeUrl, state } = await c.beginGitHubAuth();
+  assert.ok(authorizeUrl.includes('/github/auth/callback'), 'the mock self-completes via its own callback');
+  assert.ok(authorizeUrl.includes(encodeURIComponent(state)), 'the state rides the authorize URL');
+  assert.equal((await mock.fetch(authorizeUrl)).status, 200, 'the callback signs in (state-authenticated, no bearer)');
+  assert.equal((await mock.fetch(authorizeUrl)).status, 400, 'the state is single-use: a replay refuses');
+
+  const session = await c.getGitHubStatus();
+  assert.equal(session.connected, true);
+  assert.equal(session.login, 'octo');
+  assert.equal(session.installations[0].account, 'acme-org');
+  assert.equal(session.installations[0].repositories[0].fullName, 'acme-org/specs');
+
+  const root = await c.browseRepo('acme-org', 'specs');
+  assert.equal(root.kind, 'dir');
+  assert.ok(root.entries.some((e) => e.name === 'petstore.openapi.json' && e.type === 'file'), 'the root lists the spec');
+  const file = await c.browseRepo('acme-org', 'specs', { path: 'petstore.openapi.json' });
+  assert.equal(file.kind, 'file');
+  assert.ok(JSON.parse(Buffer.from(file.file.content, 'base64').toString()).openapi, 'the file content decodes to the spec');
+  await assert.rejects(() => c.browseRepo('acme-org', 'elsewhere'), (e) => e.status === 404, 'an unreachable repo is not found');
+
+  await c.deleteGitHubSession();
+  assert.equal((await c.getGitHubStatus()).connected, false, 'disconnect drops the session');
+  await assert.rejects(() => c.browseRepo('acme-org', 'specs'), (e) => e.status === 409, 'browse without a session conflicts');
+});
+
+test('persona enforcement: a viewer cannot begin the GitHub sign-in (workspace:write)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  mock.setPersona('viewer');
+  await assert.rejects(() => c.beginGitHubAuth(), (e) => e.status === 403);
+});
