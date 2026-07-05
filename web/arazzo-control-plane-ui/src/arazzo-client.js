@@ -992,6 +992,20 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `simulateWorkingCopy` — one deterministic debug command (design §4.3/§8.2, STATELESS): the
+   * server compiles the working copy (content-hash cached), replays it against the request's
+   * scripted mocks and virtual clock to the stop condition, and returns the COMPLETE structured
+   * trace — run, step, run-to-here, and re-run-after-edit are all this call with a different
+   * `until`; time-travel scrubbing renders client-side from the one trace.
+   * @param {string} id The working copy id.
+   * @param {{ workflowId?: string, scenario?: object, until?: object, budget?: object, signal?: AbortSignal }} [command]
+   * @returns {Promise<object>} The simulation trace.
+   */
+  simulateWorkingCopy(id, { signal, ...command } = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/simulate`, { body: command, signal });
+  }
+
+  /**
    * `fetchSourceDocument` — server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web
    * endpoint (no browser CORS), optionally authenticated with a registered source credential
    * referenced by `(sourceName, environment)`. Returns the validated document plus its detected
