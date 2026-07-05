@@ -208,6 +208,16 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] RunScenarioOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>PublishWorkingCopy</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PublishWorkingCopyOauth2Scopes = ["catalog:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PublishWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] PublishWorkingCopyOpenIdConnectScopes = ["catalog:write"];
+
+        /// <summary>
         /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] SimulateWorkingCopyOauth2Scopes = ["workspace:read"];
@@ -260,12 +270,12 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] AllOauth2Scopes = ["workspace:read", "workspace:write"];
+        public static readonly string[] AllOauth2Scopes = ["catalog:write", "workspace:read", "workspace:write"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] AllOpenIdConnectScopes = ["workspace:read", "workspace:write"];
+        public static readonly string[] AllOpenIdConnectScopes = ["catalog:write", "workspace:read", "workspace:write"];
     }
 
     /// <summary>
@@ -380,6 +390,17 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="scenarioName">The scenarioName parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<RunScenarioResponse> RunScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Publish the working copy as a new catalog version
+    /// </summary>
+    /// <remarks>
+    /// The deliberate publish act (design §4.6): validates the document, re-runs the FULL scenario suite server-side (evidence is server-attested, never client-submitted), builds the package embedding metadata/scenarios.json + metadata/evidence.json, and adds the new version to the catalog. Fails 422 with the diagnostics when the document is invalid, or with the suite report when a scenario fails and requireScenarios is not disabled. The new version starts as a draft until promoted.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<PublishWorkingCopyResponse> PublishWorkingCopyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Simulate a working copy deterministically

@@ -1087,6 +1087,7 @@ export function createMockControlPlane(options = {}) {
     if (method === 'GET') return null;
     if (/\/catalog\/[^/]+\/versions\/[^/]+\/availability\/[^/]+$/.test(path)) return 'availability:write';
     if (path.includes('/accessRequests') || path.includes('/availabilityRequests')) return null;
+    if (/\/workspace\/workflows\/[^/]+\/publish\/?$/.test(path)) return 'catalog:write'; // publish mints a catalog version (§4.6)
     if (path.includes('/catalog')) return method === 'PURGE' || method === 'DELETE' ? 'catalog:purge' : 'catalog:write';
     if (path.includes('/credentials')) return 'credentials:write';
     if (path.includes('/environments')) return 'environments:write'; // incl. env-admin governance (§7.7)
@@ -1371,7 +1372,7 @@ export function createMockControlPlane(options = {}) {
       return problem(405, 'Method not allowed');
     }
 
-    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|validate|sources\/[^/]+))?$/);
+    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|validate|evidence|sources\/[^/]+))?$/);
     if (versionMatch) {
       const base = decodeURIComponent(versionMatch[1]);
       const n = Number(versionMatch[2]);
@@ -1389,6 +1390,9 @@ export function createMockControlPlane(options = {}) {
       if (sub === 'workflow' && method === 'GET') return json(v._workflow);
       if (sub === 'schemas' && method === 'GET') return json(schemasFor(v));
       if (sub === 'validate' && method === 'POST') return json(validateValue(v, body));
+      if (sub === 'evidence' && method === 'GET') {
+        return v._evidence ? json(v._evidence) : problem(404, 'Evidence not found', 'This version carries no publish evidence.');
+      }
       if (sub && sub.startsWith('sources/') && method === 'GET') {
         const name = decodeURIComponent(sub.slice('sources/'.length));
         const doc = v._sources?.[name];
@@ -2222,6 +2226,48 @@ export function createMockControlPlane(options = {}) {
       const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcList[1]));
       if (!wc) return problem(404, 'Working copy not found');
       return json({ sources: (wc.sources ?? []).map(({ document, ...rest }) => structuredClone(rest)) });
+    }
+
+    const publish = fullPath.match(/\/workspace\/workflows\/([^/]+)\/publish\/?$/);
+    if (publish) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(publish[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      if (!body?.owner?.name || !body?.owner?.email) return problem(400, 'Invalid publish', 'owner.name and owner.email are required.');
+
+      // 1 — the validation gate.
+      const report = validateWorkingCopyDocument(wc.document, wc.sources ?? []);
+      if (!report.valid) return json({ reason: 'validation', diagnostics: report.diagnostics }, 422);
+
+      // 2 — the server-attested suite.
+      const results = (wc.scenarios ?? []).map((sc) => runScenarioAgainst(wc, sc));
+      const passed = results.filter((r) => r.passed).length;
+      const suite = { total: results.length, passed, failed: results.length - passed, results };
+      if (suite.failed > 0 && body.requireScenarios !== false) return json({ reason: 'scenarios', suite }, 422);
+
+      // 3 — the new draft version, evidence attached (the mock stores it on the version).
+      const base = wc.document.workflows?.[0]?.workflowId ?? 'workflow';
+      const versionNumber = catalog.filter((v) => v.baseWorkflowId === base).reduce((m, v) => Math.max(m, v.versionNumber), 0) + 1;
+      const version = {
+        baseWorkflowId: base, versionNumber, workflowId: `${base}-v${versionNumber}`,
+        title: wc.document.info?.title ?? wc.name, description: wc.document.info?.description,
+        status: 'Draft', tags: body.tags ?? [], owner: body.owner,
+        sources: (wc.document.sourceDescriptions ?? []).map((sd) => ({ name: sd.name, type: sd.type })),
+        hash: `${base}${versionNumber}`.padEnd(64, '0'),
+        securityTags: securityTagsForBase(base),
+        createdBy: actingSubject(), createdAt: iso(0),
+        _workflow: structuredClone(wc.document),
+        _scenarios: structuredClone(wc.scenarios ?? []),
+        _evidence: {
+          packageHash: `${base}${versionNumber}`.padEnd(64, '0'),
+          engineVersion: 'mock',
+          at: iso(0),
+          suite: { total: suite.total, passed: suite.passed, failed: suite.failed },
+          scenarios: results.map((r) => ({ name: r.scenario, passed: r.passed, outcome: r.outcome, pathSummary: r.trace.steps.map((st) => st.stepId).join(' → ') })),
+        },
+      };
+      catalog.push(version);
+      return json(toCatalogSummary(version), 201);
     }
 
     const scenarioRun = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/([^/]+)\/run\/?$/);

@@ -746,6 +746,19 @@ compile; it serves recorded fixtures, clearly marked).
    typed scenario forms (with the §15 schema-authoring work).*
 7. **Publish with evidence.** Publish endpoint (server-attested suite), package entries, evidence
    badge on catalog detail; optional promotion-readiness extension.
+   *Status: server half BUILT. The `.awp` format's reserved `metadata/scenarios.json` +
+   `metadata/evidence.json` entries exist (deterministic packing, canonical-repack survival via
+   OpenPooled→PackPooled pass-through, zero-copy `TryReadEntry`, hash-invariant — evidence is
+   metadata, not content). `publishWorkingCopy` (catalog:write): the validation gate (all three
+   passes, shared with validate), the server-attested suite (a client cannot submit evidence;
+   fails closed when scenarios exist and no simulator is wired), the canonical-hash-first evidence
+   record (engine version, per-scenario outcome/pathSummary, suite totals), the package embedding
+   both entries, and the catalog add stamping internal security tags with the response stripped
+   through the shared `ControlPlaneAccess.PublicView`. 422 refusals carry the diagnostics or the
+   suite report; `requireScenarios:false` overrides. `getCatalogEvidence` serves the entry from
+   the stored package. Remaining: the evidence badge on catalog detail + the designer's Publish
+   button (7b), scenario carry-over on create-from-version, and the promotion-readiness extension
+   (deployment-configurable, default-off).*
 8. **GitHub.** App broker + session endpoints; bind/pull/commit(+PR) incl. scenario files;
    import-from-repo in the acquisition dialog; **the GitHub Action wrapper** for the scenario
    runner (§4.5).

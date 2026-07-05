@@ -222,6 +222,94 @@ public sealed class ControlPlaneSimulateApiTests
     }
 
     [TestMethod]
+    public async Task Publish_attests_the_suite_server_side_and_embeds_the_evidence()
+    {
+        await using Scoped host = await StartAsync(withSimulator: true);
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+
+        const string passing = """
+            {"name":"happy","inputs":{"petId":"42"},
+             "mocks":[{"source":"petstore","operationId":"getPet","responses":[{"status":200,"body":{"name":"Fido"}}]},
+                      {"source":"petstore","operationId":"adoptPet","responses":[{"status":200}]}],
+             "expect":{"outcome":"completed"}}
+            """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/happy", passing, "workspace:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Publish: validation gate + server-attested suite + the package embedding both entries.
+        HttpResponseMessage published = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"},"tags":["designer"]}""", "catalog:write");
+        published.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string baseWorkflowId;
+        int versionNumber;
+        using (Stj.JsonDocument version = Stj.JsonDocument.Parse(await published.Content.ReadAsStringAsync()))
+        {
+            baseWorkflowId = version.RootElement.GetProperty("baseWorkflowId").GetString()!;
+            versionNumber = version.RootElement.GetProperty("versionNumber").GetInt32();
+            baseWorkflowId.ShouldBe("adopt");
+        }
+
+        // The evidence is served from the stored package, server-attested.
+        HttpResponseMessage evidenceResponse = await host.SendJsonAsync(
+            HttpMethod.Get, $"/catalog/{baseWorkflowId}/versions/{versionNumber}/evidence", "{}", "catalog:read");
+        evidenceResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument evidence = Stj.JsonDocument.Parse(await evidenceResponse.Content.ReadAsStringAsync()))
+        {
+            evidence.RootElement.GetProperty("packageHash").GetString()!.Length.ShouldBe(64);
+            evidence.RootElement.GetProperty("suite").GetProperty("total").GetInt32().ShouldBe(1);
+            evidence.RootElement.GetProperty("suite").GetProperty("passed").GetInt32().ShouldBe(1);
+            Stj.JsonElement entry = evidence.RootElement.GetProperty("scenarios")[0];
+            entry.GetProperty("name").GetString().ShouldBe("happy");
+            entry.GetProperty("passed").GetBoolean().ShouldBeTrue();
+            entry.GetProperty("pathSummary").GetString()!.ShouldContain("get-pet");
+        }
+    }
+
+    [TestMethod]
+    public async Task Publish_refuses_failing_suites_and_invalid_documents_with_422()
+    {
+        await using Scoped host = await StartAsync(withSimulator: true);
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+
+        // A failing scenario refuses the publish with the suite report; requireScenarios:false overrides.
+        const string failing = """
+            {"name":"sad","inputs":{"petId":"42"},
+             "mocks":[{"source":"petstore","operationId":"getPet","responses":[{"status":404}]}],
+             "expect":{"outcome":"completed"}}
+            """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/sad", failing, "workspace:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        HttpResponseMessage refused = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"}}""", "catalog:write");
+        refused.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        using (Stj.JsonDocument refusal = Stj.JsonDocument.Parse(await refused.Content.ReadAsStringAsync()))
+        {
+            refusal.RootElement.GetProperty("reason").GetString().ShouldBe("scenarios");
+            refusal.RootElement.GetProperty("suite").GetProperty("failed").GetInt32().ShouldBe(1);
+        }
+
+        (await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"},"requireScenarios":false}""", "catalog:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // An invalid document refuses with the diagnostics.
+        string invalid = await host.CreateWorkingCopyAsync(
+            """{"arazzo":"1.1.0","info":{"title":"x","version":"1"},"workflows":[{"workflowId":"wf","steps":[{"stepId":"a","operationId":"op","onSuccess":[{"name":"jump","type":"goto","stepId":"ghost"}]}]}]}""",
+            sourceDoc: null);
+        HttpResponseMessage invalidRefused = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{invalid}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"}}""", "catalog:write");
+        invalidRefused.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        using Stj.JsonDocument invalidRefusal = Stj.JsonDocument.Parse(await invalidRefused.Content.ReadAsStringAsync());
+        invalidRefusal.RootElement.GetProperty("reason").GetString().ShouldBe("validation");
+        invalidRefusal.RootElement.GetProperty("diagnostics").GetArrayLength().ShouldBeGreaterThan(0);
+    }
+
+    [TestMethod]
     public async Task Simulation_fails_closed_when_the_deployment_wires_no_simulator()
     {
         await using Scoped host = await StartAsync(withSimulator: false);
