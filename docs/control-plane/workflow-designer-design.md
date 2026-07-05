@@ -778,9 +778,18 @@ compile; it serves recorded fixtures, clearly marked).
    wildcards, deterministic ordering); remote (`--working-copy` + `--server`) executes the stored
    suite server-side. Console/JUnit/JSON reports (`--report junit=…/json=…`; the JSON report is the
    suite-report shape publish embeds), `--github-annotations` (::error + job summary), and CI exit
-   codes (1 = failed expectation, 2 = suite could not run). Remaining in this slice: the typed
-   scenario forms (with the §15 schema-authoring work); catalog-version targets follow
-   simulateCatalogVersion (§14 slice-5 remainder).*
+   codes (1 = failed expectation, 2 = suite could not run). Typed scenario forms BUILT — they
+   CONSUME schemas (the §15 item-8 authoring deferral stands): `getWorkingCopySchemas` recomputes
+   the baked-schema TypeDescriptors for the working copy's current document + attachments (the
+   §4.1 row, same generator and shape as the catalog's), and `<arazzo-scenario-editor>` renders
+   the form — inputs typed by the workflow's inputs descriptor, mocks addressed by the document's
+   own operations with statuses constrained to the DECLARED responses (correct by construction:
+   the simulator faults on undeclared statuses) and bodies typed per status, expectations picked
+   from the workflow's steps, triggers/clock — with JSON one toggle away and unknown fields
+   surviving a form round-trip (edits overlay the original object). `<arazzo-value-editor>`
+   gained `seed` (prefill from an existing value), so editing is seeding + reading. SLICE
+   COMPLETE; catalog-version scenario targets follow simulateCatalogVersion (§14 slice-5
+   remainder).*
 7. **Publish with evidence.** Publish endpoint (server-attested suite), package entries, evidence
    badge on catalog detail; optional promotion-readiness extension.
    *Status: server half BUILT. The `.awp` format's reserved `metadata/scenarios.json` +

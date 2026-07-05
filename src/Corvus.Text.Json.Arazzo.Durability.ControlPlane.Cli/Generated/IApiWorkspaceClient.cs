@@ -218,6 +218,16 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] PublishWorkingCopyOpenIdConnectScopes = ["catalog:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetWorkingCopySchemas</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetWorkingCopySchemasOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetWorkingCopySchemas</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetWorkingCopySchemasOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] SimulateWorkingCopyOauth2Scopes = ["workspace:read"];
@@ -401,6 +411,16 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<PublishWorkingCopyResponse> PublishWorkingCopyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdPublishBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// The working copy's schema metadata
+    /// </summary>
+    /// <remarks>
+    /// The schema-metadata document RECOMPUTED for the working copy's current document and attached sources (the same shape getCatalogWorkflowSchemas serves baked into a package): each workflow's typed inputs and each step's resolved operation, typed request/responses (or message), and outputs — powering the designer's typed forms (scenario inputs, mock bodies by declared status, expectations) and expression completions.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetWorkingCopySchemasResponse> GetWorkingCopySchemasAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Simulate a working copy deterministically

@@ -129,6 +129,15 @@ public interface IApiWorkspaceHandler
     ValueTask<PublishWorkingCopyResult> HandlePublishWorkingCopyAsync(PublishWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /workspace/workflows/{id}/schemas — The working copy's schema metadata
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetWorkingCopySchemasResult> HandleGetWorkingCopySchemasAsync(GetWorkingCopySchemasParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /workspace/workflows/{id}/simulate — Simulate a working copy deterministically
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

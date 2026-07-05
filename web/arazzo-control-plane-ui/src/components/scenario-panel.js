@@ -1,7 +1,8 @@
 // <arazzo-scenario-panel> — the working copy's scenario suite (design §3.4/§4.2): list, run one,
 // run all, and the per-expectation verdicts; a run's full trace hands off to the debug tray
-// (`run-trace`) so scenario failures debug exactly like interactive sessions. Editing is guarded
-// JSON in v1 (the typed scenario forms follow the schema-authoring work, §15).
+// (`run-trace`) so scenario failures debug exactly like interactive sessions. Editing is the TYPED
+// scenario form (<arazzo-scenario-editor>, driven by getWorkingCopySchemas) with JSON one toggle
+// away; when the schemas cannot load, editing falls back to JSON-only.
 //
 //   const panel = document.createElement('arazzo-scenario-panel');
 //   panel.client = client;
@@ -13,6 +14,7 @@
 // Events     : run-trace {scenario, trace}, scenarios-changed {count}, error {problem}
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import './scenario-editor.js';
 
 class ArazzoScenarioPanel extends ArazzoElement {
   constructor() {
@@ -45,8 +47,15 @@ class ArazzoScenarioPanel extends ArazzoElement {
     }
 
     try {
-      const { scenarios } = await this.client.listScenarios(this._workingCopyId);
+      // The scenario set and the typed form's descriptors (recomputed for the current document)
+      // load together, so an edit opened right after scenarios-changed sees the schemas. A schema
+      // failure is not fatal: the editor falls back to JSON-only.
+      const [{ scenarios }, schemas] = await Promise.all([
+        this.client.listScenarios(this._workingCopyId),
+        this.client.getWorkingCopySchemas(this._workingCopyId).catch(() => null),
+      ]);
       this._scenarios = scenarios;
+      this._schemas = schemas;
       this.render();
       this.emit('scenarios-changed', { count: scenarios.length });
     } catch (err) {
@@ -94,17 +103,22 @@ class ArazzoScenarioPanel extends ArazzoElement {
       const result = this._results.get(b.dataset.trace);
       if (result?.trace) this.emit('run-trace', { scenario: b.dataset.trace, trace: result.trace });
     }));
-    this.$$('textarea[data-json]').forEach((area) => area.addEventListener('change', async (e) => {
-      try {
-        const scenario = JSON.parse(e.target.value);
-        await this.client.putScenario(this._workingCopyId, scenario);
-        this._editing = null;
-        this.refresh();
-      } catch (err) {
-        e.target.classList.add('invalid');
-        this.emit('error', { problem: err.problem ?? { title: err.message }, error: err });
-      }
-    }));
+    this.$$('.editor-slot').forEach((slot) => {
+      const editor = document.createElement('arazzo-scenario-editor');
+      editor.schemas = this._schemas;
+      editor.scenario = this._scenarios.find((x) => x.name === slot.dataset.name);
+      editor.addEventListener('scenario-changed', async (e) => {
+        try {
+          await this.client.putScenario(this._workingCopyId, e.detail.scenario);
+          this._editing = null;
+          this.refresh();
+        } catch (err) {
+          this.emit('error', { problem: err.problem ?? { title: err.message }, error: err });
+        }
+      });
+      editor.addEventListener('cancel', () => { this._editing = null; this.render(); });
+      slot.appendChild(editor);
+    });
   }
 
   /** @private */
@@ -117,14 +131,14 @@ class ArazzoScenarioPanel extends ArazzoElement {
         ${status}
         ${result?.trace ? `<button type="button" data-trace="${escapeHtml(s.name)}" title="Open this run's trace in the debug tray">🐞</button>` : ''}
         <button type="button" data-run="${escapeHtml(s.name)}" title="Run this scenario" ${this._busy ? 'disabled' : ''}>▶</button>
-        <button type="button" data-edit="${escapeHtml(s.name)}" title="Edit as JSON">✎</button>
+        <button type="button" data-edit="${escapeHtml(s.name)}" title="Edit (typed form; JSON one toggle away)">✎</button>
         <button type="button" class="ghost" data-del="${escapeHtml(s.name)}" title="Delete">✕</button>
       </div>
       ${s.description ? `<div class="desc">${escapeHtml(s.description)}</div>` : ''}
       ${result ? `<div class="verdicts">${result.expectations.map((v) =>
         `<button type="button" data-trace="${escapeHtml(s.name)}" title="Open the trace">
           <span class="${v.passed ? 'ok' : 'bad'}">${v.passed ? '✓' : '✗'}</span> [${escapeHtml(v.kind)}] ${escapeHtml(v.detail ?? '')}</button>`).join('')}</div>` : ''}
-      ${this._editing === s.name ? `<textarea data-json="${escapeHtml(s.name)}" spellcheck="false">${escapeHtml(JSON.stringify(s, null, 2))}</textarea>` : ''}
+      ${this._editing === s.name ? `<div class="editor-slot" data-name="${escapeHtml(s.name)}"></div>` : ''}
     </div>`;
   }
 
