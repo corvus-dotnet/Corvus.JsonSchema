@@ -75,6 +75,51 @@ public interface IApiWorkspaceHandler
     ValueTask<ValidateWorkspaceWorkflowResult> HandleValidateWorkspaceWorkflowAsync(ValidateWorkspaceWorkflowParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /workspace/workflows/{id}/scenarios — List the working copy's scenarios
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListScenariosResult> HandleListScenariosAsync(ListScenariosParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /workspace/workflows/{id}/scenarios — Run every scenario as a suite
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<RunAllScenariosResult> HandleRunAllScenariosAsync(RunAllScenariosParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles PUT /workspace/workflows/{id}/scenarios/{scenarioName} — Create or replace a scenario
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<PutScenarioResult> HandlePutScenarioAsync(PutScenarioParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles DELETE /workspace/workflows/{id}/scenarios/{scenarioName} — Delete a scenario
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<DeleteScenarioResult> HandleDeleteScenarioAsync(DeleteScenarioParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /workspace/workflows/{id}/scenarios/{scenarioName}/run — Run one scenario
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<RunScenarioResult> HandleRunScenarioAsync(RunScenarioParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /workspace/workflows/{id}/simulate — Simulate a working copy deterministically
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

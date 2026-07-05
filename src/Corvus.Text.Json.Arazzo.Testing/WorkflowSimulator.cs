@@ -116,7 +116,11 @@ public sealed class WorkflowSimulator : IDisposable
         var clock = new ManualTimeProvider();
         var clockAdvances = new List<SimulationClockAdvance>();
         var run = new TracingWorkflowRun(shape.StepIds, stop, budget.MaxSteps, clock, transport);
-        var workspace = JsonWorkspace.Create();
+
+        // UNRENTED deliberately: the rented workspace cache is thread-affine, and this workspace's
+        // lifetime is the SimulationResult's — disposed by the caller after awaits, possibly on
+        // another thread. Renting here trips the cache's affinity assertion under load.
+        var workspace = JsonWorkspace.CreateUnrented();
         owned.Add(workspace);
 
         SimulationOutcome outcome;

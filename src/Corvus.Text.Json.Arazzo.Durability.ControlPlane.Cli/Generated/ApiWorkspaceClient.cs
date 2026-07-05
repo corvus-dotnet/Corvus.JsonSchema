@@ -178,6 +178,119 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     }
 
     /// <summary>
+    /// List the working copy's scenarios
+    /// </summary>
+    /// <remarks>
+    /// The scenario set travels WITH the working copy (design §4.2/§9) and is published into the package as metadata/scenarios.json.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ListScenariosResponse> ListScenariosAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        ListScenariosRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ListScenariosRequest, ListScenariosResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Run every scenario as a suite
+    /// </summary>
+    /// <remarks>
+    /// Executes each scenario against the deterministic simulator (§8) and returns the suite report. POST on the collection is run-all; POST on a member's /run is run-one. 400 when this deployment offers no simulation.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<RunAllScenariosResponse> RunAllScenariosAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        RunAllScenariosRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<RunAllScenariosRequest, RunAllScenariosResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Create or replace a scenario
+    /// </summary>
+    /// <remarks>
+    /// Upserts one scenario by name (the body's name must match the path). The working copy's etag advances; the response carries the fresh etag.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<PutScenarioResponse> PutScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ScenarioNameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, scenarioName, 30).RootElement;
+        PutScenarioRequest request = new(IdValue, ScenarioNameValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<PutScenarioRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario, PutScenarioResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Delete a scenario
+    /// </summary>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<DeleteScenarioResponse> DeleteScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ScenarioNameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, scenarioName, 30).RootElement;
+        DeleteScenarioRequest request = new(IdValue, ScenarioNameValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<DeleteScenarioRequest, DeleteScenarioResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Run one scenario
+    /// </summary>
+    /// <remarks>
+    /// Executes the named scenario against the deterministic simulator and returns its result: the outcome, every expectation's verdict, and the full trace (the debug tray renders it directly). 400 when this deployment offers no simulation.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<RunScenarioResponse> RunScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ScenarioNameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, scenarioName, 30).RootElement;
+        RunScenarioRequest request = new(IdValue, ScenarioNameValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<RunScenarioRequest, RunScenarioResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Simulate a working copy deterministically
     /// </summary>
     /// <remarks>

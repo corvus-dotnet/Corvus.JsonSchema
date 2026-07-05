@@ -158,6 +158,56 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] ValidateWorkspaceWorkflowOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>ListScenarios</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListScenariosOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListScenarios</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListScenariosOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>RunAllScenarios</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] RunAllScenariosOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>RunAllScenarios</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] RunAllScenariosOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PutScenario</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PutScenarioOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PutScenario</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] PutScenarioOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DeleteScenario</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] DeleteScenarioOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DeleteScenario</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] DeleteScenarioOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>RunScenario</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] RunScenarioOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>RunScenario</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] RunScenarioOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] SimulateWorkingCopyOauth2Scopes = ["workspace:read"];
@@ -279,6 +329,57 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="id">The id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ValidateWorkspaceWorkflowResponse> ValidateWorkspaceWorkflowAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// List the working copy's scenarios
+    /// </summary>
+    /// <remarks>
+    /// The scenario set travels WITH the working copy (design §4.2/§9) and is published into the package as metadata/scenarios.json.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ListScenariosResponse> ListScenariosAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Run every scenario as a suite
+    /// </summary>
+    /// <remarks>
+    /// Executes each scenario against the deterministic simulator (§8) and returns the suite report. POST on the collection is run-all; POST on a member's /run is run-one. 400 when this deployment offers no simulation.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<RunAllScenariosResponse> RunAllScenariosAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Create or replace a scenario
+    /// </summary>
+    /// <remarks>
+    /// Upserts one scenario by name (the body's name must match the path). The working copy's etag advances; the response carries the fresh etag.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<PutScenarioResponse> PutScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Scenario.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Delete a scenario
+    /// </summary>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<DeleteScenarioResponse> DeleteScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Run one scenario
+    /// </summary>
+    /// <remarks>
+    /// Executes the named scenario against the deterministic simulator and returns its result: the outcome, every expectation's verdict, and the full trace (the debug tray renders it directly). 400 when this deployment offers no simulation.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="scenarioName">The scenarioName parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<RunScenarioResponse> RunScenarioAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source scenarioName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Simulate a working copy deterministically

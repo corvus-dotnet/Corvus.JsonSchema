@@ -1792,6 +1792,272 @@
         }
       }
     },
+    "/workspace/workflows/{id}/scenarios": {
+      "get": {
+        "operationId": "listScenarios",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List the working copy's scenarios",
+        "description": "The scenario set travels WITH the working copy (design \u00a74.2/\u00a79) and is published into the package as metadata/scenarios.json.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The scenario set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "ScenarioList",
+                  "properties": {
+                    "scenarios": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Scenario"
+                      }
+                    }
+                  },
+                  "required": [
+                    "scenarios"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "runAllScenarios",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Run every scenario as a suite",
+        "description": "Executes each scenario against the deterministic simulator (\u00a78) and returns the suite report. POST on the collection is run-all; POST on a member's /run is run-one. 400 when this deployment offers no simulation.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The suite report.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioSuiteReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/scenarios/{scenarioName}": {
+      "put": {
+        "operationId": "putScenario",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Create or replace a scenario",
+        "description": "Upserts one scenario by name (the body's name must match the path). The working copy's etag advances; the response carries the fresh etag.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/ScenarioNamePath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Scenario"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The stored scenario plus the working copy's new etag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "StoredScenario",
+                  "properties": {
+                    "scenario": {
+                      "$ref": "#/components/schemas/Scenario"
+                    },
+                    "etag": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "scenario",
+                    "etag"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteScenario",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Delete a scenario",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/ScenarioNamePath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/scenarios/{scenarioName}/run": {
+      "post": {
+        "operationId": "runScenario",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Run one scenario",
+        "description": "Executes the named scenario against the deterministic simulator and returns its result: the outcome, every expectation's verdict, and the full trace (the debug tray renders it directly). 400 when this deployment offers no simulation.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/ScenarioNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The scenario's run result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioRunResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/workspace/workflows/{id}/simulate": {
       "post": {
         "operationId": "simulateWorkingCopy",
@@ -3316,6 +3582,15 @@
           "type": "string"
         }
       },
+      "ScenarioNamePath": {
+        "name": "scenarioName",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "The scenario's name (unique within the working copy)."
+      },
       "SourceNamePath": {
         "name": "name",
         "in": "path",
@@ -4563,6 +4838,235 @@
           "category",
           "instancePath",
           "message"
+        ]
+      },
+      "Scenario": {
+        "type": "object",
+        "title": "Scenario",
+        "description": "One deterministic test scenario (design \u00a74.2), stored with the working copy and published into the package. v1 deferrals, deliberate: per-request match criteria on mocks and response delays (the mock transport scripts sequences per route), and trigger scheduling (`at`) \u2014 triggers deliver when the run suspends on their channel.",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "inputs": {
+            "description": "The workflow inputs value."
+          },
+          "mocks": {
+            "type": "array",
+            "description": "Per source-operation scripting; a run resolves each (source, operationId) to its route through the working copy's attached surfaces.",
+            "items": {
+              "type": "object",
+              "title": "ScenarioMock",
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "operationId": {
+                  "type": "string"
+                },
+                "responses": {
+                  "type": "array",
+                  "description": "Sequence semantics; the last repeats.",
+                  "items": {
+                    "type": "object",
+                    "title": "ScenarioMockResponse",
+                    "properties": {
+                      "status": {
+                        "type": "integer"
+                      },
+                      "body": {
+                        "description": "The response body value."
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "source",
+                "operationId",
+                "responses"
+              ]
+            }
+          },
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "ScenarioTrigger",
+              "properties": {
+                "channel": {
+                  "type": "string"
+                },
+                "payload": {
+                  "description": "The message payload value."
+                },
+                "correlationId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "channel"
+              ]
+            }
+          },
+          "clock": {
+            "type": "object",
+            "title": "ScenarioClock",
+            "properties": {
+              "autoAdvance": {
+                "type": "boolean",
+                "default": true
+              }
+            }
+          },
+          "expect": {
+            "type": "object",
+            "title": "ScenarioExpectations",
+            "description": "Assertions over the run, in the criterion grammar where a condition applies.",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "completed",
+                  "faulted",
+                  "suspended"
+                ]
+              },
+              "path": {
+                "type": "array",
+                "description": "Expected step visits, in order.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "pathMode": {
+                "type": "string",
+                "enum": [
+                  "exact",
+                  "subsequence"
+                ],
+                "default": "subsequence"
+              },
+              "outputs": {
+                "type": "array",
+                "description": "Criteria evaluated against the completed run's workflow outputs ($outputs).",
+                "items": {
+                  "type": "object",
+                  "title": "OutputExpectation",
+                  "properties": {
+                    "condition": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "condition"
+                  ]
+                }
+              },
+              "steps": {
+                "type": "object",
+                "title": "StepExpectations",
+                "description": "Per-step assertions keyed by stepId.",
+                "additionalProperties": {
+                  "type": "object",
+                  "title": "StepExpectation",
+                  "properties": {
+                    "reached": {
+                      "type": "boolean"
+                    },
+                    "attempts": {
+                      "type": "integer",
+                      "description": "The exact number of executions (retries and revisits included)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ScenarioRunResult": {
+        "type": "object",
+        "title": "ScenarioRunResult",
+        "properties": {
+          "scenario": {
+            "type": "string"
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Every expectation held (a scenario with no expectations passes when the run completes)."
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "expectations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "ExpectationVerdict",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "outcome | path | output | step"
+                },
+                "passed": {
+                  "type": "boolean"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "passed"
+              ]
+            }
+          },
+          "trace": {
+            "$ref": "#/components/schemas/SimulationTrace"
+          }
+        },
+        "required": [
+          "scenario",
+          "passed",
+          "outcome",
+          "expectations"
+        ]
+      },
+      "ScenarioSuiteReport": {
+        "type": "object",
+        "title": "ScenarioSuiteReport",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "passed": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioRunResult"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "passed",
+          "failed",
+          "results"
         ]
       },
       "SimulateRequest": {

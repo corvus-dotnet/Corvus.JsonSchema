@@ -1128,3 +1128,38 @@ test('validate flags source-integrity drift: undeclared attachment, missing atta
   assert.equal(bareReport.valid, false);
   assert.ok(bareReport.diagnostics.some((d) => d.category === 'workspace-sources' && d.severity === 'error'));
 });
+
+test('scenarios: lifecycle + judged runs through the mock', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'sc', document: {
+      arazzo: '1.1.0', info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [
+        { stepId: 'a', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  await c.putScenario(wc.id, {
+    name: 'ok', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 200 }] }],
+    expect: { outcome: 'completed', steps: { a: { attempts: 1 } } },
+  });
+  await c.putScenario(wc.id, {
+    name: 'sad', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 500 }] }],
+    expect: { outcome: 'completed' },
+  });
+  assert.equal((await c.listScenarios(wc.id)).scenarios.length, 2);
+
+  const one = await c.runScenario(wc.id, 'ok');
+  assert.equal(one.passed, true);
+  assert.equal(one.trace.steps.length, 1);
+
+  const suite = await c.runAllScenarios(wc.id);
+  assert.equal(suite.total, 2);
+  assert.equal(suite.failed, 1);
+
+  await c.deleteScenario(wc.id, 'sad');
+  assert.equal((await c.listScenarios(wc.id)).scenarios.length, 1);
+});
