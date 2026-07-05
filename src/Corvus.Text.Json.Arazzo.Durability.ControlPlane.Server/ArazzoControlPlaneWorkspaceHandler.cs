@@ -579,13 +579,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 Problem("scenario-not-found", "Scenario not found", 404, $"Working copy '{id}' has no scenario named '{name}'."), workspace);
         }
 
-        (SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
+        (SimulationResult result, List<ScenarioSuite.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
         using (result)
         {
-            ParsedJsonDocument<Models.ScenarioRunResult> body = PersistedJson.ToPooledDocument<Models.ScenarioRunResult, (string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>(
+            ParsedJsonDocument<Models.ScenarioRunResult> body = PersistedJson.ToPooledDocument<Models.ScenarioRunResult, (string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)>(
                 (name, result, verdicts),
-                static (Utf8JsonWriter writer, in (string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts) s) =>
-                    WorkspaceScenarioJson.WriteRunResult(writer, s.Name, s.Result, s.Verdicts));
+                static (Utf8JsonWriter writer, in (string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts) s) =>
+                    ScenarioSuite.WriteRunResult(writer, s.Name, s.Result, s.Verdicts));
             workspace.TakeOwnership(body);
             return RunScenarioResult.Ok(body.RootElement, workspace);
         }
@@ -607,7 +607,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return RunAllScenariosResult.NotFound(NotFoundProblem(id), workspace);
         }
 
-        var runs = new List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>();
+        var runs = new List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)>();
         try
         {
             JsonElement scenarios = (JsonElement)w.RootElement.Scenarios;
@@ -617,21 +617,21 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 {
                     if (scenario.TryGetProperty("name"u8, out JsonElement n) && n.GetString() is { Length: > 0 } scenarioName)
                     {
-                        (SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
+                        (SimulationResult result, List<ScenarioSuite.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
                         runs.Add((scenarioName, result, verdicts));
                     }
                 }
             }
 
-            ParsedJsonDocument<Models.ScenarioSuiteReport> body = PersistedJson.ToPooledDocument<Models.ScenarioSuiteReport, List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>>(
+            ParsedJsonDocument<Models.ScenarioSuiteReport> body = PersistedJson.ToPooledDocument<Models.ScenarioSuiteReport, List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)>>(
                 runs,
-                static (Utf8JsonWriter writer, in List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> all) =>
+                static (Utf8JsonWriter writer, in List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)> all) =>
                 {
                     int passed = 0;
-                    foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                    foreach ((string _, SimulationResult _, List<ScenarioSuite.Verdict> verdicts) in all)
                     {
                         bool ok = true;
-                        foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                        foreach (ScenarioSuite.Verdict v in verdicts)
                         {
                             ok &= v.Passed;
                         }
@@ -647,9 +647,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                     writer.WriteNumber("passed"u8, passed);
                     writer.WriteNumber("failed"u8, all.Count - passed);
                     writer.WriteStartArray("results"u8);
-                    foreach ((string name, SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                    foreach ((string name, SimulationResult result, List<ScenarioSuite.Verdict> verdicts) in all)
                     {
-                        WorkspaceScenarioJson.WriteRunResult(writer, name, result, verdicts);
+                        ScenarioSuite.WriteRunResult(writer, name, result, verdicts);
                     }
 
                     writer.WriteEndArray();
@@ -660,7 +660,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         }
         finally
         {
-            foreach ((string _, SimulationResult result, List<WorkspaceScenarioJson.Verdict> _) in runs)
+            foreach ((string _, SimulationResult result, List<ScenarioSuite.Verdict> _) in runs)
             {
                 result.Dispose();
             }
@@ -730,7 +730,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
         // 2 — the server-attested suite: every stored scenario replays here; a client cannot submit evidence.
         JsonElement scenarios = (JsonElement)w.RootElement.Scenarios;
-        var runs = new List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>();
+        var runs = new List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)>();
         try
         {
             if (scenarios.ValueKind == JsonValueKind.Array)
@@ -745,16 +745,16 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                                 Problem("simulation-not-offered", "Simulation not offered", 400, "The working copy carries scenarios but this deployment cannot attest them (no simulator wired)."), workspace);
                         }
 
-                        (SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
+                        (SimulationResult result, List<ScenarioSuite.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
                         runs.Add((scenarioName, result, verdicts));
                     }
                 }
             }
 
             bool anyFailed = false;
-            foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in runs)
+            foreach ((string _, SimulationResult _, List<ScenarioSuite.Verdict> verdicts) in runs)
             {
-                foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                foreach (ScenarioSuite.Verdict v in verdicts)
                 {
                     anyFailed |= !v.Passed;
                 }
@@ -764,15 +764,15 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             if (anyFailed && requireScenarios)
             {
                 ParsedJsonDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity> refusal =
-                    PersistedJson.ToPooledDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity, List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>>(
+                    PersistedJson.ToPooledDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity, List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)>>(
                         runs,
-                        static (Utf8JsonWriter writer, in List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> all) =>
+                        static (Utf8JsonWriter writer, in List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)> all) =>
                         {
                             int passed = 0;
-                            foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                            foreach ((string _, SimulationResult _, List<ScenarioSuite.Verdict> verdicts) in all)
                             {
                                 bool ok = true;
-                                foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                                foreach (ScenarioSuite.Verdict v in verdicts)
                                 {
                                     ok &= v.Passed;
                                 }
@@ -790,9 +790,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                             writer.WriteNumber("passed"u8, passed);
                             writer.WriteNumber("failed"u8, all.Count - passed);
                             writer.WriteStartArray("results"u8);
-                            foreach ((string name, SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                            foreach ((string name, SimulationResult result, List<ScenarioSuite.Verdict> verdicts) in all)
                             {
-                                WorkspaceScenarioJson.WriteRunResult(writer, name, result, verdicts);
+                                ScenarioSuite.WriteRunResult(writer, name, result, verdicts);
                             }
 
                             writer.WriteEndArray();
@@ -814,13 +814,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 : [];
             byte[] evidenceBytes = PersistedJson.ToArray(
                 (Hash: hash, At: this.timeProvider.GetUtcNow(), Runs: runs),
-                static (Utf8JsonWriter writer, in (string Hash, DateTimeOffset At, List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> Runs) s) =>
+                static (Utf8JsonWriter writer, in (string Hash, DateTimeOffset At, List<(string Name, SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)> Runs) s) =>
                 {
                     int passed = 0;
-                    foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in s.Runs)
+                    foreach ((string _, SimulationResult _, List<ScenarioSuite.Verdict> verdicts) in s.Runs)
                     {
                         bool ok = true;
-                        foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                        foreach (ScenarioSuite.Verdict v in verdicts)
                         {
                             ok &= v.Passed;
                         }
@@ -841,10 +841,10 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                     writer.WriteNumber("failed"u8, s.Runs.Count - passed);
                     writer.WriteEndObject();
                     writer.WriteStartArray("scenarios"u8);
-                    foreach ((string name, SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) in s.Runs)
+                    foreach ((string name, SimulationResult result, List<ScenarioSuite.Verdict> verdicts) in s.Runs)
                     {
                         bool ok = true;
-                        foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                        foreach (ScenarioSuite.Verdict v in verdicts)
                         {
                             ok &= v.Passed;
                         }
@@ -852,7 +852,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                         writer.WriteStartObject();
                         writer.WriteString("name"u8, name);
                         writer.WriteBoolean("passed"u8, ok);
-                        writer.WriteString("outcome"u8, WorkspaceScenarioJson.OutcomeName(result.Outcome));
+                        writer.WriteString("outcome"u8, ScenarioSuite.OutcomeName(result.Outcome));
                         var visited = new List<string>();
                         foreach (SimulatedStepRecord record in result.Steps)
                         {
@@ -891,7 +891,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         }
         finally
         {
-            foreach ((string _, SimulationResult result, List<WorkspaceScenarioJson.Verdict> _) in runs)
+            foreach ((string _, SimulationResult result, List<ScenarioSuite.Verdict> _) in runs)
             {
                 result.Dispose();
             }
@@ -946,7 +946,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     }
 
     /// <summary>Runs one stored scenario against the simulator and judges its expectations.</summary>
-    private async ValueTask<(SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> RunOneScenarioAsync(ParsedJsonDocument<WorkspaceWorkflow> w, JsonElement scenario, CancellationToken cancellationToken)
+    private async ValueTask<(SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)> RunOneScenarioAsync(ParsedJsonDocument<WorkspaceWorkflow> w, JsonElement scenario, CancellationToken cancellationToken)
     {
         Dictionary<(string Source, string OperationId), (string Method, string Path)> routes =
             await WorkspaceScenarioJson.ResolveRoutesAsync((JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
@@ -954,8 +954,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         List<KeyValuePair<string, byte[]>> sourceBytes = await WorkspaceSimulationJson.SourceBytesAsync(
             (JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
         SimulationResult result = await this.simulator!.SimulateAsync(
-            documentBytes, sourceBytes, WorkspaceScenarioJson.BuildScenario(scenario, routes), cancellationToken: cancellationToken).ConfigureAwait(false);
-        return (result, WorkspaceScenarioJson.Evaluate(scenario, result));
+            documentBytes, sourceBytes, ScenarioSuite.BuildScenario(scenario, routes), cancellationToken: cancellationToken).ConfigureAwait(false);
+        return (result, ScenarioSuite.Evaluate(scenario, result));
     }
 
     /// <inheritdoc/>

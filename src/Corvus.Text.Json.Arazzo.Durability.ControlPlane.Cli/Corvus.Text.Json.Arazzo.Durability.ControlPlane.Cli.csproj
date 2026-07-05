@@ -15,6 +15,9 @@
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
     <IsPackable>false</IsPackable>
+    <!-- scenarios run (standalone, workflow-designer §4.5) compiles workflow documents in-process;
+         the runtime compiler reads the host's compilation context. -->
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
@@ -22,12 +25,15 @@
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Tests" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel.OidcClient" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
     <PackageReference Include="Spectre.Console.Cli" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />

@@ -36,6 +36,13 @@ public static class CliApp
             c.AddCommand<LogoutCommand>("logout")
                 .WithDescription("Remove the cached access token.");
 
+            c.AddBranch<CommandSettings>("scenarios", scenarios =>
+            {
+                scenarios.SetDescription("Run workflow scenario suites (the CI story, workflow-designer §4.5).");
+                scenarios.AddCommand<ScenariosRunCommand>("run")
+                    .WithDescription("Run scenario files against a workflow document in-process (standalone), or a working copy's stored suite remotely.");
+            });
+
             c.AddBranch<CommandSettings>("catalog", catalog =>
             {
                 catalog.SetDescription("Work with the workflow catalog (versioned, hashed package store).");

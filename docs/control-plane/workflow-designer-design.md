@@ -746,9 +746,18 @@ compile; it serves recorded fixtures, clearly marked).
    $outputs criteria through the real criterion compiler · per-step reached/attempts); the suite
    report counts failures with per-verdict detail. The Scenarios sidebar tab lists/runs/edits
    (guarded JSON v1) and hands any run's trace to the debug tray; "Save as scenario…" captures a
-   debug session with expectations promoted from the observed trace (§3.4). Remaining in this
-   slice: the `scenarios run` CLI (§4.5), carry-over verification on create-from-version, and the
-   typed scenario forms (with the §15 schema-authoring work).*
+   debug session with expectations promoted from the observed trace (§3.4). Carry-over on
+   create-from-version: the new working copy inherits the version's scenario set (§9). The
+   `scenarios run` CLI (§4.5): the headless engine is `ScenarioSuite` in the Testing assembly —
+   extracted from the server, which now delegates to it, so an interactive run, a publish
+   attestation, and a CI suite produce the same report shape. Standalone (default) hosts the
+   simulator in-process (workflow + sources from disk/urls, `**`-globbed scenario files, `--filter`
+   wildcards, deterministic ordering); remote (`--working-copy` + `--server`) executes the stored
+   suite server-side. Console/JUnit/JSON reports (`--report junit=…/json=…`; the JSON report is the
+   suite-report shape publish embeds), `--github-annotations` (::error + job summary), and CI exit
+   codes (1 = failed expectation, 2 = suite could not run). Remaining in this slice: the typed
+   scenario forms (with the §15 schema-authoring work); catalog-version targets follow
+   simulateCatalogVersion (§14 slice-5 remainder).*
 7. **Publish with evidence.** Publish endpoint (server-attested suite), package entries, evidence
    badge on catalog detail; optional promotion-readiness extension.
    *Status: server half BUILT. The `.awp` format's reserved `metadata/scenarios.json` +
