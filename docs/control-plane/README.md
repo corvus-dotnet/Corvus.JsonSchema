@@ -110,7 +110,8 @@ it becomes the CLI's basis:
 ```bash
 dotnet run --project src/Corvus.Json.Cli -f net10.0 -- \
   openapi-client docs/control-plane/arazzo-control-plane.openapi.json \
-  --rootNamespace Corvus.Arazzo.ControlPlane.Client --outputPath ./Generated
+  --rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client \
+  --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Generated
 ```
 
 This emits an `IApiRunsClient`/`ApiRunsClient` with

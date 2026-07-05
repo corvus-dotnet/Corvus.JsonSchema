@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the GetCatalogVersion operation (GET /catalog/{baseWorkflowId}/versions/{versionNumber}).
 /// </summary>
-/// <remarks>Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package. The package and its individual documents are fetched via the links.</remarks>
+/// <remarks>Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package — plus, for versions published with scenario evidence, the publish-evidence summary (the badge's data; the full per-scenario record is the evidence endpoint's). The package and its individual documents are fetched via the links.</remarks>
 public readonly struct GetCatalogVersionParams
 {
 

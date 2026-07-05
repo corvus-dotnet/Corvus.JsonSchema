@@ -468,7 +468,7 @@
         ],
         "tags": ["catalog"],
         "summary": "Get a workflow version",
-        "description": "Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package. The package and its individual documents are fetched via the links.",
+        "description": "Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package — plus, for versions published with scenario evidence, the publish-evidence summary (the badge's data; the full per-scenario record is the evidence endpoint's). The package and its individual documents are fetched via the links.",
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" }
@@ -4306,6 +4306,7 @@
           "sources": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSourceRef" }, "description": "The source documents in this version's package, addressable individually via the source endpoint." },
           "runnable": { "type": "boolean", "description": "Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run." },
           "hash": { "type": "string", "description": "The SHA-256 of the canonical package, hex-encoded." },
+          "evidence": { "$ref": "#/components/schemas/PublishEvidenceSummary", "description": "The publish-evidence summary (§4.6), projected from the package's metadata/evidence.json. Present only on the single-version detail and only for versions published with scenario evidence; index pages omit it. The full per-scenario record is served by the evidence endpoint." },
           "createdBy": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" },
           "lastUpdatedBy": { "type": "string" },
@@ -4922,6 +4923,27 @@
           "message"
         ]
       },
+      "EvidenceSuite": {
+        "type": "object",
+        "title": "EvidenceSuite",
+        "description": "The suite verdict: how many scenarios ran at publish and how many passed.",
+        "properties": {
+          "total": { "type": "integer" },
+          "passed": { "type": "integer" },
+          "failed": { "type": "integer" }
+        },
+        "required": ["total", "passed", "failed"]
+      },
+      "PublishEvidenceSummary": {
+        "type": "object",
+        "title": "PublishEvidenceSummary",
+        "description": "The evidence badge's data (design \u00a74.6): when the version was published and the suite verdict, without the per-scenario detail.",
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "suite": { "$ref": "#/components/schemas/EvidenceSuite" }
+        },
+        "required": ["at", "suite"]
+      },
       "PublishEvidence": {
         "type": "object",
         "title": "PublishEvidence",
@@ -4930,16 +4952,7 @@
           "packageHash": { "type": "string" },
           "engineVersion": { "type": "string" },
           "at": { "type": "string", "format": "date-time" },
-          "suite": {
-            "type": "object",
-            "title": "EvidenceSuite",
-            "properties": {
-              "total": { "type": "integer" },
-              "passed": { "type": "integer" },
-              "failed": { "type": "integer" }
-            },
-            "required": ["total", "passed", "failed"]
-          },
+          "suite": { "$ref": "#/components/schemas/EvidenceSuite" },
           "scenarios": {
             "type": "array",
             "items": {

@@ -756,9 +756,15 @@ compile; it serves recorded fixtures, clearly marked).
    both entries, and the catalog add stamping internal security tags with the response stripped
    through the shared `ControlPlaneAccess.PublicView`. 422 refusals carry the diagnostics or the
    suite report; `requireScenarios:false` overrides. `getCatalogEvidence` serves the entry from
-   the stored package. Remaining: the evidence badge on catalog detail + the designer's Publish
-   button (7b), scenario carry-over on create-from-version, and the promotion-readiness extension
-   (deployment-configurable, default-off).*
+   the stored package. The designer's Publish button lands refusals where they are actionable
+   (validation → Problems, a failing suite → Scenarios). Scenario carry-over on
+   create-from-version: the new working copy inherits the version's scenario set (§9), both
+   entries sliced from one owned package read. The evidence badge: `getCatalogVersion` — the
+   detail, never the index — projects `{at, suite}` from the package's evidence entry onto the
+   summary (`PublishEvidenceSummary`; an empty suite attests nothing and is omitted, so promotion
+   readiness can read absence as unevidenced), and catalog detail renders it green/red with the
+   publish instant. Remaining: the promotion-readiness extension (deployment-configurable,
+   default-off).*
 8. **GitHub.** App broker + session endpoints; bind/pull/commit(+PR) incl. scenario files;
    import-from-repo in the acquisition dialog; **the GitHub Action wrapper** for the scenario
    runner (§4.5).

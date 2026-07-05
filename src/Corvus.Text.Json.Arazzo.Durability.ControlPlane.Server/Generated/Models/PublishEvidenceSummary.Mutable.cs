@@ -17,17 +17,17 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
-/// PublishEvidence
+/// PublishEvidenceSummary
 /// </summary>
 /// <remarks>
 /// <para>
-/// The server-attested record written into the package at publish (design &#167;4.6).
+/// The evidence badge&#39;s data (design &#167;4.6): when the version was published and the suite verdict, without the per-scenario detail.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PublishEvidence
+public readonly partial struct PublishEvidenceSummary
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -132,7 +132,7 @@ public readonly partial struct PublishEvidence
         /// <param name="value">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(PublishEvidence instance)
+        public static explicit operator Mutable(PublishEvidenceSummary instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -147,9 +147,9 @@ public readonly partial struct PublishEvidence
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="value">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="PublishEvidence"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="PublishEvidenceSummary"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator PublishEvidence(Mutable instance)
+        public static implicit operator PublishEvidenceSummary(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -273,64 +273,11 @@ public readonly partial struct PublishEvidence
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Mutable At
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Mutable At
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>engineVersion</c> property.
-        /// </summary>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable EngineVersion
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EngineVersionUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>packageHash</c> property.
-        /// </summary>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable PackageHash
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PackageHashUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the <c>scenarios</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Mutable Scenarios
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScenariosUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -350,11 +297,11 @@ public readonly partial struct PublishEvidence
         /// The suite verdict: how many scenarios ran at publish and how many passed.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Mutable Suite
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Mutable Suite
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Mutable value))
                 {
                     return value;
                 }
@@ -387,7 +334,7 @@ public readonly partial struct PublishEvidence
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new PublishEvidence(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new PublishEvidenceSummary(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -406,7 +353,7 @@ public readonly partial struct PublishEvidence
         /// Set the <c>at</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source value)
+        public void SetAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -434,165 +381,10 @@ public readonly partial struct PublishEvidence
         }
 
         /// <summary>
-        /// Set the <c>engineVersion</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetEngineVersion(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.EngineVersionUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EngineVersionUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EngineVersion, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>engineVersion</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveEngineVersion()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.EngineVersionUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
-        /// Set the <c>packageHash</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetPackageHash(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.PackageHashUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PackageHashUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageHash, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>packageHash</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemovePackageHash()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.PackageHashUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
-        /// Set the <c>scenarios</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetScenarios(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("scenarios");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScenariosUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scenarios, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>scenarios</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetScenarios<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("scenarios");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScenariosUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scenarios, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
         /// Set the <c>suite</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuite(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source value)
+        public void SetSuite(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source value)
         {
             CheckValidInstance();
 
@@ -623,7 +415,7 @@ public readonly partial struct PublishEvidence
         /// Set the <c>suite</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuite<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> value)
+        public void SetSuite<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -737,7 +529,7 @@ public readonly partial struct PublishEvidence
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"PublishEvidence.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"PublishEvidenceSummary.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         /// <summary>
         ///   Sets a property on this JSON object element.
@@ -928,11 +720,11 @@ public readonly partial struct PublishEvidence
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="PublishEvidence"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="PublishEvidenceSummary"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="PublishEvidence"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="PublishEvidenceSummary"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -941,10 +733,10 @@ public readonly partial struct PublishEvidence
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly PublishEvidence Clone()
+        public readonly PublishEvidenceSummary Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<PublishEvidence>(_idx);
+            return _parent.CloneElement<PublishEvidenceSummary>(_idx);
         }
 
         /// <summary>
@@ -952,7 +744,7 @@ public readonly partial struct PublishEvidence
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="PublishEvidence"/> that lives for the lifetime of its
+        /// An immutable <see cref="PublishEvidenceSummary"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -963,10 +755,10 @@ public readonly partial struct PublishEvidence
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly PublishEvidence Freeze()
+        public readonly PublishEvidenceSummary Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<PublishEvidence>(_idx);
+            return _parent.FreezeElement<PublishEvidenceSummary>(_idx);
         }
     }
 
@@ -983,11 +775,8 @@ public readonly partial struct PublishEvidence
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1000,19 +789,16 @@ public readonly partial struct PublishEvidence
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg5)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
-            _createArg3 = arg3;
-            _createArg4 = arg4;
-            _createArg5 = arg5;
             _kind = Kind.Create;
         }
 
-        public static implicit operator Source(PublishEvidence instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(PublishEvidenceSummary instance) => new(JsonElement.From(instance));
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1029,7 +815,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1054,7 +840,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1079,7 +865,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1104,7 +890,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1129,7 +915,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1157,11 +943,8 @@ public readonly partial struct PublishEvidence
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1172,16 +955,13 @@ public readonly partial struct PublishEvidence
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> arg2)
         {
             _context = context;
             _createArg1 = arg1;
             _createArg2 = arg2;
-            _createArg3 = arg3;
-            _createArg4 = arg4;
-            _createArg5 = arg5;
             _kind = Kind.Create;
         }
 
@@ -1200,7 +980,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1225,7 +1005,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1250,7 +1030,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1275,7 +1055,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1300,7 +1080,7 @@ public readonly partial struct PublishEvidence
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1330,73 +1110,53 @@ public readonly partial struct PublishEvidence
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PublishEvidence"/>.
+        /// Creates an instance of a <see cref="PublishEvidenceSummary"/>.
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source suite,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite)
         {
             at.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.At, ref builder);
-            scenarios.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scenarios, ref builder);
             suite.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Suite, ref builder);
-            engineVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EngineVersion, ref builder);
-            packageHash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageHash, ref builder);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PublishEvidence"/>.
+        /// Creates an instance of a <see cref="PublishEvidenceSummary"/>.
         /// </summary>
-        public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source suite,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite)
         {
-            Create(ref _builder, at, scenarios, suite, engineVersion, packageHash);
+            Create(ref _builder, at, suite);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PublishEvidence"/>.
+        /// Creates an instance of a <see cref="PublishEvidenceSummary"/>.
         /// </summary>
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> suite,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
             at.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.At, ref builder);
-            scenarios.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scenarios, ref builder);
             suite.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Suite, ref builder);
-            engineVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EngineVersion, ref builder);
-            packageHash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageHash, ref builder);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PublishEvidence"/>.
+        /// Creates an instance of a <see cref="PublishEvidenceSummary"/>.
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> suite,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, at, scenarios, suite, engineVersion, packageHash);
+            Create(context, ref _builder, at, suite);
         }
 
         /// <summary>
@@ -1496,14 +1256,11 @@ public readonly partial struct PublishEvidence
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
-        /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
-        /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5);
+            Create(ref o, arg1, arg2);
             o.EndObject();
         }
 
@@ -1514,17 +1271,14 @@ public readonly partial struct PublishEvidence
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
-        /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
-        /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5);
+            Create(context, ref o, arg1, arg2);
             o.EndObject();
         }
     }
@@ -1562,14 +1316,11 @@ public readonly partial struct PublishEvidence
     /// Build an instance of the value directly from its property values.
     /// </summary>
     /// <param name="at">The value of the <c>"at"</c> property.</param>
-    /// <param name="scenarios">The value of the <c>"scenarios"</c> property.</param>
     /// <param name="suite">The value of the <c>"suite"</c> property.</param>
-    /// <param name="engineVersion">The value of the <c>"engineVersion"</c> property.</param>
-    /// <param name="packageHash">The value of the <c>"packageHash"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source suite, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite)
     {
-        return new Source(at, scenarios, suite, engineVersion, packageHash);
+        return new Source(at, suite);
     }
 
     /// <summary>
@@ -1578,17 +1329,14 @@ public readonly partial struct PublishEvidence
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="at">The value of the <c>"at"</c> property.</param>
-    /// <param name="scenarios">The value of the <c>"scenarios"</c> property.</param>
     /// <param name="suite">The value of the <c>"suite"</c> property.</param>
-    /// <param name="engineVersion">The value of the <c>"engineVersion"</c> property.</param>
-    /// <param name="packageHash">The value of the <c>"packageHash"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> suite, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, at, scenarios, suite, engineVersion, packageHash);
+        return new Source<TContext>(context, at, suite);
     }
 
     /// <summary>
@@ -1685,19 +1433,16 @@ public readonly partial struct PublishEvidence
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="at">The value of the property.</param>
-    /// <param name="scenarios">The value of the property.</param>
     /// <param name="suite">The value of the property.</param>
-    /// <param name="engineVersion">The value of the property.</param>
-    /// <param name="packageHash">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source suite, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(at, scenarios, suite, engineVersion, packageHash);
+        ovb.Create(at, suite);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1711,13 +1456,10 @@ public readonly partial struct PublishEvidence
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
     /// <param name="at">The value of the property.</param>
-    /// <param name="scenarios">The value of the property.</param>
     /// <param name="suite">The value of the property.</param>
-    /// <param name="engineVersion">The value of the property.</param>
-    /// <param name="packageHash">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite.Source<TContext> suite, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source engineVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source packageHash = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1726,7 +1468,7 @@ public readonly partial struct PublishEvidence
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, at, scenarios, suite, engineVersion, packageHash);
+        ovb.Create(context, at, suite);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1740,6 +1482,6 @@ public readonly partial struct PublishEvidence
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<PublishEvidence, Mutable>(this);
+        return workspace.CreateBuilder<PublishEvidenceSummary, Mutable>(this);
     }
 }

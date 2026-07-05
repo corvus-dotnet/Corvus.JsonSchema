@@ -592,8 +592,33 @@ function seedCatalog() {
   return [
     v('nightly-reconcile', 1, 'Obsolete', 'Nightly Reconcile', teamA, ['prod', 'billing'], 30, { obsoletedBy: 'alice@example.com', obsoletedAt: iso(-10 * day), lastUpdatedBy: 'alice@example.com', lastUpdatedAt: iso(-10 * day) }),
     v('nightly-reconcile', 2, 'Active', 'Nightly Reconcile', teamA, ['prod', 'billing'], 10),
-    v('nightly-reconcile', 3, 'Active', 'Nightly Reconcile', teamA, ['prod', 'billing', 'beta'], 1),
-    v('adopt-pet', 1, 'Active', 'Adopt a Pet', teamB, ['prod'], 5),
+    // Two evidence states for the catalog-detail badge (§4.6): a green suite and a partial one
+    // (published with requireScenarios:false). The older versions predate evidence entirely.
+    v('nightly-reconcile', 3, 'Active', 'Nightly Reconcile', teamA, ['prod', 'billing', 'beta'], 1, {
+      _evidence: {
+        packageHash: 'nightly-reconcile3'.padEnd(64, '0'),
+        engineVersion: 'mock',
+        at: iso(-1 * day),
+        suite: { total: 3, passed: 3, failed: 0 },
+        scenarios: [
+          { name: 'discrepancies-found', passed: true, outcome: 'completed', pathSummary: 'loadLedger → fetchTransactions → matchEntries → flagDiscrepancies → postCorrections → publishReport' },
+          { name: 'clean-ledger', passed: true, outcome: 'completed', pathSummary: 'loadLedger → fetchTransactions → matchEntries → publishReport' },
+          { name: 'ledger-unavailable', passed: true, outcome: 'faulted', pathSummary: 'loadLedger' },
+        ],
+      },
+    }),
+    v('adopt-pet', 1, 'Active', 'Adopt a Pet', teamB, ['prod'], 5, {
+      _evidence: {
+        packageHash: 'adopt-pet1'.padEnd(64, '0'),
+        engineVersion: 'mock',
+        at: iso(-5 * day),
+        suite: { total: 2, passed: 1, failed: 1 },
+        scenarios: [
+          { name: 'happy-adoption', passed: true, outcome: 'completed', pathSummary: 'findPet → reservePayment → submitAdoption → confirmAdoption' },
+          { name: 'pet-already-adopted', passed: false, outcome: 'faulted', pathSummary: 'findPet → reservePayment' },
+        ],
+      },
+    }),
     v('onboard-customer', 1, 'Active', 'Onboard Customer', teamB, ['prod', 'kyc'], 7),
   ];
 }
@@ -1382,7 +1407,11 @@ export function createMockControlPlane(options = {}) {
       if (!sub && method === 'GET') {
         // Reach (§14.2): a version whose workflow domain the caller cannot read reads back as not found.
         if (!reachAdmits(v.securityTags ?? securityTagsForBase(v.baseWorkflowId))) return problem(404, 'Version not found', `No version ${n} of workflow '${base}'.`);
-        return json(toCatalogSummary(v));
+        // Parity with the server (§4.6): the DETAIL — and only the detail — carries the evidence
+        // summary; an empty suite attests nothing, so it is omitted like versions without evidence.
+        const summary = toCatalogSummary(v);
+        if (v._evidence?.suite?.total > 0) summary.evidence = { at: v._evidence.at, suite: v._evidence.suite };
+        return json(summary);
       }
       if (!sub && method === 'PATCH') return updateVersion(v, body);
       if (!sub && method === 'DELETE') return deleteVersion(v);
