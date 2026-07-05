@@ -679,8 +679,14 @@ compile; it serves recorded fixtures, clearly marked).
    parses to the returned JSON form — same canonical digest), type/version detection, the repo's
    canonical SHA-256 digest, https-only unless the deployment opts in, a pooled 16 MiB-capped
    download, and fails-closed 400 when no fetcher is wired (measured: 1.88 KB per fetch over a
-   stub endpoint). Still to come in this slice: the operation browser rail + acquisition dialog,
-   and step creation from operations.*
+   stub endpoint). The UI half is BUILT: `<arazzo-operation-browser>`
+   (the left rail — attachments + their live operation surfaces, filter, click-to-add, detach) and
+   `<arazzo-source-acquisition-dialog>` (registry pick · credentialed URL fetch with server-detected
+   preview · JSON upload — YAML endpoints go through Fetch), wired into the designer shell: step
+   creation from descriptors (required parameters pre-populated, model-routed and undoable), the
+   inspector's criteria/body templates fed from the LIVE surfaces instead of a fixture, and the
+   save token refreshed from the attach response's etag (detach re-fetches) so acquisition never
+   false-conflicts a save. Slice 2 is complete except GitHub import (§4.7, its own slice).*
 3. **Design surface v1.** Graph projection + chosen canvas technology: render, select, inspector
    wiring, add/move/connect/delete, defaults layer, auto-layout, `designerState` persistence.
 4. **Inspectors complete.** Step/workflow/document inspectors, criteria/action editors,
