@@ -887,11 +887,12 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `saveWorkingCopy` — replace the working copy's `document` (and optionally its `name`/`designerState`), presenting
-   * the `expectedEtag` the client read. A stale save throws {@link ProblemError} `409` rather than clobbering a
-   * collaborator's work — re-fetch and reconcile. Provenance, tags, and created-* audit fields are immutable.
+   * `saveWorkingCopy` — replace the working copy's `document` (and optionally its `name`/`designerState`/
+   * `gitBinding`, §4.7), presenting the `expectedEtag` the client read. A stale save throws
+   * {@link ProblemError} `409` rather than clobbering a collaborator's work — re-fetch and reconcile.
+   * Provenance, tags, and created-* audit fields are immutable.
    * @param {string} id
-   * @param {{ document: object, expectedEtag: string, name?: string, designerState?: object, signal?: AbortSignal }} save
+   * @param {{ document: object, expectedEtag: string, name?: string, designerState?: object, gitBinding?: object, signal?: AbortSignal }} save
    * @returns {Promise<object>} The saved {@link WorkingCopy} (its new `etag` included).
    */
   saveWorkingCopy(id, save) {
@@ -901,6 +902,7 @@ export class ArazzoControlPlaneClient {
     const body = { document: save.document, expectedEtag: save.expectedEtag };
     if (save.name !== undefined) body.name = save.name;
     if (save.designerState !== undefined) body.designerState = save.designerState;
+    if (save.gitBinding !== undefined) body.gitBinding = save.gitBinding;
     return this._request('PUT', `/workspace/workflows/${encodeURIComponent(id)}`, { body, signal: save.signal });
   }
 
@@ -1068,6 +1070,36 @@ export class ArazzoControlPlaneClient {
     if (ref) query.set('ref', ref);
     const suffix = query.size > 0 ? `?${query}` : '';
     return this._request('GET', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents${suffix}`, { signal });
+  }
+
+  /**
+   * `pullWorkingCopy` — refresh a Git-bound working copy from its branch (§4.7): the document from
+   * gitBinding.path, each bound spec as an inline attachment, and — when scenariosDir is bound —
+   * the scenario set. An etag-guarded save: 409 when stale (or without a GitHub session); 400 when
+   * the working copy has no binding.
+   * @param {string} id
+   * @param {{ expectedEtag: string, signal?: AbortSignal }} opts
+   * @returns {Promise<object>} The refreshed working copy.
+   */
+  pullWorkingCopy(id, { expectedEtag, signal } = {}) {
+    if (!expectedEtag) throw new TypeError('pullWorkingCopy requires the expectedEtag.');
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/git/pull`, { body: { expectedEtag }, signal });
+  }
+
+  /**
+   * `commitWorkingCopy` — write the bound working copy to its branch (§4.7): the document, the
+   * bound specs, and one <name>.scenario.json per scenario; optionally opening a pull request FROM
+   * the bound branch (draft → the review flow). Commits are authored as the signed-in user's
+   * GitHub-held git identity — the control plane composes no author/committer.
+   * @param {string} id
+   * @param {{ message: string, pullRequest?: {base: string, title?: string, draft?: boolean}, signal?: AbortSignal }} opts
+   * @returns {Promise<object>} `{files, pullRequest?}`.
+   */
+  commitWorkingCopy(id, { message, pullRequest, signal } = {}) {
+    if (!message) throw new TypeError('commitWorkingCopy requires a message.');
+    const body = { message };
+    if (pullRequest) body.pullRequest = pullRequest;
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/git/commit`, { body, signal });
   }
 
   /** `listScenarios` — the working copy's scenario set (design §4.2). */

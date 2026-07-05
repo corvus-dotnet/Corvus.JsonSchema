@@ -98,6 +98,26 @@ public interface IApiGithubClient : IAsyncDisposable
     public static class SecurityRequirements
     {
         /// <summary>
+        /// Gets the scopes required by <c>PullWorkingCopy</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PullWorkingCopyOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PullWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] PullWorkingCopyOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CommitWorkingCopy</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CommitWorkingCopyOauth2Scopes = ["workspace:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CommitWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CommitWorkingCopyOpenIdConnectScopes = ["workspace:write"];
+
+        /// <summary>
         /// Gets the scopes required by <c>BeginGitHubAuth</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] BeginGitHubAuthOauth2Scopes = ["workspace:write"];
@@ -147,6 +167,28 @@ public interface IApiGithubClient : IAsyncDisposable
         /// </summary>
         public static readonly string[] AllOpenIdConnectScopes = ["workspace:read", "workspace:write"];
     }
+
+    /// <summary>
+    /// Pull the working copy from its bound branch
+    /// </summary>
+    /// <remarks>
+    /// Refreshes the Git-bound working copy from its branch (workflow-designer design §4.7): the document from gitBinding.path, each specPaths entry as an inline source attachment, and — when scenariosDir is bound — the scenario set from its &lt;name&gt;.scenario.json files. The pull is an etag-guarded save (409 when stale). Reads run on the CALLER's brokered token (409 github-not-connected without a session); 400 when the working copy has no binding or the deployment brokers no App; 404 when a bound file is missing (nothing is partially applied).
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<PullWorkingCopyResponse> PullWorkingCopyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitPullBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Commit the working copy to its bound branch
+    /// </summary>
+    /// <remarks>
+    /// Writes the Git-bound working copy to its branch (workflow-designer design §4.7): the document to gitBinding.path, each bound spec (specPaths) from its inline attachment, and — when scenariosDir is bound — one &lt;name&gt;.scenario.json per scenario. Commits run on the CALLER's brokered token and are authored as their GitHub-held git identity — the control plane composes no author/committer. Optionally opens a pull request FROM the bound branch (draft → the review flow). 400 unbound/not-brokered; 409 github-not-connected.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CommitWorkingCopyResponse> CommitWorkingCopyAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostWorkspaceWorkflowsByIdGitCommitBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Begin the GitHub sign-in

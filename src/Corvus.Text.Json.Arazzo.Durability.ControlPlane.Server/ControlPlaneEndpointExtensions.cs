@@ -189,7 +189,9 @@ public static class ControlPlaneEndpointExtensions
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
         // status, and proxied contents reads. Deployment-configured; fails closed when no broker is
         // wired. Token custody keys by the same subject claim the request surfaces use.
-        var gitHubHandler = new ArazzoControlPlaneGitHubHandler(gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType);
+        var gitHubHandler = new ArazzoControlPlaneGitHubHandler(
+            gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType,
+            workspaceStore: wcStore, sources: srcStore);
 
         return endpoints.MapApiEndpoints(
             securityHandler,
@@ -199,11 +201,11 @@ public static class ControlPlaneEndpointExtensions
             availabilityHandler,
             credentialsHandler,
             workspaceHandler,
+            gitHubHandler,
             sourcesHandler,
             environmentsHandler,
             runnerAuthorizationsHandler,
             administratorsHandler,
-            gitHubHandler,
             accessRequestsHandler,
             availabilityRequestsHandler,
             identityHandler,
