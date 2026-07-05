@@ -197,28 +197,35 @@ describe('<arazzo-step-inspector>', () => {
     el.shadowRoot.querySelector('.addp').click();
     equal((await changed).detail.step.parameters.length, 2);
   });
-  it('dependsOn chips toggle in step order and prune when empty', async () => {
+  it('dependsOn shows only ACTUAL dependencies; adds via the select in step order; prunes empty', async () => {
     make();
-    const chips = [...el.shadowRoot.querySelectorAll('.dependson .chip')];
-    equal(chips.length, 2, 'the other two steps offer as dependencies');
+    // A step with no dependsOn asserts nothing — no pills, an explicit none-hint, an add-select.
+    equal(el.shadowRoot.querySelectorAll('.dependson .chip').length, 0, 'no dependency pills without dependsOn');
+    ok(el.shadowRoot.querySelector('.dependson .hint').textContent.includes('none'), 'the empty state says so');
+
+    const add = (id) => {
+      const select = el.shadowRoot.querySelector('.dependson .add-dep');
+      select.value = id;
+      select.dispatchEvent(new Event('change'));
+    };
 
     let changed = nextEvent(el, 'step-changed');
-    chips.find((c) => c.dataset.id === 'manual-review').click();
+    add('manual-review');
     let step = (await changed).detail.step;
     ok(step.dependsOn.includes('manual-review'));
 
     changed = nextEvent(el, 'step-changed');
-    el.shadowRoot.querySelector('.dependson .chip[data-id="validate-order"]').click();
+    add('validate-order');
     step = (await changed).detail.step;
-    ok(Array.isArray(step.dependsOn), 'both selected');
-    equal(step.dependsOn[0], 'validate-order', 'dependencies keep step order, not click order');
+    equal(step.dependsOn[0], 'validate-order', 'dependencies keep step order, not add order');
+    equal(el.shadowRoot.querySelectorAll('.dependson .chip').length, 2, 'both render as pills');
 
     changed = nextEvent(el, 'step-changed');
-    el.shadowRoot.querySelector('.dependson .chip[data-id="validate-order"]').click();
+    [...el.shadowRoot.querySelectorAll('.dependson .chip')].find((c) => c.textContent.includes('validate-order')).click();
     changed = nextEvent(el, 'step-changed');
-    el.shadowRoot.querySelector('.dependson .chip[data-id="manual-review"]').click();
+    el.shadowRoot.querySelector('.dependson .chip').click();
     step = (await changed).detail.step;
-    equal(step.dependsOn, undefined, 'empty prunes the property');
+    equal(step.dependsOn, undefined, 'removing the last pill prunes the property');
   });
 
   it('replacements add, edit, and prune with the request body', async () => {

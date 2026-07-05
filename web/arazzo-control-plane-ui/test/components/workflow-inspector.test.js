@@ -86,17 +86,20 @@ describe('<arazzo-workflow-inspector>', () => {
     equal(wf.parameters, undefined, 'empty prunes the property');
   });
 
-  it('workflow dependsOn chips toggle over the document\'s other workflows', async () => {
+  it('workflow dependsOn shows only actual dependencies and adds via the select', async () => {
     el = make();
     el.workflowIds = ['first', 'second'];
     el.value = el.value; // rebuild with the ids
-    const chips = [...el.shadowRoot.querySelectorAll('.wdependson .chip')];
-    equal(chips.length, 2);
+    equal(el.shadowRoot.querySelectorAll('.wdependson .chip').length, 0, 'nothing asserted without dependsOn');
+    ok(el.shadowRoot.querySelector('.wdependson .hint').textContent.includes('none'), 'explicit empty state');
 
+    const select = el.shadowRoot.querySelector('.wdependson .add-dep');
+    select.value = 'second';
     const changed = nextEvent(el, 'workflow-changed');
-    chips[1].click();
+    select.dispatchEvent(new Event('change'));
     const wf = (await changed).detail.workflow;
     equal(wf.dependsOn[0], 'second');
+    equal(el.shadowRoot.querySelectorAll('.wdependson .chip').length, 1, 'the real dependency renders as a pill');
   });
 
 });

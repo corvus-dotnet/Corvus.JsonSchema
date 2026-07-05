@@ -76,6 +76,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
         .wparams { min-width: 0; }
         .wparams > div > * { min-width: 0; }
         .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+        .add-dep { font-size: 12px; max-width: 100%; min-width: 0; }
         .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
       </style>
       <div class="form" part="form"></div>
@@ -171,28 +172,53 @@ class ArazzoWorkflowInspector extends ArazzoElement {
     this._applyFocus();
   }
 
-  /** @private — toggle chips over the document's other workflows; empty prunes the property. */
+  /** @private — actual dependencies render as removable pills; new ones add through an explicit
+   *  select (offering every workflow as a toggle chip read as an assertion, not a choice). */
   _renderDependsOn() {
     const box = this.$('.wdependson');
-    if (!this._workflowIds.length) {
-      box.innerHTML = '<span class="hint">no other workflows in this document</span>';
-      return;
+    const current = this._workflow.dependsOn || [];
+    box.innerHTML = '';
+
+    if (!current.length) {
+      const none = document.createElement('span');
+      none.className = 'hint';
+      none.textContent = this._workflowIds.length
+        ? 'none — this workflow starts independently'
+        : 'no other workflows in this document';
+      box.append(none);
     }
 
-    const current = new Set(this._workflow.dependsOn || []);
-    box.innerHTML = this._workflowIds.map((id) => `
-      <button type="button" class="chip ghost${current.has(id) ? ' on' : ''}" data-id="${escapeHtml(id)}"
-        aria-pressed="${current.has(id)}">${escapeHtml(id)}</button>`).join('');
-    box.querySelectorAll('.chip').forEach((chip) => chip.addEventListener('click', () => {
-      const set = new Set(this._workflow.dependsOn || []);
-      if (set.has(chip.dataset.id)) set.delete(chip.dataset.id);
-      else set.add(chip.dataset.id);
-      const ordered = this._workflowIds.filter((id) => set.has(id));
-      if (ordered.length) this._workflow.dependsOn = ordered;
-      else delete this._workflow.dependsOn;
-      this._renderDependsOn();
-      this._emit();
-    }));
+    for (const id of current) {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'chip on';
+      pill.title = 'Remove this dependency';
+      pill.textContent = `${id} ✕`;
+      pill.addEventListener('click', () => {
+        const next = current.filter((x) => x !== id);
+        if (next.length) this._workflow.dependsOn = next;
+        else delete this._workflow.dependsOn;
+        this._renderDependsOn();
+        this._emit();
+      });
+      box.append(pill);
+    }
+
+    const remaining = this._workflowIds.filter((id) => !current.includes(id));
+    if (remaining.length) {
+      const select = document.createElement('select');
+      select.className = 'add-dep';
+      select.innerHTML = `<option value="">+ Add dependency…</option>`
+        + remaining.map((id) => `<option value="${escapeHtml(id)}">${escapeHtml(id)}</option>`).join('');
+      select.addEventListener('change', () => {
+        if (!select.value) return;
+        const set = new Set([...current, select.value]);
+        this._workflow.dependsOn = this._workflowIds.filter((id) => set.has(id));
+        this._renderDependsOn();
+        this._emit();
+      });
+      box.append(select);
+    }
   }
 
   /** @private — the workflow-level parameters (name/in/value; a reusable reference renders read-only). */
