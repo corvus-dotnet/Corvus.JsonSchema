@@ -93,6 +93,15 @@ public interface IApiCatalogHandler
     ValueTask<GetCatalogPackageResult> HandleGetCatalogPackageAsync(GetCatalogPackageParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/evidence — A version's publish evidence
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetCatalogEvidenceResult> HandleGetCatalogEvidenceAsync(GetCatalogEvidenceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/workflow — Get a version's Arazzo workflow document
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

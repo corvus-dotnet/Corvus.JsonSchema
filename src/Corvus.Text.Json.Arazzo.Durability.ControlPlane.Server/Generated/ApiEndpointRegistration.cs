@@ -2719,6 +2719,107 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetCatalogPackageEndpoint);
 
+        IEndpointConventionBuilder __GetCatalogEvidenceEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/evidence", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber VersionNumberValue = default;
+                if (context.Request.RouteValues.TryGetValue("versionNumber", out object? VersionNumberRouteVal) && VersionNumberRouteVal is string VersionNumberRaw)
+                {
+                    VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (VersionNumberValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'versionNumber' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VersionNumberValue.IsUndefined() && !VersionNumberValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetCatalogEvidenceParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    VersionNumber = VersionNumberValue,
+                }
+                ;
+
+                GetCatalogEvidenceResult result = await catalogHandler.HandleGetCatalogEvidenceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getCatalogEvidence",
+                methodName: "GetCatalogEvidence",
+                httpMethod: "GET",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/evidence",
+                tags: new[] { "catalog" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetCatalogEvidenceEndpoint);
+
         IEndpointConventionBuilder __GetCatalogWorkflowEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/workflow", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -5493,6 +5594,109 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __RunScenarioEndpoint);
+
+        IEndpointConventionBuilder __PublishWorkingCopyEndpoint = app.MapPost("/workspace/workflows/{id}/publish", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdPublishBody>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdPublishBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                PublishWorkingCopyParams parameters = new()
+                {
+                    Id = IdValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                PublishWorkingCopyResult result = await workspaceHandler.HandlePublishWorkingCopyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "publishWorkingCopy",
+                methodName: "PublishWorkingCopy",
+                httpMethod: "POST",
+                routeTemplate: "/workspace/workflows/{id}/publish",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __PublishWorkingCopyEndpoint);
 
         IEndpointConventionBuilder __SimulateWorkingCopyEndpoint = app.MapPost("/workspace/workflows/{id}/simulate", async (HttpContext context) =>
         {
@@ -10197,6 +10401,16 @@ public static class ApiEndpointRegistration
         public static readonly string[] GetCatalogPackageOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetCatalogEvidence</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogEvidenceOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetCatalogEvidence</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogEvidenceOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>GetCatalogWorkflow</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] GetCatalogWorkflowOauth2Scopes = ["catalog:read"];
@@ -10565,6 +10779,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>RunScenario</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] RunScenarioOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PublishWorkingCopy</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] PublishWorkingCopyOauth2Scopes = ["catalog:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>PublishWorkingCopy</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] PublishWorkingCopyOpenIdConnectScopes = ["catalog:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>Oauth2</c> scheme.

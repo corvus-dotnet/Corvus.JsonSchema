@@ -120,6 +120,15 @@ public interface IApiWorkspaceHandler
     ValueTask<RunScenarioResult> HandleRunScenarioAsync(RunScenarioParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles POST /workspace/workflows/{id}/publish — Publish the working copy as a new catalog version
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<PublishWorkingCopyResult> HandlePublishWorkingCopyAsync(PublishWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /workspace/workflows/{id}/simulate — Simulate a working copy deterministically
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

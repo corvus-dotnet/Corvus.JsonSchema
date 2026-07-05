@@ -82,6 +82,7 @@
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
     <button id="validate" class="tb designer-only" title="Validate the working copy">✓</button>
+    <button id="publish" class="tb designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)">🚀</button>
     <button id="theme" class="tb" title="Toggle theme">🌙</button>
   </header>
   <div id="workspace-view" style="padding: 18px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; overflow-y: auto;">
@@ -883,6 +884,35 @@
         : { valid: true };
     };
     expr.addEventListener('commit', (e) => logEvent('expression-commit', e.detail));
+
+    // The deliberate publish act (§4.6): autosave first (publish reads the STORED document), then
+    // let the server validate + attest the suite. Refusals land where they are actionable:
+    // validation diagnostics → Problems; a failing suite → Scenarios with its verdicts.
+    document.getElementById('publish').addEventListener('click', async () => {
+      if (!shell.id) return;
+      const owner = prompt('Publish owner (name <email>):', 'You <you@example.com>');
+      if (!owner) return;
+      const m = /^(.*?)\s*<([^>]+)>$/.exec(owner);
+      if (!m) { logEvent('publish-invalid-owner', { owner }); return; }
+      try {
+        if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
+        const version = await client.publishWorkingCopy(shell.id, { owner: { name: m[1] || m[2], email: m[2] } });
+        setSaveUi(`published ${version.baseWorkflowId} v${version.versionNumber} (draft)`);
+        logEvent('published', { base: version.baseWorkflowId, version: version.versionNumber });
+      } catch (err) {
+        if (err.status === 422 && err.problem?.reason === 'validation') {
+          renderProblems({ diagnostics: err.problem.diagnostics ?? [] });
+          setSaveUi('⚠ publish refused — fix the validation findings');
+        } else if (err.status === 422 && err.problem?.reason === 'scenarios') {
+          switchSideTab('scenarios');
+          scPanel.refresh();
+          setSaveUi(`⚠ publish refused — ${err.problem.suite?.failed ?? '?'} scenario(s) failing`);
+        } else {
+          setSaveUi(`publish failed: ${err.problem?.detail ?? err.message}`);
+        }
+        logEvent('publish-refused', { status: err.status, reason: err.problem?.reason });
+      }
+    });
 
     document.getElementById('fit').addEventListener('click', () => surface.fit());
     document.getElementById('relayout').addEventListener('click', () => {

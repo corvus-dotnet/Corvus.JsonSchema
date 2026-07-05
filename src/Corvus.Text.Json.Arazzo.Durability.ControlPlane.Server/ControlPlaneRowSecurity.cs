@@ -368,4 +368,69 @@ internal sealed class ControlPlaneAccess
     // The whoami path resolves the caller's internal tags as a list once per request (not per row), so wrapping them into
     // the holder here pays a single FromTags off the hot list paths — which now take the SecurityTagSet directly.
     public IReadOnlyList<CredentialUsageGrant> CallerIdentityGrants() => this.DescribeUsageScope(SecurityTagSet.FromTags(this.InternalTags()));
+
+    // Returns a client view of the version whose deployment-internal security tags (the reserved prefix, §14.2) are
+    // stripped — the persisted document keeps them for row authorization; only the response drops them. When the
+    // version carries no internal tags the original element is returned unchanged (zero-copy, no rewrite). A rewritten
+    // view is a pooled document owned by the workspace, so its element stays valid through the deferred body
+    // serialization. Lives on the ACCESS policy (not one handler) so catalog add and workspace publish share it.
+    internal CatalogVersion PublicView(CatalogVersion version, JsonWorkspace workspace)
+    {
+        SecurityTagSet full = version.SecurityTagsValue;
+        if (full.IsEmpty || !this.HasInternalTag(full))
+        {
+            return version;
+        }
+
+        SecurityTagSet visible = this.BuildVisibleTags(full);
+        var stripped = ParsedJsonDocument<CatalogVersion>.Parse(CatalogVersion.CreateWithSecurityTags(version, visible));
+        workspace.TakeOwnership(stripped);
+        return stripped.RootElement;
+    }
+
+    // Whether the set carries any deployment-internal tag (string-free span scan).
+    private bool HasInternalTag(SecurityTagSet set)
+    {
+        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                if (this.IsInternalTag(e.CurrentKey))
+                {
+                    return true;
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+
+        return false;
+    }
+
+    // Builds the non-internal (client-visible) subset of a tag set bytes-native — each retained tag is appended from
+    // its unescaped UTF-8 key/value, so no per-tag managed string is created.
+    private SecurityTagSet BuildVisibleTags(SecurityTagSet full)
+        => SecurityTagSet.Build(
+            (Full: full, Access: this),
+            static (ref IdentityBuilder builder, in (SecurityTagSet Full, ControlPlaneAccess Access) s) =>
+            {
+                SecurityTagSet.Utf8Enumerator e = s.Full.EnumerateUtf8();
+                try
+                {
+                    while (e.MoveNext())
+                    {
+                        if (!s.Access.IsInternalTag(e.CurrentKey))
+                        {
+                            builder.Add(e.CurrentKey, e.CurrentValue);
+                        }
+                    }
+                }
+                finally
+                {
+                    e.Dispose();
+                }
+            });
 }

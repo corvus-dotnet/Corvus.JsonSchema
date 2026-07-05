@@ -254,6 +254,27 @@ public sealed class ApiCatalogClient : IApiCatalogClient
     }
 
     /// <summary>
+    /// A version's publish evidence
+    /// </summary>
+    /// <remarks>
+    /// The server-attested evidence recorded at publish (workflow-designer design §4.6): engine version, package hash, the scenario suite's verdicts. 404 when the version predates evidence or was published without scenarios.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GetCatalogEvidenceResponse> GetCatalogEvidenceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        GetCatalogEvidenceRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetCatalogEvidenceRequest, GetCatalogEvidenceResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get a version's Arazzo workflow document
     /// </summary>
     /// <remarks>

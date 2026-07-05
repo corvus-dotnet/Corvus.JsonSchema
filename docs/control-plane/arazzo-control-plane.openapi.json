@@ -563,6 +563,30 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/evidence": {
+      "get": {
+        "operationId": "getCatalogEvidence",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "A version's publish evidence",
+        "description": "The server-attested evidence recorded at publish (workflow-designer design \u00a74.6): engine version, package hash, the scenario suite's verdicts. 404 when the version predates evidence or was published without scenarios.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The evidence document.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublishEvidence" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/workflow": {
       "get": {
         "operationId": "getCatalogWorkflow",
@@ -2054,6 +2078,64 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/publish": {
+      "post": {
+        "operationId": "publishWorkingCopy",
+        "security": [
+          { "oauth2": ["catalog:write"] },
+          { "openIdConnect": ["catalog:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["workspace"],
+        "summary": "Publish the working copy as a new catalog version",
+        "description": "The deliberate publish act (design \u00a74.6): validates the document, re-runs the FULL scenario suite server-side (evidence is server-attested, never client-submitted), builds the package embedding metadata/scenarios.json + metadata/evidence.json, and adds the new version to the catalog. Fails 422 with the diagnostics when the document is invalid, or with the suite report when a scenario fails and requireScenarios is not disabled. The new version starts as a draft until promoted.",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "PublishRequest",
+                "properties": {
+                  "owner": { "$ref": "#/components/schemas/CatalogOwner" },
+                  "tags": { "type": "array", "items": { "type": "string" } },
+                  "requireScenarios": { "type": "boolean", "default": true, "description": "Refuse to publish when any scenario fails (or when validation reports errors)." }
+                },
+                "required": ["owner"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new catalog version (a draft until promoted).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogVersionSummary" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": {
+            "description": "Not publishable: validation errors, or the scenario suite failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "PublishRefusal",
+                  "properties": {
+                    "reason": { "type": "string", "enum": ["validation", "scenarios"] },
+                    "diagnostics": { "type": "array", "items": { "$ref": "#/components/schemas/WorkflowDiagnostic" } },
+                    "suite": { "$ref": "#/components/schemas/ScenarioSuiteReport" }
+                  },
+                  "required": ["reason"]
+                }
+              }
+            }
           }
         }
       }
@@ -4839,6 +4921,41 @@
           "instancePath",
           "message"
         ]
+      },
+      "PublishEvidence": {
+        "type": "object",
+        "title": "PublishEvidence",
+        "description": "The server-attested record written into the package at publish (design \u00a74.6).",
+        "properties": {
+          "packageHash": { "type": "string" },
+          "engineVersion": { "type": "string" },
+          "at": { "type": "string", "format": "date-time" },
+          "suite": {
+            "type": "object",
+            "title": "EvidenceSuite",
+            "properties": {
+              "total": { "type": "integer" },
+              "passed": { "type": "integer" },
+              "failed": { "type": "integer" }
+            },
+            "required": ["total", "passed", "failed"]
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "EvidenceScenario",
+              "properties": {
+                "name": { "type": "string" },
+                "passed": { "type": "boolean" },
+                "outcome": { "type": "string" },
+                "pathSummary": { "type": "string", "description": "The visited steps, in order." }
+              },
+              "required": ["name", "passed", "outcome"]
+            }
+          }
+        },
+        "required": ["at", "suite", "scenarios"]
       },
       "Scenario": {
         "type": "object",

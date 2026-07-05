@@ -1005,6 +1005,24 @@ export class ArazzoControlPlaneClient {
     return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/simulate`, { body: command, signal });
   }
 
+  /**
+   * `publishWorkingCopy` — the deliberate publish act (design §4.6): the server validates,
+   * re-runs the scenario suite (evidence is server-attested), and adds the new draft version
+   * with metadata/scenarios.json + metadata/evidence.json embedded. 422 carries the refusal
+   * (validation diagnostics or the failing suite report).
+   * @param {string} id
+   * @param {{ owner: {name: string, email: string}, tags?: string[], requireScenarios?: boolean, signal?: AbortSignal }} request
+   */
+  publishWorkingCopy(id, { signal, ...request }) {
+    if (!request?.owner?.name || !request?.owner?.email) throw new TypeError('publishWorkingCopy requires owner.name and owner.email.');
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/publish`, { body: request, signal });
+  }
+
+  /** `getCatalogEvidence` — a version's server-attested publish evidence (§4.6). */
+  getCatalogEvidence(baseWorkflowId, versionNumber, { signal } = {}) {
+    return this._request('GET', `/catalog/${encodeURIComponent(baseWorkflowId)}/versions/${versionNumber}/evidence`, { signal });
+  }
+
   /** `listScenarios` — the working copy's scenario set (design §4.2). */
   listScenarios(id, { signal } = {}) {
     return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/scenarios`, { signal });
