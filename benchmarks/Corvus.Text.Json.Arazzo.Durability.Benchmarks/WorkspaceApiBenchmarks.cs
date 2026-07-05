@@ -94,6 +94,8 @@ public class WorkspaceApiBenchmarks
     private static readonly byte[] AttachBodyJson = BuildAttachBody();
 
     private ArazzoControlPlaneWorkspaceHandler sharedHandler = null!;
+    private ArazzoControlPlaneSourcesHandler fetchHandler = null!;
+    private ParsedJsonDocument<Models.FetchSourceRequest> fetchBody = null!;
     private string sharedId = null!;
     private ParsedJsonDocument<Models.WorkingCopyCreate> createBody = null!;
     private ParsedJsonDocument<Models.WorkingCopyCreate> blankCreateBody = null!;
@@ -122,6 +124,10 @@ public class WorkspaceApiBenchmarks
         this.saveBody = ParsedJsonDocument<Models.WorkingCopyUpdate>.Parse(SaveBodyJson);
         this.attachBody = ParsedJsonDocument<Models.AttachSourceRequest>.Parse(AttachBodyJson);
 
+        // The fetch benchmark: a stub outbound endpoint serving the petstore, measuring OUR seam only.
+        this.fetchHandler = CreateFetchHandler(new SourceDocumentFetcher(new HttpClient(new StubSpecHandler())));
+        this.fetchBody = ParsedJsonDocument<Models.FetchSourceRequest>.Parse("{\"url\":\"https://specs.example/petstore.json\"}"u8.ToArray());
+
         // Seed the shared working copy's attachment once (the attach benchmark then replaces it each op).
         this.Attach_Inline().GetAwaiter().GetResult();
     }
@@ -129,6 +135,7 @@ public class WorkspaceApiBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
+        this.fetchBody.Dispose();
         this.createBody.Dispose();
         this.blankCreateBody.Dispose();
         this.saveBody.Dispose();
@@ -220,6 +227,17 @@ public class WorkspaceApiBenchmarks
         _ = result.StatusCode;
     }
 
+    /// <summary>POST /sources/fetch → the server-side fetch seam over a stub endpoint: download into
+    /// the pooled buffer, parse, detect, canonical digest, and the pooled response envelope.</summary>
+    [Benchmark]
+    public async Task Fetch_Json()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var parameters = new FetchSourceDocumentParams { Body = this.fetchBody.RootElement };
+        FetchSourceDocumentResult result = await this.fetchHandler.HandleFetchSourceDocumentAsync(parameters, workspace, default);
+        _ = result.StatusCode;
+    }
+
     /// <summary>POST /workspace/workflows/{id}/validate → both diagnostic passes over the stored (clean)
     /// document: the embedded-schema conformance validation plus the semantic analyzer walk.</summary>
     [Benchmark]
@@ -234,6 +252,19 @@ public class WorkspaceApiBenchmarks
 
     private static ParsedJsonDocument<Models.JsonString> ParseString(string value)
         => ParsedJsonDocument<Models.JsonString>.Parse(System.Text.Encoding.UTF8.GetBytes($"\"{value}\""));
+
+    private static ArazzoControlPlaneSourcesHandler CreateFetchHandler(SourceDocumentFetcher fetcher)
+        => new(new Corvus.Text.Json.Arazzo.Durability.Sources.InMemorySourceStore(), new ControlPlaneAccess(), fetcher, Actor);
+
+    /// <summary>The stub outbound endpoint: every URL serves the petstore JSON.</summary>
+    private sealed class StubSpecHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(PetstoreJson) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json") } },
+            });
+    }
 
     // Request bodies assemble once at static init (unmeasured) — plain concatenation is fine here.
     private static byte[] BuildCreateBody()

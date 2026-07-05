@@ -31,6 +31,10 @@
     <!-- The validate endpoint builds a target schema from the package and validates against it at runtime. -->
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
+    <!-- fetchSourceDocument (design §4.4): credentialed server-side fetch + YAML spec parsing. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.SourceCredentials.Http\Corvus.Text.Json.Arazzo.SourceCredentials.Http.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Yaml\Corvus.Text.Json.Yaml.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

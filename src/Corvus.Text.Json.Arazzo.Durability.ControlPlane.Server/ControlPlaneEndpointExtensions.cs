@@ -79,7 +79,7 @@ public static class ControlPlaneEndpointExtensions
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IWorkspaceWorkflowStore? workspaceWorkflowStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IWorkspaceWorkflowStore? workspaceWorkflowStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null, SourceDocumentFetcher? sourceFetcher = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -160,7 +160,7 @@ public static class ControlPlaneEndpointExtensions
         // data plane is reach-filtered (the source store); sources are not governed (no administrator set) — reach
         // membership is the management gate. Defaults to an in-memory store so the endpoints function in development.
         ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
-        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access);
+        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher);
         IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
         var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(wcStore, access, catalog, srcStore);
 

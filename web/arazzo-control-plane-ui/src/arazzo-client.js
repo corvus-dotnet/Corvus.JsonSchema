@@ -992,6 +992,21 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `fetchSourceDocument` — server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web
+   * endpoint (no browser CORS), optionally authenticated with a registered source credential
+   * referenced by `(sourceName, environment)`. Returns the validated document plus its detected
+   * `type`/`version` and canonical `digest`; attach or register the result yourself.
+   * @param {{ url: string, credential?: { sourceName: string, environment: string }, signal?: AbortSignal }} fetchRequest
+   * @returns {Promise<{ url: string, type: string, version?: string, digest: string, contentType?: string, document: object }>}
+   */
+  fetchSourceDocument(fetchRequest) {
+    if (!fetchRequest || !fetchRequest.url) throw new TypeError('fetchSourceDocument requires a url.');
+    const body = { url: fetchRequest.url };
+    if (fetchRequest.credential) body.credential = fetchRequest.credential;
+    return this._request('POST', '/sources/fetch', { body, signal: fetchRequest.signal });
+  }
+
+  /**
    * `getCredential` — one binding by its `(sourceName, environment)` key.
    * @param {string} sourceName
    * @param {string} environment
