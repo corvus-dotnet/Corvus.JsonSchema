@@ -2098,6 +2098,11 @@ export function createMockControlPlane(options = {}) {
     if (missing.length > 0) {
       return problem(409, 'Environment not ready', `Version ${versionNumber} of '${base}' cannot be made available in '${environment}': no usable credential for ${missing.join(', ')}.`);
     }
+    // Promotion readiness (workflow-designer §4.6): readiness = credentials ∧ (suiteGreen ∨ ¬requireEvidence).
+    // Default-off — environments without the flag keep the credential-only gate exactly.
+    if (findEnvironment(environment)?.requireEvidence && !hasGreenEvidence(version)) {
+      return problem(409, 'Evidence required', `Version ${versionNumber} of '${base}' cannot be made available in '${environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).`);
+    }
     const entry = { baseWorkflowId: base, versionNumber, environment, createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag() };
     availabilityEntries.push(entry);
     return json(structuredClone(entry), 201);
@@ -2922,6 +2927,13 @@ export function createMockControlPlane(options = {}) {
     return environments.find((e) => e.name === name);
   }
 
+  // Whether the version's publish evidence attests a green suite (it ran at least one scenario and none
+  // failed) — the evidence half of the §4.6 readiness formula.
+  function hasGreenEvidence(version) {
+    const suite = version._evidence?.suite;
+    return !!suite && suite.total > 0 && suite.failed === 0;
+  }
+
   function notFoundEnvironment(name) {
     return problem(404, 'Environment not found', `No environment named '${name}'.`);
   }
@@ -2950,6 +2962,8 @@ export function createMockControlPlane(options = {}) {
       managementTags: body.managementTags ?? [],
       createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
+    // Promotion readiness (workflow-designer §4.6): the environment may require green publish evidence.
+    if (typeof body.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
     environments.push(e);
     // Creating an environment grants the creator administration of it (§7.7), mirroring catalog version creation.
     environmentAdministrators[e.name] = [adminGrant([{ dimension: 'sys:sub', value: actingSubject() }], 'person', 'You (creator)')];
@@ -2972,6 +2986,8 @@ export function createMockControlPlane(options = {}) {
 
     if (body?.displayName !== undefined) e.displayName = body.displayName;
     if (body?.description !== undefined) e.description = body.description;
+    // A present requireEvidence replaces the promotion-readiness requirement (§4.6); absent leaves it unchanged.
+    if (typeof body?.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
     e.lastUpdatedBy = actingSubject(); e.lastUpdatedAt = iso(0); e.etag = nextEtag();
     return json(structuredClone(e));
   }
@@ -3246,6 +3262,10 @@ export function createMockControlPlane(options = {}) {
       const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, r.environment, r.baseWorkflowId)).map((s) => s.name);
       if (missing.length > 0) {
         return problem(409, 'Environment not ready', `Version ${r.versionNumber} of '${r.baseWorkflowId}' cannot be made available in '${r.environment}': no usable credential for ${missing.join(', ')}.`);
+      }
+      // Promotion readiness (workflow-designer §4.6): approval hits the same evidence gate as a direct make-available.
+      if (findEnvironment(r.environment)?.requireEvidence && !hasGreenEvidence(version)) {
+        return problem(409, 'Evidence required', `Version ${r.versionNumber} of '${r.baseWorkflowId}' cannot be made available in '${r.environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).`);
       }
       r.status = 'Approved'; r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason;
       // Approval makes the version available — record it in the matrix (idempotent).
