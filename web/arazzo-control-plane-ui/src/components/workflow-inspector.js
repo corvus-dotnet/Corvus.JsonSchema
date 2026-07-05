@@ -45,6 +45,9 @@ class ArazzoWorkflowInspector extends ArazzoElement {
 
   /** The document's OTHER workflowIds — dependsOn choices and cross-workflow action targets. */
   set workflowIds(ids) { this._workflowIds = [...(ids || [])]; }
+
+  /** The document's components object — enables $components references in the defaults layer. */
+  set components(value) { this._components = value || {}; }
   set completionContext(ctx) { this._completionContext = ctx || {}; }
   get completionContext() { return this._completionContext; }
 
@@ -243,6 +246,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       kind,
       stepIds: this._stepIds,
       workflowIds: this._workflowIds,
+      components: (this._components || {})[kind === 'success' ? 'successActions' : 'failureActions'],
       completionContext: this._completionContext,
       onChange: () => {
         if (!actions.length) delete this._workflow[listName];
