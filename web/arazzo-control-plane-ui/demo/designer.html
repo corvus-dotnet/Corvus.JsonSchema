@@ -496,21 +496,27 @@
       if (!sel) { selectionPre.textContent = '(nothing selected)'; return; }
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
 
-      // Start / end / background / defaults all land on the workflow inspector, focused per §6.2.
-      const workflowSection = sel.type === 'node' && sel.id === '#start' ? 'inputs'
-        : sel.type === 'node' && sel.id === '#end' ? 'outputs'
-        : sel.type === 'defaults' ? 'failure'
-        : null;
-      if (workflowSection !== null || sel.type === 'defaults') {
+      // Canvas anchors open the MATCHING editor (§3.2): start = the workflow's inputs, end = its
+      // outputs — nothing else (start "having outputs" read as a statement about start). The
+      // defaults card is the whole-workflow anchor and keeps the full editor.
+      const anchor = sel.type === 'node' && sel.id === '#start'
+        ? { only: ['inputs'], title: `workflow inputs — ${wf.workflowId}`, focus: 'inputs' }
+        : sel.type === 'node' && sel.id === '#end'
+          ? { only: ['outputs'], title: `workflow outputs — ${wf.workflowId}`, focus: 'outputs' }
+          : sel.type === 'defaults'
+            ? { only: null, title: `workflow — ${wf.workflowId}`, focus: 'failure' }
+            : null;
+      if (anchor) {
         const wi = doc.workflows.indexOf(wf);
         const ed = document.createElement('arazzo-workflow-inspector');
         ed.stepIds = wf.steps.map((s) => s.stepId);
         ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
         ed.components = doc.components;
         ed.completionContext = expr.completionContext;
+        ed.only = anchor.only;
         ed.value = wf;
-        if (workflowSection) ed.setAttribute('focus-section', workflowSection);
-        inspector.append(heading(`workflow — ${wf.workflowId}`), ed);
+        ed.setAttribute('focus-section', anchor.focus);
+        inspector.append(heading(anchor.title), ed);
         ed.addEventListener('workflow-changed', (ev) => {
           model.update((d) => { d.workflows[wi] = ev.detail.workflow; },
             { origin: 'inspector', label: `edit workflow ${wf.workflowId}`, coalesce: true });

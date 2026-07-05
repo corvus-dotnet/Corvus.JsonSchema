@@ -43,6 +43,14 @@ class ArazzoWorkflowInspector extends ArazzoElement {
 
   set stepIds(ids) { this._stepIds = [...(ids || [])]; }
 
+  /** Scope the form to named sections ('summary'|'dependson'|'parameters'|'inputs'|'success'|
+   *  'failure'|'outputs'); null renders everything. The canvas anchors use this so selecting
+   *  START edits inputs (not outputs — those belong to the END anchor). */
+  set only(sections) {
+    this._only = sections?.length ? new Set(sections) : null;
+    if (this.isConnected && this._built) this.renderForm();
+  }
+
   /** The document's OTHER workflowIds — dependsOn choices and cross-workflow action targets. */
   set workflowIds(ids) { this._workflowIds = [...(ids || [])]; }
 
@@ -87,7 +95,9 @@ class ArazzoWorkflowInspector extends ArazzoElement {
   renderForm() {
     const w = this._workflow;
     const form = this.$('.form');
+    const wants = (section) => !this._only || this._only.has(section);
     form.innerHTML = `
+      ${wants('summary') ? `
       <div>
         <label>summary</label>
         <input class="summary" type="text" value="${escapeHtml(w.summary || '')}">
@@ -95,60 +105,68 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       <div>
         <label>description</label>
         <input class="wdesc" type="text" value="${escapeHtml(w.description || '')}">
-      </div>
+      </div>` : ''}
 
+      ${wants('dependson') ? `
       <h3 data-section="dependson">depends on</h3>
       <div class="hint">workflows that must complete before this one starts</div>
-      <div class="wdependson chips"></div>
+      <div class="wdependson chips"></div>` : ''}
 
+      ${wants('parameters') ? `
       <h3 data-section="parameters">parameters</h3>
       <div class="hint">applied to every step in this workflow (a step's own parameter with the same name and location wins)</div>
       <div class="wparams"></div>
-      <button class="addwp ghost" type="button" style="font-size:12px; justify-self:start;">+ Add parameter</button>
+      <button class="addwp ghost" type="button" style="font-size:12px; justify-self:start;">+ Add parameter</button>` : ''}
 
+      ${wants('inputs') ? `
       <h3 data-section="inputs">inputs (JSON Schema)</h3>
       <div>
         <textarea class="inputs" rows="6" spellcheck="false">${w.inputs !== undefined ? escapeHtml(JSON.stringify(w.inputs, null, 2)) : ''}</textarea>
         <div class="hint inputs-hint">drives the typed inputs form and $inputs completions</div>
-      </div>
+      </div>` : ''}
 
+      ${wants('success') ? `
       <h3 data-section="success">workflow successActions (defaults layer)</h3>
-      <div class="wsuccess"></div>
+      <div class="wsuccess"></div>` : ''}
+      ${wants('failure') ? `
       <h3 data-section="failure">workflow failureActions (defaults layer)</h3>
-      <div class="wfailure"></div>
+      <div class="wfailure"></div>` : ''}
 
+      ${wants('outputs') ? `
       <h3 data-section="outputs">outputs</h3>
-      <div class="wouts"></div>
+      <div class="wouts"></div>` : ''}
     `;
 
-    this._renderDependsOn();
-    this._renderParameters();
-    this._mountActionList('wsuccess', 'successActions', 'success');
-    this._mountActionList('wfailure', 'failureActions', 'failure');
+    if (wants('dependson')) this._renderDependsOn();
+    if (wants('parameters')) this._renderParameters();
+    if (wants('success')) this._mountActionList('wsuccess', 'successActions', 'success');
+    if (wants('failure')) this._mountActionList('wfailure', 'failureActions', 'failure');
 
-    const outs = document.createElement('arazzo-outputs-editor');
-    outs.completionContext = this._completionContext;
-    outs.value = w.outputs || {};
-    form.querySelector('.wouts').append(outs);
-    outs.addEventListener('outputs-changed', (e) => {
-      e.stopPropagation();
-      if (Object.keys(e.detail.outputs).length) this._workflow.outputs = e.detail.outputs;
-      else delete this._workflow.outputs;
-      this._emit();
-    });
+    if (wants('outputs')) {
+      const outs = document.createElement('arazzo-outputs-editor');
+      outs.completionContext = this._completionContext;
+      outs.value = w.outputs || {};
+      form.querySelector('.wouts').append(outs);
+      outs.addEventListener('outputs-changed', (e) => {
+        e.stopPropagation();
+        if (Object.keys(e.detail.outputs).length) this._workflow.outputs = e.detail.outputs;
+        else delete this._workflow.outputs;
+        this._emit();
+      });
+    }
 
-    form.querySelector('.summary').addEventListener('input', (e) => {
+    form.querySelector('.summary')?.addEventListener('input', (e) => {
       if (e.target.value) this._workflow.summary = e.target.value;
       else delete this._workflow.summary;
       this._emit();
     });
-    form.querySelector('.wdesc').addEventListener('input', (e) => {
+    form.querySelector('.wdesc')?.addEventListener('input', (e) => {
       if (e.target.value) this._workflow.description = e.target.value;
       else delete this._workflow.description;
       this._emit();
     });
     const inputs = form.querySelector('.inputs');
-    inputs.addEventListener('input', () => {
+    inputs?.addEventListener('input', () => {
       const hint = form.querySelector('.inputs-hint');
       if (!inputs.value.trim()) {
         inputs.classList.remove('invalid');
