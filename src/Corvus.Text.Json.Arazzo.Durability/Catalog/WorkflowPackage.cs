@@ -82,6 +82,12 @@ public static class WorkflowPackage
     /// <summary>The entry name of the executor manifest (target framework, integrity binding, entry type).</summary>
     public const string ExecutorManifestEntryName = "metadata/executor-manifest.json";
 
+    /// <summary>The scenario-set entry (workflow-designer design §4.2): the working copy's scenarios, published verbatim.</summary>
+    public const string ScenariosEntryName = "metadata/scenarios.json";
+
+    /// <summary>The publish-evidence entry (workflow-designer design §4.6): the server-attested suite record.</summary>
+    public const string EvidenceEntryName = "metadata/evidence.json";
+
     // Container framing constants.
     private const int MagicSize = 4;        // "AWP" + version byte
     private const int HeaderSize = 8;       // magic (4) + entry count uint32 (4)
@@ -97,6 +103,10 @@ public static class WorkflowPackage
     private static ReadOnlySpan<byte> WorkflowEntryNameUtf8 => "workflow.json"u8;
 
     private static ReadOnlySpan<byte> SchemasEntryNameUtf8 => "metadata/schemas.json"u8;
+
+    private static ReadOnlySpan<byte> ScenariosEntryNameUtf8 => "metadata/scenarios.json"u8;
+
+    private static ReadOnlySpan<byte> EvidenceEntryNameUtf8 => "metadata/evidence.json"u8;
 
     private static ReadOnlySpan<byte> ExecutorEntryNameUtf8 => "metadata/executor.dll"u8;
 
@@ -119,8 +129,10 @@ public static class WorkflowPackage
         IReadOnlyList<KeyValuePair<string, byte[]>> sources,
         ReadOnlyMemory<byte> schemas = default,
         ReadOnlyMemory<byte> executor = default,
-        ReadOnlyMemory<byte> executorManifest = default)
-        => PackPooled(workflowUtf8, ToMemorySources(sources), schemas, executor, executorManifest);
+        ReadOnlyMemory<byte> executorManifest = default,
+        ReadOnlyMemory<byte> scenarios = default,
+        ReadOnlyMemory<byte> evidence = default)
+        => PackPooled(workflowUtf8, ToMemorySources(sources), schemas, executor, executorManifest, scenarios, evidence);
 
     /// <summary>Assembles a package, taking the source documents as <see cref="ReadOnlyMemory{T}"/> (so a pooled reader
     /// can pack without materialising each source to its own array) — a distinct name from <c>Pack</c> so an empty
@@ -136,7 +148,9 @@ public static class WorkflowPackage
         IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources,
         ReadOnlyMemory<byte> schemas = default,
         ReadOnlyMemory<byte> executor = default,
-        ReadOnlyMemory<byte> executorManifest = default)
+        ReadOnlyMemory<byte> executorManifest = default,
+        ReadOnlyMemory<byte> scenarios = default,
+        ReadOnlyMemory<byte> evidence = default)
     {
         ArgumentNullException.ThrowIfNull(sources);
 
@@ -197,6 +211,18 @@ public static class WorkflowPackage
                 entryCount++;
             }
 
+            if (!scenarios.IsEmpty)
+            {
+                total = checked(total + EntryHeaderSize + ScenariosEntryNameUtf8.Length + scenarios.Length);
+                entryCount++;
+            }
+
+            if (!evidence.IsEmpty)
+            {
+                total = checked(total + EntryHeaderSize + EvidenceEntryNameUtf8.Length + evidence.Length);
+                entryCount++;
+            }
+
             // One allocation — the package itself, the genuine leaf — written in place with spans; no ZIP object graph,
             // no growing stream, and no per-entry name string.
             byte[] result = new byte[total];
@@ -223,7 +249,17 @@ public static class WorkflowPackage
 
             if (!executorManifest.IsEmpty)
             {
-                _ = WriteEntry(span, pos, ExecutorManifestEntryNameUtf8, executorManifest.Span);
+                pos = WriteEntry(span, pos, ExecutorManifestEntryNameUtf8, executorManifest.Span);
+            }
+
+            if (!scenarios.IsEmpty)
+            {
+                pos = WriteEntry(span, pos, ScenariosEntryNameUtf8, scenarios.Span);
+            }
+
+            if (!evidence.IsEmpty)
+            {
+                _ = WriteEntry(span, pos, EvidenceEntryNameUtf8, evidence.Span);
             }
 
             return result;
@@ -268,6 +304,32 @@ public static class WorkflowPackage
             data.CopyTo(span[pos..]);
             return pos + data.Length;
         }
+    }
+
+    /// <summary>
+    /// Reads one named entry from a package (e.g. <see cref="EvidenceEntryName"/> for the
+    /// catalog's evidence endpoint, <see cref="ScenariosEntryName"/> for scenario carry-over)
+    /// without materialising the whole contents — the returned memory is a view over
+    /// <paramref name="package"/>.
+    /// </summary>
+    /// <param name="package">The package bytes.</param>
+    /// <param name="entryNameUtf8">The entry name as UTF-8.</param>
+    /// <param name="data">The entry bytes when present.</param>
+    /// <returns><see langword="true"/> when the entry exists.</returns>
+    public static bool TryReadEntry(ReadOnlyMemory<byte> package, ReadOnlySpan<byte> entryNameUtf8, out ReadOnlyMemory<byte> data)
+    {
+        var reader = new PackageReader(package.Span);
+        while (reader.TryRead(out ReadOnlySpan<byte> name, out int dataOffset, out int dataLength))
+        {
+            if (name.SequenceEqual(entryNameUtf8))
+            {
+                data = package.Slice(dataOffset, dataLength);
+                return true;
+            }
+        }
+
+        data = default;
+        return false;
     }
 
     /// <summary>Opens a package, materializing its workflow and source documents.</summary>
@@ -347,6 +409,8 @@ public static class WorkflowPackage
         var reader = new PackageReader(span);
 
         ReadOnlyMemory<byte> workflow = default;
+        ReadOnlyMemory<byte> scenarios = default;
+        ReadOnlyMemory<byte> evidence = default;
         bool hasWorkflow = false;
         var sources = new List<KeyValuePair<string, ReadOnlyMemory<byte>>>();
 
@@ -362,6 +426,14 @@ public static class WorkflowPackage
             {
                 sources.Add(new KeyValuePair<string, ReadOnlyMemory<byte>>(sourceName, package.Slice(dataOffset, dataLength)));
             }
+            else if (name.SequenceEqual("metadata/scenarios.json"u8))
+            {
+                scenarios = package.Slice(dataOffset, dataLength);
+            }
+            else if (name.SequenceEqual("metadata/evidence.json"u8))
+            {
+                evidence = package.Slice(dataOffset, dataLength);
+            }
 
             // schemas/executor/manifest are produced by the providers at projection time, not read here.
         }
@@ -372,7 +444,7 @@ public static class WorkflowPackage
         }
 
         sources.Sort(SourceKeyComparer.Instance);
-        return new PooledPackageContents(workflow, sources);
+        return new PooledPackageContents(workflow, sources, scenarios: scenarios, evidence: evidence);
     }
 
     /// <summary>
@@ -662,12 +734,20 @@ internal sealed class PooledPackageContents : IDisposable
     private readonly List<byte[]>? rentedBuffers;
     private bool disposed;
 
-    internal PooledPackageContents(ReadOnlyMemory<byte> workflow, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources, List<byte[]>? rentedBuffers = null)
+    internal PooledPackageContents(ReadOnlyMemory<byte> workflow, IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> sources, List<byte[]>? rentedBuffers = null, ReadOnlyMemory<byte> scenarios = default, ReadOnlyMemory<byte> evidence = default)
     {
         this.Workflow = workflow;
         this.Sources = sources;
+        this.Scenarios = scenarios;
+        this.Evidence = evidence;
         this.rentedBuffers = rentedBuffers;
     }
+
+    /// <summary>Gets the scenario-set entry bytes, when the package carries them (a view over the package).</summary>
+    public ReadOnlyMemory<byte> Scenarios { get; }
+
+    /// <summary>Gets the publish-evidence entry bytes, when the package carries them (a view over the package).</summary>
+    public ReadOnlyMemory<byte> Evidence { get; }
 
     /// <summary>Gets the Arazzo workflow document bytes (a view over the package buffer).</summary>
     public ReadOnlyMemory<byte> Workflow { get; }

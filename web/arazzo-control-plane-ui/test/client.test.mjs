@@ -1163,3 +1163,28 @@ test('scenarios: lifecycle + judged runs through the mock', async () => {
   await c.deleteScenario(wc.id, 'sad');
   assert.equal((await c.listScenarios(wc.id)).scenarios.length, 1);
 });
+
+test('publish attests the suite and serves evidence; failures refuse with 422', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'pub', document: {
+      arazzo: '1.1.0', info: { title: 'Pub', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'pub-flow', steps: [{ stepId: 'a', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] }] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+  await c.putScenario(wc.id, { name: 'ok', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 200 }] }], expect: { outcome: 'completed' } });
+
+  const version = await c.publishWorkingCopy(wc.id, { owner: { name: 'Team', email: 't@example.com' }, tags: ['designer'] });
+  assert.equal(version.baseWorkflowId, 'pub-flow');
+
+  const evidence = await c.getCatalogEvidence(version.baseWorkflowId, version.versionNumber);
+  assert.equal(evidence.suite.passed, 1);
+  assert.equal(evidence.scenarios[0].name, 'ok');
+  assert.ok(evidence.scenarios[0].pathSummary.includes('a'));
+
+  // A failing scenario refuses.
+  await c.putScenario(wc.id, { name: 'sad', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 500 }] }], expect: { outcome: 'completed' } });
+  await assert.rejects(() => c.publishWorkingCopy(wc.id, { owner: { name: 'T', email: 't@e.com' } }), (e) => e.status === 422);
+});

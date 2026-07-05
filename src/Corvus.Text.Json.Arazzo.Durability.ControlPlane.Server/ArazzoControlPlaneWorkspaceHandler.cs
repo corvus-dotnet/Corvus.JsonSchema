@@ -336,48 +336,10 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return ValidateWorkspaceWorkflowResult.NotFound(NotFoundProblem(id), workspace);
         }
 
-        // Both passes run over the stored document and their findings merge, in document-conformance-
-        // then-semantic order. An invalid document is a SUCCESSFUL validation run (200 + findings).
-        var findings = new List<Finding>();
+        // All three passes run over the stored document and their findings merge (shared with the
+        // publish gate). An invalid document is a SUCCESSFUL validation run (200 + findings).
         var document = (Corvus.Text.Json.JsonElement)w.RootElement.Document;
-
-        // 1 — JSON-Schema conformance against the Arazzo meta-schema the document declares.
-        using (JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed))
-        {
-            ArazzoMetaSchema.For(document).Validate(in document, collector);
-            foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
-            {
-                if (!result.IsMatch)
-                {
-                    findings.Add(new("error", "schema", result.GetDocumentEvaluationLocationText(), result.GetMessageText(), result.GetSchemaEvaluationLocationText()));
-                    if (findings.Count >= MaxValidationErrors)
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-
-        // 2 — document-local semantic checks (the compiler's rules, collected instead of thrown).
-        foreach (WorkflowDocumentDiagnostic diagnostic in WorkflowDocumentAnalyzer.Analyze(in document))
-        {
-            findings.Add(new(
-                diagnostic.Severity switch
-                {
-                    WorkflowDocumentDiagnosticSeverity.Error => "error",
-                    WorkflowDocumentDiagnosticSeverity.Warning => "warning",
-                    _ => "info",
-                },
-                diagnostic.Category,
-                diagnostic.InstancePath,
-                diagnostic.Message,
-                SchemaLocation: null));
-        }
-
-        // 3 — workspace-level source integrity: the document's operation bindings cross-checked
-        //     against the working copy's ATTACHED sources. Document-local passes cannot see the
-        //     attachments, so "delete a declared source that steps still use" surfaces HERE.
-        await this.CheckSourceIntegrityAsync(document, (Corvus.Text.Json.JsonElement)w.RootElement.Sources, findings, cancellationToken).ConfigureAwait(false);
+        List<Finding> findings = await this.CollectDiagnosticsAsync(document, (JsonElement)w.RootElement.Sources, cancellationToken).ConfigureAwait(false);
 
         bool valid = true;
         foreach (Finding finding in findings)
@@ -688,6 +650,284 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 result.Dispose();
             }
         }
+    }
+
+    /// <summary>
+    /// The deliberate publish act (design §4.6): the validation gate, the server-attested scenario
+    /// suite, the evidence record, the package embedding metadata/scenarios.json +
+    /// metadata/evidence.json, and the catalog add. The new version starts as a draft.
+    /// </summary>
+    /// <param name="parameters">The request parameters.</param>
+    /// <param name="workspace">The response workspace.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The new version's summary, or the refusal.</returns>
+    public async ValueTask<PublishWorkingCopyResult> HandlePublishWorkingCopyAsync(PublishWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        if (this.catalog is null)
+        {
+            return PublishWorkingCopyResult.BadRequest(
+                Problem("catalog-unavailable", "Catalog unavailable", 400, "This deployment does not offer publishing."), workspace);
+        }
+
+        Models.PostWorkspaceWorkflowsByIdPublishBody body = parameters.Body;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return PublishWorkingCopyResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        // 1 — the validation gate: any error refuses the publish with the diagnostics.
+        var document = (JsonElement)w.RootElement.Document;
+        List<Finding> findings = await this.CollectDiagnosticsAsync(document, (JsonElement)w.RootElement.Sources, cancellationToken).ConfigureAwait(false);
+        bool invalid = false;
+        foreach (Finding finding in findings)
+        {
+            invalid |= finding.Severity == "error";
+        }
+
+        if (invalid)
+        {
+            ParsedJsonDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity> refusal =
+                PersistedJson.ToPooledDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity, List<Finding>>(
+                    findings,
+                    static (Utf8JsonWriter writer, in List<Finding> all) =>
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("reason"u8, "validation"u8);
+                        writer.WriteStartArray("diagnostics"u8);
+                        foreach (Finding f in all)
+                        {
+                            writer.WriteStartObject();
+                            writer.WriteString("severity"u8, f.Severity);
+                            writer.WriteString("category"u8, f.Category);
+                            writer.WriteString("instancePath"u8, f.InstancePath);
+                            writer.WriteString("message"u8, f.Message);
+                            writer.WriteEndObject();
+                        }
+
+                        writer.WriteEndArray();
+                        writer.WriteEndObject();
+                    });
+            workspace.TakeOwnership(refusal);
+            return PublishWorkingCopyResult.UnprocessableEntity(refusal.RootElement, workspace);
+        }
+
+        // 2 — the server-attested suite: every stored scenario replays here; a client cannot submit evidence.
+        JsonElement scenarios = (JsonElement)w.RootElement.Scenarios;
+        var runs = new List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>();
+        try
+        {
+            if (scenarios.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement scenario in scenarios.EnumerateArray())
+                {
+                    if (scenario.TryGetProperty("name"u8, out JsonElement n) && n.GetString() is { Length: > 0 } scenarioName)
+                    {
+                        if (this.simulator is null)
+                        {
+                            return PublishWorkingCopyResult.BadRequest(
+                                Problem("simulation-not-offered", "Simulation not offered", 400, "The working copy carries scenarios but this deployment cannot attest them (no simulator wired)."), workspace);
+                        }
+
+                        (SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
+                        runs.Add((scenarioName, result, verdicts));
+                    }
+                }
+            }
+
+            bool anyFailed = false;
+            foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in runs)
+            {
+                foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                {
+                    anyFailed |= !v.Passed;
+                }
+            }
+
+            bool requireScenarios = !(body.RequireScenarios.IsNotUndefined() && !(bool)body.RequireScenarios);
+            if (anyFailed && requireScenarios)
+            {
+                ParsedJsonDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity> refusal =
+                    PersistedJson.ToPooledDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity, List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>>(
+                        runs,
+                        static (Utf8JsonWriter writer, in List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> all) =>
+                        {
+                            int passed = 0;
+                            foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                            {
+                                bool ok = true;
+                                foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                                {
+                                    ok &= v.Passed;
+                                }
+
+                                if (ok)
+                                {
+                                    passed++;
+                                }
+                            }
+
+                            writer.WriteStartObject();
+                            writer.WriteString("reason"u8, "scenarios"u8);
+                            writer.WriteStartObject("suite"u8);
+                            writer.WriteNumber("total"u8, all.Count);
+                            writer.WriteNumber("passed"u8, passed);
+                            writer.WriteNumber("failed"u8, all.Count - passed);
+                            writer.WriteStartArray("results"u8);
+                            foreach ((string name, SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                            {
+                                WorkspaceScenarioJson.WriteRunResult(writer, name, result, verdicts);
+                            }
+
+                            writer.WriteEndArray();
+                            writer.WriteEndObject();
+                            writer.WriteEndObject();
+                        });
+                workspace.TakeOwnership(refusal);
+                return PublishWorkingCopyResult.UnprocessableEntity(refusal.RootElement, workspace);
+            }
+
+            // 3 — the package: content first (the hash canonicalises only {workflow, sources}), then the
+            //     evidence carrying that hash, then the final package embedding both metadata entries.
+            byte[] documentBytes = WorkspaceSimulationJson.DocumentBytes(document, null)!;
+            List<KeyValuePair<string, byte[]>> sourceBytes = await WorkspaceSimulationJson.SourceBytesAsync(
+                (JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            string hash = CatalogPackage.Validate(CatalogPackage.Build(documentBytes, sourceBytes)).Hash ?? string.Empty;
+            byte[] scenariosBytes = scenarios.ValueKind == JsonValueKind.Array
+                ? PersistedJson.ToArray(scenarios, static (Utf8JsonWriter writer, in JsonElement sc) => sc.WriteTo(writer))
+                : [];
+            byte[] evidenceBytes = PersistedJson.ToArray(
+                (Hash: hash, At: this.timeProvider.GetUtcNow(), Runs: runs),
+                static (Utf8JsonWriter writer, in (string Hash, DateTimeOffset At, List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> Runs) s) =>
+                {
+                    int passed = 0;
+                    foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in s.Runs)
+                    {
+                        bool ok = true;
+                        foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                        {
+                            ok &= v.Passed;
+                        }
+
+                        if (ok)
+                        {
+                            passed++;
+                        }
+                    }
+
+                    writer.WriteStartObject();
+                    writer.WriteString("packageHash"u8, s.Hash);
+                    writer.WriteString("engineVersion"u8, typeof(IWorkflowRun).Assembly.GetName().Version?.ToString() ?? "unknown");
+                    writer.WriteString("at"u8, s.At);
+                    writer.WriteStartObject("suite"u8);
+                    writer.WriteNumber("total"u8, s.Runs.Count);
+                    writer.WriteNumber("passed"u8, passed);
+                    writer.WriteNumber("failed"u8, s.Runs.Count - passed);
+                    writer.WriteEndObject();
+                    writer.WriteStartArray("scenarios"u8);
+                    foreach ((string name, SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) in s.Runs)
+                    {
+                        bool ok = true;
+                        foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                        {
+                            ok &= v.Passed;
+                        }
+
+                        writer.WriteStartObject();
+                        writer.WriteString("name"u8, name);
+                        writer.WriteBoolean("passed"u8, ok);
+                        writer.WriteString("outcome"u8, WorkspaceScenarioJson.OutcomeName(result.Outcome));
+                        var visited = new List<string>();
+                        foreach (SimulatedStepRecord record in result.Steps)
+                        {
+                            visited.Add(record.StepId);
+                        }
+
+                        writer.WriteString("pathSummary"u8, string.Join(" → ", visited));
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
+                    writer.WriteEndObject();
+                });
+            byte[] package = CatalogPackage.Build(documentBytes, sourceBytes, scenariosBytes, evidenceBytes);
+
+            JsonElement ownerElement = (JsonElement)body.Owner;
+            var owner = new CatalogOwner(
+                ownerElement.TryGetProperty("name"u8, out JsonElement on) ? on.GetString() ?? string.Empty : string.Empty,
+                ownerElement.TryGetProperty("email"u8, out JsonElement oe) ? oe.GetString() ?? string.Empty : string.Empty,
+                ownerElement.TryGetProperty("team"u8, out JsonElement ot) ? ot.GetString() : null,
+                ownerElement.TryGetProperty("url"u8, out JsonElement ou) ? ou.GetString() : null);
+            TagSet tags = TagSet.CopyFrom(body.Tags);
+            SecurityTagSet securityTags = ArazzoControlPlaneCatalogHandler.CombineSecurityTags(this.access.InternalTags(), default);
+
+            try
+            {
+                ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
+                workspace.TakeOwnership(version);
+                return PublishWorkingCopyResult.Created(Models.CatalogVersionSummary.From(this.access.PublicView(version.RootElement, workspace)), workspace);
+            }
+            catch (ArgumentException ex)
+            {
+                return PublishWorkingCopyResult.BadRequest(
+                    Problem("not-publishable", "Not publishable", 400, ex.Message), workspace);
+            }
+        }
+        finally
+        {
+            foreach ((string _, SimulationResult result, List<WorkspaceScenarioJson.Verdict> _) in runs)
+            {
+                result.Dispose();
+            }
+        }
+    }
+
+    /// <summary>The three validation passes (schema conformance, document-local semantics, workspace source
+    /// integrity), shared by <c>validate</c> and the publish gate.</summary>
+    private async ValueTask<List<Finding>> CollectDiagnosticsAsync(JsonElement document, JsonElement attachments, CancellationToken cancellationToken)
+    {
+        var findings = new List<Finding>();
+
+        // 1 — JSON-Schema conformance against the Arazzo meta-schema the document declares.
+        using (JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed))
+        {
+            ArazzoMetaSchema.For(document).Validate(in document, collector);
+            foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
+            {
+                if (!result.IsMatch)
+                {
+                    findings.Add(new("error", "schema", result.GetDocumentEvaluationLocationText(), result.GetMessageText(), result.GetSchemaEvaluationLocationText()));
+                    if (findings.Count >= MaxValidationErrors)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2 — document-local semantic checks (the compiler's rules, collected instead of thrown).
+        foreach (WorkflowDocumentDiagnostic diagnostic in WorkflowDocumentAnalyzer.Analyze(in document))
+        {
+            findings.Add(new(
+                diagnostic.Severity switch
+                {
+                    WorkflowDocumentDiagnosticSeverity.Error => "error",
+                    WorkflowDocumentDiagnosticSeverity.Warning => "warning",
+                    _ => "info",
+                },
+                diagnostic.Category,
+                diagnostic.InstancePath,
+                diagnostic.Message,
+                SchemaLocation: null));
+        }
+
+        // 3 — workspace-level source integrity: the document's operation bindings cross-checked
+        //     against the working copy's ATTACHED sources. Document-local passes cannot see the
+        //     attachments, so "delete a declared source that steps still use" surfaces HERE.
+        await this.CheckSourceIntegrityAsync(document, attachments, findings, cancellationToken).ConfigureAwait(false);
+
+        return findings;
     }
 
     /// <summary>Runs one stored scenario against the simulator and judges its expectations.</summary>

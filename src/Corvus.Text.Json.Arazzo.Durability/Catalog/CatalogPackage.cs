@@ -122,7 +122,7 @@ public static partial class CatalogPackage
             metadataProvider is not null || executorProvider is not null ? MaterializeSources(contents.Sources) : null;
         ReadOnlyMemory<byte> schemas = metadataProvider?.BuildSchemas(rewrittenWorkflow, providerSources!) ?? default;
         WorkflowExecutorArtifact? executor = executorProvider?.BuildExecutor(rewrittenWorkflow, providerSources!, hash);
-        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default);
+        byte[] canonicalPackage = WorkflowPackage.PackPooled(rewrittenWorkflow, contents.Sources, schemas, executor?.Assembly ?? default, executor?.Manifest ?? default, contents.Scenarios, contents.Evidence);
 
         return new CatalogPackageProjection(canonicalPackage, workflowId, hash, title, description, sources, executor.HasValue);
     }
@@ -151,7 +151,17 @@ public static partial class CatalogPackage
     public static byte[] Build(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources)
         => WorkflowPackage.Pack(workflowUtf8, sources);
 
-    /// <summary>Unpacks a package archive into its constituent documents — the inverse of <see cref="Build"/>.</summary>
+    /// <summary>Assembles a submission package carrying the scenario set and publish evidence (design §4.6) —
+    /// both survive the canonical repack and ride the stored version.</summary>
+    /// <param name="workflowUtf8">The Arazzo workflow document as UTF-8 JSON.</param>
+    /// <param name="sources">The referenced source documents, keyed by name.</param>
+    /// <param name="scenarios">The scenario-set JSON (omitted when empty).</param>
+    /// <param name="evidence">The evidence JSON (omitted when empty).</param>
+    /// <returns>The package bytes.</returns>
+    public static byte[] Build(ReadOnlyMemory<byte> workflowUtf8, IReadOnlyList<KeyValuePair<string, byte[]>> sources, ReadOnlyMemory<byte> scenarios, ReadOnlyMemory<byte> evidence)
+        => WorkflowPackage.Pack(workflowUtf8, sources, scenarios: scenarios, evidence: evidence);
+
+    /// <summary>Unpacks a package archive into its constituent documents — the inverse of <see cref="Build(ReadOnlyMemory{byte}, IReadOnlyList{KeyValuePair{string, byte[]}})"/>.</summary>
     /// <param name="packageZip">The package archive bytes.</param>
     /// <returns>The Arazzo workflow document bytes and the source documents (name → bytes).</returns>
     /// <exception cref="ArgumentException">The package has no workflow document.</exception>

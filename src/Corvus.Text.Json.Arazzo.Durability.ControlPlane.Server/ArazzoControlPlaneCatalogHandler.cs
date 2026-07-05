@@ -108,7 +108,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             // The summary is a zero-copy view over the version document, so hand the pooled document to the workspace —
             // it owns it for the response's lifetime, and a throw cannot leak the rented buffer.
             workspace.TakeOwnership(version);
-            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(this.PublicView(version.RootElement, workspace)), workspace);
+            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(this.access.PublicView(version.RootElement, workspace)), workspace);
         }
         catch (WorkflowAdministrationException ex)
         {
@@ -187,7 +187,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         workspace.TakeOwnership(v);
-        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.PublicView(v.RootElement, workspace)), workspace);
+        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.access.PublicView(v.RootElement, workspace)), workspace);
     }
 
     /// <inheritdoc/>
@@ -236,7 +236,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         ParsedJsonDocument<CatalogVersion> v = result.Document!;
         workspace.TakeOwnership(v);
-        return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.PublicView(v.RootElement, workspace)), workspace);
+        return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.access.PublicView(v.RootElement, workspace)), workspace);
     }
 
     /// <inheritdoc/>
@@ -615,7 +615,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     // is cold, so the internal list is realized once through FromTags; the union itself is bytes-native (each set's
     // tags are appended from their unescaped UTF-8, no per-tag managed string). Internal keys carry the reserved
     // prefix and user keys cannot (ValidateUserTags enforced it), so the two sets never collide.
-    private static SecurityTagSet CombineSecurityTags(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
+    internal static SecurityTagSet CombineSecurityTags(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
     {
         if (userTags.IsEmpty)
         {
@@ -654,71 +654,6 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
     }
 
-    // Returns a client view of the version whose deployment-internal security tags (the reserved prefix, §14.2) are
-    // stripped — the persisted document keeps them for row authorization; only the response drops them. When the
-    // version carries no internal tags the original element is returned unchanged (zero-copy, no rewrite). A rewritten
-    // view is a pooled document owned by the workspace, so its element stays valid through the deferred body
-    // serialization.
-    private CatalogVersion PublicView(CatalogVersion version, JsonWorkspace workspace)
-    {
-        SecurityTagSet full = version.SecurityTagsValue;
-        if (full.IsEmpty || !this.HasInternalTag(full))
-        {
-            return version;
-        }
-
-        SecurityTagSet visible = this.BuildVisibleTags(full);
-        var stripped = ParsedJsonDocument<CatalogVersion>.Parse(CatalogVersion.CreateWithSecurityTags(version, visible));
-        workspace.TakeOwnership(stripped);
-        return stripped.RootElement;
-    }
-
-    // Whether the set carries any deployment-internal tag (string-free span scan).
-    private bool HasInternalTag(SecurityTagSet set)
-    {
-        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
-        try
-        {
-            while (e.MoveNext())
-            {
-                if (this.access.IsInternalTag(e.CurrentKey))
-                {
-                    return true;
-                }
-            }
-        }
-        finally
-        {
-            e.Dispose();
-        }
-
-        return false;
-    }
-
-    // Builds the non-internal (client-visible) subset of a tag set bytes-native — each retained tag is appended from
-    // its unescaped UTF-8 key/value, so no per-tag managed string is created.
-    private SecurityTagSet BuildVisibleTags(SecurityTagSet full)
-        => SecurityTagSet.Build(
-            (Full: full, Access: this.access),
-            static (ref IdentityBuilder builder, in (SecurityTagSet Full, ControlPlaneAccess Access) s) =>
-            {
-                SecurityTagSet.Utf8Enumerator e = s.Full.EnumerateUtf8();
-                try
-                {
-                    while (e.MoveNext())
-                    {
-                        if (!s.Access.IsInternalTag(e.CurrentKey))
-                        {
-                            builder.Add(e.CurrentKey, e.CurrentValue);
-                        }
-                    }
-                }
-                finally
-                {
-                    e.Dispose();
-                }
-            });
-
     // Copy the parsed tag-list parameter's canonical bytes into the holder (per request, not per row). An add or a
     // search needle yields an empty holder when absent; a patch yields null (= "leave tags unchanged").
     private static TagSet ToTags(Models.PostCatalogBody.JsonStringArray tags) => TagSet.CopyFrom(tags);
@@ -735,7 +670,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         var views = new List<CatalogVersion>();
         foreach (CatalogVersion version in page.Versions)
         {
-            views.Add(this.PublicView(version, workspace));
+            views.Add(this.access.PublicView(version, workspace));
         }
 
         return new((ref Models.CatalogPage.Builder b) =>
@@ -752,6 +687,31 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                     }),
                 nextPageToken: nextPageToken);
         });
+    }
+
+    /// <summary>
+    /// Serves the version's publish evidence (workflow-designer design §4.6): the
+    /// <c>metadata/evidence.json</c> entry sliced from the stored package. 404 when the version
+    /// predates evidence or published without scenarios.
+    /// </summary>
+    /// <param name="parameters">The request parameters.</param>
+    /// <param name="workspace">The response workspace.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The evidence document, or not-found.</returns>
+    public async ValueTask<GetCatalogEvidenceResult> HandleGetCatalogEvidenceAsync(GetCatalogEvidenceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (package is not { } bytes || !WorkflowPackage.TryReadEntry(bytes, "metadata/evidence.json"u8, out ReadOnlyMemory<byte> entry))
+        {
+            return GetCatalogEvidenceResult.NotFound(
+                Problem("evidence-not-found", "Evidence not found", 404, $"Version '{baseWorkflowId}' v{versionNumber} does not exist, is outside your reach, or carries no publish evidence."), workspace);
+        }
+
+        var evidence = ParsedJsonDocument<Models.PublishEvidence>.Parse(entry.ToArray());
+        workspace.TakeOwnership(evidence);
+        return GetCatalogEvidenceResult.Ok(evidence.RootElement, workspace);
     }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string baseWorkflowId, int versionNumber)

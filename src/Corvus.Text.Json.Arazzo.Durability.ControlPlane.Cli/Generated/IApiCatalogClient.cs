@@ -178,6 +178,16 @@ public interface IApiCatalogClient : IAsyncDisposable
         public static readonly string[] GetCatalogPackageOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetCatalogEvidence</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogEvidenceOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetCatalogEvidence</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetCatalogEvidenceOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>GetCatalogWorkflow</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] GetCatalogWorkflowOauth2Scopes = ["catalog:read"];
@@ -349,6 +359,17 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GetCatalogPackageResponse> GetCatalogPackageAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// A version's publish evidence
+    /// </summary>
+    /// <remarks>
+    /// The server-attested evidence recorded at publish (workflow-designer design §4.6): engine version, package hash, the scenario suite's verdicts. 404 when the version predates evidence or was published without scenarios.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetCatalogEvidenceResponse> GetCatalogEvidenceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get a version's Arazzo workflow document
