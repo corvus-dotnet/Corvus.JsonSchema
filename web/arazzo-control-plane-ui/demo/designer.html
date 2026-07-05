@@ -11,7 +11,7 @@
        minmax(0, 1fr) row fills the rest of the dynamic viewport exactly; the canvas and the
        sidebar scroll INDEPENDENTLY — the page itself never scrolls. minmax(0, …) tracks make
        every region shrinkable without min-height/min-width ceremony. */
-    body { margin: 0; height: 100dvh; overflow: hidden;
+    body { margin: 0; height: 100dvh; overflow: clip;
            display: grid; grid-template-rows: auto minmax(0, 1fr);
            font: 14px var(--arazzo-font, system-ui, sans-serif); background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); }
     header { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); flex-wrap: wrap; }
@@ -24,11 +24,14 @@
     .tabs { display: flex; gap: 4px; }
     .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 4px 14px; font-size: 12px; opacity: 0.7; }
     .tabs button.active { opacity: 1; border-color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
-    /* Custom elements set :host{display:block}, which beats the UA [hidden] rule. */
+    /* Author display rules (main{display:grid}, :host{display:block}) beat the UA [hidden] rule. */
+    main[hidden], #workspace-view[hidden] { display: none !important; }
+    /* Designer-scoped toolbar controls only render while a working copy is open. */
+    body[data-view="workspace"] .designer-only { display: none !important; }
     #center > [hidden] { display: none !important; }
     /* The sidebar is one independent scroll region; sections take their natural height. */
-    aside { display: grid; grid-auto-rows: min-content; align-content: start; gap: 10px;
-            overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+    aside { display: grid; grid-auto-rows: min-content; align-content: start; gap: 10px; min-width: 0;
+            overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; }
     aside section { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
     #inspector, #inspector > * { min-width: 0; }
     aside h2 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); }
@@ -43,20 +46,20 @@
     <h1>Workflow designer</h1>
     <button id="back" title="Back to the workspace" hidden>⌂ Workspace</button>
     <span id="wc-name" class="muted" hidden></span>
-    <select id="workflow"></select>
-    <button id="docbtn" title="Edit info, source descriptions, workflows, and the reusable components library">⚙ Document</button>
-    <button id="undo" title="Undo (this actor's last edit)" disabled>↩ Undo</button>
-    <button id="redo" title="Redo" disabled>↪ Redo</button>
-    <button id="fit">Fit</button>
-    <button id="relayout">Auto-layout</button>
-    <button id="simulate">▶ Simulate (canned trace)</button>
-    <button id="step">⏭ Step</button>
+    <select id="workflow" class="designer-only"></select>
+    <button id="docbtn" class="designer-only" title="Edit info, source descriptions, workflows, and the reusable components library">⚙ Document</button>
+    <button id="undo" class="designer-only" title="Undo (this actor's last edit)" disabled>↩ Undo</button>
+    <button id="redo" class="designer-only" title="Redo" disabled>↪ Redo</button>
+    <button id="fit" class="designer-only">Fit</button>
+    <button id="relayout" class="designer-only">Auto-layout</button>
+    <button id="simulate" class="designer-only">▶ Simulate (canned trace)</button>
+    <button id="step" class="designer-only">⏭ Step</button>
     <button id="stop" hidden>■ Stop</button>
-    <label class="chk"><input type="checkbox" id="readonly"> read-only</label>
+    <label class="chk designer-only"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
-    <span id="save-status" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
-    <button id="save" disabled>💾 Save</button>
-    <button id="validate">✓ Validate</button>
+    <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
+    <button id="save" class="designer-only" disabled>💾 Save</button>
+    <button id="validate" class="designer-only">✓ Validate</button>
     <button id="theme">Toggle theme</button>
   </header>
   <div id="workspace-view" style="padding: 18px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; overflow-y: auto;">
@@ -193,8 +196,10 @@
     wctable.client = client;
 
     const shell = { id: null, etag: null, name: null, dirty: false };
+    document.body.dataset.view = 'workspace';
 
     function showView(which) {
+      document.body.dataset.view = which;
       workspaceView.hidden = which !== 'workspace';
       designerView.hidden = which !== 'designer';
       backBtn.hidden = which !== 'designer';
@@ -311,10 +316,10 @@
       logEvent('source-detached', { name: e.detail.name });
     });
 
-    // Click-to-add step creation (design §3.2): a step bound to the picked operation, required
-    // parameters pre-populated from the descriptor, inserted through the model and selected.
-    opBrowser.addEventListener('operation-selected', (e) => {
-      const { operation } = e.detail;
+    // Step creation (design §3.2): DRAG an operation onto the surface (the drop point pins the
+    // node); keyboard activation in the rail creates at the auto-layout position. Both paths make
+    // a step bound to the operation, required parameters pre-populated, model-routed and selected.
+    function createStepFromOperation(operation, position) {
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       if (!wf) return;
       const base = (operation.operationId ?? operation.channelPath ?? 'step')
@@ -330,10 +335,20 @@
         const w = d.workflows.find((x) => x.workflowId === select.value);
         w.steps.push(step);
       }, { origin: 'canvas', label: `add step ${stepId}` });
+      if (position) {
+        model.updateDesignerState((st) => {
+          st.nodes ??= {};
+          st.nodes[stepId] = { x: Math.round(position.x), y: Math.round(position.y) };
+        }, { origin: 'canvas', label: `add step ${stepId}`, coalesce: true });
+      }
+
       surface.selection = { type: 'node', id: stepId };
       showSelection(surface.selection);
-      logEvent('step-created', { stepId, from: operation.operationId ?? operation.channelPath });
-    });
+      logEvent('step-created', { stepId, from: operation.operationId ?? operation.channelPath, dropped: !!position });
+    }
+
+    opBrowser.addEventListener('operation-selected', (e) => createStepFromOperation(e.detail.operation));
+    surface.addEventListener('operation-dropped', (e) => createStepFromOperation(e.detail.operation, e.detail.position));
 
     // The document inspector (info · sourceDescriptions · workflows · components library) mounts in
     // the inspector pane on demand; selecting anything on the surface returns to selection mode.
@@ -740,7 +755,12 @@
     expr.addEventListener('commit', (e) => logEvent('expression-commit', e.detail));
 
     document.getElementById('fit').addEventListener('click', () => surface.fit());
-    document.getElementById('relayout').addEventListener('click', () => { surface.layoutOverrides = {}; surface.fit(); });
+    document.getElementById('relayout').addEventListener('click', () => {
+      // Clear pins in the MODEL (the source of truth) — clearing only the surface's copy lets the
+      // next document-changed re-pin every node from designerState and auto-layout "doesn't work".
+      model.updateDesignerState((st) => { st.nodes = {}; }, { origin: 'canvas', label: 'auto-layout' });
+      surface.fit();
+    });
     document.getElementById('readonly').addEventListener('change', (e) => {
       surface.toggleAttribute('readonly', e.target.checked);
     });

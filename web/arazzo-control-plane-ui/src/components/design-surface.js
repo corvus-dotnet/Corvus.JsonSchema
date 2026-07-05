@@ -523,6 +523,26 @@ class ArazzoDesignSurface extends ArazzoElement {
   _bindPointer() {
     const svg = this.$('svg');
 
+    // Operation drops from the browser rail (§3.2): the payload rides HTML5 DnD under our own
+    // MIME type; the drop point maps through the view transform so the step lands where released.
+    svg.addEventListener('dragover', (e) => {
+      if (this.readonly) return;
+      if ([...e.dataTransfer.types].includes('application/x-arazzo-operation')) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      }
+    });
+    svg.addEventListener('drop', (e) => {
+      if (this.readonly) return;
+      const raw = e.dataTransfer.getData('application/x-arazzo-operation');
+      if (!raw) return;
+      e.preventDefault();
+      let payload;
+      try { payload = JSON.parse(raw); } catch { return; }
+      if (!payload?.operation) return;
+      this.emit('operation-dropped', { ...payload, position: this._toWorld(e) });
+    });
+
     svg.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       const hit = this._hitOf(e);

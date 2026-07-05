@@ -77,11 +77,13 @@ class ArazzoDocumentInspector extends ArazzoElement {
         .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .pair > * { min-width: 0; }
         .row { display: grid; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .row > * { min-width: 0; }
         .hint { font-size: 11px; color: var(--_muted); }
         .add { font-size: 12px; justify-self: start; }
-        .entry { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; }
+        .entry { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; min-width: 0; }
+        .entry > * { min-width: 0; }
         .entry .ehead { display: flex; align-items: center; gap: 6px; }
-        .entry .ehead code { font-size: 12px; font-weight: 600; }
+        .entry .ehead code { font-size: 12px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
         .entry .ehead .spacer { flex: 1; }
         .entry .edel { font-size: 11px; padding: 1px 7px; }
       </style>

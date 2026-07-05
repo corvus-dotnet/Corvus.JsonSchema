@@ -67,16 +67,33 @@ describe('<arazzo-operation-browser>', () => {
     ok(el.shadowRoot.textContent.includes('No operations match'), 'non-matching groups say so');
   });
 
-  it('emits operation-selected with the FULL descriptor on click', async () => {
+  it('pointer clicks are inert; keyboard activation emits the FULL descriptor', async () => {
     ({ el } = await browserWithSources());
     const row = opRows(el).find((r) => r.textContent.includes('listPets'));
+
+    let pointerFired = false;
+    el.addEventListener('operation-selected', () => { pointerFired = true; }, { once: true });
+    row.dispatchEvent(new MouseEvent('click', { detail: 1, bubbles: true, composed: true }));
+    ok(!pointerFired, 'a pointer click must never create a step (too easy by accident)');
+
     const selected = nextEvent(el, 'operation-selected');
-    row.click();
+    row.dispatchEvent(new MouseEvent('click', { detail: 0, bubbles: true, composed: true })); // keyboard Enter
     const e = await selected;
     equal(e.detail.sourceName, 'pets');
     equal(e.detail.operation.operationId, 'listPets');
     equal(e.detail.operation.method, 'GET');
     ok(e.detail.operation.responses['200'].schema, 'the descriptor carries the raw response schema');
+  });
+
+  it('rows are drag sources carrying the operation payload', async () => {
+    ({ el } = await browserWithSources());
+    const row = opRows(el).find((r) => r.textContent.includes('listPets'));
+    equal(row.getAttribute('draggable'), 'true');
+    const transfer = new DataTransfer();
+    row.dispatchEvent(new DragEvent('dragstart', { dataTransfer: transfer, bubbles: true }));
+    const payload = JSON.parse(transfer.getData('application/x-arazzo-operation'));
+    equal(payload.sourceName, 'pets');
+    equal(payload.operation.operationId, 'listPets');
   });
 
   it('detaches a source and reports it (the host refreshes its etag)', async () => {
