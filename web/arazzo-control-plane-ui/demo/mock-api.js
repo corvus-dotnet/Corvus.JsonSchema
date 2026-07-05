@@ -2237,7 +2237,7 @@ export function createMockControlPlane(options = {}) {
       if (method !== 'POST') return problem(405, 'Method not allowed');
       const wc = workingCopies.find((x) => x.id === decodeURIComponent(validate[1]));
       if (!wc) return problem(404, 'Working copy not found', `No working copy '${validate[1]}' exists, or it is outside your reach.`);
-      return json(validateWorkingCopyDocument(wc.document));
+      return json(validateWorkingCopyDocument(wc.document, wc.sources ?? []));
     }
 
     const m = fullPath.match(/\/workspace\/workflows(?:\/([^/]+))?\/?$/);
@@ -2309,7 +2309,62 @@ export function createMockControlPlane(options = {}) {
   // A light stand-in for the server's validate pass: the required-shape subset of the schema check
   // plus the document-local goto-target/duplicate-id semantics. The real backend also runs full
   // JSON-Schema conformance and criterion/expression syntax through the runtime's own compilers.
-  function validateWorkingCopyDocument(doc) {
+  function collectOperationIdentities(sourceDoc, operations, channels) {
+    for (const [, pathItem] of Object.entries(sourceDoc.paths ?? {})) {
+      for (const [, op] of Object.entries(pathItem ?? {})) {
+        if (op?.operationId) operations.add(op.operationId);
+      }
+    }
+    for (const key of Object.keys(sourceDoc.channels ?? {})) channels.add(key);
+    for (const key of Object.keys(sourceDoc.operations ?? {})) operations.add(key);
+  }
+
+  // The workspace-level source-integrity pass (mirrors the server): declared-but-unattached,
+  // attached-but-undeclared, bindings absent from every attached surface, bindings with NO
+  // declared sources at all.
+  function workspaceSourceFindings(doc, attachments) {
+    const findings = [];
+    const declared = (doc.sourceDescriptions ?? []).map((s) => s.name).filter(Boolean);
+    const attachedNames = new Set();
+    const operations = new Set();
+    const channels = new Set();
+    let anySurface = false;
+    for (const att of attachments) {
+      if (!att.name) continue;
+      attachedNames.add(att.name);
+      if (!declared.includes(att.name)) {
+        findings.push({ severity: 'info', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: `Attached source '${att.name}' is not declared in sourceDescriptions — the document cannot reference its operations.` });
+      }
+      const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+      if (d) { collectOperationIdentities(d, operations, channels); anySurface = true; }
+    }
+    declared.forEach((name, i) => {
+      if (!attachedNames.has(name)) {
+        findings.push({ severity: 'warning', category: 'workspace-sources', instancePath: `/sourceDescriptions/${i}`, message: `Declared source '${name}' has no attachment in this working copy — its operations cannot resolve here.` });
+      }
+    });
+    (doc.workflows ?? []).forEach((wf, wi) => {
+      (wf.steps ?? []).forEach((step, si) => {
+        const bindsOp = typeof step.operationId === 'string' && step.operationId.length;
+        const bindsChannel = typeof step.channelPath === 'string' && step.channelPath.length;
+        if (!bindsOp && !bindsChannel) return;
+        if (!declared.length) {
+          findings.push({ severity: 'error', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: 'Steps bind operations but the document declares no sourceDescriptions — nothing can resolve them.' });
+          return;
+        }
+        if (!anySurface) return;
+        if (bindsOp && !step.operationId.startsWith('$sourceDescriptions.') && !operations.has(step.operationId)) {
+          findings.push({ severity: 'warning', category: 'workspace-sources', instancePath: `/workflows/${wi}/steps/${si}/operationId`, message: `Operation '${step.operationId}' is not found in any attached source — did its source description get removed?` });
+        }
+        if (bindsChannel && !channels.has(step.channelPath)) {
+          findings.push({ severity: 'warning', category: 'workspace-sources', instancePath: `/workflows/${wi}/steps/${si}/channelPath`, message: `Channel '${step.channelPath}' is not found in any attached source.` });
+        }
+      });
+    });
+    return findings;
+  }
+
+  function validateWorkingCopyDocument(doc, attachments = []) {
     const diagnostics = [];
     const schemaError = (instancePath, message) => diagnostics.push({ severity: 'error', category: 'schema', instancePath, message });
     if (!doc || typeof doc !== 'object') {
@@ -2350,7 +2405,9 @@ export function createMockControlPlane(options = {}) {
       }
     }
 
-    return { valid: diagnostics.every((d) => d.severity !== 'error'), diagnostics };
+    diagnostics.push(...workspaceSourceFindings(doc, attachments));
+    const anyError = diagnostics.some((d) => d.severity === 'error');
+    return { valid: !anyError, diagnostics };
   }
 
   function attachWorkingCopySource(wc, name, body) {
