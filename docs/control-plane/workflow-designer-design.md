@@ -719,8 +719,18 @@ compile; it serves recorded fixtures, clearly marked).
    `POST /workspace/workflows/{id}/simulate` (workspace:read) with the optional `workflowId`
    selector (the handler reorders the workflows array — the provider compiles the first);
    fails closed 400 unwired, 422 not-executable. Measured (in-process ShortRun): one cached-compile
-   replay = 34 µs / 14.7 KB — the §8.2 "milliseconds per command" budget holds with three orders of margin. Remaining: the debug UI (5b — controls, tray, context
-   explorer, trace viewer, canvas overlay, scrubber) and `simulateCatalogVersion`.*
+   replay = 34 µs / 14.7 KB — the §8.2 "milliseconds per command" budget holds with three orders of margin. The debug UI (5b) is BUILT:
+   `<arazzo-debug-tray>` renders one complete trace — the trace viewer (per-step status, attempts,
+   action taken, click-to-inspect), the paused-context explorer (exchanges, criterion truth table,
+   step and workflow outputs, fault/wait/clock records), and the time-travel scrubber, all pure
+   cursor movement over the recorded payload (§8.2 exactly: no further calls). `frameAt` projects
+   frames onto the canvas overlay (done/failed steps, taken edges lit, active step pulsing).
+   ▶ Run auto-scripts mocks from the attached surfaces' first documented success statuses;
+   breakpoints ride `until.breakpoints`; double-activating a node is run-to-here
+   (`until.beforeStepId`); one-more-step past a pause replays with the budget one step further.
+   Remaining for later increments: `simulateCatalogVersion`, the typed inputs form + mock editor
+   (scenario authoring lands with slice 6 scenarios), trigger injection UI, and the expression
+   console evaluating against the PAUSED context (it completes against the static schema today).*
 6. **Scenarios.** Scenario schema + CRUD + run endpoints (run-one and run-all suite report);
    scenario panel/editor; session recording; carry-over on create-from-version; **the `scenarios
    run` CLI** (§4.5: standalone in-process + remote modes, globbing, JUnit/JSON reports, CI exit

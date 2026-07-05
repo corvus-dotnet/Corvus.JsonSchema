@@ -1,0 +1,200 @@
+// <arazzo-debug-tray> — the debug session's tray (design §3.3): the trace viewer (every executed
+// step, click-to-inspect), the paused-context explorer (exchanges, criterion truth table, outputs),
+// and the time-travel scrubber. STATELESS by design (§8.2): the tray renders ONE complete trace
+// from `simulateWorkingCopy`; scrubbing and stepping through it are pure cursor movement — no
+// further calls. The HOST re-simulates (run / step-past-pause / re-run-after-edit) and assigns a
+// fresh trace.
+//
+//   const tray = document.createElement('arazzo-debug-tray');
+//   tray.trace = simulationTrace;          // the §4.3 SimulationTrace payload (null clears)
+//   tray.cursor = tray.length;             // frame index: k = "about to run step k"; length = final state
+//   tray.addEventListener('cursor-changed', (e) => { /* project frame e.detail.index onto the canvas */ });
+//
+// Properties : .trace, .cursor (clamped), .length (steps count)
+// Methods    : frameAt(index) → {active, steps, edges} for <arazzo-design-surface>.debugState
+// Events     : cursor-changed {index}, clear-requested, step-requested (cursor at end of a paused trace)
+
+import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+
+const OUTCOME_LABEL = {
+  completed: '✓ completed',
+  faulted: '✗ faulted',
+  paused: '⏸ paused',
+  suspended: '⏳ suspended',
+  budgetExhausted: '⏸ paused (budget)',
+};
+
+class ArazzoDebugTray extends ArazzoElement {
+  constructor() {
+    super();
+    /** @private */ this._trace = null;
+    /** @private */ this._cursor = 0;
+  }
+
+  connectedCallback() {
+    this.render();
+  }
+
+  /** The SimulationTrace payload; assigning re-renders with the cursor at the end. */
+  get trace() { return this._trace; }
+  set trace(value) {
+    this._trace = value || null;
+    this._cursor = this.length;
+    if (this.isConnected) this.render();
+  }
+
+  /** How many executed-step frames the trace holds. */
+  get length() { return this._trace?.steps?.length ?? 0; }
+
+  /** The frame index: k = "about to run step k"; length = the final state. */
+  get cursor() { return this._cursor; }
+  set cursor(value) {
+    const next = Math.max(0, Math.min(this.length, Number(value) || 0));
+    if (next === this._cursor) return;
+    this._cursor = next;
+    this.render();
+    this.emit('cursor-changed', { index: next });
+  }
+
+  /** Projects frame `index` to the design surface's debugState shape. */
+  frameAt(index) {
+    const trace = this._trace;
+    if (!trace) return null;
+    const k = Math.max(0, Math.min(this.length, index));
+    const steps = {};
+    const edges = ['seq:#start'];
+    for (let i = 0; i < k; i++) {
+      const record = trace.steps[i];
+      const failedCriteria = (record.successCriteria ?? []).some((c) => !c.satisfied);
+      steps[record.stepId] = record.status === 'faulted' || failedCriteria ? 'done-failure' : 'done-success';
+      const action = record.actionTaken;
+      if (!action || action.type === 'fallThrough') {
+        edges.push(`seq:${record.stepId}`);
+      } else if (action.type === 'goto' && action.target) {
+        edges.push(`goto:${record.stepId}:${action.name ?? 'goto'}:${failedCriteria ? 'failure' : 'success'}`);
+      } else if (action.type === 'end') {
+        edges.push(`end:${record.stepId}:${action.name ?? 'end'}:${failedCriteria ? 'failure' : 'success'}`);
+      }
+    }
+
+    const active = k < this.length ? trace.steps[k].stepId : null;
+    if (active === null && trace.outcome === 'completed') steps['#end'] = 'done-success';
+    return { active, steps, edges };
+  }
+
+  /** @private */
+  render() {
+    const trace = this._trace;
+    this.shadowRoot.innerHTML = `
+      <style>
+        ${SHARED_CSS}
+        :host { display: block; font-size: 12px; }
+        .bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--_border); }
+        .bar input[type="range"] { flex: 1; min-width: 60px; accent-color: var(--_accent); }
+        .bar .chip { font-weight: 600; }
+        .bar button { font-size: 12px; padding: 2px 8px; }
+        .empty-note { padding: 10px; color: var(--_muted); }
+        .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 0; max-height: 34vh; }
+        .steps { overflow-y: auto; border-right: 1px solid var(--_border); }
+        .step { display: flex; gap: 6px; width: 100%; text-align: left; border: none; background: none; color: inherit;
+                font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 5px 8px; cursor: pointer; align-items: baseline; }
+        .step:hover { background: var(--_surface); }
+        .step.at { background: color-mix(in srgb, var(--_accent) 14%, transparent); }
+        .step .n { color: var(--_muted); width: 2ch; text-align: right; }
+        .step .ok { color: var(--arazzo-status-completed, #2a8a4a); }
+        .step .bad { color: var(--arazzo-status-faulted, #d4351c); }
+        .step .act { color: var(--_muted); margin-left: auto; font-size: 11px; }
+        .ctx { overflow-y: auto; padding: 8px 10px; display: grid; gap: 8px; align-content: start; }
+        .ctx h4 { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); }
+        .ctx pre { margin: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+        table { border-collapse: collapse; width: 100%; }
+        td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; }
+        td.v { width: 1%; white-space: nowrap; }
+      </style>
+      ${!trace ? '<div class="empty-note">No debug session — ▶ Run simulates the working copy against its scripted mocks.</div>' : `
+      <div class="bar" part="controls">
+        <span class="chip">${escapeHtml(OUTCOME_LABEL[trace.outcome] ?? trace.outcome)}${trace.pausedBefore ? ` before ${escapeHtml(trace.pausedBefore)}` : ''}</span>
+        <button class="prev" type="button" title="Scrub back one step" ${this._cursor === 0 ? 'disabled' : ''}>⏮</button>
+        <input class="scrub" type="range" min="0" max="${this.length}" step="1" value="${this._cursor}" title="Time-travel: the whole run is recorded — scrub freely">
+        <button class="next" type="button" title="Step forward (client-side over the recorded trace)">⏭</button>
+        <span class="muted">${this._cursor}/${this.length}</span>
+        <button class="clear ghost" type="button" title="Clear the session and the canvas overlay">✕ Clear</button>
+      </div>
+      <div class="body">
+        <div class="steps" part="steps">${trace.steps.map((s, i) => this.renderStepRow(s, i)).join('')}</div>
+        <div class="ctx" part="context">${this.renderContext()}</div>
+      </div>`}
+    `;
+    if (!trace) return;
+
+    this.$('.scrub').addEventListener('input', (e) => { this.cursor = Number(e.target.value); });
+    this.$('.prev').addEventListener('click', () => { this.cursor = this._cursor - 1; });
+    this.$('.next').addEventListener('click', () => {
+      if (this._cursor < this.length) this.cursor = this._cursor + 1;
+      else this.emit('step-requested', {}); // at the end of a paused trace: the host replays one step further
+    });
+    this.$('.clear').addEventListener('click', () => this.emit('clear-requested', {}));
+    this.$$('.step').forEach((row) => row.addEventListener('click', () => { this.cursor = Number(row.dataset.index) + 1; }));
+  }
+
+  /** @private */
+  renderStepRow(record, index) {
+    const failed = record.status === 'faulted' || (record.successCriteria ?? []).some((c) => !c.satisfied);
+    const at = this._cursor === index + 1;
+    const action = record.actionTaken ? record.actionTaken.type + (record.actionTaken.target ? `→${record.actionTaken.target}` : '') : '';
+    return `<button class="step${at ? ' at' : ''}" type="button" data-index="${index}" title="Inspect after this step">
+      <span class="n">${index + 1}</span>
+      <span class="${failed ? 'bad' : 'ok'}">${failed ? '✗' : '✓'}</span>
+      <span>${escapeHtml(record.stepId)}${record.attempt ? ` <span class="muted">↻${record.attempt}</span>` : ''}</span>
+      <span class="act">${escapeHtml(action)}</span>
+    </button>`;
+  }
+
+  /** @private — the paused-context explorer for the record BEFORE the cursor. */
+  renderContext() {
+    const trace = this._trace;
+    if (this._cursor === 0) {
+      return `<h4>before the first step</h4><pre class="muted">nothing has executed — inputs and mocks are staged</pre>`;
+    }
+
+    const record = trace.steps[this._cursor - 1];
+    const parts = [];
+    if (record.requests?.length) {
+      parts.push('<h4>exchanges</h4><table>' + record.requests.map((x) =>
+        `<tr><td class="v">${escapeHtml(x.method.toUpperCase())} ${escapeHtml(x.path)}</td><td class="v">${x.status}</td>
+         <td>${x.responseBody !== undefined ? escapeHtml(JSON.stringify(x.responseBody)) : '<span class="muted">—</span>'}</td></tr>`).join('') + '</table>');
+    }
+
+    if (record.successCriteria?.length) {
+      parts.push('<h4>success criteria (truth table)</h4><table>' + record.successCriteria.map((c) =>
+        `<tr><td class="v ${c.satisfied ? 'ok' : 'bad'}">${c.satisfied ? '✓' : '✗'}</td><td>${escapeHtml(c.condition)}</td></tr>`).join('') + '</table>');
+    }
+
+    if (record.outputs !== undefined) {
+      parts.push(`<h4>outputs — $steps.${escapeHtml(record.stepId)}.outputs</h4><pre>${escapeHtml(JSON.stringify(record.outputs, null, 2))}</pre>`);
+    }
+
+    if (this._cursor === this.length) {
+      if (trace.outcome === 'completed' && trace.outputs !== undefined) {
+        parts.push(`<h4>workflow outputs</h4><pre>${escapeHtml(JSON.stringify(trace.outputs, null, 2))}</pre>`);
+      }
+
+      if (trace.fault) {
+        parts.push(`<h4>fault</h4><pre class="bad">${escapeHtml(trace.fault.stepId)} (attempt ${trace.fault.attempt}): ${escapeHtml(trace.fault.error)}</pre>`);
+      }
+
+      if (trace.wait) {
+        parts.push(`<h4>waiting on</h4><pre>${escapeHtml(trace.wait.kind)}${trace.wait.dueAt ? ` due ${escapeHtml(trace.wait.dueAt)}` : ''}${trace.wait.channel ? ` channel ${escapeHtml(trace.wait.channel)}` : ''}</pre>`);
+      }
+
+      if (trace.clockAdvances?.length) {
+        parts.push(`<h4>virtual clock</h4><pre>${trace.clockAdvances.map((a) => `→ ${escapeHtml(a.to)} (${escapeHtml(a.reason)})`).join('\n')}</pre>`);
+      }
+    }
+
+    return `<h4>after step ${this._cursor}: ${escapeHtml(record.stepId)}</h4>` + (parts.join('') || '<pre class="muted">no captured context</pre>');
+  }
+}
+
+define('arazzo-debug-tray', ArazzoDebugTray);
+export { ArazzoDebugTray };

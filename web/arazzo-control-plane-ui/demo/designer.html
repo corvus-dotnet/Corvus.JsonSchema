@@ -110,6 +110,10 @@
         </div>
       </section>
       <section>
+        <h2>Debug</h2>
+        <arazzo-debug-tray id="debugtray"></arazzo-debug-tray>
+      </section>
+      <section>
         <h2>Problems</h2>
         <div id="problems" style="padding: 8px 10px; font-size: 12px; display: grid; gap: 6px;">(not validated yet)</div>
       </section>
@@ -137,6 +141,7 @@
     import '../src/components/operation-browser.js';
     import '../src/components/source-acquisition-dialog.js';
     import '../src/components/document-inspector.js';
+    import '../src/components/debug-tray.js';
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import { createMockControlPlane } from './mock-api.js';
 
@@ -682,117 +687,77 @@
       if (created) surface.selection = { type: 'edge', id: created.id };
     });
 
-    // A canned debug-session trace: the declined-payment path into manual review.
-    const trace = [
-      { active: 'validate-order', steps: {}, edges: ['seq:#start'] },
-      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:#start', 'seq:validate-order'] },
-      { active: 'authorize-payment', steps: { 'validate-order': 'done-success' }, edges: ['seq:#start', 'seq:validate-order'] }, // retry ↻
-      { active: 'manual-review',
-        steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped' },
-        edges: ['seq:#start', 'seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure'] },
-      { active: null,
-        steps: { 'validate-order': 'done-success', 'authorize-payment': 'done-failure', 'await-confirmation': 'skipped', 'capture-payment': 'skipped', 'manual-review': 'done-success', '#end': 'done-success' },
-        edges: ['seq:#start', 'seq:validate-order', 'goto:authorize-payment:manual-review-on-decline:failure', 'end:manual-review:halt-after-review:success'] },
-    ];
-    // A tiny trace player standing in for the real replay-based debug session (design §8.2/§3.3):
-    // run → the button becomes Pause (halts before the next step); breakpoints pause on entry;
-    // Resume continues; Stop terminates the session and clears the overlay.
+    // ── The debug session: STATELESS replays of the real simulate endpoint (§8.2). ▶ Run
+    // simulates the working copy against auto-scripted mocks (every bound operation answers with
+    // its first documented success status); the COMPLETE trace comes back in one payload, so
+    // stepping and time-travel scrubbing are pure cursor movement over it. Breakpoints ride the
+    // request (`until.breakpoints`); "one more step" past a pause is a replay with the budget one
+    // step further; double-clicking a node is run-to-here (`until.beforeStepId`).
+    const tray = document.getElementById('debugtray');
     const simBtn = document.getElementById('simulate');
     const stepBtn = document.getElementById('step');
     const stopBtn = document.getElementById('stop');
-    const SIM_LABEL = '▶ Simulate (canned trace)';
-    let player = null; // { i, timer, paused }
+    const debugBreakpoints = new Set();
+    surface.addEventListener('breakpoint-toggled', (e) => {
+      if (e.detail.enabled) debugBreakpoints.add(e.detail.stepId);
+      else debugBreakpoints.delete(e.detail.stepId);
+    });
 
-    function setUi() {
-      // States: idle (null) · running · paused · done ({done:true} — overlay kept for inspection).
-      stopBtn.hidden = !player;
-      stopBtn.textContent = player?.done ? '✕ Clear' : '■ Stop';
-      stepBtn.hidden = !!player && !player.paused && !player.done;
-      simBtn.textContent = !player || player.done
-        ? SIM_LABEL
-        : player.paused
-          ? `⏵ Resume (paused at ${trace[player.i].active ?? 'end'})`
-          : '⏸ Pause';
-    }
-    function pausePlayer(detail) {
-      if (!player || player.paused) return;
-      clearInterval(player.timer);
-      player.timer = null;
-      player.paused = true;
-      logEvent('debug-paused', detail);
-      setUi();
-    }
-    function applyFrame() {
-      const frame = trace[player.i];
-      surface.debugState = frame;
-      const entered = frame.active && frame.active !== trace[player.i - 1]?.active;
-      if (entered && surface.breakpoints.has(frame.active)) {
-        pausePlayer({ stepId: frame.active, note: 'breakpoint hit' });
+    function buildScenario() {
+      const mocks = [];
+      for (const [, ops] of opBrowser.surfaces) {
+        for (const op of ops) {
+          if (op.kind !== 'openapi' || !op.method || !op.path) continue;
+          const success = Object.keys(op.responses ?? {}).find((c) => /^2\d\d$/.test(c));
+          mocks.push({ method: op.method.toLowerCase(), path: op.path, status: Number(success ?? 200), body: {} });
+        }
       }
+
+      return { mocks };
     }
-    function tick() {
-      player.i++;
-      if (player.i >= trace.length) {
-        clearInterval(player.timer);
-        player = { done: true }; // keep the outcome overlay; ✕ Clear returns to the clean surface
-        logEvent('debug-finished', { note: 'overlay kept for inspection — Clear to reset' });
-        setUi();
-        return;
-      }
-      applyFrame();
+
+    function applyDebugFrame() {
+      surface.debugState = tray.trace ? tray.frameAt(tray.cursor) : null;
     }
-    simBtn.addEventListener('click', () => {
-      if (player?.done) player = null; // a finished run restarts cleanly
-      if (player && !player.paused) {
-        pausePlayer({ note: 'paused by user — before the next step' });
-        return;
+
+    function setDebugUi() {
+      stopBtn.hidden = !tray.trace;
+    }
+
+    async function runSimulation({ until, stepPastEnd = false } = {}) {
+      if (!shell.id) return;
+      try {
+        const command = { workflowId: select.value, scenario: buildScenario() };
+        if (stepPastEnd && tray.trace) {
+          command.budget = { maxSteps: (tray.trace.stepsExecuted ?? 0) + 1 };
+        } else if (until) {
+          command.until = until;
+        } else if (debugBreakpoints.size) {
+          command.until = { breakpoints: [...debugBreakpoints] };
+        }
+
+        if (shell.dirty && !shell.conflicted) await saveWorkingCopy(); // simulate runs the STORED document
+        tray.trace = await client.simulateWorkingCopy(shell.id, command);
+        applyDebugFrame();
+        logEvent('simulated', { outcome: tray.trace.outcome, steps: tray.trace.stepsExecuted });
+      } catch (err) {
+        logEvent('simulate-failed', { error: err.problem?.detail ?? err.message });
       }
-      if (player?.paused) {
-        player.paused = false;
-        logEvent('debug-resumed', {});
-        setUi();
-        player.timer = setInterval(tick, 900);
-        return;
-      }
-      select.value = 'place-order';
-      project();
-      player = { i: 0, timer: null, paused: false };
-      logEvent('simulate', { scenario: 'payment-declined → manual review' });
-      applyFrame(); // frame 0 can itself hit a breakpoint
-      setUi();
-      if (player && !player.paused) player.timer = setInterval(tick, 900);
-    });
+
+      setDebugUi();
+    }
+
+    tray.addEventListener('cursor-changed', applyDebugFrame);
+    tray.addEventListener('clear-requested', () => { tray.trace = null; applyDebugFrame(); setDebugUi(); });
+    tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
+    simBtn.addEventListener('click', () => runSimulation());
     stepBtn.addEventListener('click', () => {
-      if (player?.done) player = null; // stepping after a finished run starts a fresh session
-      if (!player) {
-        // From idle: start the session paused before the first step.
-        select.value = 'place-order';
-        project();
-        player = { i: 0, timer: null, paused: true };
-        surface.debugState = trace[0];
-        logEvent('debug-step', { at: trace[0].active, note: 'session started paused' });
-        setUi();
-        return;
-      }
-      if (!player.paused) return;
-      // Execute exactly the next step, then stay paused (no breakpoint check — already stepping).
-      player.i++;
-      if (player.i >= trace.length) {
-        player = { done: true };
-        logEvent('debug-finished', { note: 'overlay kept for inspection — Clear to reset' });
-        setUi();
-        return;
-      }
-      surface.debugState = trace[player.i];
-      logEvent('debug-step', { at: trace[player.i].active ?? 'end' });
-      setUi();
+      if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
+      else runSimulation({ stepPastEnd: !!tray.trace });
     });
-    stopBtn.addEventListener('click', () => {
-      if (player?.timer) clearInterval(player.timer);
-      player = null;
-      surface.debugState = null;
-      logEvent('debug-stopped', {});
-      setUi();
+    stopBtn.addEventListener('click', () => { tray.trace = null; applyDebugFrame(); setDebugUi(); });
+    surface.addEventListener('node-activated', (e) => {
+      if (e.detail.id && !e.detail.id.startsWith('#')) runSimulation({ until: { beforeStepId: e.detail.id } });
     });
 
     // Expression console: completions from the fixture's schema surface, validation of $roots.
