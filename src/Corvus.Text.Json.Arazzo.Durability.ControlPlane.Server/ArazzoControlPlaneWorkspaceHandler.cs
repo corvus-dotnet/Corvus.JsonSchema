@@ -669,6 +669,28 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<GetWorkingCopySchemasResult> HandleGetWorkingCopySchemasAsync(GetWorkingCopySchemasParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return GetWorkingCopySchemasResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        // Recomputed for the CURRENT document + attachments (the catalog serves the copy baked at
+        // add): the same generator, so the designer's typed forms see exactly what a published
+        // version's consumers will.
+        byte[] documentBytes = WorkspaceSimulationJson.DocumentBytes((JsonElement)w.RootElement.Document, null)!;
+        List<KeyValuePair<string, byte[]>> sourceBytes = await WorkspaceSimulationJson.SourceBytesAsync(
+            (JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        byte[] metadata = WorkflowSchemaMetadataGenerator.Generate(documentBytes, sourceBytes);
+        ParsedJsonDocument<Models.JsonObject> parsed = ParsedJsonDocument<Models.JsonObject>.Parse(metadata);
+        workspace.TakeOwnership(parsed);
+        return GetWorkingCopySchemasResult.Ok(parsed.RootElement, workspace);
+    }
+
     /// <summary>
     /// The deliberate publish act (design §4.6): the validation gate, the server-attested scenario
     /// suite, the evidence record, the package embedding metadata/scenarios.json +

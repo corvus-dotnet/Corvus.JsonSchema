@@ -325,6 +325,25 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     }
 
     /// <summary>
+    /// The working copy's schema metadata
+    /// </summary>
+    /// <remarks>
+    /// The schema-metadata document RECOMPUTED for the working copy's current document and attached sources (the same shape getCatalogWorkflowSchemas serves baked into a package): each workflow's typed inputs and each step's resolved operation, typed request/responses (or message), and outputs — powering the designer's typed forms (scenario inputs, mock bodies by declared status, expectations) and expression completions.
+    /// </remarks>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GetWorkingCopySchemasResponse> GetWorkingCopySchemasAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        GetWorkingCopySchemasRequest request = new(IdValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetWorkingCopySchemasRequest, GetWorkingCopySchemasResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Simulate a working copy deterministically
     /// </summary>
     /// <remarks>

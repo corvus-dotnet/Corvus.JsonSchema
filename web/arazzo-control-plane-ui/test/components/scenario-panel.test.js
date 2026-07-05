@@ -57,18 +57,57 @@ describe('<arazzo-scenario-panel>', () => {
     ok(el.shadowRoot.textContent.includes('No scenarios yet'));
   });
 
-  it('edits a scenario as guarded JSON', async () => {
+  it('edits a scenario in the typed form (mock statuses constrained to the declared responses)', async () => {
     const ctx = await panelWithScenario();
     el = ctx.el;
     el.shadowRoot.querySelector('[data-edit="ok"]').click();
-    await waitFor(() => el.shadowRoot.querySelector('textarea[data-json]'), 'the editor opens');
-    const area = el.shadowRoot.querySelector('textarea[data-json]');
-    const edited = JSON.parse(area.value);
-    edited.description = 'edited!';
-    area.value = JSON.stringify(edited);
+    const editor = await waitFor(() => el.shadowRoot.querySelector('arazzo-scenario-editor'), 'the typed editor opens');
+    await waitFor(() => editor.shadowRoot.querySelector('.f-desc'), 'the form renders');
+
+    // The mock row addresses the document's own operation; the status select offers only the
+    // DECLARED responses (the simulator faults on undeclared statuses).
+    const op = editor.shadowRoot.querySelector('.m-op');
+    ok(op.value.includes('listPets'), 'the operation picker holds the mock target');
+    const statuses = [...editor.shadowRoot.querySelectorAll('.r-status option')].map((o) => o.value);
+    ok(statuses.length > 0 && statuses.every((code) => /^\d+$/.test(code)), 'statuses come from the declared responses');
+
+    editor.shadowRoot.querySelector('.f-desc').value = 'edited!';
     const changed = nextEvent(el, 'scenarios-changed');
-    area.dispatchEvent(new Event('change'));
+    editor.shadowRoot.querySelector('.save').click();
     await changed;
     ok(el.shadowRoot.textContent.includes('edited!'), 'the description renders after the round-trip');
+  });
+
+  it('the JSON view stays one toggle away and unknown fields survive a form round-trip', async () => {
+    const ctx = await panelWithScenario();
+    el = ctx.el;
+
+    // Seed an unknown field through the API, then edit through the FORM: the overlay keeps it.
+    await ctx.client.putScenario(ctx.wc.id, {
+      name: 'ok', 'x-note': 'keep me',
+      mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 200 }] }],
+      expect: { outcome: 'completed' },
+    });
+    const reloaded = nextEvent(el, 'scenarios-changed');
+    el.refresh();
+    await reloaded;
+
+    el.shadowRoot.querySelector('[data-edit="ok"]').click();
+    const editor = await waitFor(() => el.shadowRoot.querySelector('arazzo-scenario-editor'));
+    await waitFor(() => editor.shadowRoot.querySelector('.f-desc'));
+
+    // Toggle to JSON and back: the working object is the same one the form edits.
+    editor.shadowRoot.querySelector('.toggle').click();
+    const area = await waitFor(() => editor.shadowRoot.querySelector('textarea.json'));
+    ok(area.value.includes('x-note'), 'the JSON view shows the unknown field');
+    editor.shadowRoot.querySelector('.toggle').click();
+    await waitFor(() => editor.shadowRoot.querySelector('.f-desc'));
+
+    const saved = nextEvent(el, 'scenarios-changed');
+    editor.shadowRoot.querySelector('.save').click();
+    await saved;
+    const { scenarios } = await ctx.client.listScenarios(ctx.wc.id);
+    equal(scenarios[0]['x-note'], 'keep me', 'the unknown field survived the typed-form round-trip');
+    equal(scenarios[0].expect.outcome, 'completed', 'the known fields survived too');
   });
 });
