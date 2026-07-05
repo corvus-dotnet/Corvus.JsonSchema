@@ -116,6 +116,7 @@ class ArazzoStepInspector extends ArazzoElement {
         .rrow arazzo-expression-input { display: block; min-width: 0; }
         .addpref { max-width: 100%; min-width: 0; }
         .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+        .add-dep { font-size: 12px; max-width: 100%; min-width: 0; }
         .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
       </style>
       <div class="form" part="form"></div>
@@ -438,31 +439,53 @@ class ArazzoStepInspector extends ArazzoElement {
     }
   }
 
-  /** @private — toggle chips over the workflow's other steps; empty prunes the property. */
+  /** @private — actual dependencies render as removable pills; new ones add through an explicit
+   *  select. Offering every step as a toggle chip read as "this step depends on all of these". */
   _renderDependsOn() {
     const box = this.$('.dependson');
     const others = this._stepIds.filter((id) => id !== this._step.stepId);
-    if (!others.length) {
-      box.innerHTML = '<span class="hint">no other steps yet</span>';
-      return;
+    const current = this._step.dependsOn || [];
+    box.innerHTML = '';
+
+    if (!current.length) {
+      const none = document.createElement('span');
+      none.className = 'hint';
+      none.textContent = 'none — this step waits only for its position in the flow';
+      box.append(none);
     }
 
-    const current = new Set(this._step.dependsOn || []);
-    box.innerHTML = others.map((id) => `
-      <button type="button" class="chip ghost${current.has(id) ? ' on' : ''}" data-id="${escapeHtml(id)}"
-        aria-pressed="${current.has(id)}">${escapeHtml(id)}</button>`).join('');
-    box.querySelectorAll('.chip').forEach((chip) => chip.addEventListener('click', () => {
-      const set = new Set(this._step.dependsOn || []);
-      if (set.has(chip.dataset.id)) set.delete(chip.dataset.id);
-      else set.add(chip.dataset.id);
+    for (const id of current) {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'chip on';
+      pill.title = 'Remove this dependency';
+      pill.textContent = `${id} ✕`;
+      pill.addEventListener('click', () => {
+        const next = current.filter((x) => x !== id);
+        if (next.length) this._step.dependsOn = next;
+        else delete this._step.dependsOn;
+        this._renderDependsOn();
+        this._emit();
+      });
+      box.append(pill);
+    }
 
-      // Preserve step order (dependencies read best in execution order).
-      const ordered = this._stepIds.filter((id) => set.has(id));
-      if (ordered.length) this._step.dependsOn = ordered;
-      else delete this._step.dependsOn;
-      this._renderDependsOn();
-      this._emit();
-    }));
+    const remaining = others.filter((id) => !current.includes(id));
+    if (remaining.length) {
+      const select = document.createElement('select');
+      select.className = 'add-dep';
+      select.innerHTML = `<option value="">+ Add dependency…</option>`
+        + remaining.map((id) => `<option value="${escapeHtml(id)}">${escapeHtml(id)}</option>`).join('');
+      select.addEventListener('change', () => {
+        if (!select.value) return;
+        const set = new Set([...current, select.value]);
+        // Preserve step order (dependencies read best in execution order).
+        this._step.dependsOn = this._stepIds.filter((id) => set.has(id));
+        this._renderDependsOn();
+        this._emit();
+      });
+      box.append(select);
+    }
   }
 
   /** @private — the requestBody.replacements list: target (JSON Pointer) → expression-capable value. */
