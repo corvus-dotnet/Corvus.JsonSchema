@@ -208,3 +208,87 @@ function schemaDetail(s) {
 function isSchema(v) {
   return !!v && typeof v === 'object' && !Array.isArray(v);
 }
+
+/**
+ * Resolves a runtime expression to its VALUE against a paused debug frame (design §3.3's
+ * expression console): `$inputs.…`, `$outputs.…`, `$steps.<id>.outputs.<name>…`, `$statusCode`,
+ * and `$response.body`, each with optional dotted descent and a `#/json/pointer` suffix. The
+ * frame comes from the recorded trace at the scrub cursor — stateless like everything else in the
+ * debugger: no server call, the trace already holds the context.
+ *
+ * @param {string} text The expression (a single value expression, not a criterion).
+ * @param {{ inputs?: object, outputs?: any, steps?: Record<string, {outputs?: any}>,
+ *           current?: {statusCode?: number, responseBody?: any} }} frame
+ * @returns {{ found: true, value: any } | { found: false, reason: string }}
+ */
+export function resolveAgainstFrame(text, frame) {
+  const trimmed = (text ?? '').trim();
+  if (!trimmed.startsWith('$')) return { found: false, reason: 'enter a runtime expression (e.g. $steps.a.outputs.x)' };
+
+  const hash = trimmed.indexOf('#');
+  const head = hash < 0 ? trimmed : trimmed.slice(0, hash);
+  const pointer = hash < 0 ? null : trimmed.slice(hash);
+  const segments = head.split('.');
+  const root = segments[0];
+
+  let value;
+  let rest;
+  switch (root) {
+    case '$inputs':
+      value = frame?.inputs;
+      rest = segments.slice(1);
+      break;
+    case '$outputs':
+      value = frame?.outputs;
+      rest = segments.slice(1);
+      break;
+    case '$statusCode':
+      value = frame?.current?.statusCode;
+      rest = segments.slice(1);
+      break;
+    case '$response':
+      if (segments[1] !== 'body') return { found: false, reason: 'only $response.body is recorded in the trace' };
+      value = frame?.current?.responseBody;
+      rest = segments.slice(2);
+      break;
+    case '$steps': {
+      const stepId = segments[1];
+      if (!stepId) return { found: false, reason: 'name a step: $steps.<id>.outputs.<name>' };
+      const step = frame?.steps?.[stepId];
+      if (!step) return { found: false, reason: `step '${stepId}' has not executed in this frame` };
+      if (segments[2] !== 'outputs') return { found: false, reason: 'only a step’s outputs are recorded: $steps.<id>.outputs.<name>' };
+      value = step.outputs;
+      rest = segments.slice(3);
+      break;
+    }
+
+    default:
+      return { found: false, reason: `'${root}' is not resolvable from a recorded trace` };
+  }
+
+  for (const segment of rest) {
+    if (value == null || typeof value !== 'object') return { found: false, reason: `'${segment}' is not present in this frame` };
+    if (!(segment in value)) return { found: false, reason: `'${segment}' is not present in this frame` };
+    value = value[segment];
+  }
+
+  if (pointer !== null) {
+    if (pointer === '#' || pointer === '#/') {
+      // The whole value.
+    } else if (!pointer.startsWith('#/')) {
+      return { found: false, reason: 'a pointer suffix starts #/' };
+    } else {
+      for (const token of pointer.slice(2).split('/')) {
+        const key = token.replaceAll('~1', '/').replaceAll('~0', '~');
+        if (Array.isArray(value)) value = value[Number(key)];
+        else if (value != null && typeof value === 'object' && key in value) value = value[key];
+        else return { found: false, reason: `pointer '${pointer}' does not resolve in this frame` };
+        if (value === undefined) return { found: false, reason: `pointer '${pointer}' does not resolve in this frame` };
+      }
+    }
+  }
+
+  return value === undefined
+    ? { found: false, reason: 'undefined in this frame' }
+    : { found: true, value };
+}

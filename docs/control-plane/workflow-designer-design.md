@@ -760,9 +760,14 @@ compile; it serves recorded fixtures, clearly marked).
    IMMUTABLE package (unpacked document + embedded sources; the workflowId selector reorders like
    the working-copy path), `catalog:read`, fails closed without a simulator — re-verify evidence
    or explore a regression without a working copy. The typed inputs form + mock editor landed with
-   the slice-6 typed scenario forms. Remaining for later increments: trigger injection UI, and the
-   expression console evaluating against the PAUSED context (it completes against the static
-   schema today).*
+   the slice-6 typed scenario forms. Trigger injection BUILT: a suspended message wait offers the
+   tray's ⚡ form (channel/correlationId prefilled from the wait); the injected trigger joins the
+   session scenario and the stateless replay delivers it at the wait — Save-as-scenario captures
+   the session's triggers too, and the demo simulator now suspends on unmatched message waits and
+   consumes staged triggers (it silently ignored `triggers` before). Paused-context expression
+   console BUILT: ⏎ resolves `$inputs`/`$outputs`/`$steps.<id>.outputs`/`$statusCode`/
+   `$response.body` (dotted descent + `#/pointer`) against the recorded trace at the scrub cursor
+   — client-side, stateless like all stepping (§8.2). SLICE COMPLETE.*
 6. **Scenarios.** Scenario schema + CRUD + run endpoints (run-one and run-all suite report);
    scenario panel/editor; session recording; carry-over on create-from-version; **the `scenarios
    run` CLI** (§4.5: standalone in-process + remote modes, globbing, JUnit/JSON reports, CI exit

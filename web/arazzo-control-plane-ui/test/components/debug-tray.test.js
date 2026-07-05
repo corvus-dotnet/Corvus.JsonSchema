@@ -90,4 +90,37 @@ describe('<arazzo-debug-tray>', () => {
     el.shadowRoot.querySelector('.next').click(); // at the end: ask the host to replay further
     await req;
   });
+
+  it('a suspended message wait offers trigger injection and emits the session trigger', async () => {
+    make({
+      outcome: 'suspended',
+      stepsExecuted: 1,
+      steps: [TRACE.steps[0]],
+      wait: { kind: 'message', channel: 'adoption/confirmed', correlationId: 'p-42' },
+    });
+    ok(el.shadowRoot.textContent.includes('waiting on'), 'the wait renders');
+    const channel = el.shadowRoot.querySelector('.inj-channel');
+    equal(channel.value, 'adoption/confirmed', 'the channel prefills from the wait');
+    equal(el.shadowRoot.querySelector('.inj-corr').value, 'p-42', 'the correlation id prefills too');
+
+    // Invalid payload JSON refuses locally; nothing escapes the tray.
+    el.shadowRoot.querySelector('.inj-payload').value = '{nope';
+    let leaked = false;
+    el.addEventListener('trigger-injected', () => { leaked = true; }, { once: true });
+    el.shadowRoot.querySelector('.inj-go').click();
+    ok(!leaked, 'an unparseable payload does not emit');
+
+    el.shadowRoot.querySelector('.inj-payload').value = '{"approved": true}';
+    const injected = nextEvent(el, 'trigger-injected');
+    el.shadowRoot.querySelector('.inj-go').click();
+    const e = await injected;
+    equal(e.detail.channel, 'adoption/confirmed');
+    equal(e.detail.correlationId, 'p-42');
+    equal(e.detail.payload.approved, true);
+  });
+
+  it('a completed trace offers no injection form', () => {
+    make();
+    ok(!el.shadowRoot.querySelector('.inject'), 'inject only appears on a suspended message wait');
+  });
 });
