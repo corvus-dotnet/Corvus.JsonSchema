@@ -439,6 +439,7 @@
         const wi = doc.workflows.indexOf(wf);
         const ed = document.createElement('arazzo-workflow-inspector');
         ed.stepIds = wf.steps.map((s) => s.stepId);
+        ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
         ed.completionContext = expr.completionContext;
         ed.value = wf;
         if (workflowSection) ed.setAttribute('focus-section', workflowSection);

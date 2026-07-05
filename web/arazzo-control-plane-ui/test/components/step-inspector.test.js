@@ -197,4 +197,44 @@ describe('<arazzo-step-inspector>', () => {
     el.shadowRoot.querySelector('.addp').click();
     equal((await changed).detail.step.parameters.length, 2);
   });
+  it('dependsOn chips toggle in step order and prune when empty', async () => {
+    make();
+    const chips = [...el.shadowRoot.querySelectorAll('.dependson .chip')];
+    equal(chips.length, 2, 'the other two steps offer as dependencies');
+
+    let changed = nextEvent(el, 'step-changed');
+    chips.find((c) => c.dataset.id === 'manual-review').click();
+    let step = (await changed).detail.step;
+    ok(step.dependsOn.includes('manual-review'));
+
+    changed = nextEvent(el, 'step-changed');
+    el.shadowRoot.querySelector('.dependson .chip[data-id="validate-order"]').click();
+    step = (await changed).detail.step;
+    ok(Array.isArray(step.dependsOn), 'both selected');
+    equal(step.dependsOn[0], 'validate-order', 'dependencies keep step order, not click order');
+
+    changed = nextEvent(el, 'step-changed');
+    el.shadowRoot.querySelector('.dependson .chip[data-id="validate-order"]').click();
+    changed = nextEvent(el, 'step-changed');
+    el.shadowRoot.querySelector('.dependson .chip[data-id="manual-review"]').click();
+    step = (await changed).detail.step;
+    equal(step.dependsOn, undefined, 'empty prunes the property');
+  });
+
+  it('replacements add, edit, and prune with the request body', async () => {
+    make({ stepId: 'x', operationId: 'op' });
+    el.shadowRoot.querySelector('.addr').click();
+    const target = el.shadowRoot.querySelector('.rrow .rtarget');
+    target.value = '/card/number';
+    const changed = nextEvent(el, 'step-changed');
+    target.dispatchEvent(new Event('input'));
+    const step = (await changed).detail.step;
+    equal(step.requestBody.replacements[0].target, '/card/number');
+
+    const pruned = nextEvent(el, 'step-changed');
+    el.shadowRoot.querySelector('.rrow .rdel').click();
+    const after = (await pruned).detail.step;
+    equal(after.requestBody, undefined, 'removing the last replacement prunes the empty request body');
+  });
+
 });

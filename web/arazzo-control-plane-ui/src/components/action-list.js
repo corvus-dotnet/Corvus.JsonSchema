@@ -20,12 +20,13 @@ const isCatchAll = (a) => a && typeof a.reference !== 'string' && !(a.criteria?.
  * @param {object} opts
  * @param {object[]} opts.actions        The live action list (mutated in place).
  * @param {'success'|'failure'} opts.kind
- * @param {string[]} opts.stepIds        Goto targets offered by the embedded editors.
+ * @param {string[]} opts.stepIds        Step targets offered by the embedded editors.
+ * @param {string[]} [opts.workflowIds]  Cross-workflow targets offered by the embedded editors.
  * @param {object} opts.completionContext
  * @param {() => void} opts.onChange     Called after any mutation (edit, add, remove, reorder).
  * @returns {HTMLElement}
  */
-export function buildActionList({ actions, kind, stepIds, completionContext, onChange }) {
+export function buildActionList({ actions, kind, stepIds, workflowIds, completionContext, onChange }) {
   const root = document.createElement('div');
   root.className = `action-list ${kind}`;
 
@@ -94,6 +95,7 @@ export function buildActionList({ actions, kind, stepIds, completionContext, onC
       const editor = document.createElement('arazzo-action-editor');
       editor.kind = kind;
       editor.stepIds = stepIds;
+      editor.workflowIds = workflowIds || [];
       editor.completionContext = completionContext;
       editor.value = action;
       editor.addEventListener('action-changed', (e) => {
