@@ -188,10 +188,12 @@ class ArazzoEnvironments extends ArazzoElement {
     // deployment-internal tags and rejects the reserved sys: prefix (400).
     const mgmtEd = this.$('.d-mgmt-editor');
     const managementTags = mgmtEd ? mgmtEd.tags : [];
+    // The checkbox state IS the desired requirement — a present requireEvidence replaces the stored flag (§4.6).
+    const requireEvidence = this.$('.d-requireEvidence')?.checked ?? false;
     const saveBtn = this.$('.d-save');
     if (saveBtn) saveBtn.disabled = true;
     try {
-      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags });
+      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags, requireEvidence });
       this._detail = updated;
       const i = this._envs.findIndex((e) => e.name === updated.name);
       if (i >= 0) this._envs[i] = { ...this._envs[i], ...updated };
@@ -226,7 +228,7 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', displayName: '', description: '', managementTags: [], formError: null };
+    this._form = { name: '', displayName: '', description: '', managementTags: [], requireEvidence: false, formError: null };
     this.renderEditor();
     this.$('dialog').showModal();
     this.$('.f-name')?.focus();
@@ -248,6 +250,7 @@ class ArazzoEnvironments extends ArazzoElement {
         name,
         displayName: (form.displayName || '').trim() || undefined,
         description: (form.description || '').trim() || undefined,
+        requireEvidence: form.requireEvidence || undefined,
         managementTags: managementTags.length ? managementTags : undefined,
       });
       this.closeEditor();
@@ -303,6 +306,8 @@ class ArazzoEnvironments extends ArazzoElement {
         .detail .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--_muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
         .field { display: grid; gap: 4px; margin-bottom: 10px; }
         .field > span { font-size: 12px; color: var(--_muted); }
+        label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0 0 4px; }
+        label.check input { width: auto; }
         .field input, .field textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         .field textarea { min-height: 52px; }
         .audit { color: var(--_muted); font-size: 12px; margin-top: 4px; }
@@ -417,9 +422,12 @@ class ArazzoEnvironments extends ArazzoElement {
           ${writable ? `
             <div class="field"><span>Display name</span><input class="d-displayName" value="${escapeHtml(e.displayName || '')}" placeholder="${escapeHtml(e.name)}"></div>
             <div class="field"><span>Description</span><textarea class="d-description" placeholder="(optional)">${escapeHtml(e.description || '')}</textarea></div>
+            <label class="check"><input type="checkbox" class="d-requireEvidence"${e.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion</label>
+            <div class="hint">When set, a workflow version may be made available here only if its server-attested scenario suite passed at publish (workflow-designer §4.6). Saved with the details above.</div>
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</div></div>
+            ${e.requireEvidence ? '<div class="field"><span>Promotion</span><div>Requires green publish evidence (§4.6).</div></div>' : ''}
           `}
         </div>
         <div class="section">
@@ -479,6 +487,7 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="field"><span>Name</span><input class="f-name" placeholder="qa" value="${escapeHtml(f.name)}"></div>
       <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
+      <label class="check"><input type="checkbox" class="f-requireEvidence"${f.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion (§4.6)</label>
       <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
       <div class="hint">Scope who may manage and see this environment (§14.2); an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
@@ -486,6 +495,7 @@ class ArazzoEnvironments extends ArazzoElement {
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });
     content.querySelector('.f-displayName').addEventListener('input', (ev) => { f.displayName = ev.target.value; });
     content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
+    content.querySelector('.f-requireEvidence').addEventListener('change', (ev) => { f.requireEvidence = ev.target.checked; });
     const mgmtEd = content.querySelector('.f-mgmt-editor');
     mgmtEd.tags = Array.isArray(f.managementTags) ? f.managementTags : [];
     mgmtEd.addEventListener('tags-changed', () => { f.managementTags = mgmtEd.tags; });

@@ -316,9 +316,14 @@ versions, package content hash, per-scenario `{name, scenarioHash, outcome, path
 at}`, and the suite verdict. The catalog detail renders an evidence badge ("12/12 scenarios ✓ at
 publish"); `GET …/versions/{n}/evidence` serves the document.
 
-**Promotion readiness (proposed extension):** an environment can require evidence — `readiness =
-credentials ∧ (evidence.suiteGreen ∨ environment.allowsUnevidenced)`. Deployment-configurable so
-existing promotion behaviour is unchanged by default.
+**Promotion readiness (implemented):** an environment can require evidence — `readiness =
+credentials ∧ (evidence.suiteGreen ∨ ¬environment.requireEvidence)`. The per-environment
+`requireEvidence` flag (create/update, administrator-governed like the rest of the environment's
+metadata) is default-off, so existing promotion behaviour is unchanged unless an environment opts
+in. Suite-green means the attested suite ran at least one scenario and none failed; no evidence, or
+an empty suite, is unevidenced and refused. Both promotion paths hit the same gate — a direct
+make-available and an availability-request approval — refusing with a 409 `evidence-required`
+problem.
 
 ### 4.7 GitHub integration — brokered; `workspace:write` + host-configured
 
@@ -763,8 +768,11 @@ compile; it serves recorded fixtures, clearly marked).
    detail, never the index — projects `{at, suite}` from the package's evidence entry onto the
    summary (`PublishEvidenceSummary`; an empty suite attests nothing and is omitted, so promotion
    readiness can read absence as unevidenced), and catalog detail renders it green/red with the
-   publish instant. Remaining: the promotion-readiness extension (deployment-configurable,
-   default-off).*
+   publish instant. Promotion readiness: environments gained the default-off `requireEvidence`
+   flag (persisted schema + contract create/update/summary, editable in the environments panel);
+   both promotion paths — direct make-available and availability-request approval — refuse a
+   non-green (or unevidenced) version with 409 `evidence-required`, keeping the §7.7 behaviour
+   exactly where the flag is unset. SLICE COMPLETE.*
 8. **GitHub.** App broker + session endpoints; bind/pull/commit(+PR) incl. scenario files;
    import-from-repo in the acquisition dialog; **the GitHub Action wrapper** for the scenario
    runner (§4.5).

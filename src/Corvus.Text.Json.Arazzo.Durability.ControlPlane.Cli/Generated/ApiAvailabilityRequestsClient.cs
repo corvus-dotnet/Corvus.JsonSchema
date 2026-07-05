@@ -115,7 +115,7 @@ public sealed class ApiAvailabilityRequestsClient : IApiAvailabilityRequestsClie
     /// Approve an availability request
     /// </summary>
     /// <remarks>
-    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7) — is rejected (409).
+    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).
     /// </remarks>
     /// <param name="requestId">The requestId parameter.</param>
     /// <param name="body">The request body..</param>

@@ -235,6 +235,15 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             }
         }
 
+        // Promotion readiness (workflow-designer design §4.6): an environment that requires evidence admits only
+        // versions whose server-attested suite passed at publish — approval hits the same gate as a direct
+        // make-available. Default-off: environments without the flag keep the §7.7 behaviour exactly.
+        if (await this.RequiresEvidenceAsync(environment, cancellationToken).ConfigureAwait(false)
+            && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return ApproveAvailabilityRequestResult.Conflict(EvidenceRequiredProblem(baseWorkflowId, versionNumber, environment), workspace);
+        }
+
         // Make the version available (idempotent), then record the decision under optimistic concurrency so a second
         // administrator racing on the same pending request conflicts (409) rather than double-deciding.
         (ParsedJsonDocument<AvailabilityEntry> entry, _) = await this.availability.MakeAvailableAsync(baseWorkflowId, versionNumber, environment, this.CallerActor(), cancellationToken).ConfigureAwait(false);
@@ -399,6 +408,35 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         return missing;
     }
 
+    // Whether the target environment requires green publish evidence for promotion (workflow-designer design §4.6).
+    private async ValueTask<bool> RequiresEvidenceAsync(string environment, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (environmentDoc is null)
+        {
+            return false;
+        }
+
+        Environment env = environmentDoc.RootElement;
+        return env.RequireEvidence.IsNotUndefined() && (bool)env.RequireEvidence;
+    }
+
+    // Whether the version's package carries publish evidence whose attested suite is green (it ran at least one
+    // scenario and none failed) — the evidence half of the §4.6 readiness formula.
+    private async ValueTask<bool> HasGreenEvidenceAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (package is not { } bytes || !WorkflowPackage.TryReadEntry(bytes, "metadata/evidence.json"u8, out ReadOnlyMemory<byte> entry))
+        {
+            return false;
+        }
+
+        using var evidence = ParsedJsonDocument<Models.PublishEvidence>.Parse(entry);
+        Models.EvidenceSuite suite = evidence.RootElement.Suite;
+        return suite.Total.IsNotUndefined() && (int)suite.Total > 0
+            && suite.Failed.IsNotUndefined() && (int)suite.Failed == 0;
+    }
+
     // Visibility-then-membership gate on an environment (mirrors the availability handler): an environment outside reach is
     // not found; a non-administrator is not authorized.
     private async ValueTask<GovernanceGate> AuthorizeEnvironmentAdminAsync(string environment, CancellationToken cancellationToken)
@@ -455,6 +493,9 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 
     private static Models.ProblemDetails.Source NotReadyProblem(string baseWorkflowId, int versionNumber, string environment, IReadOnlyList<string> missing)
         => Problem("environment-not-ready", "Environment not ready", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': no credential for {string.Join(", ", missing)}.");
+
+    private static Models.ProblemDetails.Source EvidenceRequiredProblem(string baseWorkflowId, int versionNumber, string environment)
+        => Problem("evidence-required", "Evidence required", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(

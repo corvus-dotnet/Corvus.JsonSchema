@@ -165,7 +165,7 @@ public interface IApiAvailabilityClient : IAsyncDisposable
     /// Make a workflow version available in an environment
     /// </summary>
     /// <remarks>
-    /// Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources. Idempotent — making an already-available version available again returns the existing entry (200).
+    /// Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources; and where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite must be green, else 409 (evidence-required). Idempotent — making an already-available version available again returns the existing entry (200).
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>

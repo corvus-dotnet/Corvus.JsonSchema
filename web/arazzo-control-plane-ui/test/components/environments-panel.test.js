@@ -112,6 +112,31 @@ describe('<arazzo-environments>', () => {
     equal(e.detail.environment.managementTags?.[0]?.value, 'qa', 'management tag value persisted');
   });
 
+  it('creates an environment requiring evidence and toggles the flag in the detail (§4.6)', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    // Create with the promotion-readiness requirement checked.
+    el.shadowRoot.querySelector('.new').click();
+    const name = el.shadowRoot.querySelector('.f-name');
+    name.value = 'prod-eu'; name.dispatchEvent(new Event('input'));
+    const cb = el.shadowRoot.querySelector('.f-requireEvidence');
+    cb.checked = true; cb.dispatchEvent(new Event('change'));
+    const created = nextEvent(el, 'environment-created');
+    el.shadowRoot.querySelector('.confirm').click();
+    const e = await created;
+    equal(e.detail.environment.requireEvidence, true, 'the flag persisted on create');
+
+    // The detail shows it checked; unchecking + Save clears the requirement.
+    await waitFor(() => detail(el).querySelector('.d-requireEvidence'));
+    ok(detail(el).querySelector('.d-requireEvidence').checked, 'detail checkbox reflects the flag');
+    detail(el).querySelector('.d-requireEvidence').checked = false;
+    const changed = nextEvent(el, 'environment-changed');
+    detail(el).querySelector('.d-save').click();
+    const ch = await changed;
+    equal(ch.detail.environment.requireEvidence, false, 'unchecking clears the requirement');
+  });
+
   it('re-tags management tags on update and the change is durable', async () => {
     el = panelWithMock();
     mount(el);

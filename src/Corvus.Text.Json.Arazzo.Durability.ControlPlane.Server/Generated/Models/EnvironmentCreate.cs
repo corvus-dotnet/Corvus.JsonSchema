@@ -246,6 +246,27 @@ public readonly partial struct EnvironmentCreate
     }
 
     /// <summary>
+    /// Gets the (optional) <c>requireEvidence</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Whether promotion into this environment requires green publish evidence (workflow-designer design &#167;4.6): when true, a version may be made available here only if its server-attested scenario suite passed at publish. Absent/false preserves the default behaviour — unevidenced versions may be promoted.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean RequireEvidence
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequireEvidenceUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the number of properties in the object.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -709,6 +730,11 @@ public readonly partial struct EnvironmentCreate
         public const string Name = "name";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="RequireEvidence"/>.
+        /// </summary>
+        public const string RequireEvidence = "requireEvidence";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
@@ -727,6 +753,11 @@ public readonly partial struct EnvironmentCreate
         /// Gets the JSON property name for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RequireEvidence"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequireEvidenceUtf8 => "requireEvidence"u8;
     }
 
     /// <summary>
@@ -753,6 +784,11 @@ public readonly partial struct EnvironmentCreate
         /// Gets the escaped UTF-8 JSON property name for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Name => "name"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RequireEvidence"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequireEvidence => "requireEvidence"u8;
     }
 
     /// <summary>
@@ -780,5 +816,10 @@ public readonly partial struct EnvironmentCreate
         /// Gets the pre-baked property name blob for <see cref="Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RequireEvidence"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequireEvidence => [0x15, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x45, 0x76, 0x69, 0x64, 0x65, 0x6E, 0x63, 0x65, 0x22];
     }
 }

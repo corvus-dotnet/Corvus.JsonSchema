@@ -647,7 +647,8 @@ export class ArazzoControlPlaneClient {
   /**
    * `createEnvironment` — create a governed, reach-scoped environment; the deployment grants the calling principal
    * administration of it (§7.7). Conflicts (`409`) if an environment with that name already exists in the caller's reach.
-   * @param {{ name: string, displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} body
+   * A `requireEvidence: true` opts the environment into evidence-gated promotion (workflow-designer §4.6).
+   * @param {{ name: string, displayName?: string, description?: string, requireEvidence?: boolean, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} body
    * @returns {Promise<object>} The created {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`409`.
    */
   createEnvironment(body) {
@@ -655,17 +656,19 @@ export class ArazzoControlPlaneClient {
     const payload = { name: body.name };
     if (body.displayName) payload.displayName = body.displayName;
     if (body.description) payload.description = body.description;
+    if (typeof body.requireEvidence === 'boolean') payload.requireEvidence = body.requireEvidence;
     if (body.managementTags) payload.managementTags = body.managementTags;
     return this._request('POST', '/environments', { body: payload, signal: body.signal });
   }
 
   /**
-   * `updateEnvironment` — replace an environment's mutable metadata (display name, description, and — for an
-   * administrator re-tag — the management-tags reach scope §14.2; a present `managementTags` replaces the caller's
-   * non-internal labels, absent leaves them unchanged, the reserved `sys:` prefix is rejected 400). The name and
-   * created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
+   * `updateEnvironment` — replace an environment's mutable metadata (display name, description, the §4.6
+   * `requireEvidence` promotion requirement, and — for an administrator re-tag — the management-tags reach scope
+   * §14.2; a present `managementTags` replaces the caller's non-internal labels, absent leaves them unchanged, the
+   * reserved `sys:` prefix is rejected 400; a present `requireEvidence` likewise replaces the stored flag). The name
+   * and created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
    * @param {string} name
-   * @param {{ displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}> }} patch
+   * @param {{ displayName?: string, description?: string, requireEvidence?: boolean, managementTags?: Array<{key: string, value: string}> }} patch
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The updated {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
    */

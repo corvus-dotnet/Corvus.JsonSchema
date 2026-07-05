@@ -59,15 +59,18 @@ public readonly partial struct Environment
     /// <param name="displayName">The display-name value (or undefined).</param>
     /// <param name="description">The description value (or undefined).</param>
     /// <param name="managementTags">The resolved management tags (empty for an update).</param>
+    /// <param name="requireEvidence">The require-evidence flag value (or undefined — absent on create means the
+    /// default-off behaviour; absent on update leaves the stored flag unchanged).</param>
     /// <returns>A pooled, disposable draft document; <c>using</c> it and pass its
     /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before it is disposed.</returns>
     public static ParsedJsonDocument<Environment> Draft(
         in JsonElement name,
         in JsonElement displayName,
         in JsonElement description,
-        in SecurityTagSet managementTags)
+        in SecurityTagSet managementTags,
+        in JsonElement requireEvidence = default)
     {
-        DraftElements state = new(name, displayName, description, managementTags);
+        DraftElements state = new(name, displayName, description, managementTags, requireEvidence);
         return PersistedJson.ToPooledDocument<Environment, DraftElements>(
             state,
             static (Utf8JsonWriter writer, in DraftElements s) =>
@@ -76,6 +79,7 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, s.Name);
                 WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, s.DisplayName);
                 WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, s.Description);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, s.RequireEvidence);
                 if (!s.ManagementTags.IsEmpty)
                 {
                     writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -138,6 +142,7 @@ public readonly partial struct Environment
         WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, (JsonElement)draft.Name);
         WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, (JsonElement)draft.DisplayName);
         WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, (JsonElement)draft.Description);
+        WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, (JsonElement)draft.RequireEvidence);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
@@ -164,6 +169,10 @@ public readonly partial struct Environment
         // Mutable content carried bytes-to-bytes from the draft.
         WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, (JsonElement)draft.DisplayName);
         WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, (JsonElement)draft.Description);
+
+        // Promotion-readiness flag (workflow-designer design §4.6): an update that includes it replaces the stored
+        // value; an update that omits it leaves the environment's requirement unchanged.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.RequireEvidenceUtf8, (JsonElement)draft.RequireEvidence, (JsonElement)this.RequireEvidence);
 
         // Reach scope (§14.2): an administrator re-tag supplies managementTags on the draft (already merged with the
         // preserved deployment-internal tags by the handler) → take the draft's; an update that omits them carries the
@@ -223,7 +232,8 @@ public readonly partial struct Environment
         JsonElement name,
         JsonElement displayName,
         JsonElement description,
-        SecurityTagSet managementTags)
+        SecurityTagSet managementTags,
+        JsonElement requireEvidence)
     {
         public JsonElement Name { get; } = name;
 
@@ -232,5 +242,7 @@ public readonly partial struct Environment
         public JsonElement Description { get; } = description;
 
         public SecurityTagSet ManagementTags { get; } = managementTags;
+
+        public JsonElement RequireEvidence { get; } = requireEvidence;
     }
 }
