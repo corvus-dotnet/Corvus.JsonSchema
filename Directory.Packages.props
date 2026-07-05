@@ -76,6 +76,7 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.7" />
     <!-- Third-party libraries -->
