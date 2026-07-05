@@ -17,7 +17,10 @@
 //              .debugState ({active?, steps?: {id: 'done-success'|'done-failure'|'skipped'},
 //              edges?: [edgeId]}|null)
 // Attributes : readonly (mutation gestures off; pan/zoom/select/breakpoints still work)
-// Events     : selection-changed {selection}, layout-changed {overrides}, edge-created
+// Events     : selection-changed {selection}, layout-changed {overrides}, entry-changed
+//              {stepId} (a drag from the start node's entry port onto a step — the host reorders
+//              that step to the FRONT of the steps array, because in Arazzo the entry point IS
+//              steps[0]; the projection then re-derives the start edge), edge-created
 //              {from, to, kind}, breakpoint-toggled {stepId, enabled}, node-activated {stepId},
 //              delete-requested {selection}
 // Methods    : fit() — zoom/centre the whole graph into view.
@@ -29,7 +32,7 @@ import { START_ID } from '../workflow-graph.js';
 const PSEUDO_R = 17; // radius of the start/end pseudo-node circles
 
 const SVG = 'http://www.w3.org/2000/svg';
-const PORT_KINDS = { 'port-success': 'success', 'port-failure': 'failure' };
+const PORT_KINDS = { 'port-success': 'success', 'port-failure': 'failure', 'port-entry': 'entry' };
 const KIND_BADGE = { operation: 'OP', channel: 'CH', workflow: 'WF', unknown: '?' };
 
 class ArazzoDesignSurface extends ArazzoElement {
@@ -180,6 +183,7 @@ class ArazzoDesignSurface extends ArazzoElement {
         .port { fill: var(--_bg); stroke-width: 1.5; cursor: crosshair; }
         .port-success { stroke: var(--arazzo-status-completed, #2a8a4a); }
         .port-failure { stroke: var(--arazzo-status-faulted, #d4351c); }
+        .port-entry { stroke: var(--_accent); }
         .port:hover { stroke-width: 3; }
         :host([readonly]) .port { display: none; }
 
@@ -320,7 +324,8 @@ class ArazzoDesignSurface extends ArazzoElement {
       el.innerHTML = `
         <circle class="card" cx="${cx}" cy="${cy}" r="${PSEUDO_R}"></circle>
         ${node.kind === 'start'
-          ? `<text class="glyph" x="${cx}" y="${cy + 3.5}" text-anchor="middle">▶</text>`
+          ? `<text class="glyph" x="${cx}" y="${cy + 3.5}" text-anchor="middle">▶</text>
+        <circle class="port port-entry" cx="${cx}" cy="${cy + PSEUDO_R}" r="5"><title>Drag onto a step to make it the workflow's FIRST step</title></circle>`
           : `<circle class="inner" cx="${cx}" cy="${cy}" r="6"></circle>`}
         <text class="plabel" x="${cx}" y="${cy + PSEUDO_R + 14}" text-anchor="middle">${escapeHtml(node.label)}</text>
         ${badge ? `<text class="chip" x="${cx}" y="${cy + PSEUDO_R + 28}" text-anchor="middle">${escapeHtml(badge)}</text>` : ''}
@@ -546,19 +551,24 @@ class ArazzoDesignSurface extends ArazzoElement {
     svg.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       const hit = this._hitOf(e);
-      svg.setPointerCapture(e.pointerId);
+      try {
+        svg.setPointerCapture(e.pointerId);
+      } catch {
+        // Synthetic or already-released pointers (tests, exotic input) have no capturable id;
+        // the gesture still works — capture only guards against leaving the element mid-drag.
+      }
       if (hit?.port && !this.readonly) {
         this._gesture = { type: 'draw', from: hit.id, kind: hit.port, moved: false };
         const from = this._positions[hit.id];
-        const origin = {
-          x: from.x + NODE_WIDTH * (hit.port === 'success' ? 0.65 : 0.35),
-          y: from.y + NODE_HEIGHT,
-        };
+        const origin = hit.port === 'entry'
+          ? { x: from.x + NODE_WIDTH / 2, y: from.y + NODE_HEIGHT / 2 + PSEUDO_R }
+          : { x: from.x + NODE_WIDTH * (hit.port === 'success' ? 0.65 : 0.35), y: from.y + NODE_HEIGHT };
         this._gesture.origin = origin;
         const rubber = this.$('.rubber');
         rubber.setAttribute('d', `M ${origin.x} ${origin.y} L ${origin.x} ${origin.y}`);
         rubber.classList.toggle('rubber-success', hit.port === 'success');
         rubber.classList.toggle('rubber-failure', hit.port === 'failure');
+        rubber.classList.toggle('rubber-entry', hit.port === 'entry');
         // NB: SVG elements have no `hidden` IDL property — toggle the attribute, never the property.
         rubber.removeAttribute('hidden');
       } else if (hit?.bp) {
@@ -622,8 +632,14 @@ class ArazzoDesignSurface extends ArazzoElement {
         this.$('.rubber').setAttribute('hidden', '');
         for (const el of this.$$('.node.link-target')) el.classList.remove('link-target');
         // The start node is never a valid action target; dropping on the end terminal authors
-        // an `end` action (the host writes it — one grammar, every action is an edge).
-        if (g.over && g.over !== g.from && g.over !== START_ID) {
+        // an `end` action (the host writes it — one grammar, every action is an edge). An ENTRY
+        // drag (from the start port) must land on a real step: it reorders that step to the front
+        // of the steps array, so pseudo targets mean nothing.
+        if (g.kind === 'entry') {
+          if (g.over && g.over !== g.from && !this._pseudoIds.has(g.over)) {
+            this.emit('entry-changed', { stepId: g.over });
+          }
+        } else if (g.over && g.over !== g.from && g.over !== START_ID) {
           this.emit('edge-created', { from: g.from, to: g.over, kind: g.kind });
         }
       }

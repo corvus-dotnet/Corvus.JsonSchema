@@ -350,6 +350,21 @@
     opBrowser.addEventListener('operation-selected', (e) => createStepFromOperation(e.detail.operation));
     surface.addEventListener('operation-dropped', (e) => createStepFromOperation(e.detail.operation, e.detail.position));
 
+    // Dragging from the start node's entry port onto a step makes it the workflow's FIRST step —
+    // in Arazzo the entry point IS steps[0], so this is a reorder, not an action edge.
+    surface.addEventListener('entry-changed', (e) => {
+      const { stepId } = e.detail;
+      const wf = doc.workflows.find((w) => w.workflowId === select.value);
+      const at = wf?.steps.findIndex((x) => x.stepId === stepId) ?? -1;
+      if (at <= 0) return; // absent or already first
+      model.update((d) => {
+        const w = d.workflows.find((x) => x.workflowId === select.value);
+        const [step] = w.steps.splice(at, 1);
+        w.steps.unshift(step);
+      }, { origin: 'canvas', label: `make ${stepId} the entry step` });
+      logEvent('entry-changed', { stepId });
+    });
+
     // The document inspector (info · sourceDescriptions · workflows · components library) mounts in
     // the inspector pane on demand; selecting anything on the surface returns to selection mode.
     let docMode = false;
