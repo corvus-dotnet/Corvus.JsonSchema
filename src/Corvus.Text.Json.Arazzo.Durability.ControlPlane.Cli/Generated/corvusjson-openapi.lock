@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-05T10:30:43.7626649\u002B00:00",
+  "generatedAt": "2026-07-05T14:58:40.1180658\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -537,6 +537,9 @@
     "Models/EnvironmentUpdate.EnvironmentSecurityTagArray.cs",
     "Models/EnvironmentUpdate.EnvironmentSecurityTagArray.Mutable.cs",
     "Models/EnvironmentUpdate.EnvironmentSecurityTagArray.JsonSchema.cs",
+    "Models/EvidenceSuite.cs",
+    "Models/EvidenceSuite.Mutable.cs",
+    "Models/EvidenceSuite.JsonSchema.cs",
     "Models/FetchSourceRequest.cs",
     "Models/FetchSourceRequest.Mutable.cs",
     "Models/FetchSourceRequest.JsonSchema.cs",
@@ -588,9 +591,9 @@
     "Models/PublishEvidence.EvidenceScenarioArray.EvidenceScenario.cs",
     "Models/PublishEvidence.EvidenceScenarioArray.EvidenceScenario.Mutable.cs",
     "Models/PublishEvidence.EvidenceScenarioArray.EvidenceScenario.JsonSchema.cs",
-    "Models/PublishEvidence.EvidenceSuite.cs",
-    "Models/PublishEvidence.EvidenceSuite.Mutable.cs",
-    "Models/PublishEvidence.EvidenceSuite.JsonSchema.cs",
+    "Models/PublishEvidenceSummary.cs",
+    "Models/PublishEvidenceSummary.Mutable.cs",
+    "Models/PublishEvidenceSummary.JsonSchema.cs",
     "Models/PurgeResult.cs",
     "Models/PurgeResult.Mutable.cs",
     "Models/PurgeResult.JsonSchema.cs",
@@ -1106,9 +1109,9 @@
     "Models/PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bc7b58b74eb342f46cc686e7b1097c55be1765cf7",
+  "generatorVersion": "1.0.0\u002B90be1bb0b681a56a17eaa49a0e7657d52498ec5f",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "730be6d8ce19b7c37971cd461bc107fcd7c8f27a66a5da9297d8d662bb7f5d1a",
+  "specFileHash": "769c3e9a889d4bc114060deeb64550dd35f59f9108196163caed14abff79f249",
   "specVersion": "3.2"
 }

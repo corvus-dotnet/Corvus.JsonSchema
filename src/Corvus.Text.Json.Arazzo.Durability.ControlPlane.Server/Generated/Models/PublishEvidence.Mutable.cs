@@ -341,18 +341,20 @@ public readonly partial struct PublishEvidence
 
         /// <summary>
         /// Gets the <c>suite</c> property.
-        /// EvidenceSuite
         /// </summary>
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
+        /// <para>
+        /// The suite verdict: how many scenarios ran at publish and how many passed.
+        /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Mutable Suite
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Mutable Suite
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Mutable value))
                 {
                     return value;
                 }
@@ -590,7 +592,7 @@ public readonly partial struct PublishEvidence
         /// Set the <c>suite</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuite(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source value)
+        public void SetSuite(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source value)
         {
             CheckValidInstance();
 
@@ -621,7 +623,7 @@ public readonly partial struct PublishEvidence
         /// Set the <c>suite</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuite<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> value)
+        public void SetSuite<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -983,7 +985,7 @@ public readonly partial struct PublishEvidence
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg5;
 
@@ -1000,7 +1002,7 @@ public readonly partial struct PublishEvidence
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1157,7 +1159,7 @@ public readonly partial struct PublishEvidence
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> _createArg3;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg5;
 
@@ -1172,7 +1174,7 @@ public readonly partial struct PublishEvidence
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1334,7 +1336,7 @@ public readonly partial struct PublishEvidence
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source suite,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
         {
@@ -1351,7 +1353,7 @@ public readonly partial struct PublishEvidence
         public void Create(
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source suite,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
         {
@@ -1366,7 +1368,7 @@ public readonly partial struct PublishEvidence
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> suite,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
         #if NET9_0_OR_GREATER
@@ -1387,7 +1389,7 @@ public readonly partial struct PublishEvidence
             in TContext context,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> suite,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
         #if NET9_0_OR_GREATER
@@ -1498,7 +1500,7 @@ public readonly partial struct PublishEvidence
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1516,7 +1518,7 @@ public readonly partial struct PublishEvidence
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1565,7 +1567,7 @@ public readonly partial struct PublishEvidence
     /// <param name="engineVersion">The value of the <c>"engineVersion"</c> property.</param>
     /// <param name="packageHash">The value of the <c>"packageHash"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source suite, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
     {
         return new Source(at, scenarios, suite, engineVersion, packageHash);
     }
@@ -1581,7 +1583,7 @@ public readonly partial struct PublishEvidence
     /// <param name="engineVersion">The value of the <c>"engineVersion"</c> property.</param>
     /// <param name="packageHash">The value of the <c>"packageHash"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> suite, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1689,7 +1691,7 @@ public readonly partial struct PublishEvidence
     /// <param name="packageHash">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source suite, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source scenarios, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source suite, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1715,7 +1717,7 @@ public readonly partial struct PublishEvidence
     /// <param name="packageHash">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceSuite.Source<TContext> suite, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray.Source<TContext> scenarios, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite.Source<TContext> suite, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source engineVersion = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source packageHash = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

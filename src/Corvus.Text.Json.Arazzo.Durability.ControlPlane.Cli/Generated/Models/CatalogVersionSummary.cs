@@ -238,6 +238,30 @@ public readonly partial struct CatalogVersionSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>evidence</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The publish-evidence summary (&#167;4.6), projected from the package&#39;s metadata/evidence.json. Present only on the single-version detail and only for versions published with scenario evidence; index pages omit it. The full per-scenario record is served by the evidence endpoint.
+    /// </para>
+    /// <para>
+    /// The evidence badge&#39;s data (design &#167;4.6): when the version was published and the suite verdict, without the per-scenario detail.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidenceSummary Evidence
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EvidenceUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PublishEvidenceSummary value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>hash</c> property.
     /// </summary>
     /// <remarks>
@@ -993,6 +1017,11 @@ public readonly partial struct CatalogVersionSummary
         public const string Description = "description";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Evidence"/>.
+        /// </summary>
+        public const string Evidence = "evidence";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Hash"/>.
         /// </summary>
         public const string Hash = "hash";
@@ -1081,6 +1110,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the JSON property name for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Evidence"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EvidenceUtf8 => "evidence"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Hash"/>.
@@ -1179,6 +1213,11 @@ public readonly partial struct CatalogVersionSummary
         public static ReadOnlySpan<byte> Description => "description"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Evidence"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Evidence => "evidence"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Hash"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Hash => "hash"u8;
@@ -1274,6 +1313,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the pre-baked property name blob for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Evidence"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Evidence => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x76, 0x69, 0x64, 0x65, 0x6E, 0x63, 0x65, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Hash"/>.

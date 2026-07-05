@@ -17,24 +17,24 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
-/// PublishEvidence
+/// PublishEvidenceSummary
 /// </summary>
 /// <remarks>
 /// <para>
-/// The server-attested record written into the package at publish (design &#167;4.6).
+/// The evidence badge&#39;s data (design &#167;4.6): when the version was published and the suite verdict, without the per-scenario detail.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PublishEvidence
+public readonly partial struct PublishEvidenceSummary
 #if NET8_0_OR_GREATER
-    : IJsonElement<PublishEvidence>,
+    : IJsonElement<PublishEvidenceSummary>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<PublishEvidence>,
+    : IJsonElement<PublishEvidenceSummary>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct PublishEvidence
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="PublishEvidence"/> struct.
+    /// Initializes a new instance of the <see cref="PublishEvidenceSummary"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal PublishEvidence(IJsonDocument parent, int idx)
+    internal PublishEvidenceSummary(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct PublishEvidence
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static PublishEvidence DefaultInstance { get; }
+    public static PublishEvidenceSummary DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -166,64 +166,11 @@ public readonly partial struct PublishEvidence
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime At
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime At
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>engineVersion</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EngineVersion
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EngineVersionUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>packageHash</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PackageHash
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PackageHashUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>scenarios</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray Scenarios
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScenariosUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidence.EvidenceScenarioArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -243,11 +190,11 @@ public readonly partial struct PublishEvidence
     /// The suite verdict: how many scenarios ran at publish and how many passed.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite Suite
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite Suite
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EvidenceSuite value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuiteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EvidenceSuite value))
             {
                 return value;
             }
@@ -290,7 +237,7 @@ public readonly partial struct PublishEvidence
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in PublishEvidence left, in PublishEvidence right)
+    public static bool operator ==(in PublishEvidenceSummary left, in PublishEvidenceSummary right)
     {
         return left.Equals(right);
     }
@@ -303,7 +250,7 @@ public readonly partial struct PublishEvidence
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in PublishEvidence left, in PublishEvidence right)
+    public static bool operator !=(in PublishEvidenceSummary left, in PublishEvidenceSummary right)
     {
         return !left.Equals(right);
     }
@@ -316,7 +263,7 @@ public readonly partial struct PublishEvidence
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in PublishEvidence left, in JsonElement right)
+    public static bool operator ==(in PublishEvidenceSummary left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -329,7 +276,7 @@ public readonly partial struct PublishEvidence
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in PublishEvidence left, in JsonElement right)
+    public static bool operator !=(in PublishEvidenceSummary left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -340,7 +287,7 @@ public readonly partial struct PublishEvidence
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(PublishEvidence instance)
+    public static implicit operator JsonElement(PublishEvidenceSummary instance)
     {
         return JsonElement.From(instance);
     }
@@ -351,9 +298,9 @@ public readonly partial struct PublishEvidence
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator PublishEvidence(JsonElement instance)
+    public static implicit operator PublishEvidenceSummary(JsonElement instance)
     {
-        return PublishEvidence.From(instance);
+        return PublishEvidenceSummary.From(instance);
     }
 
     /// <summary>
@@ -362,7 +309,7 @@ public readonly partial struct PublishEvidence
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PublishEvidence From<T>(in T instance)
+    public static PublishEvidenceSummary From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -387,10 +334,10 @@ public readonly partial struct PublishEvidence
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PublishEvidence ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static PublishEvidenceSummary ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PublishEvidence>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<PublishEvidenceSummary>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -413,10 +360,10 @@ public readonly partial struct PublishEvidence
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PublishEvidence ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static PublishEvidenceSummary ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PublishEvidence>(json, options);
+        return JsonElementHelpers.ParseValue<PublishEvidenceSummary>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -439,10 +386,10 @@ public readonly partial struct PublishEvidence
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PublishEvidence ParseValue(string json, JsonDocumentOptions options = default)
+    public static PublishEvidenceSummary ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PublishEvidence>(json, options);
+        return JsonElementHelpers.ParseValue<PublishEvidenceSummary>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -482,10 +429,10 @@ public readonly partial struct PublishEvidence
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static PublishEvidence ParseValue(ref Utf8JsonReader reader)
+    public static PublishEvidenceSummary ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PublishEvidence>(ref reader);
+        return JsonElementHelpers.ParseValue<PublishEvidenceSummary>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -527,16 +474,16 @@ public readonly partial struct PublishEvidence
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out PublishEvidence? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out PublishEvidenceSummary? result)
     {
-        return JsonElementHelpers.TryParseValue<PublishEvidence>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<PublishEvidenceSummary>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new PublishEvidence(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new PublishEvidenceSummary(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -626,11 +573,11 @@ public readonly partial struct PublishEvidence
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static PublishEvidence IJsonElement<PublishEvidence>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static PublishEvidenceSummary IJsonElement<PublishEvidenceSummary>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"PublishEvidence: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"PublishEvidenceSummary: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -645,11 +592,11 @@ public readonly partial struct PublishEvidence
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="PublishEvidence"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="PublishEvidenceSummary"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="PublishEvidence"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="PublishEvidenceSummary"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -658,10 +605,10 @@ public readonly partial struct PublishEvidence
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public PublishEvidence Clone()
+    public PublishEvidenceSummary Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<PublishEvidence>(_idx);
+        return _parent.CloneElement<PublishEvidenceSummary>(_idx);
     }
 
     /// <summary>
@@ -669,7 +616,7 @@ public readonly partial struct PublishEvidence
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="PublishEvidence"/> that lives for the lifetime of its
+    /// An immutable <see cref="PublishEvidenceSummary"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -683,12 +630,12 @@ public readonly partial struct PublishEvidence
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public PublishEvidence Freeze()
+    public PublishEvidenceSummary Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<PublishEvidence>(_idx);
+            return mutable.FreezeElement<PublishEvidenceSummary>(_idx);
         }
 
         return this;
@@ -705,21 +652,6 @@ public readonly partial struct PublishEvidence
         public const string At = "at";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="EngineVersion"/>.
-        /// </summary>
-        public const string EngineVersion = "engineVersion";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="PackageHash"/>.
-        /// </summary>
-        public const string PackageHash = "packageHash";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Scenarios"/>.
-        /// </summary>
-        public const string Scenarios = "scenarios";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="Suite"/>.
         /// </summary>
         public const string Suite = "suite";
@@ -728,21 +660,6 @@ public readonly partial struct PublishEvidence
         /// Gets the JSON property name for <see cref="At"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AtUtf8 => "at"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="EngineVersion"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EngineVersionUtf8 => "engineVersion"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="PackageHash"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PackageHashUtf8 => "packageHash"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Scenarios"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ScenariosUtf8 => "scenarios"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Suite"/>.
@@ -761,21 +678,6 @@ public readonly partial struct PublishEvidence
         public static ReadOnlySpan<byte> At => "at"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="EngineVersion"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EngineVersion => "engineVersion"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="PackageHash"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PackageHash => "packageHash"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Scenarios"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Scenarios => "scenarios"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Suite"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Suite => "suite"u8;
@@ -791,21 +693,6 @@ public readonly partial struct PublishEvidence
         /// Gets the pre-baked property name blob for <see cref="At"/>.
         /// </summary>
         public static ReadOnlySpan<byte> At => [0x45, 0x00, 0x00, 0x00, 0x22, 0x61, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="EngineVersion"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EngineVersion => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="PackageHash"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PackageHash => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x63, 0x6B, 0x61, 0x67, 0x65, 0x48, 0x61, 0x73, 0x68, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Scenarios"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Scenarios => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x65, 0x6E, 0x61, 0x72, 0x69, 0x6F, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Suite"/>.
