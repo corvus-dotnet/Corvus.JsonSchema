@@ -108,6 +108,16 @@ public interface IApiSourcesClient : IAsyncDisposable
         public static readonly string[] ListRegisteredSourceOperationsOpenIdConnectScopes = ["sources:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>FetchSourceDocument</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] FetchSourceDocumentOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>FetchSourceDocument</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] FetchSourceDocumentOpenIdConnectScopes = ["sources:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ListSources</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ListSourcesOauth2Scopes = ["sources:read"];
@@ -177,6 +187,16 @@ public interface IApiSourcesClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListRegisteredSourceOperationsResponse> ListRegisteredSourceOperationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Fetch a source document from a web endpoint
+    /// </summary>
+    /// <remarks>
+    /// Fetches an OpenAPI/AsyncAPI/Arazzo document server-side (no browser CORS), optionally authenticating with a registered source credential referenced by (sourceName, environment). Returns the validated document with its detected type/version and content digest; the caller then attaches it to a working copy or registers it. 400 when the URL/scheme is not permitted, the payload is not a parseable JSON/YAML document, it declares no recognisable type, or fetching is not configured in this deployment; 404 when the referenced credential is absent or out of reach; 502 when the upstream endpoint fails.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<FetchSourceDocumentResponse> FetchSourceDocumentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List registered sources

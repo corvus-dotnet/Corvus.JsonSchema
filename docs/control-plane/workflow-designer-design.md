@@ -673,9 +673,14 @@ compile; it serves recorded fixtures, clearly marked).
    benchmarks in `WorkspaceApiBenchmarks`): attach RMW 12.93→4.86 KB, operation surface
    16.26→3.77 KB (single-pass write-through, no descriptor records), blank create 2.21→1.77 KB
    (pooled create draft, no name string / skeleton buffer), validate 5.27→3.88 KB (pointer
-   strings only at finding sites), CRUD paths already conformant (2.2–3.7 KB). Still to come in
-   this slice: `fetchSourceDocument` (§4.4), the operation browser rail + acquisition dialog, and
-   step creation from operations.*
+   strings only at finding sites), CRUD paths already conformant (2.2–3.7 KB). `fetchSourceDocument` (§4.4) is BUILT:
+   server-side fetch (no browser CORS) with an optional registered-credential reference resolved
+   through the §13 machinery (secret material never rides the API), JSON and YAML payloads (YAML
+   parses to the returned JSON form — same canonical digest), type/version detection, the repo's
+   canonical SHA-256 digest, https-only unless the deployment opts in, a pooled 16 MiB-capped
+   download, and fails-closed 400 when no fetcher is wired (measured: 1.88 KB per fetch over a
+   stub endpoint). Still to come in this slice: the operation browser rail + acquisition dialog,
+   and step creation from operations.*
 3. **Design surface v1.** Graph projection + chosen canvas technology: render, select, inspector
    wiring, add/move/connect/delete, defaults layer, auto-layout, `designerState` persistence.
 4. **Inspectors complete.** Step/workflow/document inspectors, criteria/action editors,
