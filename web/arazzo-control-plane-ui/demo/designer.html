@@ -17,9 +17,8 @@
     header { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); flex-wrap: wrap; }
     header h1 { font-size: 15px; margin: 0 12px 0 0; }
     header .spacer { flex: 1; }
-    main { display: grid; grid-template-columns: 260px minmax(0, 1fr) 360px; grid-auto-rows: minmax(0, 1fr);
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-auto-rows: minmax(0, 1fr);
            gap: 12px; padding: 12px 14px; box-sizing: border-box; }
-    #rail { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; }
     #center { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
     .tabs { display: flex; gap: 4px; }
     .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 4px 14px; font-size: 12px; opacity: 0.7; }
@@ -30,13 +29,19 @@
     body[data-view="workspace"] .designer-only { display: none !important; }
     #center > [hidden] { display: none !important; }
     /* The sidebar is one independent scroll region; sections take their natural height. */
-    aside { display: grid; grid-auto-rows: min-content; align-content: start; gap: 10px; min-width: 0;
-            overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; }
-    aside section { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+    /* The RHS sidebar is TABBED: each concern (inspect · sources · debug · problems · events) is
+       its own full-height panel — the debug session no longer competes with the selection. */
+    aside { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; min-width: 0; min-height: 0; }
+    .side-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+    .side-tabs button { padding: 4px 12px; font-size: 12px; opacity: 0.7; }
+    .side-tabs button.active { opacity: 1; border-color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
+    .side-tabs .badge { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 4px; border-radius: 999px;
+                        background: var(--arazzo-danger, #d4351c); color: #fff; font-size: 10px; font-weight: 700; }
+    .side-panel { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; min-width: 0; min-height: 0;
+                  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: flex; flex-direction: column; }
+    .side-panel[hidden] { display: none !important; }
     #inspector, #inspector > * { min-width: 0; }
-    aside h2 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); }
-    aside pre { margin: 0; padding: 10px; font: 11px ui-monospace, Menlo, monospace; overflow: auto; max-height: 32vh; }
-    #log { max-height: 22vh; }
+    aside pre { margin: 0; padding: 10px; font: 11px ui-monospace, Menlo, monospace; overflow: auto; }
     button, select { font: inherit; padding: 5px 10px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: inherit; cursor: pointer; }
     /* Toolbar icon buttons: compact, with UNMISTAKABLE hover/press/focus feedback. */
     header button.tb { width: 34px; height: 30px; padding: 0; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
@@ -84,9 +89,6 @@
     <p class="muted" style="font-size: 12px;">Open a working copy to design it; saves never mint catalog versions.</p>
   </div>
   <main hidden>
-    <nav id="rail">
-      <arazzo-operation-browser id="opbrowser"></arazzo-operation-browser>
-    </nav>
     <div id="center">
       <div class="tabs">
         <button id="tab-design" class="active">Design</button>
@@ -96,32 +98,35 @@
       <arazzo-text-editor id="text" hidden></arazzo-text-editor>
     </div>
     <aside>
-      <section>
-        <h2>Selection</h2>
+      <div class="side-tabs" role="tablist">
+        <button data-tab="inspect" class="active">Inspect</button>
+        <button data-tab="sources">Sources</button>
+        <button data-tab="debug">Debug</button>
+        <button data-tab="problems">Problems<span class="badge" id="problems-badge" hidden></span></button>
+        <button data-tab="events">Events</button>
+      </div>
+      <div class="side-panel" id="panel-inspect">
         <div id="inspector" style="padding: 10px; display: grid; gap: 8px;"></div>
         <pre id="selection">(nothing selected)</pre>
-      </section>
-      <section>
-        <h2>Expression console (CM6)</h2>
-        <div style="padding: 10px;">
+      </div>
+      <div class="side-panel" id="panel-sources" hidden>
+        <arazzo-operation-browser id="opbrowser"></arazzo-operation-browser>
+      </div>
+      <div class="side-panel" id="panel-debug" hidden>
+        <arazzo-debug-tray id="debugtray"></arazzo-debug-tray>
+        <div style="padding: 10px; border-top: 1px solid var(--arazzo-border, #e3e6ea);">
           <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
           <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280); margin-top: 6px;">
-            Completions from the fixture schema — try <code>$st</code> then <code>.</code>
+            Expression console — completions from the fixture schema; paused-context evaluation arrives with the session explorer.
           </div>
         </div>
-      </section>
-      <section>
-        <h2>Debug</h2>
-        <arazzo-debug-tray id="debugtray"></arazzo-debug-tray>
-      </section>
-      <section>
-        <h2>Problems</h2>
-        <div id="problems" style="padding: 8px 10px; font-size: 12px; display: grid; gap: 6px;">(not validated yet)</div>
-      </section>
-      <section>
-        <h2>Events</h2>
+      </div>
+      <div class="side-panel" id="panel-problems" hidden>
+        <div id="problems" style="padding: 8px 10px; font-size: 12px; display: grid; gap: 6px; align-content: start;">(not validated yet)</div>
+      </div>
+      <div class="side-panel" id="panel-events" hidden>
         <pre id="log"></pre>
-      </section>
+      </div>
     </aside>
   </main>
   <arazzo-source-acquisition-dialog id="acqdialog"></arazzo-source-acquisition-dialog>
@@ -299,6 +304,10 @@
     const SEVERITY_ICON = { error: '⛔', warning: '⚠️', info: 'ℹ️' };
 
     function renderProblems(outcome) {
+      const badge = document.getElementById('problems-badge');
+      badge.hidden = outcome.diagnostics.length === 0;
+      badge.textContent = outcome.diagnostics.length;
+      switchSideTab('problems');
       problemsEl.innerHTML = '';
       if (outcome.diagnostics.length === 0) {
         problemsEl.textContent = '✅ no findings — the document is valid';
@@ -436,7 +445,16 @@
         }
       });
     }
-    document.getElementById('docbtn').addEventListener('click', showDocumentInspector);
+    // ── the tabbed RHS sidebar: click to switch; the app auto-switches on INTENT (select →
+    // Inspect, validate → Problems, run → Debug).
+    const sideTabButtons = [...document.querySelectorAll('.side-tabs button')];
+    function switchSideTab(name) {
+      for (const b of sideTabButtons) b.classList.toggle('active', b.dataset.tab === name);
+      for (const panel of document.querySelectorAll('.side-panel')) panel.hidden = panel.id !== `panel-${name}`;
+    }
+    sideTabButtons.forEach((b) => b.addEventListener('click', () => switchSideTab(b.dataset.tab)));
+
+    document.getElementById('docbtn').addEventListener('click', () => { switchSideTab('inspect'); showDocumentInspector(); });
     textEditor.addEventListener('undo-requested', () => { if (model.canUndo) model.undo(); });
     textEditor.addEventListener('redo-requested', () => { if (model.canRedo) model.redo(); });
 
@@ -554,7 +572,10 @@
       textEditor.setProblem(result.ok ? null : result.error);
     });
 
-    surface.addEventListener('selection-changed', (e) => showSelection(e.detail.selection));
+    surface.addEventListener('selection-changed', (e) => {
+      if (e.detail.selection) switchSideTab('inspect');
+      showSelection(e.detail.selection);
+    });
     function showSelection(sel) {
       docMode = false;
       inspector.replaceChildren();
@@ -738,6 +759,7 @@
         }
 
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy(); // simulate runs the STORED document
+        switchSideTab('debug');
         tray.trace = await client.simulateWorkingCopy(shell.id, command);
         applyDebugFrame();
         logEvent('simulated', { outcome: tray.trace.outcome, steps: tray.trace.stepsExecuted });
@@ -811,11 +833,27 @@
     document.getElementById('readonly').addEventListener('change', (e) => {
       surface.toggleAttribute('readonly', e.target.checked);
     });
-    document.getElementById('theme').addEventListener('click', (e) => {
-      const html = document.documentElement;
-      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
-      e.currentTarget.textContent = html.dataset.theme === 'dark' ? '☀️' : '🌙';
+    // Theme: the playgrounds' three-state cycle — the icon shows the CURRENT preference
+    // (☀️ light · 🌙 dark · 🖥️ system) and the tooltip narrates the next click.
+    const themeBtn = document.getElementById('theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+    let themePreference = 'auto';
+    function applyTheme() {
+      const resolved = themePreference === 'auto' ? (systemDark.matches ? 'dark' : 'light') : themePreference;
+      document.documentElement.dataset.theme = resolved;
+      themeBtn.textContent = { light: '☀️', dark: '🌙', auto: '🖥️' }[themePreference];
+      themeBtn.title = {
+        light: 'Theme: Light (click for Dark)',
+        dark: 'Theme: Dark (click for System)',
+        auto: 'Theme: System (click for Light)',
+      }[themePreference];
+    }
+    systemDark.addEventListener('change', () => { if (themePreference === 'auto') applyTheme(); });
+    themeBtn.addEventListener('click', () => {
+      themePreference = { auto: 'light', light: 'dark', dark: 'auto' }[themePreference];
+      applyTheme();
     });
+    applyTheme();
   </script>
 </body>
 </html>
