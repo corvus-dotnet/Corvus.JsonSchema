@@ -22,11 +22,13 @@ const isCatchAll = (a) => a && typeof a.reference !== 'string' && !(a.criteria?.
  * @param {'success'|'failure'} opts.kind
  * @param {string[]} opts.stepIds        Step targets offered by the embedded editors.
  * @param {string[]} [opts.workflowIds]  Cross-workflow targets offered by the embedded editors.
+ * @param {object}   [opts.components]    The document's components map for this kind (name → action) —
+ *                                        enables the add-reference affordance and localize.
  * @param {object} opts.completionContext
  * @param {() => void} opts.onChange     Called after any mutation (edit, add, remove, reorder).
  * @returns {HTMLElement}
  */
-export function buildActionList({ actions, kind, stepIds, workflowIds, completionContext, onChange }) {
+export function buildActionList({ actions, kind, stepIds, workflowIds, completionContext, components, onChange }) {
   const root = document.createElement('div');
   root.className = `action-list ${kind}`;
 
@@ -45,7 +47,38 @@ export function buildActionList({ actions, kind, stepIds, workflowIds, completio
       if (action && typeof action.reference === 'string') {
         const row = document.createElement('div');
         row.className = 'muted reusable-row';
-        row.textContent = `↺ ${action.reference} (reusable — edit in components)`;
+        const label = document.createElement('span');
+        label.textContent = `↺ ${action.reference} (reusable — edit in components)`;
+        row.append(label);
+
+        // Localize: copy the referenced action inline so it can diverge here (mirrors defaults-localize).
+        const key = action.reference.split('.').pop();
+        const resolved = components?.[key];
+        if (resolved) {
+          const localize = document.createElement('button');
+          localize.type = 'button';
+          localize.className = 'ghost move';
+          localize.textContent = 'localize';
+          localize.title = 'Copy the reusable action inline so this list can edit it independently';
+          localize.addEventListener('click', () => {
+            actions[i] = structuredClone(resolved);
+            render();
+            onChange();
+          });
+          row.append(localize);
+        }
+
+        const drop = document.createElement('button');
+        drop.type = 'button';
+        drop.className = 'ghost move';
+        drop.textContent = '✕';
+        drop.title = 'Remove the reference';
+        drop.addEventListener('click', () => {
+          actions.splice(i, 1);
+          render();
+          onChange();
+        });
+        row.append(drop);
         root.append(row);
         return;
       }
@@ -139,6 +172,22 @@ export function buildActionList({ actions, kind, stepIds, workflowIds, completio
       onChange();
     });
     root.append(add);
+
+    // Reference a reusable component action ($components.successActions/… by kind).
+    const keys = Object.keys(components || {});
+    if (keys.length) {
+      const refSelect = document.createElement('select');
+      refSelect.className = 'add-ref';
+      refSelect.innerHTML = `<option value="">+ Add reference…</option>`
+        + keys.map((k) => `<option value="${k}">$components.${kind === 'success' ? 'successActions' : 'failureActions'}.${k}</option>`).join('');
+      refSelect.addEventListener('change', () => {
+        if (!refSelect.value) return;
+        actions.push({ reference: `$components.${kind === 'success' ? 'successActions' : 'failureActions'}.${refSelect.value}` });
+        render();
+        onChange();
+      });
+      root.append(refSelect);
+    }
   };
 
   render();
@@ -161,5 +210,7 @@ export const ACTION_LIST_CSS = `
   .action-list details > arazzo-action-editor { display: block; padding: 4px 10px 6px; }
   .action-list .remove { margin: 0 10px; font-size: 11px; }
   .action-list .add-action { font-size: 12px; justify-self: start; }
-  .action-list .reusable-row { font-size: 12px; padding: 6px 2px; }
+  .action-list .reusable-row { font-size: 12px; padding: 6px 2px; display: flex; align-items: center; gap: 6px; }
+  .action-list .reusable-row span { flex: 1; min-width: 0; }
+  .action-list .add-ref { font-size: 12px; justify-self: start; max-width: 100%; }
 `;

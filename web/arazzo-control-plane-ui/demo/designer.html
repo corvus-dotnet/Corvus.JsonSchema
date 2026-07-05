@@ -44,6 +44,7 @@
     <button id="back" title="Back to the workspace" hidden>⌂ Workspace</button>
     <span id="wc-name" class="muted" hidden></span>
     <select id="workflow"></select>
+    <button id="docbtn" title="Edit info, source descriptions, workflows, and the reusable components library">⚙ Document</button>
     <button id="undo" title="Undo (this actor's last edit)" disabled>↩ Undo</button>
     <button id="redo" title="Redo" disabled>↪ Redo</button>
     <button id="fit">Fit</button>
@@ -116,6 +117,7 @@
     import '../src/components/workspace-table.js';
     import '../src/components/operation-browser.js';
     import '../src/components/source-acquisition-dialog.js';
+    import '../src/components/document-inspector.js';
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import { createMockControlPlane } from './mock-api.js';
 
@@ -293,7 +295,7 @@
     // The rail's surfaces feed the inspector templates; a re-render picks up fresh descriptors.
     opBrowser.addEventListener('loaded', () => {
       rebuildOperationIndex();
-      showSelection(surface.selection);
+      if (!docMode) showSelection(surface.selection); // don't stomp document mode on a rail refresh
     });
     opBrowser.addEventListener('add-source-requested', () => acqDialog.open({ workingCopyId: shell.id }));
     acqDialog.addEventListener('source-attached', (e) => {
@@ -332,6 +334,36 @@
       showSelection(surface.selection);
       logEvent('step-created', { stepId, from: operation.operationId ?? operation.channelPath });
     });
+
+    // The document inspector (info · sourceDescriptions · workflows · components library) mounts in
+    // the inspector pane on demand; selecting anything on the surface returns to selection mode.
+    let docMode = false;
+    function showDocumentInspector() {
+      docMode = true;
+      inspector.replaceChildren();
+      selectionPre.textContent = '(document)';
+      const ed = document.createElement('arazzo-document-inspector');
+      ed.stepIds = doc.workflows.flatMap((w) => (w.steps || []).map((st) => st.stepId));
+      ed.workflowIds = doc.workflows.map((w) => w.workflowId);
+      ed.completionContext = expr.completionContext;
+      ed.value = doc;
+      inspector.append(heading('document'), ed);
+      ed.addEventListener('document-changed', (ev) => {
+        const workflowIdsBefore = doc.workflows.map((w) => w.workflowId).join('\u0000');
+        model.update((d) => {
+          const v = ev.detail.document;
+          for (const k of ['info', 'sourceDescriptions', 'components', 'workflows']) {
+            if (v[k] === undefined) delete d[k];
+            else d[k] = v[k];
+          }
+        }, { origin: 'doc-inspector', label: 'edit document', coalesce: true });
+        if (doc.workflows.map((w) => w.workflowId).join('\u0000') !== workflowIdsBefore) {
+          refreshWorkflowOptions();
+          project();
+        }
+      });
+    }
+    document.getElementById('docbtn').addEventListener('click', showDocumentInspector);
 
     saveBtn.addEventListener('click', saveWorkingCopy);
     validateBtn.addEventListener('click', validateWorkingCopy);
@@ -385,11 +417,14 @@
       }
       surface.layoutOverrides = structuredClone(model.designerState.nodes ?? {});
       project();
+      if (docMode && e.detail.origin !== 'doc-inspector') {
+        showDocumentInspector(); // remount over fresh state (an undo, a remote edit)
+      }
       if (e.detail.origin !== 'text' && !textEditor.hidden) {
         textEditor.value = model.text;
         textEditor.setProblem(null);
       }
-      if (e.detail.origin !== 'inspector' && e.detail.origin !== 'canvas') {
+      if (e.detail.origin !== 'inspector' && e.detail.origin !== 'canvas' && !docMode) {
         showSelection(surface.selection);
       }
       undoBtn.disabled = !model.canUndo;
@@ -425,6 +460,7 @@
 
     surface.addEventListener('selection-changed', (e) => showSelection(e.detail.selection));
     function showSelection(sel) {
+      docMode = false;
       inspector.replaceChildren();
       selectionPre.textContent = '';
       if (!sel) { selectionPre.textContent = '(nothing selected)'; return; }
@@ -440,6 +476,7 @@
         const ed = document.createElement('arazzo-workflow-inspector');
         ed.stepIds = wf.steps.map((s) => s.stepId);
         ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
+        ed.components = doc.components;
         ed.completionContext = expr.completionContext;
         ed.value = wf;
         if (workflowSection) ed.setAttribute('focus-section', workflowSection);
@@ -464,6 +501,7 @@
         ed.stepIds = wf.steps.map((s) => s.stepId);
         ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
         ed.workflowDefaults = { successActions: wf.successActions || [], failureActions: wf.failureActions || [] };
+        ed.components = doc.components;
         ed.completionContext = expr.completionContext;
         // The live operation surface (listSourceOperations): documented responses drive the
         // criteria templates, the request/message schema drives the body-skeleton template.
