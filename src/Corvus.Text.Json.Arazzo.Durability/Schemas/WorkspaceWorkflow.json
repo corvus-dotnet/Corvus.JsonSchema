@@ -36,6 +36,11 @@
       "description": "The sources attached to this working copy, keyed by sourceDescriptions name (workflow-designer design §4.1): a registry reference (resolved at read time) or an inline document (stored verbatim so the working copy resolves like a package).",
       "items": { "$ref": "#/$defs/AttachedSource" }
     },
+    "scenarios": {
+      "type": "array",
+      "description": "The working copy's test scenarios (workflow-designer design §4.2), stored verbatim and published into the package as metadata/scenarios.json. Shape is validated at the API contract; the store carries the set like the designer state.",
+      "items": { "type": "object" }
+    },
     "managementTags": {
       "type": "array",
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this working copy (§14.2). Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update.",

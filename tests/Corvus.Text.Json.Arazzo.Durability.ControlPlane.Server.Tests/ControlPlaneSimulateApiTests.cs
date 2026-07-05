@@ -149,6 +149,79 @@ public sealed class ControlPlaneSimulateApiTests
     }
 
     [TestMethod]
+    public async Task Scenarios_have_a_full_lifecycle_and_run_with_judged_expectations()
+    {
+        await using Scoped host = await StartAsync(withSimulator: true);
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+
+        // Upsert: mocks address operations by (source, operationId); expectations cover outcome,
+        // path, output criteria, and per-step execution counts.
+        const string passing = """
+            {"name":"happy-path","inputs":{"petId":"42"},
+             "mocks":[{"source":"petstore","operationId":"getPet","responses":[{"status":200,"body":{"name":"Fido"}}]},
+                      {"source":"petstore","operationId":"adoptPet","responses":[{"status":200}]}],
+             "expect":{"outcome":"completed","path":["get-pet","adopt-pet"],"pathMode":"exact",
+                       "outputs":[{"condition":"$outputs.name == 'Fido'"}],
+                       "steps":{"get-pet":{"attempts":1},"adopt-pet":{"reached":true}}}}
+            """;
+        HttpResponseMessage put = await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/happy-path", passing, "workspace:write");
+        put.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument stored = Stj.JsonDocument.Parse(await put.Content.ReadAsStringAsync()))
+        {
+            stored.RootElement.GetProperty("etag").GetString().ShouldNotBeNullOrEmpty();
+            stored.RootElement.GetProperty("scenario").GetProperty("name").GetString().ShouldBe("happy-path");
+        }
+
+        // A name mismatch between path and body is rejected.
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/other", passing, "workspace:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // A deliberately failing scenario: the mock 404s, so the run cannot complete.
+        const string failing = """
+            {"name":"declined","inputs":{"petId":"42"},
+             "mocks":[{"source":"petstore","operationId":"getPet","responses":[{"status":404}]}],
+             "expect":{"outcome":"completed"}}
+            """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/declined", failing, "workspace:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using (Stj.JsonDocument list = Stj.JsonDocument.Parse(await (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/scenarios", "{}", "workspace:read")).Content.ReadAsStringAsync()))
+        {
+            list.RootElement.GetProperty("scenarios").GetArrayLength().ShouldBe(2);
+        }
+
+        // Run-one: every expectation holds and the full trace rides along.
+        HttpResponseMessage runOne = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/scenarios/happy-path/run", "{}", "workspace:read");
+        runOne.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument result = Stj.JsonDocument.Parse(await runOne.Content.ReadAsStringAsync()))
+        {
+            result.RootElement.GetProperty("passed").GetBoolean().ShouldBeTrue();
+            result.RootElement.GetProperty("outcome").GetString().ShouldBe("completed");
+            result.RootElement.GetProperty("expectations").GetArrayLength().ShouldBe(5, "outcome, path, one output, two step assertions");
+            result.RootElement.GetProperty("trace").GetProperty("steps").GetArrayLength().ShouldBe(2);
+        }
+
+        // Run-all: the suite report counts the failing scenario honestly, with its verdict detail.
+        HttpResponseMessage suiteResponse = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/scenarios", "{}", "workspace:read");
+        suiteResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument suite = Stj.JsonDocument.Parse(await suiteResponse.Content.ReadAsStringAsync()))
+        {
+            suite.RootElement.GetProperty("total").GetInt32().ShouldBe(2);
+            suite.RootElement.GetProperty("passed").GetInt32().ShouldBe(1);
+            suite.RootElement.GetProperty("failed").GetInt32().ShouldBe(1);
+            Stj.JsonElement failed = suite.RootElement.GetProperty("results").EnumerateArray().Single(r => !r.GetProperty("passed").GetBoolean());
+            failed.GetProperty("scenario").GetString().ShouldBe("declined");
+            failed.GetProperty("expectations")[0].GetProperty("detail").GetString()!.ShouldContain("expected completed");
+        }
+
+        // Delete → gone; deleting again → 404.
+        (await host.SendJsonAsync(HttpMethod.Delete, $"/workspace/workflows/{id}/scenarios/declined", "{}", "workspace:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await host.SendJsonAsync(HttpMethod.Delete, $"/workspace/workflows/{id}/scenarios/declined", "{}", "workspace:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
     public async Task Simulation_fails_closed_when_the_deployment_wires_no_simulator()
     {
         await using Scoped host = await StartAsync(withSimulator: false);

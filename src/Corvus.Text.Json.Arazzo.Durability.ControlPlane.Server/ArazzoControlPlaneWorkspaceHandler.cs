@@ -491,6 +491,219 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ListScenariosResult> HandleListScenariosAsync(ListScenariosParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return ListScenariosResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        ParsedJsonDocument<Models.GetWorkspaceWorkflowsByIdScenariosOk> body = WorkspaceScenarioJson.ListResponse((JsonElement)w.RootElement.Scenarios);
+        workspace.TakeOwnership(body);
+        return ListScenariosResult.Ok(body.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<PutScenarioResult> HandlePutScenarioAsync(PutScenarioParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        string name = (string)parameters.ScenarioName;
+        JsonElement scenario = (JsonElement)parameters.Body;
+        if (!(scenario.TryGetProperty("name"u8, out JsonElement bodyName) && bodyName.ValueEquals(name)))
+        {
+            return PutScenarioResult.BadRequest(
+                Problem("scenario-name-mismatch", "Scenario name mismatch", 400, $"The body's name must be '{name}' (the path segment)."), workspace);
+        }
+
+        // Read-modify-write under the etag we read. The contract exposes no 409 here (a scenario
+        // upsert is whole-entry replacement), so a concurrent save retries against fresh state.
+        for (int attempt = 0; ; attempt++)
+        {
+            using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (workingCopy is not { } w)
+            {
+                return PutScenarioResult.NotFound(NotFoundProblem(id), workspace);
+            }
+
+            try
+            {
+                using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceScenarioJson.DraftUpserting((JsonElement)w.RootElement.Scenarios, scenario, name);
+                using ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, w.RootElement.EtagValue, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
+                if (saved is not { } s)
+                {
+                    return PutScenarioResult.NotFound(NotFoundProblem(id), workspace);
+                }
+
+                ParsedJsonDocument<Models.PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk> body = WorkspaceScenarioJson.PutResponse(
+                    WorkspaceScenarioJson.FindScenario((JsonElement)s.RootElement.Scenarios, name), s.RootElement.EtagValue.Value ?? string.Empty);
+                workspace.TakeOwnership(body);
+                return PutScenarioResult.Ok(body.RootElement, workspace);
+            }
+            catch (WorkspaceWorkflowConflictException) when (attempt < 3)
+            {
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<DeleteScenarioResult> HandleDeleteScenarioAsync(DeleteScenarioParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        string name = (string)parameters.ScenarioName;
+        for (int attempt = 0; ; attempt++)
+        {
+            using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (workingCopy is not { } w)
+            {
+                return DeleteScenarioResult.NotFound(NotFoundProblem(id), workspace);
+            }
+
+            if (WorkspaceScenarioJson.FindScenario((JsonElement)w.RootElement.Scenarios, name).ValueKind != JsonValueKind.Object)
+            {
+                return DeleteScenarioResult.NotFound(
+                    Problem("scenario-not-found", "Scenario not found", 404, $"Working copy '{id}' has no scenario named '{name}'."), workspace);
+            }
+
+            try
+            {
+                using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceScenarioJson.DraftRemoving((JsonElement)w.RootElement.Scenarios, name);
+                using ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, w.RootElement.EtagValue, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
+                return saved is { } ? DeleteScenarioResult.NoContent() : DeleteScenarioResult.NotFound(NotFoundProblem(id), workspace);
+            }
+            catch (WorkspaceWorkflowConflictException) when (attempt < 3)
+            {
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<RunScenarioResult> HandleRunScenarioAsync(RunScenarioParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        string name = (string)parameters.ScenarioName;
+        if (this.simulator is null)
+        {
+            return RunScenarioResult.BadRequest(
+                Problem("simulation-not-offered", "Simulation not offered", 400, "This deployment does not offer workflow simulation."), workspace);
+        }
+
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return RunScenarioResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        JsonElement scenario = WorkspaceScenarioJson.FindScenario((JsonElement)w.RootElement.Scenarios, name);
+        if (scenario.ValueKind != JsonValueKind.Object)
+        {
+            return RunScenarioResult.NotFound(
+                Problem("scenario-not-found", "Scenario not found", 404, $"Working copy '{id}' has no scenario named '{name}'."), workspace);
+        }
+
+        (SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
+        using (result)
+        {
+            ParsedJsonDocument<Models.ScenarioRunResult> body = PersistedJson.ToPooledDocument<Models.ScenarioRunResult, (string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>(
+                (name, result, verdicts),
+                static (Utf8JsonWriter writer, in (string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts) s) =>
+                    WorkspaceScenarioJson.WriteRunResult(writer, s.Name, s.Result, s.Verdicts));
+            workspace.TakeOwnership(body);
+            return RunScenarioResult.Ok(body.RootElement, workspace);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<RunAllScenariosResult> HandleRunAllScenariosAsync(RunAllScenariosParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        if (this.simulator is null)
+        {
+            return RunAllScenariosResult.BadRequest(
+                Problem("simulation-not-offered", "Simulation not offered", 400, "This deployment does not offer workflow simulation."), workspace);
+        }
+
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return RunAllScenariosResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        var runs = new List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>();
+        try
+        {
+            JsonElement scenarios = (JsonElement)w.RootElement.Scenarios;
+            if (scenarios.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement scenario in scenarios.EnumerateArray())
+                {
+                    if (scenario.TryGetProperty("name"u8, out JsonElement n) && n.GetString() is { Length: > 0 } scenarioName)
+                    {
+                        (SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) = await this.RunOneScenarioAsync(w, scenario, cancellationToken).ConfigureAwait(false);
+                        runs.Add((scenarioName, result, verdicts));
+                    }
+                }
+            }
+
+            ParsedJsonDocument<Models.ScenarioSuiteReport> body = PersistedJson.ToPooledDocument<Models.ScenarioSuiteReport, List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)>>(
+                runs,
+                static (Utf8JsonWriter writer, in List<(string Name, SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> all) =>
+                {
+                    int passed = 0;
+                    foreach ((string _, SimulationResult _, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                    {
+                        bool ok = true;
+                        foreach (WorkspaceScenarioJson.Verdict v in verdicts)
+                        {
+                            ok &= v.Passed;
+                        }
+
+                        if (ok)
+                        {
+                            passed++;
+                        }
+                    }
+
+                    writer.WriteStartObject();
+                    writer.WriteNumber("total"u8, all.Count);
+                    writer.WriteNumber("passed"u8, passed);
+                    writer.WriteNumber("failed"u8, all.Count - passed);
+                    writer.WriteStartArray("results"u8);
+                    foreach ((string name, SimulationResult result, List<WorkspaceScenarioJson.Verdict> verdicts) in all)
+                    {
+                        WorkspaceScenarioJson.WriteRunResult(writer, name, result, verdicts);
+                    }
+
+                    writer.WriteEndArray();
+                    writer.WriteEndObject();
+                });
+            workspace.TakeOwnership(body);
+            return RunAllScenariosResult.Ok(body.RootElement, workspace);
+        }
+        finally
+        {
+            foreach ((string _, SimulationResult result, List<WorkspaceScenarioJson.Verdict> _) in runs)
+            {
+                result.Dispose();
+            }
+        }
+    }
+
+    /// <summary>Runs one stored scenario against the simulator and judges its expectations.</summary>
+    private async ValueTask<(SimulationResult Result, List<WorkspaceScenarioJson.Verdict> Verdicts)> RunOneScenarioAsync(ParsedJsonDocument<WorkspaceWorkflow> w, JsonElement scenario, CancellationToken cancellationToken)
+    {
+        Dictionary<(string Source, string OperationId), (string Method, string Path)> routes =
+            await WorkspaceScenarioJson.ResolveRoutesAsync((JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        byte[] documentBytes = WorkspaceSimulationJson.DocumentBytes((JsonElement)w.RootElement.Document, null)!;
+        List<KeyValuePair<string, byte[]>> sourceBytes = await WorkspaceSimulationJson.SourceBytesAsync(
+            (JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        SimulationResult result = await this.simulator!.SimulateAsync(
+            documentBytes, sourceBytes, WorkspaceScenarioJson.BuildScenario(scenario, routes), cancellationToken: cancellationToken).ConfigureAwait(false);
+        return (result, WorkspaceScenarioJson.Evaluate(scenario, result));
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<DetachWorkingCopySourceResult> HandleDetachWorkingCopySourceAsync(DetachWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.Id;

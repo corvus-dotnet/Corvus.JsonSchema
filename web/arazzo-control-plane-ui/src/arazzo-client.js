@@ -1005,6 +1005,32 @@ export class ArazzoControlPlaneClient {
     return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/simulate`, { body: command, signal });
   }
 
+  /** `listScenarios` — the working copy's scenario set (design §4.2). */
+  listScenarios(id, { signal } = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/scenarios`, { signal });
+  }
+
+  /** `putScenario` — upsert one scenario by name (the body's name must match). */
+  putScenario(id, scenario, { signal } = {}) {
+    if (!scenario?.name) throw new TypeError('putScenario requires scenario.name.');
+    return this._request('PUT', `/workspace/workflows/${encodeURIComponent(id)}/scenarios/${encodeURIComponent(scenario.name)}`, { body: scenario, signal });
+  }
+
+  /** `deleteScenario`. */
+  deleteScenario(id, name, { signal } = {}) {
+    return this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}/scenarios/${encodeURIComponent(name)}`, { signal });
+  }
+
+  /** `runScenario` — execute one scenario; returns {scenario, passed, outcome, expectations, trace}. */
+  runScenario(id, name, { signal } = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/scenarios/${encodeURIComponent(name)}/run`, { body: {}, signal });
+  }
+
+  /** `runAllScenarios` — the suite report {total, passed, failed, results}. */
+  runAllScenarios(id, { signal } = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/scenarios`, { body: {}, signal });
+  }
+
   /**
    * `fetchSourceDocument` — server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web
    * endpoint (no browser CORS), optionally authenticated with a registered source credential

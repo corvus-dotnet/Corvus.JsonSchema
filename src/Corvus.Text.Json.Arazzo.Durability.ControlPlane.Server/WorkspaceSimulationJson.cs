@@ -239,7 +239,13 @@ internal static class WorkspaceSimulationJson
     {
         return PersistedJson.ToPooledDocument<Models.SimulationTrace, SimulationResult>(
             result,
-            static (Utf8JsonWriter writer, in SimulationResult r) =>
+            static (Utf8JsonWriter writer, in SimulationResult r) => WriteTrace(writer, r));
+    }
+
+    /// <summary>Writes one trace object (shared by the simulate response and each scenario run result).</summary>
+    public static void WriteTrace(Utf8JsonWriter writer, in SimulationResult r)
+    {
+        {
             {
                 writer.WriteStartObject();
                 writer.WriteString("outcome"u8, r.Outcome switch
@@ -380,7 +386,8 @@ internal static class WorkspaceSimulationJson
 
                 writer.WriteNumber("stepsExecuted"u8, r.StepsExecuted);
                 writer.WriteEndObject();
-            });
+            }
+        }
     }
 
     private static bool HasWorkflow(in JsonElement document, string workflowId)

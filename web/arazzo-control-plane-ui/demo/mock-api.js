@@ -2224,12 +2224,56 @@ export function createMockControlPlane(options = {}) {
       return json({ sources: (wc.sources ?? []).map(({ document, ...rest }) => structuredClone(rest)) });
     }
 
+    const scenarioRun = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/([^/]+)\/run\/?$/);
+    if (scenarioRun) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(scenarioRun[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const sc = (wc.scenarios ?? []).find((x) => x.name === decodeURIComponent(scenarioRun[2]));
+      if (!sc) return problem(404, 'Scenario not found');
+      return json(runScenarioAgainst(wc, sc));
+    }
+
+    const scenarioOne = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/([^/]+)\/?$/);
+    if (scenarioOne) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(scenarioOne[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const name = decodeURIComponent(scenarioOne[2]);
+      if (method === 'PUT') {
+        if (body?.name !== name) return problem(400, 'Scenario name mismatch');
+        wc.scenarios = [...(wc.scenarios ?? []).filter((x) => x.name !== name), structuredClone(body)];
+        wc.etag = nextEtag();
+        return json({ scenario: body, etag: wc.etag });
+      }
+      if (method === 'DELETE') {
+        const at = (wc.scenarios ?? []).findIndex((x) => x.name === name);
+        if (at < 0) return problem(404, 'Scenario not found');
+        wc.scenarios.splice(at, 1);
+        wc.etag = nextEtag();
+        return new Response(null, { status: 204 });
+      }
+      return problem(405, 'Method not allowed');
+    }
+
+    const scenarios = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/?$/);
+    if (scenarios) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(scenarios[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      if (method === 'GET') return json({ scenarios: wc.scenarios ?? [] });
+      if (method === 'POST') {
+        const results = (wc.scenarios ?? []).map((sc) => runScenarioAgainst(wc, sc));
+        const passed = results.filter((r) => r.passed).length;
+        return json({ total: results.length, passed, failed: results.length - passed, results });
+      }
+      return problem(405, 'Method not allowed');
+    }
+
     const simulate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/simulate\/?$/);
     if (simulate) {
       if (method !== 'POST') return problem(405, 'Method not allowed');
       const wc = workingCopies.find((x) => x.id === decodeURIComponent(simulate[1]));
       if (!wc) return problem(404, 'Working copy not found', `No working copy '${simulate[1]}' exists, or it is outside your reach.`);
-      return simulateDocument(wc.document, body ?? {});
+      const outcome = simulateDocument(wc.document, body ?? {});
+      return outcome instanceof Response ? outcome : json(outcome);
     }
 
     const validate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/validate\/?$/);
@@ -2559,14 +2603,66 @@ export function createMockControlPlane(options = {}) {
       index += 1;
     }
 
-    return json({
+    return {
       outcome,
       ...(pausedBefore ? { pausedBefore } : {}),
       ...(fault ? { fault } : {}),
       steps,
       ...(clockAdvances.length ? { clockAdvances } : {}),
       stepsExecuted: executed > maxSteps ? maxSteps : steps.length,
-    });
+    };
+  }
+
+  // Mirror of the server's scenario runner: resolve (source, operationId) mocks to routes through
+  // the attachments, replay via the demo synthesizer, judge the expectations.
+  function runScenarioAgainst(wc, sc) {
+    const routes = new Map();
+    for (const att of wc.sources ?? []) {
+      const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+      for (const [pathT, item] of Object.entries(d?.paths ?? {})) {
+        for (const [m, op] of Object.entries(item ?? {})) {
+          if (op?.operationId) routes.set(`${att.name}\u0000${op.operationId}`, { method: m, path: pathT });
+        }
+      }
+    }
+    const mocks = [];
+    for (const mock of sc.mocks ?? []) {
+      const route = routes.get(`${mock.source}\u0000${mock.operationId}`);
+      if (!route) continue;
+      for (const r of mock.responses ?? []) mocks.push({ method: route.method, path: route.path, status: r.status, body: r.body });
+    }
+    const outcome = simulateDocument(wc.document, { scenario: { inputs: sc.inputs, mocks, triggers: sc.triggers, clock: sc.clock } });
+    const trace = outcome instanceof Response ? { outcome: 'faulted', steps: [], stepsExecuted: 0 } : outcome;
+    return judgeScenario(sc, trace);
+  }
+
+  function judgeScenario(sc, trace) {
+    const verdicts = [];
+    const expect = sc.expect;
+    if (!expect) {
+      verdicts.push({ kind: 'outcome', passed: trace.outcome === 'completed', detail: `expected completed (implicit); was ${trace.outcome}` });
+    } else {
+      if (expect.outcome) verdicts.push({ kind: 'outcome', passed: trace.outcome === expect.outcome, detail: `expected ${expect.outcome}; was ${trace.outcome}` });
+      if (Array.isArray(expect.path)) {
+        const visited = trace.steps.map((s) => s.stepId);
+        let passed;
+        if (expect.pathMode === 'exact') passed = visited.length === expect.path.length && visited.every((v, i) => v === expect.path[i]);
+        else { let at = 0; for (const v of visited) if (at < expect.path.length && v === expect.path[at]) at++; passed = at === expect.path.length; }
+        verdicts.push({ kind: 'path', passed, detail: `visited [${visited.join(', ')}]` });
+      }
+      for (const o of expect.outputs ?? []) {
+        // The demo evaluates only `$outputs.<name> == '<literal>'` shapes; the server uses the real criterion compiler.
+        const m = /^\s*\$outputs\.(\w+)\s*==\s*'([^']*)'\s*$/.exec(o.condition ?? '');
+        const passed = m ? trace.outputs?.[m[1]] === m[2] : false;
+        verdicts.push({ kind: 'output', passed, detail: o.condition });
+      }
+      for (const [stepId, e] of Object.entries(expect.steps ?? {})) {
+        const attempts = trace.steps.filter((s) => s.stepId === stepId).length;
+        if (typeof e.reached === 'boolean') verdicts.push({ kind: 'step', passed: (attempts > 0) === e.reached, detail: `${stepId}: executions=${attempts}` });
+        if (typeof e.attempts === 'number') verdicts.push({ kind: 'step', passed: attempts === e.attempts, detail: `${stepId}: expected ${e.attempts}; was ${attempts}` });
+      }
+    }
+    return { scenario: sc.name, passed: verdicts.every((v) => v.passed), outcome: trace.outcome, expectations: verdicts, trace };
   }
 
   function resolveComponentAction(doc, reference) {
