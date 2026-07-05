@@ -17,8 +17,9 @@
     header { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); flex-wrap: wrap; }
     header h1 { font-size: 15px; margin: 0 12px 0 0; }
     header .spacer { flex: 1; }
-    main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-auto-rows: minmax(0, 1fr);
+    main { display: grid; grid-template-columns: 260px minmax(0, 1fr) 360px; grid-auto-rows: minmax(0, 1fr);
            gap: 12px; padding: 12px 14px; box-sizing: border-box; }
+    #rail { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; overflow: hidden; }
     #center { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
     .tabs { display: flex; gap: 4px; }
     .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 4px 14px; font-size: 12px; opacity: 0.7; }
@@ -62,6 +63,9 @@
     <p class="muted" style="font-size: 12px;">Open a working copy to design it; saves never mint catalog versions.</p>
   </div>
   <main hidden>
+    <nav id="rail">
+      <arazzo-operation-browser id="opbrowser"></arazzo-operation-browser>
+    </nav>
     <div id="center">
       <div class="tabs">
         <button id="tab-design" class="active">Design</button>
@@ -95,9 +99,10 @@
       </section>
     </aside>
   </main>
+  <arazzo-source-acquisition-dialog id="acqdialog"></arazzo-source-acquisition-dialog>
 
   <script type="module">
-    import { designerFixture } from './designer-fixture.js';
+    import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from './designer-fixture.js';
     import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
     import { EXPRESSION_ROOTS } from '../src/expression-language.js';
     import { WorkflowDocumentModel } from '../src/workflow-document-model.js';
@@ -109,6 +114,8 @@
     import '../src/components/workflow-inspector.js';
     import '../src/components/text-editor.js';
     import '../src/components/workspace-table.js';
+    import '../src/components/operation-browser.js';
+    import '../src/components/source-acquisition-dialog.js';
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import { createMockControlPlane } from './mock-api.js';
 
@@ -131,34 +138,24 @@
     const model = new WorkflowDocumentModel(designerFixture, { actor: 'you', designerState: { nodes: {} } });
     const doc = model.document;
 
-    // What listSourceOperations will provide in the full designer: per-operation documented
-    // responses and request/message schemas, powering the template affordances.
-    const OPERATION_SURFACE = {
-      validateOrder: { responses: ['200', '400', 'default'] },
-      authorizePayment: {
-        responses: ['201', '402', '429', '5XX'],
-        request: {
-          contentType: 'application/json',
-          schema: {
-            type: 'object',
-            properties: {
-              orderId: { type: 'string' },
-              amount: { type: 'number' },
-              card: { type: 'object', properties: { number: { type: 'string' }, cvv: { type: 'string' } } },
-              capture: { type: 'boolean', default: false },
-            },
-          },
-        },
-      },
-      capturePayment: { responses: ['200', '404'] },
-      createReviewTask: { responses: ['201'] },
-      refundPayment: { responses: ['200', '404', 'default'] },
-      '/channels/orderConfirmations': {
-        request: {
-          schema: { type: 'object', properties: { confirmed: { type: 'boolean' }, at: { type: 'string', format: 'date-time' } } },
-        },
-      },
-    };
+    // The live operation index (operationId/channelPath → {responses, request}), rebuilt from the
+    // operation browser's loaded surfaces — the REAL listSourceOperations data driving the step
+    // inspector's criteria/failure-action templates and body skeletons.
+    const opBrowser = document.getElementById('opbrowser');
+    const acqDialog = document.getElementById('acqdialog');
+    opBrowser.client = client;
+    acqDialog.client = client;
+    const operationIndex = new Map();
+    function rebuildOperationIndex() {
+      operationIndex.clear();
+      for (const [, ops] of opBrowser.surfaces) {
+        for (const op of ops) {
+          const entry = { responses: op.responses, request: op.request };
+          if (op.operationId) operationIndex.set(op.operationId, entry);
+          if (op.channelPath) operationIndex.set(op.channelPath, entry);
+        }
+      }
+    }
 
     function refreshWorkflowOptions() {
       select.innerHTML = '';
@@ -215,6 +212,7 @@
       shell.name = wc.name;
       shell.dirty = false;
       model.reset(wc.document, wc.designerState ?? { nodes: {} });
+      opBrowser.workingCopyId = wc.id;
       wcName.textContent = wc.name;
       refreshWorkflowOptions();
       project();
@@ -292,15 +290,63 @@
       }
     }
 
+    // The rail's surfaces feed the inspector templates; a re-render picks up fresh descriptors.
+    opBrowser.addEventListener('loaded', () => {
+      rebuildOperationIndex();
+      showSelection(surface.selection);
+    });
+    opBrowser.addEventListener('add-source-requested', () => acqDialog.open({ workingCopyId: shell.id }));
+    acqDialog.addEventListener('source-attached', (e) => {
+      shell.etag = e.detail.attachment.etag; // the attach bumped the working copy's etag
+      setSaveUi('source attached');
+      opBrowser.refresh();
+      logEvent('source-attached', { name: e.detail.attachment.name, kind: e.detail.attachment.kind });
+    });
+    opBrowser.addEventListener('source-detached', async (e) => {
+      const wc = await client.getWorkingCopy(shell.id); // the detach bumped the etag; refresh the save token
+      shell.etag = wc.etag;
+      setSaveUi('source detached');
+      logEvent('source-detached', { name: e.detail.name });
+    });
+
+    // Click-to-add step creation (design §3.2): a step bound to the picked operation, required
+    // parameters pre-populated from the descriptor, inserted through the model and selected.
+    opBrowser.addEventListener('operation-selected', (e) => {
+      const { operation } = e.detail;
+      const wf = doc.workflows.find((w) => w.workflowId === select.value);
+      if (!wf) return;
+      const base = (operation.operationId ?? operation.channelPath ?? 'step')
+        .replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'step';
+      let stepId = base;
+      for (let n = 2; wf.steps.some((x) => x.stepId === stepId); n++) stepId = `${base}-${n}`;
+      const step = { stepId };
+      if (operation.kind === 'asyncapi') step.channelPath = operation.channelPath;
+      else if (operation.operationId) step.operationId = operation.operationId;
+      const required = (operation.parameters ?? []).filter((x) => x.required);
+      if (required.length) step.parameters = required.map((x) => ({ name: x.name, in: x.in, value: '' }));
+      model.update((d) => {
+        const w = d.workflows.find((x) => x.workflowId === select.value);
+        w.steps.push(step);
+      }, { origin: 'canvas', label: `add step ${stepId}` });
+      surface.selection = { type: 'node', id: stepId };
+      showSelection(surface.selection);
+      logEvent('step-created', { stepId, from: operation.operationId ?? operation.channelPath });
+    });
+
     saveBtn.addEventListener('click', saveWorkingCopy);
     validateBtn.addEventListener('click', validateWorkingCopy);
     backBtn.addEventListener('click', () => showView('workspace'));
     wctable.addEventListener('working-copy-selected', (e) => openWorkingCopy(e.detail.workingCopy.id));
     wctable.addEventListener('working-copy-created', (e) => openWorkingCopy(e.detail.workingCopy.id));
 
-    // Seed one working copy from the fixture so the standalone demo has something to open.
-    client.createWorkingCopy({ name: 'place-order (fixture)', document: designerFixture, designerState: { nodes: {} } })
-      .then(() => wctable.reload());
+    // Seed one working copy from the fixture — with its two sources attached inline, so the rail,
+    // the operation browser, and the inspector templates all run on real listSourceOperations data.
+    (async () => {
+      const wc = await client.createWorkingCopy({ name: 'place-order (fixture)', document: designerFixture, designerState: { nodes: {} } });
+      await client.attachWorkingCopySource(wc.id, 'payments', { document: paymentsOpenApi });
+      await client.attachWorkingCopySource(wc.id, 'order-events', { document: orderEventsAsyncApi });
+      wctable.reload();
+    })();
 
     const logEvent = (type, detail) => {
       log.textContent = `${type} ${JSON.stringify(detail)}\n${log.textContent}`.slice(0, 4000);
@@ -406,15 +452,21 @@
       if (sel.type === 'node') {
         const si = wf.steps.findIndex((s) => s.stepId === sel.id);
         const step = wf.steps[si];
+        if (!step) {
+          // The selected step left the document (an undone add, a remote removal) — clear stale selection.
+          surface.selection = null;
+          selectionPre.textContent = '(nothing selected)';
+          return;
+        }
+
         const ed = document.createElement('arazzo-step-inspector');
         ed.stepIds = wf.steps.map((s) => s.stepId);
         ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
         ed.workflowDefaults = { successActions: wf.successActions || [], failureActions: wf.failureActions || [] };
         ed.completionContext = expr.completionContext;
-        // The fixture operation surface (stands in for listSourceOperations): documented
-        // responses drive the criteria templates, the request/message schema drives the
-        // body-skeleton template.
-        const op = OPERATION_SURFACE[step.operationId] ?? (step.channelPath ? OPERATION_SURFACE[step.channelPath] : undefined);
+        // The live operation surface (listSourceOperations): documented responses drive the
+        // criteria templates, the request/message schema drives the body-skeleton template.
+        const op = operationIndex.get(step.operationId) ?? (step.channelPath ? operationIndex.get(step.channelPath) : undefined);
         if (op?.responses) ed.operationResponses = op.responses;
         if (op?.request) ed.operationRequest = op.request;
         ed.value = step;

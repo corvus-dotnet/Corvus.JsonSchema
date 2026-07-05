@@ -159,3 +159,90 @@ export const designerFixture = {
     },
   },
 };
+
+// The seed source documents the demo attaches to the fixture working copy — the REAL operation
+// surfaces (raw JSON Schema) that the operation browser lists and the step inspector's templates
+// consume, matching the workflows' operationId/channelPath bindings above.
+export const paymentsOpenApi = {
+  openapi: '3.1.0',
+  info: { title: 'Payments', version: '1.0.0' },
+  components: {
+    schemas: {
+      Card: { type: 'object', properties: { number: { type: 'string' }, cvv: { type: 'string' } } },
+    },
+  },
+  paths: {
+    '/orders/validate': {
+      post: {
+        operationId: 'validateOrder',
+        summary: 'Validate an order before payment',
+        responses: { 200: { description: 'valid' }, 400: { description: 'invalid' }, default: { description: 'unexpected' } },
+      },
+    },
+    '/payments/authorize': {
+      post: {
+        operationId: 'authorizePayment',
+        summary: 'Authorize a card payment',
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  orderId: { type: 'string' },
+                  amount: { type: 'number' },
+                  card: { $ref: '#/components/schemas/Card' },
+                  capture: { type: 'boolean', default: false },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: 'authorized', content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string' }, authorizationId: { type: 'string' } } } } } },
+          402: { description: 'declined' },
+          429: { description: 'rate limited' },
+          '5XX': { description: 'gateway trouble' },
+        },
+      },
+    },
+    '/payments/{authorizationId}/capture': {
+      parameters: [{ name: 'authorizationId', in: 'path', required: true, schema: { type: 'string' } }],
+      post: {
+        operationId: 'capturePayment',
+        summary: 'Capture an authorized payment',
+        responses: { 200: { description: 'captured' }, 404: { description: 'unknown authorization' } },
+      },
+    },
+    '/reviews': {
+      post: { operationId: 'createReviewTask', summary: 'Queue a manual review', responses: { 201: { description: 'queued' } } },
+    },
+    '/payments/{authorizationId}/refund': {
+      parameters: [{ name: 'authorizationId', in: 'path', required: true, schema: { type: 'string' } }],
+      post: {
+        operationId: 'refundPayment',
+        summary: 'Refund a captured payment',
+        responses: { 200: { description: 'refunded' }, 404: { description: 'unknown authorization' }, default: { description: 'unexpected' } },
+      },
+    },
+  },
+};
+
+export const orderEventsAsyncApi = {
+  asyncapi: '2.6.0',
+  info: { title: 'Order events', version: '1.0.0' },
+  channels: {
+    '/channels/orderConfirmations': {
+      publish: {
+        operationId: 'onOrderConfirmation',
+        summary: 'Confirmations arrive here',
+        message: {
+          payload: {
+            type: 'object',
+            properties: { confirmed: { type: 'boolean' }, at: { type: 'string', format: 'date-time' } },
+          },
+        },
+      },
+    },
+  },
+};
