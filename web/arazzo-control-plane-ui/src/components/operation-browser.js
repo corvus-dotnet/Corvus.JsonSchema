@@ -7,7 +7,10 @@
 //
 // Properties : .client, .workingCopyId
 // Methods    : refresh()
-// Events     : operation-selected {sourceName, operation}   (click/Enter on an operation row)
+// Events     : operation-selected {sourceName, operation}   (KEYBOARD Enter on a row — pointer adds
+//                                                             go through drag-and-drop onto the surface,
+//                                                             which emits operation-dropped THERE; a
+//                                                             stray click must never create a step)
 //              add-source-requested                          ("Add source…" — the host opens the acquisition dialog)
 //              source-detached {name}                        (after a successful detach — the working copy's etag advanced;
 //                                                             the host refreshes its copy of the etag)
@@ -121,6 +124,8 @@ class ArazzoOperationBrowser extends ArazzoElement {
         .op { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 8px; width: 100%; box-sizing: border-box;
               text-align: left; border: none; background: none; color: inherit; font: inherit; cursor: pointer; padding: 6px 10px 6px 16px; }
         .op:hover, .op:focus-visible { background: var(--_surface); outline: none; }
+        .op { cursor: grab; }
+        .op:active { cursor: grabbing; }
         .op .badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; color: #fff; align-self: start; white-space: nowrap; }
         .op .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
         .op .summary { grid-column: 2; font-size: 11px; color: var(--_muted); overflow-wrap: anywhere; }
@@ -175,10 +180,24 @@ class ArazzoOperationBrowser extends ArazzoElement {
       button.addEventListener('click', () => this.detach(button.dataset.name));
     });
     body.querySelectorAll('button.op').forEach((button) => {
-      button.addEventListener('click', () => {
+      const payload = () => {
         const sourceName = button.dataset.source;
         const operation = this._operations.get(sourceName)?.[Number(button.dataset.index)];
-        if (operation) this.emit('operation-selected', { sourceName, operation });
+        return operation ? { sourceName, operation } : null;
+      };
+      // Pointer clicks deliberately do NOT create steps (too easy to fire by accident) — dragging
+      // onto the surface is the pointer gesture. Keyboard activation (click with detail 0) stays,
+      // so non-pointer users still have a deliberate path.
+      button.addEventListener('click', (e) => {
+        if (e.detail > 0) return;
+        const data = payload();
+        if (data) this.emit('operation-selected', data);
+      });
+      button.addEventListener('dragstart', (e) => {
+        const data = payload();
+        if (!data) return;
+        e.dataTransfer.setData('application/x-arazzo-operation', JSON.stringify(data));
+        e.dataTransfer.effectAllowed = 'copy';
       });
     });
   }
@@ -215,7 +234,7 @@ class ArazzoOperationBrowser extends ArazzoElement {
     const id = op.operationId ?? (isHttp ? op.path : op.channelPath) ?? '(unnamed)';
     const where = isHttp ? op.path : op.channelPath;
     return `
-      <button class="op" type="button" part="operation" data-source="${escapeHtml(sourceName)}" data-index="${index}" title="Add a step bound to this operation">
+      <button class="op" type="button" part="operation" draggable="true" data-source="${escapeHtml(sourceName)}" data-index="${index}" title="Drag onto the canvas to create a step bound to this operation">
         <span class="badge" style="background:${badgeColor}">${escapeHtml(badge)}</span>
         <span class="id${op.deprecated ? ' deprecated' : ''}">${escapeHtml(id)}${where && where !== id ? ` <span class="muted">${escapeHtml(where)}</span>` : ''}</span>
         ${op.summary ? `<span class="summary">${escapeHtml(op.summary)}</span>` : ''}

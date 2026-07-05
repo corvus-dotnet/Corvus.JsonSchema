@@ -111,6 +111,10 @@ class ArazzoStepInspector extends ArazzoElement {
         .localize { font-size: 12px; }
         .hint { font-size: 11px; color: var(--_muted); }
         .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .repls { min-width: 0; }
+        .rrow > * { min-width: 0; }
+        .rrow arazzo-expression-input { display: block; min-width: 0; }
+        .addpref { max-width: 100%; min-width: 0; }
         .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
         .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
       </style>

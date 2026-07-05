@@ -212,5 +212,5 @@ export const ACTION_LIST_CSS = `
   .action-list .add-action { font-size: 12px; justify-self: start; }
   .action-list .reusable-row { font-size: 12px; padding: 6px 2px; display: flex; align-items: center; gap: 6px; }
   .action-list .reusable-row span { flex: 1; min-width: 0; }
-  .action-list .add-ref { font-size: 12px; justify-self: start; max-width: 100%; }
+  .action-list .add-ref { font-size: 12px; justify-self: start; max-width: 100%; min-width: 0; }
 `;

@@ -182,4 +182,40 @@ describe('<arazzo-design-surface>', () => {
     ok(chip, 'exit chip rendered');
     ok(chip.textContent.includes('order-with-compensation'));
   });
+
+  it('accepts an operation drop and reports it with world coordinates', async () => {
+    el = make();
+    const svg = el.shadowRoot.querySelector('svg');
+    const transfer = new DataTransfer();
+    transfer.setData('application/x-arazzo-operation', JSON.stringify({
+      sourceName: 'payments',
+      operation: { kind: 'openapi', operationId: 'refundPayment', method: 'POST', path: '/refunds' },
+    }));
+
+    const over = new DragEvent('dragover', { dataTransfer: transfer, bubbles: true, cancelable: true });
+    svg.dispatchEvent(over);
+    ok(over.defaultPrevented, 'the surface advertises itself as a drop target for our MIME type');
+
+    const dropped = nextEvent(el, 'operation-dropped');
+    svg.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true, cancelable: true, clientX: 200, clientY: 150 }));
+    const e = await dropped;
+    equal(e.detail.sourceName, 'payments');
+    equal(e.detail.operation.operationId, 'refundPayment');
+    ok(Number.isFinite(e.detail.position.x) && Number.isFinite(e.detail.position.y), 'drop point mapped to world coords');
+  });
+
+  it('ignores operation drops when readonly', async () => {
+    el = make();
+    el.setAttribute('readonly', '');
+    const svg = el.shadowRoot.querySelector('svg');
+    const transfer = new DataTransfer();
+    transfer.setData('application/x-arazzo-operation', JSON.stringify({ sourceName: 's', operation: { operationId: 'x' } }));
+    let fired = false;
+    el.addEventListener('operation-dropped', () => { fired = true; });
+    const over = new DragEvent('dragover', { dataTransfer: transfer, bubbles: true, cancelable: true });
+    svg.dispatchEvent(over);
+    svg.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true, cancelable: true, clientX: 100, clientY: 100 }));
+    await new Promise((r) => setTimeout(r, 30));
+    ok(!over.defaultPrevented && !fired, 'readonly surfaces reject the gesture entirely');
+  });
 });
