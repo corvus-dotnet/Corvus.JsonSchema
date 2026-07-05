@@ -1099,3 +1099,32 @@ test('simulateWorkingCopy returns a structured trace from the mock synthesizer',
   assert.equal(paused.pausedBefore, 'b');
   assert.equal(paused.steps.length, 1);
 });
+
+test('validate flags source-integrity drift: undeclared attachment, missing attachment, unresolvable operation', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'drift',
+    document: {
+      arazzo: '1.1.0',
+      info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'ghost', url: './ghost.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [{ stepId: 'a', operationId: 'noSuchOp' }] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const report = await c.validateWorkingCopy(wc.id);
+  const cats = report.diagnostics.filter((d) => d.category === 'workspace-sources');
+  assert.ok(cats.some((d) => d.severity === 'warning' && d.message.includes("'ghost' has no attachment")), 'declared-but-unattached flagged');
+  assert.ok(cats.some((d) => d.severity === 'info' && d.message.includes("'petstore' is not declared")), 'attached-but-undeclared flagged');
+  assert.ok(cats.some((d) => d.severity === 'warning' && d.message.includes("'noSuchOp' is not found")), 'unresolvable operation flagged');
+
+  // No sourceDescriptions at all while steps bind operations → an ERROR.
+  const bare = await c.createWorkingCopy({
+    name: 'bare',
+    document: { arazzo: '1.1.0', info: { title: 't', version: '1' }, workflows: [{ workflowId: 'wf', steps: [{ stepId: 'a', operationId: 'x' }] }] },
+  });
+  const bareReport = await c.validateWorkingCopy(bare.id);
+  assert.equal(bareReport.valid, false);
+  assert.ok(bareReport.diagnostics.some((d) => d.category === 'workspace-sources' && d.severity === 'error'));
+});

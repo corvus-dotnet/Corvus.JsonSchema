@@ -172,8 +172,17 @@ class ArazzoTextEditor extends ArazzoElement {
           highlight,
           chrome,
           view.lineNumbers(),
-          commands.history(),
-          view.keymap.of([...commands.defaultKeymap, ...commands.historyKeymap, commands.indentWithTab]),
+          // NO CM6 history: undo/redo belong to the ONE document model (design §5.2) — a text-tab
+          // Ctrl-Z must unwind the same stack as a canvas edit. The bindings flush any pending
+          // debounced change first (so the very latest keystrokes are the top undo entry), then
+          // ask the host to drive the model; the model's change event refreshes this view.
+          view.keymap.of([
+            { key: 'Mod-z', preventDefault: true, run: () => { this._requestHistory('undo'); return true; } },
+            { key: 'Mod-y', preventDefault: true, run: () => { this._requestHistory('redo'); return true; } },
+            { key: 'Mod-Shift-z', preventDefault: true, run: () => { this._requestHistory('redo'); return true; } },
+            ...commands.defaultKeymap,
+            commands.indentWithTab,
+          ]),
           view.EditorView.updateListener.of((u) => {
             if (u.docChanged && !this._suppress) this._scheduleChange();
           }),
@@ -188,9 +197,23 @@ class ArazzoTextEditor extends ArazzoElement {
   /** @private */
   _scheduleChange() {
     clearTimeout(this._changeTimer);
-    this._changeTimer = setTimeout(() => {
+    this._pendingChange = true;
+    this._changeTimer = setTimeout(() => this._flushChange(), CHANGE_DEBOUNCE_MS);
+  }
+
+  /** @private */
+  _flushChange() {
+    clearTimeout(this._changeTimer);
+    if (this._pendingChange) {
+      this._pendingChange = false;
       this.emit('text-changed', { text: this.value });
-    }, CHANGE_DEBOUNCE_MS);
+    }
+  }
+
+  /** @private — flush pending text into the model, then ask the host for a model-level undo/redo. */
+  _requestHistory(kind) {
+    this._flushChange();
+    this.emit(`${kind}-requested`, {});
   }
 }
 
