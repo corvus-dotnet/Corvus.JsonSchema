@@ -12,12 +12,14 @@
 //                                              hosts refresh their save token from it)
 //              error {problem}
 //
-// The three acquisition modes end at the same seam: attachWorkingCopySource with a registry
+// The four acquisition modes end at the same seam: attachWorkingCopySource with a registry
 // reference or an inline document. Fetch previews what the server detected (type/version/digest)
 // before attaching; upload accepts a JSON document file (YAML endpoints go through Fetch, where the
-// server parses YAML). GitHub import arrives with the §4.7 integration.
+// server parses YAML); GitHub (§4.7) browses a repository through the caller's brokered session and
+// imports a JSON spec as an inline document.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import './github-connect.js';
 
 class ArazzoSourceAcquisitionDialog extends ArazzoElement {
   constructor() {
@@ -41,8 +43,10 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this._registry = [];
     this._fetched = null;
     this._uploaded = null;
+    this._github = { picked: null, path: '' };
     this.render();
     this.$('.name-in').value = suggestedName;
+    this.$('.gh-connect').client = this._client;
     this.$('dialog').showModal();
     this.loadRegistry();
   }
@@ -71,6 +75,13 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         .mode { display: grid; gap: 10px; }
         .cred { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .preview { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
+        .crumb { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--_muted); }
+        .crumb button { font-size: 11px; padding: 0 8px; }
+        .gh-list { display: grid; max-height: 200px; overflow: auto; border: 1px solid var(--_border); border-radius: 6px; }
+        .gh-list button { text-align: left; border: none; background: none; padding: 6px 10px; font-size: 12px; cursor: pointer; color: inherit; border-radius: 0; }
+        .gh-list button:hover:not(:disabled) { background: rgb(127 127 127 / 0.12); }
+        .gh-list button:disabled { opacity: 0.45; cursor: default; }
+        .gh-repo-label[hidden], .gh-browser[hidden] { display: none; }
         .preview .digest { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; overflow-wrap: anywhere; color: var(--_muted); }
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .error-banner[hidden] { display: none; }
@@ -86,6 +97,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
             <button type="button" data-mode="registry" class="active">Registry</button>
             <button type="button" data-mode="fetch">Fetch URL</button>
             <button type="button" data-mode="upload">Upload</button>
+            <button type="button" data-mode="github">GitHub</button>
           </div>
           <div class="mode mode-registry">
             <label>Registered source
@@ -113,6 +125,17 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
             </label>
             <div class="preview upload-preview" hidden></div>
           </div>
+          <div class="mode mode-github" hidden>
+            <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
+            <label class="gh-repo-label" hidden>Repository (the user ∩ installation intersection)
+              <select class="gh-repo-in"></select>
+            </label>
+            <div class="gh-browser" hidden>
+              <div class="crumb"><button class="gh-up ghost" type="button" title="Up" hidden>↑</button><span class="gh-path"></span></div>
+              <div class="gh-list"></div>
+            </div>
+            <div class="preview gh-preview" hidden></div>
+          </div>
         </div>
         <div class="foot">
           <button class="cancel" type="button">Cancel</button>
@@ -129,6 +152,10 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.registry-in').addEventListener('change', () => this.updateAttachState());
     this.$('button.fetch').addEventListener('click', () => this.fetchPreview());
     this.$('.file-in').addEventListener('change', () => this.readUpload());
+    this.$('.gh-connect').addEventListener('github-connected', () => this.renderGitHubRepos());
+    this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderGitHubRepos());
+    this.$('.gh-repo-in').addEventListener('change', () => this.browseGitHub(''));
+    this.$('.gh-up').addEventListener('click', () => this.browseGitHub(this._github.path.split('/').slice(0, -1).join('/')));
   }
 
   switchMode(mode) {
@@ -137,6 +164,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.mode-registry').hidden = mode !== 'registry';
     this.$('.mode-fetch').hidden = mode !== 'fetch';
     this.$('.mode-upload').hidden = mode !== 'upload';
+    this.$('.mode-github').hidden = mode !== 'github';
+    if (mode === 'github') this.renderGitHubRepos();
     this.updateAttachState();
   }
 
@@ -155,7 +184,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     const ready = name.length > 0 && (
       (this._mode === 'registry' && this.$('.registry-in').value)
       || (this._mode === 'fetch' && this._fetched)
-      || (this._mode === 'upload' && this._uploaded));
+      || (this._mode === 'upload' && this._uploaded)
+      || (this._mode === 'github' && this._github?.picked));
     this.$('button.attach').disabled = !ready;
   }
 
@@ -264,6 +294,92 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.updateAttachState();
   }
 
+  // ---- GitHub import (§4.7) ---------------------------------------------------------------------
+
+  renderGitHubRepos() {
+    const session = this.$('.gh-connect').session;
+    const repos = session?.connected ? (session.installations ?? []).flatMap((i) => i.repositories ?? []) : [];
+    const label = this.$('.gh-repo-label');
+    const browser = this.$('.gh-browser');
+    label.hidden = repos.length === 0;
+    if (repos.length === 0) {
+      browser.hidden = true;
+      this._github = { picked: null, path: '' };
+      this.$('.gh-preview').hidden = true;
+      this.updateAttachState();
+      return;
+    }
+
+    const sel = this.$('.gh-repo-in');
+    sel.innerHTML = `<option value="">Choose a repository…</option>` + repos.map((r) =>
+      `<option value="${escapeHtml(`${r.owner}/${r.name}`)}">${escapeHtml(r.fullName)}</option>`).join('');
+  }
+
+  async browseGitHub(path) {
+    const sel = this.$('.gh-repo-in');
+    if (!sel.value) return;
+    const [owner, repo] = [sel.value.slice(0, sel.value.indexOf('/')), sel.value.slice(sel.value.indexOf('/') + 1)];
+    this.clearError();
+    this._github = { owner, repo, path, picked: null };
+    this.$('.gh-preview').hidden = true;
+    this.updateAttachState();
+    const seq = ++this._seq;
+    try {
+      const result = await this._client.browseRepo(owner, repo, { path: path || undefined });
+      if (seq !== this._seq || this._mode !== 'github') return;
+      const browser = this.$('.gh-browser');
+      browser.hidden = false;
+      this.$('.gh-path').textContent = `${owner}/${repo}/${path}`;
+      this.$('.gh-up').hidden = !path;
+      const list = this.$('.gh-list');
+      const entries = (result.entries ?? []).slice().sort((a, b) => (a.type === b.type ? (a.name < b.name ? -1 : 1) : a.type === 'dir' ? -1 : 1));
+      list.innerHTML = entries.length === 0
+        ? `<button type="button" disabled>(empty)</button>`
+        : entries.map((e) => {
+            const importable = e.type === 'dir' || e.name.toLowerCase().endsWith('.json');
+            return `<button type="button" data-type="${e.type}" data-path="${escapeHtml(e.path)}" data-name="${escapeHtml(e.name)}"${importable ? '' : ' disabled title="Only JSON imports directly; YAML goes through Fetch URL."'}>${e.type === 'dir' ? '📁' : '📄'} ${escapeHtml(e.name)}</button>`;
+          }).join('');
+      list.querySelectorAll('button[data-path]').forEach((entry) => entry.addEventListener('click', () =>
+        entry.dataset.type === 'dir' ? this.browseGitHub(entry.dataset.path) : this.pickGitHubFile(entry.dataset.path, entry.dataset.name)));
+    } catch (err) {
+      if (seq !== this._seq) return;
+      this.showError(err.problem?.detail || err.problem?.title || err.message);
+    }
+  }
+
+  async pickGitHubFile(path, name) {
+    this.clearError();
+    const { owner, repo } = this._github;
+    const preview = this.$('.gh-preview');
+    preview.hidden = false;
+    preview.textContent = 'Loading…';
+    const seq = ++this._seq;
+    try {
+      const result = await this._client.browseRepo(owner, repo, { path });
+      if (seq !== this._seq || this._mode !== 'github') return;
+      const text = new TextDecoder().decode(Uint8Array.from(atob((result.file?.content ?? '').replace(/\s/g, '')), (c) => c.charCodeAt(0)));
+      const document = JSON.parse(text);
+      const type = document.openapi ? 'openapi' : document.asyncapi ? 'asyncapi' : document.arazzo ? 'arazzo' : null;
+      if (!type) {
+        throw new Error('The document declares neither openapi, asyncapi, nor arazzo.');
+      }
+
+      this._github.picked = { document, type, path };
+      preview.innerHTML = `<span><strong>${escapeHtml(type)}</strong> ${escapeHtml(document[type] ?? '')} · ${escapeHtml(path)}</span>`;
+      const nameIn = this.$('.name-in');
+      if (!nameIn.value.trim()) {
+        const stem = name.split('.')[0];
+        if (stem) nameIn.value = stem;
+      }
+    } catch (err) {
+      preview.hidden = true;
+      this._github.picked = null;
+      this.showError(`Not a usable JSON document: ${err.problem?.detail || err.message}`);
+    }
+
+    this.updateAttachState();
+  }
+
   // ---- attach -----------------------------------------------------------------------------------
 
   async attach() {
@@ -274,6 +390,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       attachment = { sourceName: this.$('.registry-in').value };
     } else if (this._mode === 'fetch') {
       attachment = { document: this._fetched.document, type: this._fetched.type };
+    } else if (this._mode === 'github') {
+      attachment = { document: this._github.picked.document, type: this._github.picked.type };
     } else {
       attachment = { document: this._uploaded.document, type: this._uploaded.type };
     }

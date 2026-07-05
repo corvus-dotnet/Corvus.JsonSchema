@@ -11,7 +11,7 @@ async function dialogWithMock() {
   const el = document.createElement('arazzo-source-acquisition-dialog');
   el.client = client;
   mount(el);
-  return { el, client, wc };
+  return { el, client, wc, mock };
 }
 
 describe('<arazzo-source-acquisition-dialog>', () => {
@@ -93,5 +93,37 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     el.shadowRoot.querySelector('button.fetch').click();
     await waitFor(() => !el.shadowRoot.querySelector('.error-banner').hidden, 'the failure surfaces in the banner');
     ok(el.shadowRoot.querySelector('button.attach').disabled, 'attach stays disabled after a failed fetch');
+  });
+
+  it('github mode connects via the popup flow, browses the repo, and attaches a picked spec inline (§4.7)', async () => {
+    const ctx = await dialogWithMock();
+    el = ctx.el;
+    el.open({ workingCopyId: ctx.wc.id });
+    el.shadowRoot.querySelector('.tabs button[data-mode="github"]').click();
+
+    // The popup is injectable: "opening" it fetches the mock's self-completing authorize URL.
+    const gh = el.shadowRoot.querySelector('.gh-connect');
+    gh.pollIntervalMs = 10;
+    gh.windowOpener = (url) => { ctx.mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
+    const connectButton = await waitFor(() => gh.shadowRoot.querySelector('.connect'));
+    connectButton.click();
+    await waitFor(() => [...el.shadowRoot.querySelectorAll('.gh-repo-in option')].length > 1, 'the repositories load once connected');
+    ok(gh.shadowRoot.querySelector('.chip')?.textContent.includes('octo'), 'the chip shows the signed-in login');
+
+    const sel = el.shadowRoot.querySelector('.gh-repo-in');
+    sel.value = 'acme-org/specs';
+    sel.dispatchEvent(new Event('change'));
+    await waitFor(() => el.shadowRoot.querySelectorAll('.gh-list button[data-path]').length >= 2, 'the root lists');
+
+    el.shadowRoot.querySelector('.gh-list button[data-path="petstore.openapi.json"]').click();
+    await waitFor(() => !el.shadowRoot.querySelector('.gh-preview').hidden
+      && el.shadowRoot.querySelector('.gh-preview').textContent.includes('openapi'), 'the picked spec previews');
+    equal(el.shadowRoot.querySelector('.name-in').value, 'petstore', 'the name defaults from the file stem');
+
+    const attached = nextEvent(el, 'source-attached');
+    el.shadowRoot.querySelector('button.attach').click();
+    const e = await attached;
+    equal(e.detail.attachment.kind, 'inline');
+    equal(e.detail.attachment.type, 'openapi');
   });
 });
