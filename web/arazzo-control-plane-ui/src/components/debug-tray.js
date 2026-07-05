@@ -12,7 +12,9 @@
 //
 // Properties : .trace, .cursor (clamped), .length (steps count)
 // Methods    : frameAt(index) → {active, steps, edges} for <arazzo-design-surface>.debugState
-// Events     : cursor-changed {index}, clear-requested, step-requested (cursor at end of a paused trace)
+// Events     : cursor-changed {index}, clear-requested, step-requested (cursor at end of a paused trace),
+//              trigger-injected {channel, payload?, correlationId?} (a suspended run's message wait —
+//              the host adds it to the session scenario and replays)
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
@@ -110,6 +112,11 @@ class ArazzoDebugTray extends ArazzoElement {
         table { border-collapse: collapse; width: 100%; }
         td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; }
         td.v { width: 1%; white-space: nowrap; }
+        .inject { display: grid; gap: 4px; border: 1px solid var(--_border); border-radius: 6px; padding: 6px; }
+        .inject input, .inject textarea { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; }
+        .inject textarea { min-height: 44px; }
+        .inject button { justify-self: start; font-size: 11px; }
+        .inject .why { color: var(--_muted); font-size: 10.5px; }
       </style>
       ${!trace ? '<div class="empty-note">No debug session — ▶ Run simulates the working copy against its scripted mocks.</div>' : `
       <div class="bar" part="controls">
@@ -135,6 +142,27 @@ class ArazzoDebugTray extends ArazzoElement {
     });
     this.$('.clear').addEventListener('click', () => this.emit('clear-requested', {}));
     this.$$('.step').forEach((row) => row.addEventListener('click', () => { this.cursor = Number(row.dataset.index) + 1; }));
+    this.$('.inj-go')?.addEventListener('click', () => {
+      const channel = this.$('.inj-channel').value.trim();
+      if (!channel) return;
+      const correlationId = this.$('.inj-corr').value.trim();
+      const raw = this.$('.inj-payload').value.trim();
+      let payload;
+      if (raw) {
+        try {
+          payload = JSON.parse(raw);
+        } catch {
+          this.$('.inj-payload').style.borderColor = 'var(--_danger)';
+          return;
+        }
+      }
+
+      this.emit('trigger-injected', {
+        channel,
+        ...(payload !== undefined ? { payload } : {}),
+        ...(correlationId ? { correlationId } : {}),
+      });
+    });
   }
 
   /** @private */
@@ -185,6 +213,18 @@ class ArazzoDebugTray extends ArazzoElement {
 
       if (trace.wait) {
         parts.push(`<h4>waiting on</h4><pre>${escapeHtml(trace.wait.kind)}${trace.wait.dueAt ? ` due ${escapeHtml(trace.wait.dueAt)}` : ''}${trace.wait.channel ? ` channel ${escapeHtml(trace.wait.channel)}` : ''}</pre>`);
+        if (trace.outcome === 'suspended' && trace.wait.kind === 'message') {
+          // Inject the message the run is waiting for: the trigger joins the session scenario and
+          // the host replays (stateless stepping, §8.2) — past the suspension this time.
+          parts.push(`<div class="inject" part="inject">
+            <h4>inject trigger</h4>
+            <input class="inj-channel" type="text" placeholder="channel" value="${escapeHtml(trace.wait.channel ?? '')}">
+            <input class="inj-corr" type="text" placeholder="correlationId (optional)" value="${escapeHtml(trace.wait.correlationId ?? '')}">
+            <textarea class="inj-payload" spellcheck="false" placeholder='payload JSON (optional), e.g. {"approved": true}'></textarea>
+            <button class="inj-go" type="button" title="Add this message to the session scenario and replay past the suspension">⚡ Inject &amp; continue</button>
+            <span class="why">joins the session's scenario; the replay delivers it at this wait</span>
+          </div>`);
+        }
       }
 
       if (trace.clockAdvances?.length) {

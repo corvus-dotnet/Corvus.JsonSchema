@@ -1306,3 +1306,40 @@ test('simulateCatalogVersion replays a published version verbatim (§4.3)', asyn
   await assert.rejects(() => c.simulateCatalogVersion('adopt-pet', 1, { workflowId: 'ghost' }), (e) => e.status === 400);
   await assert.rejects(() => c.simulateCatalogVersion('no-such', 1, {}), (e) => e.status === 404);
 });
+
+test('a message wait suspends the simulation; a staged trigger releases it (§3.3 injection)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'eventful',
+    document: {
+      arazzo: '1.1.0', info: { title: 'e', version: '1' },
+      sourceDescriptions: [
+        { name: 'petstore', url: './p.json', type: 'openapi' },
+        { name: 'events', url: './e.json', type: 'asyncapi' },
+      ],
+      workflows: [{ workflowId: 'wf', steps: [
+        { stepId: 'list', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] },
+        { stepId: 'confirmed', operationId: 'onOrderEvent' },
+        { stepId: 'done', operationId: 'listPets' },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+  await c.attachWorkingCopySource(wc.id, 'events', { sourceName: 'events' });
+  const mocks = [{ method: 'get', path: '/pets', status: 200, body: [] }];
+
+  // No trigger staged: the run SUSPENDS on the channel, naming what it waits for.
+  const suspended = await c.simulateWorkingCopy(wc.id, { scenario: { mocks } });
+  assert.equal(suspended.outcome, 'suspended');
+  assert.equal(suspended.wait.kind, 'message');
+  assert.equal(suspended.wait.channel, 'orders/events');
+  assert.equal(suspended.steps.length, 1, 'only the step before the wait executed');
+
+  // The injected trigger joins the scenario; the stateless replay delivers it at the wait.
+  const released = await c.simulateWorkingCopy(wc.id, {
+    scenario: { mocks, triggers: [{ channel: 'orders/events', payload: { orderId: 'o-1', kind: 'confirmed' } }] },
+  });
+  assert.equal(released.outcome, 'completed');
+  assert.equal(released.steps.length, 3);
+  assert.equal(released.steps[1].requests[0].responseBody.orderId, 'o-1', 'the payload rides the trace');
+});

@@ -122,8 +122,9 @@
         </div>
         <div style="padding: 10px; border-top: 1px solid var(--arazzo-border, #e3e6ea);">
           <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
+          <div id="expr-result" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere;" hidden></div>
           <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280); margin-top: 6px;">
-            Expression console — completions from the fixture schema; paused-context evaluation arrives with the session explorer.
+            Expression console — completions from the fixture schema; ⏎ evaluates against the debug session's frame at the scrub cursor (§3.3).
           </div>
         </div>
       </div>
@@ -143,7 +144,7 @@
   <script type="module">
     import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from './designer-fixture.js';
     import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
-    import { EXPRESSION_ROOTS } from '../src/expression-language.js';
+    import { EXPRESSION_ROOTS, resolveAgainstFrame } from '../src/expression-language.js';
     import { WorkflowDocumentModel } from '../src/workflow-document-model.js';
     import '../src/components/design-surface.js';
     import '../src/components/expression-input.js';
@@ -737,6 +738,10 @@
       else debugBreakpoints.delete(e.detail.stepId);
     });
 
+    // Triggers injected mid-session (the tray's ⚡ form on a suspended message wait). Stateless
+    // stepping means every replay re-supplies them; Stop/Clear ends the session and drops them.
+    const sessionTriggers = [];
+
     function buildScenario() {
       const mocks = [];
       for (const [, ops] of opBrowser.surfaces) {
@@ -747,7 +752,7 @@
         }
       }
 
-      return { mocks };
+      return { mocks, ...(sessionTriggers.length ? { triggers: structuredClone(sessionTriggers) } : {}) };
     }
 
     function applyDebugFrame() {
@@ -811,6 +816,7 @@
         name,
         description: `Recorded from a debug session (${trace.outcome}).`,
         mocks,
+        ...(sessionTriggers.length ? { triggers: structuredClone(sessionTriggers) } : {}),
         expect: {
           ...(trace.outcome === 'completed' || trace.outcome === 'faulted' || trace.outcome === 'suspended' ? { outcome: trace.outcome } : {}),
           path: trace.steps.map((st) => st.stepId),
@@ -835,14 +841,21 @@
     });
 
     tray.addEventListener('cursor-changed', applyDebugFrame);
-    tray.addEventListener('clear-requested', () => { tray.trace = null; applyDebugFrame(); setDebugUi(); });
+    tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; applyDebugFrame(); setDebugUi(); });
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
+    tray.addEventListener('trigger-injected', (e) => {
+      // The injected message joins the session scenario; the replay delivers it at the wait and
+      // runs on to the next pause or the end (§3.3).
+      sessionTriggers.push(e.detail);
+      logEvent('trigger-injected', e.detail);
+      runSimulation();
+    });
     simBtn.addEventListener('click', () => runSimulation());
     stepBtn.addEventListener('click', () => {
       if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
       else runSimulation({ stepPastEnd: !!tray.trace });
     });
-    stopBtn.addEventListener('click', () => { tray.trace = null; applyDebugFrame(); setDebugUi(); });
+    stopBtn.addEventListener('click', () => { tray.trace = null; sessionTriggers.length = 0; applyDebugFrame(); setDebugUi(); });
     surface.addEventListener('node-activated', (e) => {
       if (e.detail.id && !e.detail.id.startsWith('#')) runSimulation({ until: { beforeStepId: e.detail.id } });
     });
@@ -885,7 +898,43 @@
         ? { valid: false, errors: bad.map((b) => ({ message: `unknown root '${b}'` })) }
         : { valid: true };
     };
-    expr.addEventListener('commit', (e) => logEvent('expression-commit', e.detail));
+    // ⏎ evaluates against the RECORDED trace at the scrub cursor — stateless like all stepping
+    // (§8.2): the trace already holds every step's outputs and exchanges, so no server call.
+    const exprResult = document.getElementById('expr-result');
+    function debugFrame() {
+      if (!tray.trace) return null;
+      const k = tray.cursor;
+      const steps = {};
+      for (let i = 0; i < k; i++) steps[tray.trace.steps[i].stepId] = { outputs: tray.trace.steps[i].outputs };
+      const record = k > 0 ? tray.trace.steps[k - 1] : null;
+      const lastExchange = record?.requests?.length ? record.requests[record.requests.length - 1] : null;
+      return {
+        inputs: {}, // the demo session stages no inputs
+        outputs: k === tray.length ? tray.trace.outputs : undefined,
+        steps,
+        current: lastExchange ? { statusCode: lastExchange.status, responseBody: lastExchange.responseBody } : {},
+      };
+    }
+
+    expr.addEventListener('commit', (e) => {
+      logEvent('expression-commit', e.detail);
+      const frame = debugFrame();
+      exprResult.hidden = false;
+      if (!frame) {
+        exprResult.style.color = 'var(--arazzo-muted, #6b7280)';
+        exprResult.textContent = 'no debug session — ▶ Run first, then evaluate at any scrub position';
+        return;
+      }
+
+      const resolved = resolveAgainstFrame(e.detail.value, frame);
+      if (resolved.found) {
+        exprResult.style.color = 'var(--arazzo-status-completed, #2a8a4a)';
+        exprResult.textContent = `@ ${tray.cursor}/${tray.length} = ${JSON.stringify(resolved.value, null, 2)}`;
+      } else {
+        exprResult.style.color = 'var(--arazzo-muted, #6b7280)';
+        exprResult.textContent = `@ ${tray.cursor}/${tray.length} — ${resolved.reason}`;
+      }
+    });
 
     // The Git round-trip (§4.7): autosave first (the dialog reads the STORED copy), then bind /
     // pull / commit through the caller's brokered session. binding-saved and pulled both bump the
