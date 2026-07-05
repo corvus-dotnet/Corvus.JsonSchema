@@ -93,6 +93,15 @@ public interface IApiCatalogHandler
     ValueTask<GetCatalogPackageResult> HandleGetCatalogPackageAsync(GetCatalogPackageParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles POST /catalog/{baseWorkflowId}/versions/{versionNumber}/simulate — Simulate a published version
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<SimulateCatalogVersionResult> HandleSimulateCatalogVersionAsync(SimulateCatalogVersionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/evidence — A version's publish evidence
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

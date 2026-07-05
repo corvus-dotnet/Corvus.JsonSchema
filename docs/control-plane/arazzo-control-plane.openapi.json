@@ -567,6 +567,39 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/simulate": {
+      "post": {
+        "operationId": "simulateCatalogVersion",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Simulate a published version",
+        "description": "Runs the deterministic simulator over the version's IMMUTABLE stored package — the workflow document and its embedded sources, exactly as published — with the same request shape as simulateWorkingCopy (scenario, stop condition, budget) and the same complete trace back (workflow-designer design §4.3/§8). Re-verify evidence, or explore a regression, without a working copy. Mutates nothing.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulateRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The structured trace, complete up to the stop condition.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulationTrace" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": {
+            "description": "The version's document does not compile to an executable workflow (e.g. it references another Arazzo document as a source).",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+          }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/evidence": {
       "get": {
         "operationId": "getCatalogEvidence",

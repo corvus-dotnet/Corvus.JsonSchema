@@ -756,9 +756,13 @@ compile; it serves recorded fixtures, clearly marked).
    ▶ Run auto-scripts mocks from the attached surfaces' first documented success statuses;
    breakpoints ride `until.breakpoints`; double-activating a node is run-to-here
    (`until.beforeStepId`); one-more-step past a pause replays with the budget one step further.
-   Remaining for later increments: `simulateCatalogVersion`, the typed inputs form + mock editor
-   (scenario authoring lands with slice 6 scenarios), trigger injection UI, and the expression
-   console evaluating against the PAUSED context (it completes against the static schema today).*
+   `simulateCatalogVersion` BUILT: the same request/trace shapes over a published version's
+   IMMUTABLE package (unpacked document + embedded sources; the workflowId selector reorders like
+   the working-copy path), `catalog:read`, fails closed without a simulator — re-verify evidence
+   or explore a regression without a working copy. The typed inputs form + mock editor landed with
+   the slice-6 typed scenario forms. Remaining for later increments: trigger injection UI, and the
+   expression console evaluating against the PAUSED context (it completes against the static
+   schema today).*
 6. **Scenarios.** Scenario schema + CRUD + run endpoints (run-one and run-all suite report);
    scenario panel/editor; session recording; carry-over on create-from-version; **the `scenarios
    run` CLI** (§4.5: standalone in-process + remote modes, globbing, JUnit/JSON reports, CI exit

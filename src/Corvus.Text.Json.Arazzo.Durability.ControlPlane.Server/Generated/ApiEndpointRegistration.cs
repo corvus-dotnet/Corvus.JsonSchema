@@ -2721,6 +2721,131 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetCatalogPackageEndpoint);
 
+        IEndpointConventionBuilder __SimulateCatalogVersionEndpoint = app.MapPost("/catalog/{baseWorkflowId}/versions/{versionNumber}/simulate", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulateRequest>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("baseWorkflowId", out object? BaseWorkflowIdRouteVal) && BaseWorkflowIdRouteVal is string BaseWorkflowIdRaw)
+                {
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber VersionNumberValue = default;
+                if (context.Request.RouteValues.TryGetValue("versionNumber", out object? VersionNumberRouteVal) && VersionNumberRouteVal is string VersionNumberRaw)
+                {
+                    VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
+                }
+
+                if (BaseWorkflowIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'baseWorkflowId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (VersionNumberValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'versionNumber' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VersionNumberValue.IsUndefined() && !VersionNumberValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulateRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                SimulateCatalogVersionParams parameters = new()
+                {
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    VersionNumber = VersionNumberValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                SimulateCatalogVersionResult result = await catalogHandler.HandleSimulateCatalogVersionAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "simulateCatalogVersion",
+                methodName: "SimulateCatalogVersion",
+                httpMethod: "POST",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/simulate",
+                tags: new[] { "catalog" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __SimulateCatalogVersionEndpoint);
+
         IEndpointConventionBuilder __GetCatalogEvidenceEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/evidence", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -11079,6 +11204,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>GetCatalogPackage</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] GetCatalogPackageOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SimulateCatalogVersion</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SimulateCatalogVersionOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SimulateCatalogVersion</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] SimulateCatalogVersionOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>GetCatalogEvidence</c> for the <c>Oauth2</c> scheme.

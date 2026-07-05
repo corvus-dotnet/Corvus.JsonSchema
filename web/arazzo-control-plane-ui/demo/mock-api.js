@@ -1113,6 +1113,7 @@ export function createMockControlPlane(options = {}) {
     if (/\/catalog\/[^/]+\/versions\/[^/]+\/availability\/[^/]+$/.test(path)) return 'availability:write';
     if (path.includes('/accessRequests') || path.includes('/availabilityRequests')) return null;
     if (/\/workspace\/workflows\/[^/]+\/publish\/?$/.test(path)) return 'catalog:write'; // publish mints a catalog version (§4.6)
+    if (/\/catalog\/[^/]+\/versions\/[^/]+\/simulate\/?$/.test(path)) return null; // simulation mutates nothing (§4.3)
     if (path.includes('/github/auth/callback')) return null; // the browser callback authenticates by its single-use state (§4.7)
     if (path.includes('/github')) return 'workspace:write'; // begin sign-in / disconnect (§4.7)
     if (path.includes('/catalog')) return method === 'PURGE' || method === 'DELETE' ? 'catalog:purge' : 'catalog:write';
@@ -1582,7 +1583,7 @@ export function createMockControlPlane(options = {}) {
       return problem(405, 'Method not allowed');
     }
 
-    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|validate|evidence|sources\/[^/]+))?$/);
+    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|validate|simulate|evidence|sources\/[^/]+))?$/);
     if (versionMatch) {
       const base = decodeURIComponent(versionMatch[1]);
       const n = Number(versionMatch[2]);
@@ -1604,6 +1605,11 @@ export function createMockControlPlane(options = {}) {
       if (sub === 'workflow' && method === 'GET') return json(v._workflow);
       if (sub === 'schemas' && method === 'GET') return json(schemasFor(v));
       if (sub === 'validate' && method === 'POST') return json(validateValue(v, body));
+      if (sub === 'simulate' && method === 'POST') {
+        // The published version's packaged document, simulated verbatim (§4.3) — same as a working copy.
+        const outcome = simulateDocument(v._workflow, body ?? {});
+        return outcome instanceof Response ? outcome : json(outcome);
+      }
       if (sub === 'evidence' && method === 'GET') {
         return v._evidence ? json(v._evidence) : problem(404, 'Evidence not found', 'This version carries no publish evidence.');
       }
