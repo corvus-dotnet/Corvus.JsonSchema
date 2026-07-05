@@ -1011,6 +1011,19 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `simulateCatalogVersion` — the deterministic simulator over a published version's IMMUTABLE
+   * package (§4.3): the same request shape as {@link simulateWorkingCopy}, the same complete trace
+   * back. Re-verify evidence or explore a regression without a working copy; mutates nothing.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ workflowId?: string, scenario?: object, until?: object, budget?: object, signal?: AbortSignal }} [command]
+   * @returns {Promise<object>} The simulation trace.
+   */
+  simulateCatalogVersion(baseWorkflowId, versionNumber, { signal, ...command } = {}) {
+    return this._request('POST', `/catalog/${encodeURIComponent(baseWorkflowId)}/versions/${versionNumber}/simulate`, { body: command, signal });
+  }
+
+  /**
    * `publishWorkingCopy` — the deliberate publish act (design §4.6): the server validates,
    * re-runs the scenario suite (evidence is server-attested), and adds the new draft version
    * with metadata/scenarios.json + metadata/evidence.json embedded. 422 carries the refusal

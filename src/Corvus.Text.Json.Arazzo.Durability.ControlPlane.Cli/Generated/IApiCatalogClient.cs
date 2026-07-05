@@ -178,6 +178,16 @@ public interface IApiCatalogClient : IAsyncDisposable
         public static readonly string[] GetCatalogPackageOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>SimulateCatalogVersion</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] SimulateCatalogVersionOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>SimulateCatalogVersion</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] SimulateCatalogVersionOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>GetCatalogEvidence</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] GetCatalogEvidenceOauth2Scopes = ["catalog:read"];
@@ -359,6 +369,18 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GetCatalogPackageResponse> GetCatalogPackageAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Simulate a published version
+    /// </summary>
+    /// <remarks>
+    /// Runs the deterministic simulator over the version's IMMUTABLE stored package — the workflow document and its embedded sources, exactly as published — with the same request shape as simulateWorkingCopy (scenario, stop condition, budget) and the same complete trace back (workflow-designer design §4.3/§8). Re-verify evidence, or explore a regression, without a working copy. Mutates nothing.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SimulateCatalogVersionResponse> SimulateCatalogVersionAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// A version's publish evidence

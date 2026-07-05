@@ -289,6 +289,40 @@ public sealed class ControlPlaneSimulateApiTests
     }
 
     [TestMethod]
+    public async Task A_published_version_simulates_from_its_immutable_package()
+    {
+        await using Scoped host = await StartAsync(withSimulator: true);
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+        HttpResponseMessage published = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"}}""", "catalog:write");
+        published.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string baseWorkflowId;
+        int versionNumber;
+        using (Stj.JsonDocument version = Stj.JsonDocument.Parse(await published.Content.ReadAsStringAsync()))
+        {
+            baseWorkflowId = version.RootElement.GetProperty("baseWorkflowId").GetString()!;
+            versionNumber = version.RootElement.GetProperty("versionNumber").GetInt32();
+        }
+
+        // The same request shape as simulateWorkingCopy, over the packaged inputs (§4.3).
+        HttpResponseMessage simulated = await host.SendJsonAsync(
+            HttpMethod.Post, $"/catalog/{baseWorkflowId}/versions/{versionNumber}/simulate", SimulateBody, "catalog:read");
+        simulated.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument trace = Stj.JsonDocument.Parse(await simulated.Content.ReadAsStringAsync()))
+        {
+            trace.RootElement.GetProperty("outcome").GetString().ShouldBe("completed");
+            trace.RootElement.GetProperty("steps").GetArrayLength().ShouldBe(2);
+        }
+
+        // An unknown version is not found; an unknown workflow selector refuses.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/catalog/{baseWorkflowId}/versions/99/simulate", SimulateBody, "catalog:read"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.SendJsonAsync(HttpMethod.Post, $"/catalog/{baseWorkflowId}/versions/{versionNumber}/simulate",
+            """{"workflowId":"ghost","scenario":{}}""", "catalog:read")).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
     public async Task The_working_copy_serves_recomputed_schema_metadata_for_typed_forms()
     {
         await using Scoped host = await StartAsync(withSimulator: false);
