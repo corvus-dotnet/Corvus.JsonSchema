@@ -1287,3 +1287,22 @@ test('a Git-bound working copy commits to and pulls from its branch (§4.7)', as
   await c.deleteGitHubSession();
   await assert.rejects(() => c.commitWorkingCopy(wc.id, { message: 'x' }), (e) => e.status === 409);
 });
+
+test('simulateCatalogVersion replays a published version verbatim (§4.3)', async () => {
+  const c = makeClient();
+  // The seeded adopt-pet v1 carries its packaged document; the simulator runs it with scripted mocks —
+  // same request and trace shapes as a working-copy simulate, without any working copy.
+  const trace = await c.simulateCatalogVersion('adopt-pet', 1, {
+    scenario: { mocks: [
+      { method: 'get', path: '/pets/{petId}', status: 200, body: { name: 'Fido' } },
+      { method: 'post', path: '/pets/{petId}/adopt', status: 200 },
+      { method: 'get', path: '/pets/{petId}/status', status: 200, body: { state: 'adopted' } },
+      { method: 'post', path: '/pets/{petId}/confirm', status: 200 },
+    ] },
+  });
+  assert.ok(['completed', 'faulted'].includes(trace.outcome), 'the packaged document simulated to a terminal trace');
+  assert.ok(trace.steps.length > 0, 'the trace carries the visited steps');
+
+  await assert.rejects(() => c.simulateCatalogVersion('adopt-pet', 1, { workflowId: 'ghost' }), (e) => e.status === 400);
+  await assert.rejects(() => c.simulateCatalogVersion('no-such', 1, {}), (e) => e.status === 404);
+});

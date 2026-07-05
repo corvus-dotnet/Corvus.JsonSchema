@@ -9,6 +9,7 @@ using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Testing;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -38,6 +39,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private readonly ControlPlaneAccess access;
     private readonly IEnvironmentStore? environmentStore;
     private readonly IAvailabilityStore? availabilityStore;
+    private readonly WorkflowSimulator? simulator;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class (unscoped: full access).</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
@@ -55,7 +57,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
     /// <param name="environmentStore">The environment registry used to validate that a run's pinned environment exists and is in the caller's reach (design §5.5); <see langword="null"/> skips that check.</param>
     /// <param name="availabilityStore">The availability registry used to validate that the version is available in the pinned environment (§7.8); <see langword="null"/> skips that check.</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null)
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -67,6 +69,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         this.access = access;
         this.environmentStore = environmentStore;
         this.availabilityStore = availabilityStore;
+        this.simulator = simulator;
     }
 
     /// <inheritdoc/>
@@ -709,6 +712,63 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                     }),
                 nextPageToken: nextPageToken);
         });
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<SimulateCatalogVersionResult> HandleSimulateCatalogVersionAsync(SimulateCatalogVersionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.simulator is null)
+        {
+            return SimulateCatalogVersionResult.BadRequest(
+                Problem("simulation-not-offered", "Simulation not offered", 400, "This deployment does not offer workflow simulation."), workspace);
+        }
+
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (package is not { } bytes)
+        {
+            return SimulateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        // The IMMUTABLE published inputs, exactly as packaged: the document and its embedded sources —
+        // re-verify evidence or explore a regression without a working copy (§4.3).
+        (byte[] workflowBytes, IReadOnlyList<KeyValuePair<string, byte[]>> sources) = CatalogPackage.Unpack(bytes);
+
+        Models.SimulateRequest body = parameters.Body;
+        ReadOnlyMemory<byte> documentBytes = workflowBytes;
+        if (body.WorkflowId.IsNotUndefined())
+        {
+            // The selector reorders the workflows array (the provider compiles the FIRST workflow);
+            // without one, the packaged bytes run verbatim.
+            using var document = ParsedJsonDocument<JsonElement>.Parse(workflowBytes);
+            byte[]? reordered = WorkspaceSimulationJson.DocumentBytes(document.RootElement, (string)body.WorkflowId);
+            if (reordered is null)
+            {
+                return SimulateCatalogVersionResult.BadRequest(
+                    Problem("unknown-workflow", "Unknown workflow", 400, $"The document declares no workflow '{(string)body.WorkflowId}'."), workspace);
+            }
+
+            documentBytes = reordered;
+        }
+
+        using SimulationResult result = await this.simulator.SimulateAsync(
+            documentBytes,
+            sources,
+            WorkspaceSimulationJson.ReadScenario(body),
+            WorkspaceSimulationJson.ReadStop(body),
+            WorkspaceSimulationJson.ReadBudget(body),
+            cancellationToken).ConfigureAwait(false);
+
+        if (result.Outcome == SimulationOutcome.NotExecutable)
+        {
+            return SimulateCatalogVersionResult.UnprocessableEntity(
+                Problem("not-executable", "Not executable", 422, "The version's document does not compile to an executable workflow (e.g. it references another Arazzo document as a source)."), workspace);
+        }
+
+        ParsedJsonDocument<Models.SimulationTrace> trace = WorkspaceSimulationJson.TraceResponse(result);
+        workspace.TakeOwnership(trace);
+        return SimulateCatalogVersionResult.Ok(trace.RootElement, workspace);
     }
 
     /// <summary>
