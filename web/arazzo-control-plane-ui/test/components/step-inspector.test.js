@@ -210,6 +210,9 @@ describe('<arazzo-step-inspector>', () => {
 
     const structured = el.shadowRoot.querySelector('.prow arazzo-payload-editor');
     ok(structured, 'the object parameter gets the structured payload editor');
+    const fixed = el.shadowRoot.querySelector('.prow .pfixed');
+    ok(fixed && fixed.textContent.includes('checks'), 'a DECLARED parameter is a fixed row — the binding names it');
+    ok(!el.shadowRoot.querySelector('.prow:first-of-type .pname'), 'no editable name field on declared rows');
     ok(structured.shadowRoot.textContent.includes('priceTolerance'), 'fields come from the declared schema');
 
     const scalar = [...el.shadowRoot.querySelectorAll('.prow arazzo-expression-input')].at(-1);

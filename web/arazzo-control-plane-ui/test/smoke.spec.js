@@ -324,5 +324,5 @@ test('an operation dropped onto the designer starts templated from its documente
   await expect(page.locator('arazzo-step-inspector')).toContainText('on-400');
   await expect(page.locator('arazzo-step-inspector')).toContainText('$statusCode == 200');
   // The declared parameters arrive with the step too — nothing schema-derivable hides behind a button.
-  await expect(page.locator('arazzo-step-inspector .prow .pname').first()).toHaveValue('checks');
+  await expect(page.locator('arazzo-step-inspector .prow .pfixed').first()).toContainText('checks');
 });
