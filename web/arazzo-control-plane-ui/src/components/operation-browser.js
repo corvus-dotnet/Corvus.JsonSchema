@@ -21,6 +21,7 @@
 // `operation-selected` event — exactly what step creation and the step inspector's templates consume.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import './input-dialog.js';
 
 const METHOD_COLOR = {
   GET: 'var(--arazzo-status-completed, #2a8a4a)',
@@ -148,6 +149,9 @@ class ArazzoOperationBrowser extends ArazzoElement {
       <div class="search"><input type="search" placeholder="Filter operations…" aria-label="Filter operations"></div>
       <div class="body" part="body"></div>
     `;
+    const ask = document.createElement('arazzo-input-dialog');
+    ask.className = 'ask';
+    this.shadowRoot.append(ask);
     this.$('button.add').addEventListener('click', () => this.emit('add-source-requested', {}));
     this.$('.search input').addEventListener('input', (e) => {
       this._filter = e.target.value.trim().toLowerCase();
@@ -286,8 +290,23 @@ class ArazzoOperationBrowser extends ArazzoElement {
     const client = this.client;
     if (!client || !this._workingCopyId) return;
     try {
+      // Detach is destructive (the declaration goes with it), so: say what happens, and STASH the
+      // full attachment first — the host offers restore (a detach cannot ride the document's
+      // undo stack: attachments are workspace state with their own etag lifecycle).
+      const attachment = await client.getWorkingCopySource(this._workingCopyId, name).catch(() => null);
+      const inline = attachment?.kind !== 'registry';
+      const sure = await this.$('.ask').ask({
+        title: `Detach '${name}'?`,
+        message: inline
+          ? 'Its sourceDescriptions declaration goes with it and steps bound to its operations lose their surface. The stored document is kept for restore until you leave this working copy.'
+          : 'Its sourceDescriptions declaration goes with it. The source stays registered — it can be re-attached from the registry at any time.',
+        confirmLabel: 'Detach',
+        danger: true,
+      });
+      if (!sure) return;
+
       await client.detachWorkingCopySource(this._workingCopyId, name);
-      this.emit('source-detached', { name });
+      this.emit('source-detached', { name, attachment });
       this.refresh();
     } catch (err) {
       this._error = err.problem || { title: err.message };

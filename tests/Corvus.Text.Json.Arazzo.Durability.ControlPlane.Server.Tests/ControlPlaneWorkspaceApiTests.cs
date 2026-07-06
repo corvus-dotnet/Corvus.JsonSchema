@@ -737,4 +737,31 @@ public sealed class ControlPlaneWorkspaceApiTests
             return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
         }
     }
+
+    [TestMethod]
+    public async Task Attachment_reads_back_whole_for_restore_after_detach()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "d", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "inline-src", "url": "./s.json", "type": "openapi" }],
+          "workflows": [{ "workflowId": "w", "steps": [] }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/inline-src", """
+        { "document": { "openapi": "3.1.0", "info": { "title": "S", "version": "1" }, "paths": { "/x": { "get": { "operationId": "x", "responses": { "200": { "description": "ok" } } } } } } }
+        """, Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using (Stj.JsonDocument attachment = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources/inline-src", Read)))
+        {
+            attachment.RootElement.GetProperty("name").GetString().ShouldBe("inline-src");
+            attachment.RootElement.GetProperty("document").GetProperty("paths").GetProperty("/x").GetProperty("get").GetProperty("operationId").GetString().ShouldBe("x");
+        }
+
+        (await host.SendAsync(HttpMethod.Delete, $"/workspace/workflows/{id}/sources/inline-src", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources/inline-src", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
 }

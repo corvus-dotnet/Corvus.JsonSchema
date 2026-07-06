@@ -20,10 +20,12 @@
     main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-auto-rows: minmax(0, 1fr);
            gap: 12px; padding: 12px 14px; box-sizing: border-box; }
     #center { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
-    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; max-height: 42vh; overflow: hidden; }
+    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; max-height: 42vh; overflow: hidden; --arazzo-tray-body-max: calc(42vh - 48px); }
     #debug-dock[hidden] { display: none !important; }
     #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 0; }
-    #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; }
+    #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; max-height: 42vh; overflow-y: auto; }
+    #debug-dock .rail-h { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); border-top: 1px solid var(--arazzo-border, #e3e6ea); padding-top: 8px; }
+    #debug-dock .rail-h:first-child { border-top: none; padding-top: 0; }
     .tabs { display: flex; gap: 4px; }
     .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 4px 14px; font-size: 12px; opacity: 0.7; }
     .tabs button.active { opacity: 1; border-color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
@@ -66,7 +68,7 @@
   <header>
     <!-- Grouped left→right in the conventional order for design tools:
          context (back · document name · workflow) | edit (undo/redo)
-         | view (fit/auto-layout) | run (simulate/step/stop/read-only) | status · validate · theme.
+         | view (fit/auto-layout) | run (simulate/step/stop) | status · theme.
          Icon buttons with tooltips; the document autosaves (undo/redo is the safety net),
          so there is no Save button — the status chip narrates saving/saved/conflict. -->
     <button id="back" class="tb" title="Back to the workspace" hidden>⌂</button>
@@ -82,7 +84,6 @@
     <button id="simulate" class="tb designer-only" title="Simulate (canned trace)">▶</button>
     <button id="step" class="tb designer-only" title="Step through the trace">⏭</button>
     <button id="stop" class="tb" title="Stop and clear the overlay" hidden>■</button>
-    <label class="chk designer-only" title="Read-only: mutation gestures off; pan/zoom/select still work"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
     <button id="publish" class="tb labeled designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)">🚀 Publish</button>
@@ -108,25 +109,29 @@
         <button id="canvas-empty-cta" type="button" style="pointer-events: auto; justify-self: center; font-size: 13px; padding: 4px 14px;">Open Sources →</button>
       </div>
       <arazzo-text-editor id="text" hidden></arazzo-text-editor>
+      <dialog id="run-inputs-dialog" style="border:1px solid var(--arazzo-border,#e3e6ea); border-radius:10px; background:var(--arazzo-bg,#fff); color:var(--arazzo-text,inherit); padding:0; width:min(460px,92vw);">
+        <div style="padding:12px 14px; font-weight:700; border-bottom:1px solid var(--arazzo-border,#e3e6ea);">Run — provide the workflow's inputs</div>
+        <div style="padding:12px 14px; display:grid; gap:8px;">
+          <arazzo-value-editor id="run-inputs-editor"></arazzo-value-editor>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; padding:12px 14px; border-top:1px solid var(--arazzo-border,#e3e6ea);">
+          <button class="ri-cancel" type="button" style="font-size:13px;">Cancel</button>
+          <button class="ri-run" type="button" style="font-size:13px; font-weight:600;">▶ Run</button>
+        </div>
+      </dialog>
       <!-- The debug session DOCKS across the bottom of the editor: it appears when a run starts
            and is removed by Stop/Clear — the trace gets the horizontal room a sidebar never had. -->
       <div id="debug-dock" hidden>
         <div class="dock-body">
           <arazzo-debug-tray id="debugtray"></arazzo-debug-tray>
           <div class="dock-side">
+            <h4 class="rail-h">session</h4>
             <button id="save-scenario" type="button" style="font-size:12px; justify-self:start;" disabled title="Capture this session — its mocks, inputs, and expectations promoted from the observed trace (§3.4)">💾 Save as scenario…</button>
+            <h4 class="rail-h">expression console</h4>
             <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
             <div id="expr-result" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 6px; padding: 6px 8px; display: none; gap: 4px; max-height: 120px; overflow-y: auto;"></div>
             <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280);">
               Expression console — ⏎ evaluates against the session's frame at the scrub cursor (§3.3).
-            </div>
-            <div id="override-panel" hidden style="display: grid; gap: 6px; border: 1px solid var(--arazzo-status-suspended, #b45309); border-radius: 6px; padding: 8px;">
-              <div id="override-title" style="font-size: 11px; font-weight: 600;"></div>
-              <arazzo-value-editor id="override-editor"></arazzo-value-editor>
-              <div style="display: flex; gap: 6px;">
-                <button id="override-apply" type="button" style="font-size: 12px;">⏭ Apply &amp; replay</button>
-                <button id="override-cancel" type="button" style="font-size: 12px;">Cancel</button>
-              </div>
             </div>
           </div>
         </div>
@@ -305,13 +310,21 @@
     // enough to read, coloured by kind, on top of the transient save-status line.
     const toastEl = document.getElementById('toast');
     let toastTimer = 0;
-    function showToast(message, kind = 'ok') {
+    function showToast(message, kind = 'ok', { actionLabel, action } = {}) {
       toastEl.textContent = message;
+      if (actionLabel && action) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = actionLabel;
+        btn.style.cssText = 'margin-left:10px; font:inherit; font-size:12px; padding:2px 10px; border:1px solid currentColor; border-radius:6px; background:none; color:inherit; cursor:pointer;';
+        btn.addEventListener('click', async () => { toastEl.hidden = true; await action(); });
+        toastEl.append(btn);
+      }
       toastEl.style.borderColor = kind === 'error' ? 'var(--arazzo-status-faulted, #d4351c)'
         : kind === 'warn' ? 'var(--arazzo-status-suspended, #b45309)' : 'var(--arazzo-status-completed, #2a8a4a)';
       toastEl.hidden = false;
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { toastEl.hidden = true; }, kind === 'ok' ? 8000 : 12000);
+      toastTimer = setTimeout(() => { toastEl.hidden = true; }, kind === 'ok' ? 8000 : 20000);
     }
 
     // Autosave (undo/redo is the editing safety net; an explicit Save button is ceremony):
@@ -416,7 +429,14 @@
     // Click a finding → put the designer on it: switch to the pointed workflow, select the pointed
     // step on the canvas, and reveal it in the text tab when that is what's showing.
     function revealFinding(d) {
-      const m = /^\/workflows\/(\d+)(?:\/steps\/(\d+))?/.exec(d.instancePath || '');
+      const path = d.instancePath || '';
+
+      // Non-workflow findings land on the panel that owns them.
+      if (path.startsWith('/sourceDescriptions') || d.category === 'source-integrity') { switchSideTab('sources'); return; }
+      if (path.startsWith('/components')) { refreshComponentsPanel(); switchSideTab('components'); return; }
+      if (path.startsWith('/info')) { showDocumentInspector(); switchSideTab('inspect'); return; }
+
+      const m = /^\/workflows\/(\d+)(?:\/steps\/(\d+))?/.exec(path);
       if (!m) return;
       const workflow = doc.workflows?.[Number(m[1])];
       if (!workflow?.workflowId) return;
@@ -430,6 +450,8 @@
         showSelection(surface.selection);
         if (!textEditor.hidden) textEditor.revealStep(stepId);
       }
+
+      switchSideTab('inspect'); // the finding is now the selection — show it
     }
 
     // The rail's surfaces feed the inspector templates; a re-render picks up fresh descriptors.
@@ -444,10 +466,31 @@
       opBrowser.refresh();
       logEvent('source-attached', { name: e.detail.attachment.name, kind: e.detail.attachment.kind });
     });
+    // A detached source is recoverable for the life of this working-copy visit: the browser
+    // stashed the full attachment before detaching; the toast's Restore re-attaches it verbatim
+    // (declaration and all). This is the undo story — attachments cannot ride the document's
+    // undo stack (they are workspace state with their own etag lifecycle).
+    const detachedStash = new Map();
     opBrowser.addEventListener('source-detached', async (e) => {
       const wc = await client.getWorkingCopy(shell.id); // the detach bumped the etag; refresh the save token
       shell.etag = wc.etag;
       setSaveUi('source detached');
+      if (e.detail.attachment) {
+        detachedStash.set(e.detail.name, e.detail.attachment);
+        showToast(`Source '${e.detail.name}' detached.`, 'warn', {
+          actionLabel: 'Restore',
+          action: async () => {
+            const a = detachedStash.get(e.detail.name);
+            if (!a) return;
+            const payload = a.kind === 'registry' ? { sourceName: a.sourceName ?? e.detail.name } : { document: a.document };
+            const restored = await client.attachWorkingCopySource(shell.id, e.detail.name, payload);
+            shell.etag = restored.etag ?? (await client.getWorkingCopy(shell.id)).etag;
+            detachedStash.delete(e.detail.name);
+            opBrowser.refresh();
+            setSaveUi('source restored');
+          },
+        });
+      }
       logEvent('source-detached', { name: e.detail.name });
     });
 
@@ -590,7 +633,18 @@
     });
 
     backBtn.addEventListener('click', () => { clearTimeout(autosaveTimer); if (shell.dirty && !shell.conflicted) saveWorkingCopy(); }, { capture: true });
-    backBtn.addEventListener('click', () => showView('workspace'));
+    backBtn.addEventListener('click', () => {
+      // Leaving the designer ends any debug session — the dock, trace, staged triggers,
+      // overrides, and inputs all belong to the working-copy visit.
+      tray.trace = null;
+      sessionTriggers.length = 0;
+      for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k];
+      sessionInputs = null;
+      document.getElementById('debug-dock').hidden = true;
+      applyDebugFrame();
+      setDebugUi();
+      showView('workspace');
+    });
     wctable.addEventListener('working-copy-selected', (e) => openWorkingCopy(e.detail.workingCopy.id));
     wctable.addEventListener('working-copy-created', (e) => openWorkingCopy(e.detail.workingCopy.id));
 
@@ -965,6 +1019,9 @@
     // Step-over / what-if overrides (§3.3): stepId → provided outputs; the overridden step does
     // not execute on replay. Same session lifetime as the triggers.
     const sessionOutputOverrides = {};
+    // The run's INPUTS, staged through the typed form the first ▶ of a session (sticky across
+    // replays and re-asked on the next fresh run, pre-filled).
+    let sessionInputs = null;
 
     function buildScenario() {
       const mocks = [];
@@ -976,7 +1033,11 @@
         }
       }
 
-      return { mocks, ...(sessionTriggers.length ? { triggers: structuredClone(sessionTriggers) } : {}) };
+      return {
+        mocks,
+        ...(sessionInputs && Object.keys(sessionInputs).length ? { inputs: structuredClone(sessionInputs) } : {}),
+        ...(sessionTriggers.length ? { triggers: structuredClone(sessionTriggers) } : {}),
+      };
     }
 
     function applyDebugFrame() {
@@ -1003,6 +1064,7 @@
 
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy(); // simulate runs the STORED document
         document.getElementById('debug-dock').hidden = false; // the session docks under the editor
+        void feedTraySchemas();
         shell.debugWorkflow = select.value; // stepping out of a sub-workflow restores this
         tray.trace = await client.simulateWorkingCopy(shell.id, command);
         applyDebugFrame();
@@ -1069,33 +1131,32 @@
       applyDebugFrame();
       setDebugUi();
       document.getElementById('debug-dock').hidden = false;
+      void feedTraySchemas();
     });
 
-    tray.addEventListener('output-override-requested', async (e) => {
-      const panel = document.getElementById('override-panel');
-      const editor = document.getElementById('override-editor');
-      document.getElementById('override-title').textContent = `⏭ ${e.detail.stepId} — outputs to provide`;
-      let descriptor = { type: 'object' };
-      try {
-        const schemas = await client.getWorkingCopySchemas(shell.id);
-        const outputs = schemas.workflows?.[select.value]?.steps?.[e.detail.stepId]?.outputs;
-        if (outputs && Object.keys(outputs).length) descriptor = { type: 'object', properties: outputs };
-      } catch { /* untyped editing still works */ }
-      editor.seed = e.detail.outputs;
-      editor.descriptor = descriptor;
-      panel.hidden = false;
-      panel.dataset.step = e.detail.stepId;
-    });
-    document.getElementById('override-cancel').addEventListener('click', () => { document.getElementById('override-panel').hidden = true; });
-    document.getElementById('override-apply').addEventListener('click', () => {
-      const panel = document.getElementById('override-panel');
-      try {
-        sessionOutputOverrides[panel.dataset.step] = document.getElementById('override-editor').value;
-      } catch { return; } // unparseable JSON in the fallback editor: stay open
-      panel.hidden = true;
-      logEvent('step-over', { stepId: panel.dataset.step });
+    tray.addEventListener('output-override', (e) => {
+      sessionOutputOverrides[e.detail.stepId] = e.detail.outputs;
+      logEvent('step-over', { stepId: e.detail.stepId });
       runSimulation();
     });
+
+    // The tray's typed editors (step over, inject trigger) read the schemas endpoint: every
+    // workflow's steps merged into one stepId map, channels mapped to their message payloads.
+    async function feedTraySchemas() {
+      try {
+        const schemas = await client.getWorkingCopySchemas(shell.id);
+        const steps = {};
+        const channels = {};
+        for (const wf of Object.values(schemas.workflows ?? {})) {
+          for (const [stepId, entry] of Object.entries(wf.steps ?? {})) {
+            steps[stepId] ??= entry;
+            if (entry.message?.channel && entry.message.payload) channels[entry.message.channel] ??= entry.message.payload;
+          }
+        }
+        tray.stepSchemas = steps;
+        tray.channelSchemas = channels;
+      } catch { /* untyped editors still work */ }
+    }
 
     tray.addEventListener('cursor-changed', applyDebugFrame);
     tray.addEventListener('workflow-focus', (e) => {
@@ -1118,7 +1179,31 @@
       logEvent('trigger-injected', e.detail);
       runSimulation();
     });
-    simBtn.addEventListener('click', () => runSimulation());
+    simBtn.addEventListener('click', async () => {
+      const wf = doc.workflows.find((w) => w.workflowId === select.value);
+      const properties = wf?.inputs?.properties;
+      if (properties && Object.keys(properties).length && !tray.trace) {
+        const staged = await askForInputs(wf.inputs);
+        if (staged === null) return; // cancelled
+        sessionInputs = staged;
+      }
+      runSimulation();
+    });
+
+    // The pre-run inputs form: the value editor typed by the workflow's OWN inputs schema,
+    // pre-filled from the last run.
+    function askForInputs(schema) {
+      return new Promise((resolve) => {
+        const dlg = document.getElementById('run-inputs-dialog');
+        const editor = document.getElementById('run-inputs-editor');
+        editor.seed = sessionInputs ?? undefined;
+        editor.descriptor = schema;
+        const done = (value) => { dlg.close(); resolve(value); };
+        dlg.querySelector('.ri-run').onclick = () => { try { done(editor.value); } catch { /* invalid JSON stays open */ } };
+        dlg.querySelector('.ri-cancel').onclick = () => done(null);
+        dlg.showModal();
+      });
+    }
     stepBtn.addEventListener('click', () => {
       if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
       else runSimulation({ stepPastEnd: !!tray.trace });
@@ -1319,9 +1404,6 @@
       // next document-changed re-pin every node from designerState and auto-layout "doesn't work".
       model.updateDesignerState((st) => { st.nodes = {}; }, { origin: 'canvas', label: 'auto-layout' });
       surface.fit();
-    });
-    document.getElementById('readonly').addEventListener('change', (e) => {
-      surface.toggleAttribute('readonly', e.target.checked);
     });
     // Theme: the playgrounds' three-state cycle — the icon shows the CURRENT preference
     // (☀️ light · 🌙 dark · 🖥️ system) and the tooltip narrates the next click.
