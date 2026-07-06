@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-06T01:52:48.8924047\u002B00:00",
+  "generatedAt": "2026-07-06T10:09:09.9969049\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -124,6 +124,8 @@
     "SimulateWorkingCopyResponse.cs",
     "ListWorkingCopySourcesRequest.cs",
     "ListWorkingCopySourcesResponse.cs",
+    "GetWorkingCopySourceRequest.cs",
+    "GetWorkingCopySourceResponse.cs",
     "AttachWorkingCopySourceRequest.cs",
     "AttachWorkingCopySourceResponse.cs",
     "DetachWorkingCopySourceRequest.cs",
@@ -1206,11 +1208,17 @@
     "Models/PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk.cs",
     "Models/PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk.Mutable.cs",
     "Models/PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk.JsonSchema.cs",
+    "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.cs",
+    "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.Mutable.cs",
+    "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.JsonSchema.cs",
+    "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.cs",
+    "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.Mutable.cs",
+    "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B2bc7facaf5f5573547595a8005a1d30c6ffd1d79",
+  "generatorVersion": "1.0.0\u002B713c833636d64487abeb88b1f8dc947bf592d5df",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "3f2e2f4dccb2b836fde6e9351f3adeb3481f7d728c1ae18857a798ce4f1840d8",
+  "specFileHash": "d7a6af132d5cb3c1436a336d40116acfa558dd5c5fff6894a82c7517e6b6cae5",
   "specVersion": "3.2"
 }

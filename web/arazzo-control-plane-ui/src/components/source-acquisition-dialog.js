@@ -63,11 +63,14 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0; width: min(480px, 92vw); }
+        dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0;
+                 width: min(560px, 92vw); max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+        dialog:not([open]) { display: none; }
         dialog::backdrop { background: rgb(0 0 0 / 0.35); }
         .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
         .head h2 { margin: 0; font-size: 14px; }
-        .body { padding: 12px 14px; display: grid; gap: 10px; }
+        .body { padding: 12px 14px; display: grid; gap: 10px; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0; }
+        .body > * { min-width: 0; }
         label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
         input, select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
         .tabs { display: flex; gap: 4px; }

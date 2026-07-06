@@ -6086,6 +6086,107 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ListWorkingCopySourcesEndpoint);
 
+        IEndpointConventionBuilder __GetWorkingCopySourceEndpoint = app.MapGet("/workspace/workflows/{id}/sources/{name}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetWorkingCopySourceParams parameters = new()
+                {
+                    Id = IdValue,
+                    Name = NameValue,
+                }
+                ;
+
+                GetWorkingCopySourceResult result = await workspaceHandler.HandleGetWorkingCopySourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getWorkingCopySource",
+                methodName: "GetWorkingCopySource",
+                httpMethod: "GET",
+                routeTemplate: "/workspace/workflows/{id}/sources/{name}",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("bearer", new[] { "workspace:read" }, null) }, false) }),
+            __GetWorkingCopySourceEndpoint);
+
         IEndpointConventionBuilder __AttachWorkingCopySourceEndpoint = app.MapPut("/workspace/workflows/{id}/sources/{name}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -11882,6 +11983,11 @@ public static class ApiEndpointRegistration
         public static readonly string[] ListWorkingCopySourcesOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetWorkingCopySource</c> for the <c>Bearer</c> scheme.
+        /// </summary>
+        public static readonly string[] GetWorkingCopySourceBearerScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>AttachWorkingCopySource</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AttachWorkingCopySourceOauth2Scopes = ["workspace:write"];
@@ -12230,6 +12336,11 @@ public static class ApiEndpointRegistration
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] AllOpenIdConnectScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
+
+        /// <summary>
+        /// Gets all scopes required by any operation for the <c>Bearer</c> scheme.
+        /// </summary>
+        public static readonly string[] AllBearerScopes = ["workspace:read"];
     }
 
 }

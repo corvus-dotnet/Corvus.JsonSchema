@@ -1495,3 +1495,26 @@ test('step over: overridden outputs replace execution — no exchange, downstrea
   assert.deepEqual(skipped.outputs, { petName: 'Hypothetical' }, 'the provided outputs stand');
   assert.ok(trace.steps[1].requests[0].path.includes('Hypothetical'), 'downstream steps resolve against them');
 });
+
+test('an attachment reads back whole — the restore payload for undoing a detach', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({ name: 'detachable', document: {
+    arazzo: '1.1.0', info: { title: 'd', version: '1' },
+    sourceDescriptions: [{ name: 'inline-src', url: './s.json', type: 'openapi' }],
+    workflows: [{ workflowId: 'w', steps: [] }],
+  } });
+  const doc = { openapi: '3.1.0', info: { title: 'S', version: '1' }, paths: { '/x': { get: { operationId: 'x', responses: { 200: { description: 'ok' } } } } } };
+  await c.attachWorkingCopySource(wc.id, 'inline-src', { document: doc });
+
+  const attachment = await c.getWorkingCopySource(wc.id, 'inline-src');
+  assert.equal(attachment.name, 'inline-src');
+  assert.deepEqual(attachment.document.paths['/x'].get.operationId, 'x', 'the stored inline document comes back');
+
+  await c.detachWorkingCopySource(wc.id, 'inline-src');
+  await assert.rejects(() => c.getWorkingCopySource(wc.id, 'inline-src'), /404|not found/i);
+
+  // Re-attach the stash verbatim: the round trip restores the operations surface.
+  await c.attachWorkingCopySource(wc.id, 'inline-src', { document: attachment.document });
+  const ops = await c.listWorkingCopySourceOperations(wc.id, 'inline-src');
+  assert.ok(ops.operations.some((o) => o.operationId === 'x'), 'restored source projects its operations again');
+});

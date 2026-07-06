@@ -27,9 +27,10 @@ describe('<arazzo-debug-tray>', () => {
   let el;
   afterEach(() => el?.remove());
 
-  function make(trace = TRACE) {
+  function make(trace = TRACE, configure) {
     el = document.createElement('arazzo-debug-tray');
     mount(el);
+    configure?.(el); // schema feeds land before the trace renders
     el.trace = trace;
     return el;
   }
@@ -111,20 +112,53 @@ describe('<arazzo-debug-tray>', () => {
     equal(channel.value, 'adoption/confirmed', 'the channel prefills from the wait');
     equal(el.shadowRoot.querySelector('.inj-corr').value, 'p-42', 'the correlation id prefills too');
 
-    // Invalid payload JSON refuses locally; nothing escapes the tray.
-    el.shadowRoot.querySelector('.inj-payload').value = '{nope';
+    // The payload edits through the typed value editor (free-form JSON here — no channel schema
+    // was fed). Invalid JSON refuses locally; nothing escapes the tray.
+    const payloadEditor = el.shadowRoot.querySelector('.inj-payload');
+    equal(payloadEditor.tagName.toLowerCase(), 'arazzo-value-editor', 'the inject payload is the standard typed editor');
+    const jsonArea = payloadEditor.shadowRoot.querySelector('textarea');
+    jsonArea.value = '{nope';
+    jsonArea.dispatchEvent(new Event('input'));
     let leaked = false;
     el.addEventListener('trigger-injected', () => { leaked = true; }, { once: true });
     el.shadowRoot.querySelector('.inj-go').click();
     ok(!leaked, 'an unparseable payload does not emit');
 
-    el.shadowRoot.querySelector('.inj-payload').value = '{"approved": true}';
+    jsonArea.value = '{"approved": true}';
+    jsonArea.dispatchEvent(new Event('input'));
     const injected = nextEvent(el, 'trigger-injected');
     el.shadowRoot.querySelector('.inj-go').click();
     const e = await injected;
     equal(e.detail.channel, 'adoption/confirmed');
     equal(e.detail.correlationId, 'p-42');
     equal(e.detail.payload.approved, true);
+  });
+
+  it('a typed channel schema gives the inject payload a structured form', () => {
+    make({
+      outcome: 'suspended',
+      stepsExecuted: 1,
+      steps: [TRACE.steps[0]],
+      wait: { kind: 'message', channel: 'adoption/confirmed' },
+    }, (tray) => {
+      tray.channelSchemas = { 'adoption/confirmed': { type: 'object', properties: { approved: { type: 'boolean' } } } };
+    });
+    const payloadEditor = el.shadowRoot.querySelector('.inj-payload');
+    ok(payloadEditor.shadowRoot.textContent.includes('approved'), 'the message schema drives the form');
+  });
+
+  it('step over opens a typed inline editor in the context pane and emits the override', async () => {
+    make(TRACE, (tray) => {
+      tray.stepSchemas = { 'get-pet': { outputs: { petName: { type: 'string' } } } };
+    });
+    el.cursor = 1;
+    el.shadowRoot.querySelector('.override').click();
+    const form = el.shadowRoot.querySelector('.ovr-form');
+    ok(!form.hidden, 'the inline editor opens under the button');
+    ok(form.textContent.includes('typed by'), 'and says it is typed');
+    const overridden = nextEvent(el, 'output-override');
+    el.shadowRoot.querySelector('.ovr-apply').click();
+    equal((await overridden).detail.stepId, el.trace.steps[0].stepId);
   });
 
   it('a completed trace offers no injection form', () => {
