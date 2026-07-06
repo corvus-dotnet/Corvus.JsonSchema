@@ -101,25 +101,6 @@ describe('<arazzo-step-inspector>', () => {
     ok(!el.shadowRoot.querySelector('.localize'), 'affordance gone once localized');
   });
 
-  it('templates criteria from the operation responses (fills empty, appends missing)', async () => {
-    make({ stepId: 'x', operationId: 'op' });
-    el.operationResponses = ['201', '402', '429'];
-    const btn = el.shadowRoot.querySelector('.template');
-    ok(btn, 'template affordance offered when responses are known');
-    const changed = nextEvent(el, 'step-changed');
-    btn.click();
-    const step = (await changed).detail.step;
-    equal(step.successCriteria[0].condition, '$statusCode == 201');
-    equal(step.onFailure.map((a) => a.name).join(','), 'on-402,on-429,unexpected-failure');
-    equal(step.onFailure.at(-1).criteria, undefined, 'the fallback is criteria-less');
-
-    // Re-templating never duplicates and never overwrites existing criteria.
-    const again = nextEvent(el, 'step-changed');
-    el.shadowRoot.querySelector('.template').click();
-    const step2 = (await again).detail.step;
-    equal(step2.onFailure.length, 3, 'no duplicate failure actions');
-  });
-
   it('builds the request body from the operation schema (only when the payload is empty)', async () => {
     make({ stepId: 'x', operationId: 'op' });
     el.operationRequest = {
@@ -134,20 +115,6 @@ describe('<arazzo-step-inspector>', () => {
     equal(step.requestBody.contentType, 'application/json');
     ok(step.requestBody.payload.orderId === '' && step.requestBody.payload.amount === 0, 'skeleton stubbed');
     ok(!el.shadowRoot.querySelector('.body-template'), 'affordance gone once a payload exists');
-  });
-
-  it('templating with an existing catch-all inserts above it and adds no second fallback', async () => {
-    make({
-      stepId: 'x',
-      operationId: 'op',
-      onFailure: [{ name: 'give-up-here', type: 'end' }], // an existing criteria-less catch-all
-    });
-    el.operationResponses = ['200', '404'];
-    const changed = nextEvent(el, 'step-changed');
-    el.shadowRoot.querySelector('.template').click();
-    const step = (await changed).detail.step;
-    equal(step.onFailure.map((a) => a.name).join(','), 'on-404,give-up-here',
-      'criteria’d template above the catch-all; unexpected-failure skipped');
   });
 
   it('reorders actions with catch-alls pinned last', async () => {

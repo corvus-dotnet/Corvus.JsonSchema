@@ -17,7 +17,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { buildActionList, ACTION_LIST_CSS } from './action-list.js';
-import { templatesFromResponses, payloadSkeletonFromSchema } from '../operation-templates.js';
+import { payloadSkeletonFromSchema } from '../operation-templates.js';
 import './expression-input.js';
 import './criteria-editor.js';
 import './outputs-editor.js';
@@ -62,11 +62,9 @@ class ArazzoStepInspector extends ArazzoElement {
     this._components = value || {};
     if (this.isConnected && this._built) this.renderForm();
   }
-  /** The bound operation's documented response codes (from the operation surface); enables the
-   *  "template criteria from responses" affordance. */
+  /** The bound operation's documented response codes (from the operation surface); enables the */
   set operationResponses(responses) {
     this._operationResponses = responses;
-    if (this.isConnected && this._built) this._renderTemplateButton();
   }
 
   /** The binding's request surface — `{contentType?, schema}` for an OpenAPI request body, or the
@@ -173,7 +171,6 @@ class ArazzoStepInspector extends ArazzoElement {
 
       <h3>success criteria</h3>
       <div class="hint">the verdict: ALL must match for the step to succeed — failing them is what makes it fail</div>
-      <div class="template-slot"></div>
       <div class="crit"></div>
 
       <h3>on success</h3>
@@ -209,7 +206,6 @@ class ArazzoStepInspector extends ArazzoElement {
     this._mountActionList('onsuccess', 'onSuccess', 'success');
     this._mountActionList('onfailure', 'onFailure', 'failure');
     this._renderLocalize();
-    this._renderTemplateButton();
     this._renderBodyTemplateButton();
 
     // Outputs.
@@ -550,47 +546,6 @@ class ArazzoStepInspector extends ArazzoElement {
     });
     this.$(`.${slotClass}`).replaceChildren(el);
     if (!actions.length) delete this._step[listName]; // ??= above must not leave an empty list behind
-  }
-
-  /** @private — offer response-derived templates: success criteria from the documented success
-   *  codes, one failure action per documented error (plus the catch-all — a documented `default`,
-   *  or an explicit unexpected-failure fallback when the operation documents none). Success
-   *  criteria fill only when empty; failure actions append without duplicating names. */
-  _renderTemplateButton() {
-    const slot = this.$('.template-slot');
-    if (!slot) return;
-    slot.replaceChildren();
-    const templates = templatesFromResponses(this._operationResponses);
-    if (!templates) return;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'ghost template';
-    btn.style.fontSize = '12px';
-    btn.textContent = '⚡ Template from the operation’s responses';
-    btn.title = 'Derives success criteria and per-response failure actions from the documented responses.';
-    btn.addEventListener('click', () => {
-      if (!this._step.successCriteria?.length && templates.successCriteria.length) {
-        this._step.successCriteria = templates.successCriteria;
-      }
-      // First-match-wins: criteria'd templates insert ABOVE any existing catch-all (else they
-      // could never fire), and the template's own fallback is skipped when a catch-all exists.
-      const list = [...(this._step.onFailure || [])];
-      const names = new Set(list.map((a) => a?.name));
-      const isCatchAll = (a) => a && typeof a.reference !== 'string' && !(a.criteria?.length);
-      const hasCatchAll = list.some(isCatchAll);
-      const fresh = templates.failureActions.filter((a) =>
-        !names.has(a.name) && (a.criteria?.length || !hasCatchAll));
-      if (fresh.length) {
-        const pin = list.findIndex(isCatchAll);
-        const at = pin < 0 ? list.length : pin;
-        list.splice(at, 0, ...fresh.filter((a) => a.criteria?.length));
-        list.push(...fresh.filter((a) => !(a.criteria?.length)));
-        this._step.onFailure = list;
-      }
-      this.renderForm();
-      this._emit();
-    });
-    slot.append(btn);
   }
 
   /** @private — offer a request-body skeleton derived from the binding's schema: structure typed

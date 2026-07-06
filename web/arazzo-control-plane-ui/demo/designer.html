@@ -156,6 +156,7 @@
     import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from './designer-fixture.js';
     import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
     import { EXPRESSION_ROOTS, resolveAgainstFrame } from '../src/expression-language.js';
+    import { templatesFromResponses } from '../src/operation-templates.js';
     import { WorkflowDocumentModel } from '../src/workflow-document-model.js';
     import '../src/components/design-surface.js';
     import '../src/components/expression-input.js';
@@ -425,6 +426,13 @@
       else if (operation.operationId) step.operationId = operation.operationId;
       const required = (operation.parameters ?? []).filter((x) => x.required);
       if (required.length) step.parameters = required.map((x) => ({ name: x.name, in: x.in, value: '' }));
+      // The operation's documented responses ARE the step's starting contract: success criteria
+      // and per-response failure actions apply at creation — not behind a button.
+      const templates = templatesFromResponses(operation.responses);
+      if (templates) {
+        if (templates.successCriteria.length) step.successCriteria = templates.successCriteria;
+        if (templates.failureActions.length) step.onFailure = templates.failureActions;
+      }
       model.update((d) => {
         // The step's source must be DECLARED for its operations to resolve (§4.1): dropping an
         // operation auto-declares its sourceDescription in the same undo unit as the step.
