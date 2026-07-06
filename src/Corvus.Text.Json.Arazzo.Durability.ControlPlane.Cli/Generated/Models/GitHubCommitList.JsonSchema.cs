@@ -19,37 +19,42 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
-/// GitPullRequestBody
+/// GitHubCommitList
 /// </summary>
+/// <remarks>
+/// <para>
+/// One page of a repository&#39;s commit history, newest first — the Git pane&#39;s history browser.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
-    : IJsonElement<PostWorkspaceWorkflowsByIdGitPullBody>
+public readonly partial struct GitHubCommitList
+    : IJsonElement<GitHubCommitList>
 {
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyExpectedEtagPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("expectedEtag"u8, buffer, out written);
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyExpectedEtagNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("expectedEtag"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyCommitsPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("commits"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyCommitsNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("commits"u8, buffer, out written);
 
-        private const int RequiredOffsetForExpectedEtag = 0;
-        private const uint RequiredBitForExpectedEtag = 0b00000000000000000000000000000001;
+        private const int RequiredOffsetForCommits = 0;
+        private const uint RequiredBitForCommits = 0b00000000000000000000000000000001;
 
         private const uint RequiredBitMask0 =
-            RequiredBitForExpectedEtag;
-        private static readonly JsonSchemaPathProvider ExpectedEtagSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/expectedEtag"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider RefSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/ref"u8, buffer, out written);
+            RequiredBitForCommits;
+        private static readonly JsonSchemaPathProvider CommitsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/commits"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider HasMoreSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/hasMore"u8, buffer, out written);
 
-        private static void MatchExpectedEtag(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchCommits(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubCommitList.GitHubCommitArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.ExpectedEtagUtf8,
-                    evaluationPath: ExpectedEtagSchemaEvaluationPath);
+                    JsonPropertyNames.CommitsUtf8,
+                    evaluationPath: CommitsSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubCommitList.GitHubCommitArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
 
             if (!context.HasCollector && !context.IsMatch)
@@ -57,29 +62,29 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 return;
             }
 
-            requiredBitBuffer[RequiredOffsetForExpectedEtag] |= RequiredBitForExpectedEtag;
+            requiredBitBuffer[RequiredOffsetForCommits] |= RequiredBitForCommits;
         }
 
-        private static void MatchRef(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchHasMore(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.RefUtf8,
-                    evaluationPath: RefSchemaEvaluationPath);
+                    JsonPropertyNames.HasMoreUtf8,
+                    evaluationPath: HasMoreSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.ExpectedEtagUtf8, MatchExpectedEtag),
-                (static () => JsonPropertyNames.RefUtf8, MatchRef),
+                (static () => JsonPropertyNames.CommitsUtf8, MatchCommits),
+                (static () => JsonPropertyNames.HasMoreUtf8, MatchHasMore),
             ]);
         }
 
@@ -97,17 +102,17 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1workspace~1workflows~1{id}~1git~1pull/post/requestBody/content/application~1json/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/GitHubCommitList"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/paths/~1workspace~1workflows~1{id}~1git~1pull/post/requestBody/content/application~1json/schema";
+        public const string SchemaLocation = "/components/schemas/GitHubCommitList";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1workspace~1workflows~1{id}~1git~1pull/post/requestBody/content/application~1json/schema"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/GitHubCommitList"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -164,7 +169,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 // Do a quick test to see if we have all of the required bits set in each element
                 if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
                 {
-                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyExpectedEtagPresent, "expectedEtag"u8, "required"u8);
+                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyCommitsPresent, "commits"u8, "required"u8);
                 }
                 else if (!context.HasCollector)
                 {
@@ -173,13 +178,13 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 }
                 else
                 {
-                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForExpectedEtag] & RequiredBitForExpectedEtag) == 0)
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForCommits] & RequiredBitForCommits) == 0)
                     {
-                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyExpectedEtagNotPresent, "expectedEtag"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyCommitsNotPresent, "commits"u8, "required"u8);
                     }
                     else
                     {
-                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyExpectedEtagPresent, "expectedEtag"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyCommitsPresent, "commits"u8, "required"u8);
                     }
                 }
             }

@@ -255,6 +255,38 @@ public sealed class ApiGithubClient : IApiGithubClient
         return SendAsyncCore<BrowseRepoRequest, BrowseRepoResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// List a repository's commit history
+    /// </summary>
+    /// <remarks>
+    /// One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.
+    /// </remarks>
+    /// <param name="owner">The owner parameter.</param>
+    /// <param name="repo">The repo parameter.</param>
+    /// <param name="sha">The sha parameter.</param>
+    /// <param name="path">The path parameter.</param>
+    /// <param name="page">The page parameter.</param>
+    /// <param name="perPage">The perPage parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ListRepoCommitsResponse> ListRepoCommitsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source repo, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sha = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source path = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPage.Source page = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPerPage.Source perPage = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString OwnerValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, owner, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RepoValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, repo, 30).RootElement;
+        ListRepoCommitsRequest request = new(OwnerValue, RepoValue)
+        {
+            Sha = sha.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, sha, 30).RootElement,
+            Path = path.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, path, 30).RootElement,
+            Page = page.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPage)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPage.CreateBuilder(workspace, page, 30).RootElement,
+            PerPage = perPage.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPerPage)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPerPage.CreateBuilder(workspace, perPage, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ListRepoCommitsRequest, ListRepoCommitsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

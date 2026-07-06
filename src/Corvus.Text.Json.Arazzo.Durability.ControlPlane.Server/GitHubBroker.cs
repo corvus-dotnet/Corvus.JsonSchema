@@ -353,6 +353,38 @@ public sealed class GitHubBroker
     }
 
     /// <summary>
+    /// Lists one page of a repository's commit history (<c>GET /repos/{owner}/{repo}/commits</c>) on the
+    /// principal's token, newest first — the Git pane's history browser. Scope with <paramref name="sha"/>
+    /// (the bound branch) and <paramref name="path"/> (the bound document) to see the commits that touched
+    /// the working copy.
+    /// </summary>
+    /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="owner">The repository owner.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="sha">The branch/tag/commit to start from, if any.</param>
+    /// <param name="path">Only commits touching this path, if any.</param>
+    /// <param name="page">The 1-based page.</param>
+    /// <param name="perPage">The page size.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The outcome and, on success, the GitHub commits array (caller disposes).</returns>
+    public ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> ListCommitsAsync(
+        string principalKey, string owner, string repo, string? sha, string? path, int page, int perPage, CancellationToken cancellationToken)
+    {
+        var query = new System.Text.StringBuilder("?per_page=").Append(perPage).Append("&page=").Append(page);
+        if (!string.IsNullOrEmpty(sha))
+        {
+            query.Append("&sha=").Append(Uri.EscapeDataString(sha));
+        }
+
+        if (!string.IsNullOrEmpty(path))
+        {
+            query.Append("&path=").Append(Uri.EscapeDataString(path));
+        }
+
+        return this.GetAsync(principalKey, $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/commits{query}", cancellationToken);
+    }
+
+    /// <summary>
     /// Creates a branch from a base branch's head (<c>POST /repos/{owner}/{repo}/git/refs</c>) on the
     /// principal's token. Creating a ref makes no commit and composes no identity (§4.7).
     /// </summary>

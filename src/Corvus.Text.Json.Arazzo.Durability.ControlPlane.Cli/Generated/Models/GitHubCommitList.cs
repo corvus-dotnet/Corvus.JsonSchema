@@ -17,19 +17,24 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
-/// GitPullRequestBody
+/// GitHubCommitList
 /// </summary>
+/// <remarks>
+/// <para>
+/// One page of a repository&#39;s commit history, newest first — the Git pane&#39;s history browser.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
+public readonly partial struct GitHubCommitList
 #if NET8_0_OR_GREATER
-    : IJsonElement<PostWorkspaceWorkflowsByIdGitPullBody>,
+    : IJsonElement<GitHubCommitList>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<PostWorkspaceWorkflowsByIdGitPullBody>,
+    : IJsonElement<GitHubCommitList>,
       IFormattable
 #endif
 {
@@ -39,10 +44,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/> struct.
+    /// Initializes a new instance of the <see cref="GitHubCommitList"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal PostWorkspaceWorkflowsByIdGitPullBody(IJsonDocument parent, int idx)
+    internal GitHubCommitList(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -52,7 +57,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static PostWorkspaceWorkflowsByIdGitPullBody DefaultInstance { get; }
+    public static GitHubCommitList DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -154,21 +159,18 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     }
 
     /// <summary>
-    /// Gets the <c>expectedEtag</c> property.
+    /// Gets the <c>commits</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
-    /// <para>
-    /// The etag the client read (409 when stale).
-    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString ExpectedEtag
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubCommitList.GitHubCommitArray Commits
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpectedEtagUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommitsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubCommitList.GitHubCommitArray value))
             {
                 return value;
             }
@@ -178,18 +180,18 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     }
 
     /// <summary>
-    /// Gets the (optional) <c>ref</c> property.
+    /// Gets the (optional) <c>hasMore</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The branch, tag, or commit to pull from (default: the bound branch&#39;s head). Pulling at a commit is the git-history ROLLBACK — it replaces the working copy with that commit&#39;s state, so the UI danger-confirms it.
+    /// Whether another page follows.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Ref
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean HasMore
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HasMoreUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -232,7 +234,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in PostWorkspaceWorkflowsByIdGitPullBody left, in PostWorkspaceWorkflowsByIdGitPullBody right)
+    public static bool operator ==(in GitHubCommitList left, in GitHubCommitList right)
     {
         return left.Equals(right);
     }
@@ -245,7 +247,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in PostWorkspaceWorkflowsByIdGitPullBody left, in PostWorkspaceWorkflowsByIdGitPullBody right)
+    public static bool operator !=(in GitHubCommitList left, in GitHubCommitList right)
     {
         return !left.Equals(right);
     }
@@ -258,7 +260,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in PostWorkspaceWorkflowsByIdGitPullBody left, in JsonElement right)
+    public static bool operator ==(in GitHubCommitList left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -271,7 +273,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in PostWorkspaceWorkflowsByIdGitPullBody left, in JsonElement right)
+    public static bool operator !=(in GitHubCommitList left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -282,7 +284,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(PostWorkspaceWorkflowsByIdGitPullBody instance)
+    public static implicit operator JsonElement(GitHubCommitList instance)
     {
         return JsonElement.From(instance);
     }
@@ -293,9 +295,9 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator PostWorkspaceWorkflowsByIdGitPullBody(JsonElement instance)
+    public static implicit operator GitHubCommitList(JsonElement instance)
     {
-        return PostWorkspaceWorkflowsByIdGitPullBody.From(instance);
+        return GitHubCommitList.From(instance);
     }
 
     /// <summary>
@@ -304,7 +306,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostWorkspaceWorkflowsByIdGitPullBody From<T>(in T instance)
+    public static GitHubCommitList From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -329,10 +331,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostWorkspaceWorkflowsByIdGitPullBody ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static GitHubCommitList ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostWorkspaceWorkflowsByIdGitPullBody>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<GitHubCommitList>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -355,10 +357,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostWorkspaceWorkflowsByIdGitPullBody ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static GitHubCommitList ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostWorkspaceWorkflowsByIdGitPullBody>(json, options);
+        return JsonElementHelpers.ParseValue<GitHubCommitList>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -381,10 +383,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostWorkspaceWorkflowsByIdGitPullBody ParseValue(string json, JsonDocumentOptions options = default)
+    public static GitHubCommitList ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostWorkspaceWorkflowsByIdGitPullBody>(json, options);
+        return JsonElementHelpers.ParseValue<GitHubCommitList>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -424,10 +426,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static PostWorkspaceWorkflowsByIdGitPullBody ParseValue(ref Utf8JsonReader reader)
+    public static GitHubCommitList ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostWorkspaceWorkflowsByIdGitPullBody>(ref reader);
+        return JsonElementHelpers.ParseValue<GitHubCommitList>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -469,16 +471,16 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out PostWorkspaceWorkflowsByIdGitPullBody? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out GitHubCommitList? result)
     {
-        return JsonElementHelpers.TryParseValue<PostWorkspaceWorkflowsByIdGitPullBody>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<GitHubCommitList>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new PostWorkspaceWorkflowsByIdGitPullBody(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new GitHubCommitList(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -568,11 +570,11 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static PostWorkspaceWorkflowsByIdGitPullBody IJsonElement<PostWorkspaceWorkflowsByIdGitPullBody>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static GitHubCommitList IJsonElement<GitHubCommitList>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"PostWorkspaceWorkflowsByIdGitPullBody: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"GitHubCommitList: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -587,11 +589,11 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="GitHubCommitList"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="GitHubCommitList"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -600,10 +602,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public PostWorkspaceWorkflowsByIdGitPullBody Clone()
+    public GitHubCommitList Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<PostWorkspaceWorkflowsByIdGitPullBody>(_idx);
+        return _parent.CloneElement<GitHubCommitList>(_idx);
     }
 
     /// <summary>
@@ -611,7 +613,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/> that lives for the lifetime of its
+    /// An immutable <see cref="GitHubCommitList"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -625,12 +627,12 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public PostWorkspaceWorkflowsByIdGitPullBody Freeze()
+    public GitHubCommitList Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<PostWorkspaceWorkflowsByIdGitPullBody>(_idx);
+            return mutable.FreezeElement<GitHubCommitList>(_idx);
         }
 
         return this;
@@ -642,24 +644,24 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="ExpectedEtag"/>.
+        /// Gets the JSON property name for <see cref="Commits"/>.
         /// </summary>
-        public const string ExpectedEtag = "expectedEtag";
+        public const string Commits = "commits";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Ref"/>.
+        /// Gets the JSON property name for <see cref="HasMore"/>.
         /// </summary>
-        public const string Ref = "ref";
+        public const string HasMore = "hasMore";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ExpectedEtag"/>.
+        /// Gets the JSON property name for <see cref="Commits"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ExpectedEtagUtf8 => "expectedEtag"u8;
+        public static ReadOnlySpan<byte> CommitsUtf8 => "commits"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Ref"/>.
+        /// Gets the JSON property name for <see cref="HasMore"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> RefUtf8 => "ref"u8;
+        public static ReadOnlySpan<byte> HasMoreUtf8 => "hasMore"u8;
     }
 
     /// <summary>
@@ -668,14 +670,14 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ExpectedEtag"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Commits"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ExpectedEtag => "expectedEtag"u8;
+        public static ReadOnlySpan<byte> Commits => "commits"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Ref"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="HasMore"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Ref => "ref"u8;
+        public static ReadOnlySpan<byte> HasMore => "hasMore"u8;
     }
 
     /// <summary>
@@ -685,13 +687,13 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ExpectedEtag"/>.
+        /// Gets the pre-baked property name blob for <see cref="Commits"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ExpectedEtag => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x65, 0x63, 0x74, 0x65, 0x64, 0x45, 0x74, 0x61, 0x67, 0x22];
+        public static ReadOnlySpan<byte> Commits => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x6D, 0x69, 0x74, 0x73, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Ref"/>.
+        /// Gets the pre-baked property name blob for <see cref="HasMore"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Ref => [0x55, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x66, 0x22];
+        public static ReadOnlySpan<byte> HasMore => [0x95, 0x00, 0x00, 0x00, 0x22, 0x68, 0x61, 0x73, 0x4D, 0x6F, 0x72, 0x65, 0x22];
     }
 }

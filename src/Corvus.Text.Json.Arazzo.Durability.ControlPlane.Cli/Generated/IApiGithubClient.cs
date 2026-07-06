@@ -178,6 +178,16 @@ public interface IApiGithubClient : IAsyncDisposable
         public static readonly string[] BrowseRepoOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>ListRepoCommits</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRepoCommitsOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListRepoCommits</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRepoCommitsOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["workspace:read", "workspace:write"];
@@ -283,4 +293,19 @@ public interface IApiGithubClient : IAsyncDisposable
     /// <param name="ref">The ref parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<BrowseRepoResponse> BrowseRepoAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source repo, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source path = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source @ref = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// List a repository's commit history
+    /// </summary>
+    /// <remarks>
+    /// One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.
+    /// </remarks>
+    /// <param name="owner">The owner parameter.</param>
+    /// <param name="repo">The repo parameter.</param>
+    /// <param name="sha">The sha parameter.</param>
+    /// <param name="path">The path parameter.</param>
+    /// <param name="page">The page parameter.</param>
+    /// <param name="perPage">The perPage parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ListRepoCommitsResponse> ListRepoCommitsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source repo, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sha = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source path = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPage.Source page = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetGithubReposByOwnerByRepoCommitsPerPage.Source perPage = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

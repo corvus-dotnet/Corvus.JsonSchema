@@ -100,4 +100,13 @@ public interface IApiGithubHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<BrowseRepoResult> HandleBrowseRepoAsync(BrowseRepoParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /github/repos/{owner}/{repo}/commits — List a repository's commit history
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListRepoCommitsResult> HandleListRepoCommitsAsync(ListRepoCommitsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

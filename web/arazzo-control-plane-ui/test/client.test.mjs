@@ -1295,6 +1295,43 @@ test('a Git-bound working copy commits to and pulls from its branch (§4.7)', as
   await assert.rejects(() => c.commitWorkingCopy(wc.id, { message: 'x' }), (e) => e.status === 409);
 });
 
+test('git history browses, compares at a ref, and rolls back via pull-at-ref (snag 9)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  const { authorizeUrl } = await c.beginGitHubAuth();
+  await mock.fetch(authorizeUrl);
+
+  // History pages newest-first, scoped to the bound branch and document.
+  const first = await c.listRepoCommits('acme-org', 'specs', { sha: 'main', path: 'flows/adopt.arazzo.json', perPage: 2 });
+  assert.equal(first.commits.length, 2);
+  assert.equal(first.hasMore, true, 'a full page implies more history');
+  const second = await c.listRepoCommits('acme-org', 'specs', { sha: 'main', perPage: 2, page: 2 });
+  assert.equal(second.commits.length, 1);
+  assert.equal(second.hasMore, false);
+  const oldest = second.commits[0];
+  assert.ok(oldest.sha && oldest.message && oldest.author && oldest.date, 'a commit carries sha, message, author, and date');
+
+  // Contents at a commit's ref serve THAT commit's file — the side-by-side comparison's data.
+  const head = await c.browseRepo('acme-org', 'specs', { path: 'flows/adopt.arazzo.json' });
+  const historic = await c.browseRepo('acme-org', 'specs', { path: 'flows/adopt.arazzo.json', ref: oldest.sha });
+  const headSteps = JSON.parse(Buffer.from(head.file.content, 'base64').toString()).workflows[0].steps.length;
+  const historicSteps = JSON.parse(Buffer.from(historic.file.content, 'base64').toString()).workflows[0].steps.length;
+  assert.ok(historicSteps < headSteps, 'the historic document differs from the head');
+
+  // Rollback = pull at the commit: the working copy becomes that commit's state. The binding is
+  // unchanged — the next commit records the rollback as a new commit on the branch.
+  const wc = await c.createWorkingCopy({ name: 'adopt', document: { arazzo: '1.1.0', info: { title: 'Adopt', version: '1' }, workflows: [{ workflowId: 'adopt', steps: [] }] } });
+  const fresh = await c.getWorkingCopy(wc.id);
+  const bound = await c.saveWorkingCopy(wc.id, {
+    document: fresh.document,
+    expectedEtag: fresh.etag,
+    gitBinding: { owner: 'acme-org', repo: 'specs', branch: 'main', path: 'flows/adopt.arazzo.json' },
+  });
+  const rolledBack = await c.pullWorkingCopy(wc.id, { expectedEtag: bound.etag, ref: oldest.sha });
+  assert.equal(rolledBack.document.workflows[0].steps.length, historicSteps, 'the rollback pulled the commit state');
+  assert.equal(rolledBack.gitBinding.branch, 'main', 'the binding is unchanged by a rollback');
+});
+
 test('simulateCatalogVersion replays a published version verbatim (§4.3)', async () => {
   const c = makeClient();
   // The seeded adopt-pet v1 carries its packaged document; the simulator runs it with scripted mocks —

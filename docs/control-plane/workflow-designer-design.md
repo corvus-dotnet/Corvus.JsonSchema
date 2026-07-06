@@ -887,6 +887,16 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    the UI confirms with a danger dialog). A true three-way merge needs the binding to record the
    pulled commit sha (the base), divergence detection, and a conflict presentation — design work,
    not a quick add.
+8d. **Visual diff overlay on the comparison visualizer** — the Git pane's history browser ships
+   commit browsing (`GET /github/repos/{owner}/{repo}/commits`, scoped to the bound branch and
+   document), rollback (a danger-confirmed pull carrying the commit's `ref` — the binding never
+   changes, so the next commit records the rollback on the branch), and
+   `<arazzo-workflow-compare>`: a REUSABLE side-by-side of any two workflow versions as two
+   read-only design surfaces (current-vs-commit today; catalog versions or two commits are the
+   same call). The follow-on is the diff OVERLAY: classify nodes/edges added/removed/changed
+   (stepId-keyed, content-hashed for "changed") and paint the classification through the
+   surfaces' existing per-node state channel — design the matching rules (renames, reordered
+   steps) before building.
 8b. **Step-output overrides (engine)** — the mock honours `overrides.stepOutputs` on simulate
    (step over / what-if: the step does not execute, its provided outputs stand — the runs-view
    Skip brought to the debugger); the real simulator needs the same override seam for server

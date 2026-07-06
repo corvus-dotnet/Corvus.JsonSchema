@@ -178,6 +178,27 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     }
 
     /// <summary>
+    /// Gets the (optional) <c>ref</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The branch, tag, or commit to pull from (default: the bound branch&#39;s head). Pulling at a commit is the git-history ROLLBACK — it replaces the working copy with that commit&#39;s state, so the UI danger-confirms it.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Ref
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the number of properties in the object.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -626,9 +647,19 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         public const string ExpectedEtag = "expectedEtag";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Ref"/>.
+        /// </summary>
+        public const string Ref = "ref";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="ExpectedEtag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExpectedEtagUtf8 => "expectedEtag"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Ref"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RefUtf8 => "ref"u8;
     }
 
     /// <summary>
@@ -640,6 +671,11 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// Gets the escaped UTF-8 JSON property name for <see cref="ExpectedEtag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExpectedEtag => "expectedEtag"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Ref"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Ref => "ref"u8;
     }
 
     /// <summary>
@@ -652,5 +688,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// Gets the pre-baked property name blob for <see cref="ExpectedEtag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExpectedEtag => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x65, 0x63, 0x74, 0x65, 0x64, 0x45, 0x74, 0x61, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Ref"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Ref => [0x55, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x66, 0x22];
     }
 }

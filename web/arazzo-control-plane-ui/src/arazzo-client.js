@@ -1154,17 +1154,38 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listRepoCommits` — one page of the commit history through the caller's brokered session,
+   * newest first (snag 9): scope with `sha` (the bound branch) and `path` (the bound document) to
+   * see the commits that touched the working copy. Each commit can then be compared side-by-side
+   * (`browseRepo` at its ref) or rolled back to (`pullWorkingCopy` with its ref).
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ sha?: string, path?: string, page?: number, perPage?: number, signal?: AbortSignal }} [opts]
+   * @returns {Promise<{commits: Array<{sha: string, message?: string, author?: string, date?: string}>, hasMore?: boolean}>}
+   */
+  listRepoCommits(owner, repo, { sha, path, page, perPage, signal } = {}) {
+    const query = new URLSearchParams();
+    if (sha) query.set('sha', sha);
+    if (path) query.set('path', path);
+    if (page) query.set('page', String(page));
+    if (perPage) query.set('perPage', String(perPage));
+    const suffix = query.size > 0 ? `?${query}` : '';
+    return this._request('GET', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits${suffix}`, { signal });
+  }
+
+  /**
    * `pullWorkingCopy` — refresh a Git-bound working copy from its branch (§4.7): the document from
    * gitBinding.path, each bound spec as an inline attachment, and — when scenariosDir is bound —
    * the scenario set. An etag-guarded save: 409 when stale (or without a GitHub session); 400 when
-   * the working copy has no binding.
+   * the working copy has no binding. An explicit `ref` pulls at that commit instead of the branch
+   * head — the git-history ROLLBACK (snag 9), which the UI danger-confirms.
    * @param {string} id
-   * @param {{ expectedEtag: string, signal?: AbortSignal }} opts
+   * @param {{ expectedEtag: string, ref?: string, signal?: AbortSignal }} opts
    * @returns {Promise<object>} The refreshed working copy.
    */
-  pullWorkingCopy(id, { expectedEtag, signal } = {}) {
+  pullWorkingCopy(id, { expectedEtag, ref, signal } = {}) {
     if (!expectedEtag) throw new TypeError('pullWorkingCopy requires the expectedEtag.');
-    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/git/pull`, { body: { expectedEtag }, signal });
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/git/pull`, { body: ref ? { expectedEtag, ref } : { expectedEtag }, signal });
   }
 
   /**

@@ -19,6 +19,12 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
 import './git-tree.js';
 import './input-dialog.js';
+import './workflow-compare.js';
+
+/** Decodes a brokered contents read's base64 file into a parsed JSON document. */
+function decodeJsonFile(node) {
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob((node.file?.content ?? '').replace(/\s/g, '')), (c) => c.charCodeAt(0))));
+}
 
 /** The branch select's create sentinel. */
 const NEW_BRANCH = '__new__';
@@ -29,6 +35,9 @@ class ArazzoGitDialog extends ArazzoElement {
     /** @private */ this._branchSeq = 0;
     /** @private */ this._workingCopy = null;
     /** @private */ this._seq = 0;
+    /** @private */ this._historySeq = 0;
+    /** @private */ this._historyPage = 0;
+    /** @private */ this._historyKey = '';
   }
 
   /** The Layer-0 client. */
@@ -96,6 +105,15 @@ class ArazzoGitDialog extends ArazzoElement {
         .result[hidden], .error-banner[hidden] { display: none; }
         .result .file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
+        .commits { display: grid; gap: 6px; }
+        .hist-commit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+                  border: 1px solid var(--_border); border-radius: 6px; padding: 6px 10px; }
+        .hist-commit .msg { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .hist-commit .meta { grid-column: 1; font-size: 11px; color: var(--_muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .hist-commit .acts { grid-row: 1 / span 2; display: flex; gap: 6px; }
+        .hist-commit .acts button { font-size: 11.5px; }
+        .history-empty { font-size: 11.5px; color: var(--_muted); }
       </style>
       <div class="panel" part="panel">
         <arazzo-input-dialog class="ask"></arazzo-input-dialog>
@@ -154,6 +172,14 @@ class ArazzoGitDialog extends ArazzoElement {
             <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity (§4.7)">⤒ Commit</button></div>
             <div class="result" hidden></div>
           </fieldset>
+          <fieldset class="history-section" hidden>
+            <legend>History — commits touching the bound document, newest first</legend>
+            <div class="commits"></div>
+            <div class="row-actions">
+              <button class="history-more ghost" type="button" hidden>Load more…</button>
+            </div>
+          </fieldset>
+          <arazzo-workflow-compare class="compare"></arazzo-workflow-compare>
         </div>
       </div>`;
 
@@ -184,6 +210,7 @@ class ArazzoGitDialog extends ArazzoElement {
       this.updateActions();
     });
     this.$('.nb-create').addEventListener('click', () => this.createBranch());
+    this.$('.history-more').addEventListener('click', () => { void this.loadHistory({ more: true }); });
     this.wireTreeBrowser('.browse-path', '.tree-path', '.b-path', 'file');
     this.wireTreeBrowser('.browse-scenarios', '.tree-scenarios', '.b-scenarios', 'dir');
     // Picking a specs DIRECTORY tracks the attached sources automatically: every empty per-source
@@ -363,6 +390,8 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.paths-section').hidden = !picked;
     this.$('.bound-hint').hidden = !connected || bound;
     this.$('.roundtrip-section').hidden = !bound;
+    this.$('.history-section').hidden = !connected || !bound;
+    if (connected && bound) void this.loadHistory();
 
     // A disabled control carries its reason — nothing greys out silently.
     const save = this.$('.save-binding');
@@ -462,6 +491,110 @@ class ArazzoGitDialog extends ArazzoElement {
         ${result.files.map((f) => `<span class="file">${escapeHtml(f.path)}</span>`).join('')}
         ${result.pullRequest ? `<span>Pull request: <a href="${escapeHtml(result.pullRequest.url)}" target="_blank" rel="noopener">#${escapeHtml(String(result.pullRequest.number))}</a></span>` : ''}`;
       this.emit('committed', { result });
+      this._historyKey = ''; // the branch advanced — the history list is stale
+    } catch (err) {
+      this.showError(err.problem?.detail || err.problem?.title || err.message);
+      this.emit('error', { problem: err.problem, error: err });
+    }
+
+    this.updateActions();
+  }
+
+  // ── History (snag 9): browse the bound branch's commits, compare any of them side-by-side
+  // with the current state, and roll back (a danger-confirmed pull at that commit). ─────────────
+
+  /** @private — the bound (owner, repo, branch, path), or null while unbound. */
+  historyScope() {
+    const binding = this._workingCopy?.gitBinding;
+    return binding?.owner && binding?.repo && binding?.branch && binding?.path ? binding : null;
+  }
+
+  /** @private — loads one page of the bound branch's history; re-entry with the same scope is a
+   *  no-op (updateActions fires often), `more` appends the next page. */
+  async loadHistory({ more = false } = {}) {
+    const binding = this.historyScope();
+    if (!binding) return;
+    const key = `${binding.owner}/${binding.repo}@${binding.branch}:${binding.path}`;
+    if (!more && key === this._historyKey) return;
+    const seq = ++this._historySeq;
+    const page = more ? this._historyPage + 1 : 1;
+    try {
+      const list = await this._client.listRepoCommits(binding.owner, binding.repo, {
+        sha: binding.branch, path: binding.path, page, perPage: 10,
+      });
+      if (seq !== this._historySeq) return;
+      this._historyKey = key;
+      this._historyPage = page;
+      const rows = this.$('.commits');
+      if (page === 1) rows.replaceChildren();
+      if (page === 1 && list.commits.length === 0) {
+        rows.innerHTML = '<span class="history-empty">No commits touch the bound document yet — the first commit starts the history.</span>';
+      }
+
+      for (const commit of list.commits) rows.appendChild(this.renderCommit(commit));
+      this.$('.history-more').hidden = !list.hasMore;
+    } catch (err) {
+      if (seq !== this._historySeq) return;
+      this.$('.commits').innerHTML = `<span class="history-empty">History could not be loaded — ${escapeHtml(err.problem?.detail || err.problem?.title || err.message)}</span>`;
+      this.$('.history-more').hidden = true;
+    }
+  }
+
+  /** @private — one commit row: message + sha·author·date, with Compare and Roll back actions. */
+  renderCommit(commit) {
+    const row = document.createElement('div');
+    row.className = 'hist-commit'; // NOT 'commit' — that class is the round-trip section's commit button
+    const when = commit.date ? new Date(commit.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    row.innerHTML = `
+      <span class="msg" title="${escapeHtml(commit.message ?? '')}">${escapeHtml(commit.message ?? '(no message)')}</span>
+      <span class="acts">
+        <button class="cmp ghost" type="button" title="Open this commit's workflow side-by-side with the current state (read-only)">⇆ Compare</button>
+        <button class="rollback ghost" type="button" title="Replace the working copy with this commit's state (danger-confirmed; the next commit records the rollback)">↩ Roll back…</button>
+      </span>
+      <span class="meta">${escapeHtml(commit.sha.slice(0, 7))}${commit.author ? ` · ${escapeHtml(commit.author)}` : ''}${when ? ` · ${escapeHtml(when)}` : ''}</span>`;
+    row.querySelector('.cmp').addEventListener('click', () => { void this.compareCommit(commit); });
+    row.querySelector('.rollback').addEventListener('click', () => { void this.rollbackTo(commit); });
+    return row;
+  }
+
+  /** @private — fetch the bound document AT the commit and open the reusable side-by-side
+   *  visualizer: current state on the left, the commit on the right. */
+  async compareCommit(commit) {
+    this.clearError();
+    const binding = this.historyScope();
+    if (!binding) return;
+    try {
+      const node = await this._client.browseRepo(binding.owner, binding.repo, { path: binding.path, ref: commit.sha });
+      const historic = decodeJsonFile(node);
+      this.$('.compare').open({
+        left: { label: `Working copy (current) — ${this._workingCopy?.name ?? ''}`, document: this._workingCopy?.document ?? {} },
+        right: { label: `${commit.sha.slice(0, 7)} — ${commit.message ?? ''}`, document: historic },
+        workflowId: this._workingCopy?.document?.workflows?.[0]?.workflowId,
+      });
+    } catch (err) {
+      this.showError(err.problem?.detail || err.problem?.title || err.message);
+    }
+  }
+
+  /** @private — the rollback IS a pull at the commit's ref: danger-confirmed, etag-guarded, and
+   *  recorded on the branch by the NEXT commit (the binding never changes). */
+  async rollbackTo(commit) {
+    const sure = await this.$('.ask').ask({
+      title: `Roll back to ${commit.sha.slice(0, 7)}?`,
+      message: `“${commit.message ?? commit.sha}” replaces the working copy's document${this._workingCopy?.gitBinding?.specPaths ? ', bound specs,' : ''} and scenario set — local edits since the last commit are lost. The branch itself is untouched until you commit the rollback.`,
+      confirmLabel: 'Roll back & replace',
+      danger: true,
+    });
+    if (!sure) return;
+    this.clearError();
+    try {
+      const pulled = await this._client.pullWorkingCopy(this._workingCopy.id, { expectedEtag: this._workingCopy.etag, ref: commit.sha });
+      this._workingCopy = pulled;
+      this.renderBinding();
+      const result = this.$('.result');
+      result.hidden = false;
+      result.innerHTML = `<span>Rolled back to <strong>${escapeHtml(commit.sha.slice(0, 7))}</strong> — commit to record it on <strong>${escapeHtml(pulled.gitBinding.branch)}</strong>.</span>`;
+      this.emit('pulled', { workingCopy: pulled });
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
       this.emit('error', { problem: err.problem, error: err });
