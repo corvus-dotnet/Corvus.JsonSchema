@@ -17,6 +17,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
+import './git-tree.js';
 
 /** The branch select's create sentinel. */
 const NEW_BRANCH = '__new__';
@@ -78,6 +79,11 @@ class ArazzoGitDialog extends ArazzoElement {
         .row-actions { display: flex; gap: 8px; align-items: center; }
         .hint { font-size: 11px; color: var(--_muted); }
         .new-branch { display: flex; gap: 6px; align-items: center; }
+        .pathrow { display: flex; gap: 6px; align-items: center; }
+        .pathrow input { flex: 1; min-width: 0; }
+        .pathrow .ghost { flex: 0 0 auto; font-size: 11px; }
+        .tree-slot { margin-top: 4px; }
+        .tree-slot[hidden] { display: none; }
         .new-branch input { flex: 1; min-width: 0; }
         .specs { display: grid; gap: 4px; }
         .specs-head { font-size: 11px; }
@@ -107,8 +113,20 @@ class ArazzoGitDialog extends ArazzoElement {
               <select class="nb-base"></select>
               <button class="nb-create" type="button" title="Create the branch from the base branch's head — a ref only, no commit">Create branch</button>
             </div>
-            <label>Document path <input class="b-path" type="text" placeholder="flows/my-flow.arazzo.json"></label>
-            <label>Scenarios directory <span class="muted">(optional)</span> <input class="b-scenarios" type="text" placeholder="scenarios/my-flow"></label>
+            <label>Document path
+              <span class="pathrow">
+                <input class="b-path" type="text" placeholder="flows/my-flow.arazzo.json">
+                <button class="browse-path ghost" type="button" disabled title="Connect and pick a repository and branch first">browse…</button>
+              </span>
+            </label>
+            <div class="tree-slot tree-path" hidden></div>
+            <label>Scenarios directory <span class="muted">(optional)</span>
+              <span class="pathrow">
+                <input class="b-scenarios" type="text" placeholder="scenarios/my-flow">
+                <button class="browse-scenarios ghost" type="button" disabled title="Connect and pick a repository and branch first">browse…</button>
+              </span>
+            </label>
+            <div class="tree-slot tree-scenarios" hidden></div>
             <div class="specs">
               <span class="muted specs-head">Spec paths — where each attached source lives on the branch (blank = not tracked)</span>
               <div class="spec-rows"></div>
@@ -149,6 +167,8 @@ class ArazzoGitDialog extends ArazzoElement {
       this.updateActions();
     });
     this.$('.nb-create').addEventListener('click', () => this.createBranch());
+    this.wireTreeBrowser('.browse-path', '.tree-path', '.b-path', 'file');
+    this.wireTreeBrowser('.browse-scenarios', '.tree-scenarios', '.b-scenarios', 'dir');
     this.$('.c-base').addEventListener('input', (e) => { e.target.dataset.touched = '1'; });
     ['.b-path'].forEach((s) => this.$(s).addEventListener('input', () => this.updateActions()));
   }
@@ -198,6 +218,33 @@ class ArazzoGitDialog extends ArazzoElement {
         <span class="sname">${escapeHtml(name)}${attached.includes(name) ? '' : ' <span class="stale">(not attached)</span>'}</span>
         <input class="b-spec" data-name="${escapeHtml(name)}" type="text" placeholder="specs/${escapeHtml(name)}.json" value="${escapeHtml(specPaths[name] ?? '')}" spellcheck="false">
       </label>`).join('');
+  }
+
+  /** @private — a browse… button toggles a LAZY repo tree (directories fetch on expand) whose
+   *  pick lands in the field. Reuses <arazzo-git-tree>; the loader browses the bound repo+branch. */
+  wireTreeBrowser(buttonSel, slotSel, fieldSel, mode) {
+    this.$(buttonSel).addEventListener('click', () => {
+      const slot = this.$(slotSel);
+      if (!slot.hidden) { slot.hidden = true; slot.replaceChildren(); return; }
+      const repoValue = this.$('.b-repo').value;
+      const slash = repoValue.indexOf('/');
+      const branch = this.branchValue();
+      const tree = document.createElement('arazzo-git-tree');
+      tree.mode = mode;
+      if (mode === 'file') tree.pickableFile = (entry) => /\.(json|ya?ml)$/i.test(entry.name);
+      tree.loader = async (path) => {
+        const node = await this._client.browseRepo(repoValue.slice(0, slash), repoValue.slice(slash + 1), { path: path || undefined, ref: branch || undefined });
+        return node.kind === 'dir' ? node.entries : [];
+      };
+      tree.addEventListener('picked', (e) => {
+        this.$(fieldSel).value = e.detail.path;
+        slot.hidden = true;
+        slot.replaceChildren();
+        this.updateActions();
+      });
+      slot.replaceChildren(tree);
+      slot.hidden = false;
+    });
   }
 
   /** The chosen branch, '' while unchosen or mid-create. */
@@ -284,6 +331,14 @@ class ArazzoGitDialog extends ArazzoElement {
     pull.title = pull.disabled
       ? (!connected ? 'Connect GitHub first' : 'Save a binding first — Pull reads from the bound branch')
       : 'Refresh the document, bound specs, and scenarios from the branch (etag-guarded; nothing partially applies)';
+    for (const sel of ['.browse-path', '.browse-scenarios']) {
+      const browse = this.$(sel);
+      if (browse) {
+        browse.disabled = !connected || !this.$('.b-repo').value || !this.branchValue();
+        browse.title = browse.disabled ? 'Connect and pick a repository and branch first' : 'Browse the branch (directories load as you expand — large trees never load whole)';
+      }
+    }
+
     const commit = this.$('.commit');
     commit.disabled = !connected || !bound || !this.$('.c-message').value.trim();
     commit.title = commit.disabled

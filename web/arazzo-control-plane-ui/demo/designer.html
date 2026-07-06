@@ -377,11 +377,11 @@
 
     const SEVERITY_ICON = { error: '⛔', warning: '⚠️', info: 'ℹ️' };
 
-    function renderProblems(outcome) {
+    function renderProblems(outcome, { reveal = false } = {}) {
       const badge = document.getElementById('problems-badge');
       badge.hidden = outcome.diagnostics.length === 0;
       badge.textContent = outcome.diagnostics.length;
-      switchSideTab('problems');
+      if (reveal) switchSideTab('problems'); // only a deliberate act steals the tab (§ item 29)
       problemsEl.innerHTML = '';
       if (outcome.diagnostics.length === 0) {
         problemsEl.textContent = '✅ no findings — the document is valid';
@@ -1232,7 +1232,7 @@
         logEvent('published', { base: version.baseWorkflowId, version: version.versionNumber });
       } catch (err) {
         if (err.status === 422 && err.problem?.reason === 'validation') {
-          renderProblems({ diagnostics: err.problem.diagnostics ?? [] });
+          renderProblems({ diagnostics: err.problem.diagnostics ?? [] }, { reveal: true });
           showToast('Publish refused — the document has validation findings (see Problems).', 'warn');
           setSaveUi('⚠ publish refused — fix the validation findings');
         } else if (err.status === 422 && err.problem?.reason === 'scenarios') {
