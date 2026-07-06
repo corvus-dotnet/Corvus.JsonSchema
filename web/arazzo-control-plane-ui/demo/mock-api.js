@@ -83,12 +83,12 @@ export function seedRuns() {
       correlationId: '33aa71f9b5c6d7e8f90a1b2c3d4e5f60', tags: ['tenant-7'],
     },
     {
-      id: 'run-0a5512cd', workflowId: 'adopt-pet-v1', status: 'Completed', cursor: 6,
+      id: 'run-0a5512cd', workflowId: 'adopt-pet-v1', status: 'Completed', cursor: 4,
       createdAt: iso(-2 * day), updatedAt: iso(-2 * day + 5 * min), etag: nextEtag(),
       correlationId: '0a5512cd6e7f8a9b0c1d2e3f4a5b6c7d', tags: ['tenant-42'],
     },
     {
-      id: 'run-44b0e7e2', workflowId: 'nightly-reconcile-v2', status: 'Completed', cursor: 9,
+      id: 'run-44b0e7e2', workflowId: 'nightly-reconcile-v2', status: 'Completed', cursor: 6,
       createdAt: iso(-9 * day), updatedAt: iso(-9 * day + 2 * min), etag: nextEtag(),
       correlationId: '44b0e7e2c3d4e5f6a7b8c9d0e1f20314',
     },
@@ -159,6 +159,35 @@ const STEP_SETS = {
   'adopt-pet': ['findPet', 'reservePayment', 'submitAdoption', 'confirmAdoption'],
   'nightly-reconcile': ['loadLedger', 'fetchTransactions', 'matchEntries', 'flagDiscrepancies', 'postCorrections', 'publishReport'],
   'onboard-customer': ['createAccount', 'verifyIdentity', 'provisionResources', 'sendWelcome'],
+};
+
+// Every seeded step binds a REAL operation of the workflow's referenced sources, with the path
+// parameters those operations require — a catalog document must open into a working copy without
+// workspace-sources warnings. Where the stepId happens to equal the operationId nothing extra is
+// needed; the entries here carry the differences (bindings, parameters, request bodies).
+const STEP_BINDINGS = {
+  'adopt-pet': {
+    findPet: { operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }] },
+    reservePayment: { parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }] },
+    submitAdoption: { requestBody: { contentType: 'application/json', payload: { petId: '$inputs.petId', adopterEmail: '$inputs.adopterEmail' } } },
+    confirmAdoption: { parameters: [{ name: 'adoptionId', in: 'path', value: '$steps.submitAdoption.outputs.adoptionId' }] },
+  },
+  'nightly-reconcile': {
+    fetchTransactions: { parameters: [{ name: 'period', in: 'query', value: '$inputs.period' }] },
+    matchEntries: { parameters: [{ name: 'reconciliationId', in: 'path', value: '$steps.loadLedger.outputs.reconciliationId' }] },
+  },
+  'onboard-customer': {
+    verifyIdentity: { parameters: [{ name: 'accountId', in: 'path', value: '$steps.createAccount.outputs.accountId' }] },
+    provisionResources: { parameters: [{ name: 'accountId', in: 'path', value: '$steps.createAccount.outputs.accountId' }] },
+  },
+};
+
+// The typed shape each seeded workflow is invoked with (drives the schemas endpoint's inputs
+// descriptor and the scenario form).
+const WORKFLOW_INPUTS = {
+  'adopt-pet': { type: 'object', required: ['petId'], properties: { petId: { type: 'string' }, adopterEmail: { type: 'string', format: 'email' } } },
+  'nightly-reconcile': { type: 'object', required: ['period'], properties: { period: { type: 'string', description: 'The ledger period, e.g. 2026-06.' }, dryRun: { type: 'boolean' } } },
+  'onboard-customer': { type: 'object', required: ['customerEmail'], properties: { customerEmail: { type: 'string', format: 'email' }, plan: { type: 'string', enum: ['starter', 'standard', 'enterprise'] } } },
 };
 
 // Typed outputs per step (a TypeDescriptor each) — the precomputed metadata the typed patch builder reads.
@@ -453,11 +482,16 @@ function pickVariant(d, value) {
 function workflowDoc(workflowId, title, description, sourceRefs) {
   const base = workflowId.replace(/-v\d+$/, '');
   const stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
+  const bindings = STEP_BINDINGS[base] ?? {};
   return {
     arazzo: '1.1.0',
     info: { title, description },
     sourceDescriptions: (sourceRefs ?? []).map((s) => ({ name: s.name, url: `./${s.name}.json`, type: s.type })),
-    workflows: [{ workflowId, steps: stepIds.map((stepId) => ({ stepId, operationId: stepId })) }],
+    workflows: [{
+      workflowId,
+      ...(WORKFLOW_INPUTS[base] ? { inputs: structuredClone(WORKFLOW_INPUTS[base]) } : {}),
+      steps: stepIds.map((stepId) => ({ stepId, operationId: stepId, ...structuredClone(bindings[stepId] ?? {}) })),
+    }],
   };
 }
 
@@ -508,6 +542,38 @@ const SOURCE_DOCS = {
           responses: { 200: { description: 'adopted' }, 409: { description: 'already adopted' }, default: { description: 'unexpected' } },
         },
       },
+      '/pets/{petId}/payments': {
+        parameters: [{ name: 'petId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'reservePayment',
+          summary: 'Reserve the adoption fee against a card',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['amount'], properties: { amount: { type: 'number' }, capture: { type: 'boolean', default: false } } } } } },
+          responses: {
+            201: { description: 'reserved', content: { 'application/json': { schema: { type: 'object', properties: { reservationId: { type: 'string' }, amount: { type: 'number' } } } } } },
+            402: { description: 'declined' },
+            default: { description: 'unexpected' },
+          },
+        },
+      },
+      '/adoptions': {
+        post: {
+          operationId: 'submitAdoption',
+          summary: 'Submit the adoption paperwork',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['petId'], properties: { petId: { type: 'string' }, adopterEmail: { type: 'string', format: 'email' } } } } } },
+          responses: {
+            201: { description: 'submitted', content: { 'application/json': { schema: { type: 'object', properties: { adoptionId: { type: 'string' } } } } } },
+            409: { description: 'already adopted' },
+          },
+        },
+      },
+      '/adoptions/{adoptionId}/confirm': {
+        parameters: [{ name: 'adoptionId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'confirmAdoption',
+          summary: 'Confirm the adoption after the home check',
+          responses: { 200: { description: 'confirmed' }, 404: { description: 'unknown adoption' } },
+        },
+      },
     },
   },
   events: {
@@ -519,10 +585,15 @@ const SOURCE_DOCS = {
         address: 'orders/events',
         messages: { orderEvent: { payload: { type: 'object', properties: { orderId: { type: 'string' }, kind: { type: 'string' }, at: { type: 'string', format: 'date-time' } } } } },
       },
+      kycResults: {
+        address: 'kyc.results',
+        messages: { kycResult: { payload: { type: 'object', properties: { customerId: { type: 'string' }, status: { type: 'string', enum: ['clear', 'review', 'failed'] }, checkedAt: { type: 'string', format: 'date-time' } } } } },
+      },
     },
     operations: {
       onOrderEvent: { action: 'receive', summary: 'Order lifecycle events arrive here', channel: { $ref: '#/channels/orderEvents' } },
       publishOrderEvent: { action: 'send', summary: 'Emit an order lifecycle event', channel: { $ref: '#/channels/orderEvents' } },
+      onKycResult: { action: 'receive', summary: 'Identity-check verdicts arrive here', channel: { $ref: '#/channels/kycResults' } },
     },
   },
   billing: {
@@ -546,10 +617,95 @@ const SOURCE_DOCS = {
           responses: { 202: { description: 'accepted' }, 409: { description: 'already running' } },
         },
       },
+      '/ledger': {
+        get: {
+          operationId: 'loadLedger',
+          summary: 'Open the current ledger for reconciliation',
+          responses: { 200: { description: 'the ledger', content: { 'application/json': { schema: { type: 'object', properties: { reconciliationId: { type: 'string' }, openedAt: { type: 'string', format: 'date-time' } } } } } }, 503: { description: 'ledger unavailable' } },
+        },
+      },
+      '/transactions': {
+        get: {
+          operationId: 'fetchTransactions',
+          summary: 'Fetch the settled transactions for a period',
+          parameters: [{ name: 'period', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { 200: { description: 'a page of transactions' } },
+        },
+      },
+      '/reconciliations/{reconciliationId}/matches': {
+        parameters: [{ name: 'reconciliationId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'matchEntries',
+          summary: 'Match ledger entries to transactions',
+          responses: { 200: { description: 'matched', content: { 'application/json': { schema: { type: 'object', properties: { matched: { type: 'integer' }, unmatched: { type: 'integer' } } } } } }, 404: { description: 'unknown reconciliation' } },
+        },
+      },
+      '/discrepancies': {
+        post: {
+          operationId: 'flagDiscrepancies',
+          summary: 'Record the unmatched entries for follow-up',
+          responses: { 201: { description: 'recorded' }, 503: { description: 'ledger service unavailable' } },
+        },
+      },
+      '/corrections': {
+        post: {
+          operationId: 'postCorrections',
+          summary: 'Post the correcting entries',
+          responses: { 201: { description: 'posted' }, 409: { description: 'period closed' } },
+        },
+      },
+      '/reports': {
+        post: {
+          operationId: 'publishReport',
+          summary: 'Publish the reconciliation report',
+          responses: { 201: { description: 'published' } },
+        },
+      },
+    },
+  },
+  accounts: {
+    openapi: '3.1.0', info: { title: 'Accounts', version: '1.0.0' },
+    servers: [{ url: 'https://accounts.example.com' }],
+    components: { securitySchemes: { clientCreds: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'accounts:write': 'Manage accounts' } } } } } },
+    paths: {
+      '/accounts': {
+        post: {
+          operationId: 'createAccount',
+          summary: 'Create a customer account',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' }, plan: { type: 'string', enum: ['starter', 'standard', 'enterprise'] } } } } } },
+          responses: {
+            201: { description: 'created', content: { 'application/json': { schema: { type: 'object', properties: { accountId: { type: 'string' } } } } } },
+            409: { description: 'email already registered' },
+          },
+        },
+      },
+      '/accounts/{accountId}/identity-checks': {
+        parameters: [{ name: 'accountId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'verifyIdentity',
+          summary: 'Start an identity (KYC) check — the verdict arrives on kyc.results',
+          responses: { 202: { description: 'check started' }, 422: { description: 'document unreadable' } },
+        },
+      },
+      '/accounts/{accountId}/resources': {
+        parameters: [{ name: 'accountId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'provisionResources',
+          summary: 'Provision the tenant resources',
+          responses: { 201: { description: 'provisioned' }, 429: { description: 'region quota reached' } },
+        },
+      },
+      '/notifications/welcome': {
+        post: {
+          operationId: 'sendWelcome',
+          summary: 'Send the welcome email',
+          responses: { 202: { description: 'queued' } },
+        },
+      },
     },
   },
 };
-const SOURCE_TYPES = { petstore: 'openapi', events: 'asyncapi', billing: 'openapi' };
+const SOURCE_TYPES = { petstore: 'openapi', events: 'asyncapi', billing: 'openapi', accounts: 'openapi' };
 
 // ---- source registry (§7.6) — first-class, reach-scoped registered sources, referenced by name ------------------
 // A source is registered once ({ name, type, document } + per-environment credentials); workflows reference it by
@@ -574,7 +730,7 @@ function seedCatalog() {
   const refsByBase = {
     'adopt-pet': [{ name: 'petstore', type: 'openapi' }],
     'nightly-reconcile': [{ name: 'billing', type: 'openapi' }],
-    'onboard-customer': [{ name: 'events', type: 'asyncapi' }],
+    'onboard-customer': [{ name: 'accounts', type: 'openapi' }, { name: 'events', type: 'asyncapi' }],
   };
   const refsFor = (base) => refsByBase[base] ?? [{ name: 'petstore', type: 'openapi' }];
   const teamA = { name: 'Reconciliation Team', email: 'reconcile@example.com', team: 'Platform', url: 'https://runbooks.example.com/nightly-reconcile' };
@@ -681,6 +837,7 @@ function seedCredentials() {
     b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'workflow', value: 'nightly-reconcile' }], kind: 'workflow', label: 'nightly-reconcile' }, expiresAt: iso(3 * day) }),
     b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { config: [{ key: 'username', value: 'svc-legacy' }], expiresAt: iso(-2 * day) }),
     b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
+    b('accounts', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'keyvault://accounts-staging#1' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'onboarding-client' }], description: 'Accounts API for onboarding.' }),
     b('billing', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing-staging#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'sys:sub', value: 'u-1042' }], kind: 'person', label: 'Ada Lovelace' } }),
   ];
 }
@@ -717,11 +874,15 @@ function seedEnvironments() {
     name, displayName, description, managementTags,
     createdBy: 'alice@example.com', createdAt: iso(-40 * day), etag: nextEtag(),
   });
-  return [
+  const environments = [
     // Production is scoped by a management tag (§14.2) so its read-only display has something to show.
     e('production', 'Production', 'The live production environment.', [{ key: 'team', value: 'platform' }]),
     e('staging', 'Staging', 'Pre-production staging environment.'),
+    // Evidence-gated (§4.6): promotion here requires a green attested scenario suite.
+    e('uat', 'UAT', 'User acceptance — promotion requires green attested scenario evidence.'),
   ];
+  environments[2].requireEvidence = true;
+  return environments;
 }
 
 // ---- workflow administration (§15) — deployment-mapped {dimension,value} identities ------------
@@ -1231,12 +1392,46 @@ export function createMockControlPlane(options = {}) {
       entries: [
         { name: 'petstore.openapi.json', path: 'petstore.openapi.json', type: 'file', size: 512, sha: 'sha-petstore' },
         { name: 'flows', path: 'flows', type: 'dir', sha: 'sha-flows' },
+        { name: 'scenarios', path: 'scenarios', type: 'dir', sha: 'sha-scenarios' },
       ],
     },
     flows: {
       kind: 'dir',
       entries: [{ name: 'adopt.arazzo.json', path: 'flows/adopt.arazzo.json', type: 'file', size: 256, sha: 'sha-adopt' }],
     },
+    scenarios: {
+      kind: 'dir',
+      entries: [{ name: 'adopt', path: 'scenarios/adopt', type: 'dir', sha: 'sha-scenarios-adopt' }],
+    },
+    'scenarios/adopt': {
+      kind: 'dir',
+      entries: [
+        { name: 'happy-adoption.scenario.json', path: 'scenarios/adopt/happy-adoption.scenario.json', type: 'file', size: 512, sha: 'sha-sc-happy' },
+        { name: 'payment-declined.scenario.json', path: 'scenarios/adopt/payment-declined.scenario.json', type: 'file', size: 384, sha: 'sha-sc-declined' },
+      ],
+    },
+    'scenarios/adopt/happy-adoption.scenario.json': gitHubFile('scenarios/adopt/happy-adoption.scenario.json', JSON.stringify({
+      name: 'happy-adoption',
+      description: 'Every operation answers well; the adoption completes end to end.',
+      inputs: { petId: 'p-1', adopterEmail: 'sam@example.com' },
+      mocks: [
+        { source: 'petstore', operationId: 'getPet', responses: [{ status: 200, body: { id: 'p-1', name: 'Biscuit', status: 'available' } }] },
+        { source: 'petstore', operationId: 'reservePayment', responses: [{ status: 201, body: { reservationId: 'res-9', amount: 40 } }] },
+        { source: 'petstore', operationId: 'submitAdoption', responses: [{ status: 201, body: { adoptionId: 'a-42' } }] },
+        { source: 'petstore', operationId: 'confirmAdoption', responses: [{ status: 200 }] },
+      ],
+      expect: { outcome: 'completed', path: ['findPet', 'reservePayment', 'submitAdoption', 'confirmAdoption'], pathMode: 'exact' },
+    }, null, 2)),
+    'scenarios/adopt/payment-declined.scenario.json': gitHubFile('scenarios/adopt/payment-declined.scenario.json', JSON.stringify({
+      name: 'payment-declined',
+      description: 'The card declines; the run faults at the reservation.',
+      inputs: { petId: 'p-1' },
+      mocks: [
+        { source: 'petstore', operationId: 'getPet', responses: [{ status: 200, body: { id: 'p-1', name: 'Biscuit', status: 'available' } }] },
+        { source: 'petstore', operationId: 'reservePayment', responses: [{ status: 402 }] },
+      ],
+      expect: { outcome: 'faulted', path: ['findPet', 'reservePayment'], pathMode: 'exact' },
+    }, null, 2)),
     'petstore.openapi.json': gitHubFile('petstore.openapi.json', JSON.stringify(SOURCE_DOCS.petstore)),
     'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(workflowDoc('adopt-pet-v1', 'Adopt a Pet', 'Adopt a pet — imported from GitHub.', [{ name: 'petstore', type: 'openapi' }]))),
   };
@@ -2902,7 +3097,9 @@ export function createMockControlPlane(options = {}) {
       const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
       if (d) surface.push(...projectOperationSurface(d));
     }
-    const bindingOf = (step) => surface.find((o) => o.operationId && o.operationId === step.operationId) ?? null;
+    const bindingOf = (step) => surface.find((o) =>
+      (o.operationId && o.operationId === step.operationId)
+      || (step.channelPath && o.channelPath === step.channelPath)) ?? null;
 
     const until = request.until ?? {};
     const breakpoints = new Set(until.breakpoints ?? []);
@@ -2942,9 +3139,11 @@ export function createMockControlPlane(options = {}) {
 
       const op = bindingOf(step);
 
-      // A message step (AsyncAPI receive): consume a matching scenario trigger, or SUSPEND on the
-      // wait — the same semantics the real engine gives staged `triggers` and injected ones.
-      if (op?.kind === 'asyncapi' && (op.action ?? 'receive') === 'receive') {
+      // A message step (AsyncAPI receive, bound by operationId or channelPath): consume a matching
+      // scenario trigger, or SUSPEND on the wait — the same semantics the real engine gives staged
+      // `triggers` and injected ones.
+      if ((op?.kind === 'asyncapi' && (op.action ?? 'receive') === 'receive')
+        || (typeof step.channelPath === 'string' && step.channelPath && !step.operationId)) {
         const channel = op.channelPath ?? step.channelPath ?? step.operationId;
         const ti = triggerQueue.findIndex((t) => t.channel === channel);
         if (ti < 0) {

@@ -349,7 +349,7 @@ test('purgeCatalog reaps obsolete, unreferenced versions', async () => {
 
 test('listCredentials returns the seeded bindings with a derived credentialStatus', async () => {
   const { credentials } = await makeClient().listCredentials();
-  assert.equal(credentials.length, 5);
+  assert.equal(credentials.length, 6);
   const byKey = Object.fromEntries(credentials.map((c) => [`${c.sourceName}@${c.environment}`, c.credentialStatus]));
   assert.equal(byKey['petstore@production'], 'valid');      // 20 days out
   assert.equal(byKey['billing@production'], 'expiringSoon'); // 3 days out (inside the 7-day window)
@@ -371,8 +371,8 @@ test('listCredentials keyset-pages: limit + the opaque nextPageToken walk every 
     assert.ok(page.credentials.length <= 2, 'each page respects the limit');
     for (const b of page.credentials) seen.push(`${b.sourceName}@${b.environment}`);
   }
-  assert.equal(seen.length, 5, 'all five bindings, exactly once');
-  assert.equal(new Set(seen).size, 5, 'no duplicates across page boundaries');
+  assert.equal(seen.length, 6, 'all six bindings, exactly once');
+  assert.equal(new Set(seen).size, 6, 'no duplicates across page boundaries');
   assert.deepEqual(seen, [...seen].sort(), 'ordered by sourceName then environment');
 });
 
@@ -605,7 +605,7 @@ test('searchGrantees pages via the keyset nextPageToken', async () => {
 test('listEnvironments returns the seeded environments, ordered by name', async () => {
   const c = makeClient();
   const { environments, nextPageToken } = await c.listEnvironments();
-  assert.deepEqual(environments.map((e) => e.name), ['production', 'staging']);
+  assert.deepEqual(environments.map((e) => e.name), ['production', 'staging', 'uat']);
   assert.equal(nextPageToken, null);
 });
 
@@ -614,7 +614,7 @@ test('environments are reach-filtered — a reach-scoped caller sees only what i
   const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
   // Administrator (reach: all) sees every environment.
   mock.setPersona('administrator');
-  assert.deepEqual((await c.listEnvironments()).environments.map((e) => e.name), ['production', 'staging']);
+  assert.deepEqual((await c.listEnvironments()).environments.map((e) => e.name), ['production', 'staging', 'uat']);
   // The payments-reach persona: neither seeded environment is tagged domain=payments, so the list is empty and a
   // direct read is reported as absent (404), not forbidden (403) — non-disclosing, mirroring IEnvironmentStore (§7.7).
   mock.setPersona('team-reader');
