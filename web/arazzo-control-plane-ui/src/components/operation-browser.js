@@ -41,6 +41,7 @@ class ArazzoOperationBrowser extends ArazzoElement {
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._filter = '';
+    /** @private */ this._expanded = new Set(); // source names whose operations are rendered
     /** @private */ this._reqSeq = 0;
   }
 
@@ -130,6 +131,9 @@ class ArazzoOperationBrowser extends ArazzoElement {
         .group-head .type { font-size: 10px; font-weight: 600; padding: 0 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); text-transform: uppercase; }
         .group-head .spacer { flex: 1; }
         .group-head button.detach { font-size: 11px; padding: 1px 7px; }
+        .group-head.toggle { cursor: pointer; user-select: none; }
+        .group-head .twist { color: var(--_muted); width: 1em; flex-shrink: 0; }
+        .group-head .count { font-size: 10.5px; color: var(--_muted); flex-shrink: 0; }
         .op { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 8px; width: 100%; box-sizing: border-box;
               text-align: left; border: none; background: none; color: inherit; font: inherit; cursor: pointer; padding: 6px 10px 6px 16px; }
         .op:hover, .op:focus-visible { background: var(--_surface); outline: none; }
@@ -220,7 +224,17 @@ class ArazzoOperationBrowser extends ArazzoElement {
     });
 
     body.querySelectorAll('button.detach').forEach((button) => {
-      button.addEventListener('click', () => this.detach(button.dataset.name));
+      button.addEventListener('click', (e) => { e.stopPropagation(); this.detach(button.dataset.name); });
+    });
+    body.querySelectorAll('.group-head.toggle').forEach((head) => {
+      const toggle = () => {
+        const name = head.dataset.name;
+        if (this._expanded.has(name)) this._expanded.delete(name);
+        else this._expanded.add(name);
+        this.renderBody();
+      };
+      head.addEventListener('click', toggle);
+      head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     });
     body.querySelectorAll('button.op').forEach((button) => {
       const payload = () => {
@@ -247,22 +261,34 @@ class ArazzoOperationBrowser extends ArazzoElement {
 
   renderGroup(source) {
     const operations = this._operations.get(source.name) ?? [];
+    const failure = this._errors.get(source.name);
+
+    // Sources list COLLAPSED: a big spec can carry hundreds of operations, and rendering them all
+    // eagerly floods the pane. Expanding renders that source's rows (a live filter auto-expands
+    // every group so search stays cross-source); a lone source opens itself.
+    const expanded = !!this._filter || this._expanded.has(source.name) || this._sources.length === 1;
     const shown = this._filter
       ? operations.filter((op) => `${op.operationId ?? ''} ${op.path ?? ''} ${op.channelPath ?? ''} ${op.summary ?? ''}`.toLowerCase().includes(this._filter))
       : operations;
-    const failure = this._errors.get(source.name);
 
-    const rows = failure
-      ? `<div class="error-banner">${escapeHtml(failure)}</div>`
-      : shown.length === 0
-        ? `<div class="note">${operations.length === 0 ? 'No operations in this source.' : 'No operations match the filter.'}</div>`
-        : shown.map((op) => this.renderOperation(source.name, op, operations.indexOf(op))).join('');
+    const CAP = 100;
+    const rows = !expanded
+      ? ''
+      : failure
+        ? `<div class="error-banner">${escapeHtml(failure)}</div>`
+        : shown.length === 0
+          ? `<div class="note">${operations.length === 0 ? 'No operations in this source.' : 'No operations match the filter.'}</div>`
+          : shown.slice(0, CAP).map((op) => this.renderOperation(source.name, op, operations.indexOf(op))).join('')
+            + (shown.length > CAP ? `<div class="note">${shown.length - CAP} more — filter to narrow</div>` : '');
 
     return `
       <div class="group" part="group">
-        <div class="group-head">
+        <div class="group-head toggle" data-name="${escapeHtml(source.name)}" role="button" tabindex="0"
+             title="${expanded ? 'Collapse' : 'Expand'} ${escapeHtml(source.name)}">
+          <span class="twist">${expanded ? '▾' : '▸'}</span>
           <span>${escapeHtml(source.name)}</span>
           ${source.type ? `<span class="type">${escapeHtml(source.type)}</span>` : ''}
+          <span class="count">${operations.length} op${operations.length === 1 ? '' : 's'}</span>
           <span class="spacer"></span>
           <button class="detach" type="button" data-name="${escapeHtml(source.name)}" title="Detach this source">✕</button>
         </div>
