@@ -78,6 +78,7 @@ class ArazzoStepInspector extends ArazzoElement {
 
   set operationRequest(request) {
     this._operationRequest = request;
+    if (this.isConnected && this._built) this._renderReplacements();
     if (this.isConnected && this._built) this._renderBodyTemplateButton();
   }
   /** The workflow-level actions (for the localize-defaults affordance). */
@@ -522,29 +523,104 @@ class ArazzoStepInspector extends ArazzoElement {
   }
 
   /** @private — the requestBody.replacements list: target (JSON Pointer) → expression-capable value. */
+  /** @private — every JSON Pointer the request schema can address (bounded), for autocomplete. */
+  _requestPointerPaths() {
+    const paths = [];
+    const walk = (schema, prefix, depth) => {
+      if (!schema || typeof schema !== 'object' || depth > 6) return;
+      for (const [name, propSchema] of Object.entries(schema.properties || {})) {
+        const path = `${prefix}/${name.replaceAll('~', '~0').replaceAll('/', '~1')}`;
+        paths.push(path);
+        walk(propSchema, path, depth + 1);
+      }
+      if (schema.items && typeof schema.items === 'object') {
+        const path = `${prefix}/0`;
+        paths.push(path);
+        walk(schema.items, path, depth + 1);
+      }
+    };
+    walk(this._operationRequest?.schema, '', 0);
+    return paths;
+  }
+
+  /** @private — the schema node a pointer addresses (array indices resolve through items). */
+  _schemaAt(pointer) {
+    let node = this._operationRequest?.schema;
+    if (!pointer) return node ?? null;
+    if (!node || !pointer.startsWith('/')) return null;
+    for (const token of pointer.slice(1).split('/')) {
+      if (!node || typeof node !== 'object') return null;
+      const key = token.replaceAll('~1', '/').replaceAll('~0', '~');
+      node = /^\d+$/.test(key) && node.items ? node.items : node.properties?.[key];
+    }
+    return node ?? null;
+  }
+
   _renderReplacements() {
     const box = this.$('.repls');
     const replacements = this._step.requestBody?.replacements || [];
     box.innerHTML = '';
+
+    // The target pointers autocomplete from the operation's request schema.
+    const pointerPaths = this._requestPointerPaths();
+    if (pointerPaths.length) {
+      const list = document.createElement('datalist');
+      list.id = 'repl-paths';
+      list.innerHTML = pointerPaths.map((path) => `<option value="${escapeHtml(path)}"></option>`).join('');
+      box.append(list);
+    }
+
     replacements.forEach((r, i) => {
       const row = document.createElement('div');
       row.className = 'rrow';
-      row.style.cssText = 'display:grid; grid-template-columns: 1fr 1fr auto; gap:6px; align-items:center; margin-bottom:6px;';
+      row.style.cssText = 'display:grid; grid-template-columns: 1fr 1.2fr auto; gap:6px; align-items:start; margin-bottom:6px;';
       row.innerHTML = `
-        <input class="rtarget" type="text" placeholder="/card/number" value="${escapeHtml(r.target ?? '')}">
-        <div class="rvalue-slot"></div>
+        <input class="rtarget" type="text" placeholder="/card/number" ${pointerPaths.length ? 'list="repl-paths"' : ''} value="${escapeHtml(r.target ?? '')}">
+        <div class="rvalue"></div>
         <button class="rdel ghost" type="button" title="Remove">✕</button>`;
-      const value = document.createElement('arazzo-expression-input');
-      value.completionContext = this._completionContext;
-      value.value = typeof r.value === 'string' ? r.value : JSON.stringify(r.value ?? '');
-      row.querySelector('.rvalue-slot').append(value);
+
+      // The VALUE editor follows the schema at the target pointer: an object target (or an object
+      // value) edits structurally, constrained to that sub-schema; scalars stay expression inputs,
+      // literals coercing to the target's type.
+      const buildValue = () => {
+        const slot = row.querySelector('.rvalue');
+        slot.replaceChildren();
+        const target = this._schemaAt(r.target ?? '');
+        const type = Array.isArray(target?.type) ? target.type[0] : target?.type;
+        if (type === 'object' || (r.value !== null && typeof r.value === 'object')) {
+          const ed = document.createElement('arazzo-payload-editor');
+          ed.schema = type === 'object' ? target : null;
+          ed.completionContext = this._completionContext;
+          ed.value = (r.value !== null && typeof r.value === 'object') ? r.value : undefined;
+          ed.addEventListener('payload-changed', (e) => {
+            e.stopPropagation();
+            r.value = e.detail.payload === undefined ? '' : e.detail.payload;
+            this._emit();
+          });
+          slot.append(ed);
+          return;
+        }
+
+        const value = document.createElement('arazzo-expression-input');
+        value.setAttribute('placeholder', type && type !== 'string' ? `${type} or $inputs.…` : '$inputs.…');
+        value.completionContext = this._completionContext;
+        value.value = typeof r.value === 'string' ? r.value : JSON.stringify(r.value ?? '');
+        value.addEventListener('value-changed', (e) => {
+          e.stopPropagation();
+          const text = e.detail.value;
+          if (text === '' || text.startsWith('$') || text.includes('{$') || !type) r.value = text;
+          else if (type === 'number' || type === 'integer') { const n = Number(text); r.value = Number.isFinite(n) ? n : text; }
+          else if (type === 'boolean') r.value = text === 'true' ? true : text === 'false' ? false : text;
+          else r.value = text;
+          this._emit();
+        });
+        slot.append(value);
+      };
+
+      buildValue();
       row.querySelector('.rtarget').addEventListener('input', (e) => {
         r.target = e.target.value;
-        this._emit();
-      });
-      value.addEventListener('commit', (e) => {
-        e.stopPropagation();
-        r.value = e.detail.value;
+        buildValue(); // the value editor tracks the schema at the new target
         this._emit();
       });
       row.querySelector('.rdel').addEventListener('click', () => {

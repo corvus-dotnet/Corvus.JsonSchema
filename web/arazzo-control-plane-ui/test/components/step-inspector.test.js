@@ -239,4 +239,38 @@ describe('<arazzo-step-inspector>', () => {
     scalar.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '$inputs.limit' }, bubbles: true, composed: true }));
     equal((await exprChanged).detail.step.parameters[1].value, '$inputs.limit', 'expressions always stay strings');
   });
+
+  it('replacement targets autocomplete from the request schema; values follow the target type', async () => {
+    make({
+      stepId: 'x', operationId: 'op',
+      requestBody: { payload: { card: { number: '' } }, replacements: [{ target: '/card', value: '' }, { target: '/amount', value: '' }] },
+    });
+    el.operationRequest = {
+      contentType: 'application/json',
+      schema: { type: 'object', properties: {
+        amount: { type: 'number' },
+        card: { type: 'object', properties: { number: { type: 'string' }, cvv: { type: 'string' } } },
+      } },
+    };
+
+    const list = el.shadowRoot.querySelector('datalist#repl-paths');
+    ok(list, 'the pointer datalist renders');
+    const options = [...list.querySelectorAll('option')].map((o) => o.value);
+    ok(options.includes('/card') && options.includes('/card/number') && options.includes('/amount'), 'paths walk the schema');
+    ok(el.shadowRoot.querySelector('.rtarget').getAttribute('list') === 'repl-paths', 'the target input autocompletes');
+
+    const rows = [...el.shadowRoot.querySelectorAll('.rrow')];
+    ok(rows[0].querySelector('arazzo-payload-editor'), 'an object target edits structurally, constrained to the sub-schema');
+    ok(rows[0].querySelector('arazzo-payload-editor').shadowRoot.textContent.includes('cvv'), 'the sub-schema fields render');
+
+    const scalar = rows[1].querySelector('arazzo-expression-input');
+    ok(scalar, 'a scalar target stays an expression input');
+    const changed = nextEvent(el, 'step-changed');
+    scalar.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '19.99' }, bubbles: true, composed: true }));
+    equal((await changed).detail.step.requestBody.replacements[1].value, 19.99, 'a literal coerces to the target number');
+
+    const exprChanged = nextEvent(el, 'step-changed');
+    scalar.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '$inputs.amount' }, bubbles: true, composed: true }));
+    equal((await exprChanged).detail.step.requestBody.replacements[1].value, '$inputs.amount', 'expressions stay strings');
+  });
 });
