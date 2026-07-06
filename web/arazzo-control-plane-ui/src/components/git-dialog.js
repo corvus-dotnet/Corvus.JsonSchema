@@ -40,14 +40,11 @@ class ArazzoGitDialog extends ArazzoElement {
     this.render();
     this.$('.gh-connect').client = this._client;
     if (this.windowOpener) this.$('.gh-connect').windowOpener = this.windowOpener;
-    this.$('dialog').showModal();
     const seq = ++this._seq;
     try {
       const workingCopy = await this._client.getWorkingCopy(workingCopyId);
       if (seq !== this._seq) return;
       this._workingCopy = workingCopy;
-      const name = this.$('.wc-name');
-      if (name) name.textContent = workingCopy?.name ? ` — ${workingCopy.name}` : '';
       this.renderBinding();
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
@@ -56,15 +53,14 @@ class ArazzoGitDialog extends ArazzoElement {
   }
 
   close() {
-    this.$('dialog')?.close();
+    // A panel has nothing to dismiss; kept for API compatibility.
   }
 
   render() {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0; width: min(520px, 92vw); }
-        dialog::backdrop { background: rgb(0 0 0 / 0.35); }
+        .panel { background: var(--_bg); color: inherit; }
         .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
         .head h2 { margin: 0; font-size: 14px; }
         .body { padding: 12px 14px; display: grid; gap: 12px; }
@@ -96,8 +92,7 @@ class ArazzoGitDialog extends ArazzoElement {
         .result .file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
       </style>
-      <dialog part="dialog">
-        <div class="head"><h2>Git<span class="wc-name muted"></span></h2><button class="x" type="button" title="Close">✕</button></div>
+      <div class="panel" part="panel">
         <div class="body">
           <div class="error-banner" hidden></div>
           <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
@@ -149,11 +144,8 @@ class ArazzoGitDialog extends ArazzoElement {
             <div class="result" hidden></div>
           </fieldset>
         </div>
-        <div class="foot"><button class="done" type="button">Done</button></div>
-      </dialog>`;
+      </div>`;
 
-    this.$('button.x').addEventListener('click', () => this.close());
-    this.$('button.done').addEventListener('click', () => this.close());
     this.$('.gh-connect').addEventListener('github-connected', () => this.renderBinding());
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderBinding());
     this.$('.save-binding').addEventListener('click', () => this.saveBinding());
@@ -395,7 +387,7 @@ class ArazzoGitDialog extends ArazzoElement {
       this.emit('binding-saved', { workingCopy: saved });
     } catch (err) {
       this.showError(err.status === 409
-        ? 'The working copy changed while this dialog was open — close and reopen to rebind.'
+        ? 'The working copy changed underneath — reopen the working copy to rebind.'
         : err.problem?.detail || err.problem?.title || err.message);
       this.emit('error', { problem: err.problem, error: err });
     }
