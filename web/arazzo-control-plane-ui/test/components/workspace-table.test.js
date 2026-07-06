@@ -89,6 +89,7 @@ describe('<arazzo-workspace-table>', () => {
     let selections = 0;
     el.addEventListener('working-copy-selected', () => selections++);
     const deleted = nextEvent(el, 'working-copy-deleted');
+    el.confirmFn = () => true;
     el.shadowRoot.querySelector(`tbody button.rowaction[data-id="${created.id}"]`).click();
     const e = await deleted;
     equal(e.detail.id, created.id);

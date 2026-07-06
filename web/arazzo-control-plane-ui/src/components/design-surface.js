@@ -198,7 +198,8 @@ class ArazzoDesignSurface extends ArazzoElement {
         /* An action after a criteria-less catch-all can never fire (first-match-wins). */
         .edge.unreachable { opacity: 0.35; }
         .edge.unreachable .elabel { text-decoration: line-through; }
-        .elabel { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted);
+        .elabel { paint-order: stroke; stroke: var(--_bg); stroke-width: 3px; stroke-linejoin: round;
+                  font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted);
                   paint-order: stroke; stroke: var(--_surface); stroke-width: 3; }
         .elabel.ghost { font-style: italic; opacity: 0.8; }
         marker path { fill: var(--_muted); }
@@ -370,7 +371,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     el.innerHTML = `
       <path class="hit" d="${d}"></path>
       <path class="line" d="${d}" marker-end="url(#arr-${edge.kind === 'seq' ? 'seq' : edge.kind})"></path>
-      ${label ? `<text class="elabel${edge.criteriaSummary ? '' : ' ghost'}" x="${mid.x + 8}" y="${mid.y}">${escapeHtml(truncate(label, 34))}</text>` : ''}
+      ${label ? `<text class="elabel${edge.criteriaSummary ? '' : ' ghost'}" x="${mid.x + 8}" y="${mid.y + ((edge.order ?? 1) - 1) * 12}">${escapeHtml(truncate(label, 34))}</text>` : ''}
     `;
     return el;
   }
@@ -405,6 +406,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     const w = 190;
     const h = 30 + rows.length * 18;
     el.innerHTML = `
+      <title>Workflow-level default actions — what a step falls back to when it declares no onSuccess/onFailure of its own. Click to edit.</title>
       <rect class="card" width="${w}" height="${h}"></rect>
       <text class="title" x="12" y="19">WORKFLOW DEFAULTS</text>
       ${rows.map((r, i) => `<text class="row" x="12" y="${37 + i * 18}">${r.dir === 'failure' ? '✗' : '✓'} ${escapeHtml(truncate(`${r.name || r.type} (${r.type})`, 24))}</text>`).join('')}

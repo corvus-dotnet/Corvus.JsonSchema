@@ -91,7 +91,7 @@ class ArazzoGitHubConnect extends ArazzoElement {
     if (this._session?.connected) {
       row.innerHTML = `
         <span class="chip" part="chip" title="Signed in to GitHub${this._session.name ? ` as ${escapeHtml(this._session.name)}` : ''}">
-          <span class="login">${escapeHtml(this._session.login ?? 'connected')}</span>
+          <span class="muted">Connected as</span> <span class="login">${escapeHtml(this._session.login ?? 'connected')}</span>
         </span>
         <button class="disconnect" type="button" title="Drop the brokered GitHub session">Disconnect</button>`;
       this.$('.disconnect').addEventListener('click', () => this.disconnect());

@@ -122,7 +122,11 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     const client = this.client;
     if (!client) return;
     try {
-      const workingCopy = await client.createWorkingCopy();
+      // Ask for a name up front so "untitled" documents don't accumulate; cancelling keeps the
+      // default. `promptFn` is injectable for tests (a dismissed headless prompt returns null).
+      const ask = this.promptFn ?? ((message, fallback) => window.prompt(message, fallback));
+      const name = (ask('Name the new working copy:', 'untitled') || 'untitled').trim() || 'untitled';
+      const workingCopy = await client.createWorkingCopy({ name });
       this.reload();
       this.emit('working-copy-created', { workingCopy });
     } catch (err) {
@@ -136,6 +140,8 @@ class ArazzoWorkspaceTable extends ArazzoElement {
   async deleteRow(id) {
     const client = this.client;
     if (!client) return;
+    const ok = (this.confirmFn ?? ((message) => window.confirm(message)))(`Delete this working copy? Published catalog versions are unaffected.`);
+    if (!ok) return;
     try {
       await client.deleteWorkingCopy(id);
       if (this._selectedId === id) this._selectedId = null;
