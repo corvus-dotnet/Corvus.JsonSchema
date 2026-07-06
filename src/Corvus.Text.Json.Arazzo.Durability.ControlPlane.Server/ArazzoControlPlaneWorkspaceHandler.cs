@@ -1013,6 +1013,28 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         }
     }
 
+    /// <summary>Debug runs (workflow-designer design §18) fail CLOSED until the draft-run executor
+    /// is wired (§18 slice 2/3): the contract is published, the lifecycle arrives with the engine
+    /// seam — the same staging the simulator used.</summary>
+    private static Models.ProblemDetails.Source DebugRunsNotOffered()
+        => Problem("debug-runs-not-offered", "Debug runs not offered", 400, "This deployment does not offer draft debug runs yet (workflow-designer design §18 slice 2).");
+
+    /// <inheritdoc/>
+    public ValueTask<StartDebugRunResult> HandleStartDebugRunAsync(StartDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(StartDebugRunResult.BadRequest(DebugRunsNotOffered(), workspace));
+
+    /// <inheritdoc/>
+    public ValueTask<GetDebugRunResult> HandleGetDebugRunAsync(GetDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(GetDebugRunResult.NotFound(Problem("debug-run-not-found", "Debug run not found", 404, "This deployment does not offer draft debug runs yet (workflow-designer design §18 slice 2)."), workspace));
+
+    /// <inheritdoc/>
+    public ValueTask<ResumeDebugRunResult> HandleResumeDebugRunAsync(ResumeDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(ResumeDebugRunResult.NotFound(Problem("debug-run-not-found", "Debug run not found", 404, "This deployment does not offer draft debug runs yet (workflow-designer design §18 slice 2)."), workspace));
+
+    /// <inheritdoc/>
+    public ValueTask<CancelDebugRunResult> HandleCancelDebugRunAsync(CancelDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(CancelDebugRunResult.NotFound(Problem("debug-run-not-found", "Debug run not found", 404, "This deployment does not offer draft debug runs yet (workflow-designer design §18 slice 2)."), workspace));
+
     /// <inheritdoc/>
     public async ValueTask<GetWorkingCopySourceResult> HandleGetWorkingCopySourceAsync(GetWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {

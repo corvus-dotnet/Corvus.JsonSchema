@@ -2291,6 +2291,79 @@
         }
       }
     },
+    "/workspace/workflows/{id}/debug-runs": {
+      "post": {
+        "tags": ["workspace"],
+        "operationId": "startDebugRun",
+        "summary": "Start a DEBUG RUN of the working copy's stored document in a development-class environment (workflow-designer design \u00a718): a durable run under the environment's credential bindings \u2014 the runner resolves secrets as its own identity; nothing reaches the browser. Forward-only; gated by the environment's allowsDraftRuns flag, the caller's entitlement, and per-source credential readiness. Every start is audited.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [{"$ref": "#/components/parameters/WorkingCopyIdPath"}],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRunStart"}}}
+        },
+        "responses": {
+          "201": {"description": "The debug run, started (possibly already paused before its first step).", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"description": "The environment does not allow draft runs, or the caller lacks entitlement to run there.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "409": {"description": "Credential readiness is incomplete \u2014 the problem detail lists each declared source without a credential binding in the target environment.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}": {
+      "get": {
+        "tags": ["workspace"],
+        "operationId": "getDebugRun",
+        "summary": "The debug run's current state: status, cursor, the trace so far (the same shape simulation emits \u2014 exchanges as sent), and any wait it is suspended on.",
+        "security": [{"bearer": ["workspace:read"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "The debug run.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}/resume": {
+      "post": {
+        "tags": ["workspace"],
+        "operationId": "resumeDebugRun",
+        "summary": "Advance the debug run: plain resume continues to the next pause point (pause.afterEachStep = single-step; pause.beforeSteps = breakpoints); an optional action applies the SAME ResumeRequest union the runs view uses \u2014 Skip with outputs is 'step over', Rewind deliberately re-executes.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRunResume"}}}
+        },
+        "responses": {
+          "200": {"description": "The debug run after the advance.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "409": {"description": "The run is not in a resumable state.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}/cancel": {
+      "post": {
+        "tags": ["workspace"],
+        "operationId": "cancelDebugRun",
+        "summary": "Cancel the debug run; a terminal state, idempotent.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "The debug run, cancelled.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
     "/workspace/workflows/{id}/simulate": {
       "post": {
         "operationId": "simulateWorkingCopy",
@@ -5829,7 +5902,51 @@
           }
         }
       },
-      "SimulationTrace": {
+      "DebugRunPause": {
+      "type": "object",
+      "description": "Where a debug run pauses (workflow-designer design \u00a718): after every step (single-stepping) and/or before named steps (breakpoints). Absent \u2014 the run proceeds to completion, a wait, or a fault.",
+      "properties": {
+        "afterEachStep": { "type": "boolean", "description": "Pause after every executed step \u2014 the dock's single-step." },
+        "beforeSteps": { "type": "array", "description": "Pause before these steps execute \u2014 breakpoints.", "items": { "type": "string" } }
+      }
+    },
+    "DebugRunStart": {
+      "type": "object",
+      "description": "Start a debug run of the working copy's stored document in an environment that allows drafts (workflow-designer design \u00a718).",
+      "required": ["workflowId", "environment"],
+      "properties": {
+        "workflowId": { "type": "string", "description": "The workflow within the document to run." },
+        "environment": { "type": "string", "description": "The target environment; it must set allowsDraftRuns and the caller must be entitled to run there." },
+        "inputs": { "type": "object", "description": "The workflow's inputs, validated against its own inputs schema.", "additionalProperties": true },
+        "pause": { "$ref": "#/components/schemas/DebugRunPause" }
+      }
+    },
+    "DebugRunResume": {
+      "type": "object",
+      "description": "Advance a paused, suspended, or faulted debug run. A bare resume continues to the next pause point; `action` applies the SAME resume union the runs view uses (Skip with outputs = the dock's step-over; Rewind deliberately re-executes real side effects).",
+      "properties": {
+        "action": { "$ref": "#/components/schemas/ResumeRequest" },
+        "pause": { "$ref": "#/components/schemas/DebugRunPause" }
+      }
+    },
+    "DebugRun": {
+      "type": "object",
+      "description": "A debug run: a durable, forward-only run of a working-copy draft in a development-class environment (workflow-designer design \u00a718). The trace grows as the run advances and uses the same shape simulation emits \u2014 capture-to-scenario replays it offline with full time travel.",
+      "required": ["debugRunId", "workflowId", "environment", "status"],
+      "properties": {
+        "debugRunId": { "type": "string" },
+        "workflowId": { "type": "string" },
+        "environment": { "type": "string" },
+        "status": { "type": "string", "enum": ["running", "paused", "suspended", "completed", "faulted", "cancelled"], "description": "paused = at a pause point (the dock's controls apply); suspended = a real wait (message/time); the rest are terminal except running." },
+        "cursor": { "type": "integer", "format": "int32", "description": "The number of steps executed so far \u2014 the position the dock scrubs to." },
+        "trace": { "$ref": "#/components/schemas/SimulationTrace" },
+        "documentEtag": { "type": "string", "description": "The working-copy etag the run started from \u2014 the audited draft identity." },
+        "startedBy": { "type": "string" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SimulationTrace": {
         "type": "object",
         "title": "SimulationTrace",
         "description": "The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.",
@@ -6625,6 +6742,7 @@
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
           "description": { "type": "string", "description": "An optional human description." },
           "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6): when true, a version may be made available here only if its server-attested scenario suite passed at publish. Absent/false preserves the default behaviour — unevidenced versions may be promoted." },
+          "allowsDraftRuns": { "type": "boolean", "description": "Development-class flag (workflow-designer design \u00a718): when true, working-copy DRAFTS may execute here as debug runs, using this environment's credential bindings. Absent/false \u2014 only published, availability-granted versions run here." },
           "managementTags": {
             "type": "array",
             "description": "Security tags (§14.2) scoping who may MANAGE and SEE this environment. The reserved internal-tag prefix is not allowed here.",
@@ -6640,6 +6758,7 @@
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
           "description": { "type": "string", "description": "An optional human description." },
           "requireEvidence": { "type": "boolean", "description": "Replacement promotion-readiness requirement (workflow-designer design §4.6); absent leaves the environment's requirement unchanged." },
+          "allowsDraftRuns": { "type": "boolean", "description": "Replacement draft-run permission (workflow-designer design \u00a718); absent leaves the environment's setting unchanged." },
           "managementTags": { "type": "array", "description": "Replacement non-internal security tags (§14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.", "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" } }
         }
       },
@@ -6651,6 +6770,7 @@
           "displayName": { "type": "string" },
           "description": { "type": "string" },
           "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6). Absent means false — unevidenced versions may be promoted." },
+          "allowsDraftRuns": { "type": "boolean", "description": "Whether working-copy drafts may execute here as debug runs (workflow-designer design \u00a718). Absent means false." },
           "managementTags": {
             "type": "array",
             "description": "Security tags scoping who may MANAGE and SEE this environment (§14.2).",
