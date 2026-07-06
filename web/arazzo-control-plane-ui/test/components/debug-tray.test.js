@@ -123,4 +123,30 @@ describe('<arazzo-debug-tray>', () => {
     make();
     ok(!el.shadowRoot.querySelector('.inject'), 'inject only appears on a suspended message wait');
   });
+
+  it('steps into a sub-workflow trace and back out, telling the host which workflow to show', async () => {
+    make({
+      outcome: 'completed',
+      stepsExecuted: 1,
+      steps: [{
+        stepId: 'run-order', status: 'completed', attempt: 0,
+        actionTaken: { type: 'end', name: 'done' },
+        subTrace: { workflowId: 'place-order', outcome: 'completed', stepsExecuted: 1, steps: [TRACE.steps[0]] },
+      }],
+    });
+
+    const into = el.shadowRoot.querySelector('[data-into]');
+    ok(into, 'a sub-workflow step offers ⤵');
+    const focused = nextEvent(el, 'workflow-focus');
+    into.click();
+    equal((await focused).detail.workflowId, 'place-order', 'descending focuses the sub-workflow');
+    ok(el.shadowRoot.textContent.includes('get-pet'), 'the nested steps render');
+    ok(el.shadowRoot.querySelector('.crumb'), 'the breadcrumb shows where you are');
+
+    const refocused = nextEvent(el, 'workflow-focus');
+    el.shadowRoot.querySelector('.crumb .up').click();
+    equal((await refocused).detail.workflowId, null, "stepping out restores the run's own workflow");
+    ok(el.shadowRoot.textContent.includes('run-order'), 'the parent trace is back');
+    ok(!el.shadowRoot.querySelector('.crumb'), 'no breadcrumb at the top level');
+  });
 });

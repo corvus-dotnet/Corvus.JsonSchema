@@ -298,8 +298,9 @@ class ArazzoScenarioEditor extends ArazzoElement {
           </span>
         </section>
         <section>
-          <h5>$outputs conditions</h5>
-          ${(expect.outputs ?? []).map((o, i) => `<span class="row-head"><input class="x-output" data-i="${i}" type="text" value="${escapeHtml(o.condition ?? '')}" placeholder="$outputs.name == 'Fido'"><button type="button" class="ghost del" data-del-output="${i}" title="Remove">✕</button></span>`).join('')}
+          <h5>Output conditions</h5>
+          <span class="helper">Checks the run's outputs — the workflow's ($outputs.name) and any step's intermediate ones ($steps.step-id.outputs.name).</span>
+          ${(expect.outputs ?? []).map((o, i) => `<span class="row-head"><input class="x-output" data-i="${i}" type="text" value="${escapeHtml(o.condition ?? '')}" placeholder="$steps.authorize.outputs.id == 'a-1'"><button type="button" class="ghost del" data-del-output="${i}" title="Remove">✕</button></span>`).join('')}
           <button type="button" class="add add-output">+ condition</button>
         </section>
         <section>

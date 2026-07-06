@@ -14,7 +14,9 @@
 // Methods    : frameAt(index) → {active, steps, edges} for <arazzo-design-surface>.debugState
 // Events     : cursor-changed {index}, clear-requested, step-requested (cursor at end of a paused trace),
 //              trigger-injected {channel, payload?, correlationId?} (a suspended run's message wait —
-//              the host adds it to the session scenario and replays)
+//              the host adds it to the session scenario and replays),
+//              workflow-focus {workflowId|null} (stepping into/out of a sub-workflow's nested trace —
+//              the host switches the canvas to that workflow; null = the run's own workflow)
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
@@ -31,6 +33,7 @@ class ArazzoDebugTray extends ArazzoElement {
     super();
     /** @private */ this._trace = null;
     /** @private */ this._cursor = 0;
+    /** @private */ this._stack = []; // ancestor frames while stepped into a sub-workflow's trace
   }
 
   connectedCallback() {
@@ -41,6 +44,7 @@ class ArazzoDebugTray extends ArazzoElement {
   get trace() { return this._trace; }
   set trace(value) {
     this._trace = value || null;
+    this._stack = [];
     this._cursor = this.length;
     if (this.isConnected) this.render();
   }
@@ -115,6 +119,9 @@ class ArazzoDebugTray extends ArazzoElement {
         td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; overflow-wrap: anywhere; }
         td.v { width: 1%; white-space: nowrap; overflow-wrap: normal; }
         .chip.warn { color: var(--arazzo-status-suspended, #b45309); }
+        .crumb { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px dashed var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .crumb .up { font-size: 11px; padding: 1px 8px; }
+        .step .into { font-size: 11px; padding: 0 5px; flex-shrink: 0; }
         .inject { display: grid; gap: 4px; border: 1px solid var(--_border); border-radius: 6px; padding: 6px; }
         .inject input, .inject textarea { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; }
         .inject textarea { min-height: 44px; }
@@ -122,6 +129,10 @@ class ArazzoDebugTray extends ArazzoElement {
         .inject .why { color: var(--_muted); font-size: 10.5px; }
       </style>
       ${!trace ? '<div class="empty-note">No debug session — ▶ Run simulates the working copy against its scripted mocks.</div>' : `
+      ${this._stack.length ? `<div class="crumb" part="crumb">
+        <button class="up" type="button" title="Step out to the calling workflow">⬅ back</button>
+        <span class="muted">${this._stack.map((f) => escapeHtml(f.label)).join(' ⤵ ')} ⤵</span>
+      </div>` : ''}
       <div class="bar" part="controls">
         ${this.renderOutcomeChip(trace)}
         <button class="prev" type="button" title="Scrub back one step" ${this._cursor === 0 ? 'disabled' : ''}>⏮</button>
@@ -145,6 +156,24 @@ class ArazzoDebugTray extends ArazzoElement {
     });
     this.$('.clear').addEventListener('click', () => this.emit('clear-requested', {}));
     this.$$('.step').forEach((row) => row.addEventListener('click', () => { this.cursor = Number(row.dataset.index) + 1; }));
+    this.$$('[data-into]').forEach((b) => b.addEventListener('click', (e) => {
+      e.stopPropagation(); // not a cursor move
+      const record = this._trace.steps[Number(b.dataset.into)];
+      this._stack.push({ trace: this._trace, cursor: this._cursor, label: record.stepId });
+      this._trace = record.subTrace;
+      this._cursor = this.length;
+      this.render();
+      this.emit('workflow-focus', { workflowId: record.subTrace.workflowId ?? null });
+      this.emit('cursor-changed', { index: this._cursor });
+    }));
+    this.$('.crumb .up')?.addEventListener('click', () => {
+      const frame = this._stack.pop();
+      this._trace = frame.trace;
+      this._cursor = frame.cursor;
+      this.render();
+      this.emit('workflow-focus', { workflowId: this._trace.workflowId ?? null });
+      this.emit('cursor-changed', { index: this._cursor });
+    });
     this.$('.inj-go')?.addEventListener('click', () => {
       const channel = this.$('.inj-channel').value.trim();
       if (!channel) return;
@@ -188,6 +217,7 @@ class ArazzoDebugTray extends ArazzoElement {
       <span class="n">${index + 1}</span>
       <span class="${failed ? 'bad' : 'ok'}">${failed ? '✗' : '✓'}</span>
       <span class="nm">${escapeHtml(record.stepId)}${record.attempt ? ` <span class="muted">↻${record.attempt}</span>` : ''}</span>
+      ${record.subTrace ? `<span class="into ghost" data-into="${index}" title="Step into ${escapeHtml(record.subTrace.workflowId ?? 'the sub-workflow')} — its own trace, scrubbable">⤵</span>` : ''}
       <span class="act">${escapeHtml(action)}</span>
     </button>`;
   }

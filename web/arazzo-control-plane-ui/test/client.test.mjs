@@ -1387,3 +1387,34 @@ test('validate flags payload literals that can never satisfy the operation schem
   const clean = await c.validateWorkingCopy(wc.id);
   assert.ok(!clean.diagnostics.some((d) => d.category === 'payload-typing'), 'expressions + literals of the right type pass');
 });
+
+test('a workflowId-bound step runs its sub-workflow inline and carries the nested trace (§3.3 step-into)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'nested',
+    document: {
+      arazzo: '1.1.0', info: { title: 'n', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [
+        { workflowId: 'outer', steps: [
+          { stepId: 'run-inner', workflowId: 'inner', onSuccess: [{ name: 'done', type: 'end' }] },
+        ] },
+        { workflowId: 'inner', outputs: { first: '$steps.list.outputs.first' }, steps: [
+          { stepId: 'list', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }], outputs: { first: '$response.body#/0/name' } },
+        ] },
+      ],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    workflowId: 'outer',
+    scenario: { mocks: [{ method: 'get', path: '/pets', status: 200, body: [{ name: 'Biscuit' }] }] },
+  });
+  assert.equal(trace.outcome, 'completed');
+  const record = trace.steps[0];
+  assert.equal(record.stepId, 'run-inner');
+  assert.equal(record.subTrace.workflowId, 'inner', 'the nested trace names its workflow');
+  assert.equal(record.subTrace.steps[0].stepId, 'list', 'the sub-workflow steps ride the record');
+  assert.equal(record.outputs.first, 'Biscuit', 'the sub-workflow outputs become the step outputs');
+});

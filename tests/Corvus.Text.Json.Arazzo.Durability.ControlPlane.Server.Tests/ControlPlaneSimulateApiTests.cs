@@ -161,7 +161,8 @@ public sealed class ControlPlaneSimulateApiTests
              "mocks":[{"source":"petstore","operationId":"getPet","responses":[{"status":200,"body":{"name":"Fido"}}]},
                       {"source":"petstore","operationId":"adoptPet","responses":[{"status":200}]}],
              "expect":{"outcome":"completed","path":["get-pet","adopt-pet"],"pathMode":"exact",
-                       "outputs":[{"condition":"$outputs.name == 'Fido'"}],
+                       "outputs":[{"condition":"$outputs.name == 'Fido'"},
+                                  {"condition":"$steps.get-pet.outputs.petName == 'Fido'"}],
                        "steps":{"get-pet":{"attempts":1},"adopt-pet":{"reached":true}}}}
             """;
         HttpResponseMessage put = await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/happy-path", passing, "workspace:write");
@@ -197,7 +198,7 @@ public sealed class ControlPlaneSimulateApiTests
         {
             result.RootElement.GetProperty("passed").GetBoolean().ShouldBeTrue();
             result.RootElement.GetProperty("outcome").GetString().ShouldBe("completed");
-            result.RootElement.GetProperty("expectations").GetArrayLength().ShouldBe(5, "outcome, path, one output, two step assertions");
+            result.RootElement.GetProperty("expectations").GetArrayLength().ShouldBe(6, "outcome, path, a workflow-output and an INTERMEDIATE step-output condition, two step assertions");
             result.RootElement.GetProperty("trace").GetProperty("steps").GetArrayLength().ShouldBe(2);
         }
 

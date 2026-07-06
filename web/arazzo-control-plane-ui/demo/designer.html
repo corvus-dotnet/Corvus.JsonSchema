@@ -61,14 +61,13 @@
 <body data-view="workspace">
   <header>
     <!-- Grouped left→right in the conventional order for design tools:
-         context (back · document name · workflow · document settings) | edit (undo/redo)
+         context (back · document name · workflow) | edit (undo/redo)
          | view (fit/auto-layout) | run (simulate/step/stop/read-only) | status · validate · theme.
          Icon buttons with tooltips; the document autosaves (undo/redo is the safety net),
          so there is no Save button — the status chip narrates saving/saved/conflict. -->
     <button id="back" class="tb" title="Back to the workspace" hidden>⌂</button>
-    <span id="wc-name" title="The open working copy — saves never mint catalog versions" hidden></span>
+    <span id="wc-name" title="The document's title (info.title) — the working copy is named by it; edit it on the settings page (click the canvas background). Saves never mint catalog versions." hidden></span>
     <select id="workflow" class="designer-only" title="Which workflow of this document to edit"></select>
-    <button id="docbtn" class="tb designer-only" title="Document settings: info, source descriptions, workflows, reusable components">⚙</button>
     <span class="tb-sep designer-only"></span>
     <button id="undo" class="tb designer-only" title="Undo (Ctrl+Z)" disabled>↶</button>
     <button id="redo" class="tb designer-only" title="Redo (Ctrl+Y)" disabled>↷</button>
@@ -232,12 +231,17 @@
     }
     refreshWorkflowOptions();
 
+    let refreshExpressionContext = () => {}; // assigned once the console exists; project() keeps it current
     function project() {
       surface.graph = projectWorkflow(doc, select.value);
       // The empty canvas teaches the happy path instead of staring blankly (steps come from
       // an attached source's operations).
       const wf = (doc.workflows ?? []).find((w) => w.workflowId === select.value) ?? doc.workflows?.[0];
       document.getElementById('canvas-empty').hidden = !!(wf?.steps?.length);
+      // One name concept: the title bar shows the DOCUMENT's title, live (editing info.title on
+      // the settings page renames the working copy on the next save).
+      document.getElementById('wc-name').textContent = doc.info?.title || shell.name || 'untitled';
+      refreshExpressionContext();
     }
     document.getElementById('canvas-empty-cta').addEventListener('click', () => switchSideTab('sources'));
     select.addEventListener('change', () => { project(); surface.fit(); });
@@ -309,12 +313,13 @@
       model.reset(wc.document, wc.designerState ?? { nodes: {} });
       opBrowser.workingCopyId = wc.id;
       scPanel.workingCopyId = wc.id;
-      wcName.textContent = wc.name;
       refreshWorkflowOptions();
       project();
       problemsEl.textContent = '(not validated yet)';
       showView('designer');
       surface.fit();
+      surface.selection = null;
+      showSelection(null); // an open starts on the settings page (empty selection = the document)
       shell.conflicted = false;
       setSaveUi('all changes saved');
     }
@@ -323,7 +328,7 @@
       if (!shell.id) return false;
       try {
         const saved = await client.saveWorkingCopy(shell.id, {
-          name: shell.name,
+          name: model.document?.info?.title || shell.name, // name ≡ the document's title
           document: model.document,
           designerState: model.designerState,
           expectedEtag: shell.etag,
@@ -511,7 +516,6 @@
     }
     sideTabButtons.forEach((b) => b.addEventListener('click', () => switchSideTab(b.dataset.tab)));
 
-    document.getElementById('docbtn').addEventListener('click', () => { switchSideTab('inspect'); showDocumentInspector(); });
     textEditor.addEventListener('undo-requested', () => { if (model.canUndo) model.undo(); });
     textEditor.addEventListener('redo-requested', () => { if (model.canRedo) model.redo(); });
 
@@ -544,7 +548,7 @@
     // Seed one working copy from the fixture — with its two sources attached inline, so the rail,
     // the operation browser, and the inspector templates all run on real listSourceOperations data.
     (async () => {
-      const wc = await client.createWorkingCopy({ name: 'place-order (fixture)', document: designerFixture, designerState: { nodes: {} } });
+      const wc = await client.createWorkingCopy({ name: designerFixture.info.title, document: designerFixture, designerState: { nodes: {} } });
       await client.attachWorkingCopySource(wc.id, 'payments', { document: paymentsOpenApi });
       await client.attachWorkingCopySource(wc.id, 'order-events', { document: orderEventsAsyncApi });
       // A ready-made suite so the Scenarios tab (and the publish gate) demos populated: the happy
@@ -560,7 +564,15 @@
           { source: 'payments', operationId: 'capturePayment', responses: [{ status: 200, body: { receiptId: 'rcpt-9' } }] },
         ],
         triggers: [{ channel: '/channels/orderConfirmations', payload: { confirmed: true, at: '2026-07-01T09:30:00Z' } }],
-        expect: { outcome: 'completed', path: ['validate-order', 'authorize-payment', 'await-confirmation', 'capture-payment'], pathMode: 'exact' },
+        expect: {
+          outcome: 'completed',
+          path: ['validate-order', 'authorize-payment', 'await-confirmation', 'capture-payment'],
+          pathMode: 'exact',
+          outputs: [
+            { condition: "$outputs.receiptId == 'rcpt-9'" },
+            { condition: "$steps.authorize-payment.outputs.authorizationId == 'auth-77'" },
+          ],
+        },
       });
       await client.putScenario(wc.id, {
         name: 'declined-goes-to-review',
@@ -571,7 +583,13 @@
           { source: 'payments', operationId: 'authorizePayment', responses: [{ status: 402 }] },
           { source: 'payments', operationId: 'createReviewTask', responses: [{ status: 201 }] },
         ],
-        expect: { outcome: 'completed', path: ['validate-order', 'authorize-payment', 'manual-review'], pathMode: 'exact', steps: { 'manual-review': { reached: true, attempts: 1 } } },
+        expect: {
+          outcome: 'completed',
+          path: ['validate-order', 'authorize-payment', 'manual-review'],
+          pathMode: 'exact',
+          steps: { 'manual-review': { reached: true, attempts: 1 } },
+          outputs: [{ condition: '$steps.validate-order.outputs.validated == true' }],
+        },
       });
       wctable.reload();
     })();
@@ -660,10 +678,12 @@
       showSelection(e.detail.selection);
     });
     function showSelection(sel) {
+      // No selection IS a selection: the document itself. Clicking the canvas background lands on
+      // the settings page (info · source descriptions · workflows · components) — no ⚙ button.
+      if (!sel) { showDocumentInspector(); return; }
       docMode = false;
       inspector.replaceChildren();
       selectionPre.textContent = '';
-      if (!sel) { selectionPre.textContent = '(nothing selected)'; return; }
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
 
       // Canvas anchors open the MATCHING editor (§3.2): start = the workflow's inputs, end = its
@@ -848,6 +868,7 @@
 
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy(); // simulate runs the STORED document
         switchSideTab('debug');
+        shell.debugWorkflow = select.value; // stepping out of a sub-workflow restores this
         tray.trace = await client.simulateWorkingCopy(shell.id, command);
         applyDebugFrame();
         logEvent('simulated', { outcome: tray.trace.outcome, steps: tray.trace.stepsExecuted });
@@ -916,6 +937,17 @@
     });
 
     tray.addEventListener('cursor-changed', applyDebugFrame);
+    tray.addEventListener('workflow-focus', (e) => {
+      // Stepping into/out of a sub-workflow's trace: the canvas follows (null = the run's own).
+      const target = e.detail.workflowId ?? shell.debugWorkflow;
+      if (target && [...select.options].some((o) => o.value === target) && select.value !== target) {
+        select.value = target;
+        project();
+        surface.fit();
+      }
+
+      applyDebugFrame();
+    });
     tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; applyDebugFrame(); setDebugUi(); });
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
     tray.addEventListener('trigger-injected', (e) => {
@@ -935,36 +967,41 @@
       if (e.detail.id && !e.detail.id.startsWith('#')) runSimulation({ until: { beforeStepId: e.detail.id } });
     });
 
-    // Expression console: completions from the fixture's schema surface, validation of $roots.
+    // Expression console: completions from the SELECTED workflow of the OPEN document — never a
+    // stale snapshot. project() refreshes this on every workflow switch and document edit, so
+    // $steps offers exactly the steps you are looking at.
     const expr = document.getElementById('expr');
-    const wf = designerFixture.workflows[0];
-    expr.completionContext = {
-      inputs: wf.inputs, // a JSON Schema: names + type details, pointer descent below
-      outputs: Object.keys(wf.outputs || {}),
-      steps: Object.fromEntries(wf.steps.map((s) => [s.stepId, {
-        outputs: Object.keys(s.outputs || {}),
-        summary: s.description,
-      }])),
-      // In the real designer these come from the selected step's operation via the baked schemas;
-      // the demo stands in with the authorize-payment shapes so `$response.body#/…` completes.
-      response: {
-        body: {
-          type: 'object',
-          properties: {
-            status: { type: 'string' },
-            authorizationId: { type: 'string' },
-            card: { type: 'object', properties: { last4: { type: 'string' }, brand: { type: 'string' } } },
-            receipt: { type: 'object', properties: { id: { type: 'string' }, total: { type: 'number' } } },
+    refreshExpressionContext = () => {
+      const wf = (doc.workflows ?? []).find((w) => w.workflowId === select.value) ?? doc.workflows?.[0];
+      expr.completionContext = {
+        inputs: wf?.inputs, // a JSON Schema: names + type details, pointer descent below
+        outputs: Object.keys(wf?.outputs || {}),
+        steps: Object.fromEntries((wf?.steps ?? []).map((s) => [s.stepId, {
+          outputs: Object.keys(s.outputs || {}),
+          summary: s.description,
+        }])),
+        // In the real designer these come from the selected step's operation via the baked schemas;
+        // the demo stands in with the authorize-payment shapes so `$response.body#/…` completes.
+        response: {
+          body: {
+            type: 'object',
+            properties: {
+              status: { type: 'string' },
+              authorizationId: { type: 'string' },
+              card: { type: 'object', properties: { last4: { type: 'string' }, brand: { type: 'string' } } },
+              receipt: { type: 'object', properties: { id: { type: 'string' }, total: { type: 'number' } } },
+            },
           },
         },
-      },
-      message: {
-        payload: {
-          type: 'object',
-          properties: { confirmed: { type: 'boolean' }, at: { type: 'string', format: 'date-time' } },
+        message: {
+          payload: {
+            type: 'object',
+            properties: { confirmed: { type: 'boolean' }, at: { type: 'string', format: 'date-time' } },
+          },
         },
-      },
+      };
     };
+    refreshExpressionContext();
     expr.validator = async (value) => {
       const bad = [...value.matchAll(/\$[A-Za-z_][A-Za-z0-9_]*/g)]
         .map((m) => m[0])
