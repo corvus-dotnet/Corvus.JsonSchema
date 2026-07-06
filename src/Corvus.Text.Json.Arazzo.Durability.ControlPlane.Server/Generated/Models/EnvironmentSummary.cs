@@ -159,6 +159,27 @@ public readonly partial struct EnvironmentSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>allowsDraftRuns</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Whether working-copy drafts may execute here as debug runs (workflow-designer design &#167;18). Absent means false.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean AllowsDraftRuns
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowsDraftRunsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>createdAt</c> property.
     /// </summary>
     /// <remarks>
@@ -795,6 +816,11 @@ public readonly partial struct EnvironmentSummary
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public const string AllowsDraftRuns = "allowsDraftRuns";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="CreatedAt"/>.
         /// </summary>
         public const string CreatedAt = "createdAt";
@@ -843,6 +869,11 @@ public readonly partial struct EnvironmentSummary
         /// Gets the JSON property name for <see cref="RequireEvidence"/>.
         /// </summary>
         public const string RequireEvidence = "requireEvidence";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AllowsDraftRunsUtf8 => "allowsDraftRuns"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="CreatedAt"/>.
@@ -901,6 +932,11 @@ public readonly partial struct EnvironmentSummary
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AllowsDraftRuns => "allowsDraftRuns"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="CreatedAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> CreatedAt => "createdAt"u8;
@@ -957,6 +993,11 @@ public readonly partial struct EnvironmentSummary
     /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="AllowsDraftRuns"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AllowsDraftRuns => [0x15, 0x01, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x73, 0x44, 0x72, 0x61, 0x66, 0x74, 0x52, 0x75, 0x6E, 0x73, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="CreatedAt"/>.
         /// </summary>

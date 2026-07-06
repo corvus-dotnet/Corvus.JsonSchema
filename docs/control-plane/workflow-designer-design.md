@@ -907,3 +907,62 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    (Recommend: (a) as its own post-slice-8 increment; the guarded JSON editor is honest and
    lossless meanwhile. Revisit once the simulator's typed inputs form — which CONSUMES these
    schemas — makes the authoring pain concrete.)
+
+## 18. Remote dev-environment debug runs (ratified 2026-07-06)
+
+**Ruling.** "Run/debug against real endpoints" (the live-debugging ask) is answered by running the
+*draft* in a development-class environment — never by credentials in the browser. The platform's
+credential posture stays absolute: the control plane holds *references into a secret store*, the
+environment's runner resolves secrets **as its own identity** at run time (§13.5), and no secret
+ever reaches the designer, the developer, or the working copy. Browser-local credential storage was
+considered and rejected (localStorage/sessionStorage are script-readable; the "developer's own
+creds" case is served better by the capture below, and the no-dev-environment case is an adoption
+gap, not a designer feature).
+
+**Model.** A **debug run** is a durable run of the *working copy's stored document* (not a
+published version), started from the designer against a named environment. It rides the runs
+machinery, not the simulator:
+
+- **Forward-only.** The simulation debugger's stateless replay (§8.2) re-executes from step 0 on
+  every interaction — free against mocks, unthinkable against real systems. A debug run instead
+  advances persisted state exactly like a production run: *step* = resume with
+  `pause.afterEachStep`, *step over — provide outputs* = the runs `Skip` resume (verbatim shape),
+  *breakpoints* = `pause.beforeSteps`, *retry/rewind/state-patch* = the same `ResumeRequest` union
+  the runs view uses, with rewind's side-effect re-execution being the developer's deliberate act.
+- **Real waits.** A message step is a genuine suspension: the runner subscribes, the dock watches;
+  trigger *injection* on a debug run is publishing the real message (or the developer does it out
+  of band) — not scenario staging.
+- **Capture, then time-travel.** A debug run records its exchanges in the same trace shape the
+  simulator emits (`SimulationTrace`, request bodies as sent). "Save as scenario" over that trace
+  yields a mock scenario carrying *real recorded reality* — and the full replay debugger (rewind,
+  what-if, step-over, inject) then works against it offline, side-effect-free. Live run for truth;
+  replayed capture for archaeology.
+
+**Governance.** Three gates, all deliberate:
+
+1. `allowsDraftRuns` on the environment (default **false**; meaningful only on development-class
+   environments) — today only published, availability-granted versions execute in an environment,
+   and crossing that line is an explicit per-environment decision by its administrators.
+2. The caller needs reach to the working copy AND entitlement to run in that environment (the same
+   §17 resolution as catalog runs).
+3. Every debug-run start is an audited event (who, which working copy, which document etag, which
+   environment).
+
+Credential *readiness* is surfaced before the attempt: the run dialog reuses the per-environment
+credential-coverage machinery (§7.5–7.8) to show "development: payments ✓ · order-events ✗ (no
+credential bound)" per source; starting with gaps is a 409 carrying that detail.
+
+**Contract.** `Environment{Create,Update,Summary}.allowsDraftRuns`; under the working copy:
+`POST …/{id}/debug-runs` (`{workflowId, environment, inputs?, pause?}` → 201, 403 on the flag or
+entitlement, 409 on readiness), `GET …/debug-runs/{debugRunId}` (status
+`running·paused·suspended·completed·faulted·cancelled`, cursor, `SimulationTrace`-shaped trace,
+wait), `POST …/debug-runs/{debugRunId}/resume` (`{action?: ResumeRequest, pause?}`),
+`POST …/debug-runs/{debugRunId}/cancel`. Capture-to-scenario is client-side over the trace — no
+endpoint.
+
+**Staging.** (1) Contract + server lifecycle with the simulator as interim executor (validation,
+gates, pause/resume semantics real; transport still mock) + mock parity — this gives the dock its
+live-attach mode to build against. (2) The dock's attached mode: forward-only controls
+(resume/step/skip/cancel), readiness in the run dialog, capture-to-scenario. (3) The engine seam:
+the execution host runs the draft with the environment's credential bindings and real transport —
+the only slice that touches the host. §15 item 3 is superseded by this section.
