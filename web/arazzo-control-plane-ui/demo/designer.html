@@ -137,6 +137,7 @@
         <button data-tab="inspect" class="active">Inspect</button>
         <button data-tab="sources">Sources</button>
         <button data-tab="scenarios">Scenarios</button>
+        <button data-tab="components" title="The document's reusable library — $components.<kind>.<name> references resolve here">Components</button>
         <button data-tab="git" title="Bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">Git</button>
         <button data-tab="problems">Problems<span class="badge" id="problems-badge" hidden></span></button>
         <button data-tab="events">Events</button>
@@ -150,6 +151,9 @@
       </div>
       <div class="side-panel" id="panel-scenarios" hidden>
         <arazzo-scenario-panel id="scpanel"></arazzo-scenario-panel>
+      </div>
+      <div class="side-panel" id="panel-components" hidden>
+        <div style="padding: 10px;"><arazzo-document-inspector id="componentspanel" sections="components"></arazzo-document-inspector></div>
       </div>
       <div class="side-panel" id="panel-git" hidden>
         <arazzo-git-dialog id="gitpanel"></arazzo-git-dialog>
@@ -532,6 +536,7 @@
       inspector.replaceChildren();
       selectionPre.textContent = '(document)';
       const ed = document.createElement('arazzo-document-inspector');
+      ed.setAttribute('sections', 'document'); // the reusable library lives in its own tab
       ed.stepIds = doc.workflows.flatMap((w) => (w.steps || []).map((st) => st.stepId));
       ed.workflowIds = doc.workflows.map((w) => w.workflowId);
       ed.completionContext = expr.completionContext;
@@ -1220,6 +1225,23 @@
     const gitDialog = document.getElementById('gitpanel');
     gitDialog.client = client;
     gitDialog.windowOpener = mockAuthOpener;
+    // The Components tab shows the document's reusable library, refreshed on each visit (and
+    // whenever the model changes while it is showing). Persisting merges exactly like settings.
+    const componentsPanel = document.getElementById('componentspanel');
+    function refreshComponentsPanel() {
+      componentsPanel.stepIds = doc.workflows.flatMap((w) => (w.steps || []).map((st) => st.stepId));
+      componentsPanel.workflowIds = doc.workflows.map((w) => w.workflowId);
+      componentsPanel.completionContext = expr.completionContext;
+      componentsPanel.value = doc;
+    }
+    document.querySelector('.side-tabs [data-tab="components"]').addEventListener('click', () => { if (shell.id) refreshComponentsPanel(); });
+    componentsPanel.addEventListener('document-changed', (ev) => {
+      model.update((d) => {
+        if (ev.detail.document.components === undefined) delete d.components;
+        else d.components = ev.detail.document.components;
+      }, { origin: 'components-panel', label: 'edit components', coalesce: true });
+    });
+
     // The Git tab loads lazily on activation (flushing the autosave first — the panel reads the
     // STORED copy) and refreshes each visit; no GitHub call happens until you look.
     document.querySelector('.side-tabs [data-tab="git"]').addEventListener('click', async () => {

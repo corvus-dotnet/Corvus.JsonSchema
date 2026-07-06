@@ -54,6 +54,14 @@ class ArazzoDocumentInspector extends ArazzoElement {
   set completionContext(ctx) { this._completionContext = ctx || {}; }
   get completionContext() { return this._completionContext; }
 
+  /** @private — scope from the `sections` attribute: 'document' (info + sources + workflows),
+   *  'components' (the reusable library alone — it gets its own tab), or everything. */
+  _wants(section) {
+    const scope = this.getAttribute('sections');
+    if (!scope) return true;
+    return scope === 'document' ? section !== 'components' : section === scope;
+  }
+
   /** @private */
   renderShell() {
     this._built = true;
@@ -97,6 +105,7 @@ class ArazzoDocumentInspector extends ArazzoElement {
     const d = this._doc;
     const form = this.$('.form');
     form.innerHTML = `
+      ${this._wants('document') ? `
       <div class="hint">arazzo ${escapeHtml(d.arazzo || '1.1.0')}</div>
       <h3>info</h3>
       <div class="pair">
@@ -115,29 +124,33 @@ class ArazzoDocumentInspector extends ArazzoElement {
       <div class="pair">
         <input class="newwf" type="text" placeholder="new workflowId">
         <button class="add addwf ghost" type="button">+ Add workflow</button>
-      </div>
+      </div>` : ''}
 
+      ${this._wants('components') ? `
       <h3>components (reusable library)</h3>
       <div class="hint">referenced as $components.&lt;kind&gt;.&lt;name&gt; from steps and workflows</div>
-      <div class="components"></div>
+      <div class="components"></div>` : ''}
     `;
 
-    const info = (field, cls) => {
-      form.querySelector(cls).addEventListener('input', (e) => {
-        this._doc.info ??= {};
-        if (e.target.value) this._doc.info[field] = e.target.value;
-        else delete this._doc.info[field];
-        this._emit();
-      });
-    };
-    info('title', '.ititle');
-    info('version', '.iversion');
-    info('summary', '.isummary');
-    info('description', '.idesc');
+    if (this._wants('document')) {
+      const info = (field, cls) => {
+        form.querySelector(cls).addEventListener('input', (e) => {
+          this._doc.info ??= {};
+          if (e.target.value) this._doc.info[field] = e.target.value;
+          else delete this._doc.info[field];
+          this._emit();
+        });
+      };
+      info('title', '.ititle');
+      info('version', '.iversion');
+      info('summary', '.isummary');
+      info('description', '.idesc');
 
-    this._renderSources();
-    this._renderWorkflows();
-    this._renderComponents();
+      this._renderSources();
+      this._renderWorkflows();
+    }
+
+    if (this._wants('components')) this._renderComponents();
   }
 
   /** @private — READ-ONLY: source descriptions are owned by the Sources panel (attach declares,
