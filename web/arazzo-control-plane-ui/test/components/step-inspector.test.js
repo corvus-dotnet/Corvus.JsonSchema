@@ -199,9 +199,8 @@ describe('<arazzo-step-inspector>', () => {
     make({ stepId: 'x', operationId: 'op' });
     el.shadowRoot.querySelector('.addr').click();
     const target = el.shadowRoot.querySelector('.rrow .rtarget');
-    target.value = '/card/number';
     const changed = nextEvent(el, 'step-changed');
-    target.dispatchEvent(new Event('input'));
+    target.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '/card/number' }, bubbles: true, composed: true }));
     const step = (await changed).detail.step;
     equal(step.requestBody.replacements[0].target, '/card/number');
 
@@ -253,17 +252,17 @@ describe('<arazzo-step-inspector>', () => {
       } },
     };
 
-    const list = el.shadowRoot.querySelector('datalist#repl-paths');
-    ok(list, 'the pointer datalist renders');
-    const options = [...list.querySelectorAll('option')].map((o) => o.value);
+    const targetInput = el.shadowRoot.querySelector('.rtarget');
+    equal(targetInput.tagName.toLowerCase(), 'arazzo-expression-input', 'the target is the SAME CM6 input as every other editor');
+    const options = (targetInput.staticCompletions ?? []).map((o) => o.label);
     ok(options.includes('/card') && options.includes('/card/number') && options.includes('/amount'), 'paths walk the schema');
-    ok(el.shadowRoot.querySelector('.rtarget').getAttribute('list') === 'repl-paths', 'the target input autocompletes');
+    ok((targetInput.staticCompletions ?? []).some((o) => o.label === '/amount' && o.detail === 'number'), 'completions carry the schema type');
 
     const rows = [...el.shadowRoot.querySelectorAll('.rrow')];
     ok(rows[0].querySelector('arazzo-payload-editor'), 'an object target edits structurally, constrained to the sub-schema');
     ok(rows[0].querySelector('arazzo-payload-editor').shadowRoot.textContent.includes('cvv'), 'the sub-schema fields render');
 
-    const scalar = rows[1].querySelector('arazzo-expression-input');
+    const scalar = rows[1].querySelector('.rvalue arazzo-expression-input');
     ok(scalar, 'a scalar target stays an expression input');
     const changed = nextEvent(el, 'step-changed');
     scalar.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '19.99' }, bubbles: true, composed: true }));
@@ -272,5 +271,43 @@ describe('<arazzo-step-inspector>', () => {
     const exprChanged = nextEvent(el, 'step-changed');
     scalar.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '$inputs.amount' }, bubbles: true, composed: true }));
     equal((await exprChanged).detail.step.requestBody.replacements[1].value, '$inputs.amount', 'expressions stay strings');
+  });
+
+  it('shared actions edit all instances in place; locals promote to shared; localize diverges', async () => {
+    make({
+      stepId: 'x', operationId: 'op',
+      onFailure: [
+        { reference: '$components.failureActions.escalate' },
+        { name: 'give-up-here', type: 'end' },
+      ],
+    });
+    el.components = { failureActions: { escalate: { name: 'escalate', type: 'goto', stepId: 'review', criteria: [{ condition: '$statusCode == 500' }] } } };
+
+    // Edit ALL instances: the reference row expands into an editor of the SHARED action.
+    const sharedRow = el.shadowRoot.querySelector('.reusable-row-details');
+    ok(sharedRow, 'the reference row is expandable');
+    ok(sharedRow.textContent.includes('shared'), 'and says what it is');
+    const sharedEditor = sharedRow.querySelector('arazzo-action-editor');
+    ok(sharedEditor, 'the shared action edits in place');
+    const componentChanged = nextEvent(el, 'component-changed');
+    sharedEditor.dispatchEvent(new CustomEvent('action-changed', {
+      detail: { action: { name: 'escalate', type: 'goto', stepId: 'review', criteria: [{ condition: '$statusCode == 503' }] } },
+      bubbles: true, composed: true,
+    }));
+    const evt = await componentChanged;
+    equal(evt.detail.kind, 'failureActions');
+    equal(evt.detail.action.criteria[0].condition, '$statusCode == 503', 'the edit targets the SHARED action, all references follow');
+
+    // Edit JUST this instance: localize copies it inline.
+    const localize = sharedRow.querySelector('summary button');
+    equal(localize.textContent, 'this instance only');
+
+    // Make shared: a local action promotes into the library and becomes a reference.
+    const promote = [...el.shadowRoot.querySelectorAll('.promote')].at(-1);
+    ok(promote, 'local actions offer Make shared');
+    const changed = nextEvent(el, 'step-changed');
+    promote.click();
+    const step = (await changed).detail.step;
+    equal(step.onFailure[1].reference, '$components.failureActions.give-up-here', 'the local entry became a reference');
   });
 });

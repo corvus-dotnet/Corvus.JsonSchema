@@ -351,6 +351,41 @@ public sealed class ControlPlaneWorkspaceApiTests
             typing.ShouldContain(d => d.GetProperty("severity").GetString() == "warning" && d.GetProperty("message").GetString()!.Contains("'amount' is missing"));
         }
 
+        // A statically-typed expression must MATCH: $inputs.orderId is a string by the workflow's
+        // own inputs schema — on the boolean leaf it is an error, not a benefit of the doubt.
+        string etag0;
+        using (Stj.JsonDocument current = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}", Read)))
+        {
+            etag0 = current.RootElement.GetProperty("etag").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}", $$"""
+        {
+          "expectedEtag": {{Stj.JsonSerializer.Serialize(etag0)}},
+          "document": {
+            "arazzo": "1.1.0",
+            "info": { "title": "Typed", "version": "1.0.0" },
+            "sourceDescriptions": [{ "name": "payments", "url": "./payments.json", "type": "openapi" }],
+            "workflows": [{
+              "workflowId": "w",
+              "inputs": { "type": "object", "properties": { "orderId": { "type": "string" } } },
+              "steps": [{
+                "stepId": "authorize",
+                "operationId": "authorize",
+                "requestBody": { "payload": { "capture": "$inputs.orderId", "amount": 12 } }
+              }]
+            }]
+          }
+        }
+        """, Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using (Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read)))
+        {
+            Stj.JsonElement mismatch = outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+                .Single(d => d.GetProperty("category").GetString() == "payload-typing" && d.GetProperty("severity").GetString() == "error");
+            mismatch.GetProperty("message").GetString()!.ShouldContain("resolves to a string — the operation's schema requires a boolean");
+        }
+
         // Expressions are exempt wherever they appear; a right-typed literal passes too.
         string etag;
         using (Stj.JsonDocument current = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}", Read)))

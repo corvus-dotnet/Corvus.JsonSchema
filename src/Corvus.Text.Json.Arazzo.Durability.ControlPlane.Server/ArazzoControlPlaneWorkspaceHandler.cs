@@ -1350,9 +1350,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                     }
                 }
 
-                // Payload typing: literals in the step's request payload checked against the bound
-                // operation's schema. Runtime expressions are exempt everywhere ("$inputs.x" is
-                // legitimate where the schema says boolean); a plain "tru" on a boolean leaf is not.
+                // Payload typing: literals AND statically-typed expressions in the step's request
+                // payload checked against the bound operation's schema. A plain "tru" on a boolean
+                // leaf can never be valid; neither can "$inputs.orderId" (a string, per the
+                // workflow's own inputs schema) — only expressions whose type cannot be resolved
+                // get the benefit of the doubt.
                 if (bindsOperation
                     && step.TryGetProperty("requestBody"u8, out JsonElement requestBody)
                     && requestBody.TryGetProperty("payload"u8, out JsonElement payload)
@@ -1361,7 +1363,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                     JsonElement schema = ResolveRequestSchema(node.Operation, node.Root);
                     if (schema.ValueKind == JsonValueKind.Object)
                     {
-                        CheckPayloadAgainstSchema(payload, schema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/payload", findings, 0);
+                        var typing = new ExpressionTypingContext(workflow, operationNodes);
+                        CheckPayloadAgainstSchema(payload, schema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/payload", findings, 0, typing);
                     }
                 }
             }
@@ -1460,7 +1463,188 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// boolean/number leaf is an error (it can never satisfy the API); a missing required property
     /// is a warning (nothing at runtime can add it).
     /// </summary>
-    private static void CheckPayloadAgainstSchema(JsonElement value, JsonElement schema, JsonElement root, string pointer, List<Finding> findings, int depth)
+    /// <summary>Resolves an expression's STATIC type from the document itself: the workflow's inputs
+    /// schema for <c>$inputs.…</c>, and a step's output declaration chased through its operation's
+    /// response schema for <c>$steps.&lt;id&gt;.outputs.&lt;name&gt;</c>. Null = unknown (no finding).</summary>
+    private sealed class ExpressionTypingContext(JsonElement workflow, Dictionary<string, (JsonElement Root, JsonElement Operation)> operationNodes)
+    {
+        public string? ResolveType(string expression)
+        {
+            if (expression.Contains("{$", StringComparison.Ordinal))
+            {
+                return "string"; // interpolation always yields a string
+            }
+
+            string head = expression;
+            string? pointer = null;
+            int hash = expression.IndexOf('#');
+            if (hash >= 0)
+            {
+                head = expression[..hash];
+                pointer = expression[hash..];
+            }
+
+            string[] segments = head.Split('.');
+            if (segments[0] == "$inputs")
+            {
+                return workflow.TryGetProperty("inputs"u8, out JsonElement inputs)
+                    ? SchemaTypeAt(inputs, segments.AsSpan(1), pointer)
+                    : null;
+            }
+
+            if (segments[0] == "$steps" && segments.Length >= 4 && segments[2] == "outputs")
+            {
+                JsonElement target = FindStep(segments[1]);
+                if (target.ValueKind != JsonValueKind.Object
+                    || !target.TryGetProperty("outputs"u8, out JsonElement outputs)
+                    || !outputs.TryGetProperty(segments[3], out JsonElement declaration)
+                    || declaration.GetString() is not { } outputExpression)
+                {
+                    return null;
+                }
+
+                if (outputExpression == "$statusCode")
+                {
+                    return "integer";
+                }
+
+                if (outputExpression.StartsWith("$response.body", StringComparison.Ordinal)
+                    && target.TryGetProperty("operationId"u8, out JsonElement opId)
+                    && opId.GetString() is { } op
+                    && operationNodes.TryGetValue(op, out (JsonElement Root, JsonElement Operation) node))
+                {
+                    JsonElement responseSchema = ResolveSuccessResponseSchema(node.Operation, node.Root);
+                    if (responseSchema.ValueKind != JsonValueKind.Object)
+                    {
+                        return null;
+                    }
+
+                    string? outputPointer = outputExpression.Length > "$response.body".Length ? outputExpression["$response.body".Length..] : null;
+                    string? baseType = SchemaTypeAt(responseSchema, [], outputPointer);
+
+                    // The remaining segments/pointer of the ORIGINAL expression descend further.
+                    if (segments.Length > 4 || pointer is not null)
+                    {
+                        JsonElement descended = DescendSchema(responseSchema, outputPointer);
+                        return descended.ValueKind == JsonValueKind.Object ? SchemaTypeAt(descended, segments.AsSpan(4), pointer) : null;
+                    }
+
+                    return baseType;
+                }
+            }
+
+            return null;
+        }
+
+        private JsonElement FindStep(string stepId)
+        {
+            if (workflow.TryGetProperty("steps"u8, out JsonElement steps) && steps.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement candidate in steps.EnumerateArray())
+                {
+                    if (candidate.TryGetProperty("stepId"u8, out JsonElement id) && id.ValueEquals(stepId))
+                    {
+                        return candidate;
+                    }
+                }
+            }
+
+            return default;
+        }
+
+        private static JsonElement DescendSchema(JsonElement schema, string? pointer)
+        {
+            if (pointer is null or "#" or "#/")
+            {
+                return schema;
+            }
+
+            if (!pointer.StartsWith("#/", StringComparison.Ordinal))
+            {
+                return default;
+            }
+
+            JsonElement current = schema;
+            foreach (string token in pointer[2..].Split('/'))
+            {
+                string key = token.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
+                if (current.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (int.TryParse(key, out _) && current.TryGetProperty("items"u8, out JsonElement items))
+                {
+                    current = items;
+                }
+                else if (current.TryGetProperty("properties"u8, out JsonElement properties) && properties.TryGetProperty(key, out JsonElement member))
+                {
+                    current = member;
+                }
+                else
+                {
+                    return default;
+                }
+            }
+
+            return current;
+        }
+
+        private static string? SchemaTypeAt(JsonElement schema, ReadOnlySpan<string> segments, string? pointer)
+        {
+            JsonElement current = schema;
+            foreach (string segment in segments)
+            {
+                if (current.ValueKind != JsonValueKind.Object
+                    || !current.TryGetProperty("properties"u8, out JsonElement properties)
+                    || !properties.TryGetProperty(segment, out current))
+                {
+                    return null;
+                }
+            }
+
+            current = DescendSchema(current, pointer);
+            return current.ValueKind == JsonValueKind.Object
+                && current.TryGetProperty("type"u8, out JsonElement type)
+                && type.ValueKind == JsonValueKind.String
+                ? type.GetString()
+                : null;
+        }
+    }
+
+    /// <summary>The operation's first 2xx JSON response schema, $refs followed.</summary>
+    private static JsonElement ResolveSuccessResponseSchema(JsonElement operation, JsonElement root)
+    {
+        if (!operation.TryGetProperty("responses"u8, out JsonElement responses) || responses.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        foreach (JsonProperty<JsonElement> response in responses.EnumerateObject())
+        {
+            string code = response.Name.ToString();
+            if (code.Length == 3 && code[0] == '2')
+            {
+                JsonElement resolved = Deref(response.Value, root);
+                if (resolved.ValueKind == JsonValueKind.Object
+                    && resolved.TryGetProperty("content"u8, out JsonElement content)
+                    && content.TryGetProperty("application/json"u8, out JsonElement mediaType)
+                    && mediaType.TryGetProperty("schema"u8, out JsonElement schema))
+                {
+                    return Deref(schema, root);
+                }
+            }
+        }
+
+        return default;
+    }
+
+    private static bool ScalarTypesCompatible(string expressionType, string schemaType)
+        => expressionType == schemaType
+            || (expressionType == "integer" && schemaType == "number")
+            || (expressionType == "number" && schemaType == "integer");
+
+    private static void CheckPayloadAgainstSchema(JsonElement value, JsonElement schema, JsonElement root, string pointer, List<Finding> findings, int depth, ExpressionTypingContext? typing = null)
     {
         if (depth > 12)
         {
@@ -1480,9 +1664,24 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         if (value.ValueKind == JsonValueKind.String)
         {
             string text = value.GetString() ?? string.Empty;
-            if (!IsExpressionShaped(text) && type is "boolean" or "number" or "integer")
+            if (!IsExpressionShaped(text))
             {
-                findings.Add(new("error", "payload-typing", pointer, $"'{text}' is neither a {type} nor a runtime expression — the operation's schema requires a {type} here.", null));
+                if (type is "boolean" or "number" or "integer")
+                {
+                    findings.Add(new("error", "payload-typing", pointer, $"'{text}' is neither a {type} nor a runtime expression — the operation's schema requires a {type} here.", null));
+                }
+
+                return;
+            }
+
+            // An expression whose STATIC type resolves must match the property's type; only the
+            // unresolvable get the benefit of the doubt.
+            if (typing is not null
+                && type is "boolean" or "number" or "integer" or "string"
+                && typing.ResolveType(text) is { } expressionType
+                && !ScalarTypesCompatible(expressionType, type))
+            {
+                findings.Add(new("error", "payload-typing", pointer, $"'{text}' resolves to a {expressionType} — the operation's schema requires a {type} here.", null));
             }
 
             return;
@@ -1508,7 +1707,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                     string memberName = member.Name.ToString();
                     if (properties.TryGetProperty(memberName, out JsonElement memberSchema))
                     {
-                        CheckPayloadAgainstSchema(member.Value, memberSchema, root, $"{pointer}/{memberName.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal)}", findings, depth + 1);
+                        CheckPayloadAgainstSchema(member.Value, memberSchema, root, $"{pointer}/{memberName.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal)}", findings, depth + 1, typing);
                     }
                 }
             }
@@ -1522,7 +1721,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             int index = 0;
             foreach (JsonElement item in value.EnumerateArray())
             {
-                CheckPayloadAgainstSchema(item, items, root, $"{pointer}/{index}", findings, depth + 1);
+                CheckPayloadAgainstSchema(item, items, root, $"{pointer}/{index}", findings, depth + 1, typing);
                 index++;
             }
         }

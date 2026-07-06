@@ -26,9 +26,13 @@ const isCatchAll = (a) => a && typeof a.reference !== 'string' && !(a.criteria?.
  *                                        enables the add-reference affordance and localize.
  * @param {object} opts.completionContext
  * @param {() => void} opts.onChange     Called after any mutation (edit, add, remove, reorder).
+ * @param {(name: string, action: object) => void} [opts.onComponentChange]
+ *                                        Called when a SHARED (components) action is edited in
+ *                                        place or a local action is promoted — the host persists
+ *                                        the components map. Without it, shared editing is off.
  * @returns {HTMLElement}
  */
-export function buildActionList({ actions, kind, stepIds, workflowIds, completionContext, components, onChange }) {
+export function buildActionList({ actions, kind, stepIds, workflowIds, completionContext, components, onChange, onComponentChange }) {
   const root = document.createElement('div');
   root.className = `action-list ${kind}`;
 
@@ -45,41 +49,70 @@ export function buildActionList({ actions, kind, stepIds, workflowIds, completio
     let sawCatchAll = false;
     actions.forEach((action, i) => {
       if (action && typeof action.reference === 'string') {
-        const row = document.createElement('div');
-        row.className = 'muted reusable-row';
-        const label = document.createElement('span');
-        label.textContent = `↺ ${action.reference} (reusable — edit in components)`;
-        row.append(label);
-
-        // Localize: copy the referenced action inline so it can diverge here (mirrors defaults-localize).
         const key = action.reference.split('.').pop();
         const resolved = components?.[key];
+
+        // A SHARED action is properly editable in place: expanding edits every reference in the
+        // document; "this instance only" copies it inline so it can diverge here.
+        const details = document.createElement('details');
+        details.className = 'reusable-row-details';
+        const summary = document.createElement('summary');
+        const title = document.createElement('span');
+        title.className = 'atitle';
+        title.textContent = `↺ ${action.reference} · shared${resolved ? '' : ' (unresolved)'}`;
+        summary.append(title);
+
         if (resolved) {
           const localize = document.createElement('button');
           localize.type = 'button';
           localize.className = 'ghost move';
-          localize.textContent = 'localize';
-          localize.title = 'Copy the reusable action inline so this list can edit it independently';
-          localize.addEventListener('click', () => {
+          localize.textContent = 'this instance only';
+          localize.title = 'Copy the shared action inline so THIS list can edit it independently — other references keep the shared one';
+          localize.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             actions[i] = structuredClone(resolved);
             render();
             onChange();
           });
-          row.append(localize);
+          summary.append(localize);
         }
 
         const drop = document.createElement('button');
         drop.type = 'button';
         drop.className = 'ghost move';
         drop.textContent = '✕';
-        drop.title = 'Remove the reference';
-        drop.addEventListener('click', () => {
+        drop.title = 'Remove the reference (the shared action stays in the library)';
+        drop.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           actions.splice(i, 1);
           render();
           onChange();
         });
-        row.append(drop);
-        root.append(row);
+        summary.append(drop);
+        details.append(summary);
+
+        if (resolved && onComponentChange) {
+          const hint = document.createElement('div');
+          hint.className = 'shared-hint';
+          hint.textContent = 'Editing the SHARED action — every reference in the document follows.';
+          const editor = document.createElement('arazzo-action-editor');
+          editor.kind = kind;
+          editor.stepIds = stepIds;
+          editor.workflowIds = workflowIds || [];
+          editor.completionContext = completionContext;
+          editor.value = resolved;
+          editor.addEventListener('action-changed', (e) => {
+            e.stopPropagation();
+            components[key] = e.detail.action;
+            title.textContent = `↺ ${action.reference} · shared`;
+            onComponentChange(key, e.detail.action);
+          });
+          details.append(hint, editor);
+        }
+
+        root.append(details);
         return;
       }
       const unreachable = sawCatchAll;
@@ -157,6 +190,31 @@ export function buildActionList({ actions, kind, stepIds, workflowIds, completio
       });
 
       details.append(editor, remove);
+
+      // Promote: the local action moves to the components library and this entry becomes a
+      // reference — the inverse of "this instance only".
+      if (onComponentChange && components) {
+        const promote = document.createElement('button');
+        promote.type = 'button';
+        promote.className = 'ghost remove promote';
+        promote.textContent = '↺ Make shared';
+        promote.title = action.name
+          ? 'Move this action into the components library and reference it here — other steps can then reference it too'
+          : 'Name the action first — the library is keyed by name';
+        promote.disabled = !action.name;
+        promote.addEventListener('click', () => {
+          let name = action.name;
+          for (let n = 2; components[name] && JSON.stringify(components[name]) !== JSON.stringify(action); n++) name = `${action.name}-${n}`;
+          const shared = structuredClone(action);
+          shared.name = name;
+          components[name] = shared;
+          onComponentChange(name, shared);
+          actions[i] = { reference: `$components.${kind === 'success' ? 'successActions' : 'failureActions'}.${name}` };
+          render();
+          onChange();
+        });
+        details.append(promote);
+      }
       root.append(details);
     });
 
@@ -212,5 +270,8 @@ export const ACTION_LIST_CSS = `
   .action-list .add-action { font-size: 12px; justify-self: start; }
   .action-list .reusable-row { font-size: 12px; padding: 6px 2px; display: flex; align-items: center; gap: 6px; }
   .action-list .reusable-row span { flex: 1; min-width: 0; }
+  .action-list .reusable-row-details summary { color: var(--_muted); }
+  .action-list .shared-hint { font-size: 10.5px; color: var(--arazzo-status-suspended, #b45309); padding: 0 10px 4px; }
+  .action-list .promote { margin: 6px 10px 0; font-size: 11px; }
   .action-list .add-ref { font-size: 12px; justify-self: start; max-width: 100%; min-width: 0; }
 `;

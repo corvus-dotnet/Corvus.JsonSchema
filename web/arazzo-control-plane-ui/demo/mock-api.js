@@ -3052,12 +3052,84 @@ export function createMockControlPlane(options = {}) {
       }
       return null;
     };
-    const check = (value, schema, root, pointer, depth = 0) => {
+    // An expression's STATIC type, resolved from the document itself: the workflow's inputs
+    // schema for $inputs.…, a step's output declaration chased through its operation's first 2xx
+    // response schema for $steps.<id>.outputs.<name>. null = unknown (benefit of the doubt).
+    const descendSchema = (schema, ptr, root) => {
+      let node = deref(schema, root);
+      if (!ptr || ptr === '#' || ptr === '#/') return node;
+      if (!ptr.startsWith('#/')) return null;
+      for (const tok of ptr.slice(2).split('/')) {
+        node = deref(node, root);
+        if (!node || typeof node !== 'object') return null;
+        const key = tok.replaceAll('~1', '/').replaceAll('~0', '~');
+        node = /^\d+$/.test(key) && node.items ? node.items : node.properties?.[key];
+      }
+      return deref(node, root);
+    };
+    const typeAt = (schema, segments, ptr, root) => {
+      let node = deref(schema, root);
+      for (const seg of segments) {
+        node = deref(node, root);
+        if (!node || typeof node !== 'object') return null;
+        node = node.properties?.[seg];
+      }
+      node = descendSchema(node, ptr, root);
+      return node && typeof node === 'object' && typeof node.type === 'string' ? node.type : null;
+    };
+    const typeOfExpression = (expression, workflow, root) => {
+      if (expression.includes('{$')) return 'string';
+      const hash = expression.indexOf('#');
+      const head = hash < 0 ? expression : expression.slice(0, hash);
+      const ptr = hash < 0 ? null : expression.slice(hash);
+      const segs = head.split('.');
+      if (segs[0] === '$inputs') return workflow.inputs ? typeAt(workflow.inputs, segs.slice(1), ptr, root) : null;
+      if (segs[0] === '$steps' && segs[2] === 'outputs' && segs[3]) {
+        const st = (workflow.steps ?? []).find((x) => x.stepId === segs[1]);
+        const decl = st?.outputs?.[segs[3]];
+        if (typeof decl !== 'string') return null;
+        if (decl === '$statusCode') return 'integer';
+        if (decl.startsWith('$response.body')) {
+          const resolved = opSchema(st.operationId);
+          if (!resolved) return null;
+          let twoXx = null;
+          for (const item of Object.values(resolved.root.paths ?? {})) {
+            for (const op of Object.values(item ?? {})) {
+              if (!op || op.operationId !== st.operationId) continue;
+              for (const [code, response] of Object.entries(op.responses ?? {})) {
+                if (/^2\d\d$/.test(code)) {
+                  const schema = deref(response, resolved.root)?.content?.['application/json']?.schema;
+                  if (schema) { twoXx = deref(schema, resolved.root); break; }
+                }
+              }
+            }
+          }
+          if (!twoXx) return null;
+          const declPtr = decl.length > '$response.body'.length ? decl.slice('$response.body'.length) : null;
+          const at = descendSchema(twoXx, declPtr, resolved.root);
+          if (!at) return null;
+          return typeAt(at, segs.slice(4), ptr, resolved.root);
+        }
+      }
+      return null;
+    };
+    const compatible = (a, b) => a === b || (a === 'integer' && b === 'number') || (a === 'number' && b === 'integer');
+
+    const check = (value, schema, root, pointer, depth = 0, typing = null) => {
       schema = deref(schema, root);
       if (depth > 12 || !schema || typeof schema !== 'object') return;
       if (typeof value === 'string') {
-        if (!isExpr(value) && ['boolean', 'number', 'integer'].includes(schema.type)) {
-          findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' is neither a ${schema.type} nor a runtime expression — the operation's schema requires a ${schema.type} here.` });
+        if (!isExpr(value)) {
+          if (['boolean', 'number', 'integer'].includes(schema.type)) {
+            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' is neither a ${schema.type} nor a runtime expression — the operation's schema requires a ${schema.type} here.` });
+          }
+          return;
+        }
+        if (typing && ['boolean', 'number', 'integer', 'string'].includes(schema.type)) {
+          const exprType = typeOfExpression(value, typing.workflow, root);
+          if (exprType && !compatible(exprType, schema.type)) {
+            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' resolves to a ${exprType} — the operation's schema requires a ${schema.type} here.` });
+          }
         }
         return;
       }
@@ -3066,12 +3138,12 @@ export function createMockControlPlane(options = {}) {
           if (!(name in value)) findings.push({ severity: 'warning', category: 'payload-typing', instancePath: pointer, message: `Required property '${name}' is missing from the payload — the operation's schema requires it.` });
         }
         for (const [name, v] of Object.entries(value)) {
-          if (schema.properties?.[name]) check(v, schema.properties[name], root, `${pointer}/${name}`, depth + 1);
+          if (schema.properties?.[name]) check(v, schema.properties[name], root, `${pointer}/${name}`, depth + 1, typing);
         }
         return;
       }
       if (Array.isArray(value) && schema.type === 'array' && schema.items) {
-        value.forEach((v, i) => check(v, schema.items, root, `${pointer}/${i}`, depth + 1));
+        value.forEach((v, i) => check(v, schema.items, root, `${pointer}/${i}`, depth + 1, typing));
       }
     };
     for (const [wi, workflow] of (Array.isArray(doc.workflows) ? doc.workflows : []).entries()) {
@@ -3079,7 +3151,7 @@ export function createMockControlPlane(options = {}) {
         const payload = step?.requestBody?.payload;
         if (payload === undefined || !step?.operationId) continue;
         const resolved = opSchema(step.operationId);
-        if (resolved) check(payload, resolved.schema, resolved.root, `/workflows/${wi}/steps/${si}/requestBody/payload`);
+        if (resolved) check(payload, resolved.schema, resolved.root, `/workflows/${wi}/steps/${si}/requestBody/payload`, 0, { workflow });
       }
     }
 

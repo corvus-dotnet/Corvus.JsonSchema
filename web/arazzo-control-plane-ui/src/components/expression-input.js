@@ -32,6 +32,12 @@ import { expressionStreamParser, completionsFor } from '../expression-language.j
 const VALIDATE_DEBOUNCE_MS = 350;
 
 class ArazzoExpressionInput extends ArazzoElement {
+  /** A static completion vocabulary ({label, detail?}[]) replacing the expression grammar's
+   *  completions — used for schema-derived JSON Pointer paths so every autocomplete popup in the
+   *  designer looks and behaves the same. */
+  set staticCompletions(options) { this._staticCompletions = options; }
+  get staticCompletions() { return this._staticCompletions; }
+
   /** Host override: `async () => {state, view, language, autocomplete, commands, lezerHighlight}`. */
   static cmLoader = null;
   /** @private — the shared, once-only module load. */
@@ -240,6 +246,18 @@ class ArazzoExpressionInput extends ArazzoElement {
       (tr) => (tr.newDoc.lines > 1 ? [] : tr),
     );
     const completionSource = (ctx) => {
+      // A static completion list (e.g. schema-derived JSON Pointer paths) replaces the expression
+      // grammar's source when set — same popup, same styling, different vocabulary.
+      if (Array.isArray(this._staticCompletions)) {
+        const text = ctx.state.doc.toString();
+        const prefix = text.slice(0, ctx.pos);
+        const options = this._staticCompletions
+          .filter((o) => o.label.startsWith(prefix) && o.label !== prefix)
+          .map((o) => ({ label: o.label, ...(o.detail ? { detail: o.detail } : {}), type: 'property' }));
+        if (!options.length && !ctx.explicit) return null;
+        return { from: 0, options, validFor: /^[\w~/-]*$/ };
+      }
+
       const r = completionsFor(ctx.state.doc.toString(), ctx.pos, this._completionContext);
       if (!r) return null;
       return { from: r.from, options: r.options, validFor: /^[\w$.#/-]*$/ };

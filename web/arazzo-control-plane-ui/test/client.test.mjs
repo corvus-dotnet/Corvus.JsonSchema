@@ -1380,6 +1380,16 @@ test('validate flags payload literals that can never satisfy the operation schem
   assert.equal(bad.instancePath, '/workflows/0/steps/0/requestBody/payload/capture');
   assert.ok(typing.some((d) => d.severity === 'warning' && d.message.includes("'amount' is missing")), 'missing required warns');
 
+  // A statically-typed expression must match too: $inputs.orderId is a STRING by the workflow's
+  // own inputs schema — placing it on the boolean leaf is an error, not a benefit of the doubt.
+  const fresh0 = await c.getWorkingCopy(wc.id);
+  fresh0.document.workflows[0].inputs = { type: 'object', properties: { orderId: { type: 'string' } } };
+  fresh0.document.workflows[0].steps[0].requestBody.payload = { capture: '$inputs.orderId', amount: 12 };
+  await c.saveWorkingCopy(wc.id, { document: fresh0.document, expectedEtag: fresh0.etag });
+  const mismatch = await c.validateWorkingCopy(wc.id);
+  const exprBad = mismatch.diagnostics.find((d) => d.category === 'payload-typing' && d.severity === 'error');
+  assert.match(exprBad.message, /resolves to a string — the operation's schema requires a boolean/);
+
   // Expressions are exempt wherever they appear; fixing the literal clears the error.
   const fresh = await c.getWorkingCopy(wc.id);
   fresh.document.workflows[0].steps[0].requestBody.payload = { capture: '$inputs.capture', amount: 12 };

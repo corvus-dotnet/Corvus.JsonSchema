@@ -293,6 +293,12 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       stepIds: this._stepIds,
       workflowIds: this._workflowIds,
       components: (this._components || {})[kind === 'success' ? 'successActions' : 'failureActions'],
+      onComponentChange: (name, action) => {
+        const kindKey = kind === 'success' ? 'successActions' : 'failureActions';
+        (this._components ??= {})[kindKey] ??= {};
+        this._components[kindKey][name] = action;
+        this.emit('component-changed', { kind: kindKey, name, action });
+      },
       completionContext: this._completionContext,
       onChange: () => {
         if (!actions.length) delete this._workflow[listName];
