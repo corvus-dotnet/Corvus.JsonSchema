@@ -3264,6 +3264,31 @@ export function createMockControlPlane(options = {}) {
 
       const op = bindingOf(step);
 
+      // STEP OVER / what-if (§3.3): an overridden step does not execute — its outputs are
+      // PROVIDED (the runs-view Skip, brought to the debugger). No exchange happens; only
+      // criteria-less actions can route (there is no status code to judge).
+      const outputOverrides = request.overrides?.stepOutputs ?? {};
+      if (Object.prototype.hasOwnProperty.call(outputOverrides, step.stepId)) {
+        const provided = outputOverrides[step.stepId];
+        const skipRecord = { stepId: step.stepId, status: 'completed', attempt: 0, skipped: true, ...(provided !== undefined ? { outputs: provided } : {}) };
+        if (provided !== undefined) stepOutputs[step.stepId] = provided;
+        const skipActions = (step.onSuccess?.length ? step.onSuccess : wf.successActions ?? [])
+          .map((a) => (a.reference ? resolveComponentAction(doc, a.reference) : a)).filter(Boolean)
+          .find((a) => !(a.criteria?.length));
+        if (skipActions) {
+          skipRecord.actionTaken = { type: skipActions.type, ...(skipActions.name ? { name: skipActions.name } : {}), ...(skipActions.stepId ? { target: skipActions.stepId } : {}) };
+          steps.push(skipRecord);
+          if (skipActions.type === 'end') { index = -1; break; }
+          if (skipActions.type === 'goto') { index = wf.steps.findIndex((x) => x.stepId === skipActions.stepId); continue; }
+        } else {
+          skipRecord.actionTaken = { type: 'fallThrough' };
+          steps.push(skipRecord);
+        }
+
+        index += 1;
+        continue;
+      }
+
       // A sub-workflow step (workflowId binding): the target workflow runs INLINE — its nested
       // trace rides the record (`subTrace`) so the debugger can step into it (§3.3).
       if (typeof step.workflowId === 'string' && step.workflowId && !step.operationId && !step.channelPath) {

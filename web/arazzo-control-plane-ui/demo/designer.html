@@ -121,6 +121,14 @@
             <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280);">
               Expression console — ⏎ evaluates against the session's frame at the scrub cursor (§3.3).
             </div>
+            <div id="override-panel" hidden style="display: grid; gap: 6px; border: 1px solid var(--arazzo-status-suspended, #b45309); border-radius: 6px; padding: 8px;">
+              <div id="override-title" style="font-size: 11px; font-weight: 600;"></div>
+              <arazzo-value-editor id="override-editor"></arazzo-value-editor>
+              <div style="display: flex; gap: 6px;">
+                <button id="override-apply" type="button" style="font-size: 12px;">⏭ Apply &amp; replay</button>
+                <button id="override-cancel" type="button" style="font-size: 12px;">Cancel</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -173,6 +181,7 @@
     import '../src/components/source-acquisition-dialog.js';
     import '../src/components/git-dialog.js';
     import '../src/components/input-dialog.js';
+    import '../src/components/value-editor.js';
     import '../src/components/document-inspector.js';
     import '../src/components/debug-tray.js';
     import '../src/components/scenario-panel.js';
@@ -945,6 +954,9 @@
     // Triggers injected mid-session (the tray's ⚡ form on a suspended message wait). Stateless
     // stepping means every replay re-supplies them; Stop/Clear ends the session and drops them.
     const sessionTriggers = [];
+    // Step-over / what-if overrides (§3.3): stepId → provided outputs; the overridden step does
+    // not execute on replay. Same session lifetime as the triggers.
+    const sessionOutputOverrides = {};
 
     function buildScenario() {
       const mocks = [];
@@ -972,6 +984,7 @@
       if (!shell.id) return;
       try {
         const command = { workflowId: select.value, scenario: buildScenario() };
+        if (Object.keys(sessionOutputOverrides).length) command.overrides = { stepOutputs: structuredClone(sessionOutputOverrides) };
         if (stepPastEnd && tray.trace) {
           command.budget = { maxSteps: (tray.trace.stepsExecuted ?? 0) + 1 };
         } else if (until) {
@@ -1050,6 +1063,32 @@
       document.getElementById('debug-dock').hidden = false;
     });
 
+    tray.addEventListener('output-override-requested', async (e) => {
+      const panel = document.getElementById('override-panel');
+      const editor = document.getElementById('override-editor');
+      document.getElementById('override-title').textContent = `⏭ ${e.detail.stepId} — outputs to provide`;
+      let descriptor = { type: 'object' };
+      try {
+        const schemas = await client.getWorkingCopySchemas(shell.id);
+        const outputs = schemas.workflows?.[select.value]?.steps?.[e.detail.stepId]?.outputs;
+        if (outputs && Object.keys(outputs).length) descriptor = { type: 'object', properties: outputs };
+      } catch { /* untyped editing still works */ }
+      editor.seed = e.detail.outputs;
+      editor.descriptor = descriptor;
+      panel.hidden = false;
+      panel.dataset.step = e.detail.stepId;
+    });
+    document.getElementById('override-cancel').addEventListener('click', () => { document.getElementById('override-panel').hidden = true; });
+    document.getElementById('override-apply').addEventListener('click', () => {
+      const panel = document.getElementById('override-panel');
+      try {
+        sessionOutputOverrides[panel.dataset.step] = document.getElementById('override-editor').value;
+      } catch { return; } // unparseable JSON in the fallback editor: stay open
+      panel.hidden = true;
+      logEvent('step-over', { stepId: panel.dataset.step });
+      runSimulation();
+    });
+
     tray.addEventListener('cursor-changed', applyDebugFrame);
     tray.addEventListener('workflow-focus', (e) => {
       // Stepping into/out of a sub-workflow's trace: the canvas follows (null = the run's own).
@@ -1062,7 +1101,7 @@
 
       applyDebugFrame();
     });
-    tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
+    tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
     tray.addEventListener('trigger-injected', (e) => {
       // The injected message joins the session scenario; the replay delivers it at the wait and
@@ -1076,7 +1115,7 @@
       if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
       else runSimulation({ stepPastEnd: !!tray.trace });
     });
-    stopBtn.addEventListener('click', () => { tray.trace = null; sessionTriggers.length = 0; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
+    stopBtn.addEventListener('click', () => { tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     surface.addEventListener('node-activated', (e) => {
       if (e.detail.id && !e.detail.id.startsWith('#')) runSimulation({ until: { beforeStepId: e.detail.id } });
     });
