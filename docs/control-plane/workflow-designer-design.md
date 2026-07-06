@@ -897,10 +897,27 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    (stepId-keyed, content-hashed for "changed") and paint the classification through the
    surfaces' existing per-node state channel — design the matching rules (renames, reordered
    steps) before building.
-8b. **Step-output overrides (engine)** — the mock honours `overrides.stepOutputs` on simulate
-   (step over / what-if: the step does not execute, its provided outputs stand — the runs-view
-   Skip brought to the debugger); the real simulator needs the same override seam for server
-   traces.
+8b. **Step-output overrides (engine)** — BUILT for debug runs (§18 slice 3c).
+   `SimulationScenario.StepOutputOverrides` (stepId → provided outputs) is the real seam: at the
+   checkpoint boundary the replay unwinds the executor, records the overridden step as skipped
+   (`skipped: true`, attempt 0, no exchange, the PROVIDED outputs on the record), stages those
+   outputs on the run so the re-entered executor restores them for downstream references and
+   workflow outputs, and resumes past the step — the durable engine's Skip protocol (record
+   outputs, move the cursor, re-enter at the cursor) replayed, with no emitter change. Only a
+   criteria-less success action routes after a skipped step (no `$statusCode` exists to judge);
+   end/goto are honoured; a breakpoint on the step still pauses first, and a skipped step counts
+   against the budget (the mock's ordering). Debug-run resume actions ride the seam verbatim:
+   Skip resolves its step from `targetCursor − 1` (else the current position, else the last
+   traced step) and accumulates an override; Rewind resets the cursor (the forward replay
+   re-executes — deliberate per §18); RetryFaultedStep re-advances; StatePatch applies RFC 6902
+   over `{ inputs, stepOutputs }` — patched inputs replace the captured inputs, changed/added
+   `stepOutputs` entries become overrides, removed entries clear theirs, untouched entries
+   re-derive identically under the deterministic replay. Remaining: the ratified
+   `SimulateRequest` carries no `overrides`, so the simulate endpoints deliberately do not accept
+   them yet (the mock's `simulateDocument` honours them only as shared plumbing for its debug
+   runs); adding that, and declaring the trace record's `skipped` marker in `SimulationTrace`
+   (the kit already renders it), is an additive contract rev for when the what-if debugger needs
+   server-side simulate overrides.
 8a. **Sub-workflow trace records (engine)** — the mock previews `subTrace` on a workflowId-bound
    step's record (the designer's step-into descends it, the canvas following); the REAL simulator
    inlines sub-workflow execution without recording nested step records yet. The engine should

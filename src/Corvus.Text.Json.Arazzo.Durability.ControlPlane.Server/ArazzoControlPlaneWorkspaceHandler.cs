@@ -1182,9 +1182,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
     /// <summary>
     /// Advances a §18 debug run: a bare resume continues to the next pause point (the request may
-    /// re-aim the pause first — single-step, breakpoints, or run-to-completion). The
-    /// <c>ResumeRequest</c> actions (Skip/Rewind/retry/state-patch) arrive with the executor seam
-    /// (§15 8b) — the interim executor answers them 409 rather than pretending.
+    /// re-aim the pause first — single-step, breakpoints, or run-to-completion). A
+    /// <c>ResumeRequest</c> action applies the runs-view union to the session before advancing
+    /// (§15 8b): <c>Skip</c> provides the targeted step's outputs so the replay records it skipped
+    /// instead of executing it, <c>Rewind</c> resets the position (the forward replay's
+    /// re-execution of real side effects is the developer's deliberate act), <c>StatePatch</c>
+    /// patches the context <c>{ inputs, stepOutputs }</c> (patched entries become overrides), and
+    /// <c>RetryFaultedStep</c> is the plain re-advance.
     /// </summary>
     /// <param name="parameters">The request parameters.</param>
     /// <param name="workspace">The response workspace.</param>
@@ -1209,18 +1213,29 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return ResumeDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
 
-        Models.DebugRunResume body = parameters.Body;
-        if (body.Action.IsNotUndefined())
-        {
-            return ResumeDebugRunResult.Conflict(
-                Problem("resume-action-not-offered", "Resume actions arrive with the executor seam", 409, "The interim executor supports plain resume, pause, and cancel; Skip/Rewind/retry/state-patch land when the execution host runs drafts (workflow-designer design §18 slice 3, §15 8b)."), workspace);
-        }
-
         string status = run.StatusSnapshot;
         if (status is "completed" or "cancelled")
         {
             return ResumeDebugRunResult.Conflict(
                 Problem("not-resumable", "Not resumable", 409, $"The debug run is {status}."), workspace);
+        }
+
+        Models.DebugRunResume body = parameters.Body;
+        if (body.Action.IsNotUndefined())
+        {
+            switch (ApplyResumeAction(run, body.Action))
+            {
+                case ResumeActionOutcome.SkipTargetUnknown:
+                    return ResumeDebugRunResult.Conflict(
+                        Problem("skip-target-unknown", "Skip target unknown", 409, "The Skip resume names no resolvable step: targetCursor - 1 (or the current position) is outside the workflow's steps, and the run has no trace to fall back to."), workspace);
+
+                case ResumeActionOutcome.PatchFailed:
+                    return ResumeDebugRunResult.Conflict(
+                        Problem("state-patch-failed", "State patch failed", 409, "The RFC 6902 patch does not apply to the run's context object { \"inputs\": …, \"stepOutputs\": { … } } — an operation's path or test failed."), workspace);
+
+                default:
+                    break;
+            }
         }
 
         if (body.Pause.IsNotUndefined())
@@ -1266,6 +1281,61 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         return CancelDebugRunResult.Ok(view.RootElement, workspace);
     }
 
+    /// <summary>How a §18 resume action landed on the session.</summary>
+    private enum ResumeActionOutcome
+    {
+        /// <summary>The action applied (or needed no session change); the advance proceeds.</summary>
+        Applied,
+
+        /// <summary>A Skip resume named no resolvable step.</summary>
+        SkipTargetUnknown,
+
+        /// <summary>A StatePatch resume's patch did not apply to the context.</summary>
+        PatchFailed,
+    }
+
+    /// <summary>
+    /// Applies a §18 resume action to the session — the runs-view <c>ResumeRequest</c> union in its
+    /// verbatim shape (§15 8b), mapped through the same <see cref="ResumeOptions"/> the runs
+    /// endpoint uses: Skip accumulates a step-output override (an absent <c>skipOutputs</c> still
+    /// skips, recording the empty object — the mock's rule), Rewind resets the cursor, StatePatch
+    /// patches <c>{ inputs, stepOutputs }</c>, and RetryFaultedStep needs no session change (the
+    /// advance replays the run).
+    /// </summary>
+    private static ResumeActionOutcome ApplyResumeAction(DebugRunSession run, in Models.ResumeRequest action)
+    {
+        ResumeOptions options = ArazzoControlPlaneHandler.ToResumeOptions(action);
+        switch (options.Mode)
+        {
+            case ResumeMode.Rewind:
+                run.Rewind(options.TargetCursor ?? 0);
+                return ResumeActionOutcome.Applied;
+
+            case ResumeMode.Skip:
+            {
+                string? stepId = run.ResolveSkipStepId(options.TargetCursor);
+                if (stepId is null)
+                {
+                    return ResumeActionOutcome.SkipTargetUnknown;
+                }
+
+                byte[] outputs = options.SkipOutputs.ValueKind is JsonValueKind.Undefined
+                    ? "{}"u8.ToArray()
+                    : PersistedJson.ToArray(options.SkipOutputs, static (Utf8JsonWriter writer, in JsonElement value) => value.WriteTo(writer));
+                run.Skip(stepId, outputs);
+                return ResumeActionOutcome.Applied;
+            }
+
+            case ResumeMode.StatePatch:
+                return run.TryApplyStatePatch(options.Patch)
+                    ? ResumeActionOutcome.Applied
+                    : ResumeActionOutcome.PatchFailed;
+
+            default:
+                return ResumeActionOutcome.Applied; // RetryFaultedStep: the advance below replays the run
+        }
+    }
+
     /// <summary>Reads the request's pause points (single-step and/or breakpoints); an absent or
     /// empty pause means the run proceeds to completion, a wait, or a fault.</summary>
     private static (bool AfterEachStep, string[] Breakpoints) ReadPause(in Models.DebugRunPause pause)
@@ -1302,42 +1372,65 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// <returns>The failure detail when the document does not compile; otherwise <see langword="null"/>.</returns>
     private async ValueTask<string?> AdvanceDebugRunAsync(DebugRunSession run, CancellationToken cancellationToken)
     {
-        (int cursor, bool afterEachStep, string[] breakpoints) = run.Plan();
-        using ParsedJsonDocument<JsonElement>? inputs = run.InputsUtf8 is { } inputBytes ? ParsedJsonDocument<JsonElement>.Parse(inputBytes) : null;
-        var scenario = new SimulationScenario
-        {
-            Inputs = inputs is { } parsedInputs ? parsedInputs.RootElement : default,
-            Mocks = run.Mocks,
-        };
+        DebugRunSession.AdvancePlan plan = run.Plan();
+        using ParsedJsonDocument<JsonElement>? inputs = plan.InputsUtf8 is { } inputBytes ? ParsedJsonDocument<JsonElement>.Parse(inputBytes) : null;
 
-        SimulationStop? stop = !afterEachStep && breakpoints.Length > 0
-            ? new SimulationStop { Breakpoints = new HashSet<string>(breakpoints, StringComparer.Ordinal) }
-            : null;
-        SimulationBudget? budget = afterEachStep ? new SimulationBudget { MaxSteps = cursor + 1 } : null;
-
-        using SimulationResult result = await this.simulator!.SimulateAsync(run.DocumentBytes, run.SourceBytes, scenario, stop, budget, cancellationToken).ConfigureAwait(false);
-        if (result.Outcome == SimulationOutcome.NotExecutable)
+        // The accumulated Skip/StatePatch overrides ride the scenario (§15 8b). Each parses for
+        // the replay's lifetime — the trace serializes inside this scope, before they dispose.
+        var overrideDocuments = new List<ParsedJsonDocument<JsonElement>>(plan.StepOutputOverrides.Length);
+        try
         {
-            return "The document does not compile to an executable workflow (e.g. it references another Arazzo document as a source, or has no workflows).";
+            Dictionary<string, JsonElement>? overrides = null;
+            foreach (KeyValuePair<string, byte[]> entry in plan.StepOutputOverrides)
+            {
+                ParsedJsonDocument<JsonElement> parsed = ParsedJsonDocument<JsonElement>.Parse(entry.Value);
+                overrideDocuments.Add(parsed);
+                (overrides ??= new(StringComparer.Ordinal))[entry.Key] = parsed.RootElement;
+            }
+
+            var scenario = new SimulationScenario
+            {
+                Inputs = inputs is { } parsedInputs ? parsedInputs.RootElement : default,
+                Mocks = run.Mocks,
+                StepOutputOverrides = overrides ?? (IReadOnlyDictionary<string, JsonElement>)System.Collections.ObjectModel.ReadOnlyDictionary<string, JsonElement>.Empty,
+            };
+
+            SimulationStop? stop = !plan.AfterEachStep && plan.Breakpoints.Length > 0
+                ? new SimulationStop { Breakpoints = new HashSet<string>(plan.Breakpoints, StringComparer.Ordinal) }
+                : null;
+            SimulationBudget? budget = plan.AfterEachStep ? new SimulationBudget { MaxSteps = plan.Cursor + 1 } : null;
+
+            using SimulationResult result = await this.simulator!.SimulateAsync(run.DocumentBytes, run.SourceBytes, scenario, stop, budget, cancellationToken).ConfigureAwait(false);
+            if (result.Outcome == SimulationOutcome.NotExecutable)
+            {
+                return "The document does not compile to an executable workflow (e.g. it references another Arazzo document as a source, or has no workflows).";
+            }
+
+            string status = result.Outcome switch
+            {
+                SimulationOutcome.Completed => "completed",
+                SimulationOutcome.Faulted => "faulted",
+                SimulationOutcome.Suspended => "suspended",
+
+                // Paused (a breakpoint) and BudgetExhausted (the deliberate single-step budget) both
+                // present as the contract's paused — the dock's controls apply.
+                _ => "paused",
+            };
+            byte[] trace = PersistedJson.ToArray(result, static (Utf8JsonWriter writer, in SimulationResult simulation) => ScenarioSuite.WriteTrace(writer, simulation));
+
+            // The cursor is the position the dock scrubs to: the RECORDED steps. On a budget stop,
+            // SimulationResult.StepsExecuted also counts the boundary the budget aborted, so it sits
+            // one past the last recorded step — the trace's step list is the honest position.
+            run.Apply(status, result.Steps.Count, trace, this.timeProvider.GetUtcNow());
+            return null;
         }
-
-        string status = result.Outcome switch
+        finally
         {
-            SimulationOutcome.Completed => "completed",
-            SimulationOutcome.Faulted => "faulted",
-            SimulationOutcome.Suspended => "suspended",
-
-            // Paused (a breakpoint) and BudgetExhausted (the deliberate single-step budget) both
-            // present as the contract's paused — the dock's controls apply.
-            _ => "paused",
-        };
-        byte[] trace = PersistedJson.ToArray(result, static (Utf8JsonWriter writer, in SimulationResult simulation) => ScenarioSuite.WriteTrace(writer, simulation));
-
-        // The cursor is the position the dock scrubs to: the RECORDED steps. On a budget stop,
-        // SimulationResult.StepsExecuted also counts the boundary the budget aborted, so it sits
-        // one past the last recorded step — the trace's step list is the honest position.
-        run.Apply(status, result.Steps.Count, trace, this.timeProvider.GetUtcNow());
-        return null;
+            foreach (ParsedJsonDocument<JsonElement> document in overrideDocuments)
+            {
+                document.Dispose();
+            }
+        }
     }
 
     /// <inheritdoc/>

@@ -22,6 +22,15 @@ public sealed class SimulationScenario
     /// <summary>Gets the message triggers delivered, in order, when the run suspends on a matching channel.</summary>
     public IReadOnlyList<SimulationTrigger> Triggers { get; init; } = [];
 
+    /// <summary>
+    /// Gets the step-output overrides (workflow-designer design §15 8b): step id → the PROVIDED
+    /// outputs value. An overridden step does not execute — the replay records it as skipped and its
+    /// provided outputs stand for downstream reference resolution, exactly as the durable engine's
+    /// Skip resume records operator-supplied outputs and moves the cursor past the step.
+    /// </summary>
+    public IReadOnlyDictionary<string, JsonElement> StepOutputOverrides { get; init; } =
+        System.Collections.ObjectModel.ReadOnlyDictionary<string, JsonElement>.Empty;
+
     /// <summary>Gets a value indicating whether timer waits auto-advance the virtual clock and resume (default true).</summary>
     public bool AutoAdvanceClock { get; init; } = true;
 }
@@ -101,6 +110,10 @@ public sealed class SimulatedStepRecord
 
     /// <summary>Gets a value indicating whether the step faulted (rather than completing).</summary>
     public bool Faulted { get; init; }
+
+    /// <summary>Gets a value indicating whether a step-output override skipped the step (§15 8b):
+    /// it never executed — <see cref="Outputs"/> holds the PROVIDED value.</summary>
+    public bool Skipped { get; init; }
 
     /// <summary>Gets the step's extracted outputs, when it produced any.</summary>
     public JsonElement Outputs { get; init; }
@@ -184,3 +197,15 @@ internal sealed class SimulationPauseException(string pausedBefore) : Exception
 
 /// <summary>Thrown by the tracing run when the step budget runs out; never escapes the simulator.</summary>
 internal sealed class SimulationBudgetException : Exception;
+
+/// <summary>
+/// One resolved step-output override (§15 8b): the provided outputs, the state the replay resumes at
+/// after the skip (the criteria-less success route — end/goto honoured; no <c>$statusCode</c> exists
+/// to judge anything else), and the routing decision recorded on the skipped step's record.
+/// </summary>
+internal readonly record struct StepOutputOverride(JsonElement Outputs, int NextState, SimulatedAction Action);
+
+/// <summary>Thrown by the tracing run when the next step is overridden (§15 8b): the executor
+/// invocation unwinds so the driver can consume the skip and re-enter at the advanced cursor — the
+/// replay analogue of the durable Skip's mutate-checkpoint-then-re-enter. Never escapes the simulator.</summary>
+internal sealed class SimulationSkipException : Exception;

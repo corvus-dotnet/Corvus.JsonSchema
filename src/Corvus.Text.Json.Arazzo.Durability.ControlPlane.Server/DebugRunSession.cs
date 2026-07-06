@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Arazzo.Testing;
+using Corvus.Text.Json.Patch;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -26,9 +27,15 @@ internal sealed class DebugRunSession
 {
     private readonly Lock syncRoot = new();
 
+    // §15 8b: the accumulated step-output overrides (stepId → outputs UTF-8) a Skip or StatePatch
+    // resume pinned — the next advance's replay records those steps as skipped, their provided
+    // outputs standing for downstream resolution.
+    private readonly Dictionary<string, byte[]> stepOutputOverrides = new(StringComparer.Ordinal);
+
     private string status = "running";
     private int cursor;
     private byte[]? traceUtf8;
+    private byte[]? inputsUtf8;
     private DateTimeOffset updatedAt;
     private bool pauseAfterEachStep;
     private string[] breakpoints = [];
@@ -65,8 +72,10 @@ internal sealed class DebugRunSession
     /// declare (see <see cref="SpecDerivedMocks"/>).</summary>
     public required IReadOnlyList<SimulationMockRoute> Mocks { get; init; }
 
-    /// <summary>Gets the workflow inputs as captured UTF-8, or <see langword="null"/> for none.</summary>
-    public required byte[]? InputsUtf8 { get; init; }
+    /// <summary>Gets the workflow inputs as captured UTF-8, or <see langword="null"/> for none. A
+    /// §18 StatePatch resume may replace the captured inputs; an advance reads them through
+    /// <see cref="Plan"/> so its snapshot is consistent.</summary>
+    public required byte[]? InputsUtf8 { get => this.inputsUtf8; init => this.inputsUtf8 = value; }
 
     /// <summary>Gets the run's current status (the contract enum:
     /// <c>running·paused·suspended·completed·faulted·cancelled</c>).</summary>
@@ -132,15 +141,185 @@ internal sealed class DebugRunSession
         }
     }
 
-    /// <summary>Snapshots what the next advance replays to: the position reached so far and the
-    /// pause points that bound it.</summary>
-    /// <returns>The consistent (cursor, pause) triple.</returns>
-    public (int Cursor, bool AfterEachStep, string[] Breakpoints) Plan()
+    /// <summary>Snapshots what the next advance replays: the position reached so far, the pause
+    /// points that bound it, the (possibly state-patched) inputs, and the accumulated §15 8b
+    /// step-output overrides the replay must honour.</summary>
+    /// <returns>The consistent snapshot.</returns>
+    public AdvancePlan Plan()
     {
         lock (this.syncRoot)
         {
-            return (this.cursor, this.pauseAfterEachStep, this.breakpoints);
+            return new AdvancePlan(this.cursor, this.pauseAfterEachStep, this.breakpoints, this.inputsUtf8, [.. this.stepOutputOverrides]);
         }
+    }
+
+    /// <summary>Records a §18 Skip resume: the step's outputs are PROVIDED, so the next advance's
+    /// replay records it as skipped instead of executing it — the runs-view Skip brought to the
+    /// debugger (workflow-designer design §15 8b).</summary>
+    /// <param name="stepId">The step being stepped over.</param>
+    /// <param name="outputsUtf8">The provided outputs (the empty object for a bare Skip).</param>
+    public void Skip(string stepId, byte[] outputsUtf8)
+    {
+        lock (this.syncRoot)
+        {
+            this.stepOutputOverrides[stepId] = outputsUtf8;
+        }
+    }
+
+    /// <summary>Applies a §18 Rewind resume: the position resets (clamped at the start) and the next
+    /// advance's forward replay re-executes from there — the developer's deliberate act.</summary>
+    /// <param name="targetCursor">The cursor to rewind to.</param>
+    public void Rewind(int targetCursor)
+    {
+        lock (this.syncRoot)
+        {
+            this.cursor = Math.Max(0, targetCursor);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the step a §18 Skip resume targets: the step at <c>targetCursor - 1</c> (the
+    /// contract's <c>targetCursor</c> names the cursor to resume AT, so the skipped step sits one
+    /// before it), or the step at the current position for a bare Skip. A position past the step
+    /// list — a faulted run's cursor counts the faulted record — falls back to the last traced
+    /// step, exactly as the mock resolves it.
+    /// </summary>
+    /// <param name="targetCursor">The action's target cursor, if any.</param>
+    /// <returns>The step id, or <see langword="null"/> when nothing resolves.</returns>
+    public string? ResolveSkipStepId(int? targetCursor)
+    {
+        int at;
+        byte[]? trace;
+        lock (this.syncRoot)
+        {
+            at = targetCursor is { } target ? target - 1 : this.cursor;
+            trace = this.traceUtf8;
+        }
+
+        if (at >= 0)
+        {
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(this.DocumentBytes);
+            if (document.RootElement.TryGetProperty("workflows"u8, out JsonElement workflows) && workflows.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement workflow in workflows.EnumerateArray())
+                {
+                    // The FIRST workflow is the one the run executes (reordered at start).
+                    if (workflow.TryGetProperty("steps"u8, out JsonElement steps) && steps.ValueKind == JsonValueKind.Array)
+                    {
+                        int index = 0;
+                        foreach (JsonElement step in steps.EnumerateArray())
+                        {
+                            if (index++ == at)
+                            {
+                                return step.TryGetProperty("stepId"u8, out JsonElement stepId) ? stepId.GetString() : null;
+                            }
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        // Past the end (the faulted record counted in the cursor): the last traced step.
+        if (trace is not null)
+        {
+            using ParsedJsonDocument<JsonElement> parsed = ParsedJsonDocument<JsonElement>.Parse(trace);
+            if (parsed.RootElement.TryGetProperty("steps"u8, out JsonElement records) && records.ValueKind == JsonValueKind.Array)
+            {
+                string? last = null;
+                foreach (JsonElement record in records.EnumerateArray())
+                {
+                    if (record.TryGetProperty("stepId"u8, out JsonElement stepId))
+                    {
+                        last = stepId.GetString();
+                    }
+                }
+
+                return last;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Applies a §18 StatePatch resume: an RFC 6902 patch over the run's context object
+    /// <c>{ "inputs": …, "stepOutputs": { … } }</c> — the same shape the durable engine patches.
+    /// The interim executor is a stateless replay, so the patch lands as session state: a patched
+    /// <c>inputs</c> replaces the captured inputs (the replay re-runs with them), and each
+    /// <c>stepOutputs</c> entry the patch changed or added becomes a step-output override — that
+    /// step no longer executes; its patched outputs stand (an entry the patch removed clears its
+    /// override). Untouched entries keep executing normally: the deterministic replay re-derives
+    /// them identically.
+    /// </summary>
+    /// <param name="patch">The RFC 6902 patch array.</param>
+    /// <returns><see langword="false"/> when the patch does not apply to the context.</returns>
+    public bool TryApplyStatePatch(in JsonElement patch)
+    {
+        byte[]? inputs;
+        byte[]? trace;
+        KeyValuePair<string, byte[]>[] existingOverrides;
+        lock (this.syncRoot)
+        {
+            inputs = this.inputsUtf8;
+            trace = this.traceUtf8;
+            existingOverrides = [.. this.stepOutputOverrides];
+        }
+
+        // 1 — compose the context from the last replay's step outputs (last record per step wins),
+        //     overlaid with the overrides already in force (they ARE the pinned state).
+        Dictionary<string, byte[]> before = ComposeStepOutputs(trace, existingOverrides);
+        byte[] contextUtf8 = ComposeContext(inputs, before);
+
+        // 2 — apply the patch with the repo's RFC 6902 machinery (never hand-rolled).
+        using JsonWorkspace patchWorkspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> context = ParsedJsonDocument<JsonElement>.Parse(contextUtf8);
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = context.RootElement.CreateBuilder(patchWorkspace);
+        JsonElement.Mutable root = builder.RootElement;
+        JsonPatchDocument patchDocument = patch;
+        if (!root.TryValidateAndApplyPatch(in patchDocument))
+        {
+            return false;
+        }
+
+        // 3 — read the patched context back and land it as session state.
+        byte[] patchedUtf8 = PersistedJson.ToArray(root, static (Utf8JsonWriter writer, in JsonElement.Mutable value) => value.WriteTo(writer));
+        using ParsedJsonDocument<JsonElement> patched = ParsedJsonDocument<JsonElement>.Parse(patchedUtf8);
+        byte[]? newInputs = patched.RootElement.TryGetProperty("inputs"u8, out JsonElement patchedInputs)
+            ? PersistedJson.ToArray(patchedInputs, static (Utf8JsonWriter writer, in JsonElement value) => value.WriteTo(writer))
+            : null;
+
+        var after = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        if (patched.RootElement.TryGetProperty("stepOutputs"u8, out JsonElement patchedOutputs) && patchedOutputs.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> entry in patchedOutputs.EnumerateObject())
+            {
+                after[entry.Name] = PersistedJson.ToArray(entry.Value, static (Utf8JsonWriter writer, in JsonElement value) => value.WriteTo(writer));
+            }
+        }
+
+        lock (this.syncRoot)
+        {
+            this.inputsUtf8 = newInputs;
+            foreach (KeyValuePair<string, byte[]> entry in after)
+            {
+                if (!before.TryGetValue(entry.Key, out byte[]? unchanged) || !unchanged.AsSpan().SequenceEqual(entry.Value))
+                {
+                    this.stepOutputOverrides[entry.Key] = entry.Value;
+                }
+            }
+
+            foreach (KeyValuePair<string, byte[]> entry in existingOverrides)
+            {
+                if (!after.ContainsKey(entry.Key))
+                {
+                    this.stepOutputOverrides.Remove(entry.Key);
+                }
+            }
+        }
+
+        return true;
     }
 
     /// <summary>Applies one advance's outcome atomically. A cancelled run is terminal: a replay
@@ -183,6 +362,61 @@ internal sealed class DebugRunSession
         => PersistedJson.ToPooledDocument<Models.DebugRun, DebugRunSession>(
             this,
             static (Utf8JsonWriter writer, in DebugRunSession run) => run.Write(writer));
+
+    /// <summary>The last replay's step outputs (last record per step wins — retries and revisits
+    /// overwrite), overlaid with the overrides already in force.</summary>
+    private static Dictionary<string, byte[]> ComposeStepOutputs(byte[]? traceUtf8, KeyValuePair<string, byte[]>[] overrides)
+    {
+        var outputs = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        if (traceUtf8 is not null)
+        {
+            using ParsedJsonDocument<JsonElement> trace = ParsedJsonDocument<JsonElement>.Parse(traceUtf8);
+            if (trace.RootElement.TryGetProperty("steps"u8, out JsonElement steps) && steps.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement record in steps.EnumerateArray())
+                {
+                    if (record.TryGetProperty("stepId"u8, out JsonElement stepId)
+                        && stepId.GetString() is { Length: > 0 } id
+                        && record.TryGetProperty("outputs"u8, out JsonElement value))
+                    {
+                        outputs[id] = PersistedJson.ToArray(value, static (Utf8JsonWriter writer, in JsonElement v) => v.WriteTo(writer));
+                    }
+                }
+            }
+        }
+
+        foreach (KeyValuePair<string, byte[]> entry in overrides)
+        {
+            outputs[entry.Key] = entry.Value;
+        }
+
+        return outputs;
+    }
+
+    /// <summary>Composes the patchable context object <c>{ "inputs": …, "stepOutputs": { … } }</c>
+    /// (absent inputs are omitted, mirroring the durable engine's composition).</summary>
+    private static byte[] ComposeContext(byte[]? inputsUtf8, Dictionary<string, byte[]> stepOutputs)
+        => PersistedJson.ToArray(
+            (Inputs: inputsUtf8, StepOutputs: stepOutputs),
+            static (Utf8JsonWriter writer, in (byte[]? Inputs, Dictionary<string, byte[]> StepOutputs) c) =>
+            {
+                writer.WriteStartObject();
+                if (c.Inputs is not null)
+                {
+                    writer.WritePropertyName("inputs"u8);
+                    writer.WriteRawValue(c.Inputs, skipInputValidation: false);
+                }
+
+                writer.WriteStartObject("stepOutputs"u8);
+                foreach (KeyValuePair<string, byte[]> entry in c.StepOutputs)
+                {
+                    writer.WritePropertyName(entry.Key);
+                    writer.WriteRawValue(entry.Value, skipInputValidation: false);
+                }
+
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+            });
 
     private static bool IsHttpMethod(in JsonProperty<JsonElement> operation)
         => operation.NameEquals("get"u8) || operation.NameEquals("put"u8) || operation.NameEquals("post"u8)
@@ -231,4 +465,17 @@ internal sealed class DebugRunSession
             writer.WriteEndObject();
         }
     }
+
+    /// <summary>One advance's consistent snapshot (taken under the session lock).</summary>
+    /// <param name="Cursor">The position reached so far — the recorded steps.</param>
+    /// <param name="AfterEachStep">Whether the run pauses after every executed step.</param>
+    /// <param name="Breakpoints">The steps the run pauses before.</param>
+    /// <param name="InputsUtf8">The (possibly state-patched) workflow inputs, or <see langword="null"/> for none.</param>
+    /// <param name="StepOutputOverrides">The accumulated §15 8b step-output overrides (stepId → outputs UTF-8).</param>
+    public readonly record struct AdvancePlan(
+        int Cursor,
+        bool AfterEachStep,
+        string[] Breakpoints,
+        byte[]? InputsUtf8,
+        KeyValuePair<string, byte[]>[] StepOutputOverrides);
 }

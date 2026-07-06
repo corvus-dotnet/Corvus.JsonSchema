@@ -29,6 +29,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
     private readonly int maxSteps;
     private readonly ManualTimeProvider clock;
     private readonly MockApiTransport transport;
+    private readonly IReadOnlyDictionary<string, StepOutputOverride> overrides;
     private readonly Dictionary<string, JsonElement> outputs = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> retryCounts = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> arrivals = new(StringComparer.Ordinal);
@@ -38,13 +39,20 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
     private JsonElement deliveredMessage;
     private bool hasDeliveredMessage;
 
-    public TracingWorkflowRun(IReadOnlyList<string> stepIds, SimulationStop stop, int maxSteps, ManualTimeProvider clock, MockApiTransport transport)
+    public TracingWorkflowRun(
+        IReadOnlyList<string> stepIds,
+        SimulationStop stop,
+        int maxSteps,
+        ManualTimeProvider clock,
+        MockApiTransport transport,
+        IReadOnlyDictionary<string, StepOutputOverride> overrides)
     {
         this.stepIds = stepIds;
         this.stop = stop;
         this.maxSteps = maxSteps;
         this.clock = clock;
         this.transport = transport;
+        this.overrides = overrides;
 
         // The stop condition may name the FIRST step (pause before anything runs).
         this.CheckStop(0, throwBeforeAnything: false);
@@ -113,6 +121,15 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         this.Cursor = cursor;
         this.currentState = cursor;
         this.CheckStop(cursor, throwBeforeAnything: true);
+        if (cursor >= 0 && cursor < this.stepIds.Count && this.overrides.ContainsKey(this.stepIds[cursor]))
+        {
+            // §15 8b: the next step is overridden — it must not execute. The executor's internal
+            // state has already moved on, so unwind the invocation; the driver consumes the skip
+            // (SkipOverriddenSteps) and re-enters at the advanced cursor, exactly as a durable
+            // Skip resume mutates the checkpoint and re-enters the executor.
+            throw new SimulationSkipException();
+        }
+
         return default;
     }
 
@@ -166,6 +183,48 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
 
         payload = default;
         return false;
+    }
+
+    /// <summary>
+    /// Consumes §15 8b step-output overrides at the cursor before an executor (re)invocation: each
+    /// overridden step is recorded as skipped — no exchange, attempt 0, its PROVIDED outputs staged
+    /// on the run so the resumed executor restores them for downstream references — and the cursor
+    /// advances along the override's criteria-less success route. The replay analogue of the durable
+    /// engine's Skip resume (outputs recorded, cursor moved past, executor re-entered). A skipped
+    /// step counts against the budget and its successor still honours the stop condition, matching
+    /// the mock's ordering (breakpoint first, budget second, override third).
+    /// </summary>
+    public void SkipOverriddenSteps()
+    {
+        while (this.Cursor >= 0 && this.Cursor < this.stepIds.Count
+            && this.overrides.TryGetValue(this.stepIds[this.Cursor], out StepOutputOverride stepOverride))
+        {
+            string stepId = this.stepIds[this.Cursor];
+            if (++this.StepsExecuted > this.maxSteps)
+            {
+                throw new SimulationBudgetException();
+            }
+
+            if (stepOverride.Outputs.ValueKind is not JsonValueKind.Undefined)
+            {
+                this.outputs[stepId] = stepOverride.Outputs;
+            }
+
+            this.steps.Add(new SimulatedStepRecord
+            {
+                StepId = stepId,
+                Attempt = 0,
+                Skipped = true,
+                Outputs = stepOverride.Outputs,
+                FirstExchange = this.exchangeMark,
+                ExchangeCount = 0,
+                ActionTaken = stepOverride.Action,
+            });
+
+            this.Cursor = stepOverride.NextState;
+            this.currentState = this.Cursor;
+            this.CheckStop(this.Cursor, throwBeforeAnything: true);
+        }
     }
 
     /// <summary>Records the step whose execution just reached a run boundary (checkpoint/complete/fault/timer-suspend).</summary>

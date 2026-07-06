@@ -195,7 +195,8 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
     // Map the generated ResumeRequest union onto the engine's ResumeOptions by matching the variant the
     // `mode` const selected. An absent body (the request body is optional) means a plain retry.
-    private static ResumeOptions ToResumeOptions(in Models.ResumeRequest body)
+    // Internal: the workspace handler's §18 debug runs apply the SAME union (§15 8b) — one mapping.
+    internal static ResumeOptions ToResumeOptions(in Models.ResumeRequest body)
     {
         if (body.ValueKind != JsonValueKind.Object)
         {

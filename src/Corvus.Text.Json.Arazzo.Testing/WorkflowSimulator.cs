@@ -115,7 +115,7 @@ public sealed class WorkflowSimulator : IDisposable
 
         var clock = new ManualTimeProvider();
         var clockAdvances = new List<SimulationClockAdvance>();
-        var run = new TracingWorkflowRun(shape.StepIds, stop, budget.MaxSteps, clock, transport);
+        var run = new TracingWorkflowRun(shape.StepIds, stop, budget.MaxSteps, clock, transport, BuildOverrides(shape, scenario));
 
         // UNRENTED deliberately: the rented workspace cache is thread-affine, and this workspace's
         // lifetime is the SimulationResult's — disposed by the caller after awaits, possibly on
@@ -170,11 +170,19 @@ public sealed class WorkflowSimulator : IDisposable
         int nextTrigger = 0;
         while (true)
         {
-            run.BeginInvocation();
             WorkflowRunResultKind kind;
             try
             {
+                // §15 8b: consume any overrides at the cursor first — an overridden step records as
+                // skipped and the cursor advances, so the executor re-enters PAST it (the durable
+                // Skip protocol replayed).
+                run.SkipOverriddenSteps();
+                run.BeginInvocation();
                 kind = await loaded.Workflow.RunAsync(transports, null, workspace, scenario.Inputs, run, wallClock.Token).ConfigureAwait(false);
+            }
+            catch (SimulationSkipException)
+            {
+                continue; // the checkpoint met an overridden step: re-enter; SkipOverriddenSteps consumes it
             }
             catch (SimulationPauseException)
             {
@@ -243,12 +251,90 @@ public sealed class WorkflowSimulator : IDisposable
         }
     }
 
+    /// <summary>
+    /// Resolves the scenario's step-output overrides (§15 8b) against the document: for each
+    /// overridden step, the provided outputs plus where the replay resumes after the skip. The step
+    /// never executes, so there is no <c>$statusCode</c> to judge — only a criteria-less success
+    /// action can route (end and goto honoured; anything else, or none, falls through to the next
+    /// step), the same rule the mock applies.
+    /// </summary>
+    private static IReadOnlyDictionary<string, StepOutputOverride> BuildOverrides(WorkflowShape shape, SimulationScenario scenario)
+    {
+        if (scenario.StepOutputOverrides.Count == 0)
+        {
+            return System.Collections.ObjectModel.ReadOnlyDictionary<string, StepOutputOverride>.Empty;
+        }
+
+        var overrides = new Dictionary<string, StepOutputOverride>(StringComparer.Ordinal);
+        for (int i = 0; i < shape.StepIds.Count; i++)
+        {
+            string stepId = shape.StepIds[i];
+            if (!scenario.StepOutputOverrides.TryGetValue(stepId, out JsonElement provided))
+            {
+                continue;
+            }
+
+            WorkflowShape.Action? fired = null;
+            IReadOnlyList<WorkflowShape.Action> actions =
+                shape.Steps.TryGetValue(stepId, out WorkflowShape.Step? step) && step.OnSuccess.Count > 0
+                    ? step.OnSuccess
+                    : shape.WorkflowSuccessActions;
+            foreach (WorkflowShape.Action action in actions)
+            {
+                if (action.Criteria.Count == 0)
+                {
+                    fired = action;
+                    break;
+                }
+            }
+
+            int next = i + 1;
+            if (fired is { Type: "end" })
+            {
+                next = shape.StepIds.Count; // the terminal outputs state
+            }
+            else if (fired is { Type: "goto" })
+            {
+                int target = fired.Target is { } targetStep ? IndexOf(shape.StepIds, targetStep) : -1;
+                next = target >= 0 ? target : shape.StepIds.Count; // an unresolvable target ends the run, as the mock's loop does
+            }
+
+            overrides[stepId] = new StepOutputOverride(
+                provided,
+                next,
+                fired is null ? new SimulatedAction("fallThrough", null, null) : new SimulatedAction(fired.Type, fired.Name, fired.Target));
+        }
+
+        return overrides;
+    }
+
+    private static int IndexOf(IReadOnlyList<string> stepIds, string stepId)
+    {
+        for (int i = 0; i < stepIds.Count; i++)
+        {
+            if (string.Equals(stepIds[i], stepId, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /// <summary>Post-hoc analysis: criterion truth tables and inferred routing, re-evaluated against the captured deterministic context.</summary>
     private static void AnalyzeTrace(in WorkflowShape shape, SimulationScenario scenario, SimulationResult result, List<IDisposable> owned)
     {
         for (int i = 0; i < result.Steps.Count; i++)
         {
             SimulatedStepRecord record = result.Steps[i];
+            if (record.Skipped)
+            {
+                // §15 8b: the step never executed — no exchange, no truth table; its routing
+                // decision was fixed when the override was consumed. Its PROVIDED outputs still
+                // feed later steps' contexts through the p-loop below.
+                continue;
+            }
+
             if (!shape.Steps.TryGetValue(record.StepId, out WorkflowShape.Step? step))
             {
                 continue;
