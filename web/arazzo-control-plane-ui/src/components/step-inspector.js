@@ -69,6 +69,13 @@ class ArazzoStepInspector extends ArazzoElement {
 
   /** The binding's request surface — `{contentType?, schema}` for an OpenAPI request body, or the
    *  message-payload schema for an AsyncAPI send; enables the body-skeleton affordance. */
+  /** The operation's declared parameters ({name, in, schema}[]) — object-schema'd ones get the
+   *  structured editor; scalars coerce by their declared type. */
+  set operationParameters(parameters) {
+    this._operationParameters = parameters;
+    if (this.isConnected && this._built) this._renderParams();
+  }
+
   set operationRequest(request) {
     this._operationRequest = request;
     if (this.isConnected && this._built) this._renderBodyTemplateButton();
@@ -396,15 +403,45 @@ class ArazzoStepInspector extends ArazzoElement {
         </div>
         <span class="pval-slot"></span>
       `;
-      const val = document.createElement('arazzo-expression-input');
-      val.setAttribute('placeholder', '$inputs.orderId');
-      val.value = typeof p.value === 'string' ? p.value : JSON.stringify(p.value ?? '');
-      val.completionContext = this._completionContext;
+      // The declared schema (from the operation surface) picks the editor: object schemas — and
+      // object values, declared or not — get the STRUCTURED payload editor (expression-capable
+      // leaves); scalars stay a single expression input, literals coercing to the declared type.
+      const declared = (this._operationParameters ?? []).find((d) => d.name === p.name && (!d.in || d.in === p.in))
+        ?? (this._operationParameters ?? []).find((d) => d.name === p.name);
+      const declaredType = Array.isArray(declared?.schema?.type) ? declared.schema.type[0] : declared?.schema?.type;
+      const isComplex = declaredType === 'object' || (p.value !== null && typeof p.value === 'object');
+      let val;
+      if (isComplex) {
+        val = document.createElement('arazzo-payload-editor');
+        val.schema = declaredType === 'object' ? declared.schema : null;
+        val.completionContext = this._completionContext;
+        val.value = (p.value !== null && typeof p.value === 'object') ? p.value : undefined;
+        val.addEventListener('payload-changed', (e) => {
+          e.stopPropagation();
+          if (e.detail.payload === undefined) delete p.value; else p.value = e.detail.payload;
+          this._emit();
+        });
+      } else {
+        val = document.createElement('arazzo-expression-input');
+        val.setAttribute('placeholder', declaredType && declaredType !== 'string' ? `${declaredType} or $inputs.…` : '$inputs.orderId');
+        val.value = typeof p.value === 'string' ? p.value : p.value === undefined ? '' : JSON.stringify(p.value);
+        val.completionContext = this._completionContext;
+        val.addEventListener('value-changed', (e) => {
+          e.stopPropagation();
+          const text = e.detail.value;
+          if (text === '') { p.value = ''; }
+          else if (text.startsWith('$') || text.includes('{$') || !declaredType) { p.value = text; }
+          else if (declaredType === 'number' || declaredType === 'integer') { const n = Number(text); p.value = Number.isFinite(n) ? n : text; }
+          else if (declaredType === 'boolean') { p.value = text === 'true' ? true : text === 'false' ? false : text; }
+          else { p.value = text; }
+          this._emit();
+        });
+      }
+
       row.querySelector('.pval-slot').replaceWith(val);
 
       row.querySelector('.pname').addEventListener('input', (e) => { p.name = e.target.value; this._emit(); });
       row.querySelector('.pin').addEventListener('change', (e) => { p.in = e.target.value; this._emit(); });
-      val.addEventListener('value-changed', (e) => { e.stopPropagation(); p.value = e.detail.value; this._emit(); });
       row.querySelector('.close').addEventListener('click', () => {
         s.parameters.splice(i, 1);
         if (!s.parameters.length) delete s.parameters;
