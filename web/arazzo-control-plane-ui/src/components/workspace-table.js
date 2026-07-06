@@ -19,6 +19,7 @@
 
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
 import './input-dialog.js';
+import './catalog-table.js';
 import './pager.js';
 
 class ArazzoWorkspaceTable extends ArazzoElement {
@@ -185,7 +186,7 @@ class ArazzoWorkspaceTable extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         button.rowaction { font-size: 12px; padding: 2px 8px; }
-        .fromcat-dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0; width: min(460px, 92vw); }
+        .fromcat-dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0; width: min(640px, 92vw); }
         .fromcat-dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
         .fc-body { padding: 14px; display: grid; gap: 10px; }
         .fc-body h2 { margin: 0; font-size: 14px; }
@@ -216,9 +217,10 @@ class ArazzoWorkspaceTable extends ArazzoElement {
         <div class="fc-body">
           <h2>New working copy</h2>
           <div class="fc-hint">Carry a published catalog workflow into the workspace: its document opens as a draft, its sources attached. Publishing later mints the next version.</div>
-          <label>Catalog workflow
-            <select class="fc-version"><option value="">Loading…</option></select>
+          <label>Search the catalog
+            <input class="fc-q" type="text" placeholder="name, tag, owner…" spellcheck="false">
           </label>
+          <arazzo-catalog-table class="fc-table" selectable status="Active" page-size="6"></arazzo-catalog-table>
           <label>Working copy name
             <input class="fc-name" type="text" spellcheck="false">
           </label>
@@ -232,44 +234,46 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
     this.$('button.new').addEventListener('click', () => this.createBlank());
-    this.$('button.fromcat').addEventListener('click', () => { void this.openFromCatalog(); });
+    this.$('button.fromcat').addEventListener('click', () => this.openFromCatalog());
     this.$('.fc-cancel').addEventListener('click', () => this.$('.fromcat-dialog').close());
     this.$('.fromcat-dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.$('.fromcat-dialog').close(); });
     this.$('.fc-create').addEventListener('click', () => { void this.createFromCatalog(); });
     this.$('.fc-name').addEventListener('input', () => this.updateFromCatalogState());
   }
 
-  /** "New working copy…": browse the catalog, carry the picked version into the workspace. */
-  async openFromCatalog() {
+  /** "New working copy…": browse the catalog (server-side filtered, keyset-paged — hundreds of
+   *  workflows stay browsable), carry the picked version into the workspace. */
+  openFromCatalog() {
     const dialog = this.$('.fromcat-dialog');
-    dialog.showModal();
-    const sel = this.$('.fc-version');
-    try {
-      const { versions } = await this.client.searchCatalog({ status: 'Active', limit: 100 });
-      this._catalogVersions = versions.sort((a, b) => a.baseWorkflowId.localeCompare(b.baseWorkflowId) || b.versionNumber - a.versionNumber);
-      sel.innerHTML = '<option value="">Choose…</option>' + this._catalogVersions.map((v, i) =>
-        `<option value="${i}">${escapeHtml(v.baseWorkflowId)} v${v.versionNumber} — ${escapeHtml(v.title ?? '')}</option>`).join('');
-      sel.onchange = () => {
-        const v = sel.value === '' ? null : this._catalogVersions[Number(sel.value)];
-        if (v) this.$('.fc-name').value = v.title ?? v.baseWorkflowId;
+    const table = this.$('.fc-table');
+    if (table.client !== this.client) {
+      table.client = this.client;
+      table.addEventListener('version-selected', (e) => {
+        this._fromCatalogPick = e.detail.version;
+        this.$('.fc-name').value = e.detail.version.title ?? e.detail.version.baseWorkflowId;
         this.updateFromCatalogState();
-      };
-    } catch (err) {
-      sel.innerHTML = `<option value="">${escapeHtml(err.problem?.title ?? err.message)}</option>`;
+      });
+      let debounce = 0;
+      this.$('.fc-q').addEventListener('input', (e) => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => { table.filters = { ...table.filters, q: e.target.value.trim() || undefined }; }, 250);
+      });
     }
 
+    this._fromCatalogPick = null;
+    this.$('.fc-name').value = '';
+    dialog.showModal();
     this.updateFromCatalogState();
   }
 
   /** @private */
   updateFromCatalogState() {
-    const picked = this.$('.fc-version').value !== '';
-    this.$('.fc-create').disabled = !picked || !this.$('.fc-name').value.trim();
+    this.$('.fc-create').disabled = !this._fromCatalogPick || !this.$('.fc-name').value.trim();
   }
 
   /** @private */
   async createFromCatalog() {
-    const v = this._catalogVersions[Number(this.$('.fc-version').value)];
+    const v = this._fromCatalogPick;
     if (!v) return;
     try {
       const workingCopy = await this.client.createWorkingCopy({

@@ -17,7 +17,6 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { buildActionList, ACTION_LIST_CSS } from './action-list.js';
-import { payloadSkeletonFromSchema } from '../operation-templates.js';
 import './expression-input.js';
 import './criteria-editor.js';
 import './outputs-editor.js';
@@ -79,7 +78,6 @@ class ArazzoStepInspector extends ArazzoElement {
   set operationRequest(request) {
     this._operationRequest = request;
     if (this.isConnected && this._built) this._renderReplacements();
-    if (this.isConnected && this._built) this._renderBodyTemplateButton();
   }
   /** The workflow-level actions (for the localize-defaults affordance). */
   set workflowDefaults(d) { this._defaults = { successActions: [], failureActions: [], ...(d || {}) }; }
@@ -160,7 +158,6 @@ class ArazzoStepInspector extends ArazzoElement {
       </div>
 
       <h3>request body</h3>
-      <div class="body-template-slot"></div>
       <div class="pair">
         <div>
           <label>contentType</label>
@@ -214,7 +211,6 @@ class ArazzoStepInspector extends ArazzoElement {
     this._mountActionList('onsuccess', 'onSuccess', 'success');
     this._mountActionList('onfailure', 'onFailure', 'failure');
     this._renderLocalize();
-    this._renderBodyTemplateButton();
 
     // Outputs.
     const outs = document.createElement('arazzo-outputs-editor');
@@ -259,7 +255,6 @@ class ArazzoStepInspector extends ArazzoElement {
         this._ensureRequestBody();
         this._step.requestBody.payload = e.detail.payload;
       }
-      this._renderBodyTemplateButton(); // the skeleton affordance tracks payload presence
       this._emit();
     });
   }
@@ -670,33 +665,6 @@ class ArazzoStepInspector extends ArazzoElement {
     });
     this.$(`.${slotClass}`).replaceChildren(el);
     if (!actions.length) delete this._step[listName]; // ??= above must not leave an empty list behind
-  }
-
-  /** @private — offer a request-body skeleton derived from the binding's schema: structure typed
-   *  for you, values (usually runtime expressions) yours to fill. Only fills an empty payload. */
-  _renderBodyTemplateButton() {
-    const slot = this.$('.body-template-slot');
-    if (!slot) return;
-    slot.replaceChildren();
-    const request = this._operationRequest;
-    const skeleton = payloadSkeletonFromSchema(request?.schema);
-    if (skeleton === undefined || this._step.requestBody?.payload !== undefined) return;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'ghost body-template';
-    btn.style.fontSize = '12px';
-    btn.textContent = '⚡ Build body from the operation’s schema';
-    btn.title = 'Fills the payload with the schema’s structure; replace the stub values with runtime expressions.';
-    btn.addEventListener('click', () => {
-      this._ensureRequestBody();
-      this._step.requestBody.payload = skeleton;
-      if (!this._step.requestBody.contentType && request.contentType) {
-        this._step.requestBody.contentType = request.contentType;
-      }
-      this.renderForm();
-      this._emit();
-    });
-    slot.append(btn);
   }
 
   /** @private — the §3.2 affordance: copy the inherited workflow defaults into local actions. */
