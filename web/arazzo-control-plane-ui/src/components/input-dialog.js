@@ -58,7 +58,7 @@ class ArazzoInputDialog extends ArazzoElement {
         button { font: inherit; font-size: 13px; padding: 5px 14px; border: 1px solid var(--_border); border-radius: 8px;
                  background: var(--_bg); color: inherit; cursor: pointer; }
         button.confirm { border-color: var(--_accent); font-weight: 600; }
-        button.confirm.danger { border-color: var(--arazzo-status-faulted, #d4351c); color: var(--arazzo-status-faulted, #d4351c); }
+        button.confirm.danger { background: var(--arazzo-danger, #d4351c); border-color: var(--arazzo-danger, #d4351c); color: #fff; }
       </style>
       <dialog part="dialog"><div class="frame"></div></dialog>`;
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.settle(null); });
