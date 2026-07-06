@@ -212,7 +212,7 @@
       operationIndex.clear();
       for (const [, ops] of opBrowser.surfaces) {
         for (const op of ops) {
-          const entry = { responses: op.responses, request: op.request };
+          const entry = { responses: op.responses, request: op.request, parameters: op.parameters };
           if (op.operationId) operationIndex.set(op.operationId, entry);
           if (op.channelPath) operationIndex.set(op.channelPath, entry);
         }
@@ -741,6 +741,7 @@
         const op = operationIndex.get(step.operationId) ?? (step.channelPath ? operationIndex.get(step.channelPath) : undefined);
         if (op?.responses) ed.operationResponses = op.responses;
         if (op?.request) ed.operationRequest = op.request;
+        if (op?.parameters) ed.operationParameters = op.parameters;
         ed.value = step;
         inspector.append(heading(`step — ${sel.id}`), ed);
         ed.addEventListener('step-changed', (ev) => {

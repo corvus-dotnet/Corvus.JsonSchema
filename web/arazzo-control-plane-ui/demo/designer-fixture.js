@@ -41,6 +41,8 @@ export const designerFixture = {
           operationId: 'validateOrder',
           parameters: [
             { name: 'orderId', in: 'path', value: '$inputs.orderId' },
+            // A COMPLEX parameter: a deepObject query value edited structurally in the inspector.
+            { name: 'checks', in: 'query', value: { inventory: true, fraud: true, priceTolerance: 0.05 } },
           ],
           successCriteria: [
             { condition: '$statusCode == 200' },
@@ -51,6 +53,9 @@ export const designerFixture = {
           stepId: 'authorize-payment',
           description: 'Authorize the card for the order amount.',
           operationId: 'authorizePayment',
+          parameters: [
+            { name: 'Idempotency-Key', in: 'header', value: '$inputs.orderId' },
+          ],
           requestBody: {
             contentType: 'application/json',
             payload: { orderId: '$inputs.orderId', amount: '$inputs.amount' },
@@ -176,6 +181,22 @@ export const paymentsOpenApi = {
       post: {
         operationId: 'validateOrder',
         summary: 'Validate an order before payment',
+        parameters: [
+          {
+            name: 'checks',
+            in: 'query',
+            style: 'deepObject',
+            description: 'Which validations to run.',
+            schema: {
+              type: 'object',
+              properties: {
+                inventory: { type: 'boolean' },
+                fraud: { type: 'boolean' },
+                priceTolerance: { type: 'number' },
+              },
+            },
+          },
+        ],
         responses: { 200: { description: 'valid' }, 400: { description: 'invalid' }, default: { description: 'unexpected' } },
       },
     },
@@ -183,6 +204,9 @@ export const paymentsOpenApi = {
       post: {
         operationId: 'authorizePayment',
         summary: 'Authorize a card payment',
+        parameters: [
+          { name: 'Idempotency-Key', in: 'header', required: true, description: 'Retries reuse the same key.', schema: { type: 'string' } },
+        ],
         requestBody: {
           content: {
             'application/json': {

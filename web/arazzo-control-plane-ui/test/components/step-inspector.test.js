@@ -211,4 +211,32 @@ describe('<arazzo-step-inspector>', () => {
     equal(after.requestBody, undefined, 'removing the last replacement prunes the empty request body');
   });
 
+
+  it('an object-schema parameter edits structurally; scalar literals coerce to the declared type', async () => {
+    make({
+      stepId: 'x', operationId: 'op',
+      parameters: [
+        { name: 'checks', in: 'query', value: { inventory: true } },
+        { name: 'limit', in: 'query', value: 25 },
+      ],
+    });
+    el.operationParameters = [
+      { name: 'checks', in: 'query', schema: { type: 'object', properties: { inventory: { type: 'boolean' }, priceTolerance: { type: 'number' } } } },
+      { name: 'limit', in: 'query', schema: { type: 'integer' } },
+    ];
+
+    const structured = el.shadowRoot.querySelector('.prow arazzo-payload-editor');
+    ok(structured, 'the object parameter gets the structured payload editor');
+    ok(structured.shadowRoot.textContent.includes('priceTolerance'), 'fields come from the declared schema');
+
+    const scalar = [...el.shadowRoot.querySelectorAll('.prow arazzo-expression-input')].at(-1);
+    ok(scalar, 'the scalar parameter stays a single expression input');
+    const changed = nextEvent(el, 'step-changed');
+    scalar.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '50' }, bubbles: true, composed: true }));
+    equal((await changed).detail.step.parameters[1].value, 50, 'a literal coerces to the declared integer');
+
+    const exprChanged = nextEvent(el, 'step-changed');
+    scalar.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '$inputs.limit' }, bubbles: true, composed: true }));
+    equal((await exprChanged).detail.step.parameters[1].value, '$inputs.limit', 'expressions always stay strings');
+  });
 });

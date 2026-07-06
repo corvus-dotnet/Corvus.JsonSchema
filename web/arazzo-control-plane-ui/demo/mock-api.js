@@ -528,6 +528,10 @@ const SOURCE_DOCS = {
           parameters: [
             { name: 'status', in: 'query', schema: { type: 'string', enum: ['available', 'pending', 'adopted'] } },
             { name: 'limit', in: 'query', schema: { type: 'integer', maximum: 100 } },
+            {
+              name: 'filter', in: 'query', style: 'deepObject', description: 'Structured matching.',
+              schema: { type: 'object', properties: { breed: { type: 'string' }, goodWith: { type: 'object', properties: { children: { type: 'boolean' }, cats: { type: 'boolean' } } } } },
+            },
           ],
           responses: { 200: { description: 'A page of pets', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Pet' } } } } } },
         },
