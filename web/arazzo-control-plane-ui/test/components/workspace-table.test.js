@@ -142,4 +142,30 @@ describe('<arazzo-workspace-table>', () => {
     ok(el.shadowRoot.querySelector('.error-banner'), 'error banner renders');
     ok(el.shadowRoot.querySelector('.retry'), 'retry affordance present');
   });
+
+  it('New working copy… browses the catalog and carries the picked version over', async () => {
+    el = tableWithMock({ 'can-write': '' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('button.fromcat').click();
+    const sel = await waitFor(() => {
+      const c = el.shadowRoot.querySelector('.fc-version');
+      return c.options.length > 1 ? c : null;
+    }, 'the catalog versions load');
+
+    const adopt = [...sel.options].findIndex((o) => o.textContent.startsWith('adopt-pet'));
+    sel.value = String(adopt - 1);
+    sel.dispatchEvent(new Event('change'));
+    equal(el.shadowRoot.querySelector('.fc-name').value, 'Adopt a Pet', 'the name defaults to the version title');
+
+    const created = nextEvent(el, 'working-copy-created');
+    el.shadowRoot.querySelector('.fc-create').click();
+    const wc = (await created).detail.workingCopy;
+    equal(wc.baseWorkflowId, 'adopt-pet', 'provenance recorded');
+    equal(wc.basedOnVersion, 1);
+    ok(wc.document.workflows[0].steps.some((s) => s.stepId === 'findPet'), 'the version document carried over');
+    ok(wc.sources.some((s) => s.sourceName === 'petstore'), 'the referenced sources attached by registry name');
+    await nextEvent(el, 'loaded');
+    ok(el.shadowRoot.textContent.includes('adopt-pet'), 'the provenance column shows the base');
+  });
 });
