@@ -1470,6 +1470,30 @@ export function createMockControlPlane(options = {}) {
     'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(workflowDoc('adopt-pet-v1', 'Adopt a Pet', 'Adopt a pet — imported from GitHub.', [{ name: 'petstore', type: 'openapi' }]))),
   };
 
+  // Snag 9: the bound branch's commit history (newest first) plus per-commit content overrides —
+  // enough to browse history, compare any commit side-by-side (contents at ref), and roll back
+  // (pull at ref). A commit override carries only the files that DIFFER at that commit; anything
+  // else serves the current tree, which is an honest-enough approximation for the demo.
+  const historicalAdoptDoc = (dropSteps, description) => {
+    const doc = workflowDoc('adopt-pet-v1', 'Adopt a Pet', description, [{ name: 'petstore', type: 'openapi' }]);
+    doc.workflows[0].steps = doc.workflows[0].steps.filter((step) => !dropSteps.includes(step.stepId));
+    return doc;
+  };
+  const gitHubCommits = [
+    { sha: 'a3f1c9d4e8b2a7c1d5e9f3b6a2c8d4e7f1a5b9c3', message: 'Confirm adoptions after submission', author: 'Octo Cat', date: iso(-2 * 86_400_000) },
+    { sha: 'b7e2d8c5f1a9b3e6c2d7f4a8b5c1e9d3f6a2b8c4', message: 'Submit the adoption once payment reserves', author: 'Priya Ops', date: iso(-5 * 86_400_000) },
+    { sha: 'c1d9e5b2f8a4c7d3e6b1f9a5c2d8e4b7f3a6c9d1', message: 'Initial adopt workflow', author: 'Octo Cat', date: iso(-9 * 86_400_000) },
+  ];
+  const gitHubCommitFiles = {
+    'b7e2d8c5f1a9b3e6c2d7f4a8b5c1e9d3f6a2b8c4': {
+      'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(historicalAdoptDoc(['confirmAdoption'], 'Adopt a pet — before confirmation.'))),
+    },
+    'c1d9e5b2f8a4c7d3e6b1f9a5c2d8e4b7f3a6c9d1': {
+      'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(historicalAdoptDoc(['submitAdoption', 'confirmAdoption'], 'The first cut of the adopt workflow.'))),
+    },
+  };
+  const gitHubFileAt = (ref, path) => (ref && gitHubCommitFiles[ref]?.[path]) ? gitHubCommitFiles[ref][path] : gitHubTree[path];
+
   // The working-copy variant of schemasFor: RECOMPUTED from the current document + attachments,
   // like the server's generator — each workflow's inputs schema passes through as its descriptor
   // (the mock's schemas are already descriptor-shaped), and each step resolves its operation and
@@ -1570,21 +1594,24 @@ export function createMockControlPlane(options = {}) {
 
     if (!body?.expectedEtag) return problem(400, 'Invalid pull', "A pull requires the 'expectedEtag'.");
     if (body.expectedEtag !== wc.etag) return problem(409, 'Save conflict', 'The working copy changed; re-fetch and pull again.');
-    const documentNode = gitHubTree[binding.path];
+    // An explicit ref makes the pull the git-history ROLLBACK: the bound files are read at that
+    // commit; the binding is unchanged, so the next commit records the rollback on the branch.
+    const pullRef = body.ref;
+    const documentNode = gitHubFileAt(pullRef, binding.path);
     if (documentNode?.kind !== 'file') return problem(404, 'Not found', `'${binding.owner}/${binding.repo}/${binding.path}' does not exist on the bound branch.`);
     wc.document = JSON.parse(base64ToUtf8(documentNode.file.content));
     if (dir) {
       wc.scenarios = Object.entries(gitHubTree)
         .filter(([p, node]) => node.kind === 'file' && p.startsWith(`${dir}/`) && p.endsWith('.scenario.json'))
         .sort(([a], [b2]) => (a < b2 ? -1 : 1))
-        .map(([, node]) => JSON.parse(base64ToUtf8(node.file.content)));
+        .map(([p]) => JSON.parse(base64ToUtf8(gitHubFileAt(pullRef, p).file.content)));
     }
     wc.lastUpdatedBy = actingSubject(); wc.lastUpdatedAt = iso(0); wc.etag = nextEtag();
     return json(structuredClone(wc));
   }
 
   function handleGitHub(path, method, params, origin, body) {
-    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/(?:contents|branches))\/?$/);
+    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/(?:contents|branches|commits))\/?$/);
     if (!m) return null;
     const route = m[1];
     if (route === 'auth' && method === 'POST') {
@@ -1643,8 +1670,21 @@ export function createMockControlPlane(options = {}) {
         return json({ name, sha: `sha-${from}` }, 201);
       }
 
+      if (route.endsWith('/commits') && method === 'GET') {
+        const perPage = Math.min(100, Math.max(1, Number(params.get('perPage') ?? 30)));
+        const page = Math.max(1, Number(params.get('page') ?? 1));
+        const sha = params.get('sha');
+        // A commit sha starts the history mid-stream; a branch name (or nothing) starts at the
+        // head. The path filter is accepted but not applied — every seeded commit touches the
+        // bound flow, which is the case the history browser scopes to anyway.
+        const start = sha && gitHubCommits.some((c) => c.sha === sha) ? gitHubCommits.findIndex((c) => c.sha === sha) : 0;
+        const scoped = gitHubCommits.slice(start);
+        const offset = (page - 1) * perPage;
+        return json({ commits: scoped.slice(offset, offset + perPage).map((c) => ({ ...c })), hasMore: offset + perPage < scoped.length });
+      }
+
       if (method === 'GET') {
-        const node = gitHubTree[params.get('path') || ''];
+        const node = gitHubFileAt(params.get('ref'), params.get('path') || '');
         if (!node) return problem(404, 'Not found', `'${owner}/${repo}/${params.get('path')}' does not exist.`);
         return json(node);
       }

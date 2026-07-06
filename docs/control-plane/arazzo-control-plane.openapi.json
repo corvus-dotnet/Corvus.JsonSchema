@@ -2222,7 +2222,8 @@
                 "type": "object",
                 "title": "GitPullRequestBody",
                 "properties": {
-                  "expectedEtag": { "type": "string", "description": "The etag the client read (409 when stale)." }
+                  "expectedEtag": { "type": "string", "description": "The etag the client read (409 when stale)." },
+                  "ref": { "type": "string", "description": "The branch, tag, or commit to pull from (default: the bound branch's head). Pulling at a commit is the git-history ROLLBACK — it replaces the working copy with that commit's state, so the UI danger-confirms it." }
                 },
                 "required": ["expectedEtag"]
               }
@@ -3457,6 +3458,36 @@
           "200": {
             "description": "The directory listing or file content.",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBrowseResult" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/github/repos/{owner}/{repo}/commits": {
+      "get": {
+        "operationId": "listRepoCommits",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "List a repository's commit history",
+        "description": "One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." },
+          { "name": "sha", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The branch, tag, or commit to start from (default: the default branch)." },
+          { "name": "path", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Only commits touching this path (the bound document, typically)." },
+          { "name": "page", "in": "query", "required": false, "schema": { "type": "integer", "format": "int32", "minimum": 1 }, "description": "The 1-based page (default 1)." },
+          { "name": "perPage", "in": "query", "required": false, "schema": { "type": "integer", "format": "int32", "minimum": 1, "maximum": 100 }, "description": "The page size (default 30, max 100)." }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of commits, newest first.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubCommitList" } } }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -5451,6 +5482,28 @@
           "branches": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubBranch" } }
         },
         "required": ["branches"]
+      },
+      "GitHubCommit": {
+        "type": "object",
+        "title": "GitHubCommit",
+        "description": "One commit in the brokered history — enough to browse, compare, and roll back.",
+        "properties": {
+          "sha": { "type": "string" },
+          "message": { "type": "string", "description": "The commit message's first line." },
+          "author": { "type": "string", "description": "The author's display name." },
+          "date": { "type": "string", "format": "date-time", "description": "The author date." }
+        },
+        "required": ["sha"]
+      },
+      "GitHubCommitList": {
+        "type": "object",
+        "title": "GitHubCommitList",
+        "description": "One page of a repository's commit history, newest first — the Git pane's history browser.",
+        "properties": {
+          "commits": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubCommit" } },
+          "hasMore": { "type": "boolean", "description": "Whether another page follows." }
+        },
+        "required": ["commits"]
       },
       "GitHubBranchCreate": {
         "type": "object",

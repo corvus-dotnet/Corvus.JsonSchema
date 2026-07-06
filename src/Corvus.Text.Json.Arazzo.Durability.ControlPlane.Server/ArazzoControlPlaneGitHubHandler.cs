@@ -265,6 +265,49 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ListRepoCommitsResult> HandleListRepoCommitsAsync(ListRepoCommitsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.broker is not { } github)
+        {
+            return ListRepoCommitsResult.BadRequest(NotBrokeredProblem(), workspace);
+        }
+
+        string owner = (string)parameters.Owner;
+        string repo = (string)parameters.Repo;
+        if (this.PrincipalKey() is not { } principal || !github.IsConnected(principal))
+        {
+            return ListRepoCommitsResult.Conflict(
+                Problem("github-not-connected", "GitHub not connected", 409, "The caller has no GitHub session; begin the sign-in first."), workspace);
+        }
+
+        string? sha = parameters.Sha.IsNotUndefined() ? (string)parameters.Sha : null;
+        string? path = parameters.Path.IsNotUndefined() ? (string)parameters.Path : null;
+        int page = parameters.Page.IsNotUndefined() ? Math.Max(1, (int)parameters.Page) : 1;
+        int perPage = parameters.PerPage.IsNotUndefined() ? Math.Clamp((int)parameters.PerPage, 1, 100) : 30;
+        (GitHubBroker.ReadOutcome outcome, ParsedJsonDocument<JsonElement>? payload) = await github.ListCommitsAsync(principal, owner, repo, sha, path, page, perPage, cancellationToken).ConfigureAwait(false);
+        if (outcome == GitHubBroker.ReadOutcome.NotConnected)
+        {
+            payload?.Dispose();
+            return ListRepoCommitsResult.Conflict(
+                Problem("github-not-connected", "GitHub not connected", 409, "The GitHub session is no longer valid; begin the sign-in again."), workspace);
+        }
+
+        if (outcome != GitHubBroker.ReadOutcome.Success || payload is null)
+        {
+            payload?.Dispose();
+            return ListRepoCommitsResult.NotFound(
+                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}' does not exist, or is outside the user ∩ installation intersection."), workspace);
+        }
+
+        using (payload)
+        {
+            ParsedJsonDocument<Models.GitHubCommitList> body = WriteCommitList(payload.RootElement, perPage);
+            workspace.TakeOwnership(body);
+            return ListRepoCommitsResult.Ok(Models.GitHubCommitList.From(body.RootElement), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<CreateRepoBranchResult> HandleCreateRepoBranchAsync(CreateRepoBranchParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         if (this.broker is not { } github)
@@ -349,9 +392,14 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 
         (string owner, string repo, string branch, string path) = ReadBinding(binding);
 
+        // An explicit ref makes the pull the git-history ROLLBACK: every bound file is fetched at
+        // that commit instead of the branch head. The binding itself is unchanged — the next
+        // commit still writes to the bound branch, recording the rollback as a new commit.
+        string reference = parameters.Body.Ref.IsNotUndefined() && (string)parameters.Body.Ref is { Length: > 0 } requestedRef ? requestedRef : branch;
+
         // Fetch everything FIRST — a pull applies fully or not at all. Every pooled payload stays
         // alive until the one draft write below completes.
-        (GitHubBroker.ReadOutcome documentOutcome, byte[]? documentBytes) = await this.FetchFileAsync(github, principal, owner, repo, path, branch, cancellationToken).ConfigureAwait(false);
+        (GitHubBroker.ReadOutcome documentOutcome, byte[]? documentBytes) = await this.FetchFileAsync(github, principal, owner, repo, path, reference, cancellationToken).ConfigureAwait(false);
         if (MapPullFetch(documentOutcome, owner, repo, path, workspace) is { } documentRefusal)
         {
             return documentRefusal;
@@ -373,7 +421,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
                     }
 
                     string specPath = spec.Value.GetString() ?? string.Empty;
-                    (GitHubBroker.ReadOutcome outcome, byte[]? bytes) = await this.FetchFileAsync(github, principal, owner, repo, specPath, branch, cancellationToken).ConfigureAwait(false);
+                    (GitHubBroker.ReadOutcome outcome, byte[]? bytes) = await this.FetchFileAsync(github, principal, owner, repo, specPath, reference, cancellationToken).ConfigureAwait(false);
                     if (MapPullFetch(outcome, owner, repo, specPath, workspace) is { } specRefusal)
                     {
                         return specRefusal;
@@ -387,7 +435,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             if (scenariosBound)
             {
                 string dir = scenariosDir.GetString()!.TrimEnd('/');
-                (GitHubBroker.ReadOutcome outcome, ParsedJsonDocument<JsonElement>? listing) = await github.BrowseAsync(principal, owner, repo, dir, branch, cancellationToken).ConfigureAwait(false);
+                (GitHubBroker.ReadOutcome outcome, ParsedJsonDocument<JsonElement>? listing) = await github.BrowseAsync(principal, owner, repo, dir, reference, cancellationToken).ConfigureAwait(false);
                 using ParsedJsonDocument<JsonElement>? heldListing = listing;
                 if (MapPullFetch(outcome, owner, repo, dir, workspace) is { } dirRefusal)
                 {
@@ -402,7 +450,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
                             && entry.TryGetProperty("name"u8, out JsonElement fileName) && fileName.GetString() is { } n
                             && n.EndsWith(".scenario.json", StringComparison.OrdinalIgnoreCase))
                         {
-                            (GitHubBroker.ReadOutcome fileOutcome, byte[]? bytes) = await this.FetchFileAsync(github, principal, owner, repo, $"{dir}/{n}", branch, cancellationToken).ConfigureAwait(false);
+                            (GitHubBroker.ReadOutcome fileOutcome, byte[]? bytes) = await this.FetchFileAsync(github, principal, owner, repo, $"{dir}/{n}", reference, cancellationToken).ConfigureAwait(false);
                             if (MapPullFetch(fileOutcome, owner, repo, $"{dir}/{n}", workspace) is { } fileRefusal)
                             {
                                 return fileRefusal;
@@ -445,7 +493,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         catch (JsonException)
         {
             return PullWorkingCopyResult.BadRequest(
-                Problem("github-content-invalid", "Content invalid", 400, $"A bound file in '{owner}/{repo}@{branch}' is not valid JSON; fix it in the repository and pull again."), workspace);
+                Problem("github-content-invalid", "Content invalid", 400, $"A bound file in '{owner}/{repo}@{reference}' is not valid JSON; fix it in the repository and pull again."), workspace);
         }
         finally
         {
@@ -689,6 +737,65 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
                 }
 
                 writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
+    }
+
+    /// <summary>Projects GitHub's commits array to the contract's <c>GitHubCommitList</c>: sha, the
+    /// message's first line, the author's display name, and the author date. A full page implies
+    /// another may follow (GitHub's Link header is not surfaced through the pooled read).</summary>
+    private static ParsedJsonDocument<Models.GitHubCommitList> WriteCommitList(in JsonElement payload, int perPage)
+    {
+        return PersistedJson.ToPooledDocument<Models.GitHubCommitList, (JsonElement Commits, int PerPage)>(
+            (payload, perPage),
+            static (Utf8JsonWriter writer, in (JsonElement Commits, int PerPage) s) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteStartArray("commits"u8);
+                int count = 0;
+                if (s.Commits.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement commit in s.Commits.EnumerateArray())
+                    {
+                        if (!commit.TryGetProperty("sha"u8, out JsonElement sha))
+                        {
+                            continue;
+                        }
+
+                        count++;
+                        writer.WriteStartObject();
+                        writer.WritePropertyName("sha"u8);
+                        sha.WriteTo(writer);
+                        if (commit.TryGetProperty("commit"u8, out JsonElement detail) && detail.ValueKind == JsonValueKind.Object)
+                        {
+                            if (detail.TryGetProperty("message"u8, out JsonElement message) && message.GetString() is { } m)
+                            {
+                                int newline = m.IndexOf('\n', StringComparison.Ordinal);
+                                writer.WriteString("message"u8, newline < 0 ? m : m[..newline]);
+                            }
+
+                            if (detail.TryGetProperty("author"u8, out JsonElement author) && author.ValueKind == JsonValueKind.Object)
+                            {
+                                if (author.TryGetProperty("name"u8, out JsonElement name) && name.ValueKind == JsonValueKind.String)
+                                {
+                                    writer.WritePropertyName("author"u8);
+                                    name.WriteTo(writer);
+                                }
+
+                                if (author.TryGetProperty("date"u8, out JsonElement date) && date.ValueKind == JsonValueKind.String)
+                                {
+                                    writer.WritePropertyName("date"u8);
+                                    date.WriteTo(writer);
+                                }
+                            }
+                        }
+
+                        writer.WriteEndObject();
+                    }
+                }
+
+                writer.WriteEndArray();
+                writer.WriteBoolean("hasMore"u8, count >= s.PerPage);
                 writer.WriteEndObject();
             });
     }

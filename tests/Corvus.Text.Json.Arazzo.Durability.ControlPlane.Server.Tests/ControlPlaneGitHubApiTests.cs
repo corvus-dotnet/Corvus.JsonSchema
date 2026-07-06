@@ -216,6 +216,77 @@ public sealed class ControlPlaneGitHubApiTests
     }
 
     [TestMethod]
+    public async Task Commit_history_lists_paged_and_a_pull_at_ref_rolls_back()
+    {
+        const string boundDoc = """{"arazzo":"1.1.0","info":{"title":"Adopt","version":"1.0.0"},"workflows":[{"workflowId":"adopt","steps":[{"stepId":"a","operationId":"x"},{"stepId":"b","operationId":"y"}]}]}""";
+        const string historicDoc = """{"arazzo":"1.1.0","info":{"title":"Adopt","version":"1.0.0"},"workflows":[{"workflowId":"adopt","steps":[{"stepId":"a","operationId":"x"}]}]}""";
+        await using StubGitHub github = await StubGitHub.StartAsync();
+        await using Scoped host = await StartAsync(github.Url);
+        string state = await host.BeginAsync("ada");
+        (await host.SendAnonymousAsync($"/github/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // One page of history, projected to sha/message/author/date; a full page implies more.
+        using (Stj.JsonDocument list = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/commits?sha=main&path=flows/adopt.arazzo.json&perPage=2", "workspace:read", "ada")))
+        {
+            list.RootElement.GetProperty("commits").GetArrayLength().ShouldBe(2);
+            list.RootElement.GetProperty("hasMore").GetBoolean().ShouldBeTrue();
+            list.RootElement.GetProperty("commits")[0].GetProperty("sha").GetString().ShouldBe("sha-head-3");
+            list.RootElement.GetProperty("commits")[0].GetProperty("message").GetString().ShouldBe("Route failures to review");
+            list.RootElement.GetProperty("commits")[0].GetProperty("author").GetString().ShouldBe("Octo Cat");
+            list.RootElement.GetProperty("commits")[0].GetProperty("date").GetString().ShouldBe("2026-07-04T10:00:00Z");
+        }
+
+        // The scoping params flow to GitHub verbatim (branch + bound path).
+        github.CommitQueries.ShouldHaveSingleItem().ShouldContain("sha=main");
+        github.CommitQueries[0].ShouldContain("path=flows%2Fadopt.arazzo.json");
+
+        using (Stj.JsonDocument list = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/commits?perPage=2&page=2", "workspace:read", "ada")))
+        {
+            list.RootElement.GetProperty("commits").GetArrayLength().ShouldBe(1);
+            list.RootElement.GetProperty("hasMore").GetBoolean().ShouldBeFalse();
+        }
+
+        // A caller without a session conflicts.
+        (await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/commits", "workspace:read", "bob")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // Rollback: a pull carrying ref fetches the bound files at THAT commit; the binding is
+        // unchanged, so the next commit records the rollback as a new commit on the branch.
+        github.Files["flows/adopt.arazzo.json"] = Encoding.UTF8.GetBytes(boundDoc);
+        github.FilesAt["sha-old-1"] = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["flows/adopt.arazzo.json"] = Encoding.UTF8.GetBytes(historicDoc) };
+        HttpResponseMessage created = await host.SendJsonAsync(HttpMethod.Post, "/workspace/workflows", $$"""{"name":"adopt","document":{{boundDoc}}}""", "workspace:write", "ada");
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string id;
+        using (Stj.JsonDocument doc = Stj.JsonDocument.Parse(await created.Content.ReadAsStringAsync()))
+        {
+            id = doc.RootElement.GetProperty("id").GetString()!;
+        }
+
+        string etag = await host.EtagAsync(id);
+        (await host.SendJsonAsync(
+            HttpMethod.Put, $"/workspace/workflows/{id}",
+            $$"""{"document":{{boundDoc}},"expectedEtag":"{{etag}}","gitBinding":{"owner":"acme-org","repo":"specs","branch":"main","path":"flows/adopt.arazzo.json"} }""",
+            "workspace:write", "ada")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        etag = await host.EtagAsync(id);
+        HttpResponseMessage rolledBack = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/git/pull", $$"""{"expectedEtag":"{{etag}}","ref":"sha-old-1"}""", "workspace:write", "ada");
+        rolledBack.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument refreshed = Stj.JsonDocument.Parse(await rolledBack.Content.ReadAsStringAsync()))
+        {
+            refreshed.RootElement.GetProperty("document").GetProperty("workflows")[0].GetProperty("steps").GetArrayLength().ShouldBe(1, "the pull fetched the commit's state, not the head");
+            refreshed.RootElement.GetProperty("gitBinding").GetProperty("branch").GetString().ShouldBe("main", "a rollback does not rebind");
+        }
+
+        // A plain pull (no ref) still reads the head.
+        etag = await host.EtagAsync(id);
+        HttpResponseMessage headPull = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/git/pull", $$"""{"expectedEtag":"{{etag}}"}""", "workspace:write", "ada");
+        headPull.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument refreshed = Stj.JsonDocument.Parse(await headPull.Content.ReadAsStringAsync()))
+        {
+            refreshed.RootElement.GetProperty("document").GetProperty("workflows")[0].GetProperty("steps").GetArrayLength().ShouldBe(2);
+        }
+    }
+
+    [TestMethod]
     public async Task Branches_list_and_create_through_the_brokered_session()
     {
         await using StubGitHub github = await StubGitHub.StartAsync();
@@ -405,6 +476,19 @@ public sealed class ControlPlaneGitHubApiTests
 
         public System.Collections.Concurrent.ConcurrentDictionary<string, string> Branches { get; } = new() { ["main"] = "sha-main" };
 
+        public List<(string Sha, string Message, string Author, string Date)> Commits { get; } =
+        [
+            ("sha-head-3", "Route failures to review", "Octo Cat", "2026-07-04T10:00:00Z"),
+            ("sha-mid-2", "Add the review step", "Priya Ops", "2026-07-01T10:00:00Z"),
+            ("sha-old-1", "Initial workflow", "Octo Cat", "2026-06-27T10:00:00Z"),
+        ];
+
+        public List<string> CommitQueries { get; } = [];
+
+        /// <summary>Historic content per commit sha: a contents read carrying <c>?ref=</c> serves the
+        /// file at THAT commit when the sha carries an override — the rollback/compare data.</summary>
+        public System.Collections.Concurrent.ConcurrentDictionary<string, Dictionary<string, byte[]>> FilesAt { get; } = new();
+
         public static async Task<StubGitHub> StartAsync()
         {
             var stub = new StubGitHub();
@@ -486,6 +570,23 @@ public sealed class ControlPlaneGitHubApiTests
                     : Results.UnprocessableEntity(new { message = "Reference already exists" });
             });
 
+            app.MapGet("/repos/acme-org/specs/commits", (HttpContext context) =>
+            {
+                if (!Authorized(context))
+                {
+                    return Results.Unauthorized();
+                }
+
+                stub.CommitQueries.Add(context.Request.QueryString.Value ?? string.Empty);
+                int perPage = int.TryParse(context.Request.Query["per_page"], out int pp) ? pp : 30;
+                int page = int.TryParse(context.Request.Query["page"], out int pg) ? pg : 1;
+                return Results.Json(stub.Commits
+                    .Skip((page - 1) * perPage)
+                    .Take(perPage)
+                    .Select(c => new { sha = c.Sha, commit = new { message = c.Message, author = new { name = c.Author, date = c.Date } } })
+                    .ToArray());
+            });
+
             app.MapGet("/repos/acme-org/specs/contents/{*path}", (HttpContext context, string? path) =>
             {
                 if (!Authorized(context))
@@ -494,6 +595,22 @@ public sealed class ControlPlaneGitHubApiTests
                 }
 
                 string key = path ?? string.Empty;
+                string? reference = context.Request.Query["ref"];
+                if (!string.IsNullOrEmpty(reference)
+                    && stub.FilesAt.TryGetValue(reference, out Dictionary<string, byte[]>? historic)
+                    && historic.TryGetValue(key, out byte[]? historicFile))
+                {
+                    return Results.Json(new
+                    {
+                        name = key.Split('/').Last(),
+                        path = key,
+                        sha = ShaOf(historicFile),
+                        size = historicFile.Length,
+                        encoding = "base64",
+                        content = Convert.ToBase64String(historicFile),
+                    });
+                }
+
                 if (stub.Files.TryGetValue(key, out byte[]? file))
                 {
                     return Results.Json(new

@@ -19,10 +19,15 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
-/// GitPullRequestBody
+/// GitHubCommit
 /// </summary>
+/// <remarks>
+/// <para>
+/// One commit in the brokered history — enough to browse, compare, and roll back.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
+public readonly partial struct GitHubCommit
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -127,7 +132,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// <param name="value">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(PostWorkspaceWorkflowsByIdGitPullBody instance)
+        public static explicit operator Mutable(GitHubCommit instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -142,9 +147,9 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="value">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="GitHubCommit"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator PostWorkspaceWorkflowsByIdGitPullBody(Mutable instance)
+        public static implicit operator GitHubCommit(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -261,21 +266,18 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         }
 
         /// <summary>
-        /// Gets the <c>expectedEtag</c> property.
+        /// Gets the (optional) <c>author</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The etag the client read (409 when stale).
+        /// The author&#39;s display name.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable ExpectedEtag
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Author
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpectedEtagUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -285,18 +287,60 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         }
 
         /// <summary>
-        /// Gets the (optional) <c>ref</c> property.
+        /// Gets the (optional) <c>date</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The branch, tag, or commit to pull from (default: the bound branch&#39;s head). Pulling at a commit is the git-history ROLLBACK — it replaces the working copy with that commit&#39;s state, so the UI danger-confirms it.
+        /// The author date.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Ref
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Mutable Date
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DateUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>message</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The commit message&#39;s first line.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Message
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the <c>sha</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Sha
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShaUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -329,7 +373,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new PostWorkspaceWorkflowsByIdGitPullBody(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new GitHubCommit(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -345,53 +389,22 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         }
 
         /// <summary>
-        /// Set the <c>expectedEtag</c> property.
+        /// Set the <c>author</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExpectedEtag(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetAuthor(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("expectedEtag");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpectedEtagUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpectedEtag, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>ref</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetRef(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RefUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AuthorUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -400,7 +413,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ref, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Author, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -409,15 +422,136 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         }
 
         /// <summary>
-        /// Remove the <c>ref</c> property, if present.
+        /// Remove the <c>author</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveRef()
+        public bool RemoveAuthor()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RefUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AuthorUtf8);
             _documentVersion = _parent.Version;
             return result;
+        }
+
+        /// <summary>
+        /// Set the <c>date</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetDate(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DateUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DateUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Date, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>date</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveDate()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DateUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>message</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetMessage(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.MessageUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Message, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>message</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveMessage()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.MessageUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>sha</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetSha(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("sha");
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShaUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Sha, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
         }
 
         /// <inheritdoc/>
@@ -504,7 +638,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"PostWorkspaceWorkflowsByIdGitPullBody.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"GitHubCommit.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         /// <summary>
         ///   Sets a property on this JSON object element.
@@ -695,11 +829,11 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="GitHubCommit"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="GitHubCommit"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -708,10 +842,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly PostWorkspaceWorkflowsByIdGitPullBody Clone()
+        public readonly GitHubCommit Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<PostWorkspaceWorkflowsByIdGitPullBody>(_idx);
+            return _parent.CloneElement<GitHubCommit>(_idx);
         }
 
         /// <summary>
@@ -719,7 +853,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/> that lives for the lifetime of its
+        /// An immutable <see cref="GitHubCommit"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -730,10 +864,10 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly PostWorkspaceWorkflowsByIdGitPullBody Freeze()
+        public readonly GitHubCommit Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<PostWorkspaceWorkflowsByIdGitPullBody>(_idx);
+            return _parent.FreezeElement<GitHubCommit>(_idx);
         }
     }
 
@@ -752,6 +886,8 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -764,16 +900,18 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitPullBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubCommit.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
+            _createArg3 = arg3;
+            _createArg4 = arg4;
             _kind = Kind.Create;
         }
 
-        public static implicit operator Source(PostWorkspaceWorkflowsByIdGitPullBody instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(GitHubCommit instance) => new(JsonElement.From(instance));
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -790,7 +928,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -815,7 +953,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -840,7 +978,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -865,7 +1003,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -890,7 +1028,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -927,7 +1065,7 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitPullBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubCommit.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1039,23 +1177,31 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/>.
+        /// Creates an instance of a <see cref="GitHubCommit"/>.
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source expectedEtag,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source refValue = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sha,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source author = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source date = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source message = default)
         {
-            expectedEtag.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpectedEtag, ref builder);
-            refValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ref, ref builder);
+            sha.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Sha, ref builder);
+            author.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Author, ref builder);
+            date.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Date, ref builder);
+            message.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Message, ref builder);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PostWorkspaceWorkflowsByIdGitPullBody"/>.
+        /// Creates an instance of a <see cref="GitHubCommit"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source expectedEtag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source refValue = default)
+        public void Create(
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sha,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source author = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source date = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source message = default)
         {
-            Create(ref _builder, expectedEtag, refValue);
+            Create(ref _builder, sha, author, date, message);
         }
 
         /// <summary>
@@ -1155,11 +1301,13 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
+        /// <param name="arg3">The value of the property.</param>
+        /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2);
+            Create(ref o, arg1, arg2, arg3, arg4);
             o.EndObject();
         }
     }
@@ -1196,12 +1344,14 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
-    /// <param name="expectedEtag">The value of the <c>"expectedEtag"</c> property.</param>
-    /// <param name="refValue">The value of the <c>"ref"</c> property.</param>
+    /// <param name="sha">The value of the <c>"sha"</c> property.</param>
+    /// <param name="author">The value of the <c>"author"</c> property.</param>
+    /// <param name="date">The value of the <c>"date"</c> property.</param>
+    /// <param name="message">The value of the <c>"message"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source expectedEtag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source refValue = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sha, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source author = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source date = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source message = default)
     {
-        return new Source(expectedEtag, refValue);
+        return new Source(sha, author, date, message);
     }
 
     /// <summary>
@@ -1297,17 +1447,19 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="expectedEtag">The value of the property.</param>
-    /// <param name="refValue">The value of the property.</param>
+    /// <param name="sha">The value of the property.</param>
+    /// <param name="author">The value of the property.</param>
+    /// <param name="date">The value of the property.</param>
+    /// <param name="message">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source expectedEtag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source refValue = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source sha, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source author = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source date = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source message = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(expectedEtag, refValue);
+        ovb.Create(sha, author, date, message);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1321,6 +1473,6 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<PostWorkspaceWorkflowsByIdGitPullBody, Mutable>(this);
+        return workspace.CreateBuilder<GitHubCommit, Mutable>(this);
     }
 }
