@@ -10,7 +10,7 @@ const TRACE = {
   steps: [
     {
       stepId: 'get-pet', status: 'completed', attempt: 0,
-      requests: [{ method: 'get', path: '/pets/42', status: 200, responseBody: { name: 'Fido' } }],
+      requests: [{ method: 'get', path: '/pets/42', status: 200, requestBody: { include: ['photos'] }, responseBody: { name: 'Fido' } }],
       successCriteria: [{ condition: '$statusCode == 200', satisfied: true }],
       actionTaken: { type: 'fallThrough' },
       outputs: { petName: 'Fido' },
@@ -40,6 +40,14 @@ describe('<arazzo-debug-tray>', () => {
     ok(el.shadowRoot.textContent.includes('✓ completed'));
     equal(el.shadowRoot.querySelectorAll('.step').length, 2);
     ok(el.shadowRoot.textContent.includes('workflow outputs'), 'final frame shows the workflow outputs');
+  });
+
+  it('the context pane shows what the step SENT — the resolved request body', () => {
+    make();
+    el.cursor = 1;
+    ok(el.shadowRoot.textContent.includes('as sent'), 'the exchanges section says what it shows');
+    ok(el.shadowRoot.querySelector('td.sent'), 'the sent-body line renders');
+    ok(el.shadowRoot.textContent.includes('photos'), 'with the resolved payload');
   });
 
   it('scrubbing is pure cursor movement with context per frame', async () => {

@@ -1428,3 +1428,41 @@ test('a workflowId-bound step runs its sub-workflow inline and carries the neste
   assert.equal(record.subTrace.steps[0].stepId, 'list', 'the sub-workflow steps ride the record');
   assert.equal(record.outputs.first, 'Biscuit', 'the sub-workflow outputs become the step outputs');
 });
+
+test('the trace records what a step actually SENT: resolved path, query, and request body (§3.3)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'sent-view',
+    document: {
+      arazzo: '1.1.0', info: { title: 's', version: '1' },
+      sourceDescriptions: [{ name: 'orders', url: './o.json', type: 'openapi' }],
+      workflows: [{
+        workflowId: 'wf',
+        inputs: { type: 'object', properties: { orderId: { type: 'string' }, amount: { type: 'number' } } },
+        steps: [{
+          stepId: 'place', operationId: 'placeOrder',
+          parameters: [
+            { name: 'orderId', in: 'path', value: '$inputs.orderId' },
+            { name: 'dryRun', in: 'query', value: true },
+          ],
+          requestBody: { payload: { amount: '$inputs.amount', note: 'from-test' } },
+          successCriteria: [{ condition: '$statusCode == 201' }],
+        }],
+      }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'orders', { document: {
+    openapi: '3.1.0', info: { title: 'Orders', version: '1' },
+    paths: { '/orders/{orderId}': { post: { operationId: 'placeOrder',
+      parameters: [{ name: 'orderId', in: 'path', required: true, schema: { type: 'string' } }],
+      requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { amount: { type: 'number' }, note: { type: 'string' } } } } } },
+      responses: { 201: { description: 'placed' } } } } },
+  } });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    scenario: { inputs: { orderId: 'o-77', amount: 12.5 }, mocks: [{ method: 'post', path: '/orders/{orderId}', status: 201 }] },
+  });
+  const sent = trace.steps[0].requests[0];
+  assert.equal(sent.path, '/orders/o-77?dryRun=true', 'parameters resolve into the path and query');
+  assert.deepEqual(sent.requestBody, { amount: 12.5, note: 'from-test' }, 'the body records as sent, expressions resolved');
+});

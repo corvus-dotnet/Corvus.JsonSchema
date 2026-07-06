@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Text;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 
@@ -138,7 +139,7 @@ public sealed class MockApiTransport : IApiTransport
         where TRequest : struct, IApiRequest<TRequest>
         where TBody : struct, IJsonElement<TBody>
         where TResponse : struct, IApiResponse<TResponse>
-        => this.Respond<TRequest, TResponse>(in request, cancellationToken);
+        => this.Respond<TRequest, TResponse>(in request, cancellationToken, SerializeBody(in body));
 
     /// <inheritdoc/>
     public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Stream body, string contentType, CancellationToken cancellationToken = default)
@@ -155,7 +156,19 @@ public sealed class MockApiTransport : IApiTransport
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
-    private ValueTask<TResponse> Respond<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken)
+    private static byte[] SerializeBody<TBody>(in TBody body)
+        where TBody : struct, IJsonElement<TBody>
+    {
+        var buffer = new ArrayBufferWriter<byte>(256);
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            body.WriteTo(writer);
+        }
+
+        return buffer.WrittenSpan.ToArray();
+    }
+
+    private ValueTask<TResponse> Respond<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken, byte[]? requestBody = null)
         where TRequest : struct, IApiRequest<TRequest>
         where TResponse : struct, IApiResponse<TResponse>
     {
@@ -164,7 +177,7 @@ public sealed class MockApiTransport : IApiTransport
         this.requests.Add(new MockApiRequest(TRequest.Method, resolvedPath));
 
         MockResponse response = this.Match(TRequest.Method, template);
-        this.exchanges.Add(new MockApiExchange(TRequest.Method, resolvedPath, response.StatusCode, response.Body, response.ContentType));
+        this.exchanges.Add(new MockApiExchange(TRequest.Method, resolvedPath, response.StatusCode, response.Body, response.ContentType, requestBody ?? default));
         if (this.responseDelay > TimeSpan.Zero)
         {
             return RespondAfterDelayAsync<TResponse>(this.responseDelay, response, cancellationToken);
