@@ -118,4 +118,23 @@ describe('<arazzo-operation-browser>', () => {
     equal(surfaces.get('pets').length, 2);
     equal(surfaces.get('events')[0].channelPath, 'order/confirmations');
   });
+
+  it('lists the document\'s other workflows as draggable sub-workflow sources', async () => {
+    const ctx = await browserWithSources();
+    el = ctx.el;
+    el.documentWorkflows = [
+      { workflowId: 'place-order', summary: 'The happy path.', current: true },
+      { workflowId: 'order-with-compensation', summary: 'Refunds if it ends badly.' },
+    ];
+    ok(el.shadowRoot.textContent.includes('This document'), 'the section renders');
+    const rows = [...el.shadowRoot.querySelectorAll('button.wfop')];
+    equal(rows.length, 2);
+    ok(rows[0].disabled, 'the workflow being edited cannot be its own step');
+
+    const selected = nextEvent(el, 'operation-selected');
+    rows[1].dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, detail: 0 }));
+    const e = await selected;
+    equal(e.detail.operation.kind, 'workflow');
+    equal(e.detail.operation.workflowId, 'order-with-compensation');
+  });
 });

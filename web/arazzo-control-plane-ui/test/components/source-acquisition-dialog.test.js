@@ -126,4 +126,33 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     equal(e.detail.attachment.kind, 'inline');
     equal(e.detail.attachment.type, 'openapi');
   });
+
+  it('catalog mode synthesizes the §6.2 trigger source, typed by the version inputs schema', async () => {
+    const ctx = await dialogWithMock();
+    el = ctx.el;
+    el.open({ workingCopyId: ctx.wc.id });
+    el.shadowRoot.querySelector('[data-mode="catalog"]').click();
+    const sel = await waitFor(() => {
+      const c = el.shadowRoot.querySelector('.cat-version');
+      return c.options.length > 1 ? c : null;
+    }, 'the active catalog versions list');
+
+    const adopt = [...sel.options].findIndex((o) => o.textContent.includes('adopt-pet'));
+    sel.value = String(adopt - 1); // options are Choose… + versions
+    sel.dispatchEvent(new Event('change'));
+    await waitFor(() => !el.shadowRoot.querySelector('button.attach').disabled, 'picking enables Attach');
+    equal(el.shadowRoot.querySelector('.name-in').value, 'run-adopt-pet', 'the name suggests itself');
+
+    const attached = nextEvent(el, 'source-attached');
+    el.shadowRoot.querySelector('button.attach').click();
+    equal((await attached).detail.attachment.name, 'run-adopt-pet');
+
+    // The attach echo omits inline documents (by design) — the OPERATIONS surface proves the shape.
+    const { operations } = await ctx.client.listWorkingCopySourceOperations(ctx.wc.id, 'run-adopt-pet');
+    const trigger = operations.find((op) => op.operationId === 'start-adopt-pet-v1');
+    ok(trigger, 'the trigger operation projects');
+    equal(trigger.method.toLowerCase(), 'post');
+    equal(trigger.path, '/catalog/adopt-pet/versions/1/runs');
+    ok(trigger.request.schema.required.includes('petId'), "the body is the version's typed inputs");
+  });
 });

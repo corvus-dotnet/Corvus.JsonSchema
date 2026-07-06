@@ -313,7 +313,7 @@ test('an operation dropped onto the designer starts templated from its documente
   await page.locator('[data-tab="sources"]').click();
 
   // Keyboard activation is the non-pointer path of drag-onto-canvas: it creates the bound step.
-  const op = page.locator('arazzo-operation-browser button.op').first();
+  const op = page.locator('arazzo-operation-browser button.op:not(.wfop)').first();
   await op.focus();
   await page.keyboard.press('Enter');
 

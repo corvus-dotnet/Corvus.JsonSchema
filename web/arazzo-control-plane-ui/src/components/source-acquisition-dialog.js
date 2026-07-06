@@ -98,6 +98,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
             <button type="button" data-mode="registry" class="active">Registry</button>
             <button type="button" data-mode="fetch">Fetch URL</button>
             <button type="button" data-mode="upload">Upload</button>
+            <button type="button" data-mode="catalog">Catalog</button>
             <button type="button" data-mode="github">GitHub</button>
           </div>
           <div class="mode mode-registry">
@@ -125,6 +126,13 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
               <input class="file-in" type="file" accept=".json,application/json">
             </label>
             <div class="preview upload-preview" hidden></div>
+          </div>
+          <div class="mode mode-catalog" hidden>
+            <div class="hint">Trigger a published workflow over HTTP (§6.2): attaching adds the control plane's run-trigger operation for the picked version — request body typed by ITS inputs schema. Drag the operation onto the canvas like any other.</div>
+            <label>Catalog workflow
+              <select class="cat-version"><option value="">Loading…</option></select>
+            </label>
+            <div class="cat-preview hint" hidden></div>
           </div>
           <div class="mode mode-github" hidden>
             <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
@@ -166,7 +174,9 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.mode-fetch').hidden = mode !== 'fetch';
     this.$('.mode-upload').hidden = mode !== 'upload';
     this.$('.mode-github').hidden = mode !== 'github';
+    this.$('.mode-catalog').hidden = mode !== 'catalog';
     if (mode === 'github') this.renderGitHubRepos();
+    if (mode === 'catalog') void this.loadCatalog();
     this.updateAttachState();
   }
 
@@ -186,11 +196,74 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       (this._mode === 'registry' && this.$('.registry-in').value)
       || (this._mode === 'fetch' && this._fetched)
       || (this._mode === 'upload' && this._uploaded)
-      || (this._mode === 'github' && this._github?.picked));
+      || (this._mode === 'github' && this._github?.picked)
+      || (this._mode === 'catalog' && this._catalog?.picked));
     this.$('button.attach').disabled = !ready;
   }
 
   // ---- modes ------------------------------------------------------------------------------------
+
+  /** Catalog mode: the ACTIVE versions, latest per base; picking one synthesizes the §6.2 trigger source. */
+  async loadCatalog() {
+    const seq = ++this._seq;
+    const sel = this.$('.cat-version');
+    try {
+      const { versions } = await this._client.searchCatalog({ status: 'Active', limit: 100 });
+      if (seq !== this._seq) return;
+      const latest = new Map();
+      for (const v of versions) {
+        const held = latest.get(v.baseWorkflowId);
+        if (!held || v.versionNumber > held.versionNumber) latest.set(v.baseWorkflowId, v);
+      }
+
+      this._catalogVersions = [...latest.values()].sort((a, b) => a.baseWorkflowId.localeCompare(b.baseWorkflowId));
+      sel.innerHTML = '<option value="">Choose…</option>' + this._catalogVersions.map((v, i) =>
+        `<option value="${i}">${escapeHtml(v.baseWorkflowId)} v${v.versionNumber} — ${escapeHtml(v.title ?? '')}</option>`).join('');
+      sel.onchange = () => void this.pickCatalogVersion(sel.value === '' ? null : this._catalogVersions[Number(sel.value)]);
+    } catch (err) {
+      if (seq === this._seq) this.showError(err.problem?.detail || err.problem?.title || err.message);
+    }
+  }
+
+  /** @private — the synthesized source: ONE operation, the version's HTTP trigger, inputs-typed. */
+  async pickCatalogVersion(version) {
+    this.clearError();
+    this._catalog = { picked: null };
+    const preview = this.$('.cat-preview');
+    preview.hidden = true;
+    if (!version) { this.updateAttachState(); return; }
+    let inputs = { type: 'object' };
+    try {
+      const schemas = await this._client.getCatalogWorkflowSchemas(version.baseWorkflowId, version.versionNumber);
+      inputs = schemas.workflows?.[version.workflowId]?.inputs ?? Object.values(schemas.workflows ?? {})[0]?.inputs ?? inputs;
+    } catch {
+      // No baked metadata: the trigger still attaches, body untyped.
+    }
+
+    const path = `/catalog/${version.baseWorkflowId}/versions/${version.versionNumber}/runs`;
+    this._catalog.picked = {
+      version,
+      document: {
+        openapi: '3.1.0',
+        info: { title: `Control plane — run ${version.title ?? version.baseWorkflowId} v${version.versionNumber}`, version: '1.0.0' },
+        paths: { [path]: { post: {
+          operationId: `start-${version.baseWorkflowId}-v${version.versionNumber}`,
+          summary: `Start a run of ${version.title ?? version.baseWorkflowId} v${version.versionNumber} (the §6.2 HTTP trigger; 202 = the run was created, it executes asynchronously)`,
+          requestBody: { content: { 'application/json': { schema: inputs } } },
+          responses: {
+            202: { description: 'run created', content: { 'application/json': { schema: { type: 'object', properties: { runId: { type: 'string' }, status: { type: 'string' } } } } } },
+            404: { description: 'unknown version, or outside your reach' },
+            409: { description: 'no live runner hosts this version in the environment' },
+          },
+        } } },
+      },
+    };
+    if (!this.$('.name-in').value.trim()) this.$('.name-in').value = `run-${version.baseWorkflowId}`;
+    preview.textContent = `POST ${path} — body: the workflow's typed inputs; 202 → { runId }`;
+    preview.hidden = false;
+    this.updateAttachState();
+  }
+
 
   async loadRegistry() {
     const seq = ++this._seq;
@@ -306,6 +379,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     if (repos.length === 0) {
       browser.hidden = true;
       this._github = { picked: null, path: '' };
+      this._catalog = { picked: null };
       this.$('.gh-preview').hidden = true;
       this.updateAttachState();
       return;
@@ -393,6 +467,8 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
       attachment = { document: this._fetched.document, type: this._fetched.type };
     } else if (this._mode === 'github') {
       attachment = { document: this._github.picked.document, type: this._github.picked.type };
+    } else if (this._mode === 'catalog') {
+      attachment = { document: this._catalog.picked.document, type: 'openapi' };
     } else {
       attachment = { document: this._uploaded.document, type: this._uploaded.type };
     }

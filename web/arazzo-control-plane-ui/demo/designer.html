@@ -241,6 +241,10 @@
       // One name concept: the title bar shows the DOCUMENT's title, live (editing info.title on
       // the settings page renames the working copy on the next save).
       document.getElementById('wc-name').textContent = doc.info?.title || shell.name || 'untitled';
+      // The Sources panel lists the document's OTHER workflows as draggable sub-workflow steps.
+      opBrowser.documentWorkflows = (doc.workflows ?? []).map((w) => ({
+        workflowId: w.workflowId, summary: w.summary, current: w.workflowId === select.value,
+      }));
       refreshExpressionContext();
     }
     document.getElementById('canvas-empty-cta').addEventListener('click', () => switchSideTab('sources'));
@@ -427,7 +431,10 @@
       let stepId = base;
       for (let n = 2; wf.steps.some((x) => x.stepId === stepId); n++) stepId = `${base}-${n}`;
       const step = { stepId };
-      if (operation.kind === 'asyncapi') step.channelPath = operation.channelPath;
+      if (operation.kind === 'workflow') {
+        if (operation.workflowId === select.value) { setSaveUi('a workflow cannot run itself as a step'); return; }
+        step.workflowId = operation.workflowId;
+      } else if (operation.kind === 'asyncapi') step.channelPath = operation.channelPath;
       else if (operation.operationId) step.operationId = operation.operationId;
       const required = (operation.parameters ?? []).filter((x) => x.required);
       if (required.length) step.parameters = required.map((x) => ({ name: x.name, in: x.in, value: '' }));
@@ -441,7 +448,7 @@
       model.update((d) => {
         // The step's source must be DECLARED for its operations to resolve (§4.1): dropping an
         // operation auto-declares its sourceDescription in the same undo unit as the step.
-        if (sourceName && !(d.sourceDescriptions ?? []).some((x) => x.name === sourceName)) {
+        if (sourceName && operation.kind !== 'workflow' && !(d.sourceDescriptions ?? []).some((x) => x.name === sourceName)) {
           d.sourceDescriptions = [...(d.sourceDescriptions ?? []),
             { name: sourceName, url: `./sources/${sourceName}.json`, type: operation.kind === 'asyncapi' ? 'asyncapi' : 'openapi' }];
         }
