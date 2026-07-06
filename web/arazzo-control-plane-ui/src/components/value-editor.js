@@ -89,6 +89,8 @@ class ArazzoValueEditor extends ArazzoElement {
         select { padding-right: 30px; }
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
         fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; margin: 0; display: grid; gap: 10px; }
+        input[type="number"] { max-width: 18ch; }
+        input[type="date"], input[type="time"], input[type="datetime-local"] { max-width: 26ch; }
         legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
         .array-items { display: grid; gap: 6px; }
         .array-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }

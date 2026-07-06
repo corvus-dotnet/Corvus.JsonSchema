@@ -84,7 +84,9 @@ class ArazzoScenarioEditor extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; font-size: 12px; }
-        .frame { border: 1px solid var(--_border); border-radius: 8px; margin: 0 10px 8px; padding: 8px; display: grid; gap: 8px; min-width: 0; }
+        .frame { border: 1px solid var(--_border); border-radius: 8px; margin: 0 10px 8px; padding: 8px; display: grid; gap: 8px; min-width: 0; position: relative; }
+        .frame-head { position: sticky; top: 0; z-index: 1; background: var(--_bg); font-size: 11px; font-weight: 600; padding: 2px 0 4px; border-bottom: 1px solid var(--_border); }
+        .frame-head .muted { font-weight: 400; }
         .frame > *, section > *, .group > * { min-width: 0; }
         .group { border: 1px solid var(--_border); border-radius: 6px; padding: 6px 8px 8px; display: grid; gap: 8px; }
         .group.expect { border-color: color-mix(in srgb, var(--_accent) 45%, var(--_border)); }
@@ -109,7 +111,9 @@ class ArazzoScenarioEditor extends ArazzoElement {
         .kv-grid .col { font-size: 10px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
         .kv-grid select { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
         .add { justify-self: start; font-size: 11px; padding: 1px 7px; }
-        .foot { display: flex; gap: 8px; align-items: center; }
+        .foot { display: flex; gap: 8px; align-items: center; position: sticky; bottom: 0; z-index: 1; background: var(--_bg); padding: 6px 0 2px; border-top: 1px solid var(--_border); }
+        .helper { font-size: 10.5px; color: var(--_muted); }
+        .wait-hint { font-size: 11px; color: var(--arazzo-status-suspended, #b45309); }
         .spacer { flex: 1; }
         .error-banner[hidden] { display: none; }
         label.check { display: flex; gap: 5px; align-items: center; color: var(--_text); cursor: pointer; font-size: 11px; }
@@ -118,6 +122,7 @@ class ArazzoScenarioEditor extends ArazzoElement {
         button.ghost { padding: 1px 6px; }
       </style>
       <div class="frame" part="editor">
+        <div class="frame-head">${this._isNew ? 'New scenario' : `Editing <span class="muted">${escapeHtml(this._working.name ?? '')}</span>`}</div>
         <div class="error-banner" hidden></div>
         ${this._json ? this.renderJson() : this.renderForm(s)}
         <div class="foot">
@@ -240,7 +245,8 @@ class ArazzoScenarioEditor extends ArazzoElement {
           <arazzo-value-editor class="inputs-editor"></arazzo-value-editor>
         </section>
         <section>
-          <h5>Mocked responses <span title="How each operation the workflow calls will answer. Statuses are limited to the operation's declared responses; the body form is typed by that status's schema.">ⓘ</span></h5>
+          <h5>Mocked responses</h5>
+          <span class="helper">How each operation the workflow calls will answer — statuses come from its declared responses; the body form is typed by that status's schema.</span>
           ${(s.mocks ?? []).map((mock, i) => `
             <div class="row" data-i="${i}">
               <div class="row-head">
@@ -258,7 +264,9 @@ class ArazzoScenarioEditor extends ArazzoElement {
           <button type="button" class="add add-mock">+ mock</button>
         </section>
         <section>
-          <h5>Staged events &amp; clock <span title="Messages delivered when the run suspends on a matching channel wait; the clock auto-advances past timers unless switched off.">ⓘ</span></h5>
+          <h5>Staged events &amp; clock</h5>
+          <span class="helper">Messages delivered when the run suspends on a matching channel wait; the clock auto-advances past timers unless switched off.</span>
+          ${this.waitHint(s, expect)}
           ${(s.triggers ?? []).map((t, i) => `
             <span class="row-head" data-i="${i}">
               <input class="t-channel" data-i="${i}" type="text" value="${escapeHtml(t.channel ?? '')}" placeholder="channel">
@@ -272,9 +280,9 @@ class ArazzoScenarioEditor extends ArazzoElement {
       <div class="group expect" part="expect">
         <div class="group-head">Expect <span class="sub">— what must be true of the run</span></div>
         <section>
-          <label class="inline">Outcome
+          <label class="inline" title="The run's terminal outcome; leaving it at the default asserts the run completes">Outcome
             <select class="x-outcome">
-              <option value="">(implicit: completed)</option>
+              <option value="">completed (the default)</option>
               ${OUTCOMES.map((o) => `<option value="${o}"${expect.outcome === o ? ' selected' : ''}>${o}</option>`).join('')}
             </select>
           </label>
@@ -311,6 +319,21 @@ class ArazzoScenarioEditor extends ArazzoElement {
           <button type="button" class="add add-stepx">+ step expectation</button>
         </section>
       </div>`;
+  }
+
+  /** @private A workflow that waits on a channel needs a staged event (or a suspended expectation). */
+  waitHint(s, expect) {
+    const staged = new Set((s.triggers ?? []).map((t) => t.channel));
+    const waits = [];
+    for (const [stepId, step] of Object.entries(this.firstWorkflow()?.steps ?? {})) {
+      const op = step.operation;
+      if (op?.kind === 'asyncapi' && (op.action ?? 'receive') === 'receive' && op.channel && !staged.has(op.channel)) {
+        waits.push({ stepId, channel: op.channel });
+      }
+    }
+
+    if (!waits.length || expect.outcome === 'suspended') return '';
+    return waits.map((w) => `<span class="wait-hint">⚠ ${escapeHtml(w.stepId)} waits on ${escapeHtml(w.channel)} — stage an event for it, or expect "suspended"</span>`).join('');
   }
 
   // ---- collect / save -----------------------------------------------------------------------------
