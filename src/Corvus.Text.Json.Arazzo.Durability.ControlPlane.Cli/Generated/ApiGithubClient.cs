@@ -171,6 +171,63 @@ public sealed class ApiGithubClient : IApiGithubClient
     }
 
     /// <summary>
+    /// List a repository's branches
+    /// </summary>
+    /// <remarks>
+    /// The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.
+    /// </remarks>
+    /// <param name="owner">The owner parameter.</param>
+    /// <param name="repo">The repo parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ListRepoBranchesResponse> ListRepoBranchesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source repo, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString OwnerValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, owner, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RepoValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, repo, 30).RootElement;
+        ListRepoBranchesRequest request = new(OwnerValue, RepoValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ListRepoBranchesRequest, ListRepoBranchesResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Create a branch
+    /// </summary>
+    /// <remarks>
+    /// Creates a branch from a base branch's head (default: the repository's default branch), through the calling principal's brokered token — the branch-per-working-copy flow (§4.7) starts here. Creating a ref makes no commit and composes no identity. 409 (github-branch-exists) when the name is taken; 409 (github-not-connected) when the caller has no GitHub session.
+    /// </remarks>
+    /// <param name="owner">The owner parameter.</param>
+    /// <param name="repo">The repo parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CreateRepoBranchResponse> CreateRepoBranchAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source repo, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString OwnerValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, owner, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RepoValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, repo, 30).RootElement;
+        CreateRepoBranchRequest request = new(OwnerValue, RepoValue);
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<CreateRepoBranchRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GitHubBranchCreate, CreateRepoBranchResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Browse a repository's contents
     /// </summary>
     /// <remarks>

@@ -75,6 +75,24 @@ public interface IApiGithubHandler
     ValueTask<DeleteGitHubSessionResult> HandleDeleteGitHubSessionAsync(DeleteGitHubSessionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /github/repos/{owner}/{repo}/branches — List a repository's branches
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListRepoBranchesResult> HandleListRepoBranchesAsync(ListRepoBranchesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /github/repos/{owner}/{repo}/branches — Create a branch
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CreateRepoBranchResult> HandleCreateRepoBranchAsync(CreateRepoBranchParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /github/repos/{owner}/{repo}/contents — Browse a repository's contents
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

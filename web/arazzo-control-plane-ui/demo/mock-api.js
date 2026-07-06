@@ -1224,6 +1224,7 @@ export function createMockControlPlane(options = {}) {
     kind: 'file',
     file: { name: path.split('/').pop(), path, sha: `sha-${path}`, size: content.length, encoding: 'base64', content: utf8ToBase64(content) },
   });
+  const gitHubBranches = new Set(['main']);
   const gitHubTree = {
     '': {
       kind: 'dir',
@@ -1311,6 +1312,10 @@ export function createMockControlPlane(options = {}) {
     if (!wc.gitBinding) return problem(400, 'Not Git-bound', `Working copy '${wc.id}' has no gitBinding; save one first (§4.7).`);
     if (!gitHubConnected) return problem(409, 'GitHub not connected', 'The caller has no GitHub session; begin the sign-in first.');
     const binding = wc.gitBinding;
+    if (!gitHubBranches.has(binding.branch)) {
+      return problem(404, 'Not found', `'${binding.owner}/${binding.repo}' has no branch '${binding.branch}' — create it from the Git dialog first.`);
+    }
+
     const dir = binding.scenariosDir ? binding.scenariosDir.replace(/\/$/, '') : null;
 
     if (gitOp[2] === 'commit') {
@@ -1345,8 +1350,8 @@ export function createMockControlPlane(options = {}) {
     return json(structuredClone(wc));
   }
 
-  function handleGitHub(path, method, params, origin) {
-    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/contents)\/?$/);
+  function handleGitHub(path, method, params, origin, body) {
+    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/(?:contents|branches))\/?$/);
     if (!m) return null;
     const route = m[1];
     if (route === 'auth' && method === 'POST') {
@@ -1383,7 +1388,7 @@ export function createMockControlPlane(options = {}) {
       return new Response(null, { status: 204 });
     }
 
-    if (route.startsWith('repos/') && method === 'GET') {
+    if (route.startsWith('repos/')) {
       if (!gitHubConnected) return problem(409, 'GitHub not connected', 'The caller has no GitHub session; begin the sign-in first.');
       const owner = decodeURIComponent(m[2]);
       const repo = decodeURIComponent(m[3]);
@@ -1391,9 +1396,25 @@ export function createMockControlPlane(options = {}) {
         return problem(404, 'Not found', `'${owner}/${repo}' does not exist, or is outside the user ∩ installation intersection.`);
       }
 
-      const node = gitHubTree[params.get('path') || ''];
-      if (!node) return problem(404, 'Not found', `'${owner}/${repo}/${params.get('path')}' does not exist.`);
-      return json(node);
+      if (route.endsWith('/branches') && method === 'GET') {
+        return json({ defaultBranch: 'main', branches: [...gitHubBranches].sort().map((name) => ({ name, sha: `sha-${name}`, protected: name === 'main' })) });
+      }
+
+      if (route.endsWith('/branches') && method === 'POST') {
+        const name = (body?.name ?? '').trim();
+        if (!name) return problem(400, 'Invalid branch name', 'Provide a branch name.');
+        const from = body?.from ?? 'main';
+        if (!gitHubBranches.has(from)) return problem(404, 'Not found', `'${owner}/${repo}' has no branch '${from}'.`);
+        if (gitHubBranches.has(name)) return problem(409, 'Branch not created', `GitHub refused creating '${name}' — most often the name is already taken.`);
+        gitHubBranches.add(name);
+        return json({ name, sha: `sha-${from}` }, 201);
+      }
+
+      if (method === 'GET') {
+        const node = gitHubTree[params.get('path') || ''];
+        if (!node) return problem(404, 'Not found', `'${owner}/${repo}/${params.get('path')}' does not exist.`);
+        return json(node);
+      }
     }
 
     return null;
@@ -1429,7 +1450,7 @@ export function createMockControlPlane(options = {}) {
     const sourcesResponse = handleSources(path, method, u.searchParams, body);
     if (sourcesResponse) return sourcesResponse;
 
-    const gitHubResponse = handleGitHub(path, method, u.searchParams, u.origin);
+    const gitHubResponse = handleGitHub(path, method, u.searchParams, u.origin, body);
     if (gitHubResponse) return gitHubResponse;
 
     const workingCopyGitResponse = handleWorkingCopyGit(path, method, body);

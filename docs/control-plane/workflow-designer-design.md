@@ -848,7 +848,11 @@ compile; it serves recorded fixtures, clearly marked).
    injectable for tests), the acquisition dialog's fourth mode (GitHub: repo picker from the
    user ∩ installation intersection, contents browser, picked spec attaches through the same
    inline seam), and `<arazzo-git-dialog>` on the designer toolbar (⎇): binding form, Pull, and
-   Commit + optional draft PR, the result naming the signed-in identity. Remaining: the GitHub
+   Commit + optional draft PR, the result naming the signed-in identity. The binding form browses
+   the repo's REAL branches (`listRepoBranches` — default branch marked) with in-dialog branch
+   creation (`createRepoBranch` — a ref from a base head, no commit, no composed identity), and
+   spec paths are one row per ATTACHED source (names from the working copy, only the path typed;
+   blank = not tracked; stale entries marked "not attached"). Remaining: the GitHub
    Action wrapper — blocked on publishing the CLI as a dotnet tool (release engineering, not this
    branch).*
 

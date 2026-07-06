@@ -3276,6 +3276,60 @@
         }
       }
     },
+    "/github/repos/{owner}/{repo}/branches": {
+      "get": {
+        "operationId": "listRepoBranches",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "List a repository's branches",
+        "description": "The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The branch list.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBranchList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "post": {
+        "operationId": "createRepoBranch",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Create a branch",
+        "description": "Creates a branch from a base branch's head (default: the repository's default branch), through the calling principal's brokered token — the branch-per-working-copy flow (§4.7) starts here. Creating a ref makes no commit and composes no identity. 409 (github-branch-exists) when the name is taken; 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBranchCreate" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The created branch.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBranch" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/github/repos/{owner}/{repo}/contents": {
       "get": {
         "operationId": "browseRepo",
@@ -5270,6 +5324,38 @@
           "private": { "type": "boolean" }
         },
         "required": ["owner", "name", "fullName"]
+      },
+      "GitHubBranch": {
+        "type": "object",
+        "title": "GitHubBranch",
+        "description": "A branch head reachable through the brokered session.",
+        "properties": {
+          "name": { "type": "string" },
+          "sha": { "type": "string", "description": "The head commit SHA." },
+          "protected": { "type": "boolean" }
+        },
+        "required": ["name"]
+      },
+      "GitHubBranchList": {
+        "type": "object",
+        "title": "GitHubBranchList",
+        "description": "A repository's branches plus its default branch — the Git dialog's branch picker.",
+        "properties": {
+          "defaultBranch": { "type": "string" },
+          "branches": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubBranch" } }
+        },
+        "required": ["branches"]
+      },
+      "GitHubBranchCreate": {
+        "type": "object",
+        "title": "GitHubBranchCreate",
+        "description": "Creates a branch from a base branch's head (default: the repository's default branch).",
+        "properties": {
+          "name": { "type": "string", "description": "The new branch name (without refs/heads/)." },
+          "from": { "type": "string", "description": "The base branch (default: the default branch)." }
+        },
+        "required": ["name"],
+        "additionalProperties": false
       },
       "GitHubBrowseResult": {
         "type": "object",

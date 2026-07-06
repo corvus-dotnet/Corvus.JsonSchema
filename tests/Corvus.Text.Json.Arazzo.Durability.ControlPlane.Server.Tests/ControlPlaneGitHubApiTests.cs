@@ -216,6 +216,46 @@ public sealed class ControlPlaneGitHubApiTests
     }
 
     [TestMethod]
+    public async Task Branches_list_and_create_through_the_brokered_session()
+    {
+        await using StubGitHub github = await StubGitHub.StartAsync();
+        await using Scoped host = await StartAsync(github.Url);
+        string state = await host.BeginAsync("ada");
+        (await host.SendAnonymousAsync($"/github/auth/callback?code={GoodCode}&state={Uri.EscapeDataString(state)}"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The picker's list: the branches and the default branch.
+        using (Stj.JsonDocument list = await ReadAsync(await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/branches", "workspace:read", "ada")))
+        {
+            list.RootElement.GetProperty("defaultBranch").GetString().ShouldBe("main");
+            list.RootElement.GetProperty("branches")[0].GetProperty("name").GetString().ShouldBe("main");
+            list.RootElement.GetProperty("branches")[0].GetProperty("sha").GetString().ShouldBe("sha-main");
+        }
+
+        // Create from the default branch's head: a ref, no commit, no composed identity.
+        HttpResponseMessage created = await host.SendJsonAsync(HttpMethod.Post, "/github/repos/acme-org/specs/branches", """{"name":"feature/adopt"}""", "workspace:write", "ada");
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument branch = Stj.JsonDocument.Parse(await created.Content.ReadAsStringAsync()))
+        {
+            branch.RootElement.GetProperty("name").GetString().ShouldBe("feature/adopt");
+            branch.RootElement.GetProperty("sha").GetString().ShouldBe("sha-main");
+        }
+
+        github.Branches.ContainsKey("feature/adopt").ShouldBeTrue();
+
+        // A taken name refuses with its own problem type; an unknown base 404s.
+        HttpResponseMessage duplicate = await host.SendJsonAsync(HttpMethod.Post, "/github/repos/acme-org/specs/branches", """{"name":"feature/adopt"}""", "workspace:write", "ada");
+        duplicate.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await duplicate.Content.ReadAsStringAsync()).ShouldContain("github-branch-exists");
+        (await host.SendJsonAsync(HttpMethod.Post, "/github/repos/acme-org/specs/branches", """{"name":"x","from":"ghost"}""", "workspace:write", "ada"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // No session: fails closed like every other brokered call.
+        (await host.SendAsync(HttpMethod.Get, "/github/repos/acme-org/specs/branches", "workspace:read", "bob"))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [TestMethod]
     public async Task A_deployment_without_a_broker_fails_closed_and_scopes_are_enforced()
     {
         await using Scoped host = await StartAsync(gitHubUrl: null);
@@ -363,6 +403,8 @@ public sealed class ControlPlaneGitHubApiTests
 
         public List<string> PullRequests { get; } = [];
 
+        public System.Collections.Concurrent.ConcurrentDictionary<string, string> Branches { get; } = new() { ["main"] = "sha-main" };
+
         public static async Task<StubGitHub> StartAsync()
         {
             var stub = new StubGitHub();
@@ -407,6 +449,42 @@ public sealed class ControlPlaneGitHubApiTests
             app.MapGet("/user/installations/7/repositories", (HttpContext context) => Authorized(context)
                 ? Results.Json(new { repositories = new[] { new { name = "specs", full_name = "acme-org/specs", owner = new { login = "acme-org" }, default_branch = "main", @private = true } } })
                 : Results.Unauthorized());
+
+            app.MapGet("/repos/acme-org/specs", (HttpContext context) => Authorized(context)
+                ? Results.Json(new { name = "specs", full_name = "acme-org/specs", default_branch = "main" })
+                : Results.Unauthorized());
+
+            app.MapGet("/repos/acme-org/specs/branches", (HttpContext context) => Authorized(context)
+                ? Results.Json(stub.Branches.OrderBy(b => b.Key).Select(b => new { name = b.Key, commit = new { sha = b.Value }, @protected = b.Key == "main" }).ToArray())
+                : Results.Unauthorized());
+
+            app.MapGet("/repos/acme-org/specs/git/ref/heads/{*branch}", (HttpContext context, string branch) =>
+            {
+                if (!Authorized(context))
+                {
+                    return Results.Unauthorized();
+                }
+
+                return stub.Branches.TryGetValue(branch, out string? sha)
+                    ? Results.Json(new { @ref = $"refs/heads/{branch}", @object = new { sha } })
+                    : Results.NotFound();
+            });
+
+            app.MapPost("/repos/acme-org/specs/git/refs", async (HttpContext context) =>
+            {
+                if (!Authorized(context))
+                {
+                    return Results.Unauthorized();
+                }
+
+                using Stj.JsonDocument body = await Stj.JsonDocument.ParseAsync(context.Request.Body);
+                string reference = body.RootElement.GetProperty("ref").GetString()!;
+                string sha = body.RootElement.GetProperty("sha").GetString()!;
+                string name = reference["refs/heads/".Length..];
+                return stub.Branches.TryAdd(name, sha)
+                    ? Results.Json(new { @ref = reference, @object = new { sha } }, statusCode: 201)
+                    : Results.UnprocessableEntity(new { message = "Reference already exists" });
+            });
 
             app.MapGet("/repos/acme-org/specs/contents/{*path}", (HttpContext context, string? path) =>
             {
