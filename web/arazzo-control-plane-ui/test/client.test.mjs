@@ -349,7 +349,7 @@ test('purgeCatalog reaps obsolete, unreferenced versions', async () => {
 
 test('listCredentials returns the seeded bindings with a derived credentialStatus', async () => {
   const { credentials } = await makeClient().listCredentials();
-  assert.equal(credentials.length, 6);
+  assert.equal(credentials.length, 8);
   const byKey = Object.fromEntries(credentials.map((c) => [`${c.sourceName}@${c.environment}`, c.credentialStatus]));
   assert.equal(byKey['petstore@production'], 'valid');      // 20 days out
   assert.equal(byKey['billing@production'], 'expiringSoon'); // 3 days out (inside the 7-day window)
@@ -371,8 +371,8 @@ test('listCredentials keyset-pages: limit + the opaque nextPageToken walk every 
     assert.ok(page.credentials.length <= 2, 'each page respects the limit');
     for (const b of page.credentials) seen.push(`${b.sourceName}@${b.environment}`);
   }
-  assert.equal(seen.length, 6, 'all six bindings, exactly once');
-  assert.equal(new Set(seen).size, 6, 'no duplicates across page boundaries');
+  assert.equal(seen.length, 8, 'all eight bindings, exactly once');
+  assert.equal(new Set(seen).size, 8, 'no duplicates across page boundaries');
   assert.deepEqual(seen, [...seen].sort(), 'ordered by sourceName then environment');
 });
 
@@ -605,7 +605,7 @@ test('searchGrantees pages via the keyset nextPageToken', async () => {
 test('listEnvironments returns the seeded environments, ordered by name', async () => {
   const c = makeClient();
   const { environments, nextPageToken } = await c.listEnvironments();
-  assert.deepEqual(environments.map((e) => e.name), ['production', 'staging', 'uat']);
+  assert.deepEqual(environments.map((e) => e.name), ['development', 'production', 'staging', 'uat']);
   assert.equal(nextPageToken, null);
 });
 
@@ -614,7 +614,7 @@ test('environments are reach-filtered — a reach-scoped caller sees only what i
   const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
   // Administrator (reach: all) sees every environment.
   mock.setPersona('administrator');
-  assert.deepEqual((await c.listEnvironments()).environments.map((e) => e.name), ['production', 'staging', 'uat']);
+  assert.deepEqual((await c.listEnvironments()).environments.map((e) => e.name), ['development', 'production', 'staging', 'uat']);
   // The payments-reach persona: neither seeded environment is tagged domain=payments, so the list is empty and a
   // direct read is reported as absent (404), not forbidden (403) — non-disclosing, mirroring IEnvironmentStore (§7.7).
   mock.setPersona('team-reader');
@@ -1517,4 +1517,51 @@ test('an attachment reads back whole — the restore payload for undoing a detac
   await c.attachWorkingCopySource(wc.id, 'inline-src', { document: attachment.document });
   const ops = await c.listWorkingCopySourceOperations(wc.id, 'inline-src');
   assert.ok(ops.operations.some((o) => o.operationId === 'x'), 'restored source projects its operations again');
+});
+
+test('debug runs (§18): gated start, single-step forward, step-over via Skip, cancel', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'debuggable',
+    document: {
+      arazzo: '1.1.0', info: { title: 'dbg', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{
+        workflowId: 'wf',
+        inputs: { type: 'object', properties: { petId: { type: 'string' } } },
+        steps: [
+          { stepId: 'find', operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }],
+            successCriteria: [{ condition: '$statusCode == 200' }], outputs: { petName: '$response.body#/name' } },
+          { stepId: 'adopt', operationId: 'adoptPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }],
+            successCriteria: [{ condition: '$statusCode == 200' }] },
+        ],
+      }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  // Gate 1: an environment that does not allow drafts refuses with 403.
+  await assert.rejects(() => c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'production' }), (err) => err.status === 403);
+
+  // Gate 2: readiness — 'petstore' has no credential bound in development yet → 409 naming it.
+  await assert.rejects(() => c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development' }), (err) =>
+    err.status === 409 && /petstore/.test(err.problem?.detail ?? ''));
+  await c.createCredential({ sourceName: 'petstore', environment: 'development', authKind: 'httpBearer', secretRefs: [{ name: 'token', ref: 'vault://kv/dev/petstore#token' }] });
+
+  // Forward-only lifecycle: start paused after step 1, resume advances exactly one step.
+  const run = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', inputs: { petId: 'p-1' }, pause: { afterEachStep: true } });
+  assert.equal(run.status, 'paused');
+  assert.equal(run.cursor, 1, 'paused after the first step');
+  assert.ok(run.trace.steps[0].requests?.length, 'the trace carries the as-sent exchange');
+
+  // Step over: the runs Skip verbatim — the next step does not execute; its outputs are provided.
+  const over = await c.resumeDebugRun(wc.id, run.debugRunId, { action: { mode: 'Skip', skipOutputs: { forced: true } }, pause: { afterEachStep: true } });
+  const skipped = over.trace.steps.find((s) => s.stepId === 'adopt');
+  assert.equal(skipped?.skipped, true, 'the stepped-over step did not execute');
+  assert.deepEqual(skipped?.outputs, { forced: true });
+  assert.equal(over.status, 'completed', 'skipping the final step completes the run');
+  await assert.rejects(() => c.resumeDebugRun(wc.id, run.debugRunId, {}), (err) => err.status === 409, 'terminal runs refuse resume');
+
+  const cancelled = await c.cancelDebugRun(wc.id, run.debugRunId);
+  assert.equal(cancelled.status, 'cancelled');
 });
