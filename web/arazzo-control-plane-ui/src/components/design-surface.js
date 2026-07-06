@@ -22,7 +22,9 @@
 //              that step to the FRONT of the steps array, because in Arazzo the entry point IS
 //              steps[0]; the projection then re-derives the start edge), edge-created
 //              {from, to, kind}, breakpoint-toggled {stepId, enabled}, node-activated {stepId},
-//              delete-requested {selection}
+//              delete-requested {selection},
+//              edge-retargeted {id, actionName, from, kind, to} (the selected action edge's
+//              arrowhead dragged onto another node/the end terminal — the host rewrites the action)
 // Methods    : fit() — zoom/centre the whole graph into view.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
@@ -208,6 +210,8 @@ class ArazzoDesignSurface extends ArazzoElement {
 
         /* Rubber band while drawing an edge (coloured by the edge kind being drawn) */
         .rubber { fill: none; stroke: var(--_accent); stroke-width: 2; stroke-dasharray: 5 4; pointer-events: none; }
+        .retarget { fill: var(--_bg); stroke: var(--_accent); stroke-width: 2; cursor: grab; }
+        .retarget:hover { fill: var(--_accent); }
         .rubber.rubber-success { stroke: var(--arazzo-status-completed, #2a8a4a); }
         .rubber.rubber-failure { stroke: var(--arazzo-status-faulted, #d4351c); }
         .node.link-target .card { stroke: var(--_accent); stroke-width: 2.5; }
@@ -512,6 +516,42 @@ class ArazzoDesignSurface extends ArazzoElement {
       const type = el.classList.contains('node') ? 'node' : el.classList.contains('edge') ? 'edge' : 'defaults';
       el.classList.toggle('selected', !!sel && sel.type === type && (type === 'defaults' || sel.id === id));
     }
+
+    // A selected ACTION edge grows a drag handle at its arrowhead: drag it onto another node to
+    // retarget the action (sequence edges are the step order — they have no handle).
+    this.$$('.retarget').forEach((el) => el.remove());
+    const sel = this._selection;
+    if (sel?.type === 'edge' && !this.readonly) {
+      const edge = this._graph?.edges.find((x) => x.id === sel.id);
+      if (edge && edge.kind !== 'seq' && edge.actionName) {
+        const end = this._edgeEnd(edge);
+        if (end) {
+          const handle = document.createElementNS(SVG, 'circle');
+          handle.setAttribute('class', 'retarget');
+          handle.setAttribute('data-id', edge.id);
+          handle.setAttribute('r', '7');
+          handle.setAttribute('cx', end.x);
+          handle.setAttribute('cy', end.y);
+          handle.append(Object.assign(document.createElementNS(SVG, 'title'), { textContent: 'Drag onto another step (or the end terminal) to retarget this action' }));
+          this.$('.extras').append(handle);
+        }
+      }
+    }
+  }
+
+  /** @private — where an edge's arrow lands (mirrors _edgePath's end arithmetic). */
+  _edgeEnd(edge) {
+    const a = this._positions[edge.from];
+    const b = this._positions[edge.to] || this._exitPositions?.[edge.to];
+    if (!a || !b) return null;
+    if (this._exitPositions?.[edge.to]) return { x: b.x, y: b.y + 13 };
+    const fan = this._fan(edge);
+    const arrive = this._inbound?.get(edge.id) ?? 0;
+    const to = this._anchors(edge.to);
+    const down = b.y > a.y + NODE_HEIGHT / 2;
+    return down
+      ? { x: to.top.x + fan + arrive, y: to.top.y }
+      : { x: to.right.x, y: to.right.y + arrive * 0.6 };
   }
 
   /** @private */
@@ -590,6 +630,18 @@ class ArazzoDesignSurface extends ArazzoElement {
         rubber.classList.toggle('rubber-entry', hit.port === 'entry');
         // NB: SVG elements have no `hidden` IDL property — toggle the attribute, never the property.
         rubber.removeAttribute('hidden');
+      } else if (hit?.retarget && !this.readonly) {
+        const edge = this._graph?.edges.find((x) => x.id === hit.id);
+        const from = this._positions[edge?.from];
+        if (edge && from) {
+          this._gesture = { type: 'retarget', edge, origin: { x: from.x + NODE_WIDTH / 2, y: from.y + NODE_HEIGHT }, moved: false };
+          const rubber = this.$('.rubber');
+          rubber.setAttribute('d', `M ${this._gesture.origin.x} ${this._gesture.origin.y} L ${this._gesture.origin.x} ${this._gesture.origin.y}`);
+          rubber.classList.toggle('rubber-success', edge.kind === 'success');
+          rubber.classList.toggle('rubber-failure', edge.kind === 'failure');
+          rubber.classList.remove('rubber-entry');
+          rubber.removeAttribute('hidden');
+        }
       } else if (hit?.bp) {
         this._gesture = { type: 'bp', id: hit.id };
       } else if (hit?.type === 'node') {
@@ -619,12 +671,12 @@ class ArazzoDesignSurface extends ArazzoElement {
         this._overrides[g.id] = { x: Math.round(p.x - g.dx), y: Math.round(p.y - g.dy) };
         this._positions[g.id] = this._overrides[g.id];
         this._moveNode(g.id);
-      } else if (g.type === 'draw') {
+      } else if (g.type === 'draw' || g.type === 'retarget') {
         g.moved = true;
         const p = this._toWorld(e);
         const rubber = this.$('.rubber');
         rubber.setAttribute('d', `M ${g.origin.x} ${g.origin.y} L ${p.x} ${p.y}`);
-        const over = this._nodeAt(p, g.from);
+        const over = this._nodeAt(p, g.type === 'retarget' ? g.edge.from : g.from);
         for (const el of this.$$('.node')) el.classList.toggle('link-target', over === el.getAttribute('data-id'));
         g.over = over;
       }
@@ -660,6 +712,12 @@ class ArazzoDesignSurface extends ArazzoElement {
           }
         } else if (g.over && g.over !== g.from && g.over !== START_ID) {
           this.emit('edge-created', { from: g.from, to: g.over, kind: g.kind });
+        }
+      } else if (g.type === 'retarget') {
+        this.$('.rubber').setAttribute('hidden', '');
+        for (const el of this.$$('.node.link-target')) el.classList.remove('link-target');
+        if (g.over && g.over !== g.edge.from && g.over !== START_ID && g.over !== g.edge.to) {
+          this.emit('edge-retargeted', { id: g.edge.id, actionName: g.edge.actionName, from: g.edge.from, kind: g.edge.kind, to: g.over });
         }
       }
     });
@@ -719,6 +777,7 @@ class ArazzoDesignSurface extends ArazzoElement {
       }
       if (el.classList?.contains('bp')) return { bp: true, id: el.closest('.node').getAttribute('data-id') };
       if (el.classList?.contains('node')) return { type: 'node', id: el.getAttribute('data-id') };
+      if (el.classList?.contains('retarget')) return { retarget: true, id: el.getAttribute('data-id') };
       if (el.classList?.contains('edge')) return { type: 'edge', id: el.getAttribute('data-id') };
       if (el.classList?.contains('defaults')) return { type: 'defaults', id: 'defaults' };
       if (el.classList?.contains('exit-chip')) return { type: 'exit', id: el.getAttribute('data-id') };
