@@ -114,4 +114,22 @@ describe('<arazzo-document-inspector>', () => {
     area.dispatchEvent(new Event('input'));
     equal((await changed).detail.document.components.inputs.pagination.type, 'string');
   });
+
+  it('sections attribute scopes the form: document vs components', () => {
+    el = document.createElement('arazzo-document-inspector');
+    el.setAttribute('sections', 'components');
+    el.value = { arazzo: '1.1.0', info: { title: 't', version: '1' }, workflows: [], components: { failureActions: { esc: { name: 'esc', type: 'end' } } } };
+    mount(el);
+    ok(!el.shadowRoot.querySelector('.ititle'), 'no info fields in components scope');
+    ok(el.shadowRoot.querySelector('.components'), 'the library renders');
+    ok(el.shadowRoot.textContent.includes('$components.failureActions.esc'), 'with its entries');
+
+    el.remove();
+    el = document.createElement('arazzo-document-inspector');
+    el.setAttribute('sections', 'document');
+    el.value = { arazzo: '1.1.0', info: { title: 't', version: '1' }, workflows: [] };
+    mount(el);
+    ok(el.shadowRoot.querySelector('.ititle'), 'info fields in document scope');
+    ok(!el.shadowRoot.querySelector('.components'), 'no library on the settings page — it has its own tab');
+  });
 });
