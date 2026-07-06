@@ -49,6 +49,8 @@ class ArazzoGitTree extends ArazzoElement {
         .twist { width: 1em; flex-shrink: 0; color: var(--_muted); }
         .spin { color: var(--_muted); font-size: 11px; padding-left: 20px; }
         .pick-dir { font-size: 10.5px; padding: 0 6px; flex-shrink: 0; }
+        .mkdir .name { color: var(--_muted); }
+        .mkdir-name { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 2px 6px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; width: 100%; box-sizing: border-box; }
       </style>
       <div class="tree"><ul class="root"></ul></div>`;
     void this.renderLevel(this.$('ul.root'), '');
@@ -112,6 +114,35 @@ class ArazzoGitTree extends ArazzoElement {
     }
 
     if (!sorted.length) listEl.innerHTML = '<li class="spin">(empty)</li>';
+
+    // In dir mode a level offers "+ new directory" — a VIRTUAL node (git has no empty
+    // directories; the path materialises when something commits into it).
+    if (this.mode === 'dir') {
+      const li = document.createElement('li');
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'entry mkdir';
+      add.innerHTML = '<span class="twist"></span><span class="name">+ new directory…</span>';
+      add.title = 'Name a directory here — it is created when the binding first commits into it';
+      add.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'directory-name';
+        input.className = 'mkdir-name';
+        li.replaceChildren(input);
+        input.focus();
+        const settle = () => {
+          const name = input.value.trim().replace(/^\/+|\/+$/g, '');
+          if (!name) { li.replaceChildren(add); return; }
+          const full = path ? `${path}/${name}` : name;
+          this.emit('picked', { path: full, entry: { name, path: full, type: 'dir', virtual: true } });
+        };
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') settle(); if (e.key === 'Escape') li.replaceChildren(add); });
+        input.addEventListener('blur', settle);
+      });
+      li.append(add);
+      listEl.append(li);
+    }
   }
 }
 

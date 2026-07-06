@@ -43,6 +43,12 @@ async function browserWithSources() {
   return { el, client, wc };
 }
 
+const expandAll = (el) => {
+  // Sources list collapsed by default (large specs); tests expand to reach the rows.
+  el.shadowRoot.querySelectorAll('.group-head.toggle').forEach((h) => {
+    if (h.querySelector('.twist')?.textContent === '▸') h.click();
+  });
+};
 const opRows = (el) => [...el.shadowRoot.querySelectorAll('button.op')];
 
 describe('<arazzo-operation-browser>', () => {
@@ -51,6 +57,7 @@ describe('<arazzo-operation-browser>', () => {
 
   it('renders each attachment as a group with its operation surface', async () => {
     ({ el } = await browserWithSources());
+    expandAll(el);
     const groups = [...el.shadowRoot.querySelectorAll('.group-head')].map((g) => g.textContent);
     ok(groups.some((g) => g.includes('pets') && g.includes('openapi')), 'openapi group renders with its type');
     ok(groups.some((g) => g.includes('events') && g.includes('asyncapi')), 'asyncapi group renders');
@@ -60,6 +67,7 @@ describe('<arazzo-operation-browser>', () => {
 
   it('filters operations across groups', async () => {
     ({ el } = await browserWithSources());
+    expandAll(el);
     const input = el.shadowRoot.querySelector('.search input');
     input.value = 'confirmation';
     input.dispatchEvent(new Event('input'));
@@ -69,6 +77,7 @@ describe('<arazzo-operation-browser>', () => {
 
   it('pointer clicks are inert; keyboard activation emits the FULL descriptor', async () => {
     ({ el } = await browserWithSources());
+    expandAll(el);
     const row = opRows(el).find((r) => r.textContent.includes('listPets'));
 
     let pointerFired = false;
@@ -87,6 +96,7 @@ describe('<arazzo-operation-browser>', () => {
 
   it('rows are drag sources carrying the operation payload', async () => {
     ({ el } = await browserWithSources());
+    expandAll(el);
     const row = opRows(el).find((r) => r.textContent.includes('listPets'));
     equal(row.getAttribute('draggable'), 'true');
     const transfer = new DataTransfer();
@@ -98,6 +108,7 @@ describe('<arazzo-operation-browser>', () => {
 
   it('detaches a source and reports it (the host refreshes its etag)', async () => {
     ({ el } = await browserWithSources());
+    expandAll(el);
     const detached = nextEvent(el, 'source-detached');
     el.shadowRoot.querySelector('button.detach[data-name="events"]').click();
     // Detach is destructive: the standard danger dialog states the consequences first, and the
@@ -116,6 +127,7 @@ describe('<arazzo-operation-browser>', () => {
 
   it('requests the acquisition dialog from the Add button', async () => {
     ({ el } = await browserWithSources());
+    expandAll(el);
     const requested = nextEvent(el, 'add-source-requested');
     el.shadowRoot.querySelector('button.add').click();
     await requested;
@@ -123,6 +135,7 @@ describe('<arazzo-operation-browser>', () => {
 
   it('exposes the loaded surfaces for the host operation index', async () => {
     ({ el } = await browserWithSources());
+    expandAll(el);
     const surfaces = el.surfaces;
     equal(surfaces.get('pets').length, 2);
     equal(surfaces.get('events')[0].channelPath, 'order/confirmations');
@@ -145,5 +158,24 @@ describe('<arazzo-operation-browser>', () => {
     const e = await selected;
     equal(e.detail.operation.kind, 'workflow');
     equal(e.detail.operation.workflowId, 'order-with-compensation');
+  });
+
+  it('sources list collapsed with counts; expanding renders rows lazily; a filter auto-expands', async () => {
+    ({ el } = await browserWithSources());
+    // collapsed: heads show counts, no operation rows in the DOM at all
+    equal(opRows(el).length, 0, 'nothing renders until a source expands');
+    ok(el.shadowRoot.textContent.includes('op'), 'the head advertises the operation count');
+
+    const head = el.shadowRoot.querySelector('.group-head.toggle');
+    head.click();
+    ok(opRows(el).length > 0, 'expanding renders that source\'s rows');
+    head.click?.call(el.shadowRoot.querySelector('.group-head.toggle')); // re-query: renderBody rebuilt
+    equal(opRows(el).length, 0, 'collapsing removes them again');
+
+    // typing a filter auto-expands every group so search stays cross-source
+    const filter = el.shadowRoot.querySelector('input');
+    filter.value = 'listPets';
+    filter.dispatchEvent(new Event('input'));
+    await waitFor(() => opRows(el).length === 1);
   });
 });
