@@ -1259,6 +1259,13 @@ test('a Git-bound working copy commits to and pulls from its branch (§4.7)', as
   await mock.fetch(authorizeUrl);
   const wc = await c.createWorkingCopy({ name: 'adopt', document: { arazzo: '1.1.0', info: { title: 'Adopt', version: '1' }, workflows: [{ workflowId: 'adopt', steps: [] }] } });
   await c.putScenario(wc.id, { name: 'happy', expect: { outcome: 'completed' } });
+  // The branch must exist before anything writes to it (a ref, no commit; §4.7).
+  const branches = await c.listRepoBranches('acme-org', 'specs');
+  assert.equal(branches.defaultBranch, 'main');
+  const createdBranch = await c.createRepoBranch('acme-org', 'specs', { name: 'feature/adopt' });
+  assert.equal(createdBranch.name, 'feature/adopt');
+  await assert.rejects(() => c.createRepoBranch('acme-org', 'specs', { name: 'feature/adopt' }), (e) => e.status === 409);
+
   const fresh = await c.getWorkingCopy(wc.id);
   const bound = await c.saveWorkingCopy(wc.id, {
     document: fresh.document,

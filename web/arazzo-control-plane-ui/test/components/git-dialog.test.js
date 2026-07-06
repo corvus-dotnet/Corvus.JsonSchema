@@ -35,14 +35,28 @@ describe('<arazzo-git-dialog>', () => {
     (await waitFor(() => gh.shadowRoot.querySelector('.connect'))).click();
     await waitFor(() => [...el.shadowRoot.querySelectorAll('.b-repo option')].length > 1, 'the repositories seed the binding form');
 
-    // Bind: repo from the session, branch/path/scenarios typed.
+    // Bind: repo from the session; the branch picker browses the repo's REAL branches.
     const sel = el.shadowRoot.querySelector('.b-repo');
     sel.value = 'acme-org/specs';
-    sel.dispatchEvent(new Event('input'));
-    el.shadowRoot.querySelector('.b-branch').value = 'feature/adopt';
+    sel.dispatchEvent(new Event('change'));
+    const branchSel = await waitFor(() => {
+      const b = el.shadowRoot.querySelector('.b-branch');
+      return b.disabled || !b.options.length ? null : b;
+    }, 'the branch picker loads the repository branches');
+    ok([...branchSel.options].some((o) => o.value === 'main'), 'the default branch lists');
+
+    // ＋ New branch…: create feature/adopt from main — a ref only, then it selects itself.
+    branchSel.value = '__new__';
+    branchSel.dispatchEvent(new Event('change'));
+    const nb = el.shadowRoot.querySelector('.new-branch');
+    ok(!nb.hidden, 'the create form reveals');
+    el.shadowRoot.querySelector('.nb-name').value = 'feature/adopt';
+    el.shadowRoot.querySelector('.nb-create').click();
+    await waitFor(() => el.shadowRoot.querySelector('.b-branch').value === 'feature/adopt', 'the created branch selects itself');
+
     el.shadowRoot.querySelector('.b-path').value = 'flows/adopt.arazzo.json';
     el.shadowRoot.querySelector('.b-scenarios').value = 'scenarios/adopt';
-    el.shadowRoot.querySelector('.b-branch').dispatchEvent(new Event('input'));
+    el.shadowRoot.querySelector('.b-path').dispatchEvent(new Event('input'));
     const boundEvent = nextEvent(el, 'binding-saved');
     (await waitFor(() => {
       const b = el.shadowRoot.querySelector('.save-binding');

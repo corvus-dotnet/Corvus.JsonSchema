@@ -226,6 +226,100 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ListRepoBranchesResult> HandleListRepoBranchesAsync(ListRepoBranchesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.broker is not { } github)
+        {
+            return ListRepoBranchesResult.BadRequest(NotBrokeredProblem(), workspace);
+        }
+
+        string owner = (string)parameters.Owner;
+        string repo = (string)parameters.Repo;
+        if (this.PrincipalKey() is not { } principal || !github.IsConnected(principal))
+        {
+            return ListRepoBranchesResult.Conflict(
+                Problem("github-not-connected", "GitHub not connected", 409, "The caller has no GitHub session; begin the sign-in first."), workspace);
+        }
+
+        (GitHubBroker.ReadOutcome outcome, string? defaultBranch, ParsedJsonDocument<JsonElement>? payload) = await github.ListBranchesAsync(principal, owner, repo, cancellationToken).ConfigureAwait(false);
+        if (outcome == GitHubBroker.ReadOutcome.NotConnected)
+        {
+            payload?.Dispose();
+            return ListRepoBranchesResult.Conflict(
+                Problem("github-not-connected", "GitHub not connected", 409, "The GitHub session is no longer valid; begin the sign-in again."), workspace);
+        }
+
+        if (outcome != GitHubBroker.ReadOutcome.Success || payload is null)
+        {
+            payload?.Dispose();
+            return ListRepoBranchesResult.NotFound(
+                Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}' does not exist, or is outside the user ∩ installation intersection."), workspace);
+        }
+
+        using (payload)
+        {
+            ParsedJsonDocument<Models.GitHubBranchList> body = WriteBranchList(defaultBranch, payload.RootElement);
+            workspace.TakeOwnership(body);
+            return ListRepoBranchesResult.Ok(Models.GitHubBranchList.From(body.RootElement), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CreateRepoBranchResult> HandleCreateRepoBranchAsync(CreateRepoBranchParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.broker is not { } github)
+        {
+            return CreateRepoBranchResult.BadRequest(NotBrokeredProblem(), workspace);
+        }
+
+        string owner = (string)parameters.Owner;
+        string repo = (string)parameters.Repo;
+        if (this.PrincipalKey() is not { } principal || !github.IsConnected(principal))
+        {
+            return CreateRepoBranchResult.Conflict(
+                Problem("github-not-connected", "GitHub not connected", 409, "The caller has no GitHub session; begin the sign-in first."), workspace);
+        }
+
+        string name = (string)parameters.Body.Name;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return CreateRepoBranchResult.BadRequest(
+                Problem("github-branch-invalid", "Invalid branch name", 400, "Provide a branch name."), workspace);
+        }
+
+        string? from = parameters.Body.FromValue.IsNotUndefined() ? (string)parameters.Body.FromValue : null;
+        (GitHubBroker.WriteOutcome outcome, string? sha) = await github.CreateBranchAsync(principal, owner, repo, name, from, cancellationToken).ConfigureAwait(false);
+        switch (outcome)
+        {
+            case GitHubBroker.WriteOutcome.NotConnected:
+                return CreateRepoBranchResult.Conflict(
+                    Problem("github-not-connected", "GitHub not connected", 409, "The GitHub session is no longer valid; begin the sign-in again."), workspace);
+            case GitHubBroker.WriteOutcome.NotFound:
+                return CreateRepoBranchResult.NotFound(
+                    Problem("github-content-not-found", "Not found", 404, $"'{owner}/{repo}'{(from is null ? string.Empty : $" or its branch '{from}'")} does not exist, or is outside the user ∩ installation intersection."), workspace);
+            case GitHubBroker.WriteOutcome.Refused:
+                return CreateRepoBranchResult.Conflict(
+                    Problem("github-branch-exists", "Branch not created", 409, $"GitHub refused creating '{name}' — most often the name is already taken."), workspace);
+        }
+
+        ParsedJsonDocument<Models.GitHubBranch> created = PersistedJson.ToPooledDocument<Models.GitHubBranch, (string Name, string? Sha)>(
+            (name, sha),
+            static (Utf8JsonWriter writer, in (string Name, string? Sha) s) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("name"u8, s.Name);
+                if (s.Sha is not null)
+                {
+                    writer.WriteString("sha"u8, s.Sha);
+                }
+
+                writer.WriteEndObject();
+            });
+        workspace.TakeOwnership(created);
+        return CreateRepoBranchResult.Created(Models.GitHubBranch.From(created.RootElement), workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<PullWorkingCopyResult> HandlePullWorkingCopyAsync(PullWorkingCopyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.Id;
@@ -553,6 +647,52 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
 
     // Projects a GitHub contents payload — an array for a directory, an object for a file — into
     // the contract's GitHubBrowseResult in one pooled write.
+    private static ParsedJsonDocument<Models.GitHubBranchList> WriteBranchList(string? defaultBranch, in JsonElement payload)
+    {
+        return PersistedJson.ToPooledDocument<Models.GitHubBranchList, (string? DefaultBranch, JsonElement Branches)>(
+            (defaultBranch, payload),
+            static (Utf8JsonWriter writer, in (string? DefaultBranch, JsonElement Branches) s) =>
+            {
+                writer.WriteStartObject();
+                if (s.DefaultBranch is not null)
+                {
+                    writer.WriteString("defaultBranch"u8, s.DefaultBranch);
+                }
+
+                writer.WriteStartArray("branches"u8);
+                if (s.Branches.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement branch in s.Branches.EnumerateArray())
+                    {
+                        if (!branch.TryGetProperty("name"u8, out JsonElement name))
+                        {
+                            continue;
+                        }
+
+                        writer.WriteStartObject();
+                        writer.WritePropertyName("name"u8);
+                        name.WriteTo(writer);
+                        if (branch.TryGetProperty("commit"u8, out JsonElement commit) && commit.TryGetProperty("sha"u8, out JsonElement sha))
+                        {
+                            writer.WritePropertyName("sha"u8);
+                            sha.WriteTo(writer);
+                        }
+
+                        if (branch.TryGetProperty("protected"u8, out JsonElement prot) && (prot.ValueKind == JsonValueKind.True || prot.ValueKind == JsonValueKind.False))
+                        {
+                            writer.WritePropertyName("protected"u8);
+                            prot.WriteTo(writer);
+                        }
+
+                        writer.WriteEndObject();
+                    }
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
+    }
+
     private static ParsedJsonDocument<Models.GitHubBrowseResult> WriteBrowse(in JsonElement payload)
     {
         return PersistedJson.ToPooledDocument<Models.GitHubBrowseResult, JsonElement>(

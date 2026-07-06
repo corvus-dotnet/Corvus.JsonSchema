@@ -1077,6 +1077,30 @@ export class ArazzoControlPlaneClient {
    * @param {{ path?: string, ref?: string, signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} `{kind:'dir'|'file', entries?, file?}`.
    */
+  /**
+   * `listRepoBranches` — the repository's branches plus its default branch, through the caller's
+   * brokered session. The Git dialog's branch picker browses these instead of free-form text.
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{defaultBranch?: string, branches: Array<{name: string, sha?: string, protected?: boolean}>}>}
+   */
+  listRepoBranches(owner, repo, { signal } = {}) {
+    return this._request('GET', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`, { signal });
+  }
+
+  /**
+   * `createRepoBranch` — creates a branch from a base branch's head (default: the repository's
+   * default branch). A ref only: no commit, no composed identity (§4.7).
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ name: string, from?: string, signal?: AbortSignal }} command
+   * @returns {Promise<{name: string, sha?: string}>}
+   */
+  createRepoBranch(owner, repo, { signal, ...command }) {
+    return this._request('POST', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`, { body: command, signal });
+  }
+
   browseRepo(owner, repo, { path, ref, signal } = {}) {
     const query = new URLSearchParams();
     if (path) query.set('path', path);
