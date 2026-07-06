@@ -148,14 +148,10 @@ describe('<arazzo-workspace-table>', () => {
     mount(el);
     await nextEvent(el, 'loaded');
     el.shadowRoot.querySelector('button.fromcat').click();
-    const sel = await waitFor(() => {
-      const c = el.shadowRoot.querySelector('.fc-version');
-      return c.options.length > 1 ? c : null;
-    }, 'the catalog versions load');
-
-    const adopt = [...sel.options].findIndex((o) => o.textContent.startsWith('adopt-pet'));
-    sel.value = String(adopt - 1);
-    sel.dispatchEvent(new Event('change'));
+    const table = el.shadowRoot.querySelector('.fc-table');
+    const row = await waitFor(() => [...table.shadowRoot.querySelectorAll('tbody tr')]
+      .find((r) => r.textContent.includes('adopt-pet')), 'the catalog table lists the workflows');
+    row.click();
     equal(el.shadowRoot.querySelector('.fc-name').value, 'Adopt a Pet', 'the name defaults to the version title');
 
     const created = nextEvent(el, 'working-copy-created');

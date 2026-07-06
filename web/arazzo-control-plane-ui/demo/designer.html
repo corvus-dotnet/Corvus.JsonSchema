@@ -154,7 +154,7 @@
     import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from './designer-fixture.js';
     import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
     import { EXPRESSION_ROOTS, resolveAgainstFrame } from '../src/expression-language.js';
-    import { templatesFromResponses } from '../src/operation-templates.js';
+    import { templatesFromResponses, payloadSkeletonFromSchema } from '../src/operation-templates.js';
     import { WorkflowDocumentModel } from '../src/workflow-document-model.js';
     import '../src/components/design-surface.js';
     import '../src/components/expression-input.js';
@@ -446,8 +446,19 @@
         step.workflowId = operation.workflowId;
       } else if (operation.kind === 'asyncapi') step.channelPath = operation.channelPath;
       else if (operation.operationId) step.operationId = operation.operationId;
-      const required = (operation.parameters ?? []).filter((x) => x.required);
-      if (required.length) step.parameters = required.map((x) => ({ name: x.name, in: x.in, value: '' }));
+      // ALL declared parameters AND the body skeleton arrive with the step (user ruling: nothing
+      // schema-derivable hides behind a button) — values yours to fill, usually with expressions.
+      const params = operation.parameters ?? [];
+      if (params.length) step.parameters = params.map((x) => ({ name: x.name, in: x.in, value: '' }));
+      if (operation.request?.schema) {
+        const skeleton = payloadSkeletonFromSchema(operation.request.schema);
+        if (skeleton !== undefined) {
+          step.requestBody = {
+            ...(operation.request.contentType ? { contentType: operation.request.contentType } : {}),
+            payload: skeleton,
+          };
+        }
+      }
       // The operation's documented responses ARE the step's starting contract: success criteria
       // and per-response failure actions apply at creation — not behind a button.
       const templates = templatesFromResponses(operation.responses);
