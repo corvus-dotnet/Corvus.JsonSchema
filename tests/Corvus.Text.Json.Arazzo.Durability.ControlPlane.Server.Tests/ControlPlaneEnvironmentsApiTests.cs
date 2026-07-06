@@ -76,6 +76,39 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
+    public async Task The_allows_draft_runs_flag_round_trips_and_survives_updates_that_omit_it()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // A development-class environment (workflow-designer design §18): drafts may debug-run here.
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"development","allowsDraftRuns":true}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("allowsDraftRuns").GetBoolean().ShouldBeTrue();
+        }
+
+        // An update that omits the flag leaves the permission unchanged.
+        HttpResponseMessage updated = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/development", """{"displayName":"Dev sandbox"}""", Write);
+        updated.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(updated))
+        {
+            doc.RootElement.GetProperty("allowsDraftRuns").GetBoolean().ShouldBeTrue();
+        }
+
+        // An update that includes it replaces the permission — administrators can close the door.
+        HttpResponseMessage closed = await host.SendJsonAsync(
+            HttpMethod.Put, "/environments/development", """{"allowsDraftRuns":false}""", Write);
+        closed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(closed))
+        {
+            doc.RootElement.GetProperty("allowsDraftRuns").GetBoolean().ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
     public async Task The_require_evidence_flag_round_trips_and_survives_updates_that_omit_it()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
