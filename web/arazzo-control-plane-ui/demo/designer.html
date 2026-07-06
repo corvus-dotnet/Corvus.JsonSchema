@@ -85,7 +85,6 @@
     <label class="chk designer-only" title="Read-only: mutation gestures off; pan/zoom/select still work"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
-    <button id="git" class="tb labeled designer-only" title="Git — bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">⎇ Git</button>
     <button id="publish" class="tb labeled designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)">🚀 Publish</button>
     <button id="theme" class="tb" title="Toggle theme">🌙</button>
   </header>
@@ -138,6 +137,7 @@
         <button data-tab="inspect" class="active">Inspect</button>
         <button data-tab="sources">Sources</button>
         <button data-tab="scenarios">Scenarios</button>
+        <button data-tab="git" title="Bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">Git</button>
         <button data-tab="problems">Problems<span class="badge" id="problems-badge" hidden></span></button>
         <button data-tab="events">Events</button>
       </div>
@@ -150,6 +150,9 @@
       </div>
       <div class="side-panel" id="panel-scenarios" hidden>
         <arazzo-scenario-panel id="scpanel"></arazzo-scenario-panel>
+      </div>
+      <div class="side-panel" id="panel-git" hidden>
+        <arazzo-git-dialog id="gitpanel"></arazzo-git-dialog>
       </div>
       <div class="side-panel" id="panel-problems" hidden>
         <div id="problems" style="padding: 8px 10px; font-size: 12px; display: grid; gap: 6px; align-content: start;">(not validated yet)</div>
@@ -1214,11 +1217,12 @@
     // pull / commit through the caller's brokered session. binding-saved and pulled both bump the
     // etag (refresh the save token); pulled also replaced the document — reload the model like an
     // open, and let the scenario panel re-read its (possibly replaced) set.
-    const gitDialog = document.createElement('arazzo-git-dialog');
+    const gitDialog = document.getElementById('gitpanel');
     gitDialog.client = client;
     gitDialog.windowOpener = mockAuthOpener;
-    document.body.appendChild(gitDialog);
-    document.getElementById('git').addEventListener('click', async () => {
+    // The Git tab loads lazily on activation (flushing the autosave first — the panel reads the
+    // STORED copy) and refreshes each visit; no GitHub call happens until you look.
+    document.querySelector('.side-tabs [data-tab="git"]').addEventListener('click', async () => {
       if (!shell.id) return;
       clearTimeout(autosaveTimer);
       if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
