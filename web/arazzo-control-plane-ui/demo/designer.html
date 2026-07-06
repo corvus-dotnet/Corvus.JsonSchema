@@ -547,6 +547,32 @@
       const wc = await client.createWorkingCopy({ name: 'place-order (fixture)', document: designerFixture, designerState: { nodes: {} } });
       await client.attachWorkingCopySource(wc.id, 'payments', { document: paymentsOpenApi });
       await client.attachWorkingCopySource(wc.id, 'order-events', { document: orderEventsAsyncApi });
+      // A ready-made suite so the Scenarios tab (and the publish gate) demos populated: the happy
+      // path releases the confirmation wait with a staged event; the declined path exercises the
+      // 402 → manual-review branch.
+      await client.putScenario(wc.id, {
+        name: 'happy-path',
+        description: 'Authorize, confirm, capture — the order completes.',
+        inputs: { orderId: 'o-1001', amount: 42.5 },
+        mocks: [
+          { source: 'payments', operationId: 'validateOrder', responses: [{ status: 200, body: { validated: true } }] },
+          { source: 'payments', operationId: 'authorizePayment', responses: [{ status: 201, body: { status: 'authorized', authorizationId: 'auth-77' } }] },
+          { source: 'payments', operationId: 'capturePayment', responses: [{ status: 200, body: { receiptId: 'rcpt-9' } }] },
+        ],
+        triggers: [{ channel: '/channels/orderConfirmations', payload: { confirmed: true, at: '2026-07-01T09:30:00Z' } }],
+        expect: { outcome: 'completed', path: ['validate-order', 'authorize-payment', 'await-confirmation', 'capture-payment'], pathMode: 'exact' },
+      });
+      await client.putScenario(wc.id, {
+        name: 'declined-goes-to-review',
+        description: 'A 402 decline routes to manual review and halts there.',
+        inputs: { orderId: 'o-1002', amount: 9800 },
+        mocks: [
+          { source: 'payments', operationId: 'validateOrder', responses: [{ status: 200, body: { validated: true } }] },
+          { source: 'payments', operationId: 'authorizePayment', responses: [{ status: 402 }] },
+          { source: 'payments', operationId: 'createReviewTask', responses: [{ status: 201 }] },
+        ],
+        expect: { outcome: 'completed', path: ['validate-order', 'authorize-payment', 'manual-review'], pathMode: 'exact', steps: { 'manual-review': { reached: true, attempts: 1 } } },
+      });
       wctable.reload();
     })();
 

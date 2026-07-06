@@ -45,7 +45,7 @@
   },
   "scripts": {
     "build:vendor": "esbuild vendor/codemirror-entry.js --bundle --format=esm --minify --legal-comments=none --banner:js='/* Vendored CodeMirror 6 bundle for @corvus-dotnet/arazzo-control-plane-ui. MIT-licensed: CodeMirror (c) Marijn Haverbeke and others — https://codemirror.net/ ; @codemirror/state, view, language, autocomplete, commands and @lezer/highlight. Rebuild: npm run build:vendor (see vendor/codemirror-entry.js). */' --outfile=src/vendor/codemirror.mjs",
-    "test": "node --test test/client.test.mjs test/conformance.test.mjs test/workflow-graph.test.mjs test/workflow-layout.test.mjs test/expression-language.test.mjs test/operation-templates.test.mjs test/workflow-document-model.test.mjs",
+    "test": "node --test test/client.test.mjs test/conformance.test.mjs test/workflow-graph.test.mjs test/workflow-layout.test.mjs test/expression-language.test.mjs test/operation-templates.test.mjs test/workflow-document-model.test.mjs test/seed-consistency.test.mjs",
     "test:components": "web-test-runner --config test/web-test-runner.config.mjs",
     "test:smoke": "playwright test --config test/playwright.config.mjs",
     "test:browser": "npm run test:components && npm run test:smoke",

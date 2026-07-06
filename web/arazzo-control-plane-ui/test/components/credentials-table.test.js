@@ -22,7 +22,7 @@ describe('<arazzo-credentials-table>', () => {
     el = tableWithMock();
     mount(el);
     const e = await nextEvent(el, 'loaded');
-    equal(rowCount(el), 5, 'five seeded bindings');
+    equal(rowCount(el), 6, 'six seeded bindings');
     equal(e.detail.expiring, 1, 'one expiring soon');
     equal(e.detail.expired, 1, 'one expired');
     ok(el.shadowRoot.querySelector('[part="status"]'), 'status badge present');
@@ -88,7 +88,7 @@ describe('<arazzo-credentials-table>', () => {
     const page3 = nextEvent(el, 'loaded');
     next().click();
     await page3;
-    equal(rowCount(el), 1, 'page 3 holds the remaining binding');
+    equal(rowCount(el), 2, 'page 3 holds the remaining bindings');
     ok(next().disabled, 'Next is disabled on the last page');
     ok(!prev().disabled, 'Prev is enabled off page 1');
 
