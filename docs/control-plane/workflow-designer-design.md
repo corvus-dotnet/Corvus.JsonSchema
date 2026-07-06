@@ -883,6 +883,10 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    runaway steps under the §8.3 wall-clock cap). (Recommend: emitter change, scheduled with the
    engine's own backlog — it affects production runs too, where a virtual-clock-driven timeout is
    equally desirable for determinism in tests.)
+8c. **Pull as merge** — pull today REPLACES the working copy from the branch (etag-guarded, and
+   the UI confirms with a danger dialog). A true three-way merge needs the binding to record the
+   pulled commit sha (the base), divergence detection, and a conflict presentation — design work,
+   not a quick add.
 8b. **Step-output overrides (engine)** — the mock honours `overrides.stepOutputs` on simulate
    (step over / what-if: the step does not execute, its provided outputs stand — the runs-view
    Skip brought to the debugger); the real simulator needs the same override seam for server
