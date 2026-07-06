@@ -108,6 +108,10 @@ class ArazzoStepInspector extends ArazzoElement {
            full-width beneath — a narrow inspector rail never squeezes the editor. */
         .prow { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 8px; display: grid; gap: 6px; }
         .prow .phead { display: grid; grid-template-columns: minmax(80px, 1fr) auto auto; gap: 6px; align-items: center; }
+        .prow .pfixed { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+        .prow .phead:has(.pfixed) { grid-template-columns: minmax(0, 1fr) auto; }
+        .pmissing { display: flex; flex-wrap: wrap; gap: 4px; }
+        .pmissing .ghost { font-size: 11px; }
         .prow .phead > * { min-width: 0; }
         .prow input.pname { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
         .params { display: grid; gap: 8px; }
@@ -153,7 +157,7 @@ class ArazzoStepInspector extends ArazzoElement {
       <h3>parameters</h3>
       <div class="params"></div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button class="addp ghost" type="button">+ Add parameter</button>
+        <button class="addp ghost" type="button">+ Custom parameter (undeclared)</button>
         <select class="addpref" hidden style="font-size:12px;"></select>
       </div>
 
@@ -391,14 +395,29 @@ class ArazzoStepInspector extends ArazzoElement {
       }
       const row = document.createElement('div');
       row.className = 'prow';
-      row.innerHTML = `
-        <div class="phead">
-          <input class="pname" type="text" placeholder="name" value="${escapeHtml(p.name || '')}">
-          <select class="pin">${PARAM_IN.map((v) => `<option ${v === p.in ? 'selected' : ''}>${v}</option>`).join('')}</select>
-          <button class="close" type="button" title="Remove parameter">✕</button>
-        </div>
-        <span class="pval-slot"></span>
-      `;
+      // A DECLARED parameter's name and location come from the source binding — fixed, not typed
+      // in. Only undeclared (custom) entries get editable name/in fields.
+      const declaredHead = (this._operationParameters ?? []).find((d) => d.name === p.name && (!d.in || d.in === p.in))
+        ?? (this._operationParameters ?? []).find((d) => d.name === p.name);
+      if (declaredHead) {
+        const headType = Array.isArray(declaredHead.schema?.type) ? declaredHead.schema.type[0] : declaredHead.schema?.type;
+        row.innerHTML = `
+          <div class="phead">
+            <span class="pfixed">${escapeHtml(p.name)} <span class="muted">${escapeHtml(p.in ?? declaredHead.in ?? 'query')}${headType ? ` · ${escapeHtml(headType)}` : ''}${declaredHead.required ? ' · required' : ''}</span></span>
+            <button class="close" type="button" title="${declaredHead.required ? 'Remove (the operation REQUIRES this parameter — validation will flag it)' : 'Remove parameter'}">✕</button>
+          </div>
+          <span class="pval-slot"></span>
+        `;
+      } else {
+        row.innerHTML = `
+          <div class="phead">
+            <input class="pname" type="text" placeholder="name" value="${escapeHtml(p.name || '')}">
+            <select class="pin">${PARAM_IN.map((v) => `<option ${v === p.in ? 'selected' : ''}>${v}</option>`).join('')}</select>
+            <button class="close" type="button" title="Remove parameter">✕</button>
+          </div>
+          <span class="pval-slot"></span>
+        `;
+      }
       // The declared schema (from the operation surface) picks the editor: object schemas — and
       // object values, declared or not — get the STRUCTURED payload editor (expression-capable
       // leaves); scalars stay a single expression input, literals coercing to the declared type.
@@ -436,8 +455,8 @@ class ArazzoStepInspector extends ArazzoElement {
 
       row.querySelector('.pval-slot').replaceWith(val);
 
-      row.querySelector('.pname').addEventListener('input', (e) => { p.name = e.target.value; this._emit(); });
-      row.querySelector('.pin').addEventListener('change', (e) => { p.in = e.target.value; this._emit(); });
+      row.querySelector('.pname')?.addEventListener('input', (e) => { p.name = e.target.value; this._emit(); });
+      row.querySelector('.pin')?.addEventListener('change', (e) => { p.in = e.target.value; this._emit(); });
       row.querySelector('.close').addEventListener('click', () => {
         s.parameters.splice(i, 1);
         if (!s.parameters.length) delete s.parameters;
@@ -446,6 +465,29 @@ class ArazzoStepInspector extends ArazzoElement {
       });
       box.append(row);
     });
+    // Declared parameters the step does not carry yet offer themselves as one-click adds.
+    const present = new Set((s.parameters || []).map((p) => p?.name).filter(Boolean));
+    const missing = (this._operationParameters ?? []).filter((d) => d.name && !present.has(d.name));
+    if (missing.length) {
+      const offer = document.createElement('div');
+      offer.className = 'pmissing';
+      for (const d of missing) {
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'ghost';
+        add.textContent = `+ ${d.name} (${d.in ?? 'query'})`;
+        add.title = d.description ?? `Add the declared '${d.name}' parameter`;
+        add.addEventListener('click', () => {
+          (this._step.parameters ??= []).push({ name: d.name, in: d.in ?? 'query', value: '' });
+          this._renderParams();
+          this._emit();
+        });
+        offer.append(add);
+      }
+
+      box.append(offer);
+    }
+
     this.$('.addp').onclick = () => {
       (this._step.parameters ??= []).push({ name: '', in: 'query', value: '' });
       this._renderParams();
