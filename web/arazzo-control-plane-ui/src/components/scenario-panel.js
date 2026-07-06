@@ -88,14 +88,17 @@ class ArazzoScenarioPanel extends ArazzoElement {
       <div class="bar" part="controls">
         <span class="chip">${this._scenarios.length} scenario${this._scenarios.length === 1 ? '' : 's'}</span>
         <button class="runall" type="button" ${this._scenarios.length && !this._busy ? '' : 'disabled'} title="Run every scenario as a suite">▶ Run all</button>
+        <button class="new" type="button" title="Author a scenario from scratch — no run needed">+ New</button>
         <span class="suite muted"></span>
       </div>
-      ${this._scenarios.length === 0
-        ? '<div class="empty-note">No scenarios yet — run a debug session and "Save as scenario…", or add one from a run.</div>'
+      ${this._creating ? '<div class="editor-slot" data-name=""></div>' : ''}
+      ${this._scenarios.length === 0 && !this._creating
+        ? '<div class="empty-note">No scenarios yet — + New authors one from scratch, or run a debug session and "Save as scenario…".</div>'
         : this._scenarios.map((s) => this.renderScenario(s)).join('')}
     `;
 
     this.$('.runall')?.addEventListener('click', () => this.runAll());
+    this.$('.new')?.addEventListener('click', () => { this._creating = true; this._editing = null; this.render(); });
     this.$$('.sc [data-run]').forEach((b) => b.addEventListener('click', () => this.runOne(b.dataset.run)));
     this.$$('.sc [data-del]').forEach((b) => b.addEventListener('click', () => this.delete(b.dataset.del)));
     this.$$('.sc [data-edit]').forEach((b) => b.addEventListener('click', () => { this._editing = this._editing === b.dataset.edit ? null : b.dataset.edit; this.render(); }));
@@ -106,17 +109,18 @@ class ArazzoScenarioPanel extends ArazzoElement {
     this.$$('.editor-slot').forEach((slot) => {
       const editor = document.createElement('arazzo-scenario-editor');
       editor.schemas = this._schemas;
-      editor.scenario = this._scenarios.find((x) => x.name === slot.dataset.name);
+      editor.scenario = slot.dataset.name ? this._scenarios.find((x) => x.name === slot.dataset.name) : {};
       editor.addEventListener('scenario-changed', async (e) => {
         try {
           await this.client.putScenario(this._workingCopyId, e.detail.scenario);
           this._editing = null;
+          this._creating = false;
           this.refresh();
         } catch (err) {
           this.emit('error', { problem: err.problem ?? { title: err.message }, error: err });
         }
       });
-      editor.addEventListener('cancel', () => { this._editing = null; this.render(); });
+      editor.addEventListener('cancel', () => { this._editing = null; this._creating = false; this.render(); });
       slot.appendChild(editor);
     });
   }

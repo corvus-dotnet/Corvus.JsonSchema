@@ -168,6 +168,11 @@
     const mock = createMockControlPlane({ latencyMs: 0 });
     const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
 
+    // The mock's authorize URL is a fake that self-completes when FETCHED — a real window.open
+    // would 404 in an actual browser tab. A real deployment omits this: the default opener pops
+    // GitHub's genuine authorize page.
+    const mockAuthOpener = (url) => { mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
+
     const surface = document.getElementById('surface');
     const textEditor = document.getElementById('text');
     const select = document.getElementById('workflow');
@@ -189,6 +194,7 @@
     const acqDialog = document.getElementById('acqdialog');
     opBrowser.client = client;
     acqDialog.client = client;
+    acqDialog.windowOpener = mockAuthOpener;
     const operationIndex = new Map();
     function rebuildOperationIndex() {
       operationIndex.clear();
@@ -942,6 +948,7 @@
     // open, and let the scenario panel re-read its (possibly replaced) set.
     const gitDialog = document.createElement('arazzo-git-dialog');
     gitDialog.client = client;
+    gitDialog.windowOpener = mockAuthOpener;
     document.body.appendChild(gitDialog);
     document.getElementById('git').addEventListener('click', async () => {
       if (!shell.id) return;

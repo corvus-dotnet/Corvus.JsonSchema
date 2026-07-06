@@ -97,21 +97,22 @@ class ArazzoDebugTray extends ArazzoElement {
         .bar button { font-size: 12px; padding: 2px 8px; }
         .empty-note { padding: 10px; color: var(--_muted); }
         .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 0; max-height: 34vh; }
-        .steps { overflow-y: auto; border-right: 1px solid var(--_border); }
+        .steps { overflow-y: auto; overflow-x: hidden; border-right: 1px solid var(--_border); }
         .step { display: flex; gap: 6px; width: 100%; text-align: left; border: none; background: none; color: inherit;
                 font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 5px 8px; cursor: pointer; align-items: baseline; }
         .step:hover { background: var(--_surface); }
         .step.at { background: color-mix(in srgb, var(--_accent) 14%, transparent); }
-        .step .n { color: var(--_muted); width: 2ch; text-align: right; }
+        .step .n { color: var(--_muted); width: 2ch; text-align: right; flex-shrink: 0; }
+        .step .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
         .step .ok { color: var(--arazzo-status-completed, #2a8a4a); }
         .step .bad { color: var(--arazzo-status-faulted, #d4351c); }
-        .step .act { color: var(--_muted); margin-left: auto; font-size: 11px; }
-        .ctx { overflow-y: auto; padding: 8px 10px; display: grid; gap: 8px; align-content: start; }
+        .step .act { color: var(--_muted); margin-left: auto; font-size: 11px; flex-shrink: 0; }
+        .ctx { overflow-y: auto; overflow-x: hidden; padding: 8px 10px; display: grid; gap: 8px; align-content: start; }
         .ctx h4 { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); }
         .ctx pre { margin: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
-        table { border-collapse: collapse; width: 100%; }
-        td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; }
-        td.v { width: 1%; white-space: nowrap; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; overflow-wrap: anywhere; }
+        td.v { width: 4ch; }
         .inject { display: grid; gap: 4px; border: 1px solid var(--_border); border-radius: 6px; padding: 6px; }
         .inject input, .inject textarea { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; }
         .inject textarea { min-height: 44px; }
@@ -173,7 +174,7 @@ class ArazzoDebugTray extends ArazzoElement {
     return `<button class="step${at ? ' at' : ''}" type="button" data-index="${index}" title="Inspect after this step">
       <span class="n">${index + 1}</span>
       <span class="${failed ? 'bad' : 'ok'}">${failed ? '✗' : '✓'}</span>
-      <span>${escapeHtml(record.stepId)}${record.attempt ? ` <span class="muted">↻${record.attempt}</span>` : ''}</span>
+      <span class="nm">${escapeHtml(record.stepId)}${record.attempt ? ` <span class="muted">↻${record.attempt}</span>` : ''}</span>
       <span class="act">${escapeHtml(action)}</span>
     </button>`;
   }
@@ -189,7 +190,7 @@ class ArazzoDebugTray extends ArazzoElement {
     const parts = [];
     if (record.requests?.length) {
       parts.push('<h4>exchanges</h4><table>' + record.requests.map((x) =>
-        `<tr><td class="v">${escapeHtml(x.method.toUpperCase())} ${escapeHtml(x.path)}</td><td class="v">${x.status}</td>
+        `<tr><td>${escapeHtml(x.method.toUpperCase())} ${escapeHtml(x.path)}</td><td class="v">${x.status}</td>
          <td>${x.responseBody !== undefined ? escapeHtml(JSON.stringify(x.responseBody)) : '<span class="muted">—</span>'}</td></tr>`).join('') + '</table>');
     }
 

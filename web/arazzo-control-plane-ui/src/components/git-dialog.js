@@ -34,6 +34,7 @@ class ArazzoGitDialog extends ArazzoElement {
     this._workingCopy = null;
     this.render();
     this.$('.gh-connect').client = this._client;
+    if (this.windowOpener) this.$('.gh-connect').windowOpener = this.windowOpener;
     this.$('dialog').showModal();
     const seq = ++this._seq;
     try {

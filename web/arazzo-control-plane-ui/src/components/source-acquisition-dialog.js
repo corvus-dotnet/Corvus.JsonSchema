@@ -47,6 +47,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.render();
     this.$('.name-in').value = suggestedName;
     this.$('.gh-connect').client = this._client;
+    if (this.windowOpener) this.$('.gh-connect').windowOpener = this.windowOpener;
     this.$('dialog').showModal();
     this.loadRegistry();
   }

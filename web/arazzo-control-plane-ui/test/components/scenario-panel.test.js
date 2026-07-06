@@ -57,6 +57,24 @@ describe('<arazzo-scenario-panel>', () => {
     ok(el.shadowRoot.textContent.includes('No scenarios yet'));
   });
 
+
+  it('+ New authors a scenario from scratch — no run needed', async () => {
+    const ctx = await panelWithScenario();
+    el = ctx.el;
+    el.shadowRoot.querySelector('.new').click();
+    const editor = await waitFor(() => el.shadowRoot.querySelector('.editor-slot[data-name=""] arazzo-scenario-editor'), 'the blank editor opens');
+    const name = await waitFor(() => editor.shadowRoot.querySelector('.f-name'), 'a new scenario asks for its name');
+    name.value = 'from-scratch';
+    editor.shadowRoot.querySelector('.f-desc').value = 'authored, not recorded';
+
+    const changed = nextEvent(el, 'scenarios-changed');
+    editor.shadowRoot.querySelector('.save').click();
+    equal((await changed).detail.count, 2, 'the new scenario joins the set');
+    ok(el.shadowRoot.textContent.includes('from-scratch'));
+    const { scenarios } = await ctx.client.listScenarios(ctx.wc.id);
+    equal(scenarios.find((x) => x.name === 'from-scratch').description, 'authored, not recorded');
+  });
+
   it('edits a scenario in the typed form (mock statuses constrained to the declared responses)', async () => {
     const ctx = await panelWithScenario();
     el = ctx.el;
