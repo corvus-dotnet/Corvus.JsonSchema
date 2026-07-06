@@ -1466,3 +1466,32 @@ test('the trace records what a step actually SENT: resolved path, query, and req
   assert.equal(sent.path, '/orders/o-77?dryRun=true', 'parameters resolve into the path and query');
   assert.deepEqual(sent.requestBody, { amount: 12.5, note: 'from-test' }, 'the body records as sent, expressions resolved');
 });
+
+test('step over: overridden outputs replace execution — no exchange, downstream steps see them (§3.3)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'what-if',
+    document: {
+      arazzo: '1.1.0', info: { title: 'w', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [
+        { stepId: 'find', operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }],
+          successCriteria: [{ condition: '$statusCode == 200' }], outputs: { petName: '$response.body#/name' } },
+        { stepId: 'adopt', operationId: 'adoptPet', parameters: [{ name: 'petId', in: 'path', value: '$steps.find.outputs.petName' }],
+          successCriteria: [{ condition: '$statusCode == 200' }] },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    scenario: { inputs: { petId: 'p-1' }, mocks: [{ method: 'post', path: '/pets/{petId}/adopt', status: 200 }] },
+    overrides: { stepOutputs: { find: { petName: 'Hypothetical' } } },
+  });
+  assert.equal(trace.outcome, 'completed');
+  const skipped = trace.steps[0];
+  assert.equal(skipped.skipped, true, 'the overridden step did not execute');
+  assert.equal(skipped.requests, undefined, 'no exchange happened');
+  assert.deepEqual(skipped.outputs, { petName: 'Hypothetical' }, 'the provided outputs stand');
+  assert.ok(trace.steps[1].requests[0].path.includes('Hypothetical'), 'downstream steps resolve against them');
+});
