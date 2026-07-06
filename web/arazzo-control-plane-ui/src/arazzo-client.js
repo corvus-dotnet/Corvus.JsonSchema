@@ -942,6 +942,38 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `startDebugRun` — start a DEBUG RUN of the working copy's stored document in a development-class
+   * environment (§18): durable, forward-only, under the environment's credential bindings. 403 when
+   * the environment does not allow drafts; 409 when credential readiness is incomplete.
+   *
+   * @param {string} id - The working copy id.
+   * @param {object} command - `{workflowId, environment, inputs?, pause?: {afterEachStep?, beforeSteps?}}`.
+   * @returns {Promise<object>} The {@link DebugRun}.
+   */
+  startDebugRun(id, command, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs`, { body: command, signal: opts.signal });
+  }
+
+  /** `getDebugRun` — the debug run's status, cursor, trace-so-far, and any wait (§18). */
+  getDebugRun(id, debugRunId, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `resumeDebugRun` — advance the run: bare resume continues to the next pause point;
+   * `{action}` applies the runs ResumeRequest union (Skip with outputs = step over); `{pause}`
+   * replaces the pause points (afterEachStep = single-step).
+   */
+  resumeDebugRun(id, debugRunId, command = {}, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/resume`, { body: command, signal: opts.signal });
+  }
+
+  /** `cancelDebugRun` — terminal, idempotent (§18). */
+  cancelDebugRun(id, debugRunId, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/cancel`, { body: {}, signal: opts.signal });
+  }
+
+  /**
    * `getWorkingCopySource` — one attachment WITH its stored inline document (or registry
    * reference) — the full payload needed to re-attach it (restore after a detach).
    *
