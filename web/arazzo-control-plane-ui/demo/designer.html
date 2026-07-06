@@ -45,6 +45,7 @@
     button, select { font: inherit; padding: 5px 10px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: inherit; cursor: pointer; }
     /* Toolbar icon buttons: compact, with UNMISTAKABLE hover/press/focus feedback. */
     header button.tb { width: 34px; height: 30px; padding: 0; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    header button.tb.labeled { width: auto; padding: 0 10px; font-size: 13px; gap: 5px; }
     header [hidden] { display: none !important; }
     header button:hover:not(:disabled), header select:hover {
       border-color: var(--arazzo-accent, #3b6cf6);
@@ -81,22 +82,30 @@
     <label class="chk designer-only" title="Read-only: mutation gestures off; pan/zoom/select still work"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
-    <button id="validate" class="tb designer-only" title="Validate the working copy">✓</button>
-    <button id="git" class="tb designer-only" title="Git — bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">⎇</button>
-    <button id="publish" class="tb designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)">🚀</button>
+    <button id="validate" class="tb labeled designer-only" title="Validate the working copy">✓ Validate</button>
+    <button id="git" class="tb labeled designer-only" title="Git — bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">⎇ Git</button>
+    <button id="publish" class="tb labeled designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)">🚀 Publish</button>
     <button id="theme" class="tb" title="Toggle theme">🌙</button>
   </header>
   <div id="workspace-view" style="padding: 18px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; overflow-y: auto;">
+    <h1 style="font-size: 18px; margin: 6px 0 2px;">Arazzo workflow designer</h1>
+    <p class="muted" style="font-size: 12px; margin: 0 0 14px;">Design, simulate, and test Arazzo workflows against their OpenAPI/AsyncAPI sources, then publish attested versions to the catalog.</p>
     <arazzo-workspace-table id="wctable" selectable can-write></arazzo-workspace-table>
     <p class="muted" style="font-size: 12px;">Open a working copy to design it; saves never mint catalog versions.</p>
   </div>
   <main hidden>
-    <div id="center">
+    <div id="center" style="position: relative;">
       <div class="tabs">
         <button id="tab-design" class="active">Design</button>
         <button id="tab-text">Text</button>
       </div>
       <arazzo-design-surface id="surface"></arazzo-design-surface>
+      <div id="canvas-empty" hidden style="position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 8px; pointer-events: none; color: var(--arazzo-muted, #6b7280); font-size: 13px;">
+        <div style="font-size: 15px; font-weight: 600;">An empty canvas</div>
+        <div>Steps come from a source's operations:</div>
+        <div>1 — attach an OpenAPI/AsyncAPI source &nbsp;·&nbsp; 2 — drag an operation onto the canvas</div>
+        <button id="canvas-empty-cta" type="button" style="pointer-events: auto; justify-self: center; font-size: 13px; padding: 4px 14px;">Open Sources →</button>
+      </div>
       <arazzo-text-editor id="text" hidden></arazzo-text-editor>
     </div>
     <aside>
@@ -122,7 +131,7 @@
         </div>
         <div style="padding: 10px; border-top: 1px solid var(--arazzo-border, #e3e6ea);">
           <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
-          <div id="expr-result" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere;" hidden></div>
+          <div id="expr-result" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 6px; padding: 6px 8px; display: none; gap: 4px; max-height: 160px; overflow-y: auto;"></div>
           <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280); margin-top: 6px;">
             Expression console — completions from the fixture schema; ⏎ evaluates against the debug session's frame at the scrub cursor (§3.3).
           </div>
@@ -140,6 +149,7 @@
     </aside>
   </main>
   <arazzo-source-acquisition-dialog id="acqdialog"></arazzo-source-acquisition-dialog>
+  <div id="toast" hidden style="position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 50; max-width: min(620px, 90vw); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--arazzo-border, #e3e6ea); background: var(--arazzo-bg, #fff); box-shadow: 0 6px 24px rgba(0,0,0,0.18); font-size: 13px;"></div>
 
   <script type="module">
     import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from './designer-fixture.js';
@@ -221,7 +231,12 @@
 
     function project() {
       surface.graph = projectWorkflow(doc, select.value);
+      // The empty canvas teaches the happy path instead of staring blankly (steps come from
+      // an attached source's operations).
+      const wf = (doc.workflows ?? []).find((w) => w.workflowId === select.value) ?? doc.workflows?.[0];
+      document.getElementById('canvas-empty').hidden = !!(wf?.steps?.length);
     }
+    document.getElementById('canvas-empty-cta').addEventListener('click', () => switchSideTab('sources'));
     select.addEventListener('change', () => { project(); surface.fit(); });
     if ([...select.options].some((o) => o.value === 'place-order')) select.value = 'place-order';
     project();
@@ -256,6 +271,19 @@
       saveStatus.textContent = status || (shell.dirty ? 'unsaved…' : '');
     }
 
+    // Durable feedback for the acts that deserve it (publish, git): a toast that stays long
+    // enough to read, coloured by kind, on top of the transient save-status line.
+    const toastEl = document.getElementById('toast');
+    let toastTimer = 0;
+    function showToast(message, kind = 'ok') {
+      toastEl.textContent = message;
+      toastEl.style.borderColor = kind === 'error' ? 'var(--arazzo-status-faulted, #d4351c)'
+        : kind === 'warn' ? 'var(--arazzo-status-suspended, #b45309)' : 'var(--arazzo-status-completed, #2a8a4a)';
+      toastEl.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toastEl.hidden = true; }, kind === 'ok' ? 8000 : 12000);
+    }
+
     // Autosave (undo/redo is the editing safety net; an explicit Save button is ceremony):
     // a short debounce after the last change, flushed when leaving the designer. A 409 pauses
     // autosaving — a collaborator saved first, and re-opening is the reconciliation.
@@ -285,7 +313,7 @@
       showView('designer');
       surface.fit();
       shell.conflicted = false;
-      setSaveUi('opened');
+      setSaveUi('all changes saved');
     }
 
     async function saveWorkingCopy() {
@@ -922,24 +950,33 @@
       };
     }
 
+    const exprHistory = [];
+    function renderExprHistory() {
+      exprResult.style.display = exprHistory.length ? 'grid' : 'none';
+      exprResult.replaceChildren(...exprHistory.map((entry) => {
+        const line = document.createElement('div');
+        line.style.color = entry.ok ? 'var(--arazzo-status-completed, #2a8a4a)' : 'var(--arazzo-muted, #6b7280)';
+        line.textContent = entry.text;
+        return line;
+      }));
+    }
+
     expr.addEventListener('commit', (e) => {
       logEvent('expression-commit', e.detail);
       const frame = debugFrame();
-      exprResult.hidden = false;
+      let entry;
       if (!frame) {
-        exprResult.style.color = 'var(--arazzo-muted, #6b7280)';
-        exprResult.textContent = 'no debug session — ▶ Run first, then evaluate at any scrub position';
-        return;
+        entry = { ok: false, text: 'no debug session — ▶ Run first, then evaluate at any scrub position' };
+      } else {
+        const resolved = resolveAgainstFrame(e.detail.value, frame);
+        entry = resolved.found
+          ? { ok: true, text: `${e.detail.value} @ ${tray.cursor}/${tray.length} = ${JSON.stringify(resolved.value)}` }
+          : { ok: false, text: `${e.detail.value} @ ${tray.cursor}/${tray.length} — ${resolved.reason}` };
       }
 
-      const resolved = resolveAgainstFrame(e.detail.value, frame);
-      if (resolved.found) {
-        exprResult.style.color = 'var(--arazzo-status-completed, #2a8a4a)';
-        exprResult.textContent = `@ ${tray.cursor}/${tray.length} = ${JSON.stringify(resolved.value, null, 2)}`;
-      } else {
-        exprResult.style.color = 'var(--arazzo-muted, #6b7280)';
-        exprResult.textContent = `@ ${tray.cursor}/${tray.length} — ${resolved.reason}`;
-      }
+      exprHistory.unshift(entry);
+      exprHistory.length = Math.min(exprHistory.length, 5);
+      renderExprHistory();
     });
 
     // The Git round-trip (§4.7): autosave first (the dialog reads the STORED copy), then bind /
@@ -992,17 +1029,22 @@
       try {
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
         const version = await client.publishWorkingCopy(shell.id, { owner: { name: m[1] || m[2], email: m[2] } });
+        const suite = version.evidence?.suite;
+        showToast(`🚀 Published ${version.baseWorkflowId} v${version.versionNumber} (draft)${suite ? ` — ${suite.passed}/${suite.total} scenarios green` : ''}. Promote it from the catalog when ready.`);
         setSaveUi(`published ${version.baseWorkflowId} v${version.versionNumber} (draft)`);
         logEvent('published', { base: version.baseWorkflowId, version: version.versionNumber });
       } catch (err) {
         if (err.status === 422 && err.problem?.reason === 'validation') {
           renderProblems({ diagnostics: err.problem.diagnostics ?? [] });
+          showToast('Publish refused — the document has validation findings (see Problems).', 'warn');
           setSaveUi('⚠ publish refused — fix the validation findings');
         } else if (err.status === 422 && err.problem?.reason === 'scenarios') {
           switchSideTab('scenarios');
           scPanel.refresh();
+          showToast(`Publish refused — ${err.problem.suite?.failed ?? '?'} scenario(s) failing (see Scenarios). Evidence is server-attested; fix or delete the failing scenarios.`, 'warn');
           setSaveUi(`⚠ publish refused — ${err.problem.suite?.failed ?? '?'} scenario(s) failing`);
         } else {
+          showToast(`Publish failed: ${err.problem?.detail ?? err.message}`, 'error');
           setSaveUi(`publish failed: ${err.problem?.detail ?? err.message}`);
         }
         logEvent('publish-refused', { status: err.status, reason: err.problem?.reason });

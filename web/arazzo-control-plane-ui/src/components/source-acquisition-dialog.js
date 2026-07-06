@@ -91,7 +91,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         <div class="head"><h2>Attach a source</h2><button class="x" type="button" title="Close">✕</button></div>
         <div class="body">
           <div class="error-banner" hidden></div>
-          <label>Attach as (the <code>sourceDescriptions</code> name)
+          <label>Name — matches the document's <code>sourceDescriptions</code>
             <input class="name-in" type="text" placeholder="e.g. payments" autocomplete="off">
           </label>
           <div class="tabs" role="tablist">

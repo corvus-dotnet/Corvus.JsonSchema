@@ -103,16 +103,18 @@ class ArazzoDebugTray extends ArazzoElement {
         .step:hover { background: var(--_surface); }
         .step.at { background: color-mix(in srgb, var(--_accent) 14%, transparent); }
         .step .n { color: var(--_muted); width: 2ch; text-align: right; flex-shrink: 0; }
-        .step .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+        .step .nm { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
         .step .ok { color: var(--arazzo-status-completed, #2a8a4a); }
         .step .bad { color: var(--arazzo-status-faulted, #d4351c); }
-        .step .act { color: var(--_muted); margin-left: auto; font-size: 11px; flex-shrink: 0; }
+        .step .act { color: var(--_muted); margin-left: auto; font-size: 11px; flex: 0 1 auto; min-width: 0;
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
         .ctx { overflow-y: auto; overflow-x: hidden; padding: 8px 10px; display: grid; gap: 8px; align-content: start; }
         .ctx h4 { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); }
         .ctx pre { margin: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        table { border-collapse: collapse; width: 100%; }
         td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; overflow-wrap: anywhere; }
-        td.v { width: 4ch; }
+        td.v { width: 1%; white-space: nowrap; overflow-wrap: normal; }
+        .chip.warn { color: var(--arazzo-status-suspended, #b45309); }
         .inject { display: grid; gap: 4px; border: 1px solid var(--_border); border-radius: 6px; padding: 6px; }
         .inject input, .inject textarea { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; }
         .inject textarea { min-height: 44px; }
@@ -121,7 +123,7 @@ class ArazzoDebugTray extends ArazzoElement {
       </style>
       ${!trace ? '<div class="empty-note">No debug session — ▶ Run simulates the working copy against its scripted mocks.</div>' : `
       <div class="bar" part="controls">
-        <span class="chip">${escapeHtml(OUTCOME_LABEL[trace.outcome] ?? trace.outcome)}${trace.pausedBefore ? ` before ${escapeHtml(trace.pausedBefore)}` : ''}</span>
+        ${this.renderOutcomeChip(trace)}
         <button class="prev" type="button" title="Scrub back one step" ${this._cursor === 0 ? 'disabled' : ''}>⏮</button>
         <input class="scrub" type="range" min="0" max="${this.length}" step="1" value="${this._cursor}" title="Time-travel: the whole run is recorded — scrub freely">
         <button class="next" type="button" title="Step forward (client-side over the recorded trace)">⏭</button>
@@ -164,6 +166,17 @@ class ArazzoDebugTray extends ArazzoElement {
         ...(correlationId ? { correlationId } : {}),
       });
     });
+  }
+
+  /** @private The engine outcome, tempered by judged health: completing while criteria failed is a warning. */
+  renderOutcomeChip(trace) {
+    const failed = (trace.steps ?? []).filter((s) => s.status === 'faulted' || (s.successCriteria ?? []).some((c) => !c.satisfied)).length;
+    const base = `${escapeHtml(OUTCOME_LABEL[trace.outcome] ?? trace.outcome)}${trace.pausedBefore ? ` before ${escapeHtml(trace.pausedBefore)}` : ''}`;
+    if (trace.outcome === 'completed' && failed > 0) {
+      return `<span class="chip warn" title="The run reached an end, but ${failed} step${failed === 1 ? "'s" : 's’'} success criteria failed along the way">✓ completed — ${failed} failed criteri${failed === 1 ? 'on' : 'a'}</span>`;
+    }
+
+    return `<span class="chip">${base}</span>`;
   }
 
   /** @private */

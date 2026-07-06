@@ -41,6 +41,8 @@ class ArazzoGitDialog extends ArazzoElement {
       const workingCopy = await this._client.getWorkingCopy(workingCopyId);
       if (seq !== this._seq) return;
       this._workingCopy = workingCopy;
+      const name = this.$('.wc-name');
+      if (name) name.textContent = workingCopy?.name ? ` — ${workingCopy.name}` : '';
       this.renderBinding();
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
@@ -77,7 +79,7 @@ class ArazzoGitDialog extends ArazzoElement {
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
       </style>
       <dialog part="dialog">
-        <div class="head"><h2>Git</h2><button class="x" type="button" title="Close">✕</button></div>
+        <div class="head"><h2>Git<span class="wc-name muted"></span></h2><button class="x" type="button" title="Close">✕</button></div>
         <div class="body">
           <div class="error-banner" hidden></div>
           <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
@@ -153,9 +155,21 @@ class ArazzoGitDialog extends ArazzoElement {
     const connected = !!this.$('.gh-connect').session?.connected;
     const formed = this.$('.b-repo').value && this.$('.b-branch').value.trim() && this.$('.b-path').value.trim();
     const bound = !!this._workingCopy?.gitBinding;
-    this.$('.save-binding').disabled = !this._workingCopy || !formed;
-    this.$('.pull').disabled = !connected || !bound;
-    this.$('.commit').disabled = !connected || !bound || !this.$('.c-message').value.trim();
+
+    // A disabled control carries its reason — nothing greys out silently.
+    const save = this.$('.save-binding');
+    save.disabled = !this._workingCopy || !formed;
+    save.title = save.disabled ? 'Pick a repository and fill in the branch and document path first' : 'Store this binding on the working copy';
+    const pull = this.$('.pull');
+    pull.disabled = !connected || !bound;
+    pull.title = pull.disabled
+      ? (!connected ? 'Connect GitHub first' : 'Save a binding first — Pull reads from the bound branch')
+      : 'Refresh the document, bound specs, and scenarios from the branch (etag-guarded; nothing partially applies)';
+    const commit = this.$('.commit');
+    commit.disabled = !connected || !bound || !this.$('.c-message').value.trim();
+    commit.title = commit.disabled
+      ? (!connected ? 'Connect GitHub first' : !bound ? 'Save a binding first — Commit writes to the bound branch' : 'Enter a commit message')
+      : 'Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity (§4.7)';
   }
 
   // The form's gitBinding value (specPaths parsed from `name = path` lines).

@@ -1270,6 +1270,23 @@ export function createMockControlPlane(options = {}) {
               }
             }
           }
+
+          // AsyncAPI 3 operations resolve to their channel address (the typed-form wait hints read it).
+          for (const [opId, op] of Object.entries(doc.operations ?? {})) {
+            if (opId !== step.operationId) continue;
+            const address = op?.channel?.$ref ? doc.channels?.[op.channel.$ref.split('/').pop()]?.address : op?.channel?.address;
+            entry.operation = { source: sourceName, kind: 'asyncapi', operationId: opId, ...(op?.action ? { action: op.action } : {}), ...(address ? { channel: address } : {}) };
+          }
+
+          // A channelPath binding (no operationId) resolves against the doc's channels directly.
+          if (!entry.operation && typeof step.channelPath === 'string' && step.channelPath) {
+            for (const [channelKey, channel] of Object.entries(doc.channels ?? {})) {
+              const address = channel?.address ?? channelKey;
+              if (address === step.channelPath || channelKey === step.channelPath) {
+                entry.operation = { source: sourceName, kind: 'asyncapi', action: 'receive', channel: address };
+              }
+            }
+          }
         }
 
         steps[step.stepId] = entry;
