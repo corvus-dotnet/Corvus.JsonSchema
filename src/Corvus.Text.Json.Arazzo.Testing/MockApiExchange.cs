@@ -16,9 +16,12 @@ namespace Corvus.Text.Json.Arazzo.Testing;
 /// <param name="StatusCode">The scripted response status.</param>
 /// <param name="ResponseBody">The scripted response body bytes (empty for a bodiless response).</param>
 /// <param name="ContentType">The scripted response content type.</param>
+/// <param name="RequestBody">The request body AS SENT (expressions resolved), when the call carried a
+/// typed JSON body — the debugger's "what did this step actually send". Empty otherwise.</param>
 public readonly record struct MockApiExchange(
     OperationMethod Method,
     string Path,
     int StatusCode,
     ReadOnlyMemory<byte> ResponseBody,
-    string ContentType);
+    string ContentType,
+    ReadOnlyMemory<byte> RequestBody = default);

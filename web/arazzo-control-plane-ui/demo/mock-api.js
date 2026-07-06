@@ -3342,9 +3342,32 @@ export function createMockControlPlane(options = {}) {
       const criteria = (step.successCriteria ?? []).map((c) => ({ condition: c.condition, satisfied: evalCriterion(c.condition, status) }));
       const ok = criteria.length ? criteria.every((c) => c.satisfied) : (status >= 200 && status < 300);
 
+      // The exchange records what the step actually SENT: parameters resolved into the path and
+      // query, the request body with its expressions resolved — the debugger's inputs view.
+      const frame = { inputs: scenario.inputs ?? {}, steps: Object.fromEntries(Object.entries(stepOutputs).map(([sid, o]) => [sid, { outputs: o }])) };
+      const resolveValue = (v) => {
+        if (typeof v === 'string' && v.startsWith('$')) {
+          const r = resolveAgainstFrame(v, frame);
+          return r.found ? r.value : v; // unresolved expressions stay visible as themselves
+        }
+        if (Array.isArray(v)) return v.map(resolveValue);
+        if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, resolveValue(x)]));
+        return v;
+      };
+      let resolvedPath = op?.path ?? `/${step.stepId}`;
+      const query = [];
+      for (const prm of step.parameters ?? []) {
+        if (!prm?.name || typeof prm.reference === 'string') continue;
+        const val = resolveValue(prm.value);
+        if ((prm.in ?? 'query') === 'path') resolvedPath = resolvedPath.replace(`{${prm.name}}`, encodeURIComponent(String(val)));
+        else if ((prm.in ?? 'query') === 'query') query.push(`${prm.name}=${encodeURIComponent(typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val))}`);
+      }
+      if (query.length) resolvedPath += `?${query.join('&')}`;
+      const sentBody = step.requestBody?.payload !== undefined ? resolveValue(step.requestBody.payload) : undefined;
+
       const record = {
         stepId: step.stepId, status: 'completed', attempt,
-        requests: [{ method: (op?.method ?? 'GET').toLowerCase(), path: op?.path ?? `/${step.stepId}`, status, ...(respBody !== undefined ? { responseBody: respBody } : {}) }],
+        requests: [{ method: (op?.method ?? 'GET').toLowerCase(), path: resolvedPath, status, ...(sentBody !== undefined ? { requestBody: sentBody } : {}), ...(respBody !== undefined ? { responseBody: respBody } : {}) }],
         ...(criteria.length ? { successCriteria: criteria } : {}),
       };
       const extracted = extractOutputs(step.outputs, { statusCode: status, responseBody: respBody });
