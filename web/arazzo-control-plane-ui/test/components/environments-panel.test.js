@@ -25,7 +25,7 @@ describe('<arazzo-environments>', () => {
     el = panelWithMock();
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rows(el).length, 3, 'production + staging + uat');
+    equal(rows(el).length, 4, 'development + production + staging + uat');
     ok(el.shadowRoot.textContent.includes('Production'), 'shows the display name');
     ok(el.shadowRoot.textContent.includes('production'), 'shows the name');
   });
@@ -48,15 +48,19 @@ describe('<arazzo-environments>', () => {
     const page3 = nextEvent(el, 'loaded');
     el.shadowRoot.querySelector('.next').click();
     await page3;
-    equal(rows(el).length, 1, 'page 3 holds the last environment');
+    equal(rows(el).length, 1, 'page 3 holds the next environment');
+    ok(!el.shadowRoot.querySelector('.next').disabled, 'Next still enabled — a fourth follows');
+
+    const page4 = nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.next').click();
+    await page4;
     ok(el.shadowRoot.querySelector('.next').disabled, 'Next disabled on the last page');
 
-    const back2 = nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.prev').click();
-    await back2;
-    const back1 = nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.prev').click();
-    await back1;
+    for (let back = 0; back < 3; back++) {
+      const landed = nextEvent(el, 'loaded');
+      el.shadowRoot.querySelector('.prev').click();
+      await landed;
+    }
     ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev disabled again back on page 1');
   });
 

@@ -855,6 +855,10 @@ function seedCredentials() {
     b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
     b('accounts', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'keyvault://accounts-staging#1' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'onboarding-client' }], description: 'Accounts API for onboarding.' }),
     b('billing', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing-staging#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'sys:sub', value: 'u-1042' }], kind: 'person', label: 'Ada Lovelace' } }),
+  
+    // §18: developer-sandbox credentials so the demo working copy is debug-ready in 'development'.
+    b('payments', 'development', 'httpBearer', [{ name: 'token', ref: 'vault://kv/dev/payments#token' }]),
+    b('order-events', 'development', 'httpBearer', [{ name: 'token', ref: 'vault://kv/dev/order-events#token' }]),
   ];
 }
 
@@ -898,6 +902,10 @@ function seedEnvironments() {
     e('uat', 'UAT', 'User acceptance — promotion requires green attested scenario evidence.'),
   ];
   environments[2].requireEvidence = true;
+  // Development-class (§18): drafts may execute here as debug runs.
+  const dev = e('development', 'Development', 'Developer sandbox — working-copy drafts may run here as debug runs (§18).');
+  dev.allowsDraftRuns = true;
+  environments.push(dev);
   return environments;
 }
 
@@ -1227,6 +1235,8 @@ export function createMockControlPlane(options = {}) {
   const runnerAuthorizations = options.runnerAuthorizationsSeed ? structuredClone(options.runnerAuthorizationsSeed) : seedRunnerAuthorizations();
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
   const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
+  const debugRunsStore = new Map(); // §18 debug runs, in-memory for the session
+  const auditEvents = [];
   const environments = options.environmentsSeed ? structuredClone(options.environmentsSeed) : seedEnvironments();
   const sourceRegistry = options.sourcesSeed ? structuredClone(options.sourcesSeed) : seedSources();
   const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
@@ -2691,6 +2701,118 @@ export function createMockControlPlane(options = {}) {
       const doc = entry.document ?? sourceRegistry.find((x) => x.name === entry.sourceName)?.document;
       if (!doc) return problem(404, 'Source not found', 'The referenced registered source no longer exists.');
       return json({ operations: projectOperationSurface(doc) });
+    }
+
+    const dbg = fullPath.match(/\/workspace\/workflows\/([^/]+)\/debug-runs(?:\/([^/]+))?(?:\/(resume|cancel))?\/?$/);
+    if (dbg) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(dbg[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+
+      // The interim executor (§18 slice 2): the stateless simulator plays the environment's
+      // runner — the trace shape, pause semantics, and resume verbs are the real contract;
+      // real transport arrives with the engine seam (slice 3).
+      const execute = (run) => {
+        const mocks = [];
+        for (const attachment of wc.sources ?? []) {
+          const sdoc = attachment.document ?? sourceRegistry.find((x) => x.name === attachment.sourceName)?.document;
+          for (const [pth, methods] of Object.entries(sdoc?.paths ?? {})) {
+            for (const [method, op] of Object.entries(methods ?? {})) {
+              if (!op || typeof op !== 'object') continue;
+              const success = Object.keys(op.responses ?? {}).find((c) => /^2\d\d$/.test(c));
+              mocks.push({ method, path: pth, status: Number(success ?? 200), body: {} });
+            }
+          }
+        }
+        const budget = run.pause?.afterEachStep
+          ? { maxSteps: run.cursor + 1 }
+          : run.pause?.beforeSteps?.length
+            ? { breakBefore: run.pause.beforeSteps }
+            : undefined;
+        const request = {
+          workflowId: run.workflowId,
+          scenario: { inputs: run.inputs ?? {}, mocks },
+          ...(budget?.maxSteps ? { budget: { maxSteps: budget.maxSteps } } : {}),
+          ...(budget?.breakBefore ? { until: { breakpoints: budget.breakBefore } } : {}),
+          ...(Object.keys(run.overrides).length ? { overrides: { stepOutputs: structuredClone(run.overrides) } } : {}),
+        };
+        const trace = simulateDocument(wc.document, request, undefined);
+        if (trace instanceof Response) return trace;
+        run.trace = trace;
+        run.cursor = trace.stepsExecuted ?? (trace.steps?.length ?? 0);
+        run.status = trace.outcome === 'suspended' ? 'suspended'
+          : trace.outcome === 'faulted' ? 'faulted'
+          : trace.outcome === 'completed' ? 'completed'
+          : 'paused';
+        // A budget stop reads as paused even though the underlying outcome says completed-so-far.
+        if (budget?.maxSteps && run.cursor >= budget.maxSteps && trace.outcome === 'completed' && (wc.document.workflows.find((w) => w.workflowId === run.workflowId)?.steps?.length ?? 0) > run.cursor) {
+          run.status = 'paused';
+        }
+        run.updatedAt = iso(0);
+        return null;
+      };
+
+      const view = (run) => json({
+        debugRunId: run.id, workflowId: run.workflowId, environment: run.environment,
+        status: run.status, cursor: run.cursor, trace: structuredClone(run.trace ?? { outcome: 'running', stepsExecuted: 0, steps: [] }),
+        documentEtag: run.documentEtag, startedBy: run.startedBy, startedAt: run.startedAt, updatedAt: run.updatedAt,
+      }, run.justCreated ? 201 : 200);
+
+      if (!dbg[2] && method === 'POST') {
+        const env = environments.find((x) => x.name === body?.environment);
+        if (!env) return problem(404, 'Environment not found', `No environment '${body?.environment}'.`);
+        if (!env.allowsDraftRuns) {
+          return problem(403, 'Drafts may not run here', `Environment '${env.name}' does not allow draft debug runs (§18) — its administrators must set allowsDraftRuns.`);
+        }
+        const declared = (wc.document?.sourceDescriptions ?? []).map((x) => x.name);
+        const missing = declared.filter((name) => !credentials.some((c) => c.sourceName === name && c.environment === env.name));
+        if (missing.length) {
+          return problem(409, 'Credentials not ready', `No credential bound in '${env.name}' for: ${missing.join(', ')}.`);
+        }
+        const wfId = body?.workflowId;
+        if (!wfId || !(wc.document?.workflows ?? []).some((w) => w.workflowId === wfId)) {
+          return problem(400, 'Unknown workflow', `The document declares no workflow '${wfId}'.`);
+        }
+        const run = {
+          id: `dbg-${nextEtag().replaceAll('"', '')}`, wcId: wc.id, workflowId: wfId, environment: env.name,
+          inputs: body?.inputs, pause: body?.pause, overrides: {}, cursor: 0, status: 'running',
+          documentEtag: wc.etag, startedBy: actingSubject(), startedAt: iso(0), updatedAt: iso(0), justCreated: true,
+        };
+        const fail = execute(run);
+        if (fail) return fail;
+        debugRunsStore.set(run.id, run);
+        auditEvents.push?.({ kind: 'debug-run-started', workingCopyId: wc.id, environment: env.name, documentEtag: run.documentEtag, by: run.startedBy, at: run.startedAt });
+        const response = view(run);
+        run.justCreated = false;
+        return response;
+      }
+
+      const run = debugRunsStore.get(decodeURIComponent(dbg[2] ?? ''));
+      if (!run || run.wcId !== wc.id) return problem(404, 'Debug run not found');
+      if (!dbg[3] && method === 'GET') return view(run);
+      if (dbg[3] === 'cancel' && method === 'POST') {
+        run.status = 'cancelled';
+        run.updatedAt = iso(0);
+        return view(run);
+      }
+      if (dbg[3] === 'resume' && method === 'POST') {
+        if (['completed', 'cancelled'].includes(run.status)) return problem(409, 'Not resumable', `The debug run is ${run.status}.`);
+        const action = body?.action;
+        if (action?.mode === 'Skip') {
+          // Step over: the paused/faulted step's outputs are PROVIDED; it does not execute.
+          const wf = wc.document.workflows.find((w) => w.workflowId === run.workflowId);
+          const at = action.targetCursor != null ? action.targetCursor - 1 : run.cursor;
+          const stepId = wf?.steps?.[at]?.stepId ?? run.trace?.steps?.at(-1)?.stepId;
+          if (stepId) run.overrides[stepId] = action.skipOutputs ?? {};
+        } else if (action?.mode === 'Rewind') {
+          run.cursor = Math.max(0, (action.targetCursor ?? 0)); // deliberate re-execution forward from here
+        }
+        if (body?.pause !== undefined) run.pause = body.pause;
+        if (run.pause?.afterEachStep) run.cursor = Math.min(run.cursor + 0, run.cursor); // budget computed from cursor below
+        const fail = execute(run);
+        if (fail) return fail;
+        return view(run);
+      }
+      return problem(405, 'Method not allowed');
     }
 
     const srcOne = fullPath.match(/\/workspace\/workflows\/([^/]+)\/sources\/([^/]+)\/?$/);

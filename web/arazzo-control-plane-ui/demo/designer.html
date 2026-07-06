@@ -112,6 +112,14 @@
       <dialog id="run-inputs-dialog" style="border:1px solid var(--arazzo-border,#e3e6ea); border-radius:10px; background:var(--arazzo-bg,#fff); color:var(--arazzo-text,inherit); padding:0; width:min(460px,92vw);">
         <div style="padding:12px 14px; font-weight:700; border-bottom:1px solid var(--arazzo-border,#e3e6ea);">Run — provide the workflow's inputs</div>
         <div style="padding:12px 14px; display:grid; gap:8px;">
+          <label style="font-size:11px; color:var(--arazzo-muted,#6b7280); display:grid; gap:2px;">Run in
+            <select id="run-inputs-env" style="font:inherit; font-size:13px; padding:6px 9px; border:1px solid var(--arazzo-border,#e3e6ea); border-radius:8px; background:var(--arazzo-bg,#fff); color:inherit;">
+              <option value="">Mocks (simulated)</option>
+            </select>
+          </label>
+          <div id="run-inputs-env-hint" style="font-size:11px; color:var(--arazzo-muted,#6b7280);" hidden>
+            A DEBUG RUN (§18): durable and forward-only in that environment — the runner resolves the credentials; step over uses the runs Skip; capture the trace to replay with time travel.
+          </div>
           <arazzo-value-editor id="run-inputs-editor"></arazzo-value-editor>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:8px; padding:12px 14px; border-top:1px solid var(--arazzo-border,#e3e6ea);">
@@ -636,6 +644,7 @@
     backBtn.addEventListener('click', () => {
       // Leaving the designer ends any debug session — the dock, trace, staged triggers,
       // overrides, and inputs all belong to the working-copy visit.
+      if (shell.debugRun) { void client.cancelDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); }
       tray.trace = null;
       sessionTriggers.length = 0;
       for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k];
@@ -1201,6 +1210,12 @@
     });
 
     tray.addEventListener('output-override', (e) => {
+      if (shell.debugRun) {
+        // Attached: step over IS the runs Skip — the step's outputs are provided, it never executes.
+        void advanceDebugRun({ action: { mode: 'Skip', skipOutputs: e.detail.outputs }, pause: { afterEachStep: true } });
+        logEvent('step-over', { stepId: e.detail.stepId, live: true });
+        return;
+      }
       sessionOutputOverrides[e.detail.stepId] = e.detail.outputs;
       logEvent('step-over', { stepId: e.detail.stepId });
       runSimulation();
@@ -1246,35 +1261,93 @@
       runSimulation();
     });
     simBtn.addEventListener('click', async () => {
+      if (shell.debugRun) { void advanceDebugRun({ pause: {} }); return; } // attached ▶ = continue
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       const properties = wf?.inputs?.properties;
-      if (properties && Object.keys(properties).length && !tray.trace) {
-        const staged = await askForInputs(wf.inputs);
+      const envs = await loadDraftRunEnvironments();
+      if (!tray.trace && ((properties && Object.keys(properties).length) || envs.length)) {
+        const staged = await askForInputs(wf?.inputs ?? { type: 'object' });
         if (staged === null) return; // cancelled
-        sessionInputs = staged;
+        sessionInputs = staged.inputs;
+        if (staged.environment) {
+          try {
+            applyDebugRun(await client.startDebugRun(shell.id, {
+              workflowId: select.value,
+              environment: staged.environment,
+              ...(sessionInputs && Object.keys(sessionInputs).length ? { inputs: sessionInputs } : {}),
+              pause: { afterEachStep: true },
+            }));
+            logEvent('debug-run-started', { environment: staged.environment });
+          } catch (err) {
+            showToast(`Debug run refused — ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
+          }
+          return;
+        }
       }
       runSimulation();
     });
 
     // The pre-run inputs form: the value editor typed by the workflow's OWN inputs schema,
     // pre-filled from the last run.
-    function askForInputs(schema) {
+    let draftRunEnvironments = null; // §18: environments whose administrators allow draft debug runs
+    async function loadDraftRunEnvironments() {
+      if (draftRunEnvironments) return draftRunEnvironments;
+      try {
+        const { environments } = await client.listEnvironments();
+        draftRunEnvironments = environments.filter((e) => e.allowsDraftRuns);
+      } catch { draftRunEnvironments = []; }
+      return draftRunEnvironments;
+    }
+
+    async function askForInputs(schema) {
+      const envs = await loadDraftRunEnvironments();
       return new Promise((resolve) => {
         const dlg = document.getElementById('run-inputs-dialog');
         const editor = document.getElementById('run-inputs-editor');
+        const envSelect = document.getElementById('run-inputs-env');
+        envSelect.innerHTML = '<option value="">Mocks (simulated)</option>'
+          + envs.map((e) => `<option value="${e.name}">${e.displayName ?? e.name} — debug run (§18)</option>`).join('');
+        envSelect.onchange = () => { document.getElementById('run-inputs-env-hint').hidden = !envSelect.value; };
         editor.seed = sessionInputs ?? undefined;
         editor.descriptor = schema;
         const done = (value) => { dlg.close(); resolve(value); };
-        dlg.querySelector('.ri-run').onclick = () => { try { done(editor.value); } catch { /* invalid JSON stays open */ } };
+        dlg.querySelector('.ri-run').onclick = () => {
+          try { done({ inputs: editor.value, environment: envSelect.value || null }); } catch { /* invalid JSON stays open */ }
+        };
         dlg.querySelector('.ri-cancel').onclick = () => done(null);
         dlg.showModal();
       });
     }
+
+    // ── §18 attached mode: the dock drives a DURABLE debug run — forward-only ─────────────────────
+    function applyDebugRun(run) {
+      shell.debugRun = { id: run.debugRunId, environment: run.environment, status: run.status };
+      tray.trace = run.trace;
+      document.getElementById('debug-dock').hidden = false;
+      void feedTraySchemas();
+      applyDebugFrame();
+      setDebugUi();
+      setSaveUi(`debug run ${run.status} in ${run.environment} · step ${run.cursor}`);
+    }
+
+    function detachDebugRun() {
+      shell.debugRun = null;
+    }
+
+    async function advanceDebugRun(command) {
+      if (!shell.debugRun) return;
+      try {
+        applyDebugRun(await client.resumeDebugRun(shell.id, shell.debugRun.id, command));
+      } catch (err) {
+        showToast(`Debug run: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
+      }
+    }
     stepBtn.addEventListener('click', () => {
+      if (shell.debugRun) { void advanceDebugRun({ pause: { afterEachStep: true } }); return; } // forward-only single step
       if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
       else runSimulation({ stepPastEnd: !!tray.trace });
     });
-    stopBtn.addEventListener('click', () => { tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
+    stopBtn.addEventListener('click', () => { if (shell.debugRun) { void client.cancelDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); } tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     surface.addEventListener('node-activated', (e) => {
       if (e.detail.id && !e.detail.id.startsWith('#')) runSimulation({ until: { beforeStepId: e.detail.id } });
     });
