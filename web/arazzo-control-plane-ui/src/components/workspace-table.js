@@ -168,8 +168,8 @@ class ArazzoWorkspaceTable extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .bar h2 { margin: 0; font-size: 13px; font-weight: 600; }
+        .bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .bar h2 { margin: 0 auto 0 0; font-size: 13px; font-weight: 600; }
         table { width: 100%; border-collapse: collapse; }
         thead th {
           text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
