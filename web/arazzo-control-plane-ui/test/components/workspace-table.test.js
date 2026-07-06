@@ -2,7 +2,7 @@
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/workspace-table.js';
-import { ok, equal, nextEvent, mount } from './helpers.js';
+import { ok, equal, nextEvent, mount, waitFor } from './helpers.js';
 
 function tableWithMock(attrs = {}) {
   const mock = createMockControlPlane({ latencyMs: 0 });
@@ -72,6 +72,11 @@ describe('<arazzo-workspace-table>', () => {
     ok(!el.shadowRoot.querySelector('button.new').hidden, 'New shows with can-write');
     const createdEvent = nextEvent(el, 'working-copy-created');
     el.shadowRoot.querySelector('button.new').click();
+    // The kit's standard dialog asks for the name — no system prompt.
+    const ask = el.shadowRoot.querySelector('arazzo-input-dialog');
+    await waitFor(() => ask.shadowRoot.querySelector('.in-field'));
+    equal(ask.shadowRoot.querySelector('.in-field').value, 'untitled', 'the default name prefills');
+    ask.shadowRoot.querySelector('.confirm').click();
     const e = await createdEvent;
     equal(e.detail.workingCopy.name, 'untitled', 'blank create derives the untitled name');
     ok(e.detail.workingCopy.document, 'the created event carries the FULL working copy');
@@ -89,8 +94,14 @@ describe('<arazzo-workspace-table>', () => {
     let selections = 0;
     el.addEventListener('working-copy-selected', () => selections++);
     const deleted = nextEvent(el, 'working-copy-deleted');
-    el.confirmFn = () => true;
     el.shadowRoot.querySelector(`tbody button.rowaction[data-id="${created.id}"]`).click();
+    // The standard danger dialog confirms — no system confirm.
+    const ask = el.shadowRoot.querySelector('arazzo-input-dialog');
+    await waitFor(() => {
+      const b = ask.shadowRoot.querySelector('.confirm.danger');
+      return b && ask.shadowRoot.querySelector('dialog').open ? b : null;
+    });
+    ask.shadowRoot.querySelector('.confirm.danger').click();
     const e = await deleted;
     equal(e.detail.id, created.id);
     equal(selections, 0, 'the delete click did not bubble into a row selection');
