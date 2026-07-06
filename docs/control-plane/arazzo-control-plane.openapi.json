@@ -2405,6 +2405,39 @@
       }
     },
     "/workspace/workflows/{id}/sources/{name}": {
+      "get": {
+        "tags": ["workspace"],
+        "operationId": "getWorkingCopySource",
+        "summary": "One attachment WITH its stored document (inline) or registry reference \u2014 the full payload needed to re-attach it (restore after a detach).",
+        "security": [{"bearer": ["workspace:read"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "name", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachment, including the inline document when the working copy stores one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {"$ref": "#/components/schemas/AttachedSource"},
+                    {
+                      "type": "object",
+                      "properties": {
+                        "document": {
+                          "description": "The stored source document (inline attachments only)."
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
       "put": {
         "operationId": "attachWorkingCopySource",
         "security": [

@@ -156,6 +156,15 @@ public interface IApiWorkspaceHandler
     ValueTask<ListWorkingCopySourcesResult> HandleListWorkingCopySourcesAsync(ListWorkingCopySourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /workspace/workflows/{id}/sources/{name} — One attachment WITH its stored document (inline) or registry reference — the full payload needed to re-attach it (restore after a detach).
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetWorkingCopySourceResult> HandleGetWorkingCopySourceAsync(GetWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles PUT /workspace/workflows/{id}/sources/{name} — Attach a source to a working copy
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

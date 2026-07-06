@@ -1014,6 +1014,33 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<GetWorkingCopySourceResult> HandleGetWorkingCopySourceAsync(GetWorkingCopySourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string id = (string)parameters.Id;
+        string name = (string)parameters.Name;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is not { } w)
+        {
+            return GetWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        JsonElement attachment = WorkspaceSourceJson.FindAttachment((JsonElement)w.RootElement.Sources, name);
+        if (attachment.ValueKind != JsonValueKind.Object)
+        {
+            return GetWorkingCopySourceResult.NotFound(AttachmentNotFoundProblem(id, name), workspace);
+        }
+
+        // The stored attachment IS the restore payload: name + kind + (sourceName | document) —
+        // copied into a workspace-owned pooled document (the store copy disposes with this scope).
+        ParsedJsonDocument<Models.GetWorkspaceWorkflowsByIdSourcesByNameOk> response =
+            PersistedJson.ToPooledDocument<Models.GetWorkspaceWorkflowsByIdSourcesByNameOk, JsonElement>(
+                attachment,
+                static (Utf8JsonWriter writer, in JsonElement entry) => entry.WriteTo(writer));
+        workspace.TakeOwnership(response);
+        return GetWorkingCopySourceResult.Ok(response.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ListWorkingCopySourceOperationsResult> HandleListWorkingCopySourceOperationsAsync(ListWorkingCopySourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.Id;

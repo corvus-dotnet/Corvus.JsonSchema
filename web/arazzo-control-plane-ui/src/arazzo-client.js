@@ -942,6 +942,18 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `getWorkingCopySource` — one attachment WITH its stored inline document (or registry
+   * reference) — the full payload needed to re-attach it (restore after a detach).
+   *
+   * @param {string} id - The working copy id.
+   * @param {string} name - The sourceDescriptions name.
+   * @returns {Promise<object>} The attachment. Throws {@link ProblemError} `404` if not attached.
+   */
+  getWorkingCopySource(id, name, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  /**
    * `attachWorkingCopySource` — attach (or replace) the source for a `sourceDescriptions` name:
    * EXACTLY ONE of `sourceName` (a registry reference, resolved reach-checked at read time) or
    * `document` (an inline upload, stored on the working copy). The response carries the working

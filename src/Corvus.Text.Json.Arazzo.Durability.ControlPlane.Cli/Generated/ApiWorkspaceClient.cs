@@ -397,6 +397,24 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
     }
 
     /// <summary>
+    /// One attachment WITH its stored document (inline) or registry reference — the full payload needed to re-attach it (restore after a detach).
+    /// </summary>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GetWorkingCopySourceResponse> GetWorkingCopySourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString IdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, id, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        GetWorkingCopySourceRequest request = new(IdValue, NameValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetWorkingCopySourceRequest, GetWorkingCopySourceResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Attach a source to a working copy
     /// </summary>
     /// <remarks>

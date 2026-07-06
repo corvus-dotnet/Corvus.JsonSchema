@@ -21,6 +21,7 @@
 //              provided outputs in a typed editor and replays with them forced)
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import './value-editor.js';
 
 const OUTCOME_LABEL = {
   completed: '✓ completed',
@@ -36,6 +37,10 @@ class ArazzoDebugTray extends ArazzoElement {
     /** @private */ this._trace = null;
     /** @private */ this._cursor = 0;
     /** @private */ this._stack = []; // ancestor frames while stepped into a sub-workflow's trace
+    /** stepId → {outputs?: descriptors} — types the step-over editor (host-fed from the schemas endpoint). */
+    this.stepSchemas = {};
+    /** channelPath → message payload schema — types the inject-trigger editor. */
+    this.channelSchemas = {};
   }
 
   connectedCallback() {
@@ -102,7 +107,7 @@ class ArazzoDebugTray extends ArazzoElement {
         .bar .chip { font-weight: 600; }
         .bar button { font-size: 12px; padding: 2px 8px; }
         .empty-note { padding: 10px; color: var(--_muted); }
-        .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 0; max-height: 34vh; }
+        .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr); gap: 0; max-height: var(--arazzo-tray-body-max, 34vh); overflow: hidden; }
         .steps { overflow-y: auto; overflow-x: hidden; border-right: 1px solid var(--_border); }
         .step { display: flex; gap: 6px; width: 100%; text-align: left; border: none; background: none; color: inherit;
                 font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 5px 8px; cursor: pointer; align-items: baseline; }
@@ -131,6 +136,13 @@ class ArazzoDebugTray extends ArazzoElement {
         .inject button { justify-self: start; font-size: 11px; }
         .inject .why { color: var(--_muted); font-size: 10.5px; }
         .override { font-size: 11px; justify-self: start; }
+        .ovr-form { display: grid; gap: 6px; border: 1px solid var(--arazzo-status-suspended, #b45309); border-radius: 6px; padding: 8px; margin-top: 4px; }
+        .ovr-form[hidden] { display: none; }
+        .ovr-form .why { color: var(--_muted); font-size: 10.5px; }
+        .ovr-actions { display: flex; gap: 6px; }
+        .ovr-actions button { font-size: 11px; }
+        .ctx-into { font-size: 11px; justify-self: start; }
+        .inj-payload-slot { display: grid; gap: 3px; }
       </style>
       ${!trace ? '<div class="empty-note">No debug session — ▶ Run simulates the working copy against its scripted mocks.</div>' : `
       ${this._stack.length ? `<div class="crumb" part="crumb">
@@ -179,22 +191,44 @@ class ArazzoDebugTray extends ArazzoElement {
       this.emit('cursor-changed', { index: this._cursor });
     });
     this.$('.override')?.addEventListener('click', () => {
-      const record = this._trace.steps[this._cursor - 1];
-      this.emit('output-override-requested', { stepId: record.stepId, outputs: record.outputs });
+      const form = this.$('.ovr-form');
+      form.hidden = !form.hidden;
+      if (!form.hidden && !form.dataset.built) {
+        form.dataset.built = '1';
+        const record = this._trace.steps[this._cursor - 1];
+        const declared = this.stepSchemas?.[record.stepId]?.outputs;
+        const editor = form.querySelector('.ovr-editor');
+        editor.seed = record.outputs;
+        editor.descriptor = declared && Object.keys(declared).length ? { type: 'object', properties: declared } : { type: 'object' };
+      }
     });
+    this.$('.ovr-apply')?.addEventListener('click', () => {
+      const record = this._trace.steps[this._cursor - 1];
+      try {
+        this.emit('output-override', { stepId: record.stepId, outputs: this.$('.ovr-editor').value });
+      } catch { /* unparseable JSON in the fallback editor: stay open */ }
+    });
+    this.$('.ovr-cancel')?.addEventListener('click', () => { this.$('.ovr-form').hidden = true; });
+
+    // The inject payload edits TYPED when the awaited channel's message schema is known.
+    const injSlot = this.$('.inj-payload-slot');
+    if (injSlot) {
+      const schema = this.channelSchemas?.[this._trace.wait?.channel];
+      const editor = document.createElement('arazzo-value-editor');
+      editor.className = 'inj-payload';
+      editor.descriptor = schema && typeof schema === 'object' ? schema : { type: 'object' };
+      injSlot.append(editor);
+      if (!schema) injSlot.insertAdjacentHTML('beforeend', '<span class="why">no message schema declared for this channel — free-form payload</span>');
+    }
     this.$('.inj-go')?.addEventListener('click', () => {
       const channel = this.$('.inj-channel').value.trim();
       if (!channel) return;
       const correlationId = this.$('.inj-corr').value.trim();
-      const raw = this.$('.inj-payload').value.trim();
       let payload;
-      if (raw) {
-        try {
-          payload = JSON.parse(raw);
-        } catch {
-          this.$('.inj-payload').style.borderColor = 'var(--_danger)';
-          return;
-        }
+      try {
+        payload = this.$('.inj-payload').value; // the typed editor parses/validates
+      } catch {
+        return; // unparseable free-form JSON: the editor shows the error, stay put
       }
 
       this.emit('trigger-injected', {
@@ -273,7 +307,7 @@ class ArazzoDebugTray extends ArazzoElement {
             <h4>inject trigger</h4>
             <input class="inj-channel" type="text" placeholder="channel" value="${escapeHtml(trace.wait.channel ?? '')}">
             <input class="inj-corr" type="text" placeholder="correlationId (optional)" value="${escapeHtml(trace.wait.correlationId ?? '')}">
-            <textarea class="inj-payload" spellcheck="false" placeholder='payload JSON (optional), e.g. {"approved": true}'></textarea>
+            <div class="inj-payload-slot"></div>
             <button class="inj-go" type="button" title="Add this message to the session scenario and replay past the suspension">⚡ Inject &amp; continue</button>
             <span class="why">joins the session's scenario; the replay delivers it at this wait</span>
           </div>`);
@@ -285,10 +319,24 @@ class ArazzoDebugTray extends ArazzoElement {
       }
     }
 
-    const overrideButton = `<button class="override ghost" type="button" data-step="${escapeHtml(record.stepId)}"
-      title="Provide this step's outputs yourself and replay — the step will NOT execute (the runs-view Skip, here). Rewind first to try a what-if from any point.">⏭ step over — provide outputs & replay…</button>`;
+    if (record.subTrace) {
+      parts.push(`<button class="ghost ctx-into" data-into="${this._cursor - 1}"
+        title="Open ${escapeHtml(record.subTrace.workflowId ?? 'the sub-workflow')}'s own trace — scrubbable, with ⬅ back in the breadcrumb">⤵ step into ${escapeHtml(record.subTrace.workflowId ?? 'subworkflow')}</button>`);
+    }
+
+    const declared = this.stepSchemas?.[record.stepId]?.outputs;
+    const typed = declared && Object.keys(declared).length;
+    const overrideBlock = `<button class="override ghost" type="button" data-step="${escapeHtml(record.stepId)}"
+      title="Provide this step's outputs yourself and replay — the step will NOT execute (the runs-view Skip, here). Rewind first to try a what-if from any point.">⏭ step over — provide outputs & replay…</button>
+      <div class="ovr-form" hidden>
+        <span class="why">${typed
+          ? `typed by ${escapeHtml(record.stepId)}'s declared outputs`
+          : 'this step declares no outputs — provide an object to stand in as its outputs'}</span>
+        <arazzo-value-editor class="ovr-editor"></arazzo-value-editor>
+        <span class="ovr-actions"><button class="ovr-apply" type="button">⏭ Apply &amp; replay</button><button class="ovr-cancel ghost" type="button">Cancel</button></span>
+      </div>`;
     return `<h4>after step ${this._cursor}: ${escapeHtml(record.stepId)}${record.skipped ? ' <span class="muted">(stepped over — outputs provided)</span>' : ''}</h4>`
-      + (parts.join('') || '<pre class="muted">no captured context</pre>') + overrideButton;
+      + (parts.join('') || '<pre class="muted">no captured context</pre>') + overrideBlock;
   }
 }
 

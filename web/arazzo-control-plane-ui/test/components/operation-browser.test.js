@@ -2,7 +2,7 @@
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/operation-browser.js';
-import { ok, equal, nextEvent, mount } from './helpers.js';
+import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
 
 const petstore = {
   openapi: '3.1.0',
@@ -100,7 +100,16 @@ describe('<arazzo-operation-browser>', () => {
     ({ el } = await browserWithSources());
     const detached = nextEvent(el, 'source-detached');
     el.shadowRoot.querySelector('button.detach[data-name="events"]').click();
-    equal((await detached).detail.name, 'events');
+    // Detach is destructive: the standard danger dialog states the consequences first, and the
+    // stashed attachment rides the event so the host can offer restore.
+    const ask = el.shadowRoot.querySelector('arazzo-input-dialog');
+    (await waitFor(() => {
+      const b = ask.shadowRoot.querySelector('.confirm.danger');
+      return b && ask.shadowRoot.querySelector('dialog').open ? b : null;
+    }, 'the detach confirmation')).click();
+    const e = await detached;
+    equal(e.detail.name, 'events');
+    ok(e.detail.attachment, 'the full attachment is stashed for restore');
     await nextEvent(el, 'loaded');
     equal(opRows(el).length, 2, 'the channel operation left with its source');
   });

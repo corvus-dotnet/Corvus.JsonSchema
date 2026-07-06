@@ -1504,6 +1504,10 @@ export function createMockControlPlane(options = {}) {
               const address = channel?.address ?? channelKey;
               if (address === step.channelPath || channelKey === step.channelPath) {
                 entry.operation = { source: sourceName, kind: 'asyncapi', action: 'receive', channel: address };
+                // AsyncAPI 3 keys channel.messages; 2.x hangs the message off publish/subscribe.
+                const messageRef = Object.values(channel?.messages ?? {})[0] ?? channel?.publish?.message ?? channel?.subscribe?.message;
+                const message = messageRef?.$ref ? doc.components?.messages?.[messageRef.$ref.split('/').pop()] : messageRef;
+                if (message?.payload) entry.message = { channel: address, payload: message.payload };
               }
             }
           }
@@ -2694,6 +2698,11 @@ export function createMockControlPlane(options = {}) {
       const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcOne[1]));
       if (!wc) return problem(404, 'Working copy not found');
       const name = decodeURIComponent(srcOne[2]);
+      if (method === 'GET') {
+        const attachment = (wc.sources ?? []).find((x) => x.name === name);
+        if (!attachment) return problem(404, 'Attachment not found');
+        return json(attachment); // the stored attachment IS the restore payload
+      }
       if (method === 'PUT') return attachWorkingCopySource(wc, name, body);
       if (method === 'DELETE') {
         const at = (wc.sources ?? []).findIndex((x) => x.name === name);

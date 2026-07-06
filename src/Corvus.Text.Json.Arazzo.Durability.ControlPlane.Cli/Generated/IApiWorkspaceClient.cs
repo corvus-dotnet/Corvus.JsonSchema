@@ -248,6 +248,11 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] ListWorkingCopySourcesOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetWorkingCopySource</c> for the <c>Bearer</c> scheme.
+        /// </summary>
+        public static readonly string[] GetWorkingCopySourceBearerScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>AttachWorkingCopySource</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AttachWorkingCopySourceOauth2Scopes = ["workspace:write"];
@@ -286,6 +291,11 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] AllOpenIdConnectScopes = ["catalog:write", "workspace:read", "workspace:write"];
+
+        /// <summary>
+        /// Gets all scopes required by any operation for the <c>Bearer</c> scheme.
+        /// </summary>
+        public static readonly string[] AllBearerScopes = ["workspace:read"];
     }
 
     /// <summary>
@@ -442,6 +452,14 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="id">The id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListWorkingCopySourcesResponse> ListWorkingCopySourcesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// One attachment WITH its stored document (inline) or registry reference — the full payload needed to re-attach it (restore after a detach).
+    /// </summary>
+    /// <param name="id">The id parameter.</param>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetWorkingCopySourceResponse> GetWorkingCopySourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Attach a source to a working copy
