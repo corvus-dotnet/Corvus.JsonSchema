@@ -259,6 +259,16 @@ public sealed class HttpClientTransport : IApiTransport
         CancellationToken cancellationToken)
         where TResponse : struct, IApiResponse<TResponse>
     {
+        if (this.baseUrlOverride is not null && !this.baseUrlOverrideResolved)
+        {
+            // A per-environment base URL override (§8): resolve once; ApplyBaseAddress combines each relative
+            // request against it instead of HttpClient.BaseAddress, with the same prefix-preserving composition,
+            // so the run reaches this environment's endpoint. Resolving before authentication means providers
+            // that sign the request see the final absolute URI.
+            this.resolvedBaseUrlOverride = await this.baseUrlOverride(cancellationToken).ConfigureAwait(false);
+            this.baseUrlOverrideResolved = true;
+        }
+
         this.ApplyBaseAddress(httpRequest);
 
         if (this.authenticationProvider is not null)
@@ -266,22 +276,6 @@ public sealed class HttpClientTransport : IApiTransport
             await this.authenticationProvider
                 .AuthenticateAsync(httpRequest, cancellationToken)
                 .ConfigureAwait(false);
-        }
-
-        if (this.baseUrlOverride is not null)
-        {
-            // A per-environment base URL override (§8): resolve once, then resolve each relative request against it
-            // (the same combine HttpClient applies to BaseAddress) so the run reaches this environment's endpoint.
-            if (!this.baseUrlOverrideResolved)
-            {
-                this.resolvedBaseUrlOverride = await this.baseUrlOverride(cancellationToken).ConfigureAwait(false);
-                this.baseUrlOverrideResolved = true;
-            }
-
-            if (this.resolvedBaseUrlOverride is { } overrideBase && httpRequest.RequestUri is { IsAbsoluteUri: false } relative)
-            {
-                httpRequest.RequestUri = new Uri(overrideBase, relative);
-            }
         }
 
         HttpResponseMessage httpResponse = await this.httpClient
@@ -313,9 +307,10 @@ public sealed class HttpClientTransport : IApiTransport
     }
 
     /// <summary>
-    /// Composes the final absolute request URI from <see cref="HttpClient.BaseAddress"/>
-    /// and the relative operation URI produced by <see cref="BuildHttpRequest"/>,
-    /// preserving any path prefix carried by the base address.
+    /// Composes the final absolute request URI from the effective base — the resolved
+    /// per-transport base URL override when one is configured, else
+    /// <see cref="HttpClient.BaseAddress"/> — and the relative operation URI produced by
+    /// <see cref="BuildHttpRequest"/>, preserving any path prefix carried by the base.
     /// </summary>
     /// <param name="httpRequest">The request whose <see cref="HttpRequestMessage.RequestUri"/>
     /// is rewritten in place.</param>
@@ -330,9 +325,13 @@ public sealed class HttpClientTransport : IApiTransport
     /// segment the result is identical to the RFC 3986 resolution.
     /// </para>
     /// <para>
-    /// If the client has no <see cref="HttpClient.BaseAddress"/>, or the request URI is
-    /// already absolute or does not begin with <c>/</c>, the request is left untouched and
-    /// <see cref="HttpClient"/> behaves exactly as before.
+    /// If there is no effective base (no override resolved and no
+    /// <see cref="HttpClient.BaseAddress"/>), or the request URI is already absolute, the
+    /// request is left untouched and <see cref="HttpClient"/> behaves exactly as before. A
+    /// relative reference that does not begin with <c>/</c> has no prefix-dropping hazard —
+    /// RFC 3986 merge keeps the base path — so it is resolved against the override when one
+    /// is present (only this method knows the override) and otherwise left for
+    /// <see cref="HttpClient"/> to resolve against its own base address.
     /// </para>
     /// <para>
     /// The composition allocates exactly one string per request (the composed URI passed to
@@ -344,34 +343,45 @@ public sealed class HttpClientTransport : IApiTransport
     /// </remarks>
     private void ApplyBaseAddress(HttpRequestMessage httpRequest)
     {
-        if (this.httpClient.BaseAddress is Uri baseAddress
-            && httpRequest.RequestUri is { IsAbsoluteUri: false } relativeUri
-            && relativeUri.OriginalString.StartsWith('/'))
+        if ((this.resolvedBaseUrlOverride ?? this.httpClient.BaseAddress) is not Uri baseAddress
+            || httpRequest.RequestUri is not { IsAbsoluteUri: false } relativeUri)
         {
-            string baseUri = baseAddress.AbsoluteUri;
-            int baseLength = baseUri.AsSpan().IndexOfAny('?', '#');
-            if (baseLength < 0)
-            {
-                baseLength = baseUri.Length;
-            }
-
-            while (baseLength > 0 && baseUri[baseLength - 1] == '/')
-            {
-                baseLength--;
-            }
-
-            string relative = relativeUri.OriginalString;
-            string composed = string.Create(
-                baseLength + relative.Length,
-                (baseUri, baseLength, relative),
-                static (span, state) =>
-                {
-                    state.baseUri.AsSpan(0, state.baseLength).CopyTo(span);
-                    state.relative.CopyTo(span[state.baseLength..]);
-                });
-
-            httpRequest.RequestUri = new Uri(composed, UriKind.Absolute);
+            return;
         }
+
+        if (!relativeUri.OriginalString.StartsWith('/'))
+        {
+            if (this.resolvedBaseUrlOverride is not null)
+            {
+                httpRequest.RequestUri = new Uri(baseAddress, relativeUri);
+            }
+
+            return;
+        }
+
+        string baseUri = baseAddress.AbsoluteUri;
+        int baseLength = baseUri.AsSpan().IndexOfAny('?', '#');
+        if (baseLength < 0)
+        {
+            baseLength = baseUri.Length;
+        }
+
+        while (baseLength > 0 && baseUri[baseLength - 1] == '/')
+        {
+            baseLength--;
+        }
+
+        string relative = relativeUri.OriginalString;
+        string composed = string.Create(
+            baseLength + relative.Length,
+            (baseUri, baseLength, relative),
+            static (span, state) =>
+            {
+                state.baseUri.AsSpan(0, state.baseLength).CopyTo(span);
+                state.relative.CopyTo(span[state.baseLength..]);
+            });
+
+        httpRequest.RequestUri = new Uri(composed, UriKind.Absolute);
     }
 
     /// <summary>
