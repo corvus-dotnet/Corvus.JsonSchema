@@ -37,9 +37,10 @@ class ArazzoScenarioEditor extends ArazzoElement {
 
   get schemas() { return this._schemas; }
 
-  /** The scenario value under edit (cloned; Save emits the edited copy). */
+  /** The scenario value under edit (cloned; Save emits the edited copy). No name = a NEW scenario. */
   set scenario(value) {
     this._working = structuredClone(value ?? {});
+    this._isNew = !this._working.name;
     this._json = !this._schemas;
     if (this.isConnected) this.render();
   }
@@ -83,27 +84,38 @@ class ArazzoScenarioEditor extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; font-size: 12px; }
-        .frame { border: 1px solid var(--_border); border-radius: 8px; margin: 0 10px 8px; padding: 8px 10px; display: grid; gap: 10px; }
-        h5 { margin: 0; font-size: 11px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
-        section { display: grid; gap: 6px; }
+        .frame { border: 1px solid var(--_border); border-radius: 8px; margin: 0 10px 8px; padding: 8px; display: grid; gap: 8px; min-width: 0; }
+        .frame > *, section > *, .group > * { min-width: 0; }
+        .group { border: 1px solid var(--_border); border-radius: 6px; padding: 6px 8px 8px; display: grid; gap: 8px; }
+        .group.expect { border-color: color-mix(in srgb, var(--_accent) 45%, var(--_border)); }
+        .group-head { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--_muted); }
+        .group-head .sub { font-weight: 400; text-transform: none; letter-spacing: 0; }
+        h5 { margin: 0; font-size: 10.5px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
+        section { display: grid; gap: 4px; }
         label.inline { display: grid; gap: 3px; font-size: 11px; color: var(--_muted); }
-        input, select, textarea { font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
+        input, select, textarea { font: inherit; font-size: 11px; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: var(--arazzo-text, inherit); min-width: 0; max-width: 100%; box-sizing: border-box; }
         textarea.json { width: 100%; box-sizing: border-box; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 220px; }
-        .row { border: 1px solid var(--_border); border-radius: 6px; padding: 6px 8px; display: grid; gap: 6px; }
-        .row-head { display: flex; gap: 6px; align-items: center; }
+        .row { border: 1px solid var(--_border); border-radius: 6px; padding: 5px 6px; display: grid; gap: 5px; }
+        .row-head { display: flex; gap: 5px; align-items: center; }
         .row-head select, .row-head input { flex: 1; min-width: 0; }
-        .row-head .del { flex: 0; }
-        .resp { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: start; }
-        .path-steps { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-        .path-steps select { max-width: 160px; }
-        .kv { display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; align-items: center; }
-        .add { justify-self: start; font-size: 11px; }
+        .row-head .del { flex: 0 0 auto; }
+        .resp { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 5px; align-items: start; }
+        .path-list { margin: 0; padding-left: 3ch; display: grid; gap: 3px; }
+        .path-list li::marker { color: var(--_muted); font-size: 11px; }
+        .path-list li > span { display: flex; gap: 4px; align-items: center; }
+        .path-list select { flex: 1; min-width: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .row-line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .kv-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) auto 6ch auto; gap: 3px 5px; align-items: center; }
+        .kv-grid .col { font-size: 10px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
+        .kv-grid select { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .add { justify-self: start; font-size: 11px; padding: 1px 7px; }
         .foot { display: flex; gap: 8px; align-items: center; }
         .spacer { flex: 1; }
         .error-banner[hidden] { display: none; }
-        label.check { display: flex; gap: 6px; align-items: center; color: var(--_text); cursor: pointer; font-size: 12px; }
+        label.check { display: flex; gap: 5px; align-items: center; color: var(--_text); cursor: pointer; font-size: 11px; }
         label.check input { width: auto; }
         button { font-size: 12px; }
+        button.ghost { padding: 1px 6px; }
       </style>
       <div class="frame" part="editor">
         <div class="error-banner" hidden></div>
@@ -215,78 +227,90 @@ class ArazzoScenarioEditor extends ArazzoElement {
     };
     const stepOptions = (picked) => steps.map((id) => `<option value="${escapeHtml(id)}"${id === picked ? ' selected' : ''}>${escapeHtml(id)}</option>`).join('');
 
+    const stepExpectations = Object.entries(expect.steps ?? {});
     return `
       <section>
-        <h5>Scenario</h5>
+        ${this._isNew ? `<label class="inline">Name <input class="f-name" type="text" value="${escapeHtml(s.name ?? '')}" placeholder="e.g. declined-card" spellcheck="false"></label>` : ''}
         <label class="inline">Description <input class="f-desc" type="text" value="${escapeHtml(s.description ?? '')}" placeholder="(optional)"></label>
       </section>
-      <section>
-        <h5>Inputs — typed by the workflow's inputs schema</h5>
-        <arazzo-value-editor class="inputs-editor"></arazzo-value-editor>
-      </section>
-      <section>
-        <h5>Mocks — the document's own operations; bodies typed by the declared status</h5>
-        ${(s.mocks ?? []).map((mock, i) => `
-          <div class="row" data-i="${i}">
-            <div class="row-head">
-              <select class="m-op">${opOptions(mock)}</select>
-              <button type="button" class="ghost del" data-del-mock="${i}" title="Remove mock">✕</button>
-            </div>
-            ${(mock.responses ?? []).map((response, j) => `
-              <div class="resp" data-i="${i}" data-j="${j}">
-                <select class="r-status" title="Declared response statuses only — the simulator faults on undeclared ones">${statusOptions(mock, response.status)}</select>
-                <arazzo-value-editor class="r-body"></arazzo-value-editor>
-                <button type="button" class="ghost" data-del-resp="${i},${j}" title="Remove response">✕</button>
-              </div>`).join('')}
-            <button type="button" class="add" data-add-resp="${i}">+ response</button>
-          </div>`).join('')}
-        <button type="button" class="add add-mock">+ mock</button>
-      </section>
-      <section>
-        <h5>Expectations</h5>
-        <label class="inline">Outcome
-          <select class="x-outcome">
-            <option value="">(implicit: completed)</option>
-            ${OUTCOMES.map((o) => `<option value="${o}"${expect.outcome === o ? ' selected' : ''}>${o}</option>`).join('')}
-          </select>
-        </label>
-        <label class="inline">Path — visited steps, in order
-          <span class="path-steps">
-            ${(expect.path ?? []).map((id, i) => `<span><select class="x-path" data-i="${i}">${stepOptions(id)}</select><button type="button" class="ghost" data-del-path="${i}" title="Remove">✕</button></span>`).join('')}
+      <div class="group" part="stage">
+        <div class="group-head">Stage <span class="sub">— the world this scenario runs in</span></div>
+        <section>
+          <h5>Workflow inputs</h5>
+          <arazzo-value-editor class="inputs-editor"></arazzo-value-editor>
+        </section>
+        <section>
+          <h5>Mocked responses <span title="How each operation the workflow calls will answer. Statuses are limited to the operation's declared responses; the body form is typed by that status's schema.">ⓘ</span></h5>
+          ${(s.mocks ?? []).map((mock, i) => `
+            <div class="row" data-i="${i}">
+              <div class="row-head">
+                <select class="m-op">${opOptions(mock)}</select>
+                <button type="button" class="ghost del" data-del-mock="${i}" title="Remove mock">✕</button>
+              </div>
+              ${(mock.responses ?? []).map((response, j) => `
+                <div class="resp" data-i="${i}" data-j="${j}">
+                  <select class="r-status" title="Declared response statuses only — the simulator faults on undeclared ones">${statusOptions(mock, response.status)}</select>
+                  <arazzo-value-editor class="r-body"></arazzo-value-editor>
+                  <button type="button" class="ghost" data-del-resp="${i},${j}" title="Remove response">✕</button>
+                </div>`).join('')}
+              <button type="button" class="add" data-add-resp="${i}">+ response</button>
+            </div>`).join('')}
+          <button type="button" class="add add-mock">+ mock</button>
+        </section>
+        <section>
+          <h5>Staged events &amp; clock <span title="Messages delivered when the run suspends on a matching channel wait; the clock auto-advances past timers unless switched off.">ⓘ</span></h5>
+          ${(s.triggers ?? []).map((t, i) => `
+            <span class="row-head" data-i="${i}">
+              <input class="t-channel" data-i="${i}" type="text" value="${escapeHtml(t.channel ?? '')}" placeholder="channel">
+              <input class="t-corr" data-i="${i}" type="text" value="${escapeHtml(t.correlationId ?? '')}" placeholder="correlationId (optional)">
+              <button type="button" class="ghost del" data-del-trigger="${i}" title="Remove">✕</button>
+            </span>`).join('')}
+          <button type="button" class="add add-trigger">+ event</button>
+          <label class="check"><input type="checkbox" class="c-auto"${(s.clock?.autoAdvance ?? true) ? ' checked' : ''}> auto-advance the virtual clock past timers</label>
+        </section>
+      </div>
+      <div class="group expect" part="expect">
+        <div class="group-head">Expect <span class="sub">— what must be true of the run</span></div>
+        <section>
+          <label class="inline">Outcome
+            <select class="x-outcome">
+              <option value="">(implicit: completed)</option>
+              ${OUTCOMES.map((o) => `<option value="${o}"${expect.outcome === o ? ' selected' : ''}>${o}</option>`).join('')}
+            </select>
+          </label>
+        </section>
+        <section>
+          <h5>Visited steps, in order</h5>
+          ${(expect.path ?? []).length ? `<ol class="path-list">
+            ${(expect.path ?? []).map((id, i) => `<li><span><select class="x-path" data-i="${i}">${stepOptions(id)}</select><button type="button" class="ghost" data-del-path="${i}" title="Remove">✕</button></span></li>`).join('')}
+          </ol>` : ''}
+          <span class="row-line">
             <button type="button" class="add add-path">+ step</button>
-            <label class="check"><input type="checkbox" class="x-exact"${expect.pathMode === 'exact' ? ' checked' : ''}> exact</label>
+            <label class="check" title="With exact on, the run must visit these steps and NO others"><input type="checkbox" class="x-exact"${expect.pathMode === 'exact' ? ' checked' : ''}> exact — no other steps</label>
           </span>
-        </label>
-        <label class="inline">$outputs conditions
+        </section>
+        <section>
+          <h5>$outputs conditions</h5>
           ${(expect.outputs ?? []).map((o, i) => `<span class="row-head"><input class="x-output" data-i="${i}" type="text" value="${escapeHtml(o.condition ?? '')}" placeholder="$outputs.name == 'Fido'"><button type="button" class="ghost del" data-del-output="${i}" title="Remove">✕</button></span>`).join('')}
           <button type="button" class="add add-output">+ condition</button>
-        </label>
-        <label class="inline">Per-step
-          ${Object.entries(expect.steps ?? {}).map(([stepId, x]) => `
-            <span class="kv" data-step="${escapeHtml(stepId)}">
-              <select class="x-step">${stepOptions(stepId)}</select>
-              <select class="x-reached">
-                <option value=""${x.reached === undefined ? ' selected' : ''}>reached: any</option>
-                <option value="true"${x.reached === true ? ' selected' : ''}>reached</option>
-                <option value="false"${x.reached === false ? ' selected' : ''}>not reached</option>
+        </section>
+        <section>
+          <h5>Per-step</h5>
+          ${stepExpectations.length ? `<div class="kv-grid">
+            <span class="col">step</span><span class="col">reached</span><span class="col" title="How many times the step must have executed — retries count. Blank = don't check.">runs ×</span><span class="col"></span>
+            ${stepExpectations.map(([stepId, x]) => `
+              <select class="x-step" data-step="${escapeHtml(stepId)}">${stepOptions(stepId)}</select>
+              <select class="x-reached" data-step="${escapeHtml(stepId)}">
+                <option value=""${x.reached === undefined ? ' selected' : ''}>any</option>
+                <option value="true"${x.reached === true ? ' selected' : ''}>yes</option>
+                <option value="false"${x.reached === false ? ' selected' : ''}>no</option>
               </select>
-              <input class="x-attempts" type="number" min="0" placeholder="attempts" value="${x.attempts ?? ''}" style="width:80px">
-              <button type="button" class="ghost" data-del-stepx="${escapeHtml(stepId)}" title="Remove">✕</button>
-            </span>`).join('')}
+              <input class="x-attempts" data-step="${escapeHtml(stepId)}" type="number" min="0" value="${x.attempts ?? ''}" title="How many times the step must have executed — retries count. Blank = don't check.">
+              <button type="button" class="ghost" data-del-stepx="${escapeHtml(stepId)}" title="Remove">✕</button>`).join('')}
+          </div>` : ''}
           <button type="button" class="add add-stepx">+ step expectation</button>
-        </label>
-      </section>
-      <section>
-        <h5>Triggers &amp; clock</h5>
-        ${(s.triggers ?? []).map((t, i) => `
-          <span class="row-head" data-i="${i}">
-            <input class="t-channel" data-i="${i}" type="text" value="${escapeHtml(t.channel ?? '')}" placeholder="channel">
-            <input class="t-corr" data-i="${i}" type="text" value="${escapeHtml(t.correlationId ?? '')}" placeholder="correlationId (optional)">
-            <button type="button" class="ghost del" data-del-trigger="${i}" title="Remove">✕</button>
-          </span>`).join('')}
-        <button type="button" class="add add-trigger">+ trigger</button>
-        <label class="check"><input type="checkbox" class="c-auto"${(s.clock?.autoAdvance ?? true) ? ' checked' : ''}> auto-advance the virtual clock past timers</label>
-      </section>`;
+        </section>
+      </div>`;
   }
 
   // ---- collect / save -----------------------------------------------------------------------------
@@ -299,6 +323,11 @@ class ArazzoScenarioEditor extends ArazzoElement {
     }
 
     const w = this._working;
+    if (this._isNew) {
+      const name = this.$('.f-name').value.trim();
+      if (name) w.name = name; else delete w.name;
+    }
+
     const description = this.$('.f-desc').value.trim();
     if (description) w.description = description; else delete w.description;
 
@@ -325,13 +354,14 @@ class ArazzoScenarioEditor extends ArazzoElement {
       return base;
     }).filter((o) => o.condition);
     if (outputs.length > 0) expect.outputs = outputs; else delete expect.outputs;
-    const stepEntries = this.$$('.kv[data-step]').map((row) => {
-      const base = expect.steps?.[row.dataset.step] ?? {};
-      const reached = row.querySelector('.x-reached').value;
+    const stepEntries = this.$$('.x-step').map((sel) => {
+      const key = sel.dataset.step;
+      const base = expect.steps?.[key] ?? {};
+      const reached = this.$(`.x-reached[data-step="${CSS.escape(key)}"]`).value;
       if (reached) base.reached = reached === 'true'; else delete base.reached;
-      const attempts = row.querySelector('.x-attempts').value;
+      const attempts = this.$(`.x-attempts[data-step="${CSS.escape(key)}"]`).value;
       if (attempts !== '') base.attempts = Number(attempts); else delete base.attempts;
-      return [row.querySelector('.x-step').value, base];
+      return [sel.value, base];
     });
     if (stepEntries.length > 0) expect.steps = Object.fromEntries(stepEntries); else delete expect.steps;
     if (Object.keys(expect).length > 0) w.expect = expect; else delete w.expect;
