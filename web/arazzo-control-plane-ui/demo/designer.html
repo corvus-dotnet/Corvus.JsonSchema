@@ -149,6 +149,7 @@
     </aside>
   </main>
   <arazzo-source-acquisition-dialog id="acqdialog"></arazzo-source-acquisition-dialog>
+  <arazzo-input-dialog id="ask"></arazzo-input-dialog>
   <div id="toast" hidden style="position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 50; max-width: min(620px, 90vw); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--arazzo-border, #e3e6ea); background: var(--arazzo-bg, #fff); box-shadow: 0 6px 24px rgba(0,0,0,0.18); font-size: 13px;"></div>
 
   <script type="module">
@@ -167,6 +168,7 @@
     import '../src/components/operation-browser.js';
     import '../src/components/source-acquisition-dialog.js';
     import '../src/components/git-dialog.js';
+    import '../src/components/input-dialog.js';
     import '../src/components/document-inspector.js';
     import '../src/components/debug-tray.js';
     import '../src/components/scenario-panel.js';
@@ -830,7 +832,12 @@
     saveScenarioBtn.addEventListener('click', async () => {
       const trace = tray.trace;
       if (!trace || !shell.id) return;
-      const name = prompt('Scenario name:', `session-${new Date().toISOString().slice(11, 19).replaceAll(':', '')}`);
+      const name = await document.getElementById('ask').ask({
+        title: 'Save as scenario',
+        message: 'Captures this session — its mocks, staged events, and expectations promoted from the observed trace (§3.4).',
+        field: { label: 'Scenario name', value: `session-${new Date().toISOString().slice(11, 19).replaceAll(':', '')}` },
+        confirmLabel: 'Save',
+      });
       if (!name) return;
       const routes = new Map();
       for (const [srcName, ops] of opBrowser.surfaces) {
@@ -1022,7 +1029,12 @@
     // validation diagnostics → Problems; a failing suite → Scenarios with its verdicts.
     document.getElementById('publish').addEventListener('click', async () => {
       if (!shell.id) return;
-      const owner = prompt('Publish owner (name <email>):', 'You <you@example.com>');
+      const owner = await document.getElementById('ask').ask({
+        title: 'Publish to the catalog',
+        message: 'Validates the document and re-runs the scenario suite server-side; the new version starts as a draft. Who owns it?',
+        field: { label: 'Owner (name <email>)', value: 'You <you@example.com>' },
+        confirmLabel: '🚀 Publish',
+      });
       if (!owner) return;
       const m = /^(.*?)\s*<([^>]+)>$/.exec(owner);
       if (!m) { logEvent('publish-invalid-owner', { owner }); return; }
