@@ -294,6 +294,97 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Validation_flags_payload_literals_the_operation_schema_can_never_accept()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // "tru" on a boolean leaf is not a boolean and not a runtime expression — nothing at
+        // runtime can make it valid; the missing required 'amount' can never be added either.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Typed", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "payments", "url": "./payments.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "steps": [{
+              "stepId": "authorize",
+              "operationId": "authorize",
+              "requestBody": { "payload": { "capture": "tru", "reference": "$inputs.orderId" } }
+            }]
+          }]
+        }
+        """);
+
+        const string PaymentsDoc = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Payments", "version": "1.0.0" },
+          "paths": {
+            "/authorize": {
+              "post": {
+                "operationId": "authorize",
+                "requestBody": { "content": { "application/json": { "schema": {
+                  "type": "object",
+                  "required": ["amount"],
+                  "properties": {
+                    "capture": { "type": "boolean" },
+                    "amount": { "type": "number" },
+                    "reference": { "type": "string" }
+                  } } } } },
+                "responses": { "200": { "description": "ok" } }
+              }
+            }
+          }
+        }
+        """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/payments", $$"""{"document":{{PaymentsDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using (Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read)))
+        {
+            outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+            Stj.JsonElement[] typing = [.. outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+                .Where(d => d.GetProperty("category").GetString() == "payload-typing")];
+            Stj.JsonElement error = typing.Single(d => d.GetProperty("severity").GetString() == "error");
+            error.GetProperty("instancePath").GetString().ShouldBe("/workflows/0/steps/0/requestBody/payload/capture");
+            error.GetProperty("message").GetString()!.ShouldContain("'tru' is neither a boolean nor a runtime expression");
+            typing.ShouldContain(d => d.GetProperty("severity").GetString() == "warning" && d.GetProperty("message").GetString()!.Contains("'amount' is missing"));
+        }
+
+        // Expressions are exempt wherever they appear; a right-typed literal passes too.
+        string etag;
+        using (Stj.JsonDocument current = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}", Read)))
+        {
+            etag = current.RootElement.GetProperty("etag").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}", $$"""
+        {
+          "expectedEtag": {{Stj.JsonSerializer.Serialize(etag)}},
+          "document": {
+            "arazzo": "1.1.0",
+            "info": { "title": "Typed", "version": "1.0.0" },
+            "sourceDescriptions": [{ "name": "payments", "url": "./payments.json", "type": "openapi" }],
+            "workflows": [{
+              "workflowId": "w",
+              "steps": [{
+                "stepId": "authorize",
+                "operationId": "authorize",
+                "requestBody": { "payload": { "capture": "$inputs.capture", "amount": 12 } }
+              }]
+            }]
+          }
+        }
+        """, Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using (Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read)))
+        {
+            outcome.RootElement.EnumerateObject().First(p => p.NameEquals("diagnostics")).Value.EnumerateArray()
+                .ShouldNotContain(d => d.GetProperty("category").GetString() == "payload-typing");
+        }
+    }
+
+    [TestMethod]
     public async Task Warnings_do_not_fail_validation()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
