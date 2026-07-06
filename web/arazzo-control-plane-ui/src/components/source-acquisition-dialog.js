@@ -20,6 +20,7 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
+import './catalog-table.js';
 
 class ArazzoSourceAcquisitionDialog extends ArazzoElement {
   constructor() {
@@ -129,9 +130,10 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
           </div>
           <div class="mode mode-catalog" hidden>
             <div class="hint">Trigger a published workflow over HTTP (§6.2): attaching adds the control plane's run-trigger operation for the picked version — request body typed by ITS inputs schema. Drag the operation onto the canvas like any other.</div>
-            <label>Catalog workflow
-              <select class="cat-version"><option value="">Loading…</option></select>
+            <label>Search the catalog
+              <input class="cat-q" type="text" placeholder="name, tag, owner…" spellcheck="false">
             </label>
+            <arazzo-catalog-table class="cat-table" selectable status="Active" page-size="6"></arazzo-catalog-table>
             <div class="cat-preview hint" hidden></div>
           </div>
           <div class="mode mode-github" hidden>
@@ -176,7 +178,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
     this.$('.mode-github').hidden = mode !== 'github';
     this.$('.mode-catalog').hidden = mode !== 'catalog';
     if (mode === 'github') this.renderGitHubRepos();
-    if (mode === 'catalog') void this.loadCatalog();
+    if (mode === 'catalog') this.loadCatalog();
     this.updateAttachState();
   }
 
@@ -203,25 +205,18 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
 
   // ---- modes ------------------------------------------------------------------------------------
 
-  /** Catalog mode: the ACTIVE versions, latest per base; picking one synthesizes the §6.2 trigger source. */
-  async loadCatalog() {
-    const seq = ++this._seq;
-    const sel = this.$('.cat-version');
-    try {
-      const { versions } = await this._client.searchCatalog({ status: 'Active', limit: 100 });
-      if (seq !== this._seq) return;
-      const latest = new Map();
-      for (const v of versions) {
-        const held = latest.get(v.baseWorkflowId);
-        if (!held || v.versionNumber > held.versionNumber) latest.set(v.baseWorkflowId, v);
-      }
-
-      this._catalogVersions = [...latest.values()].sort((a, b) => a.baseWorkflowId.localeCompare(b.baseWorkflowId));
-      sel.innerHTML = '<option value="">Choose…</option>' + this._catalogVersions.map((v, i) =>
-        `<option value="${i}">${escapeHtml(v.baseWorkflowId)} v${v.versionNumber} — ${escapeHtml(v.title ?? '')}</option>`).join('');
-      sel.onchange = () => void this.pickCatalogVersion(sel.value === '' ? null : this._catalogVersions[Number(sel.value)]);
-    } catch (err) {
-      if (seq === this._seq) this.showError(err.problem?.detail || err.problem?.title || err.message);
+  /** Catalog mode: the REAL catalog table — server-side filtered, keyset-paged (hundreds of
+   *  workflows stay browsable); picking a row synthesizes the §6.2 trigger source. */
+  loadCatalog() {
+    const table = this.$('.cat-table');
+    if (table.client !== this._client) {
+      table.client = this._client;
+      table.addEventListener('version-selected', (e) => void this.pickCatalogVersion(e.detail.version));
+      let debounce = 0;
+      this.$('.cat-q').addEventListener('input', (e) => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => { table.filters = { ...table.filters, q: e.target.value.trim() || undefined }; }, 250);
+      });
     }
   }
 

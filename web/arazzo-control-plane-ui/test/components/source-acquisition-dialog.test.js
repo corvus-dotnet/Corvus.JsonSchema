@@ -132,14 +132,10 @@ describe('<arazzo-source-acquisition-dialog>', () => {
     el = ctx.el;
     el.open({ workingCopyId: ctx.wc.id });
     el.shadowRoot.querySelector('[data-mode="catalog"]').click();
-    const sel = await waitFor(() => {
-      const c = el.shadowRoot.querySelector('.cat-version');
-      return c.options.length > 1 ? c : null;
-    }, 'the active catalog versions list');
-
-    const adopt = [...sel.options].findIndex((o) => o.textContent.includes('adopt-pet'));
-    sel.value = String(adopt - 1); // options are Choose… + versions
-    sel.dispatchEvent(new Event('change'));
+    const table = el.shadowRoot.querySelector('.cat-table');
+    const row = await waitFor(() => [...table.shadowRoot.querySelectorAll('tbody tr')]
+      .find((r) => r.textContent.includes('adopt-pet')), 'the catalog table lists the workflows');
+    row.click();
     await waitFor(() => !el.shadowRoot.querySelector('button.attach').disabled, 'picking enables Attach');
     equal(el.shadowRoot.querySelector('.name-in').value, 'run-adopt-pet', 'the name suggests itself');
 
