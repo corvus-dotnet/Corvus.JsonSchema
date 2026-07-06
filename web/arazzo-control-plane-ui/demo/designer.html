@@ -81,7 +81,6 @@
     <label class="chk designer-only" title="Read-only: mutation gestures off; pan/zoom/select still work"><input type="checkbox" id="readonly"> read-only</label>
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
-    <button id="validate" class="tb labeled designer-only" title="Validate the working copy">✓ Validate</button>
     <button id="git" class="tb labeled designer-only" title="Git — bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">⎇ Git</button>
     <button id="publish" class="tb labeled designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)">🚀 Publish</button>
     <button id="theme" class="tb" title="Toggle theme">🌙</button>
@@ -261,7 +260,6 @@
     const backBtn = document.getElementById('back');
     const wcName = document.getElementById('wc-name');
     let autosaveTimer = 0;
-    const validateBtn = document.getElementById('validate');
     const saveStatus = document.getElementById('save-status');
     const problemsEl = document.getElementById('problems');
     wctable.client = client;
@@ -324,6 +322,7 @@
       surface.fit();
       surface.selection = null;
       showSelection(null); // an open starts on the settings page (empty selection = the document)
+      scheduleValidate(); // the Problems badge is live from the first look
       shell.conflicted = false;
       setSaveUi('all changes saved');
     }
@@ -340,6 +339,7 @@
         shell.etag = saved.etag;
         shell.dirty = false;
         setSaveUi(`saved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+        scheduleValidate();
         return true;
       } catch (err) {
         // A stale etag means a collaborator saved first: nothing was clobbered — re-open to reconcile.
@@ -349,14 +349,24 @@
       }
     }
 
+    // Validation is AUTOMATIC, like saving: every successful save (autosave included) schedules a
+    // debounced validate of the STORED document; the Problems badge updates silently — no button.
+    let validateTimer = 0;
+    let validateSeq = 0;
+    function scheduleValidate() {
+      clearTimeout(validateTimer);
+      validateTimer = setTimeout(() => { void validateWorkingCopy(); }, 400);
+    }
+
     async function validateWorkingCopy() {
       if (!shell.id) return;
       if (shell.dirty && !(await saveWorkingCopy())) return; // validate runs on the STORED document
+      const seq = ++validateSeq;
       try {
         const outcome = await client.validateWorkingCopy(shell.id);
-        renderProblems(outcome);
+        if (seq === validateSeq) renderProblems(outcome);
       } catch (err) {
-        problemsEl.textContent = `validation failed: ${err.message}`;
+        if (seq === validateSeq) problemsEl.textContent = `validation failed: ${err.message}`;
       }
     }
 
@@ -547,7 +557,6 @@
     });
 
     backBtn.addEventListener('click', () => { clearTimeout(autosaveTimer); if (shell.dirty && !shell.conflicted) saveWorkingCopy(); }, { capture: true });
-    validateBtn.addEventListener('click', validateWorkingCopy);
     backBtn.addEventListener('click', () => showView('workspace'));
     wctable.addEventListener('working-copy-selected', (e) => openWorkingCopy(e.detail.workingCopy.id));
     wctable.addEventListener('working-copy-created', (e) => openWorkingCopy(e.detail.workingCopy.id));
@@ -714,6 +723,11 @@
         ed.value = wf;
         ed.setAttribute('focus-section', anchor.focus);
         inspector.append(heading(anchor.title), ed);
+        ed.addEventListener('component-changed', (ev) => {
+          model.update((d) => {
+            ((d.components ??= {})[ev.detail.kind] ??= {})[ev.detail.name] = ev.detail.action;
+          }, { origin: 'inspector', label: `edit shared action ${ev.detail.name}`, coalesce: true });
+        });
         ed.addEventListener('workflow-changed', (ev) => {
           model.update((d) => { d.workflows[wi] = ev.detail.workflow; },
             { origin: 'inspector', label: `edit workflow ${wf.workflowId}`, coalesce: true });
@@ -744,6 +758,11 @@
         if (op?.parameters) ed.operationParameters = op.parameters;
         ed.value = step;
         inspector.append(heading(`step — ${sel.id}`), ed);
+        ed.addEventListener('component-changed', (ev) => {
+          model.update((d) => {
+            ((d.components ??= {})[ev.detail.kind] ??= {})[ev.detail.name] = ev.detail.action;
+          }, { origin: 'inspector', label: `edit shared action ${ev.detail.name}`, coalesce: true });
+        });
         ed.addEventListener('step-changed', (ev) => {
           model.update((d) => {
             const w = d.workflows.find((x) => x.workflowId === wf.workflowId);

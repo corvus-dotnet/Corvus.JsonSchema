@@ -561,23 +561,27 @@ class ArazzoStepInspector extends ArazzoElement {
     const replacements = this._step.requestBody?.replacements || [];
     box.innerHTML = '';
 
-    // The target pointers autocomplete from the operation's request schema.
+    // The target pointers autocomplete from the operation's request schema — through the SAME
+    // CM6 completion popup every other editor uses (a native datalist looked foreign here).
     const pointerPaths = this._requestPointerPaths();
-    if (pointerPaths.length) {
-      const list = document.createElement('datalist');
-      list.id = 'repl-paths';
-      list.innerHTML = pointerPaths.map((path) => `<option value="${escapeHtml(path)}"></option>`).join('');
-      box.append(list);
-    }
-
     replacements.forEach((r, i) => {
       const row = document.createElement('div');
       row.className = 'rrow';
       row.style.cssText = 'display:grid; grid-template-columns: 1fr 1.2fr auto; gap:6px; align-items:start; margin-bottom:6px;';
       row.innerHTML = `
-        <input class="rtarget" type="text" placeholder="/card/number" ${pointerPaths.length ? 'list="repl-paths"' : ''} value="${escapeHtml(r.target ?? '')}">
+        <div class="rtarget-slot"></div>
         <div class="rvalue"></div>
         <button class="rdel ghost" type="button" title="Remove">✕</button>`;
+      const targetInput = document.createElement('arazzo-expression-input');
+      targetInput.className = 'rtarget';
+      targetInput.setAttribute('placeholder', '/card/number');
+      targetInput.staticCompletions = pointerPaths.map((path) => {
+        const at = this._schemaAt(path);
+        const type = Array.isArray(at?.type) ? at.type[0] : at?.type;
+        return { label: path, ...(type ? { detail: type } : {}) };
+      });
+      targetInput.value = r.target ?? '';
+      row.querySelector('.rtarget-slot').replaceWith(targetInput);
 
       // The VALUE editor follows the schema at the target pointer: an object target (or an object
       // value) edits structurally, constrained to that sub-schema; scalars stay expression inputs,
@@ -618,8 +622,9 @@ class ArazzoStepInspector extends ArazzoElement {
       };
 
       buildValue();
-      row.querySelector('.rtarget').addEventListener('input', (e) => {
-        r.target = e.target.value;
+      targetInput.addEventListener('value-changed', (e) => {
+        e.stopPropagation();
+        r.target = e.detail.value;
         buildValue(); // the value editor tracks the schema at the new target
         this._emit();
       });
@@ -649,6 +654,12 @@ class ArazzoStepInspector extends ArazzoElement {
       stepIds: this._stepIds.filter((id) => id !== this._step.stepId),
       workflowIds: this._workflowIds,
       components: this._components?.[kind === 'success' ? 'successActions' : 'failureActions'],
+      onComponentChange: (name, action) => {
+        const kindKey = kind === 'success' ? 'successActions' : 'failureActions';
+        (this._components ??= {})[kindKey] ??= {};
+        this._components[kindKey][name] = action;
+        this.emit('component-changed', { kind: kindKey, name, action });
+      },
       completionContext: this._completionContext,
       onChange: () => {
         if (!actions.length) delete this._step[listName];
