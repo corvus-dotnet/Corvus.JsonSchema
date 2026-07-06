@@ -16,7 +16,9 @@
 //              trigger-injected {channel, payload?, correlationId?} (a suspended run's message wait —
 //              the host adds it to the session scenario and replays),
 //              workflow-focus {workflowId|null} (stepping into/out of a sub-workflow's nested trace —
-//              the host switches the canvas to that workflow; null = the run's own workflow)
+//              the host switches the canvas to that workflow; null = the run's own workflow),
+//              output-override-requested {stepId, outputs?} (step over: the host collects the
+//              provided outputs in a typed editor and replays with them forced)
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
@@ -128,6 +130,7 @@ class ArazzoDebugTray extends ArazzoElement {
         .inject textarea { min-height: 44px; }
         .inject button { justify-self: start; font-size: 11px; }
         .inject .why { color: var(--_muted); font-size: 10.5px; }
+        .override { font-size: 11px; justify-self: start; }
       </style>
       ${!trace ? '<div class="empty-note">No debug session — ▶ Run simulates the working copy against its scripted mocks.</div>' : `
       ${this._stack.length ? `<div class="crumb" part="crumb">
@@ -175,6 +178,10 @@ class ArazzoDebugTray extends ArazzoElement {
       this.emit('workflow-focus', { workflowId: this._trace.workflowId ?? null });
       this.emit('cursor-changed', { index: this._cursor });
     });
+    this.$('.override')?.addEventListener('click', () => {
+      const record = this._trace.steps[this._cursor - 1];
+      this.emit('output-override-requested', { stepId: record.stepId, outputs: record.outputs });
+    });
     this.$('.inj-go')?.addEventListener('click', () => {
       const channel = this.$('.inj-channel').value.trim();
       if (!channel) return;
@@ -217,7 +224,7 @@ class ArazzoDebugTray extends ArazzoElement {
     return `<button class="step${at ? ' at' : ''}" type="button" data-index="${index}" title="Inspect after this step">
       <span class="n">${index + 1}</span>
       <span class="${failed ? 'bad' : 'ok'}">${failed ? '✗' : '✓'}</span>
-      <span class="nm">${escapeHtml(record.stepId)}${record.attempt ? ` <span class="muted">↻${record.attempt}</span>` : ''}</span>
+      <span class="nm">${escapeHtml(record.stepId)}${record.skipped ? ' <span class="muted" title="stepped over — outputs provided">⏭</span>' : ''}${record.attempt ? ` <span class="muted">↻${record.attempt}</span>` : ''}</span>
       ${record.subTrace ? `<span class="into ghost" data-into="${index}" title="Step into ${escapeHtml(record.subTrace.workflowId ?? 'the sub-workflow')} — its own trace, scrubbable">⤵</span>` : ''}
       <span class="act">${escapeHtml(action)}</span>
     </button>`;
@@ -278,7 +285,10 @@ class ArazzoDebugTray extends ArazzoElement {
       }
     }
 
-    return `<h4>after step ${this._cursor}: ${escapeHtml(record.stepId)}</h4>` + (parts.join('') || '<pre class="muted">no captured context</pre>');
+    const overrideButton = `<button class="override ghost" type="button" data-step="${escapeHtml(record.stepId)}"
+      title="Provide this step's outputs yourself and replay — the step will NOT execute (the runs-view Skip, here). Rewind first to try a what-if from any point.">⏭ step over — provide outputs & replay…</button>`;
+    return `<h4>after step ${this._cursor}: ${escapeHtml(record.stepId)}${record.skipped ? ' <span class="muted">(stepped over — outputs provided)</span>' : ''}</h4>`
+      + (parts.join('') || '<pre class="muted">no captured context</pre>') + overrideButton;
   }
 }
 
