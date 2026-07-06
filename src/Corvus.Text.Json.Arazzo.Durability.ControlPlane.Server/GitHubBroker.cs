@@ -323,6 +323,121 @@ public sealed class GitHubBroker
         return (WriteOutcome.Success, number, url);
     }
 
+    /// <summary>
+    /// Lists a repository's branches plus its default branch (<c>GET /repos/{owner}/{repo}</c> +
+    /// <c>GET /repos/{owner}/{repo}/branches</c>) on the principal's token — the Git dialog's branch picker.
+    /// </summary>
+    /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="owner">The repository owner.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The outcome, the default branch, and on success the branches payload (caller disposes).</returns>
+    public async ValueTask<(ReadOutcome Outcome, string? DefaultBranch, ParsedJsonDocument<JsonElement>? Branches)> ListBranchesAsync(string principalKey, string owner, string repo, CancellationToken cancellationToken)
+    {
+        (ReadOutcome repoOutcome, ParsedJsonDocument<JsonElement>? repoPayload) = await this.GetAsync(
+            principalKey, $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}", cancellationToken).ConfigureAwait(false);
+        if (repoOutcome != ReadOutcome.Success || repoPayload is not { } repoDoc)
+        {
+            return (repoOutcome, null, null);
+        }
+
+        string? defaultBranch;
+        using (repoDoc)
+        {
+            defaultBranch = repoDoc.RootElement.TryGetProperty("default_branch"u8, out JsonElement d) ? d.GetString() : null;
+        }
+
+        (ReadOutcome outcome, ParsedJsonDocument<JsonElement>? branches) = await this.GetAsync(
+            principalKey, $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/branches?per_page=100", cancellationToken).ConfigureAwait(false);
+        return outcome != ReadOutcome.Success ? (outcome, null, null) : (ReadOutcome.Success, defaultBranch, branches);
+    }
+
+    /// <summary>
+    /// Creates a branch from a base branch's head (<c>POST /repos/{owner}/{repo}/git/refs</c>) on the
+    /// principal's token. Creating a ref makes no commit and composes no identity (§4.7).
+    /// </summary>
+    /// <param name="principalKey">The calling principal's stable key.</param>
+    /// <param name="owner">The repository owner.</param>
+    /// <param name="repo">The repository name.</param>
+    /// <param name="name">The new branch name (without <c>refs/heads/</c>).</param>
+    /// <param name="from">The base branch, or <see langword="null"/> for the repository's default branch.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The outcome (Refused = the name is taken) and, on success, the new head sha.</returns>
+    public async ValueTask<(WriteOutcome Outcome, string? Sha)> CreateBranchAsync(string principalKey, string owner, string repo, string name, string? from, CancellationToken cancellationToken)
+    {
+        string? baseBranch = from;
+        if (string.IsNullOrEmpty(baseBranch))
+        {
+            (ReadOutcome repoOutcome, string? defaultBranch, ParsedJsonDocument<JsonElement>? branchesDoc) = await this.ListBranchesAsync(principalKey, owner, repo, cancellationToken).ConfigureAwait(false);
+            branchesDoc?.Dispose();
+            if (repoOutcome != ReadOutcome.Success || defaultBranch is null)
+            {
+                return (repoOutcome == ReadOutcome.NotConnected ? WriteOutcome.NotConnected : WriteOutcome.NotFound, null);
+            }
+
+            baseBranch = defaultBranch;
+        }
+
+        (ReadOutcome refOutcome, ParsedJsonDocument<JsonElement>? refPayload) = await this.GetAsync(
+            principalKey, $"/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/git/ref/heads/{Uri.EscapeDataString(baseBranch)}", cancellationToken).ConfigureAwait(false);
+        if (refOutcome != ReadOutcome.Success || refPayload is not { } refDoc)
+        {
+            return (refOutcome == ReadOutcome.NotConnected ? WriteOutcome.NotConnected : WriteOutcome.NotFound, null);
+        }
+
+        string? baseSha;
+        using (refDoc)
+        {
+            baseSha = refDoc.RootElement.TryGetProperty("object"u8, out JsonElement obj) && obj.TryGetProperty("sha"u8, out JsonElement sha) ? sha.GetString() : null;
+        }
+
+        if (baseSha is null)
+        {
+            return (WriteOutcome.NotFound, null);
+        }
+
+        string? token = await this.CurrentTokenAsync(principalKey, cancellationToken).ConfigureAwait(false);
+        if (token is null)
+        {
+            return (WriteOutcome.NotConnected, null);
+        }
+
+        byte[] body = PersistedJson.ToArray(
+            (Name: name, Sha: baseSha),
+            static (Utf8JsonWriter writer, in (string Name, string Sha) s) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("ref"u8, $"refs/heads/{s.Name}");
+                writer.WriteString("sha"u8, s.Sha);
+                writer.WriteEndObject();
+            });
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{this.options.ApiBaseUrl!.TrimEnd('/')}/repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo)}/git/refs")
+        {
+            Content = new ByteArrayContent(body) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json") } },
+        };
+        AddGitHubHeaders(request, token);
+        using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            this.tokens.Remove(principalKey);
+            return (WriteOutcome.NotConnected, null);
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return (WriteOutcome.NotFound, null);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // 422 "Reference already exists" and friends: the caller renders the refusal.
+            return (WriteOutcome.Refused, null);
+        }
+
+        return (WriteOutcome.Success, baseSha);
+    }
+
     private async ValueTask<(ReadOutcome Outcome, ParsedJsonDocument<JsonElement>? Payload)> GetAsync(string principalKey, string pathAndQuery, CancellationToken cancellationToken)
     {
         string? token = await this.CurrentTokenAsync(principalKey, cancellationToken).ConfigureAwait(false);
