@@ -343,6 +343,13 @@ public static class ScenarioSuite
             writer.WriteString("stepId"u8, step.StepId);
             writer.WriteString("status"u8, step.Faulted ? "faulted"u8 : "completed"u8);
             writer.WriteNumber("attempt"u8, step.Attempt);
+            if (step.Skipped)
+            {
+                // §15 8b: a step-output override skipped the step — the record's outputs are the
+                // PROVIDED value and no exchange exists (the shape the mock emits and the dock renders).
+                writer.WriteBoolean("skipped"u8, true);
+            }
+
             if (step.Outputs.ValueKind is not JsonValueKind.Undefined)
             {
                 writer.WritePropertyName("outputs"u8);
