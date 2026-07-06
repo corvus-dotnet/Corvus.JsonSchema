@@ -67,6 +67,10 @@ class ArazzoGitDialog extends ArazzoElement {
         .body { padding: 12px 14px; display: grid; gap: 12px; }
         fieldset { border: 1px solid var(--_border); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; margin: 0; }
         legend { font-size: 12px; color: var(--_muted); padding: 0 4px; }
+        .stage-hint { font-size: 12px; color: var(--_muted); border: 1px dashed var(--_border); border-radius: 8px; padding: 10px 12px; }
+        .stage-hint[hidden] { display: none; }
+        .paths-section { display: grid; gap: 8px; }
+        .paths-section[hidden] { display: none; }
         label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
         label.check { display: flex; gap: 6px; align-items: center; cursor: pointer; }
         label.check input { width: auto; }
@@ -98,7 +102,8 @@ class ArazzoGitDialog extends ArazzoElement {
         <div class="body">
           <div class="error-banner" hidden></div>
           <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
-          <fieldset>
+          <div class="stage-hint connect-hint">Connect your GitHub identity to bind this working copy to a branch.</div>
+          <fieldset class="binding-section" hidden>
             <legend>Binding — branch-per-working-copy is the natural multi-author flow (§4.7)</legend>
             <div class="two">
               <label>Repository <select class="b-repo"></select></label>
@@ -110,6 +115,8 @@ class ArazzoGitDialog extends ArazzoElement {
               <select class="nb-base"></select>
               <button class="nb-create" type="button" title="Create the branch from the base branch's head — a ref only, no commit">Create branch</button>
             </div>
+            <div class="stage-hint paths-hint">Pick a repository and branch — the paths below browse it.</div>
+            <div class="paths-section" hidden>
             <label>Document path
               <span class="pathrow">
                 <input class="b-path" type="text" placeholder="flows/my-flow.arazzo.json">
@@ -133,8 +140,10 @@ class ArazzoGitDialog extends ArazzoElement {
               <div class="spec-rows"></div>
             </div>
             <div class="row-actions"><button class="save-binding" type="button" disabled>Save binding</button></div>
+            </div>
           </fieldset>
-          <fieldset>
+          <div class="stage-hint bound-hint" hidden>Save the binding — pull and commit work against the bound branch.</div>
+          <fieldset class="roundtrip-section" hidden>
             <legend>Round-trip</legend>
             <div class="row-actions">
               <button class="pull" type="button" disabled title="Refresh the document, bound specs, and scenarios from the branch (etag-guarded; nothing partially applies)">⤓ Pull</button>
@@ -344,6 +353,16 @@ class ArazzoGitDialog extends ArazzoElement {
     const connected = !!this.$('.gh-connect').session?.connected;
     const formed = this.$('.b-repo').value && this.branchValue() && this.$('.b-path').value.trim();
     const bound = !!this._workingCopy?.gitBinding;
+
+    // PROGRESSIVE disclosure: each stage appears when the previous one is satisfied — a wall of
+    // disabled controls explains nothing; a staged panel narrates the journey.
+    const picked = !!(this.$('.b-repo').value && this.branchValue());
+    this.$('.connect-hint').hidden = connected;
+    this.$('.binding-section').hidden = !connected;
+    this.$('.paths-hint').hidden = picked;
+    this.$('.paths-section').hidden = !picked;
+    this.$('.bound-hint').hidden = !connected || bound;
+    this.$('.roundtrip-section').hidden = !bound;
 
     // A disabled control carries its reason — nothing greys out silently.
     const save = this.$('.save-binding');

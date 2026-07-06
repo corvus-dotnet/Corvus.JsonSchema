@@ -865,7 +865,73 @@
           return;
         }
         if (edge.reusable) {
-          selectionPre.textContent = 'reusable action ($components reference) — edit it in the components library';
+          // A $components reference edge: show the RESOLVED shared action read-only, with the
+          // standard ✎ choice — edit for all instances (the library action) or just this one
+          // (localize the copy onto the step).
+          const kindKey = edge.kind === 'success' ? 'successActions' : 'failureActions';
+          const name = edge.actionName;
+          const resolved = doc.components?.[kindKey]?.[name];
+          if (!resolved) { selectionPre.textContent = `unresolvable reference $components.${kindKey}.${name}`; return; }
+          const refString = `$components.${kindKey}.${name}`;
+
+          const view = document.createElement('div');
+          view.style.cssText = 'display:grid; gap:8px; padding:10px; min-width:0;';
+          view.innerHTML = `
+            <div style="font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap:anywhere;">↺ ${refString} · shared</div>
+            <div style="display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 10px; font-size:12px;">
+              <span style="color:var(--arazzo-muted,#6b7280)">type</span><span>${resolved.type ?? ''}${resolved.stepId ? ` → ${resolved.stepId}` : ''}</span>
+              ${(resolved.criteria ?? []).map((c) => `<span style="color:var(--arazzo-muted,#6b7280)">when</span><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; overflow-wrap:anywhere;">${c.condition ?? ''}</span>`).join('')}
+              ${resolved.criteria?.length ? '' : '<span style="color:var(--arazzo-muted,#6b7280)">when</span><span>always (catch-all)</span>'}
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="re-edit ghost" type="button" style="font-size:12px;">✎ Edit…</button>
+            </div>
+            <div class="re-menu" hidden style="display:flex; gap:6px; padding-left:14px;">
+              <button class="re-all ghost" type="button" style="font-size:11px;" title="Edit the SHARED library action — every reference in the document follows">for all instances</button>
+              <button class="re-one ghost" type="button" style="font-size:11px;" title="Copy the shared action inline on this step so it can diverge — other references keep the shared one">just this instance</button>
+            </div>
+            <div class="re-editor" hidden style="display:grid; gap:6px;"></div>`;
+          view.querySelector('.re-menu').style.display = 'none';
+          const menu = view.querySelector('.re-menu');
+          view.querySelector('.re-edit').addEventListener('click', () => {
+            menu.hidden = !menu.hidden;
+            menu.style.display = menu.hidden ? 'none' : 'flex';
+          });
+          view.querySelector('.re-all').addEventListener('click', () => {
+            menu.hidden = true;
+            menu.style.display = 'none';
+            const slot = view.querySelector('.re-editor');
+            if (!slot.hidden) { slot.hidden = true; slot.replaceChildren(); return; }
+            const hint = document.createElement('div');
+            hint.style.cssText = 'font-size:10.5px; color:var(--arazzo-status-suspended,#b45309);';
+            hint.textContent = 'Editing the SHARED action — every reference in the document follows.';
+            const editor = document.createElement('arazzo-action-editor');
+            editor.kind = edge.kind;
+            editor.stepIds = wf.steps.map((x) => x.stepId).filter((id) => id !== edge.from);
+            editor.completionContext = expr.completionContext;
+            editor.value = resolved;
+            editor.addEventListener('action-changed', (ev) => {
+              ev.stopPropagation();
+              model.update((d) => {
+                ((d.components ??= {})[kindKey] ??= {})[name] = ev.detail.action;
+              }, { origin: 'inspector', label: `edit shared action ${name}`, coalesce: true });
+            });
+            slot.replaceChildren(hint, editor);
+            slot.hidden = false;
+          });
+          view.querySelector('.re-one').addEventListener('click', () => {
+            model.update((d) => {
+              const w = d.workflows.find((x) => x.workflowId === wf.workflowId);
+              const st = w.steps.find((x) => x.stepId === edge.from);
+              const list = edge.kind === 'success' ? 'onSuccess' : 'onFailure';
+              const at = (st?.[list] ?? []).findIndex((a) => a && a.reference === refString);
+              if (at >= 0) st[list][at] = structuredClone(resolved);
+            }, { origin: 'inspector', label: `localize ${name} on ${edge.from}` });
+            showSelection(surface.selection); // now a local action edge — re-inspect
+          });
+
+          inspector.append(heading(`${edge.from} · ${edge.kind} → shared`), view);
+          selectionPre.textContent = '';
           return;
         }
         const step = wf.steps.find((s) => s.stepId === edge.from);

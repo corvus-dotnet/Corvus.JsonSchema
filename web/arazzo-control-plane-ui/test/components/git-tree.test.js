@@ -59,4 +59,17 @@ describe('<arazzo-git-tree>', () => {
     pick.click();
     equal((await picked).detail.path, 'flows');
   });
+
+  it('dir mode creates a virtual directory in place (git materialises it on commit)', async () => {
+    make('dir');
+    const add = await waitFor(() => el.shadowRoot.querySelector('.mkdir'));
+    add.click();
+    const input = el.shadowRoot.querySelector('.mkdir-name');
+    input.value = 'specs';
+    const picked = nextEvent(el, 'picked');
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    const e = await picked;
+    equal(e.detail.path, 'specs');
+    ok(e.detail.entry.virtual, 'the node is virtual — no API call, no fake listing');
+  });
 });
