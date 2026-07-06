@@ -2850,7 +2850,31 @@ export function createMockControlPlane(options = {}) {
   function createWorkingCopy(body) {
     if (body?.fromBaseWorkflowId) {
       if (body.document != null) return problem(400, 'Invalid working copy', 'Supply a document OR a from-version, not both.');
-      return problem(400, 'Carry-over unavailable', 'The demo mock does not offer catalog carry-over.');
+      const base = body.fromBaseWorkflowId;
+      const version = catalog
+        .filter((v) => v.baseWorkflowId === base && (body.fromVersionNumber == null || v.versionNumber === body.fromVersionNumber))
+        .sort((a, b) => b.versionNumber - a.versionNumber)[0];
+      if (!version) {
+        return problem(404, 'Version not found', `No catalog version '${base}'${body.fromVersionNumber != null ? ` v${body.fromVersionNumber}` : ''} exists, or it is outside your reach.`);
+      }
+
+      // The carry-over: the version's document opens as a draft, its referenced sources attached
+      // by registry name so every operation resolves immediately.
+      const wc = {
+        id: `wc-${String(++workingCopySeq).padStart(10, '0')}`,
+        name: body.name || version.title,
+        baseWorkflowId: base,
+        basedOnVersion: version.versionNumber,
+        document: structuredClone(version._workflow),
+        sources: (version.sources ?? []).map((ref) => ({
+          name: ref.name, kind: 'registry', sourceName: ref.name, ...(ref.type ? { type: ref.type } : {}),
+          attachedBy: actingSubject(), attachedAt: iso(0),
+        })),
+        managementTags: body?.managementTags ?? [],
+        createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
+      };
+      workingCopies.push(wc);
+      return json(structuredClone(wc), 201);
     }
     const name = body?.name
       || body?.document?.workflows?.[0]?.workflowId
