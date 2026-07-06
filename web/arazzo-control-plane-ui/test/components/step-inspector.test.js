@@ -270,11 +270,16 @@ describe('<arazzo-step-inspector>', () => {
     });
     el.components = { failureActions: { escalate: { name: 'escalate', type: 'goto', stepId: 'review', criteria: [{ condition: '$statusCode == 500' }] } } };
 
-    // Edit ALL instances: the reference row expands into an editor of the SHARED action.
-    const sharedRow = el.shadowRoot.querySelector('.reusable-row-details');
-    ok(sharedRow, 'the reference row is expandable');
-    ok(sharedRow.textContent.includes('shared'), 'and says what it is');
-    const sharedEditor = sharedRow.querySelector('arazzo-action-editor');
+    // ✎ opens the two-choice menu; "for all instances" edits the SHARED action in place.
+    const wrap = el.shadowRoot.querySelector('.reusable-wrap');
+    ok(wrap.textContent.includes('shared'), 'the row says what it is');
+    wrap.querySelector('.edit').click();
+    const menu = wrap.querySelector('.edit-menu');
+    ok(!menu.hidden, 'the edit menu opens');
+    equal(menu.querySelector('.edit-all').textContent, 'for all instances');
+    equal(menu.querySelector('.edit-one').textContent, 'just this instance');
+    menu.querySelector('.edit-all').click();
+    const sharedEditor = wrap.querySelector('arazzo-action-editor');
     ok(sharedEditor, 'the shared action edits in place');
     const componentChanged = nextEvent(el, 'component-changed');
     sharedEditor.dispatchEvent(new CustomEvent('action-changed', {
@@ -285,9 +290,7 @@ describe('<arazzo-step-inspector>', () => {
     equal(evt.detail.kind, 'failureActions');
     equal(evt.detail.action.criteria[0].condition, '$statusCode == 503', 'the edit targets the SHARED action, all references follow');
 
-    // Edit JUST this instance: localize copies it inline.
-    const localize = sharedRow.querySelector('summary button');
-    equal(localize.textContent, 'this instance only');
+    // "just this instance" is the localize path (proven by the menu's presence above).
 
     // Make shared: a local action promotes into the library and becomes a reference.
     const promote = [...el.shadowRoot.querySelectorAll('.promote')].at(-1);

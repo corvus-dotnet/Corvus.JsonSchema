@@ -52,30 +52,71 @@ export function buildActionList({ actions, kind, stepIds, workflowIds, completio
         const key = action.reference.split('.').pop();
         const resolved = components?.[key];
 
-        // A SHARED action is properly editable in place: expanding edits every reference in the
-        // document; "this instance only" copies it inline so it can diverge here.
-        const details = document.createElement('details');
-        details.className = 'reusable-row-details';
-        const summary = document.createElement('summary');
+        // A SHARED action: ✎ (the standard edit affordance) opens a two-choice menu — edit for
+        // ALL instances (the library action, every reference follows) or just THIS one (a local
+        // copy that can diverge).
+        const row = document.createElement('div');
+        row.className = 'reusable-row';
         const title = document.createElement('span');
         title.className = 'atitle';
         title.textContent = `↺ ${action.reference} · shared${resolved ? '' : ' (unresolved)'}`;
-        summary.append(title);
+        row.append(title);
+
+        const editArea = document.createElement('div');
+        editArea.className = 'shared-edit';
+        editArea.hidden = true;
+        const menu = document.createElement('div');
+        menu.className = 'edit-menu';
+        menu.hidden = true;
 
         if (resolved) {
-          const localize = document.createElement('button');
-          localize.type = 'button';
-          localize.className = 'ghost move';
-          localize.textContent = 'this instance only';
-          localize.title = 'Copy the shared action inline so THIS list can edit it independently — other references keep the shared one';
-          localize.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          const edit = document.createElement('button');
+          edit.type = 'button';
+          edit.className = 'ghost move edit';
+          edit.textContent = '✎';
+          edit.title = 'Edit this action…';
+          edit.addEventListener('click', () => { menu.hidden = !menu.hidden; });
+          row.append(edit);
+
+          const all = document.createElement('button');
+          all.type = 'button';
+          all.className = 'ghost edit-all';
+          all.textContent = 'for all instances';
+          all.title = 'Edit the SHARED library action — every reference in the document follows';
+          all.addEventListener('click', () => {
+            menu.hidden = true;
+            if (!onComponentChange) return;
+            if (!editArea.hidden) { editArea.hidden = true; editArea.replaceChildren(); return; }
+            const hint = document.createElement('div');
+            hint.className = 'shared-hint';
+            hint.textContent = 'Editing the SHARED action — every reference in the document follows.';
+            const editor = document.createElement('arazzo-action-editor');
+            editor.kind = kind;
+            editor.stepIds = stepIds;
+            editor.workflowIds = workflowIds || [];
+            editor.completionContext = completionContext;
+            editor.value = resolved;
+            editor.addEventListener('action-changed', (e) => {
+              e.stopPropagation();
+              components[key] = e.detail.action;
+              onComponentChange(key, e.detail.action);
+            });
+            editArea.replaceChildren(hint, editor);
+            editArea.hidden = false;
+          });
+
+          const one = document.createElement('button');
+          one.type = 'button';
+          one.className = 'ghost edit-one';
+          one.textContent = 'just this instance';
+          one.title = 'Copy the shared action inline so THIS list can edit it independently — other references keep the shared one';
+          one.addEventListener('click', () => {
             actions[i] = structuredClone(resolved);
             render();
+            root.querySelectorAll('details')[i]?.setAttribute('open', '');
             onChange();
           });
-          summary.append(localize);
+          menu.append(all, one);
         }
 
         const drop = document.createElement('button');
@@ -83,36 +124,17 @@ export function buildActionList({ actions, kind, stepIds, workflowIds, completio
         drop.className = 'ghost move';
         drop.textContent = '✕';
         drop.title = 'Remove the reference (the shared action stays in the library)';
-        drop.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+        drop.addEventListener('click', () => {
           actions.splice(i, 1);
           render();
           onChange();
         });
-        summary.append(drop);
-        details.append(summary);
+        row.append(drop);
 
-        if (resolved && onComponentChange) {
-          const hint = document.createElement('div');
-          hint.className = 'shared-hint';
-          hint.textContent = 'Editing the SHARED action — every reference in the document follows.';
-          const editor = document.createElement('arazzo-action-editor');
-          editor.kind = kind;
-          editor.stepIds = stepIds;
-          editor.workflowIds = workflowIds || [];
-          editor.completionContext = completionContext;
-          editor.value = resolved;
-          editor.addEventListener('action-changed', (e) => {
-            e.stopPropagation();
-            components[key] = e.detail.action;
-            title.textContent = `↺ ${action.reference} · shared`;
-            onComponentChange(key, e.detail.action);
-          });
-          details.append(hint, editor);
-        }
-
-        root.append(details);
+        const wrap = document.createElement('div');
+        wrap.className = 'reusable-wrap';
+        wrap.append(row, menu, editArea);
+        root.append(wrap);
         return;
       }
       const unreachable = sawCatchAll;
@@ -270,7 +292,9 @@ export const ACTION_LIST_CSS = `
   .action-list .add-action { font-size: 12px; justify-self: start; }
   .action-list .reusable-row { font-size: 12px; padding: 6px 2px; display: flex; align-items: center; gap: 6px; }
   .action-list .reusable-row span { flex: 1; min-width: 0; }
-  .action-list .reusable-row-details summary { color: var(--_muted); }
+  .action-list .reusable-wrap { display: grid; gap: 4px; }
+  .action-list .edit-menu { display: flex; gap: 6px; padding-left: 14px; }
+  .action-list .edit-menu .ghost { font-size: 11px; }
   .action-list .shared-hint { font-size: 10.5px; color: var(--arazzo-status-suspended, #b45309); padding: 0 10px 4px; }
   .action-list .promote { margin: 6px 10px 0; font-size: 11px; }
   .action-list .add-ref { font-size: 12px; justify-self: start; max-width: 100%; min-width: 0; }
