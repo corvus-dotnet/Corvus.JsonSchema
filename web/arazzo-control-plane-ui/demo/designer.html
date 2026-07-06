@@ -782,6 +782,77 @@
     // end action — into the document, re-projects, and SELECTS the new edge (the designer's
     // drop → select → edit-criteria flow; the inspector will open on the action's conditions).
     // An identical unconditional duplicate is meaningless, so it selects the existing edge instead.
+    // Delete/Backspace removes the selection: a step, or an ACTION edge (its onSuccess/onFailure
+    // entry). Sequence edges ARE the step order — deleting one means moving or removing a step.
+    surface.addEventListener('delete-requested', (e) => {
+      const sel = e.detail.selection;
+      if (sel?.type === 'node' && !sel.id.startsWith('#')) {
+        model.update((d) => {
+          const w = d.workflows.find((x) => x.workflowId === select.value);
+          w.steps = w.steps.filter((st) => st.stepId !== sel.id);
+        }, { origin: 'canvas', label: `delete step ${sel.id}` });
+        surface.selection = null;
+        showSelection(null);
+        return;
+      }
+
+      if (sel?.type === 'edge') {
+        const edge = surface.graph.edges.find((x) => x.id === sel.id);
+        if (!edge) return;
+        if (edge.kind === 'seq' || !edge.actionName) {
+          setSaveUi('sequence edges follow the step order — delete or reorder the step instead');
+          return;
+        }
+
+        model.update((d) => {
+          const w = d.workflows.find((x) => x.workflowId === select.value);
+          const st = w.steps.find((x) => x.stepId === edge.from);
+          for (const list of ['onSuccess', 'onFailure']) {
+            if (!st?.[list]) continue;
+            const next = st[list].filter((a) => a.name !== edge.actionName && !(a.reference && a.reference.endsWith(`.${edge.actionName}`)));
+            if (next.length !== st[list].length) {
+              if (next.length) st[list] = next; else delete st[list];
+            }
+          }
+        }, { origin: 'canvas', label: `delete edge ${edge.actionName}` });
+        surface.selection = null;
+        showSelection(null);
+      }
+    });
+
+    // Dragging a selected action edge's arrowhead onto another node retargets the action; onto
+    // the end terminal it becomes an `end`. Reusable (components) actions are shared — edit those
+    // in the library, not by dragging one usage.
+    surface.addEventListener('edge-retargeted', (e) => {
+      const { actionName, from, to } = e.detail;
+      const wf = doc.workflows.find((w) => w.workflowId === select.value);
+      const step = wf?.steps.find((st) => st.stepId === from);
+      const isShared = ['onSuccess', 'onFailure'].some((list) => (step?.[list] ?? []).some((a) => a.reference && a.reference.endsWith(`.${actionName}`)));
+      if (isShared) {
+        setSaveUi(`'${actionName}' is a shared components action — edit it in the library (settings page)`);
+        return;
+      }
+
+      model.update((d) => {
+        const w = d.workflows.find((x) => x.workflowId === select.value);
+        const st = w.steps.find((x) => x.stepId === from);
+        for (const list of ['onSuccess', 'onFailure']) {
+          const action = (st?.[list] ?? []).find((a) => a.name === actionName);
+          if (!action) continue;
+          if (to === '#end') {
+            action.type = 'end';
+            delete action.stepId;
+          } else {
+            action.type = 'goto';
+            action.stepId = to;
+          }
+        }
+      }, { origin: 'canvas', label: `retarget ${actionName} → ${to === '#end' ? 'end' : to}` });
+      const moved = surface.graph.edges.find((x) => x.from === from && x.actionName === actionName);
+      if (moved) surface.selection = { type: 'edge', id: moved.id };
+      logEvent('edge-retargeted', e.detail);
+    });
+
     surface.addEventListener('edge-created', (e) => {
       const { from, to, kind } = e.detail;
       const wf = doc.workflows.find((w) => w.workflowId === select.value);

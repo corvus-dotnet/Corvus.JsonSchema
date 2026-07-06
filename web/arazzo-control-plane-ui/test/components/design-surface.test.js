@@ -250,4 +250,30 @@ describe('<arazzo-design-surface>', () => {
     await new Promise((r) => setTimeout(r, 30));
     ok(!fired, 'start → end is not a meaningful entry');
   });
+
+  it('a selected action edge grows a handle; dragging it onto another node emits edge-retargeted', async () => {
+    make();
+    // manual-review-on-decline: authorize-payment --402--> manual-review (a goto action edge).
+    el.selection = { type: 'edge', id: 'goto:authorize-payment:manual-review-on-decline:failure' };
+    const handle = el.shadowRoot.querySelector('.retarget');
+    ok(handle, 'the selected action edge shows its retarget handle');
+
+    const svg = el.shadowRoot.querySelector('svg');
+    const handleBox = handle.getBoundingClientRect();
+    const target = centerOf('capture-payment');
+    const done = nextEvent(el, 'edge-retargeted');
+    pointer('pointerdown', handle, { clientX: handleBox.left + 3, clientY: handleBox.top + 3 });
+    pointer('pointermove', svg, target);
+    ok(!el.shadowRoot.querySelector('.rubber').hasAttribute('hidden'), 'the rubber band follows the drag');
+    await waitFor(() => node('capture-payment').classList.contains('link-target'));
+    pointer('pointerup', svg, target);
+    const e = await done;
+    equal(e.detail.actionName, 'manual-review-on-decline');
+    equal(e.detail.from, 'authorize-payment');
+    equal(e.detail.to, 'capture-payment');
+
+    // A sequence edge gets no handle: it IS the step order.
+    el.selection = { type: 'edge', id: 'seq:validate-order' };
+    ok(!el.shadowRoot.querySelector('.retarget'), 'sequence edges cannot be retargeted');
+  });
 });
