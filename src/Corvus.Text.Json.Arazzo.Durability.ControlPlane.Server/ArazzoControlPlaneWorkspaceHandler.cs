@@ -1242,7 +1242,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         var attachedNames = new HashSet<string>(StringComparer.Ordinal);
         var operations = new HashSet<string>(StringComparer.Ordinal);
         var channels = new HashSet<string>(StringComparer.Ordinal);
+        var operationNodes = new Dictionary<string, (JsonElement Root, JsonElement Operation)>(StringComparer.Ordinal);
+        var rentedSourceDocs = new List<IDisposable>();
         bool anySurfaceResolved = false;
+        try
+        {
         if (attachments.ValueKind == JsonValueKind.Array)
         {
             foreach (JsonElement attachment in attachments.EnumerateArray())
@@ -1261,16 +1265,21 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 if (attachment.TryGetProperty("document"u8, out JsonElement inline) && inline.ValueKind == JsonValueKind.Object)
                 {
                     CollectOperationIdentities(inline, operations, channels);
+                    CollectOperationNodes(inline, operationNodes);
                     anySurfaceResolved = true;
                 }
                 else if (this.sources is not null
                     && attachment.TryGetProperty("sourceName"u8, out JsonElement sn)
                     && sn.GetString() is { Length: > 0 } registryName)
                 {
-                    using ParsedJsonDocument<RegisteredSource>? registered = await this.sources.GetAsync(registryName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+                    // NOT disposed inline: the payload-typing pass below reads elements of this
+                    // document; it is returned in the finally.
+                    ParsedJsonDocument<RegisteredSource>? registered = await this.sources.GetAsync(registryName, this.access.Current(), cancellationToken).ConfigureAwait(false);
                     if (registered is { } r)
                     {
+                        rentedSourceDocs.Add(r);
                         CollectOperationIdentities((JsonElement)r.RootElement.Document, operations, channels);
+                        CollectOperationNodes((JsonElement)r.RootElement.Document, operationNodes);
                         anySurfaceResolved = true;
                     }
                 }
@@ -1340,6 +1349,181 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                         findings.Add(new("warning", "workspace-sources", $"/workflows/{workflowIndex}/steps/{stepIndex}/channelPath", $"Channel '{channel}' is not found in any attached source.", null));
                     }
                 }
+
+                // Payload typing: literals in the step's request payload checked against the bound
+                // operation's schema. Runtime expressions are exempt everywhere ("$inputs.x" is
+                // legitimate where the schema says boolean); a plain "tru" on a boolean leaf is not.
+                if (bindsOperation
+                    && step.TryGetProperty("requestBody"u8, out JsonElement requestBody)
+                    && requestBody.TryGetProperty("payload"u8, out JsonElement payload)
+                    && operationNodes.TryGetValue(operationId.GetString()!, out (JsonElement Root, JsonElement Operation) node))
+                {
+                    JsonElement schema = ResolveRequestSchema(node.Operation, node.Root);
+                    if (schema.ValueKind == JsonValueKind.Object)
+                    {
+                        CheckPayloadAgainstSchema(payload, schema, node.Root, $"/workflows/{workflowIndex}/steps/{stepIndex}/requestBody/payload", findings, 0);
+                    }
+                }
+            }
+        }
+        }
+        finally
+        {
+            foreach (IDisposable rented in rentedSourceDocs)
+            {
+                rented.Dispose();
+            }
+        }
+    }
+
+    /// <summary>Maps each OpenAPI operationId to its operation node (with the doc root for $ref walks).</summary>
+    private static void CollectOperationNodes(JsonElement doc, Dictionary<string, (JsonElement Root, JsonElement Operation)> nodes)
+    {
+        if (!doc.TryGetProperty("paths"u8, out JsonElement paths) || paths.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        foreach (JsonProperty<JsonElement> path in paths.EnumerateObject())
+        {
+            if (path.Value.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            foreach (JsonProperty<JsonElement> method in path.Value.EnumerateObject())
+            {
+                if (method.Value.ValueKind == JsonValueKind.Object
+                    && method.Value.TryGetProperty("operationId"u8, out JsonElement id)
+                    && id.GetString() is { Length: > 0 } operationId)
+                {
+                    nodes.TryAdd(operationId, (doc, method.Value));
+                }
+            }
+        }
+    }
+
+    /// <summary>Follows a local <c>$ref</c> ("#/…") within the source document; anything else returns as-is.</summary>
+    private static JsonElement Deref(JsonElement nodeElement, JsonElement root)
+    {
+        for (int hops = 0; hops < 8; hops++)
+        {
+            if (nodeElement.ValueKind != JsonValueKind.Object
+                || !nodeElement.TryGetProperty("$ref"u8, out JsonElement reference)
+                || reference.GetString() is not { } pointer
+                || !pointer.StartsWith("#/", StringComparison.Ordinal))
+            {
+                return nodeElement;
+            }
+
+            JsonElement current = root;
+            foreach (string token in pointer[2..].Split('/'))
+            {
+                string key = token.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
+                if (current.ValueKind != JsonValueKind.Object || !current.TryGetProperty(key, out current))
+                {
+                    return default;
+                }
+            }
+
+            nodeElement = current;
+        }
+
+        return nodeElement;
+    }
+
+    /// <summary>The operation's JSON request schema (requestBody → content → application/json → schema), $refs followed.</summary>
+    private static JsonElement ResolveRequestSchema(JsonElement operation, JsonElement root)
+    {
+        if (!operation.TryGetProperty("requestBody"u8, out JsonElement requestBody))
+        {
+            return default;
+        }
+
+        requestBody = Deref(requestBody, root);
+        if (requestBody.ValueKind != JsonValueKind.Object
+            || !requestBody.TryGetProperty("content"u8, out JsonElement content)
+            || !content.TryGetProperty("application/json"u8, out JsonElement mediaType)
+            || !mediaType.TryGetProperty("schema"u8, out JsonElement schema))
+        {
+            return default;
+        }
+
+        return Deref(schema, root);
+    }
+
+    private static bool IsExpressionShaped(string text)
+        => text.StartsWith('$') || text.Contains("{$", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Walks payload literals against the operation's schema: a non-expression string on a
+    /// boolean/number leaf is an error (it can never satisfy the API); a missing required property
+    /// is a warning (nothing at runtime can add it).
+    /// </summary>
+    private static void CheckPayloadAgainstSchema(JsonElement value, JsonElement schema, JsonElement root, string pointer, List<Finding> findings, int depth)
+    {
+        if (depth > 12)
+        {
+            return;
+        }
+
+        schema = Deref(schema, root);
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        string? type = schema.TryGetProperty("type"u8, out JsonElement typeElement) && typeElement.ValueKind == JsonValueKind.String
+            ? typeElement.GetString()
+            : null;
+
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            string text = value.GetString() ?? string.Empty;
+            if (!IsExpressionShaped(text) && type is "boolean" or "number" or "integer")
+            {
+                findings.Add(new("error", "payload-typing", pointer, $"'{text}' is neither a {type} nor a runtime expression — the operation's schema requires a {type} here.", null));
+            }
+
+            return;
+        }
+
+        if (value.ValueKind == JsonValueKind.Object && (type is null or "object"))
+        {
+            if (schema.TryGetProperty("required"u8, out JsonElement required) && required.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement requiredName in required.EnumerateArray())
+                {
+                    if (requiredName.GetString() is { Length: > 0 } memberName && !value.TryGetProperty(memberName, out _))
+                    {
+                        findings.Add(new("warning", "payload-typing", pointer, $"Required property '{memberName}' is missing from the payload — the operation's schema requires it.", null));
+                    }
+                }
+            }
+
+            if (schema.TryGetProperty("properties"u8, out JsonElement properties) && properties.ValueKind == JsonValueKind.Object)
+            {
+                foreach (JsonProperty<JsonElement> member in value.EnumerateObject())
+                {
+                    string memberName = member.Name.ToString();
+                    if (properties.TryGetProperty(memberName, out JsonElement memberSchema))
+                    {
+                        CheckPayloadAgainstSchema(member.Value, memberSchema, root, $"{pointer}/{memberName.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal)}", findings, depth + 1);
+                    }
+                }
+            }
+
+            return;
+        }
+
+        if (value.ValueKind == JsonValueKind.Array && type == "array"
+            && schema.TryGetProperty("items"u8, out JsonElement items) && items.ValueKind == JsonValueKind.Object)
+        {
+            int index = 0;
+            foreach (JsonElement item in value.EnumerateArray())
+            {
+                CheckPayloadAgainstSchema(item, items, root, $"{pointer}/{index}", findings, depth + 1);
+                index++;
             }
         }
     }

@@ -1350,3 +1350,40 @@ test('a message wait suspends the simulation; a staged trigger releases it (§3.
   assert.equal(released.steps.length, 3);
   assert.equal(released.steps[1].requests[0].responseBody.orderId, 'o-1', 'the payload rides the trace');
 });
+
+test('validate flags payload literals that can never satisfy the operation schema (§5.3)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'typed-payloads',
+    document: {
+      arazzo: '1.1.0', info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'payments', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [{
+        stepId: 'authorize', operationId: 'authorize',
+        requestBody: { payload: { capture: 'tru', reference: '$inputs.orderId' } },
+      }] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'payments', { document: {
+    openapi: '3.1.0', info: { title: 'Payments', version: '1' },
+    paths: { '/authorize': { post: { operationId: 'authorize', requestBody: { content: { 'application/json': { schema: {
+      type: 'object', required: ['amount'],
+      properties: { capture: { type: 'boolean' }, amount: { type: 'number' }, reference: { type: 'string' } },
+    } } } }, responses: { 200: { description: 'ok' } } } } },
+  } });
+
+  const report = await c.validateWorkingCopy(wc.id);
+  assert.equal(report.valid, false, 'a boolean leaf holding "tru" cannot be valid');
+  const typing = report.diagnostics.filter((d) => d.category === 'payload-typing');
+  const bad = typing.find((d) => d.severity === 'error');
+  assert.match(bad.message, /'tru' is neither a boolean nor a runtime expression/);
+  assert.equal(bad.instancePath, '/workflows/0/steps/0/requestBody/payload/capture');
+  assert.ok(typing.some((d) => d.severity === 'warning' && d.message.includes("'amount' is missing")), 'missing required warns');
+
+  // Expressions are exempt wherever they appear; fixing the literal clears the error.
+  const fresh = await c.getWorkingCopy(wc.id);
+  fresh.document.workflows[0].steps[0].requestBody.payload = { capture: '$inputs.capture', amount: 12 };
+  await c.saveWorkingCopy(wc.id, { document: fresh.document, expectedEtag: fresh.etag });
+  const clean = await c.validateWorkingCopy(wc.id);
+  assert.ok(!clean.diagnostics.some((d) => d.category === 'payload-typing'), 'expressions + literals of the right type pass');
+});
