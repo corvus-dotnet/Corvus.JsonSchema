@@ -175,10 +175,20 @@ public static class ScenarioSuite
 
         if (expect.TryGetProperty("outputs"u8, out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Array)
         {
+            // The judged frame carries the workflow outputs AND every step's outputs (last attempt
+            // wins), so conditions can assert intermediate results: $steps.<id>.outputs.<name>.
             var context = new WorkflowExecutionContext();
             if (result.Outputs.ValueKind is not JsonValueKind.Undefined)
             {
                 context.SetWorkflowOutputs(result.Outputs);
+            }
+
+            foreach (SimulatedStepRecord record in result.Steps)
+            {
+                if (record.Outputs.ValueKind is not JsonValueKind.Undefined)
+                {
+                    context.SetStepOutputs(record.StepId, record.Outputs);
+                }
             }
 
             foreach (JsonElement expectation in outputs.EnumerateArray())

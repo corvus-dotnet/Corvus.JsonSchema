@@ -10,6 +10,8 @@
 
 import { unpackWorkflowPackage } from '../src/workflow-package.js';
 
+import { resolveAgainstFrame } from '../src/expression-language.js';
+
 const TERMINAL = new Set(['Completed', 'Cancelled']);
 let etagSeq = 1000;
 
@@ -167,19 +169,28 @@ const STEP_SETS = {
 // needed; the entries here carry the differences (bindings, parameters, request bodies).
 const STEP_BINDINGS = {
   'adopt-pet': {
-    findPet: { operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }] },
-    reservePayment: { parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }] },
-    submitAdoption: { requestBody: { contentType: 'application/json', payload: { petId: '$inputs.petId', adopterEmail: '$inputs.adopterEmail' } } },
+    findPet: { operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }], outputs: { petName: '$response.body#/name' } },
+    reservePayment: { parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }], outputs: { reservationId: '$response.body#/reservationId' } },
+    submitAdoption: { requestBody: { contentType: 'application/json', payload: { petId: '$inputs.petId', adopterEmail: '$inputs.adopterEmail' } }, outputs: { adoptionId: '$response.body#/adoptionId' } },
     confirmAdoption: { parameters: [{ name: 'adoptionId', in: 'path', value: '$steps.submitAdoption.outputs.adoptionId' }] },
   },
   'nightly-reconcile': {
+    loadLedger: { outputs: { reconciliationId: '$response.body#/reconciliationId' } },
     fetchTransactions: { parameters: [{ name: 'period', in: 'query', value: '$inputs.period' }] },
-    matchEntries: { parameters: [{ name: 'reconciliationId', in: 'path', value: '$steps.loadLedger.outputs.reconciliationId' }] },
+    matchEntries: { parameters: [{ name: 'reconciliationId', in: 'path', value: '$steps.loadLedger.outputs.reconciliationId' }], outputs: { matched: '$response.body#/matched', unmatched: '$response.body#/unmatched' } },
   },
   'onboard-customer': {
+    createAccount: { outputs: { accountId: '$response.body#/accountId' } },
     verifyIdentity: { parameters: [{ name: 'accountId', in: 'path', value: '$steps.createAccount.outputs.accountId' }] },
     provisionResources: { parameters: [{ name: 'accountId', in: 'path', value: '$steps.createAccount.outputs.accountId' }] },
   },
+};
+
+// The workflow-level outputs each seeded document exposes (resolved from step outputs at run end).
+const WORKFLOW_OUTPUTS = {
+  'adopt-pet': { adoptionId: '$steps.submitAdoption.outputs.adoptionId', petName: '$steps.findPet.outputs.petName' },
+  'nightly-reconcile': { unmatched: '$steps.matchEntries.outputs.unmatched' },
+  'onboard-customer': { accountId: '$steps.createAccount.outputs.accountId' },
 };
 
 // The typed shape each seeded workflow is invoked with (drives the schemas endpoint's inputs
@@ -491,6 +502,7 @@ function workflowDoc(workflowId, title, description, sourceRefs) {
       workflowId,
       ...(WORKFLOW_INPUTS[base] ? { inputs: structuredClone(WORKFLOW_INPUTS[base]) } : {}),
       steps: stepIds.map((stepId) => ({ stepId, operationId: stepId, ...structuredClone(bindings[stepId] ?? {}) })),
+      ...(WORKFLOW_OUTPUTS[base] ? { outputs: structuredClone(WORKFLOW_OUTPUTS[base]) } : {}),
     }],
   };
 }
@@ -1420,7 +1432,15 @@ export function createMockControlPlane(options = {}) {
         { source: 'petstore', operationId: 'submitAdoption', responses: [{ status: 201, body: { adoptionId: 'a-42' } }] },
         { source: 'petstore', operationId: 'confirmAdoption', responses: [{ status: 200 }] },
       ],
-      expect: { outcome: 'completed', path: ['findPet', 'reservePayment', 'submitAdoption', 'confirmAdoption'], pathMode: 'exact' },
+      expect: {
+        outcome: 'completed',
+        path: ['findPet', 'reservePayment', 'submitAdoption', 'confirmAdoption'],
+        pathMode: 'exact',
+        outputs: [
+          { condition: "$outputs.adoptionId == 'a-42'" },
+          { condition: "$steps.reservePayment.outputs.reservationId == 'res-9'" },
+        ],
+      },
     }, null, 2)),
     'scenarios/adopt/payment-declined.scenario.json': gitHubFile('scenarios/adopt/payment-declined.scenario.json', JSON.stringify({
       name: 'payment-declined',
@@ -1839,8 +1859,10 @@ export function createMockControlPlane(options = {}) {
       if (sub === 'schemas' && method === 'GET') return json(schemasFor(v));
       if (sub === 'validate' && method === 'POST') return json(validateValue(v, body));
       if (sub === 'simulate' && method === 'POST') {
-        // The published version's packaged document, simulated verbatim (§4.3) — same as a working copy.
-        const outcome = simulateDocument(v._workflow, body ?? {});
+        // The published version's packaged document, simulated verbatim (§4.3) — bound to the
+        // version's own referenced sources, same as a working copy is to its attachments.
+        const refs = (v.sources ?? []).map((ref) => ({ name: ref.name, document: v._sources?.[ref.name] }));
+        const outcome = simulateDocument(v._workflow, body ?? {}, refs);
         return outcome instanceof Response ? outcome : json(outcome);
       }
       if (sub === 'evidence' && method === 'GET') {
@@ -3068,7 +3090,7 @@ export function createMockControlPlane(options = {}) {
   // request's scripted mocks, evaluating only `$statusCode ==/!= N` conditions (other conditions
   // count as satisfied when the status is 2xx). Approximate by design — good enough to drive the
   // debug UI's overlay, truth tables, and stepping against the mock control plane.
-  function simulateDocument(doc, request) {
+  function simulateDocument(doc, request, attachments, depth = 0, sharedTriggers) {
     const wf = (doc.workflows ?? []).find((w) => !request.workflowId || w.workflowId === request.workflowId)
       ?? (request.workflowId ? null : doc.workflows?.[0]);
     if (request.workflowId && !doc.workflows?.some((w) => w.workflowId === request.workflowId)) {
@@ -3090,10 +3112,11 @@ export function createMockControlPlane(options = {}) {
       const next = queue.length > 1 ? queue.shift() : queue[0];
       return { status: next.status, body: next.body };
     };
-    // Bind steps to method/path via the ATTACHED sources' operation surfaces when available.
-    const wcSources = (workingCopies.find((x) => x.document === doc)?.sources) ?? [];
+    // Bind steps to method/path via the sources' operation surfaces: the caller's attachments
+    // (a catalog version's referenced sources), else the owning working copy's.
+    const boundSources = attachments ?? (workingCopies.find((x) => x.document === doc)?.sources) ?? [];
     const surface = [];
-    for (const att of wcSources) {
+    for (const att of boundSources) {
       const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
       if (d) surface.push(...projectOperationSurface(d));
     }
@@ -3106,8 +3129,9 @@ export function createMockControlPlane(options = {}) {
     const maxSteps = Math.min(request.budget?.maxSteps ?? 256, 1024);
     const clockStart = Date.parse('2020-01-01T00:00:00Z');
     let clockMs = 0;
-    // Scenario triggers (staged or injected mid-session) queue up for the message waits, in order.
-    const triggerQueue = [...(scenario.triggers ?? [])];
+    // Scenario triggers (staged or injected mid-session) queue up for the message waits, in order —
+    // one queue for the whole run, shared with inlined sub-workflows.
+    const triggerQueue = sharedTriggers ?? [...(scenario.triggers ?? [])];
     let wait;
 
     const evalCriterion = (condition, status) => {
@@ -3117,6 +3141,7 @@ export function createMockControlPlane(options = {}) {
     };
 
     const steps = [];
+    const stepOutputs = {};
     const clockAdvances = [];
     const arrivals = new Map();
     const retries = new Map();
@@ -3139,6 +3164,53 @@ export function createMockControlPlane(options = {}) {
 
       const op = bindingOf(step);
 
+      // A sub-workflow step (workflowId binding): the target workflow runs INLINE — its nested
+      // trace rides the record (`subTrace`) so the debugger can step into it (§3.3).
+      if (typeof step.workflowId === 'string' && step.workflowId && !step.operationId && !step.channelPath) {
+        if (depth >= 4) { outcome = 'faulted'; fault = { stepId: step.stepId, attempt: 1, error: 'Sub-workflow nesting exceeds the demo depth limit.' }; break; }
+        const sub = simulateDocument(doc, { workflowId: step.workflowId, scenario }, attachments, depth + 1, triggerQueue);
+        if (sub instanceof Response) { outcome = 'faulted'; fault = { stepId: step.stepId, attempt: 1, error: `Sub-workflow '${step.workflowId}' is not executable.` }; break; }
+        const subRecord = {
+          stepId: step.stepId, status: sub.outcome === 'faulted' ? 'faulted' : 'completed', attempt: retries.get(step.stepId) ?? 0,
+          subTrace: { workflowId: step.workflowId, ...sub },
+          ...(sub.outputs !== undefined ? { outputs: sub.outputs } : {}),
+        };
+        if (sub.outputs !== undefined) stepOutputs[step.stepId] = sub.outputs;
+        if (sub.outcome === 'suspended') {
+          // The wait bubbles: the parent suspends where the child does.
+          steps.push(subRecord);
+          outcome = 'suspended';
+          wait = sub.wait;
+          break;
+        }
+
+        const subOk = sub.outcome === 'completed';
+        const subActions = subOk
+          ? (step.onSuccess?.length ? step.onSuccess : wf.successActions ?? [])
+          : (step.onFailure?.length ? step.onFailure : wf.failureActions ?? []);
+        const subFired = subActions.map((a) => (a.reference ? resolveComponentAction(doc, a.reference) : a)).filter(Boolean)
+          .find((a) => !(a.criteria?.length)); // sub-workflow steps have no $statusCode; only criteria-less actions fire
+        if (subFired) {
+          subRecord.actionTaken = { type: subFired.type, ...(subFired.name ? { name: subFired.name } : {}), ...(subFired.stepId ? { target: subFired.stepId } : {}) };
+          steps.push(subRecord);
+          if (subFired.type === 'end') { index = -1; break; }
+          if (subFired.type === 'goto') { index = wf.steps.findIndex((x) => x.stepId === subFired.stepId); continue; }
+        } else if (!subOk) {
+          outcome = 'faulted';
+          fault = { stepId: step.stepId, attempt: 1, error: `Sub-workflow '${step.workflowId}' faulted.` };
+          subRecord.status = 'faulted';
+          subRecord.actionTaken = { type: 'fault' };
+          steps.push(subRecord);
+          break;
+        } else {
+          subRecord.actionTaken = { type: 'fallThrough' };
+          steps.push(subRecord);
+        }
+
+        index += 1;
+        continue;
+      }
+
       // A message step (AsyncAPI receive, bound by operationId or channelPath): consume a matching
       // scenario trigger, or SUSPEND on the wait — the same semantics the real engine gives staged
       // `triggers` and injected ones.
@@ -3153,11 +3225,14 @@ export function createMockControlPlane(options = {}) {
         }
 
         const [trigger] = triggerQueue.splice(ti, 1);
-        steps.push({
+        const messageRecord = {
           stepId: step.stepId, status: 'completed', attempt: retries.get(step.stepId) ?? 0,
           requests: [{ method: 'message', path: channel, status: 200, ...(trigger.payload !== undefined ? { responseBody: trigger.payload } : {}) }],
           actionTaken: { type: 'fallThrough' },
-        });
+        };
+        const messageOutputs = extractOutputs(step.outputs, { statusCode: 200, messagePayload: trigger.payload });
+        if (messageOutputs !== undefined) { messageRecord.outputs = messageOutputs; stepOutputs[step.stepId] = messageOutputs; }
+        steps.push(messageRecord);
         index += 1;
         continue;
       }
@@ -3172,6 +3247,8 @@ export function createMockControlPlane(options = {}) {
         requests: [{ method: (op?.method ?? 'GET').toLowerCase(), path: op?.path ?? `/${step.stepId}`, status, ...(respBody !== undefined ? { responseBody: respBody } : {}) }],
         ...(criteria.length ? { successCriteria: criteria } : {}),
       };
+      const extracted = extractOutputs(step.outputs, { statusCode: status, responseBody: respBody });
+      if (extracted !== undefined) { record.outputs = extracted; stepOutputs[step.stepId] = extracted; }
 
       const actions = ok
         ? (step.onSuccess?.length ? step.onSuccess : wf.successActions ?? [])
@@ -3214,15 +3291,52 @@ export function createMockControlPlane(options = {}) {
       index += 1;
     }
 
+    // Workflow outputs resolve from the collected step outputs and the scenario inputs — only a
+    // completed run produces them, like the real engine.
+    let workflowOutputs;
+    if (outcome === 'completed' && wf.outputs && typeof wf.outputs === 'object') {
+      const frame = { inputs: scenario.inputs ?? {}, steps: Object.fromEntries(Object.entries(stepOutputs).map(([id, o]) => [id, { outputs: o }])) };
+      for (const [name, expr] of Object.entries(wf.outputs)) {
+        const resolved = typeof expr === 'string' ? resolveAgainstFrame(expr, frame) : { found: false };
+        if (resolved.found) (workflowOutputs ??= {})[name] = resolved.value;
+      }
+    }
+
     return {
       outcome,
       ...(pausedBefore ? { pausedBefore } : {}),
       ...(fault ? { fault } : {}),
       ...(wait ? { wait } : {}),
+      ...(workflowOutputs !== undefined ? { outputs: workflowOutputs } : {}),
       steps,
       ...(clockAdvances.length ? { clockAdvances } : {}),
       stepsExecuted: executed > maxSteps ? maxSteps : steps.length,
     };
+  }
+
+  // Step output extraction, demo-grade: `$response.body#/ptr`, `$response.body`, `$message.payload#/ptr`,
+  // and `$statusCode` resolve; anything else is skipped (the real engine runs full expressions).
+  function extractOutputs(declared, { statusCode, responseBody, messagePayload }) {
+    if (!declared || typeof declared !== 'object') return undefined;
+    let out;
+    for (const [name, expr] of Object.entries(declared)) {
+      if (typeof expr !== 'string') continue;
+      let value;
+      if (expr === '$statusCode') value = statusCode;
+      else {
+        const m = /^\$(response\.body|message\.payload)(#\/(.*))?$/.exec(expr);
+        if (!m) continue;
+        value = m[1] === 'response.body' ? responseBody : messagePayload;
+        if (m[3] !== undefined) {
+          for (const tok of m[3].split('/')) {
+            const key = tok.replaceAll('~1', '/').replaceAll('~0', '~');
+            value = Array.isArray(value) ? value[Number(key)] : (value && typeof value === 'object' ? value[key] : undefined);
+          }
+        }
+      }
+      if (value !== undefined) (out ??= {})[name] = value;
+    }
+    return out;
   }
 
   // Mirror of the server's scenario runner: resolve (source, operationId) mocks to routes through
@@ -3262,11 +3376,15 @@ export function createMockControlPlane(options = {}) {
         else { let at = 0; for (const v of visited) if (at < expect.path.length && v === expect.path[at]) at++; passed = at === expect.path.length; }
         verdicts.push({ kind: 'path', passed, detail: `visited [${visited.join(', ')}]` });
       }
+      // Output conditions evaluate against the FULL frame — workflow outputs AND every step's
+      // outputs — so intermediate results are assertable: `$steps.authorize.outputs.id == 'a-1'`.
+      const frame = {
+        inputs: sc.inputs ?? {},
+        outputs: trace.outputs,
+        steps: Object.fromEntries(trace.steps.filter((s) => s.outputs !== undefined).map((s) => [s.stepId, { outputs: s.outputs }])),
+      };
       for (const o of expect.outputs ?? []) {
-        // The demo evaluates only `$outputs.<name> == '<literal>'` shapes; the server uses the real criterion compiler.
-        const m = /^\s*\$outputs\.(\w+)\s*==\s*'([^']*)'\s*$/.exec(o.condition ?? '');
-        const passed = m ? trace.outputs?.[m[1]] === m[2] : false;
-        verdicts.push({ kind: 'output', passed, detail: o.condition });
+        verdicts.push({ kind: 'output', ...evaluateOutputCondition(o.condition, frame) });
       }
       for (const [stepId, e] of Object.entries(expect.steps ?? {})) {
         const attempts = trace.steps.filter((s) => s.stepId === stepId).length;
@@ -3275,6 +3393,21 @@ export function createMockControlPlane(options = {}) {
       }
     }
     return { scenario: sc.name, passed: verdicts.every((v) => v.passed), outcome: trace.outcome, expectations: verdicts, trace };
+  }
+
+  // `<expr> == <literal>` / `!=` over the judged frame (demo-grade; the server compiles the real
+  // criterion grammar). The literal is JSON: 'quoted', 42, true, false, null.
+  function evaluateOutputCondition(condition, frame) {
+    const m = /^\s*(\$\S+)\s*(==|!=)\s*(.+?)\s*$/.exec(condition ?? '');
+    if (!m) return { passed: false, detail: `${condition} — not a <expression> == <literal> condition` };
+    const resolved = resolveAgainstFrame(m[1], frame);
+    if (!resolved.found) return { passed: false, detail: `${condition} — ${resolved.reason}` };
+    let literal;
+    try { literal = JSON.parse(m[3].replaceAll("'", '"')); }
+    catch { return { passed: false, detail: `${condition} — right side is not a literal` }; }
+    const equal = JSON.stringify(resolved.value) === JSON.stringify(literal);
+    const passed = m[2] === '==' ? equal : !equal;
+    return { passed, detail: `${condition} — left was ${JSON.stringify(resolved.value)}` };
   }
 
   function resolveComponentAction(doc, reference) {

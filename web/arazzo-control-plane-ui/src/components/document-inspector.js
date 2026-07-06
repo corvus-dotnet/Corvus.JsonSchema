@@ -17,7 +17,6 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './action-editor.js';
 
-const SOURCE_TYPES = ['openapi', 'asyncapi', 'arazzo'];
 const COMPONENT_KINDS = [
   ['parameters', 'parameter'],
   ['successActions', 'success action'],
@@ -79,6 +78,8 @@ class ArazzoDocumentInspector extends ArazzoElement {
         .row { display: grid; gap: 6px; align-items: center; margin-bottom: 6px; }
         .row > * { min-width: 0; }
         .hint { font-size: 11px; color: var(--_muted); }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+        .srow { align-items: baseline; }
         .add { font-size: 12px; justify-self: start; }
         .entry { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; min-width: 0; }
         .entry > * { min-width: 0; }
@@ -106,9 +107,8 @@ class ArazzoDocumentInspector extends ArazzoElement {
       <div><label>description</label><input class="idesc" type="text" value="${escapeHtml(d.info?.description || '')}"></div>
 
       <h3>source descriptions</h3>
-      <div class="hint">the names workflows bind (a workspace attachment satisfies each name)</div>
+      <div class="hint">managed from the Sources panel — attaching a source declares it here; detaching removes the declaration</div>
       <div class="sources"></div>
-      <button class="add addsrc ghost" type="button">+ Add source description</button>
 
       <h3>workflows</h3>
       <div class="workflows"></div>
@@ -140,36 +140,19 @@ class ArazzoDocumentInspector extends ArazzoElement {
     this._renderComponents();
   }
 
-  /** @private */
+  /** @private — READ-ONLY: source descriptions are owned by the Sources panel (attach declares,
+   *  detach removes); the settings page only shows what the document binds. */
   _renderSources() {
     const box = this.$('.sources');
     const sources = this._doc.sourceDescriptions || [];
-    box.innerHTML = '';
-    sources.forEach((src, i) => {
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.style.gridTemplateColumns = '1fr 1.4fr auto auto';
-      row.innerHTML = `
-        <input class="sname" type="text" placeholder="name" value="${escapeHtml(src.name ?? '')}">
-        <input class="surl" type="text" placeholder="./specs/payments.json" value="${escapeHtml(src.url ?? '')}">
-        <select class="stype">${SOURCE_TYPES.map((t) => `<option ${t === (src.type ?? 'openapi') ? 'selected' : ''}>${t}</option>`).join('')}</select>
-        <button class="sdel ghost" type="button" title="Remove">✕</button>`;
-      row.querySelector('.sname').addEventListener('input', (e) => { src.name = e.target.value; this._emit(); });
-      row.querySelector('.surl').addEventListener('input', (e) => { src.url = e.target.value; this._emit(); });
-      row.querySelector('.stype').addEventListener('change', (e) => { src.type = e.target.value; this._emit(); });
-      row.querySelector('.sdel').addEventListener('click', () => {
-        sources.splice(i, 1);
-        this._renderSources();
-        this._emit();
-      });
-      box.append(row);
-    });
-    this.$('.addsrc').onclick = () => {
-      (this._doc.sourceDescriptions ??= []).push({ name: '', url: '', type: 'openapi' });
-      this._renderSources();
-      box.querySelector('.row:last-child .sname')?.focus();
-      this._emit();
-    };
+    box.innerHTML = sources.length === 0
+      ? '<div class="hint">none yet — attach one from the Sources panel</div>'
+      : sources.map((src) => `
+        <div class="row srow" style="grid-template-columns: 1fr 1.4fr auto;">
+          <span class="sname mono">${escapeHtml(src.name ?? '')}</span>
+          <span class="surl mono muted">${escapeHtml(src.url ?? '')}</span>
+          <span class="stype muted">${escapeHtml(src.type ?? 'openapi')}</span>
+        </div>`).join('');
   }
 
   /** @private — the workflows list: names + remove; adding appends an empty workflow. */
