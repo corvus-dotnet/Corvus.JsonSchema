@@ -128,7 +128,11 @@ class ArazzoGitDialog extends ArazzoElement {
             </label>
             <div class="tree-slot tree-scenarios" hidden></div>
             <div class="specs">
-              <span class="muted specs-head">Spec paths — where each attached source lives on the branch (blank = not tracked)</span>
+              <span class="pathrow">
+                <span class="muted specs-head">Spec paths — where each attached source lives on the branch (blank = not tracked)</span>
+                <button class="browse-specs ghost" type="button" disabled title="Connect and pick a repository and branch first">specs dir…</button>
+              </span>
+              <div class="tree-slot tree-specs" hidden></div>
               <div class="spec-rows"></div>
             </div>
             <div class="row-actions"><button class="save-binding" type="button" disabled>Save binding</button></div>
@@ -169,6 +173,15 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.nb-create').addEventListener('click', () => this.createBranch());
     this.wireTreeBrowser('.browse-path', '.tree-path', '.b-path', 'file');
     this.wireTreeBrowser('.browse-scenarios', '.tree-scenarios', '.b-scenarios', 'dir');
+    // Picking a specs DIRECTORY tracks the attached sources automatically: every empty per-source
+    // row fills as <dir>/<name>.json (still editable — the rows stay the truth).
+    this.wireTreeBrowser('.browse-specs', '.tree-specs', null, 'dir', (path) => {
+      for (const input of this.$$('.b-spec')) {
+        if (!input.value.trim()) input.value = `${path.replace(/\/$/, '')}/${input.dataset.name}.json`;
+      }
+
+      this.updateActions();
+    });
     this.$('.c-base').addEventListener('input', (e) => { e.target.dataset.touched = '1'; });
     ['.b-path'].forEach((s) => this.$(s).addEventListener('input', () => this.updateActions()));
   }
@@ -222,7 +235,7 @@ class ArazzoGitDialog extends ArazzoElement {
 
   /** @private — a browse… button toggles a LAZY repo tree (directories fetch on expand) whose
    *  pick lands in the field. Reuses <arazzo-git-tree>; the loader browses the bound repo+branch. */
-  wireTreeBrowser(buttonSel, slotSel, fieldSel, mode) {
+  wireTreeBrowser(buttonSel, slotSel, fieldSel, mode, onPick) {
     this.$(buttonSel).addEventListener('click', () => {
       const slot = this.$(slotSel);
       if (!slot.hidden) { slot.hidden = true; slot.replaceChildren(); return; }
@@ -237,7 +250,8 @@ class ArazzoGitDialog extends ArazzoElement {
         return node.kind === 'dir' ? node.entries : [];
       };
       tree.addEventListener('picked', (e) => {
-        this.$(fieldSel).value = e.detail.path;
+        if (fieldSel) this.$(fieldSel).value = e.detail.path;
+        if (onPick) onPick(e.detail.path);
         slot.hidden = true;
         slot.replaceChildren();
         this.updateActions();
@@ -331,7 +345,7 @@ class ArazzoGitDialog extends ArazzoElement {
     pull.title = pull.disabled
       ? (!connected ? 'Connect GitHub first' : 'Save a binding first — Pull reads from the bound branch')
       : 'Refresh the document, bound specs, and scenarios from the branch (etag-guarded; nothing partially applies)';
-    for (const sel of ['.browse-path', '.browse-scenarios']) {
+    for (const sel of ['.browse-path', '.browse-scenarios', '.browse-specs']) {
       const browse = this.$(sel);
       if (browse) {
         browse.disabled = !connected || !this.$('.b-repo').value || !this.branchValue();
