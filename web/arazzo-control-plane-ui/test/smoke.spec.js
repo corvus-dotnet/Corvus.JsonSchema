@@ -306,3 +306,21 @@ test('the Runner auth tab opens the approver inbox of runners awaiting authoriza
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('an operation dropped onto the designer starts templated from its documented responses', async ({ page }) => {
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('(fixture)').click();
+  await page.locator('[data-tab="sources"]').click();
+
+  // Keyboard activation is the non-pointer path of drag-onto-canvas: it creates the bound step.
+  const op = page.locator('arazzo-operation-browser button.op').first();
+  await op.focus();
+  await page.keyboard.press('Enter');
+
+  // The step arrives with its contract, not blank: criteria from the documented success code
+  // and a failure action per documented error — no template button involved. The new step is
+  // selected, so the inspector shows them (CodeMirror virtualises the text tab; assert here).
+  await page.locator('[data-tab="inspect"]').click();
+  await expect(page.locator('arazzo-step-inspector')).toContainText('on-400');
+  await expect(page.locator('arazzo-step-inspector')).toContainText('$statusCode == 200');
+});
