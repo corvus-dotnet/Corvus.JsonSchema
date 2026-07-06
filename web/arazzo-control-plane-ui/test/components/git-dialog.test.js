@@ -92,4 +92,62 @@ describe('<arazzo-git-dialog>', () => {
     equal(pulled.detail.workingCopy.document.info.title, 'Adopt', 'the document round-tripped');
     ok(pulled.detail.workingCopy.etag !== bound.detail.workingCopy.etag, 'the pull bumped the etag');
   });
+
+  it('browses history, compares side-by-side, and rolls back via pull-at-ref (snag 9)', async () => {
+    const ctx = await dialogWithMock();
+    el = ctx.el;
+    el.open({ workingCopyId: ctx.wc.id });
+    const gh = await waitFor(() => el.shadowRoot.querySelector('.gh-connect'));
+    gh.pollIntervalMs = 10;
+    gh.windowOpener = (url) => { ctx.mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
+    (await waitFor(() => gh.shadowRoot.querySelector('.connect'))).click();
+    await waitFor(() => [...el.shadowRoot.querySelectorAll('.b-repo option')].length > 1);
+
+    // Bind to main at the seeded document — the branch that carries the seeded history.
+    const sel = el.shadowRoot.querySelector('.b-repo');
+    sel.value = 'acme-org/specs';
+    sel.dispatchEvent(new Event('change'));
+    await waitFor(() => {
+      const b = el.shadowRoot.querySelector('.b-branch');
+      return b.disabled || !b.options.length ? null : b;
+    });
+    el.shadowRoot.querySelector('.b-path').value = 'flows/adopt.arazzo.json';
+    el.shadowRoot.querySelector('.b-path').dispatchEvent(new Event('input'));
+    const boundEvent = nextEvent(el, 'binding-saved');
+    (await waitFor(() => {
+      const b = el.shadowRoot.querySelector('.save-binding');
+      return b.disabled ? null : b;
+    })).click();
+    await boundEvent;
+
+    // The history section reveals with the bound branch's commits, newest first.
+    const rows = await waitFor(() => {
+      const r = [...el.shadowRoot.querySelectorAll('.hist-commit')];
+      return r.length === 3 ? r : null;
+    }, 'the seeded history loads');
+    ok(rows[0].textContent.includes('Confirm adoptions'), 'the newest commit lists first');
+    ok(rows[2].textContent.includes('Initial adopt workflow'), 'the oldest commit lists last');
+
+    // Compare opens the reusable side-by-side visualizer: two read-only design surfaces.
+    rows[2].querySelector('.cmp').click();
+    const compare = el.shadowRoot.querySelector('arazzo-workflow-compare');
+    await waitFor(() => compare.shadowRoot?.querySelector('dialog[open]'), 'the comparison dialog opens');
+    const surfaces = compare.shadowRoot.querySelectorAll('arazzo-design-surface');
+    equal(surfaces.length, 2, 'two surfaces render side-by-side');
+    ok([...surfaces].every((s) => s.hasAttribute('readonly')), 'both sides are read-only');
+    compare.close();
+
+    // Roll back to the oldest commit: a danger-confirmed pull at that ref replaces the working
+    // copy — and the binding never changes, so the next commit records the rollback.
+    const pulledEvent = nextEvent(el, 'pulled');
+    rows[2].querySelector('.rollback').click();
+    const ask = el.shadowRoot.querySelector('arazzo-input-dialog');
+    (await waitFor(() => {
+      const b = ask.shadowRoot.querySelector('.confirm.danger');
+      return b && ask.shadowRoot.querySelector('dialog').open ? b : null;
+    }, 'the rollback confirmation')).click();
+    const pulled = await pulledEvent;
+    equal(pulled.detail.workingCopy.document.workflows[0].steps.length, 2, 'the oldest commit state replaced the working copy');
+    equal(pulled.detail.workingCopy.gitBinding.branch, 'main', 'a rollback never rebinds');
+  });
 });

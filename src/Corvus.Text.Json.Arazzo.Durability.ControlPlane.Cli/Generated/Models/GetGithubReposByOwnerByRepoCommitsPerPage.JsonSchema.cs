@@ -19,95 +19,28 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
-/// GitPullRequestBody
+/// Generated from JSON Schema.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
-    : IJsonElement<PostWorkspaceWorkflowsByIdGitPullBody>
+public readonly partial struct GetGithubReposByOwnerByRepoCommitsPerPage
+    : IJsonElement<GetGithubReposByOwnerByRepoCommitsPerPage>
 {
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyExpectedEtagPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("expectedEtag"u8, buffer, out written);
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyExpectedEtagNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("expectedEtag"u8, buffer, out written);
-
-        private const int RequiredOffsetForExpectedEtag = 0;
-        private const uint RequiredBitForExpectedEtag = 0b00000000000000000000000000000001;
-
-        private const uint RequiredBitMask0 =
-            RequiredBitForExpectedEtag;
-        private static readonly JsonSchemaPathProvider ExpectedEtagSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/expectedEtag"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider RefSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/ref"u8, buffer, out written);
-
-        private static void MatchExpectedEtag(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.ExpectedEtagUtf8,
-                    evaluationPath: ExpectedEtagSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-            context.CommitChildContext(childContext.IsMatch, ref childContext);
-
-            if (!context.HasCollector && !context.IsMatch)
-            {
-                return;
-            }
-
-            requiredBitBuffer[RequiredOffsetForExpectedEtag] |= RequiredBitForExpectedEtag;
-        }
-
-        private static void MatchRef(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.RefUtf8,
-                    evaluationPath: RefSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
-        {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.ExpectedEtagUtf8, MatchExpectedEtag),
-                (static () => JsonPropertyNames.RefUtf8, MatchRef),
-            ]);
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
-
-        private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
-#if NET
-        [NotNullWhen(true)]
-#endif
-        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
-        {
-            return Matchers.TryGetNamedMatcher(span, out matcher);
-        }
-
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1workspace~1workflows~1{id}~1git~1pull/post/requestBody/content/application~1json/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1github~1repos~1{owner}~1{repo}~1commits/get/parameters/5/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/paths/~1workspace~1workflows~1{id}~1git~1pull/post/requestBody/content/application~1json/schema";
+        public const string SchemaLocation = "/paths/~1github~1repos~1{owner}~1{repo}~1commits/get/parameters/5/schema";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1workspace~1workflows~1{id}~1git~1pull/post/requestBody/content/application~1json/schema"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1github~1repos~1{owner}~1{repo}~1commits/get/parameters/5/schema"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -128,60 +61,31 @@ public readonly partial struct PostWorkspaceWorkflowsByIdGitPullBody
                 JsonTokenType.EndObject or
                 JsonTokenType.EndArray));
 
-            if (!JsonSchemaEvaluation.MatchTypeObject(tokenType,"type"u8, ref context))
+            ReadOnlyMemory<byte> rawSimpleValue = tokenType is JsonTokenType.Number or JsonTokenType.String ? parentDocument.GetRawSimpleValue(parentIndex) : default;
+
+            JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
+            if (!JsonSchemaEvaluation.MatchTypeInteger(tokenType,"type"u8, exponent, ref context))
             {
                 if (!context.HasCollector)
                 {
                     return;
                 }
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeInteger, "maximum"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeInteger, "minimum"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeInteger, "format"u8);
             }
             else
             {
-                Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
-                int objectValidation_propertyCount = 0;
+                JsonSchemaEvaluation.MatchLessThanOrEquals(isNegative, integral, fractional, exponent, false, "1"u8, ""u8, 2, "100", "maximum"u8, ref context);
 
-                var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
-                while (objectValidation_enumerator.MoveNext())
+                if (!context.HasCollector && !context.IsMatch)
                 {
-                    int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
-                    using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
-
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
-                    {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
-
-                        if (!context.HasCollector && !context.IsMatch)
-                        {
-                            return;
-                        }
-                    }
-
-                    objectValidation_propertyCount++;
-                }
-
-                // Do a quick test to see if we have all of the required bits set in each element
-                if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
-                {
-                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyExpectedEtagPresent, "expectedEtag"u8, "required"u8);
-                }
-                else if (!context.HasCollector)
-                {
-                    context.EvaluatedBooleanSchema(false);
                     return;
                 }
-                else
-                {
-                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForExpectedEtag] & RequiredBitForExpectedEtag) == 0)
-                    {
-                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyExpectedEtagNotPresent, "expectedEtag"u8, "required"u8);
-                    }
-                    else
-                    {
-                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyExpectedEtagPresent, "expectedEtag"u8, "required"u8);
-                    }
-                }
+
+                JsonSchemaEvaluation.MatchGreaterThanOrEquals(isNegative, integral, fractional, exponent, false, "1"u8, ""u8, 0, "1", "minimum"u8, ref context);
+
+                JsonSchemaEvaluation.MatchInt32(isNegative, integral, fractional, exponent, "format"u8, ref context);
             }
         }
 
