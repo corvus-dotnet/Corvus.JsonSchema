@@ -58,6 +58,14 @@ class ArazzoOperationBrowser extends ArazzoElement {
   /** The loaded operation surfaces (source name → descriptor array), a read-only copy. */
   get surfaces() { return new Map(this._operations); }
 
+  /** The OPEN document's other workflows — draggable step sources like any operation (a step
+   *  bound by workflowId runs them as sub-workflows; the debugger steps into them). */
+  get documentWorkflows() { return this._documentWorkflows ?? []; }
+  set documentWorkflows(value) {
+    this._documentWorkflows = value ?? [];
+    if (this.isConnected) this.renderBody();
+  }
+
   /** Reload the attachments and every source's operation surface. */
   async refresh() {
     const client = this.client;
@@ -174,7 +182,38 @@ class ArazzoOperationBrowser extends ArazzoElement {
       return;
     }
 
-    body.innerHTML = this._sources.map((s) => this.renderGroup(s)).join('');
+    const docWorkflows = (this._documentWorkflows ?? []).filter((w) => !this._filter
+      || `${w.workflowId} ${w.summary ?? ''}`.toLowerCase().includes(this._filter));
+    const docSection = (this._documentWorkflows ?? []).length === 0 ? '' : `
+      <div class="group" part="group">
+        <div class="group-head"><span>This document</span><span class="type">workflows</span></div>
+        ${docWorkflows.length === 0 ? '<div class="note">No workflows match the filter.</div>' : docWorkflows.map((w, i) => `
+          <button class="op wfop" type="button" part="operation" draggable="${w.current ? 'false' : 'true'}" data-wf="${i}"
+            ${w.current ? 'disabled title="The workflow being edited — a step cannot run its own workflow directly"' : 'title="Drag onto the canvas to run this workflow as a sub-workflow step"'}>
+            <span class="badge" style="background:var(--arazzo-status-running, #7048b7)">WF</span>
+            <span class="id">${escapeHtml(w.workflowId)}</span>
+            ${w.summary ? `<span class="summary">${escapeHtml(w.summary)}</span>` : ''}
+          </button>`).join('')}
+      </div>`;
+    body.innerHTML = docSection + this._sources.map((s) => this.renderGroup(s)).join('');
+
+    body.querySelectorAll('button.wfop').forEach((button) => {
+      const payload = () => {
+        const w = docWorkflows[Number(button.dataset.wf)];
+        return w && !w.current ? { sourceName: null, operation: { kind: 'workflow', workflowId: w.workflowId, summary: w.summary } } : null;
+      };
+      button.addEventListener('click', (e) => {
+        if (e.detail > 0) return;
+        const data = payload();
+        if (data) this.emit('operation-selected', data);
+      });
+      button.addEventListener('dragstart', (e) => {
+        const data = payload();
+        if (!data) return;
+        e.dataTransfer.setData('application/x-arazzo-operation', JSON.stringify(data));
+        e.dataTransfer.effectAllowed = 'copy';
+      });
+    });
 
     body.querySelectorAll('button.detach').forEach((button) => {
       button.addEventListener('click', () => this.detach(button.dataset.name));

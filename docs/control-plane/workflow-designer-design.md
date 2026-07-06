@@ -883,6 +883,11 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    runaway steps under the §8.3 wall-clock cap). (Recommend: emitter change, scheduled with the
    engine's own backlog — it affects production runs too, where a virtual-clock-driven timeout is
    equally desirable for determinism in tests.)
+8a. **Sub-workflow trace records (engine)** — the mock previews `subTrace` on a workflowId-bound
+   step's record (the designer's step-into descends it, the canvas following); the REAL simulator
+   inlines sub-workflow execution without recording nested step records yet. The engine should
+   emit them so step-into works on server traces. (The §6.2 HTTP-trigger source — the Sources
+   panel's Catalog mode — needs nothing: a trigger step is a plain OpenAPI operation.)
 8. **Typed schema-authoring form** — workflow `inputs` and the components library's input schemas
    currently edit as guarded JSON textareas (parse-gated, last-valid-wins), not a typed
    JSON-Schema-authoring form. That is the one deliberate exception to the slice-4 "full editing
