@@ -164,7 +164,7 @@ public static class ControlPlaneEndpointExtensions
         ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
         var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher);
         IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
-        var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(wcStore, access, catalog, srcStore, simulator: workflowSimulator);
+        var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore);
 
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
