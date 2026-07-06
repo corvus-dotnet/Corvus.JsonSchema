@@ -1,5 +1,13 @@
 # Version History
 
+## V5.2.3
+
+V5.2.3 fixes the `HttpClient`-backed OpenAPI transport so that a base URL carrying a path prefix — for example an API-gateway route — is preserved in every request URI.
+
+### Bug fixes
+
+- **`HttpClientTransport` now preserves a base URL's path prefix** — Generated operation paths always begin with `/`, and the transport previously sent them as relative URIs for `HttpClient` to resolve against `HttpClient.BaseAddress`. Under RFC 3986 §5.3, an absolute-path reference such as `/transactions` **replaces** the base URI's entire path, so any deployment whose base URL carries a path prefix — the Azure API Management pattern, `https://apim.example/inventory/` — silently lost the prefix: requests landed on `https://apim.example/transactions` instead of `https://apim.example/inventory/transactions`, and because generated paths always start with `/` there was no `BaseAddress` spelling that avoided it. The transport now composes the final absolute URI itself — the base address up to and including its path, with any trailing `/` trimmed, followed by the resolved operation path and query — so the prefix is preserved; this is the same composition NSwag- and Kiota-generated clients use. For a base address with no path segment the composed URI is byte-identical to the previous resolution, and a client with no `BaseAddress` at all still fails with `HttpClient`'s usual invalid-request-URI error, so no other behavior changes. This is a runtime fix in `Corvus.Text.Json.OpenApi.HttpTransport`; no regeneration of generated clients is required.
+
 ## V5.2.2
 
 V5.2.2 lets the property-parameter `Build(...)` factory be used directly as an array element (or object-property value) inside a mutable builder callback.
