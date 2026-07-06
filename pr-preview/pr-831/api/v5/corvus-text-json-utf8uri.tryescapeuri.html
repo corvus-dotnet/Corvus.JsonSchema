@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/7575d94528c3695426f4368c6b45b432f07432ba/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.EscapeDataString.cs#L64">Utf8Uri.EscapeDataString.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/e4ccfb91f2a6f0b3ac509d670c79600d23adeee9/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.EscapeDataString.cs#L64">Utf8Uri.EscapeDataString.cs</a></p>
 <h2 id="tryescapeuri-readonlyspan-byte-span-byte-int">TryEscapeUri(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
 <p>Escapes a UTF-8 string with URI semantics (matching JavaScript's <code>encodeURI</code>). RFC 3986 unreserved characters plus reserved characters (<code>: / ? # [ ] @ ! $ &amp; ' ( ) * + , ; =</code>) pass through unescaped; all other bytes are percent-encoded as <code>%XX</code> with uppercase hex digits.</p>
 <pre><code class="language-csharp">public static bool TryEscapeUri(ReadOnlySpan&lt;byte&gt; utf8String, Span&lt;byte&gt; destination, out int bytesWritten)
