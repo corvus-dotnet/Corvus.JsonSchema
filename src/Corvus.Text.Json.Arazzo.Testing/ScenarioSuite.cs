@@ -359,6 +359,12 @@ public static class ScenarioSuite
                     writer.WriteString("method"u8, exchange.Method.ToString().ToLowerInvariant());
                     writer.WriteString("path"u8, exchange.Path);
                     writer.WriteNumber("status"u8, exchange.StatusCode);
+                    if (!exchange.RequestBody.IsEmpty)
+                    {
+                        writer.WritePropertyName("requestBody"u8);
+                        writer.WriteRawValue(exchange.RequestBody.Span, skipInputValidation: false);
+                    }
+
                     if (!exchange.ResponseBody.IsEmpty)
                     {
                         writer.WritePropertyName("responseBody"u8);

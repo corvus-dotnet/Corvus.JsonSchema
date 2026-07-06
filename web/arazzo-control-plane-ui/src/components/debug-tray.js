@@ -118,6 +118,7 @@ class ArazzoDebugTray extends ArazzoElement {
         table { border-collapse: collapse; width: 100%; }
         td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; overflow-wrap: anywhere; }
         td.v { width: 1%; white-space: nowrap; overflow-wrap: normal; }
+        td.sent { color: var(--_muted); border-top: none; padding-top: 0; }
         .chip.warn { color: var(--arazzo-status-suspended, #b45309); }
         .crumb { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px dashed var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
         .crumb .up { font-size: 11px; padding: 1px 8px; }
@@ -232,9 +233,10 @@ class ArazzoDebugTray extends ArazzoElement {
     const record = trace.steps[this._cursor - 1];
     const parts = [];
     if (record.requests?.length) {
-      parts.push('<h4>exchanges</h4><table>' + record.requests.map((x) =>
+      parts.push('<h4>exchanges — as sent</h4><table>' + record.requests.map((x) =>
         `<tr><td>${escapeHtml(x.method.toUpperCase())} ${escapeHtml(x.path)}</td><td class="v">${x.status}</td>
-         <td>${x.responseBody !== undefined ? escapeHtml(JSON.stringify(x.responseBody)) : '<span class="muted">—</span>'}</td></tr>`).join('') + '</table>');
+         <td>${x.responseBody !== undefined ? escapeHtml(JSON.stringify(x.responseBody)) : '<span class="muted">—</span>'}</td></tr>`
+        + (x.requestBody !== undefined ? `<tr><td colspan="3" class="sent">→ ${escapeHtml(JSON.stringify(x.requestBody))}</td></tr>` : '')).join('') + '</table>');
     }
 
     if (record.successCriteria?.length) {
