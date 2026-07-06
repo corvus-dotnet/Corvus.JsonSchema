@@ -75,6 +75,7 @@ class ArazzoPayloadEditor extends ArazzoElement {
         }
         textarea.invalid { border-color: var(--_danger); }
         .hint { font-size: 11px; color: var(--_muted); margin-top: 3px; }
+              arazzo-expression-input.invalid { outline: 1.5px solid var(--_danger, #d4351c); border-radius: 6px; }
       </style>
       <div class="modes" hidden>
         <button type="button" class="m-form">Form</button>
@@ -134,6 +135,14 @@ class ArazzoPayloadEditor extends ArazzoElement {
     input.addEventListener('value-changed', (e) => {
       e.stopPropagation();
       this._setLeaf(path, e.detail.value, type);
+      // Inline truth while typing: a non-expression literal that can never satisfy the schema's
+      // type shows invalid (t → tr → tru clears at "true"); Validate catches what gets committed.
+      const text = e.detail.value;
+      const impossible = text !== '' && !text.startsWith('$') && !text.includes('{$') && (
+        (type === 'boolean' && text !== 'true' && text !== 'false')
+        || ((type === 'number' || type === 'integer') && !Number.isFinite(Number(text))));
+      input.classList.toggle('invalid', impossible);
+      input.title = impossible ? `neither a ${type} nor a runtime expression — the schema requires a ${type}` : '';
     });
     field.append(input);
     return field;

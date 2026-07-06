@@ -80,4 +80,22 @@ describe('<arazzo-payload-editor>', () => {
     ok(el.shadowRoot.querySelector('.modes').hidden, 'no toggle without a schema');
     ok(el.shadowRoot.querySelector('.payload'), 'JSON editor serves');
   });
+
+  it('marks a leaf invalid while its literal can never satisfy the schema type', async () => {
+    make();
+    const capture = leafFor('capture');
+    capture.dispatchEvent(new CustomEvent('value-changed', { detail: { value: 'tru' } }));
+    ok(capture.classList.contains('invalid'), '"tru" on a boolean leaf shows invalid while typing');
+    ok(capture.title.includes('neither a boolean'), 'the title says why');
+
+    capture.dispatchEvent(new CustomEvent('value-changed', { detail: { value: 'true' } }));
+    ok(!capture.classList.contains('invalid'), 'finishing the word clears it');
+
+    capture.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '$inputs.capture' } }));
+    ok(!capture.classList.contains('invalid'), 'expressions are always fine');
+
+    const amount = leafFor('amount');
+    amount.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '12x' } }));
+    ok(amount.classList.contains('invalid'), 'a non-number literal on a number leaf shows invalid');
+  });
 });

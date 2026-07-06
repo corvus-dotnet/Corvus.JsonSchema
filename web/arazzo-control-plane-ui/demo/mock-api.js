@@ -2768,8 +2768,77 @@ export function createMockControlPlane(options = {}) {
     }
 
     diagnostics.push(...workspaceSourceFindings(doc, attachments));
+    diagnostics.push(...payloadTypingFindings(doc, attachments));
     const anyError = diagnostics.some((d) => d.severity === 'error');
     return { valid: !anyError, diagnostics };
+  }
+
+  // Payload typing (§5.3): literals in step request payloads checked against the bound operation's
+  // schema. Runtime expressions are exempt ("$inputs.x" is fine where the schema says boolean); a
+  // plain "tru" on a boolean leaf can never satisfy the API — an error. Missing required
+  // properties warn: no expression can add an absent key at runtime.
+  function payloadTypingFindings(doc, attachments) {
+    const findings = [];
+    const attachedDocs = [];
+    for (const a of attachments ?? []) {
+      const d = a.document ?? sourceRegistry.find((s) => s.name === a.sourceName)?.document;
+      if (d) attachedDocs.push(d);
+    }
+
+    if (!attachedDocs.length) return findings;
+    const isExpr = (t) => t.startsWith('$') || t.includes('{$');
+    const deref = (node, root) => {
+      for (let hops = 0; node && typeof node === 'object' && typeof node.$ref === 'string' && node.$ref.startsWith('#/') && hops < 8; hops++) {
+        node = node.$ref.slice(2).split('/').reduce((cur, tok) => cur?.[tok.replaceAll('~1', '/').replaceAll('~0', '~')], root);
+      }
+      return node;
+    };
+    const opSchema = (operationId) => {
+      for (const root of attachedDocs) {
+        for (const item of Object.values(root.paths ?? {})) {
+          for (const op of Object.values(item ?? {})) {
+            if (op && typeof op === 'object' && op.operationId === operationId) {
+              const rb = deref(op.requestBody, root);
+              const schema = deref(rb?.content?.['application/json']?.schema, root);
+              return schema ? { schema, root } : null;
+            }
+          }
+        }
+      }
+      return null;
+    };
+    const check = (value, schema, root, pointer, depth = 0) => {
+      schema = deref(schema, root);
+      if (depth > 12 || !schema || typeof schema !== 'object') return;
+      if (typeof value === 'string') {
+        if (!isExpr(value) && ['boolean', 'number', 'integer'].includes(schema.type)) {
+          findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' is neither a ${schema.type} nor a runtime expression — the operation's schema requires a ${schema.type} here.` });
+        }
+        return;
+      }
+      if (value && typeof value === 'object' && !Array.isArray(value) && (!schema.type || schema.type === 'object')) {
+        for (const name of schema.required ?? []) {
+          if (!(name in value)) findings.push({ severity: 'warning', category: 'payload-typing', instancePath: pointer, message: `Required property '${name}' is missing from the payload — the operation's schema requires it.` });
+        }
+        for (const [name, v] of Object.entries(value)) {
+          if (schema.properties?.[name]) check(v, schema.properties[name], root, `${pointer}/${name}`, depth + 1);
+        }
+        return;
+      }
+      if (Array.isArray(value) && schema.type === 'array' && schema.items) {
+        value.forEach((v, i) => check(v, schema.items, root, `${pointer}/${i}`, depth + 1));
+      }
+    };
+    for (const [wi, workflow] of (Array.isArray(doc.workflows) ? doc.workflows : []).entries()) {
+      for (const [si, step] of (Array.isArray(workflow?.steps) ? workflow.steps : []).entries()) {
+        const payload = step?.requestBody?.payload;
+        if (payload === undefined || !step?.operationId) continue;
+        const resolved = opSchema(step.operationId);
+        if (resolved) check(payload, resolved.schema, resolved.root, `/workflows/${wi}/steps/${si}/requestBody/payload`);
+      }
+    }
+
+    return findings;
   }
 
   function attachWorkingCopySource(wc, name, body) {
