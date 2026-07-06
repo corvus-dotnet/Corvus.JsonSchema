@@ -17,6 +17,7 @@
 // emits `working-copy-created` with the FULL working copy, ready to open.
 
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
+import './input-dialog.js';
 import './pager.js';
 
 class ArazzoWorkspaceTable extends ArazzoElement {
@@ -122,11 +123,13 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     const client = this.client;
     if (!client) return;
     try {
-      // Ask for a name up front so "untitled" documents don't accumulate; cancelling keeps the
-      // default. `promptFn` is injectable for tests (a dismissed headless prompt returns null).
-      const ask = this.promptFn ?? ((message, fallback) => window.prompt(message, fallback));
-      const name = (ask('Name the new working copy:', 'untitled') || 'untitled').trim() || 'untitled';
-      const workingCopy = await client.createWorkingCopy({ name });
+      // Ask for a name up front so "untitled" documents don't accumulate — via the kit's standard
+      // dialog (system prompts are banned); `promptFn` remains an injectable test seam.
+      const answer = this.promptFn
+        ? this.promptFn('Name the new working copy:', 'untitled')
+        : await this.$('.ask').ask({ title: 'New working copy', field: { label: 'Name', value: 'untitled' } });
+      if (answer === null) return;
+      const workingCopy = await client.createWorkingCopy({ name: (answer || 'untitled').trim() || 'untitled' });
       this.reload();
       this.emit('working-copy-created', { workingCopy });
     } catch (err) {
@@ -140,7 +143,9 @@ class ArazzoWorkspaceTable extends ArazzoElement {
   async deleteRow(id) {
     const client = this.client;
     if (!client) return;
-    const ok = (this.confirmFn ?? ((message) => window.confirm(message)))(`Delete this working copy? Published catalog versions are unaffected.`);
+    const ok = this.confirmFn
+      ? this.confirmFn('Delete this working copy? Published catalog versions are unaffected.')
+      : await this.$('.ask').ask({ title: 'Delete this working copy?', message: 'Its draft document and scenarios go with it. Published catalog versions are unaffected.', confirmLabel: 'Delete', danger: true });
     if (!ok) return;
     try {
       await client.deleteWorkingCopy(id);
@@ -196,6 +201,7 @@ class ArazzoWorkspaceTable extends ArazzoElement {
         </table>
         <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
+      <arazzo-input-dialog class="ask"></arazzo-input-dialog>
     `;
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
