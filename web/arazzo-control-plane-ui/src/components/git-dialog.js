@@ -18,6 +18,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
 import './git-tree.js';
+import './input-dialog.js';
 
 /** The branch select's create sentinel. */
 const NEW_BRANCH = '__new__';
@@ -93,6 +94,7 @@ class ArazzoGitDialog extends ArazzoElement {
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
       </style>
       <div class="panel" part="panel">
+        <arazzo-input-dialog class="ask"></arazzo-input-dialog>
         <div class="body">
           <div class="error-banner" hidden></div>
           <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
@@ -139,7 +141,7 @@ class ArazzoGitDialog extends ArazzoElement {
               <span class="hint">Pull replaces the document, bound specs, and scenario set from the branch.</span>
             </div>
             <label>Commit message <input class="c-message" type="text" placeholder="what changed"></label>
-            <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <input class="c-base" type="text" value="main" style="width:90px"></label>
+            <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <select class="c-base" disabled title="Pick a repository first"></select></label>
             <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity (§4.7)">⤒ Commit</button></div>
             <div class="result" hidden></div>
           </fieldset>
@@ -149,7 +151,17 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.gh-connect').addEventListener('github-connected', () => this.renderBinding());
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderBinding());
     this.$('.save-binding').addEventListener('click', () => this.saveBinding());
-    this.$('.pull').addEventListener('click', () => this.pull());
+    this.$('.pull').addEventListener('click', async () => {
+      // Pull is a REPLACE, not a merge (§4.7): the branch's document, bound specs, and scenario
+      // set overwrite the working copy under the etag guard. Say so before doing it.
+      const sure = await this.$('.ask').ask({
+        title: 'Pull replaces this working copy',
+        message: 'The branch’s document, bound specs, and scenario set replace what is here — local edits since the last commit are lost. (A true merge is on the roadmap; commit first if in doubt.)',
+        confirmLabel: 'Pull & replace',
+        danger: true,
+      });
+      if (sure) this.pull();
+    });
     this.$('.commit').addEventListener('click', () => this.commit());
     this.$('.c-message').addEventListener('input', () => this.updateActions());
     this.$('.b-repo').addEventListener('change', () => { void this.loadBranches(); });
@@ -174,7 +186,6 @@ class ArazzoGitDialog extends ArazzoElement {
 
       this.updateActions();
     });
-    this.$('.c-base').addEventListener('input', (e) => { e.target.dataset.touched = '1'; });
     ['.b-path'].forEach((s) => this.$(s).addEventListener('input', () => this.updateActions()));
   }
 
@@ -290,7 +301,13 @@ class ArazzoGitDialog extends ArazzoElement {
       const base = this.$('.nb-base');
       base.innerHTML = names.map((name) => `<option value="${escapeHtml(name)}"${name === list.defaultBranch ? ' selected' : ''}>${escapeHtml(name)}</option>`).join('');
       const prBase = this.$('.c-base');
-      if (prBase && !prBase.dataset.touched && list.defaultBranch) prBase.value = list.defaultBranch;
+      if (prBase) {
+        const held = prBase.value;
+        prBase.innerHTML = names.map((name) =>
+          `<option value="${escapeHtml(name)}"${(held || list.defaultBranch) === name ? ' selected' : ''}>${escapeHtml(name)}${name === list.defaultBranch ? ' (default)' : ''}</option>`).join('');
+        prBase.disabled = false;
+        prBase.title = 'The branch the pull request targets';
+      }
     } catch (err) {
       if (seq !== this._branchSeq) return;
       sel.disabled = true;

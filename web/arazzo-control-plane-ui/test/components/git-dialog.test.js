@@ -82,6 +82,12 @@ describe('<arazzo-git-dialog>', () => {
     // Pull: refreshes from the branch and emits the updated working copy (new etag).
     const pulledEvent = nextEvent(el, 'pulled');
     el.shadowRoot.querySelector('.pull').click();
+    // Pull REPLACES the working copy — the standard danger dialog says so first.
+    const ask = el.shadowRoot.querySelector('arazzo-input-dialog');
+    (await waitFor(() => {
+      const b = ask.shadowRoot.querySelector('.confirm.danger');
+      return b && ask.shadowRoot.querySelector('dialog').open ? b : null;
+    }, 'the pull confirmation')).click();
     const pulled = await pulledEvent;
     equal(pulled.detail.workingCopy.document.info.title, 'Adopt', 'the document round-tripped');
     ok(pulled.detail.workingCopy.etag !== bound.detail.workingCopy.etag, 'the pull bumped the etag');
