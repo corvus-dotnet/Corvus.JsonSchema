@@ -309,7 +309,7 @@ test('the Runner auth tab opens the approver inbox of runners awaiting authoriza
 
 test('an operation dropped onto the designer starts templated from its documented responses', async ({ page }) => {
   await page.goto('/demo/designer.html');
-  await page.locator('arazzo-workspace-table').getByText('(fixture)').click();
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
   await page.locator('[data-tab="sources"]').click();
 
   // Keyboard activation is the non-pointer path of drag-onto-canvas: it creates the bound step.

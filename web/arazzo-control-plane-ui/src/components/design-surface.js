@@ -243,9 +243,10 @@ class ArazzoDesignSurface extends ArazzoElement {
       </style>
       <svg part="surface" tabindex="0" role="application" aria-label="Workflow design surface">
         <defs>
-          <marker id="arr-seq" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z"></path></marker>
-          <marker id="arr-success" class="m-success" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z"></path></marker>
-          <marker id="arr-failure" class="m-failure" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z"></path></marker>
+          <!-- userSpaceOnUse: a selected (thicker) line must NOT inflate its arrowhead. -->
+          <marker id="arr-seq" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto"><path d="M0 0 L12 6 L0 12 Z"></path></marker>
+          <marker id="arr-success" class="m-success" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto"><path d="M0 0 L12 6 L0 12 Z"></path></marker>
+          <marker id="arr-failure" class="m-failure" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto"><path d="M0 0 L12 6 L0 12 Z"></path></marker>
         </defs>
         <g class="world">
           <g class="edges"></g>
@@ -283,6 +284,21 @@ class ArazzoDesignSurface extends ArazzoElement {
       ids.forEach((id, i) => this._parallel.set(id, { i, n: ids.length }));
     }
     this._pseudoIds = new Set(g.nodes.filter((n) => n.pseudo).map((n) => n.id));
+
+    // Arrivals spread along the target border so arrowheads never stack: every edge landing on a
+    // node gets its own landing point, ordered by where it comes from.
+    this._inbound = new Map();
+    const inboundGroups = new Map();
+    for (const edge of g.edges) {
+      if (edge.to.startsWith('workflow:')) continue;
+      if (!inboundGroups.has(edge.to)) inboundGroups.set(edge.to, []);
+      inboundGroups.get(edge.to).push(edge);
+    }
+    for (const group of inboundGroups.values()) {
+      const sorted = [...group].sort((p, q) =>
+        ((this._positions[p.from]?.x ?? 0) - (this._positions[q.from]?.x ?? 0)) || (p.id < q.id ? -1 : 1));
+      sorted.forEach((edge, i) => this._inbound.set(edge.id, (i - (sorted.length - 1) / 2) * 16));
+    }
 
     // Exit chips (edges targeting `workflow:<id>`) get synthetic positions next to their source.
     this._exitPositions = {};
@@ -453,19 +469,20 @@ class ArazzoDesignSurface extends ArazzoElement {
     const from = this._anchors(edge.from);
     const to = this._anchors(edge.to);
     const down = b.y > a.y + NODE_HEIGHT / 2;
+    const arrive = this._inbound?.get(edge.id) ?? 0;
     if (down) {
       const x1 = from.bottom.x + fan;
       const y1 = from.bottom.y;
-      const x2 = to.top.x + fan;
+      const x2 = to.top.x + fan + arrive;
       const y2 = to.top.y;
       const c = Math.max(24, (y2 - y1) / 2);
-      return `M ${x1} ${y1} C ${x1 + fan} ${y1 + c}, ${x2 + fan} ${y2 - c}, ${x2} ${y2}`;
+      return `M ${x1} ${y1} C ${x1 + fan} ${y1 + c}, ${x2 + fan + arrive} ${y2 - c}, ${x2} ${y2}`;
     }
-    // Upward or same-rank: route around the right side.
+    // Upward or same-rank: route around the right side, arrivals spread down the border.
     const x1 = from.right.x;
     const y1 = from.right.y;
     const x2 = to.right.x;
-    const y2 = to.right.y;
+    const y2 = to.right.y + arrive * 0.6;
     const bow = 70 + Math.abs(y2 - y1) * 0.08 + Math.abs(fan);
     return `M ${x1} ${y1} C ${x1 + bow} ${y1}, ${x2 + bow} ${y2}, ${x2} ${y2}`;
   }

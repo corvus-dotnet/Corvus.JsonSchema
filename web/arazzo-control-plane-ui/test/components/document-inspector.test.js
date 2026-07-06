@@ -33,24 +33,23 @@ describe('<arazzo-document-inspector>', () => {
   it('renders info, sources, workflows, and the components library', () => {
     make();
     equal(el.shadowRoot.querySelector('.ititle').value, 'Orders');
-    equal(el.shadowRoot.querySelector('.sources .sname').value, 'payments');
+    equal(el.shadowRoot.querySelector('.sources .sname').textContent, 'payments');
     ok(el.shadowRoot.textContent.includes('place-order'), 'workflows list');
     ok(el.shadowRoot.textContent.includes('$components.parameters.page'), 'component entries render their reference form');
     ok(el.shadowRoot.querySelector('arazzo-action-editor'), 'a component action embeds the action editor');
   });
 
-  it('edits info fields and source descriptions', async () => {
+  it('edits info fields; source descriptions are read-only (the Sources panel owns them)', async () => {
     make();
     const title = el.shadowRoot.querySelector('.ititle');
     title.value = 'Orders v2';
-    let changed = nextEvent(el, 'document-changed');
+    const changed = nextEvent(el, 'document-changed');
     title.dispatchEvent(new Event('input'));
     equal((await changed).detail.document.info.title, 'Orders v2');
 
-    changed = nextEvent(el, 'document-changed');
-    el.shadowRoot.querySelector('.addsrc').click();
-    const doc = (await changed).detail.document;
-    equal(doc.sourceDescriptions.length, 2);
+    ok(!el.shadowRoot.querySelector('.addsrc'), 'no add affordance — attach from the Sources panel instead');
+    ok(!el.shadowRoot.querySelector('.sources input'), 'no editable source fields');
+    ok(el.shadowRoot.querySelector('.sources .sname'), 'the declared names still display');
   });
 
   it('adds and removes workflows (empty skeleton, duplicate ids refused)', async () => {
