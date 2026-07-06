@@ -19,7 +19,11 @@
     header .spacer { flex: 1; }
     main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-auto-rows: minmax(0, 1fr);
            gap: 12px; padding: 12px 14px; box-sizing: border-box; }
-    #center { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
+    #center { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
+    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; max-height: 42vh; overflow: hidden; }
+    #debug-dock[hidden] { display: none !important; }
+    #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 0; }
+    #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; }
     .tabs { display: flex; gap: 4px; }
     .tabs button { border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 4px 14px; font-size: 12px; opacity: 0.7; }
     .tabs button.active { opacity: 1; border-color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
@@ -105,12 +109,26 @@
         <button id="canvas-empty-cta" type="button" style="pointer-events: auto; justify-self: center; font-size: 13px; padding: 4px 14px;">Open Sources →</button>
       </div>
       <arazzo-text-editor id="text" hidden></arazzo-text-editor>
+      <!-- The debug session DOCKS across the bottom of the editor: it appears when a run starts
+           and is removed by Stop/Clear — the trace gets the horizontal room a sidebar never had. -->
+      <div id="debug-dock" hidden>
+        <div class="dock-body">
+          <arazzo-debug-tray id="debugtray"></arazzo-debug-tray>
+          <div class="dock-side">
+            <button id="save-scenario" type="button" style="font-size:12px; justify-self:start;" disabled title="Capture this session — its mocks, inputs, and expectations promoted from the observed trace (§3.4)">💾 Save as scenario…</button>
+            <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
+            <div id="expr-result" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 6px; padding: 6px 8px; display: none; gap: 4px; max-height: 120px; overflow-y: auto;"></div>
+            <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280);">
+              Expression console — ⏎ evaluates against the session's frame at the scrub cursor (§3.3).
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <aside>
       <div class="side-tabs" role="tablist">
         <button data-tab="inspect" class="active">Inspect</button>
         <button data-tab="sources">Sources</button>
-        <button data-tab="debug">Debug</button>
         <button data-tab="scenarios">Scenarios</button>
         <button data-tab="problems">Problems<span class="badge" id="problems-badge" hidden></span></button>
         <button data-tab="events">Events</button>
@@ -121,19 +139,6 @@
       </div>
       <div class="side-panel" id="panel-sources" hidden>
         <arazzo-operation-browser id="opbrowser"></arazzo-operation-browser>
-      </div>
-      <div class="side-panel" id="panel-debug" hidden>
-        <arazzo-debug-tray id="debugtray"></arazzo-debug-tray>
-        <div style="padding: 8px 10px; border-top: 1px solid var(--arazzo-border, #e3e6ea);">
-          <button id="save-scenario" type="button" style="font-size:12px;" disabled title="Capture this session — its mocks, inputs, and expectations promoted from the observed trace (§3.4)">💾 Save as scenario…</button>
-        </div>
-        <div style="padding: 10px; border-top: 1px solid var(--arazzo-border, #e3e6ea);">
-          <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
-          <div id="expr-result" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 6px; padding: 6px 8px; display: none; gap: 4px; max-height: 160px; overflow-y: auto;"></div>
-          <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280); margin-top: 6px;">
-            Expression console — completions from the fixture schema; ⏎ evaluates against the debug session's frame at the scrub cursor (§3.3).
-          </div>
-        </div>
       </div>
       <div class="side-panel" id="panel-scenarios" hidden>
         <arazzo-scenario-panel id="scpanel"></arazzo-scenario-panel>
@@ -976,7 +981,7 @@
         }
 
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy(); // simulate runs the STORED document
-        switchSideTab('debug');
+        document.getElementById('debug-dock').hidden = false; // the session docks under the editor
         shell.debugWorkflow = select.value; // stepping out of a sub-workflow restores this
         tray.trace = await client.simulateWorkingCopy(shell.id, command);
         applyDebugFrame();
@@ -1042,7 +1047,7 @@
       tray.trace = e.detail.trace;
       applyDebugFrame();
       setDebugUi();
-      switchSideTab('debug');
+      document.getElementById('debug-dock').hidden = false;
     });
 
     tray.addEventListener('cursor-changed', applyDebugFrame);
@@ -1057,7 +1062,7 @@
 
       applyDebugFrame();
     });
-    tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; applyDebugFrame(); setDebugUi(); });
+    tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
     tray.addEventListener('trigger-injected', (e) => {
       // The injected message joins the session scenario; the replay delivers it at the wait and
@@ -1071,7 +1076,7 @@
       if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
       else runSimulation({ stepPastEnd: !!tray.trace });
     });
-    stopBtn.addEventListener('click', () => { tray.trace = null; sessionTriggers.length = 0; applyDebugFrame(); setDebugUi(); });
+    stopBtn.addEventListener('click', () => { tray.trace = null; sessionTriggers.length = 0; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     surface.addEventListener('node-activated', (e) => {
       if (e.detail.id && !e.detail.id.startsWith('#')) runSimulation({ until: { beforeStepId: e.detail.id } });
     });
