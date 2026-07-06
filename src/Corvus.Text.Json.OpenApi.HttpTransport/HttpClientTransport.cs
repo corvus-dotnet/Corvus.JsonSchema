@@ -307,6 +307,13 @@ public sealed class HttpClientTransport : IApiTransport
     /// already absolute or does not begin with <c>/</c>, the request is left untouched and
     /// <see cref="HttpClient"/> behaves exactly as before.
     /// </para>
+    /// <para>
+    /// The composition allocates exactly one string per request (the composed URI passed to
+    /// the <see cref="Uri"/> constructor). The base part is always a prefix of
+    /// <see cref="Uri.AbsoluteUri"/> — which the base <see cref="Uri"/> caches — because the
+    /// query/fragment cut and the trailing-<c>/</c> trim only ever shorten it from the end,
+    /// so both halves are written straight into the final string.
+    /// </para>
     /// </remarks>
     private void ApplyBaseAddress(HttpRequestMessage httpRequest)
     {
@@ -314,8 +321,29 @@ public sealed class HttpClientTransport : IApiTransport
             && httpRequest.RequestUri is { IsAbsoluteUri: false } relativeUri
             && relativeUri.OriginalString.StartsWith('/'))
         {
-            string basePart = baseAddress.GetLeftPart(UriPartial.Path).TrimEnd('/');
-            httpRequest.RequestUri = new Uri(basePart + relativeUri.OriginalString, UriKind.Absolute);
+            string baseUri = baseAddress.AbsoluteUri;
+            int baseLength = baseUri.AsSpan().IndexOfAny('?', '#');
+            if (baseLength < 0)
+            {
+                baseLength = baseUri.Length;
+            }
+
+            while (baseLength > 0 && baseUri[baseLength - 1] == '/')
+            {
+                baseLength--;
+            }
+
+            string relative = relativeUri.OriginalString;
+            string composed = string.Create(
+                baseLength + relative.Length,
+                (baseUri, baseLength, relative),
+                static (span, state) =>
+                {
+                    state.baseUri.AsSpan(0, state.baseLength).CopyTo(span);
+                    state.relative.CopyTo(span[state.baseLength..]);
+                });
+
+            httpRequest.RequestUri = new Uri(composed, UriKind.Absolute);
         }
     }
 
