@@ -21,6 +21,10 @@
       "type": "boolean",
       "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6): when true, a version may be made available here only if its server-attested scenario suite passed at publish. Absent/false preserves the default behaviour — unevidenced versions may be promoted. Mutable."
     },
+    "allowsDraftRuns": {
+      "type": "boolean",
+      "description": "Development-class flag (workflow-designer design §18): when true, working-copy DRAFTS may execute here as debug runs, under this environment's credential bindings. Absent/false — only published, availability-granted versions run here. Mutable."
+    },
     "managementTags": {
       "type": "array",
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this environment (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped environment.",
