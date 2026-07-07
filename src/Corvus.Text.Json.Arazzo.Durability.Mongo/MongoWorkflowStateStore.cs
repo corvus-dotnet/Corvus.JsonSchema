@@ -23,6 +23,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
 
     private readonly IMongoClient client;
     private readonly TimeProvider timeProvider;
@@ -284,8 +285,16 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.And(
+
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (resumeRequestedAt present) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
+        FilterDefinition<BsonDocument> claimableStatus = b.Or(
             b.In("status", new[] { PendingStatus, RunningStatus }),
+            b.And(
+                b.In("status", new[] { SuspendedStatus, FaultedStatus }),
+                b.Ne<BsonValue>("resumeRequestedAt", BsonNull.Value)));
+        FilterDefinition<BsonDocument> filter = b.And(
+            claimableStatus,
             b.In("workflowId", hostedWorkflowIds));
 
         // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
@@ -334,7 +343,12 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         foreach ((string id, string status) in candidates)
         {
-            if (status == PendingStatus || (status == RunningStatus && !heldRunIds.Contains(id)))
+            // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (the
+            // filter required it), so surface it unconditionally alongside Pending and orphaned-Running runs.
+            if (status == PendingStatus
+                || (status == RunningStatus && !heldRunIds.Contains(id))
+                || status == SuspendedStatus
+                || status == FaultedStatus)
             {
                 yield return new WorkflowRunId(id);
             }
@@ -481,6 +495,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
             ["tags"] = index.Tags.IsEmpty ? BsonNull.Value : new BsonArray(index.Tags.ToList()),
             ["securityTags"] = MongoSecurityTags.ToBson(index.SecurityTags),
+            ["resumeRequestedAt"] = index.ResumeRequestedAt is { } resume ? resume.ToUnixTimeMilliseconds() : BsonNull.Value,
         };
 
         // §5.5 run→environment pinning: index the environment only when set, so the field is absent (matches anything)
