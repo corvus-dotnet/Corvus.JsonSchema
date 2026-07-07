@@ -111,6 +111,48 @@ public class GenerateCommandTests : IDisposable
     }
 
     [TestMethod]
+    public async Task Generate_V4BooleanNullUnion_ImplementsJsonValueInterfaceOnNet8Plus()
+    {
+        // Regression test for #832. A ["boolean", "null"] union generated with the V4 engine did not
+        // implement IJsonValue<T> on net8.0+, so the generated code failed to compile: CS0315 (the
+        // JsonValueConverter<T> attribute constraint) and CS0540 (the explicit IJsonValue members).
+        // The "null" core type contributes no type-family interface, and IJsonBoolean<T> — the only
+        // other candidate supplier of IJsonValue<T> — is declared only on pre-net8.0 frameworks for a
+        // union (a union converts to bool explicitly, so it cannot satisfy IJsonBoolean<T>'s static
+        // abstract "implicit operator bool" on net8.0+). The generator must therefore declare
+        // IJsonValue<T> directly on net8.0+.
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "boolean-null-union.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputRootTypeName NullableBool --outputPath \"{_outputDir}\" --engine V4");
+
+        Assert.AreEqual(0, result.ExitCode, $"Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        // The core partial carries [JsonConverter(typeof(JsonValueConverter<NullableBool>))], whose type
+        // argument requires NullableBool : IJsonValue<NullableBool>. Inspect that file's base list.
+        string coreFile = Directory
+            .GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories)
+            .Single(f => File.ReadAllText(f).Contains("JsonValueConverter<NullableBool>", StringComparison.Ordinal));
+        string content = await File.ReadAllTextAsync(coreFile);
+
+        // Isolate the struct's base-interface list (from the declaration to the opening body brace).
+        int structIndex = content.IndexOf("partial struct NullableBool", StringComparison.Ordinal);
+        int bodyBraceIndex = content.IndexOf('{', structIndex);
+        string baseList = content.Substring(structIndex, bodyBraceIndex - structIndex);
+
+        Assert.IsTrue(
+            baseList.Contains("IJsonValue<", StringComparison.Ordinal),
+            "Expected the core partial for a [\"boolean\", \"null\"] union to declare IJsonValue<T> in its " +
+            $"base-interface list so it implements IJsonValue<T> on net8.0+ (regression #832). Base list:\n{baseList}");
+
+        // The IJsonValue<T> base declaration must be present on net8.0+, not confined to pre-net8.0.
+        Assert.IsFalse(
+            baseList.Contains("#if !NET8_0_OR_GREATER", StringComparison.Ordinal),
+            "The IJsonValue<T> base declaration for a [\"boolean\", \"null\"] union must be present on net8.0+ " +
+            $"(regression #832). Base list:\n{baseList}");
+    }
+
+    [TestMethod]
     public async Task Generate_WithOptionalAsNullable_ProducesFiles()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
