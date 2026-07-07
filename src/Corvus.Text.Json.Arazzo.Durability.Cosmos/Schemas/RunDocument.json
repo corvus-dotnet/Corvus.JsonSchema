@@ -57,6 +57,11 @@
       "type": "string",
       "description": "The deployment environment the run is pinned to (design §5.5), if any."
     },
+    "resumeRequestedAt": {
+      "type": "integer",
+      "format": "int64",
+      "description": "When a paused (or faulted) run was marked resume-claimable by the control plane (design §18), Unix milliseconds, if it has been. A run carrying this marker is surfaced by the claimable-dispatch query so a separate runner can claim and advance it; cleared on the runner's next checkpoint."
+    },
     "tags": {
       "type": "array",
       "description": "The free-form run tags.",

@@ -80,6 +80,11 @@ public readonly partial struct RunDocument
             writer.WriteString(JsonPropertyNames.EnvironmentUtf8, environment);
         }
 
+        if (index.ResumeRequestedAt is { } resumeRequestedAt)
+        {
+            writer.WriteNumber(JsonPropertyNames.ResumeRequestedAtUtf8, resumeRequestedAt.ToUnixTimeMilliseconds());
+        }
+
         if (!index.Tags.IsEmpty)
         {
             writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
