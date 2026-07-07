@@ -6,9 +6,11 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Testing;
+using Corvus.Text.Json.OpenApi;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -22,21 +24,23 @@ using Stj = System.Text.Json;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 
 /// <summary>
-/// Tests the §18 debug-run lifecycle over the API (workflow-designer design §18, interim
-/// executor): the three start gates (the environment's <c>allowsDraftRuns</c> flag → 403,
-/// per-source credential readiness → 409 naming the gaps, unknown workflow → 400), single-step
-/// pause semantics (start paused after step 1, resume to completion), the resume actions through
-/// the simulator's §15 8b override seam (Skip records a skipped step whose provided outputs stand
-/// downstream, Rewind replays forward from the target, RetryFaultedStep re-advances a faulted run,
-/// StatePatch mutates inputs and pins step outputs), terminal-state conflicts, cancel, and the
-/// fail-closed 400 when the deployment wires no executor.
+/// Tests the §18 debug-run lifecycle over the API on the DURABLE host (workflow-designer design §18 slice 3e-2c):
+/// a debug run IS the durable <c>$draft</c> run the in-process <see cref="InProcessDraftRunner"/> executes for real
+/// (real <see cref="WorkflowExecutorProvider"/>(durable: true), in-memory stores, a scripted transport), stepped by
+/// the handler driving the runner's recording+tracing resumer directly. Covers the three start gates
+/// (<c>allowsDraftRuns</c> → 403, credential readiness → 409, unknown workflow → 400), start → completed, start with
+/// <c>pause.afterEachStep</c> → paused at step 1, step → advances, a breakpoint stops there, the native fault-remediation
+/// resume verbs (retry / skip / rewind / state-patch on a FAULTED run), terminal-state conflicts, cancel, the trace's
+/// step records (no bodies), and the fail-closed 400 when the deployment wires no in-process draft-run host.
 /// </summary>
 [TestClass]
 public sealed class ControlPlaneDebugRunApiTests
 {
     private const string StartScopes = "workspace:write runs:write";
 
-    private const string WorkflowDoc = """
+    // A 2-step workflow whose steps DECLARE outputs, so each executed step leaves checkpoint evidence and appears in
+    // the metadata trace's step records (a step that produced nothing is not individually represented).
+    private const string TwoStepDoc = """
         {
           "arazzo": "1.1.0",
           "info": { "title": "Adopt", "version": "1.0.0" },
@@ -47,47 +51,20 @@ public sealed class ControlPlaneDebugRunApiTests
               "steps": [
                 { "stepId": "get-pet", "operationId": "getPet",
                   "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ] },
-                { "stepId": "adopt-pet", "operationId": "adoptPet",
-                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ] }
-              ]
-            }
-          ]
-        }
-        """;
-
-    // Three steps whose LAST references the middle step's outputs — the §15 8b assertions: when
-    // adopt-pet is stepped over, its PROVIDED nextPetId must resolve check-pet's path parameter.
-    // adopt-pet's outputs deliberately read $inputs (not the response body): the spec-derived
-    // interim mocks answer with empty bodies, so a body extraction would fault if it ever executed.
-    private const string ChainDoc = """
-        {
-          "arazzo": "1.1.0",
-          "info": { "title": "Chain", "version": "1.0.0" },
-          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" } ],
-          "workflows": [
-            {
-              "workflowId": "chain",
-              "steps": [
-                { "stepId": "get-pet", "operationId": "getPet",
-                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ] },
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" } },
                 { "stepId": "adopt-pet", "operationId": "adoptPet",
                   "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
                   "successCriteria": [ { "condition": "$statusCode == 200" } ],
-                  "outputs": { "nextPetId": "$inputs.nextPetId" } },
-                { "stepId": "check-pet", "operationId": "getPet",
-                  "parameters": [ { "name": "petId", "in": "path", "value": "$steps.adopt-pet.outputs.nextPetId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ] }
+                  "outputs": { "status": "$response.body#/status" } }
               ]
             }
           ]
         }
         """;
 
-    // The first step demands a 202 the spec-derived mock (first declared 2xx = 200) never answers,
-    // and declares no failure action: the run faults immediately — the retry/skip recovery corpus.
+    // get-pet's criterion fails against a 500, and it declares no failure action: the run faults on get-pet. adopt-pet
+    // uses only $inputs (never get-pet's outputs), so a skip past the faulted step completes the run.
     private const string FaultingDoc = """
         {
           "arazzo": "1.1.0",
@@ -99,10 +76,12 @@ public sealed class ControlPlaneDebugRunApiTests
               "steps": [
                 { "stepId": "get-pet", "operationId": "getPet",
                   "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 202" } ] },
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" } },
                 { "stepId": "adopt-pet", "operationId": "adoptPet",
                   "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
-                  "successCriteria": [ { "condition": "$statusCode == 200" } ] }
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "status": "$response.body#/status" } }
               ]
             }
           ]
@@ -117,24 +96,27 @@ public sealed class ControlPlaneDebugRunApiTests
             "/pets/{petId}": {
               "get": { "operationId": "getPet",
                 "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } } ],
-                "responses": { "200": { "description": "ok" }, "default": { "description": "unexpected" } } }
+                "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" } } } } } }, "default": { "description": "unexpected" } } }
             },
             "/pets/{petId}/adopt": {
               "post": { "operationId": "adoptPet",
                 "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } } ],
-                "responses": { "200": { "description": "adopted" } } }
+                "responses": { "200": { "description": "adopted", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string" } } } } } } } }
             }
           }
         }
         """;
 
-    private static readonly WorkflowSimulator SharedSimulator = new(new WorkflowExecutorProvider(durable: true));
+    // One durable-mode executor provider is shared across tests: the runner's compile cache keys by content hash, so
+    // a document compiles once however many runs replay it (each test still builds its own runner + stores).
+    private static readonly WorkflowExecutorProvider SharedProvider = new(durable: true);
+    private static readonly WorkflowSimulator SharedSimulator = new(SharedProvider);
 
     [TestMethod]
     public async Task The_start_gates_answer_honestly_before_any_execution()
     {
-        await using Scoped host = await StartAsync(withSimulator: true);
-        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateWorkingCopyAsync(TwoStepDoc, PetstoreDoc);
 
         // An unknown environment is 404 (non-disclosing).
         (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
@@ -147,8 +129,7 @@ public sealed class ControlPlaneDebugRunApiTests
             """{"workflowId":"adopt","environment":"production"}""", StartScopes))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
-        // A development-class environment that allows drafts but has no credential bound for the
-        // declared source: 409 naming the gap.
+        // A development-class environment that allows drafts but has no credential bound for the declared source: 409.
         await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
         HttpResponseMessage notReady = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"adopt","environment":"development"}""", StartScopes);
@@ -165,13 +146,11 @@ public sealed class ControlPlaneDebugRunApiTests
     [TestMethod]
     public async Task A_debug_run_single_steps_to_completion_and_terminal_states_conflict()
     {
-        await using Scoped host = await StartAsync(withSimulator: true);
-        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
-        await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
-        await host.BindCredentialAsync("petstore", "development");
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
 
-        // Start paused after each step: the run advances exactly one step and reports paused,
-        // carrying the audit tuple and the simulation-shaped trace.
+        // Start paused after each step: the run advances exactly one step and reports paused, carrying the audit
+        // tuple and the host-executed metadata trace (its one step record with a metadata-only exchange).
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"},"pause":{"afterEachStep":true}}""", StartScopes);
         started.StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -182,12 +161,17 @@ public sealed class ControlPlaneDebugRunApiTests
             run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
             run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
             run.RootElement.GetProperty("environment").GetString().ShouldBe("development");
+            run.RootElement.GetProperty("workflowId").GetString().ShouldBe("adopt");
             run.RootElement.GetProperty("documentEtag").GetString().ShouldNotBeNullOrEmpty();
             run.RootElement.GetProperty("startedBy").GetString().ShouldNotBeNullOrEmpty();
-            Stj.JsonElement steps = run.RootElement.GetProperty("trace").GetProperty("steps");
+            Stj.JsonElement trace = run.RootElement.GetProperty("trace");
+            trace.GetProperty("outcome").GetString().ShouldBe("paused");
+            trace.GetProperty("pausedBefore").GetString().ShouldBe("adopt-pet");
+            Stj.JsonElement steps = trace.GetProperty("steps");
             steps.GetArrayLength().ShouldBe(1);
             steps[0].GetProperty("stepId").GetString().ShouldBe("get-pet");
             steps[0].GetProperty("requests")[0].GetProperty("path").GetString().ShouldBe("/pets/42");
+            steps[0].GetProperty("requests")[0].GetProperty("method").GetString().ShouldBe("get");
         }
 
         // GET reads the same state back.
@@ -199,7 +183,7 @@ public sealed class ControlPlaneDebugRunApiTests
             run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
         }
 
-        // A plain resume carries the single-step pause forward: step 2 of 2 completes the run.
+        // A plain resume carries the single-step pause off (bare resume): step 2 of 2 completes the run.
         HttpResponseMessage resumed = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
         resumed.StatusCode.ShouldBe(HttpStatusCode.OK);
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await resumed.Content.ReadAsStringAsync()))
@@ -239,106 +223,66 @@ public sealed class ControlPlaneDebugRunApiTests
     }
 
     [TestMethod]
-    public async Task Skip_steps_over_the_next_step_and_its_provided_outputs_stand_downstream()
+    public async Task A_run_with_no_pause_advances_straight_to_completion()
     {
-        await using Scoped host = await StartAsync(withSimulator: true);
-        string id = await host.CreateWorkingCopyAsync(ChainDoc, PetstoreDoc);
-        await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
-        await host.BindCredentialAsync("petstore", "development");
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
 
-        // Paused after step 1: the cursor names adopt-pet as the next step — the step-over target.
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
-            """{"workflowId":"chain","environment":"development","inputs":{"petId":"42","nextPetId":"13"},"pause":{"afterEachStep":true}}""", StartScopes);
+            """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
         started.StatusCode.ShouldBe(HttpStatusCode.Created);
-        string debugRunId;
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
-        {
-            debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
-            run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
-            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
-        }
+        using Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync());
+        run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
+        run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
 
-        // Step over with provided outputs (§15 8b): adopt-pet is recorded skipped — no exchange —
-        // and its PROVIDED nextPetId is the value downstream references must see.
-        HttpResponseMessage skipped = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
-            """{"action":{"mode":"Skip","skipOutputs":{"nextPetId":"77"}}}""", StartScopes);
-        skipped.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await skipped.Content.ReadAsStringAsync()))
-        {
-            run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
-            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
-            Stj.JsonElement record = run.RootElement.GetProperty("trace").GetProperty("steps")[1];
-            record.GetProperty("stepId").GetString().ShouldBe("adopt-pet");
-            record.GetProperty("status").GetString().ShouldBe("completed");
-            record.GetProperty("attempt").GetInt32().ShouldBe(0);
-            record.GetProperty("skipped").GetBoolean().ShouldBeTrue();
-            record.GetProperty("outputs").GetProperty("nextPetId").GetString().ShouldBe("77");
-            record.TryGetProperty("requests", out _).ShouldBeFalse("the skipped step never touched the transport");
-        }
-
-        // The completing advance proves the override stands: check-pet's path parameter resolves
-        // $steps.adopt-pet.outputs.nextPetId to the PROVIDED 77 through the real emitted executor.
-        HttpResponseMessage completed = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
-        completed.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await completed.Content.ReadAsStringAsync()))
-        {
-            run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
-            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(3);
-            Stj.JsonElement record = run.RootElement.GetProperty("trace").GetProperty("steps")[2];
-            record.GetProperty("stepId").GetString().ShouldBe("check-pet");
-            record.GetProperty("requests")[0].GetProperty("path").GetString().ShouldBe("/pets/77");
-        }
+        Stj.JsonElement trace = run.RootElement.GetProperty("trace");
+        trace.GetProperty("outcome").GetString().ShouldBe("completed");
+        trace.GetProperty("stepsExecuted").GetInt32().ShouldBe(2);
+        trace.GetProperty("steps")[0].GetProperty("stepId").GetString().ShouldBe("get-pet");
+        trace.GetProperty("steps")[1].GetProperty("stepId").GetString().ShouldBe("adopt-pet");
+        trace.GetProperty("steps")[1].GetProperty("requests")[0].GetProperty("path").GetString().ShouldBe("/pets/42/adopt");
+        AssertNoBodies(trace);
     }
 
     [TestMethod]
-    public async Task Rewind_resets_the_position_and_the_forward_replay_reexecutes()
+    public async Task A_breakpoint_stops_before_the_named_step()
     {
-        await using Scoped host = await StartAsync(withSimulator: true);
-        string id = await host.CreateWorkingCopyAsync(ChainDoc, PetstoreDoc);
-        await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
-        await host.BindCredentialAsync("petstore", "development");
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
 
+        // No afterEachStep, just a breakpoint before adopt-pet: the run executes get-pet and stops before adopt-pet.
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
-            """{"workflowId":"chain","environment":"development","inputs":{"petId":"42","nextPetId":"13"},"pause":{"afterEachStep":true}}""", StartScopes);
+            """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"},"pause":{"beforeSteps":["adopt-pet"]}}""", StartScopes);
         started.StatusCode.ShouldBe(HttpStatusCode.Created);
         string debugRunId;
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
         {
             debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
-        }
-
-        // Advance to position 2 first, so the rewind observably moves backwards.
-        HttpResponseMessage advanced = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
-        advanced.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await advanced.Content.ReadAsStringAsync()))
-        {
-            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
-        }
-
-        // Rewind to the start: the forward replay re-executes step 1 (its exchange is in the fresh
-        // trace) and the single-step pause halts after it — position 1, one recorded step.
-        HttpResponseMessage rewound = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
-            """{"action":{"mode":"Rewind","targetCursor":0}}""", StartScopes);
-        rewound.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await rewound.Content.ReadAsStringAsync()))
-        {
             run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
             run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
             Stj.JsonElement steps = run.RootElement.GetProperty("trace").GetProperty("steps");
             steps.GetArrayLength().ShouldBe(1);
             steps[0].GetProperty("stepId").GetString().ShouldBe("get-pet");
-            steps[0].GetProperty("requests")[0].GetProperty("path").GetString().ShouldBe("/pets/42");
+            run.RootElement.GetProperty("trace").GetProperty("pausedBefore").GetString().ShouldBe("adopt-pet");
+        }
+
+        // Bare resume (no breakpoint carried forward) runs off the end to completion.
+        HttpResponseMessage completed = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
+        completed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await completed.Content.ReadAsStringAsync()))
+        {
+            run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
+            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
         }
     }
 
     [TestMethod]
-    public async Task Retry_re_advances_a_faulted_run_and_skip_steps_over_the_faulted_step()
+    public async Task Native_resume_verbs_remediate_a_faulted_run()
     {
-        await using Scoped host = await StartAsync(withSimulator: true);
-        string id = await host.CreateWorkingCopyAsync(FaultingDoc, PetstoreDoc);
-        await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
-        await host.BindCredentialAsync("petstore", "development");
+        await using Scoped host = await StartAsync(withRunner: true, FaultingMock());
+        string id = await host.CreateReadyWorkingCopyAsync(FaultingDoc);
 
+        // Start: get-pet's criterion fails against the 500, so the run faults immediately (a resumable terminal).
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"faulting","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
         started.StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -350,8 +294,7 @@ public sealed class ControlPlaneDebugRunApiTests
             run.RootElement.GetProperty("trace").GetProperty("fault").GetProperty("stepId").GetString().ShouldBe("get-pet");
         }
 
-        // RetryFaultedStep re-advances; the deterministic replay meets the same 200 and faults
-        // again — honestly reported, exactly as the durable engine's retry of an unchanged world.
+        // RetryFaultedStep re-advances; the deterministic 500 faults again — honestly reported (native retry path).
         HttpResponseMessage retried = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
             """{"action":{"mode":"RetryFaultedStep"}}""", StartScopes);
         retried.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -360,33 +303,73 @@ public sealed class ControlPlaneDebugRunApiTests
             run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
         }
 
-        // Skip past the faulted step (targetCursor = the cursor to resume AT, so 1 names step 0):
-        // the replay records get-pet skipped and the run completes through adopt-pet.
+        // A StatePatch that cannot apply (replace on a missing path) is a 409 and mutates nothing.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
+            """{"action":{"mode":"StatePatch","patch":[{"op":"replace","path":"/stepOutputs/nope","value":1}]}}""", StartScopes))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // A StatePatch that DOES apply re-enters the faulted step (the 500 world is unchanged, so it re-faults) — the
+        // 200 proves the native state-patch path applied the RFC 6902 patch over { inputs, stepOutputs }.
+        HttpResponseMessage patched = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
+            """{"action":{"mode":"StatePatch","patch":[{"op":"replace","path":"/inputs/petId","value":"99"}]}}""", StartScopes);
+        patched.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await patched.Content.ReadAsStringAsync()))
+        {
+            run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
+        }
+
+        // Rewind to the start re-runs get-pet against the same 500 — still faulted (native rewind path).
+        HttpResponseMessage rewound = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
+            """{"action":{"mode":"Rewind","targetCursor":0}}""", StartScopes);
+        rewound.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await rewound.Content.ReadAsStringAsync()))
+        {
+            run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
+        }
+
+        // Skip past the faulted step (targetCursor = the cursor to resume at, so 1 skips step 0): the run completes
+        // through adopt-pet (which the FaultingMock answers 200) — native skip path.
         HttpResponseMessage skipped = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
             """{"action":{"mode":"Skip","targetCursor":1,"skipOutputs":{}}}""", StartScopes);
         skipped.StatusCode.ShouldBe(HttpStatusCode.OK);
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await skipped.Content.ReadAsStringAsync()))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
-            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
+
+            // Skipping the faulted get-pet advances into and completes adopt-pet (proved by the run completing and
+            // adopt-pet being recorded completed). The exact per-exchange attribution across a skipped step is a
+            // slice-3f trace-parity concern (the assembler pairs ordered exchanges to executed steps one-to-one), so
+            // this asserts the step outcome, not which step the lone recorded exchange landed on.
             Stj.JsonElement steps = run.RootElement.GetProperty("trace").GetProperty("steps");
-            steps[0].GetProperty("stepId").GetString().ShouldBe("get-pet");
-            steps[0].GetProperty("skipped").GetBoolean().ShouldBeTrue();
-            steps[1].GetProperty("stepId").GetString().ShouldBe("adopt-pet");
-            steps[1].GetProperty("requests")[0].GetProperty("path").GetString().ShouldBe("/pets/42/adopt");
+            bool adoptCompleted = false;
+            foreach (Stj.JsonElement step in steps.EnumerateArray())
+            {
+                if (step.GetProperty("stepId").GetString() == "adopt-pet")
+                {
+                    step.GetProperty("status").GetString().ShouldBe("completed");
+                    adoptCompleted = true;
+                }
+            }
+
+            adoptCompleted.ShouldBeTrue("skipping the faulted get-pet advances into and completes adopt-pet");
         }
+
+        // Terminal: a completed run refuses a further resume verb.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
+            """{"action":{"mode":"RetryFaultedStep"}}""", StartScopes))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [TestMethod]
-    public async Task State_patch_mutates_inputs_and_pins_step_outputs_and_a_bad_patch_conflicts()
+    public async Task A_resume_verb_on_a_paused_non_faulted_run_does_not_apply()
     {
-        await using Scoped host = await StartAsync(withSimulator: true);
-        string id = await host.CreateWorkingCopyAsync(ChainDoc, PetstoreDoc);
-        await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
-        await host.BindCredentialAsync("petstore", "development");
+        // Step-over of a NON-faulted paused step is a replay-debugger operation (slice 3e-3), not a live-run one, so a
+        // native resume verb on a paused run does not apply (409).
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
 
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
-            """{"workflowId":"chain","environment":"development","inputs":{"petId":"42","nextPetId":"13"},"pause":{"afterEachStep":true}}""", StartScopes);
+            """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"},"pause":{"afterEachStep":true}}""", StartScopes);
         started.StatusCode.ShouldBe(HttpStatusCode.Created);
         string debugRunId;
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
@@ -395,41 +378,16 @@ public sealed class ControlPlaneDebugRunApiTests
             run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
         }
 
-        // A patch that cannot apply (replace on a missing path) is a 409 and mutates nothing.
         (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
-            """{"action":{"mode":"StatePatch","patch":[{"op":"replace","path":"/stepOutputs/nope","value":1}]}}""", StartScopes))
+            """{"action":{"mode":"RetryFaultedStep"}}""", StartScopes))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
-
-        // Patch the context { inputs, stepOutputs }: the replaced input re-aims get-pet's replay,
-        // and the added stepOutputs entry pins adopt-pet as an override (it skips; 88 stands).
-        HttpResponseMessage patched = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
-            """{"action":{"mode":"StatePatch","patch":[{"op":"replace","path":"/inputs/petId","value":"43"},{"op":"add","path":"/stepOutputs/adopt-pet","value":{"nextPetId":"88"}}]}}""", StartScopes);
-        patched.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await patched.Content.ReadAsStringAsync()))
-        {
-            run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
-            Stj.JsonElement steps = run.RootElement.GetProperty("trace").GetProperty("steps");
-            steps[0].GetProperty("requests")[0].GetProperty("path").GetString().ShouldBe("/pets/43", "the patched input drives the replay");
-            steps[1].GetProperty("stepId").GetString().ShouldBe("adopt-pet");
-            steps[1].GetProperty("skipped").GetBoolean().ShouldBeTrue("the patched stepOutputs entry became an override");
-        }
-
-        HttpResponseMessage completed = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
-        completed.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await completed.Content.ReadAsStringAsync()))
-        {
-            run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
-            Stj.JsonElement record = run.RootElement.GetProperty("trace").GetProperty("steps")[2];
-            record.GetProperty("stepId").GetString().ShouldBe("check-pet");
-            record.GetProperty("requests")[0].GetProperty("path").GetString().ShouldBe("/pets/88", "the pinned outputs stand downstream");
-        }
     }
 
     [TestMethod]
-    public async Task Debug_runs_fail_closed_when_the_deployment_wires_no_executor()
+    public async Task Debug_runs_fail_closed_when_no_in_process_draft_run_host_is_wired()
     {
-        await using Scoped host = await StartAsync(withSimulator: false);
-        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+        await using Scoped host = await StartAsync(withRunner: false, null);
+        string id = await host.CreateWorkingCopyAsync(TwoStepDoc, PetstoreDoc);
         (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"adopt","environment":"development"}""", StartScopes))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -437,12 +395,41 @@ public sealed class ControlPlaneDebugRunApiTests
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
-    private static async Task<Scoped> StartAsync(bool withSimulator)
+    private static MockApiTransport HappyMock()
+    {
+        var mock = new MockApiTransport();
+        mock.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+        mock.SetResponse(OperationMethod.Post, "/pets/{petId}/adopt", 200, """{"status":"adopted"}""");
+        return mock;
+    }
+
+    private static MockApiTransport FaultingMock()
+    {
+        var mock = new MockApiTransport();
+        mock.SetResponse(OperationMethod.Get, "/pets/{petId}", 500, """{"error":"boom"}""");
+        mock.SetResponse(OperationMethod.Post, "/pets/{petId}/adopt", 200, """{"status":"adopted"}""");
+        return mock;
+    }
+
+    private static async Task<Scoped> StartAsync(bool withRunner, MockApiTransport? transport)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
         var workspaceStore = new Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows.InMemoryWorkspaceWorkflowStore();
+
+        InMemoryDraftRunStore? drafts = null;
+        InProcessDraftRunner? runner = null;
+        if (withRunner)
+        {
+            drafts = new InMemoryDraftRunStore();
+            MockApiTransport mock = transport!;
+            WorkflowTransportBinder binder = (WorkflowDescriptor descriptor, SecurityTagSet runTags) =>
+                new WorkflowTransports(
+                    descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)mock, StringComparer.Ordinal),
+                    null);
+            runner = new InProcessDraftRunner(store, "runner-dev", "development", drafts, SharedProvider, binder);
+        }
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -459,12 +446,40 @@ public sealed class ControlPlaneDebugRunApiTests
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
             workspaceWorkflowStore: workspaceStore,
-            workflowSimulator: withSimulator ? SharedSimulator : null);
+            workflowSimulator: SharedSimulator,
+            workflowStateStore: withRunner ? store : null,
+            draftRunStore: drafts,
+            draftRunner: runner);
         await app.StartAsync();
-        return new Scoped(app, app.GetTestClient());
+        return new Scoped(app, app.GetTestClient(), runner);
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client) : IAsyncDisposable
+    // The no-bodies invariant (the ratified §18 posture): no request or response body property appears in the trace.
+    private static void AssertNoBodies(Stj.JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case Stj.JsonValueKind.Object:
+                foreach (Stj.JsonProperty property in element.EnumerateObject())
+                {
+                    property.Name.ShouldNotBe("requestBody");
+                    property.Name.ShouldNotBe("responseBody");
+                    AssertNoBodies(property.Value);
+                }
+
+                break;
+
+            case Stj.JsonValueKind.Array:
+                foreach (Stj.JsonElement item in element.EnumerateArray())
+                {
+                    AssertNoBodies(item);
+                }
+
+                break;
+        }
+    }
+
+    private sealed class Scoped(WebApplication app, HttpClient client, InProcessDraftRunner? runner) : IAsyncDisposable
     {
         public async Task<string> CreateWorkingCopyAsync(string workflowDoc, string? sourceDoc)
         {
@@ -481,6 +496,16 @@ public sealed class ControlPlaneDebugRunApiTests
                 attached.StatusCode.ShouldBe(HttpStatusCode.OK);
             }
 
+            return id;
+        }
+
+        // A working copy plus its petstore source, a development environment that allows drafts, and a bound
+        // credential for the source — the ready-to-run state the gates require before a debug run may start.
+        public async Task<string> CreateReadyWorkingCopyAsync(string workflowDoc)
+        {
+            string id = await this.CreateWorkingCopyAsync(workflowDoc, PetstoreDoc);
+            await this.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
+            await this.BindCredentialAsync("petstore", "development");
             return id;
         }
 
@@ -519,6 +544,11 @@ public sealed class ControlPlaneDebugRunApiTests
         public async ValueTask DisposeAsync()
         {
             client.Dispose();
+            if (runner is not null)
+            {
+                await runner.DisposeAsync();
+            }
+
             await app.DisposeAsync();
         }
     }

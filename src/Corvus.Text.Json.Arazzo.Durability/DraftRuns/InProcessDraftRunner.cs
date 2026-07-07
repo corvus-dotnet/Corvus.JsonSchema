@@ -141,6 +141,18 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         return advanced;
     }
 
+    /// <summary>
+    /// Gets this runner's recording-and-tracing <see cref="WorkflowResumer"/> — the exact delegate <see cref="RunPendingAsync"/>
+    /// drives each claimed run through. A single-process host that needs to advance one specific run <em>interactively</em>
+    /// (the §18 debug-run stepper, which sets a per-advance <see cref="WorkflowRun.SetPause"/> before it drives, and so
+    /// cannot go through the dispatcher's internally-constructed run) loads the run itself and awaits this delegate: it
+    /// records the run's metadata-only exchanges, resumes it (honouring any pause), and assembles+caches its metadata
+    /// trace exactly as a pumped run — so <see cref="TryGetTrace"/> answers for it afterwards. It is also the resumer a
+    /// <c>SecuredWorkflowManagement</c> is constructed with so its native faulted-run resume (retry/skip/rewind/patch)
+    /// records+traces through the same path. This exposes existing behaviour; it drives no dispatch, lease, or claim.
+    /// </summary>
+    public WorkflowResumer Resumer => this.tracingResumer;
+
     /// <summary>Gets the latest assembled metadata trace for a run, if this runner has advanced it since starting.</summary>
     /// <param name="id">The run id.</param>
     /// <param name="traceUtf8">The <c>SimulationTrace</c>-shaped metadata trace as UTF-8 JSON, when one is cached.</param>
