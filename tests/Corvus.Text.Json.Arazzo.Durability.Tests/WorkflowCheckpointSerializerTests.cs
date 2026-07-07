@@ -166,4 +166,58 @@ public sealed class WorkflowCheckpointSerializerTests
         // owned parsed document is disposed before the exception propagates.
         Should.Throw<Exception>(() => WorkflowCheckpointSerializer.Deserialize("{}"u8.ToArray()));
     }
+
+    [TestMethod]
+    public void Round_trips_a_persisted_pause_configuration()
+    {
+        // §18: a paused run persists its pause configuration so a claiming runner (a different process) applies
+        // the same stops without re-supplying them — both the after-each-step flag and the breakpoint cursors.
+        using var retryCounters = PooledUtf8Map<int>.Rent(0);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        byte[] bytes = WorkflowCheckpointSerializer.Serialize(
+            "run-1",
+            "wf",
+            WorkflowRunStatus.Suspended,
+            cursor: 2,
+            CreatedAt,
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            wait: WorkflowWait.Pause(),
+            pause: new WorkflowPauseConfig(AfterEachStep: true, new HashSet<int> { 1, 3 }));
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(bytes);
+
+        state.Wait!.Value.Kind.ShouldBe(WorkflowWaitKind.Pause);
+        state.Pause.ShouldNotBeNull();
+        state.Pause!.Value.AfterEachStep.ShouldBeTrue();
+        state.Pause.Value.BreakpointCursors.ShouldBe(new HashSet<int> { 1, 3 }, ignoreOrder: true);
+    }
+
+    [TestMethod]
+    public void A_run_with_no_pause_configuration_omits_the_pause_property()
+    {
+        // A no-pause run writes nothing under "pause" and round-trips as an ordinary (unpaused) run, so an
+        // ordinary run's checkpoint is byte-for-byte unaffected by the pause seam.
+        using var retryCounters = PooledUtf8Map<int>.Rent(0);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        byte[] bytes = WorkflowCheckpointSerializer.Serialize(
+            "run-1",
+            "wf",
+            WorkflowRunStatus.Running,
+            cursor: 1,
+            CreatedAt,
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default);
+
+        Encoding.UTF8.GetString(bytes).ShouldNotContain("pause");
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(bytes);
+        state.Pause.ShouldBeNull();
+    }
 }

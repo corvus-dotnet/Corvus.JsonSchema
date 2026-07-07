@@ -111,8 +111,13 @@ public sealed class WorkflowDispatcher
             using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
 
             // Re-check under the lease: the run may have been claimed, completed, suspended, or deleted between
-            // the index query and the lease. Only fresh (Pending) and orphaned (Running) runs are dispatchable.
-            if (run is null || run.Status is not (WorkflowRunStatus.Pending or WorkflowRunStatus.Running))
+            // the index query and the lease. Dispatchable are fresh (Pending) runs, orphaned (Running) runs, and
+            // — §18 — a paused/faulted run the control plane marked resume-claimable (RequestResumeAsync), whose
+            // first checkpoint on advance clears the marker. A terminal run (Completed/Cancelled) is never claimed,
+            // even if a marker somehow lingered.
+            if (run is null
+                || !(run.Status is WorkflowRunStatus.Pending or WorkflowRunStatus.Running
+                     || (run.IsResumeRequested && run.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted)))
             {
                 return false;
             }
