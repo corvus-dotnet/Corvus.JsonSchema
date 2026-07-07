@@ -23,6 +23,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
 
     private readonly SqliteConnection connection;
     private readonly TimeProvider timeProvider;
@@ -114,8 +115,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 using SqliteCommand insert = this.connection.CreateCommand();
                 insert.CommandText =
                     """
-                    INSERT INTO WorkflowRuns (RunId, Checkpoint, Version, Status, WorkflowId, Environment, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags)
-                    VALUES (@id, @checkpoint, 1, @status, @workflowId, @environment, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType, @correlationId, @tags)
+                    INSERT INTO WorkflowRuns (RunId, Checkpoint, Version, Status, WorkflowId, Environment, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags, ResumeRequestedAt)
+                    VALUES (@id, @checkpoint, 1, @status, @workflowId, @environment, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType, @correlationId, @tags, @resumeRequestedAt)
                     ON CONFLICT(RunId) DO NOTHING;
                     """;
                 BindRun(insert, id, checkpoint, indexCopy);
@@ -137,7 +138,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 SET Checkpoint = @checkpoint, Version = Version + 1, Status = @status, WorkflowId = @workflowId,
                     Environment = @environment, CreatedAt = @createdAt, UpdatedAt = @updatedAt, DueAt = @dueAt,
                     AwaitingChannel = @awaitingChannel, AwaitingCorrelationId = @awaitingCorrelationId, ErrorType = @errorType,
-                    CorrelationId = @correlationId, Tags = @tags
+                    CorrelationId = @correlationId, Tags = @tags, ResumeRequestedAt = @resumeRequestedAt
                 WHERE RunId = @id AND Version = @expectedVersion;
                 """;
             BindRun(update, id, checkpoint, indexCopy);
@@ -434,6 +435,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         command.Parameters.AddWithValue("@awaitingCorrelationId", (object?)index.AwaitingCorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@errorType", (object?)index.ErrorType ?? DBNull.Value);
         command.Parameters.AddWithValue("@correlationId", (object?)index.CorrelationId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@resumeRequestedAt", (object?)index.ResumeRequestedAt?.ToUnixTimeMilliseconds() ?? DBNull.Value);
         command.Parameters.AddWithValue("@tags", (object?)index.Tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
     }
 
@@ -493,13 +495,17 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
         // unpinned run (Environment IS NULL) or an unscoped dispatcher (@runnerEnvironment IS NULL) matches anything.
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (ResumeRequestedAt IS NOT NULL) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         string sql =
             $"""
             SELECT r.RunId FROM WorkflowRuns r
             LEFT JOIN WorkflowLeases l ON l.RunId = r.RunId
             WHERE r.WorkflowId IN ({string.Join(", ", placeholders)})
               AND (@runnerEnvironment IS NULL OR r.Environment IS NULL OR r.Environment = @runnerEnvironment)
-              AND (r.Status = @pending OR (r.Status = @running AND (l.RunId IS NULL OR l.ExpiresAt <= @now)));
+              AND (r.Status = @pending
+                   OR (r.Status = @running AND (l.RunId IS NULL OR l.ExpiresAt <= @now))
+                   OR (r.ResumeRequestedAt IS NOT NULL AND r.Status IN (@suspended, @faulted)));
             """;
 
         List<WorkflowRunId> claimable = await this.QueryIdsAsync(
@@ -508,6 +514,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             {
                 cmd.Parameters.AddWithValue("@pending", PendingStatus);
                 cmd.Parameters.AddWithValue("@running", RunningStatus);
+                cmd.Parameters.AddWithValue("@suspended", SuspendedStatus);
+                cmd.Parameters.AddWithValue("@faulted", FaultedStatus);
                 cmd.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
                 cmd.Parameters.AddWithValue("@runnerEnvironment", (object?)runnerEnvironment ?? DBNull.Value);
                 for (int i = 0; i < ids.Count; i++)
@@ -564,7 +572,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             AwaitingCorrelationId TEXT NULL,
             ErrorType TEXT NULL,
             CorrelationId TEXT NULL,
-            Tags TEXT NULL
+            Tags TEXT NULL,
+            ResumeRequestedAt INTEGER NULL
         );
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Due ON WorkflowRuns (Status, DueAt);
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Awaiting ON WorkflowRuns (Status, AwaitingChannel, AwaitingCorrelationId);

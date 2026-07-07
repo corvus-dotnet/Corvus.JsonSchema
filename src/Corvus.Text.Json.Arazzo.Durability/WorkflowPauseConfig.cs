@@ -5,10 +5,13 @@
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// The ephemeral, per-advance §18 debugger pause configuration for a durable run: the stop points a single
-/// re-entry of the executor honours at its step boundaries. It is never persisted — a caller sets it on the
-/// run for the duration of one advance through <see cref="WorkflowRun.SetPause"/>; an advance on which no
-/// pause is configured behaves exactly like an ordinary run (the default).
+/// The §18 debugger pause configuration for a durable run: the stop points the executor honours at its step
+/// boundaries. A caller sets it on the run through <see cref="WorkflowRun.SetPause"/> for the current advance,
+/// or when marking a paused run resume-claimable through <see cref="WorkflowRun.RequestResumeAsync"/>. It is
+/// persisted into the checkpoint so a runner that later claims the run — a <em>different</em> process — applies
+/// the same stops without re-supplying them, and is re-persisted across each pause so a single-step /
+/// next-breakpoint carries; a later resume overwrites it. An advance on which no pause is configured persists
+/// none and behaves exactly like an ordinary run (the default).
 /// </summary>
 /// <remarks>
 /// The breakpoints are STATE INDICES (cursors) in the durable executor's cursor space, not step ids: a run

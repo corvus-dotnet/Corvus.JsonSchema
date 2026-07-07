@@ -27,6 +27,12 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="Tags">The free-form tags applied to the run at creation, if any.</param>
 /// <param name="SecurityTags">The security tags (KVP labels) applied to the run at creation, if any — the input to tag-based row authorization (§14.2), distinct from the free-form <paramref name="Tags"/>.</param>
 /// <param name="Environment">The deployment environment the run is pinned to (design §5.5), if any — the store indexes it so dispatch can constrain a run to runners serving its environment; absent on a run created before run→environment pinning.</param>
+/// <param name="ResumeRequestedAt">When a <em>paused</em> (or faulted) run was marked resume-claimable through
+/// <see cref="WorkflowRun.RequestResumeAsync"/> by the control plane (design §18), if it has been. A run carrying
+/// this marker is surfaced by <see cref="IWorkflowDispatchIndex.QueryClaimableAsync(IReadOnlyCollection{string}, string?, DateTimeOffset, CancellationToken)"/>
+/// so a <em>separate</em> runner can claim and advance it, while the run stays <see cref="WorkflowRunStatus.Suspended"/>
+/// (never transitioned to <see cref="WorkflowRunStatus.Pending"/>, so it is not mistaken for a fresh un-started run).
+/// The marker is cleared on the runner's next checkpoint, so an advancing run is not perpetually re-claimable.</param>
 public readonly record struct WorkflowRunIndexEntry(
     string WorkflowId,
     WorkflowRunStatus Status,
@@ -39,4 +45,5 @@ public readonly record struct WorkflowRunIndexEntry(
     string? CorrelationId = null,
     TagSet Tags = default,
     SecurityTagSet SecurityTags = default,
-    string? Environment = null);
+    string? Environment = null,
+    DateTimeOffset? ResumeRequestedAt = null);
