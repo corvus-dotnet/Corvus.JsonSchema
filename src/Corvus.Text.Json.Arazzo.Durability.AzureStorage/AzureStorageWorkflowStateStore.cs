@@ -26,6 +26,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
     private const string IndexPartition = "run";
     private const string LeasePartition = "lease";
     private const string RunsContainer = "arazzo-runs";
@@ -294,11 +295,14 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
         var hosted = new HashSet<string>(hostedWorkflowIds);
 
-        // Azure Tables $filter cannot express an IN list cheaply, so the server-side filter narrows to the two
-        // claimable statuses and the small candidate set is filtered by hosted workflow id client-side. The §5.5
+        // Azure Tables $filter cannot express an IN list cheaply, so the server-side filter narrows to the
+        // candidate statuses and the small candidate set is filtered by hosted workflow id client-side. The §5.5
         // environment predicate ("IS NULL OR eq") likewise cannot be expressed over a possibly-absent property in
         // OData, so it too is applied in process — matching how the hosted-workflow and tag predicates filter.
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus})");
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (ResumeRequestedAt present) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
+        // The marker presence is checked in process too (OData cannot test a possibly-absent property).
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus} or Status eq {SuspendedStatus} or Status eq {FaultedStatus})");
         var candidates = new List<(string RowKey, string Status)>();
         bool anyRunning = false;
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
@@ -315,6 +319,13 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             }
 
             string status = entity.GetString("Status") ?? string.Empty;
+
+            // A Suspended/Faulted run is claimable only if the control plane marked it resume-claimable.
+            if ((status == SuspendedStatus || status == FaultedStatus) && entity.GetInt64("ResumeRequestedAt") is null)
+            {
+                continue;
+            }
+
             candidates.Add((entity.RowKey, status));
             if (status == RunningStatus)
             {
@@ -336,7 +347,12 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
         foreach ((string rowKey, string status) in candidates)
         {
-            if (status == PendingStatus || held?.Contains(rowKey) != true)
+            // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (gated
+            // above), so surface it unconditionally alongside Pending and orphaned-Running runs.
+            if (status == PendingStatus
+                || status == SuspendedStatus
+                || status == FaultedStatus
+                || held?.Contains(rowKey) != true)
             {
                 yield return new WorkflowRunId(rowKey);
             }
@@ -470,6 +486,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         if (index.Environment is { } environment)
         {
             entity["Environment"] = environment;
+        }
+
+        if (index.ResumeRequestedAt is { } resume)
+        {
+            entity["ResumeRequestedAt"] = resume.ToUnixTimeMilliseconds();
         }
 
         if (index.Tags.ToJsonStringOrNull() is { } tagsJson)
