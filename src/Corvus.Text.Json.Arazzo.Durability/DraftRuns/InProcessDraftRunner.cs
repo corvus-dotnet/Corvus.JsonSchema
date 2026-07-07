@@ -1,0 +1,309 @@
+// <copyright file="InProcessDraftRunner.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Buffers;
+using System.Collections.Concurrent;
+using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.OpenApi;
+
+namespace Corvus.Text.Json.Arazzo.Durability;
+
+/// <summary>
+/// A composable, environment-pinned runner that hosts §18 <c>$draft</c> debug runs in the <em>same</em> process
+/// as the control plane (workflow-designer design §18 slice 3e-2b). A single-process deployment — the live demo,
+/// the container-free tests — advances draft runs with no separate runner process by pumping this runner; a
+/// multi-process deployment runs the same composition out of process instead. It <em>composes</em> the existing
+/// dispatch, resume, and trace-assembly pieces and adds nothing to the durable machinery: no handler change, no
+/// change to the persisted checkpoint shape, no store fan-out.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>What it composes.</b> A <see cref="WorkflowDispatcher"/> pinned to <c>runnerEnvironment</c> claims the next
+/// batch of Pending/orphaned <c>$draft</c> runs (the reserved <see cref="DraftRuns.RunWorkflowId"/>); a
+/// <see cref="DraftWorkflowResumer"/> resolves each claimed run's captured draft, compiles it (its content-hash
+/// LRU cache), binds its transports, and drives it through the same <see cref="IHostedWorkflow.RunAsync"/> path a
+/// catalog run takes (catching a §18 debugger <c>WorkflowPauseException</c> → Suspended, from slice 3e-1); an
+/// optional <see cref="WorkflowWorker"/> resumes due timer waits through the same resumer. The runner wraps each
+/// per-run credentialed API transport the binder yields (from <c>SourceCredentialTransports.CreateBinder</c> in
+/// production, or a caller-supplied binder in tests) in a <see cref="RecordingApiTransport"/>, so every run's
+/// metadata-only exchanges (method, pre-auth path, status — never a body) are recorded, and assembles the
+/// <c>SimulationTrace</c>-shaped metadata trace (<see cref="MetadataTraceAssembler"/>) from the run's
+/// just-persisted checkpoint plus that run's recorded exchanges.
+/// </para>
+/// <para>
+/// <b>Correlating a run with its exchanges.</b> The binder the <see cref="DraftWorkflowResumer"/> is constructed
+/// with is shared across every run, is invoked per run with only the descriptor and the run's tags (never the run
+/// id), and is invoked <em>after</em> an <c>await</c> inside the resume — so it cannot itself key recorders by run.
+/// Rather than widen <see cref="DraftWorkflowResumer"/>'s surface, the correlation is done one level out, at the
+/// <see cref="WorkflowResumer"/> delegate the dispatcher and worker actually call: that delegate establishes a
+/// per-run recording sink in an <see cref="AsyncLocal{T}"/>, drives the resume (the shared recording binder reads
+/// the ambient sink and deposits this run's recorders into it — <see cref="AsyncLocal{T}"/> flows down through the
+/// awaited resume and never leaks up to the dispatcher, so sequential and even concurrent pumps stay isolated),
+/// then assembles and caches the trace from the run plus exactly that run's recorders. No change to
+/// <see cref="DraftWorkflowResumer"/>, <see cref="RecordingApiTransport"/>, or <see cref="MetadataTraceAssembler"/>
+/// was needed.
+/// </para>
+/// <para>
+/// <b>The trace cache is in-process and ephemeral.</b> Assembled traces live in an in-memory, thread-safe map keyed
+/// by run id and are lost when the runner is disposed. This matches the in-process-runner scope: the process that
+/// advanced the run is the process that answers <c>get-debug-run</c> for it. A durable, cross-process draft trace
+/// (persisted so a different process can read it) is a deliberately-later increment and is <em>not</em> added here
+/// — there is no store, no fan-out, no persisted trace.
+/// </para>
+/// <para>
+/// <b>Pumping.</b> <see cref="RunPendingAsync"/> is the pump: it claims and advances one batch and is independently
+/// callable, so a test drives it synchronously. <see cref="Start"/> layers an optional self-driving background loop
+/// (a plain cancellable <see cref="Task"/> at a poll interval; there is no <c>IHostedService</c> precedent in this
+/// codebase, so the runner takes no ASP.NET hosting dependency — the host starts and stops the loop) over the same
+/// pump.
+/// </para>
+/// </remarks>
+public sealed class InProcessDraftRunner : IAsyncDisposable
+{
+    private static readonly string[] DraftHosting = [DraftRuns.RunWorkflowId];
+
+    private readonly IWorkflowStateStore store;
+    private readonly WorkflowTransportBinder baseBinder;
+    private readonly DraftWorkflowResumer resumer;
+    private readonly WorkflowDispatcher dispatcher;
+    private readonly WorkflowWorker? worker;
+    private readonly WorkflowResumer tracingResumer;
+    private readonly ConcurrentDictionary<string, ReadOnlyMemory<byte>> traces = new(StringComparer.Ordinal);
+    private readonly AsyncLocal<List<RecordingApiTransport>?> currentRecording = new();
+    private readonly Lock loopGate = new();
+    private CancellationTokenSource? loopCts;
+    private Task? loop;
+
+    /// <summary>Initializes a new instance of the <see cref="InProcessDraftRunner"/> class.</summary>
+    /// <param name="store">The state store the draft runs are claimed from (must implement
+    /// <see cref="IWorkflowDispatchIndex"/>, and <see cref="IWorkflowWaitIndex"/> when <paramref name="hostTimerWaits"/>
+    /// is set).</param>
+    /// <param name="owner">This runner's opaque identity, used as the dispatcher's and worker's lease owner.</param>
+    /// <param name="runnerEnvironment">The single deployment environment this runner serves (design §5.5/§18); draft
+    /// dispatch is fail-closed and requires it, so it must be non-empty.</param>
+    /// <param name="drafts">The draft-run store the captured drafts are resolved from.</param>
+    /// <param name="provider">The durable-mode executor provider that compiles a captured draft.</param>
+    /// <param name="binder">The per-run transport binder each run executes through — the credential-aware
+    /// <c>SourceCredentialTransports.CreateBinder</c> binder in production, or a caller-supplied binder in tests. The
+    /// runner wraps each API transport it yields in a <see cref="RecordingApiTransport"/>.</param>
+    /// <param name="inner">The resumer non-draft runs are delegated to, or <see langword="null"/> for a draft-only
+    /// runner (the usual in-process draft-hosting case).</param>
+    /// <param name="hostTimerWaits">Whether to compose a <see cref="WorkflowWorker"/> so <see cref="RunPendingAsync"/>
+    /// also resumes due timer waits (a draft run that suspended on a retry timer). Message-wait delivery is not driven
+    /// by the pump; a host that needs it calls the worker's <see cref="WorkflowWorker.DeliverMessageAsync"/> directly.</param>
+    /// <param name="timeProvider">The time source for lease TTLs and due-timer evaluation; defaults to
+    /// <see cref="TimeProvider.System"/>.</param>
+    /// <param name="maxCachedExecutors">How many compiled captures the resumer keeps loaded.</param>
+    public InProcessDraftRunner(
+        IWorkflowStateStore store,
+        string owner,
+        string runnerEnvironment,
+        IDraftRunStore drafts,
+        IWorkflowExecutorProvider provider,
+        WorkflowTransportBinder binder,
+        WorkflowResumer? inner = null,
+        bool hostTimerWaits = false,
+        TimeProvider? timeProvider = null,
+        int maxCachedExecutors = 16)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentException.ThrowIfNullOrEmpty(owner);
+        ArgumentException.ThrowIfNullOrEmpty(runnerEnvironment);
+        ArgumentNullException.ThrowIfNull(drafts);
+        ArgumentNullException.ThrowIfNull(provider);
+        ArgumentNullException.ThrowIfNull(binder);
+
+        this.store = store;
+        this.baseBinder = binder;
+        this.resumer = new DraftWorkflowResumer(drafts, provider, this.RecordingBinder, inner, maxCachedExecutors);
+        this.dispatcher = new WorkflowDispatcher(store, owner, timeProvider, runnerEnvironment: runnerEnvironment);
+        this.worker = hostTimerWaits ? new WorkflowWorker(store, owner, timeProvider) : null;
+        this.tracingResumer = this.RunAndTraceAsync;
+    }
+
+    /// <summary>
+    /// Claims and advances the next batch of <c>$draft</c> runs pinned to this runner's environment — each claimed
+    /// run's exchanges recorded and its metadata trace assembled and cached — and, when a worker is composed, resumes
+    /// every due timer wait the same way.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The number of runs advanced this cycle (dispatched fresh/orphaned runs plus, if configured, timer resumes).</returns>
+    public async ValueTask<int> RunPendingAsync(CancellationToken cancellationToken = default)
+    {
+        int advanced = await this.dispatcher.DispatchClaimableAsync(DraftHosting, this.tracingResumer, cancellationToken).ConfigureAwait(false);
+        if (this.worker is { } timerWorker)
+        {
+            advanced += await timerWorker.ResumeDueTimersAsync(this.tracingResumer, cancellationToken).ConfigureAwait(false);
+        }
+
+        return advanced;
+    }
+
+    /// <summary>Gets the latest assembled metadata trace for a run, if this runner has advanced it since starting.</summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="traceUtf8">The <c>SimulationTrace</c>-shaped metadata trace as UTF-8 JSON, when one is cached.</param>
+    /// <returns><see langword="true"/> when a trace is cached for <paramref name="id"/>.</returns>
+    public bool TryGetTrace(WorkflowRunId id, out ReadOnlyMemory<byte> traceUtf8)
+        => this.traces.TryGetValue(id.Value, out traceUtf8);
+
+    /// <summary>
+    /// Starts the optional self-driving background loop: it pumps <see cref="RunPendingAsync"/> every
+    /// <paramref name="pollInterval"/> until <see cref="StopAsync"/> (or disposal). The pump stays independently
+    /// callable, so a host may either start this loop or drive <see cref="RunPendingAsync"/> itself, but not usefully
+    /// both at once.
+    /// </summary>
+    /// <param name="pollInterval">How long to wait between pumps; defaults to one second.</param>
+    /// <param name="onError">An optional callback invoked with any non-cancellation exception a pump throws, so the loop
+    /// surfaces failures instead of swallowing them silently while it keeps polling; <see langword="null"/> ignores them.</param>
+    /// <exception cref="InvalidOperationException">The loop is already running.</exception>
+    public void Start(TimeSpan? pollInterval = null, Action<Exception>? onError = null)
+    {
+        lock (this.loopGate)
+        {
+            if (this.loop is not null)
+            {
+                throw new InvalidOperationException("The draft runner's background loop is already running.");
+            }
+
+            TimeSpan interval = pollInterval ?? TimeSpan.FromSeconds(1);
+            var cts = new CancellationTokenSource();
+            CancellationToken token = cts.Token;
+            this.loopCts = cts;
+            this.loop = Task.Run(() => this.PollLoopAsync(interval, onError, token), CancellationToken.None);
+        }
+    }
+
+    /// <summary>Stops the background loop started by <see cref="Start"/> and waits for it to drain; a no-op if it is not running.</summary>
+    /// <returns>A task that completes when the loop has stopped.</returns>
+    public async ValueTask StopAsync()
+    {
+        Task? running;
+        CancellationTokenSource? cts;
+        lock (this.loopGate)
+        {
+            running = this.loop;
+            cts = this.loopCts;
+            this.loop = null;
+            this.loopCts = null;
+        }
+
+        if (cts is null)
+        {
+            return;
+        }
+
+        await cts.CancelAsync().ConfigureAwait(false);
+        try
+        {
+            if (running is not null)
+            {
+                await running.ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // The loop observed the stop signal.
+        }
+        finally
+        {
+            cts.Dispose();
+        }
+    }
+
+    /// <summary>Stops the background loop and unloads the compiled captured drafts. The ephemeral trace cache is dropped.</summary>
+    /// <returns>A task that completes when the runner has stopped and released its resources.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        await this.StopAsync().ConfigureAwait(false);
+        this.resumer.Dispose();
+    }
+
+    private async Task PollLoopAsync(TimeSpan interval, Action<Exception>? onError, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await this.RunPendingAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                onError?.Invoke(ex);
+            }
+
+            try
+            {
+                await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+        }
+    }
+
+    // The WorkflowResumer the dispatcher and worker call: it scopes a per-run recording sink into the AsyncLocal the
+    // shared recording binder reads, drives the draft resume, then assembles and caches this run's metadata trace from
+    // its just-persisted checkpoint plus exactly the recorders bound for it.
+    private async ValueTask<WorkflowRunResultKind> RunAndTraceAsync(WorkflowRun run, CancellationToken cancellationToken)
+    {
+        var recorders = new List<RecordingApiTransport>();
+        this.currentRecording.Value = recorders;
+        try
+        {
+            WorkflowRunResultKind kind = await this.resumer.ResumeAsync(run, cancellationToken).ConfigureAwait(false);
+            await this.AssembleTraceAsync(run.Id, recorders, cancellationToken).ConfigureAwait(false);
+            return kind;
+        }
+        finally
+        {
+            this.currentRecording.Value = null;
+        }
+    }
+
+    // The shared binder the DraftWorkflowResumer is constructed with: it wraps every API transport the base binder
+    // yields in a RecordingApiTransport and deposits them into the ambient per-run sink (established by RunAndTraceAsync)
+    // so the run's exchanges are recorded and reachable once the resume returns. The message transport is passed through
+    // untouched — its lifetime is the binder's, not the resumer's, and it is not recorded here.
+    private WorkflowTransports RecordingBinder(WorkflowDescriptor descriptor, SecurityTagSet runTags)
+    {
+        WorkflowTransports bound = this.baseBinder(descriptor, runTags);
+        List<RecordingApiTransport>? sink = this.currentRecording.Value;
+        var recording = new Dictionary<string, IApiTransport>(bound.ApiTransports.Count, StringComparer.Ordinal);
+        foreach (KeyValuePair<string, IApiTransport> pair in bound.ApiTransports)
+        {
+            var recorder = new RecordingApiTransport(pair.Value);
+            sink?.Add(recorder);
+            recording[pair.Key] = recorder;
+        }
+
+        return new WorkflowTransports(recording, bound.MessageTransport);
+    }
+
+    private async ValueTask AssembleTraceAsync(WorkflowRunId id, List<RecordingApiTransport> recorders, CancellationToken cancellationToken)
+    {
+        // A draft run issues its calls sequentially (Arazzo 1.x has no parallel steps); the assembler attributes the
+        // ordered exchanges to the executed steps one-to-one, so the per-source recorders are concatenated in bind
+        // order — the same shape slice 3e-2a established for a real host-executed run.
+        var exchanges = new List<RecordedApiExchange>();
+        foreach (RecordingApiTransport recorder in recorders)
+        {
+            exchanges.AddRange(recorder.Exchanges);
+        }
+
+        var buffer = new ArrayBufferWriter<byte>();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, id, exchanges, pausedBeforeStepId: null, cancellationToken).ConfigureAwait(false);
+            writer.Flush();
+        }
+
+        this.traces[id.Value] = buffer.WrittenSpan.ToArray();
+    }
+}
