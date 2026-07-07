@@ -40,6 +40,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private bool hasDeliveredMessage;
     private WorkflowPauseConfig? pause;
     private int pauseStartCursor;
+    private DateTimeOffset? resumeRequestedAt;
 
     private WorkflowRun(
         IWorkflowStateStore store,
@@ -60,7 +61,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         string? environment,
         WorkflowWait? wait,
         WorkflowFault? fault,
-        WorkflowCheckpointState? resumedState)
+        WorkflowCheckpointState? resumedState,
+        WorkflowPauseConfig? pause = null,
+        DateTimeOffset? resumeRequestedAt = null)
     {
         this.store = store;
         this.Id = id;
@@ -81,6 +84,13 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.wait = wait;
         this.fault = fault;
         this.resumedState = resumedState;
+
+        // §18: a run loaded from a checkpoint carrying a persisted pause configuration adopts it, recording the
+        // loaded cursor as the start cursor so the `cursor > pauseStartCursor` guard fires from the resumed
+        // position (a claiming runner never re-supplies it via SetPause). An ordinary run passes none.
+        this.pause = pause;
+        this.pauseStartCursor = cursor;
+        this.resumeRequestedAt = resumeRequestedAt;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -103,6 +113,13 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 
     /// <summary>Gets the fault record if the run is faulted.</summary>
     public WorkflowFault? Fault => this.fault;
+
+    /// <summary>Gets a value indicating whether the control plane has marked this run resume-claimable via
+    /// <see cref="RequestResumeAsync"/> (design §18) and a runner has not yet consumed the marker. Only meaningful
+    /// together with a stopped <see cref="Status"/> (<see cref="WorkflowRunStatus.Suspended"/> for a paused run,
+    /// <see cref="WorkflowRunStatus.Faulted"/> for a fault-remediation resume); a dispatcher uses it to admit such a
+    /// run for a separate runner to claim and advance.</summary>
+    public bool IsResumeRequested => this.resumeRequestedAt is not null;
 
     /// <inheritdoc/>
     public int Cursor { get; private set; }
@@ -205,7 +222,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             environment: state.Environment,
             wait: state.Wait,
             fault: state.Fault,
-            resumedState: state);
+            resumedState: state,
+            pause: state.Pause,
+            resumeRequestedAt: state.ResumeRequestedAt);
     }
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
@@ -278,6 +297,29 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.pauseStartCursor = this.Cursor;
     }
 
+    /// <summary>
+    /// Marks a paused (or faulted) run resume-claimable (design §18): records the requested pause configuration to
+    /// persist (so the claiming runner honours the same stops), stamps the resume-requested marker on the run's
+    /// index projection, and persists — leaving the run in its current lifecycle status (<see cref="WorkflowRunStatus.Suspended"/>
+    /// for a paused run; <see cref="WorkflowRunStatus.Faulted"/> for a faulted run whose checkpoint a caller has
+    /// already mutated). This is the durable primitive a <em>control plane</em> calls to hand a paused debug run to a
+    /// <em>separate</em> runner: it never re-enters the executor / calls a resumer, so no workflow runs in the control
+    /// plane. A runner then surfaces the run through <see cref="IWorkflowDispatchIndex.QueryClaimableAsync(IReadOnlyCollection{string}, string?, DateTimeOffset, CancellationToken)"/>,
+    /// claims it, applies the persisted pause configuration, and advances it; its first checkpoint clears the marker.
+    /// </summary>
+    /// <param name="pause">The pause configuration the claiming runner should honour on its advance — a single-step
+    /// (<see cref="WorkflowPauseConfig.AfterEachStep"/>) or a set of breakpoint cursors — or <see langword="null"/> to
+    /// resume with no further stops (run to completion or the next fault). Overwrites any previously persisted config.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the resume-claimable state is durable.</returns>
+    public ValueTask RequestResumeAsync(WorkflowPauseConfig? pause, CancellationToken cancellationToken)
+    {
+        this.pause = pause;
+        this.pauseStartCursor = this.Cursor;
+        this.resumeRequestedAt = this.timeProvider.GetUtcNow();
+        return this.PersistAsync(default, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
     {
@@ -285,6 +327,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.Status = WorkflowRunStatus.Running;
         this.wait = null;
         this.fault = null;
+
+        // §18: a runner claiming a resume-requested run consumes the marker on its first checkpoint, so the run is
+        // not re-surfaced by QueryClaimable while it advances. If this advance re-pauses (afterEachStep / a
+        // breakpoint), PauseAsync persists Suspended with the marker cleared — it awaits the NEXT explicit resume.
+        this.resumeRequestedAt = null;
 
         // §18: a debugger stop point at this step boundary suspends the run with a Pause wait (no wake trigger)
         // instead of leaving it Running, then unwinds the advance for the resumer to catch. The
@@ -437,7 +484,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.correlationId,
             this.tags,
             this.securityTags,
-            this.environment);
+            this.environment,
+            this.pause,
+            this.resumeRequestedAt);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,
@@ -451,7 +500,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             CorrelationId: this.correlationId,
             Tags: this.tags,
             SecurityTags: this.securityTags,
-            Environment: this.environment);
+            Environment: this.environment,
+            ResumeRequestedAt: this.resumeRequestedAt);
 
         long startedAt = Stopwatch.GetTimestamp();
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);

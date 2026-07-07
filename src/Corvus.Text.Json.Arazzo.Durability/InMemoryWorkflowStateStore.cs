@@ -237,7 +237,15 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
                 .Where(kvp => hostedWorkflowIds.Contains(kvp.Value.Index.WorkflowId)
                     && MatchesEnvironment(kvp.Value.Index.Environment, runnerEnvironment)
                     && (kvp.Value.Index.Status == WorkflowRunStatus.Pending
-                        || (kvp.Value.Index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))))
+                        || (kvp.Value.Index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))
+
+                        // §18: a paused (or faulted) run the control plane marked resume-claimable via
+                        // RequestResumeAsync. It stays Suspended/Faulted (never re-labelled Pending), and its marker
+                        // is cleared on the claiming runner's first checkpoint. Gated on the stopped status so a
+                        // terminal run that somehow retained the marker is never surfaced (nor perpetually re-loaded
+                        // and rejected by the dispatcher).
+                        || (kvp.Value.Index.ResumeRequestedAt is not null
+                            && kvp.Value.Index.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted)))
                 .Select(kvp => new WorkflowRunId(kvp.Key))
                 .ToList();
         }

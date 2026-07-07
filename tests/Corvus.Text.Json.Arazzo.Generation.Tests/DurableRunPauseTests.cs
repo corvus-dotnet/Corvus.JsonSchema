@@ -186,6 +186,113 @@ public class DurableRunPauseTests
         transport.Requests.Count.ShouldBe(2);
     }
 
+    [TestMethod]
+    public async Task A_persisted_pause_config_is_honoured_by_a_reload_that_never_calls_SetPause()
+    {
+        // §18 slice R1: the pause configuration is PERSISTED, so a claiming runner (a different process) that only
+        // reloads the checkpoint — never calling SetPause — still honours the same stops.
+        (InMemoryWorkflowCatalogStore catalog, string versionId) = await CatalogAsync();
+        var runStore = new InMemoryWorkflowStateStore();
+        MockApiTransport transport = Transport();
+        using var loader = new WorkflowExecutorLoader();
+        WorkflowResumer resume = Resumer(catalog, loader, transport);
+
+        WorkflowRunId id = await EnqueueAsync(runStore, versionId);
+
+        // Advance 1 configures after-each-step and pauses at cursor 1, persisting the config into the checkpoint.
+        (await AdvanceAsync(runStore, id, resume, new WorkflowPauseConfig(AfterEachStep: true, new HashSet<int>())))
+            .ShouldBe(WorkflowRunResultKind.Suspended);
+        await AssertPausedAtAsync(runStore, id, cursor: 1);
+
+        // Advance 2 passes NO pause config (as a claiming runner would): the PERSISTED config still fires, so the
+        // run single-steps to cursor 2 rather than running to completion.
+        (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Suspended);
+        await AssertPausedAtAsync(runStore, id, cursor: 2);
+        transport.Requests.Count.ShouldBe(2);
+
+        // Advance 3 (still no SetPause) runs off the end — cursor 2 is past the last step — to completion.
+        (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Completed);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        completed.ShouldNotBeNull();
+        completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
+    }
+
+    [TestMethod]
+    public async Task A_resume_requested_paused_run_becomes_claimable_a_runner_advances_it_and_the_marker_clears()
+    {
+        // §18 slice R1: the CONTROL PLANE marks a paused run resume-claimable (no execution); a SEPARATE runner
+        // then surfaces it via QueryClaimable, claims it, applies the persisted config, advances it, and the
+        // marker clears — so it is not perpetually re-claimable.
+        (InMemoryWorkflowCatalogStore catalog, string versionId) = await CatalogAsync();
+        var runStore = new InMemoryWorkflowStateStore();
+        MockApiTransport transport = Transport();
+        using var loader = new WorkflowExecutorLoader();
+        WorkflowResumer resume = Resumer(catalog, loader, transport);
+        var dispatch = (IWorkflowDispatchIndex)runStore;
+
+        WorkflowRunId id = await EnqueueAsync(runStore, versionId);
+        var afterEachStep = new WorkflowPauseConfig(AfterEachStep: true, new HashSet<int>());
+
+        // Pause at cursor 1. A plainly-paused run is NOT dispatch-claimable (as an interactive debug pause is today).
+        (await AdvanceAsync(runStore, id, resume, afterEachStep)).ShouldBe(WorkflowRunResultKind.Suspended);
+        await AssertPausedAtAsync(runStore, id, cursor: 1);
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+
+        // The control plane marks it resume-claimable WITHOUT executing anything: it stays Suspended + Pause, and is
+        // now surfaced as claimable.
+        await RequestResumeAsync(runStore, id, afterEachStep);
+        await AssertPausedAtAsync(runStore, id, cursor: 1);
+        (await ClaimableAsync(dispatch, versionId)).ShouldContain(id);
+
+        // A separate runner claims + advances applying the PERSISTED config (never SetPause): it pauses at cursor 2
+        // and the marker clears, so the run is not re-surfaced while merely paused.
+        (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Suspended);
+        await AssertPausedAtAsync(runStore, id, cursor: 2);
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+        transport.Requests.Count.ShouldBe(2);
+
+        // Only the NEXT explicit resume makes it claimable again; resuming with no further stops runs to completion.
+        await RequestResumeAsync(runStore, id, pause: null);
+        (await ClaimableAsync(dispatch, versionId)).ShouldContain(id);
+        (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Completed);
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+    }
+
+    [TestMethod]
+    public async Task The_WorkflowDispatcher_actually_claims_and_advances_a_resume_requested_run()
+    {
+        // §18 slice R1: the REAL WorkflowDispatcher (not just the store's QueryClaimable) must ADMIT a
+        // resume-requested Suspended run and drive it through the resumer. The run the dispatcher constructs
+        // loads the PERSISTED pause config (the dispatcher never calls SetPause) and honours it, then the marker
+        // clears so the run is not re-dispatched. A plainly-paused run (never marked) is never dispatched.
+        (InMemoryWorkflowCatalogStore catalog, string versionId) = await CatalogAsync();
+        var runStore = new InMemoryWorkflowStateStore();
+        MockApiTransport transport = Transport();
+        using var loader = new WorkflowExecutorLoader();
+        WorkflowResumer resume = Resumer(catalog, loader, transport);
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-1");
+        var dispatch = (IWorkflowDispatchIndex)runStore;
+
+        WorkflowRunId id = await EnqueueAsync(runStore, versionId);
+        var afterEachStep = new WorkflowPauseConfig(AfterEachStep: true, new HashSet<int>());
+
+        // Pause at cursor 1 (persisting the config). A plainly-paused run is NOT dispatched by the real dispatcher.
+        (await AdvanceAsync(runStore, id, resume, afterEachStep)).ShouldBe(WorkflowRunResultKind.Suspended);
+        await AssertPausedAtAsync(runStore, id, cursor: 1);
+        (await dispatcher.DispatchClaimableAsync([versionId], resume, default)).ShouldBe(0);
+
+        // The control plane marks it resume-claimable; the dispatcher now claims AND advances it, applying the
+        // PERSISTED config (it constructs the run itself and never calls SetPause), pausing at cursor 2.
+        await RequestResumeAsync(runStore, id, afterEachStep);
+        (await dispatcher.DispatchClaimableAsync([versionId], resume, default)).ShouldBe(1);
+        await AssertPausedAtAsync(runStore, id, cursor: 2);
+        transport.Requests.Count.ShouldBe(2);
+
+        // The marker cleared on the advance's first checkpoint, so a second dispatch is a no-op.
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+        (await dispatcher.DispatchClaimableAsync([versionId], resume, default)).ShouldBe(0);
+    }
+
     private static async Task<(InMemoryWorkflowCatalogStore Catalog, string VersionId)> CatalogAsync()
     {
         var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
@@ -236,6 +343,18 @@ public class DurableRunPauseTests
 
         return await resume(run!, default);
     }
+
+    // The control-plane mark-resume-claimable step: load the paused run and stamp the resume-requested marker
+    // (persisting the requested pause config) WITHOUT executing — no resumer is driven here.
+    private static async Task RequestResumeAsync(IWorkflowStateStore runStore, WorkflowRunId id, WorkflowPauseConfig? pause)
+    {
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, id);
+        run.ShouldNotBeNull();
+        await run!.RequestResumeAsync(pause, default);
+    }
+
+    private static async Task<List<WorkflowRunId>> ClaimableAsync(IWorkflowDispatchIndex dispatch, string versionId)
+        => await CollectAsync(dispatch.QueryClaimableAsync([versionId], DateTimeOffset.UtcNow, default));
 
     private static async Task AssertPausedAtAsync(IWorkflowStateStore runStore, WorkflowRunId id, int cursor)
     {
