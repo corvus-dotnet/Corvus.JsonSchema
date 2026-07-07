@@ -132,11 +132,29 @@ public sealed class CorePartial : ICodeFileBuilder
 
         static ConditionalCodeSpecification JsonAnyType(TypeDeclaration typeDeclaration)
         {
-            bool isNull = (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Null) != 0 && typeDeclaration.ImpliedCoreTypes().CountTypes() == 1;
+            CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypes();
+            bool isNull = (impliedCoreTypes & CoreTypes.Null) != 0 && impliedCoreTypes.CountTypes() == 1;
             bool isAny = typeDeclaration.LocallyImpliedCoreTypes().CountTypes() == 0;
+
+            // A ["boolean", "null"] union has no type-family interface to supply IJsonValue<T>
+            // on net8.0+: "null" contributes no interface, and IJsonBoolean<T> is declared only on
+            // pre-net8.0 frameworks for a union (its static abstract "implicit operator bool" cannot
+            // be satisfied because a union converts to bool explicitly). Without this, the type does
+            // not implement IJsonValue<T> on net8.0+ and the generated code fails to compile
+            // (CS0315 / CS0540). Emit IJsonValue<T> directly on net8.0+ to close that gap (#832).
+            bool isBooleanOnlyUnionWithoutOtherInterfaces =
+                (impliedCoreTypes & CoreTypes.Boolean) != 0 &&
+                (impliedCoreTypes & ~(CoreTypes.Boolean | CoreTypes.Null)) == 0 &&
+                impliedCoreTypes.CountTypes() > 1;
+
+            FrameworkType frameworkType =
+                isNull || isAny ? FrameworkType.All
+                : isBooleanOnlyUnionWithoutOtherInterfaces ? FrameworkType.Net80OrGreater
+                : FrameworkType.NotEmitted;
+
             return new(
                 g => g.GenericTypeOf("IJsonValue", typeDeclaration),
-                isNull || isAny ? FrameworkType.All : FrameworkType.NotEmitted);
+                frameworkType);
         }
     }
 }
