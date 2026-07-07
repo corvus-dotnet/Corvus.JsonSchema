@@ -23,6 +23,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
 
     private readonly MySqlDataSource dataSource;
     private readonly bool ownsDataSource;
@@ -160,8 +161,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             await using MySqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, environment, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @environment, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags)
+                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, environment, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, resume_requested_at)
+                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @environment, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags, @resume_requested_at)
                 ON DUPLICATE KEY UPDATE run_id = run_id;
                 """;
             BindRun(insert, id, checkpoint, index);
@@ -183,7 +184,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             SET checkpoint = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
                 environment = @environment, created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
                 awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
-                correlation_id = @correlation_id, tags = @tags
+                correlation_id = @correlation_id, tags = @tags, resume_requested_at = @resume_requested_at
             WHERE run_id = @id AND version = @expected_version;
             """;
         BindRun(update, id, checkpoint, index);
@@ -337,16 +338,22 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
         // unpinned run (environment IS NULL) or an unscoped dispatcher (@runner_environment IS NULL) matches anything.
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (resume_requested_at IS NOT NULL) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         select.CommandText =
             $"""
             SELECT r.run_id FROM workflow_runs r
             LEFT JOIN workflow_leases l ON l.run_id = r.run_id
             WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
               AND (@runner_environment IS NULL OR r.environment IS NULL OR r.environment = @runner_environment)
-              AND (r.status = @pending OR (r.status = @running AND (l.run_id IS NULL OR l.expires_at <= @now)));
+              AND (r.status = @pending
+                   OR (r.status = @running AND (l.run_id IS NULL OR l.expires_at <= @now))
+                   OR (r.resume_requested_at IS NOT NULL AND r.status IN (@suspended, @faulted)));
             """;
         select.Parameters.AddWithValue("@pending", PendingStatus);
         select.Parameters.AddWithValue("@running", RunningStatus);
+        select.Parameters.AddWithValue("@suspended", SuspendedStatus);
+        select.Parameters.AddWithValue("@faulted", FaultedStatus);
         select.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
         select.Parameters.AddWithValue("@runner_environment", (object?)runnerEnvironment ?? DBNull.Value);
         for (int i = 0; i < ids.Count; i++)
@@ -500,6 +507,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         command.Parameters.AddWithValue("@awaiting_correlation_id", (object?)index.AwaitingCorrelationId ?? DBNull.Value);
         command.Parameters.AddWithValue("@error_type", (object?)index.ErrorType ?? DBNull.Value);
         command.Parameters.AddWithValue("@correlation_id", (object?)index.CorrelationId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@resume_requested_at", (object?)index.ResumeRequestedAt?.ToUnixTimeMilliseconds() ?? DBNull.Value);
         command.Parameters.AddWithValue("@tags", (object?)index.Tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
     }
 
@@ -527,6 +535,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             error_type VARCHAR(1024) NULL,
             correlation_id VARCHAR(512) NULL,
             tags TEXT NULL,
+            resume_requested_at BIGINT NULL,
             INDEX ix_workflow_runs_due (status, due_at),
             INDEX ix_workflow_runs_awaiting (status, awaiting_channel, awaiting_correlation_id)
         );
