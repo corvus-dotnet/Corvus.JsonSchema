@@ -272,6 +272,15 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 continue;
             }
 
+            // §18: a paused (or faulted) run the control plane marked resume-claimable (ResumeRequestedAt present) also
+            // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
+            if (entry.ResumeRequestedAt is not null
+                && (entry.Status == WorkflowRunStatus.Suspended || entry.Status == WorkflowRunStatus.Faulted))
+            {
+                yield return runId;
+                continue;
+            }
+
             if (entry.Status == WorkflowRunStatus.Pending)
             {
                 yield return runId;
@@ -439,6 +448,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                     writer.WriteString("environment", environment);
                 }
 
+                if (index.ResumeRequestedAt is { } resume)
+                {
+                    writer.WriteNumber("resumeRequestedAt", resume.ToUnixTimeMilliseconds());
+                }
+
                 if (!index.Tags.IsEmpty)
                 {
                     writer.WritePropertyName("tags");
@@ -490,7 +504,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
                 DecodeTags(root),
                 DecodeSecurityTags(root),
-                root.TryGetProperty("environment"u8, out JsonElement environment) ? environment.GetString() : null);
+                root.TryGetProperty("environment"u8, out JsonElement environment) ? environment.GetString() : null,
+                root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAt.GetInt64()) : null);
         }
 
         private static TagSet DecodeTags(JsonElement root)
