@@ -1011,13 +1011,26 @@ seam, §15 item 8b). Stage 3 — the engine seam — is split three ways:
   parameters, or base64 written straight into the item writer), never a per-put `ToArray`; the
   measured floor and the bind mandate live in `DraftRunStoreBenchmarks`. The workspace handler stays
   on the interim simulator through 3d, so nothing user-visible changes until 3e.
-- **3e: the pause seam + handler swap.** `afterEachStep`/`beforeSteps` honoured at the run's step
-  boundary (the simulator's `CheckStop` precedent, no emitter change expected); the workspace handler
-  routes debug runs through the host, and the resume verbs land on the durable engine's native
-  `TryApplyResumeMutationAsync` rather than the 3c simulator override. The interim simulator executor
-  retires here (ruling below).
-- **3f: trace parity.** A host-executed run emits the `SimulationTrace`-shaped record the dock
-  renders, so capture-to-scenario works on real traces.
+- **3e: the pause seam + handler swap.** `afterEachStep`/`beforeSteps` are honoured at the run's step
+  boundary (3e-1, the simulator's `CheckStop` precedent, no emitter change): a durable run pauses as
+  `Suspended` carrying a `WorkflowWaitKind.Pause` with no wake trigger, so a worker never resumes it —
+  only an explicit step/resume does. The workspace handler then routes debug runs through the
+  in-process host (3e-2): a debug run *is* a durable `$draft` run; the handler captures + enqueues it,
+  drives each advance through the in-process runner's recording+tracing resumer (which produces the
+  `SimulationTrace`-shaped metadata trace the dock renders — 3e-2a/b), and the interim simulator
+  executor retires here. Because a paused (`Suspended`) run is **not** dispatch-claimable, interactive
+  debug runs require the in-process runner; a deployment wiring none fails closed
+  (`debug-runs-not-offered`). **Refinement of the §18 model.** The resume verbs on a *live* debug run
+  are the durable engine's native fault-remediation (retry / skip-past-the-faulted-step / rewind /
+  state-patch), which act only on a **faulted** run. "Step over — provide outputs" of a *non-faulted*
+  paused step is therefore not a live-run operation: it is a **replay-debugger** action (the
+  `SimulateRequest.overrides` rev, 3e-3), consistent with *live run for truth; replayed capture for
+  archaeology*. So the live-run dock controls are step (`afterEachStep`), continue (breakpoints), and
+  fault remediation; the dock's "step over" against a live run routes to replay.
+- **3f: body-capture opt-in.** The metadata trace (no bodies) lands with the 3e-2 swap. 3f narrows to
+  the per-environment body-capture opt-in (default off, development-class only, audited,
+  pre-authentication recording invariant, caps + `truncated` markers, purged with the run) — the
+  second ruling below.
 
 **Ruling — the simulator's role (2026-07-07).** The simulator-backed debug-run path is *interim*: it
 retires at the 3e handler swap. The simulator remains permanent for the simulate/replay endpoints,
