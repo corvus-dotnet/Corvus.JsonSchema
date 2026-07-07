@@ -68,6 +68,15 @@ public sealed class WorkflowDispatcher
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         ArgumentNullException.ThrowIfNull(resume);
 
+        // §18 fail-closed: draft runs are always environment-pinned, so a runner may declare draft hosting (the
+        // reserved $draft id) only when it is itself pinned to one environment — an unpinned dispatcher claiming
+        // drafts would cross the §5.5 credential boundary (it could claim any environment's draft runs).
+        if (this.runnerEnvironment is null && hostedWorkflowIds.Contains(DraftRuns.RunWorkflowId))
+        {
+            throw new InvalidOperationException(
+                "Draft-run dispatch requires an environment-pinned runner (design §5.5/§18): construct the WorkflowDispatcher with a runnerEnvironment to claim draft runs.");
+        }
+
         // §5.5 authorization gate: a runner not currently authorized to serve its environment claims nothing — it stays
         // registered + heartbeating (visible, reclaimable) but takes no new or orphaned work until authorized.
         if (this.dispatchGate is not null && !await this.dispatchGate(cancellationToken).ConfigureAwait(false))

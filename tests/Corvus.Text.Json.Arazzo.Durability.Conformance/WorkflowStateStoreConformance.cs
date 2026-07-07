@@ -275,6 +275,52 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task QueryClaimable_dispatches_draft_runs_only_to_draft_hosting_runners_in_their_environment()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        var index = (IWorkflowDispatchIndex)store;
+
+        // §18: a draft run is an ordinary Pending run carrying the reserved $draft workflow id, pinned to its
+        // environment; it rides the same dispatch filter as a versioned run.
+        await store.SaveAsync("draft-dev", Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0, Environment: "development"), WorkflowEtag.None, default);
+        await store.SaveAsync("catalog-dev", Bytes("a"), InEnvironment("development"), WorkflowEtag.None, default);
+
+        // A draft-hosting runner (it passes $draft among its hosted ids) pinned to the run's environment claims it.
+        List<string> draftHosting = (await Collect(index.QueryClaimableAsync([DraftRuns.RunWorkflowId], "development", T0, default))).Select(r => r.Value).ToList();
+        draftHosting.ShouldContain("draft-dev");
+        draftHosting.ShouldNotContain("catalog-dev");
+
+        // A draft-hosting runner in ANOTHER environment never claims it (§5.5 pinning preserved).
+        (await Collect(index.QueryClaimableAsync([DraftRuns.RunWorkflowId], "production", T0, default))).ShouldBeEmpty();
+
+        // A runner that does not declare draft hosting never claims it, whatever its environment.
+        (await Collect(index.QueryClaimableAsync(["wf"], "development", T0, default))).Select(r => r.Value).ShouldBe(["catalog-dev"]);
+    }
+
+    [TestMethod]
+    public async Task Query_excludes_draft_runs_unless_the_reserved_id_is_asked_for()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        await store.SaveAsync("draft-1", Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0, Environment: "development"), WorkflowEtag.None, default);
+        await store.SaveAsync("run-1", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+
+        // §18: the production runs listing (an unfiltered visibility query) never surfaces draft runs — whatever
+        // the caller's reach — so the runs REST surface cannot leak them.
+        WorkflowRunPage unfiltered = await index.QueryAsync(new WorkflowQuery(Limit: 10), default);
+        unfiltered.Runs.Select(r => r.Id.Value).ShouldBe(["run-1"]);
+
+        WorkflowRunPage byStatus = await index.QueryAsync(new WorkflowQuery(Status: WorkflowRunStatus.Pending), default);
+        byStatus.Runs.Select(r => r.Id.Value).ShouldBe(["run-1"]);
+
+        // The reserved id must be named explicitly (the debug-run surface's own view does).
+        WorkflowRunPage drafts = await index.QueryAsync(new WorkflowQuery(WorkflowId: DraftRuns.RunWorkflowId), default);
+        drafts.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("draft-1");
+    }
+
+    [TestMethod]
     public async Task Query_filters_by_status_and_workflow()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();

@@ -173,8 +173,12 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             foreach (KeyValuePair<string, Entry> kvp in this.entries)
             {
                 WorkflowRunIndexEntry index = kvp.Value.Index;
+
+                // §18: draft runs never surface on an unfiltered visibility query — a caller must name the
+                // reserved $draft workflow id explicitly (the debug-run surface does; the runs listing never does).
                 if ((query.Status is { } status && index.Status != status)
                     || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
+                    || (query.WorkflowId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
                     || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
                     || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
                     || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)
