@@ -29,6 +29,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
     private const string RunsContainerId = "workflow_runs";
     private const string LeasesContainerId = "workflow_leases";
 
@@ -343,14 +344,18 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         // Candidate runs are Pending (always claimable) or Running (claimable only if no live lease holds them).
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (c.resumeRequestedAt defined) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
         // unpinned run (c.environment absent) or an unscoped dispatcher (@runnerEnvironment is null) matches anything.
         // (Cosmos SQL has no `@p IS NULL`; a null-valued parameter is tested with IS_NULL, and an absent doc field with
         // NOT IS_DEFINED — mirroring this store's IS_DEFINED idiom for optional properties.)
         var candidateQuery = new QueryDefinition(
-            "SELECT c.id, c.status FROM c WHERE (c.status = @pending OR c.status = @running) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR NOT IS_DEFINED(c.environment) OR c.environment = @runnerEnvironment)")
+            "SELECT c.id, c.status FROM c WHERE ((c.status = @pending OR c.status = @running) OR ((c.status = @suspended OR c.status = @faulted) AND IS_DEFINED(c.resumeRequestedAt))) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR NOT IS_DEFINED(c.environment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@pending", PendingStatus)
             .WithParameter("@running", RunningStatus)
+            .WithParameter("@suspended", SuspendedStatus)
+            .WithParameter("@faulted", FaultedStatus)
             .WithParameter("@hosted", new List<string>(hostedWorkflowIds))
             .WithParameter("@runnerEnvironment", runnerEnvironment);
 
@@ -389,7 +394,13 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         foreach ((string id, string status) in candidates)
         {
-            if (status == PendingStatus || (status == RunningStatus && !heldRunIds.Contains(id)))
+            // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (the
+            // query required IS_DEFINED(c.resumeRequestedAt)), so surface it unconditionally alongside Pending and
+            // orphaned-Running runs.
+            if (status == PendingStatus
+                || (status == RunningStatus && !heldRunIds.Contains(id))
+                || status == SuspendedStatus
+                || status == FaultedStatus)
             {
                 yield return new WorkflowRunId(id);
             }
