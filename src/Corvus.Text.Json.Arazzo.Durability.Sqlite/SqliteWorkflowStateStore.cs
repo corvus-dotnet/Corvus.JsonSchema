@@ -316,6 +316,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags, Environment
                 FROM WorkflowRuns
                 WHERE (@status IS NULL OR Status = @status) AND (@workflowId IS NULL OR WorkflowId = @workflowId)
+                  AND (@workflowId IS NOT NULL OR WorkflowId <> @draftId)
                   AND (@createdAfter IS NULL OR CreatedAt >= @createdAfter)
                   AND (@createdBefore IS NULL OR CreatedAt < @createdBefore)
                   AND (@updatedAfter IS NULL OR UpdatedAt >= @updatedAfter)
@@ -329,6 +330,10 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 """;
             select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
             select.Parameters.AddWithValue("@workflowId", (object?)query.WorkflowId ?? DBNull.Value);
+
+            // §18: draft runs never surface on an unfiltered visibility query — a caller must name the
+            // reserved $draft workflow id explicitly (the debug-run surface does; the runs listing never does).
+            select.Parameters.AddWithValue("@draftId", DraftRuns.RunWorkflowId);
             select.Parameters.AddWithValue("@createdAfter", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
             select.Parameters.AddWithValue("@createdBefore", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
             select.Parameters.AddWithValue("@updatedAfter", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);

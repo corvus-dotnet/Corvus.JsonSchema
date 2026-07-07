@@ -46,6 +46,10 @@
       "type": "array",
       "description": "The catalog versions the runner currently hosts.",
       "items": { "$ref": "#/$defs/RunnerHostedVersion" }
+    },
+    "hostsDraftRuns": {
+      "type": "boolean",
+      "description": "Whether this runner claims §18 draft runs (the reserved $draft workflow id) pinned to its environment — the working-copy debug-run engine seam (workflow-designer design §18). Absent means false; meaningful only on runners serving development-class environments."
     }
   },
   "additionalProperties": false,

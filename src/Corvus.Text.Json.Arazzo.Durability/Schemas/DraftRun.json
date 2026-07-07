@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DraftRun",
+  "description": "The audited capture record of a §18 draft run (workflow-designer design §18): which working copy's document a run executes, at which etag, who started it, and where — persisted alongside the captured package in the draft-run store, keyed by the run id.",
+  "type": "object",
+  "required": ["runId", "workingCopyId", "workflowId", "documentEtag", "environment", "startedBy", "startedAt", "contentHash"],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "description": "The id of the durable run this capture belongs to (the draft-run store key)."
+    },
+    "workingCopyId": {
+      "type": "string",
+      "description": "The working copy the draft was captured from — the §18 audit tuple's working-copy member, and the run's row-security scope (sys:workingCopy)."
+    },
+    "workflowId": {
+      "type": "string",
+      "description": "The workflow within the captured document the run executes (the document's FIRST workflow — the capture reorders the workflows array)."
+    },
+    "documentEtag": {
+      "type": "string",
+      "description": "The working copy's document etag at capture — the audited draft identity; later edits to the working copy do not affect the run."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The development-class environment the run is pinned to (its allowsDraftRuns gate passed at start)."
+    },
+    "startedBy": {
+      "type": "string",
+      "description": "The audit actor who started the run."
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the run was started."
+    },
+    "contentHash": {
+      "type": "string",
+      "description": "The canonical content hash of the captured { workflow, sources } (WorkflowPackage.ComputeContentHash) — the runner's compile-cache key and the executor manifest's integrity binding."
+    }
+  },
+  "additionalProperties": false
+}
