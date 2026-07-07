@@ -38,6 +38,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private WorkflowFault? fault;
     private JsonElement deliveredMessage;
     private bool hasDeliveredMessage;
+    private WorkflowPauseConfig? pause;
+    private int pauseStartCursor;
 
     private WorkflowRun(
         IWorkflowStateStore store,
@@ -257,6 +259,25 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <returns>A task that completes when the pending run is durable.</returns>
     public ValueTask EnqueueAsync(CancellationToken cancellationToken) => this.PersistAsync(default, cancellationToken);
 
+    /// <summary>
+    /// Sets the §18 debugger pause configuration for the NEXT advance of this run (the imminent re-entry of the
+    /// executor) and records the cursor the advance starts at, so a pause fires only at a step boundary PAST it.
+    /// Ephemeral and per-advance: a run instance is loaded fresh for each advance, so an advance on which
+    /// <see cref="SetPause"/> is not called behaves exactly like an ordinary run (the default — no pause).
+    /// </summary>
+    /// <param name="pause">The pause configuration to honour for the next advance.</param>
+    /// <remarks>
+    /// The recorded start cursor is the <see cref="Cursor"/> at the call: a pause is honoured only when a
+    /// checkpoint lands at a cursor strictly greater than it (the simulator's <c>throwBeforeAnything</c>
+    /// analogue), so a run never re-pauses at the cursor it just resumed from and every advance makes forward
+    /// progress.
+    /// </remarks>
+    public void SetPause(WorkflowPauseConfig pause)
+    {
+        this.pause = pause;
+        this.pauseStartCursor = this.Cursor;
+    }
+
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
     {
@@ -264,7 +285,33 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.Status = WorkflowRunStatus.Running;
         this.wait = null;
         this.fault = null;
+
+        // §18: a debugger stop point at this step boundary suspends the run with a Pause wait (no wake trigger)
+        // instead of leaving it Running, then unwinds the advance for the resumer to catch. The
+        // `cursor > pauseStartCursor` guard is the simulator's throwBeforeAnything analogue
+        // (TracingWorkflowRun.CheckStop): a run never re-pauses at the cursor it just resumed from, so a resumed
+        // advance always makes forward progress. A run with no pause configured takes the original checkpoint
+        // path unchanged.
+        if (this.pause is { } pauseConfig
+            && cursor > this.pauseStartCursor
+            && (pauseConfig.AfterEachStep || (pauseConfig.BreakpointCursors is { } breakpoints && breakpoints.Contains(cursor))))
+        {
+            return this.PauseAsync(cursor, cancellationToken);
+        }
+
         return this.PersistAsync(default, cancellationToken);
+    }
+
+    /// <summary>Suspends the run at a §18 debugger pause point: persists it as <see cref="WorkflowRunStatus.Suspended"/>
+    /// with a <see cref="WorkflowWaitKind.Pause"/> wait (no wake trigger, so the worker leaves it alone), emits the
+    /// suspended telemetry, then throws to unwind the advance for the resumer to catch.</summary>
+    private async ValueTask PauseAsync(int cursor, CancellationToken cancellationToken)
+    {
+        this.Status = WorkflowRunStatus.Suspended;
+        this.wait = WorkflowWait.Pause();
+        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
+        ArazzoTelemetry.WorkflowsSuspended.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId));
+        throw new WorkflowPauseException(cursor);
     }
 
     /// <inheritdoc/>

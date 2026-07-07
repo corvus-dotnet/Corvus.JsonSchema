@@ -12,6 +12,10 @@ public enum WorkflowWaitKind
 
     /// <summary>Waiting for a correlated message on a channel — an AsyncAPI receive.</summary>
     Message,
+
+    /// <summary>Held at a §18 debugger pause point — a breakpoint or an after-each-step stop — awaiting an
+    /// explicit resume or step, with no external wake trigger (a worker never resumes it on its own).</summary>
+    Pause,
 }
 
 /// <summary>
@@ -41,4 +45,9 @@ public readonly record struct WorkflowWait(
     /// <returns>The wait.</returns>
     public static WorkflowWait Message(string channel, string? correlationId)
         => new(WorkflowWaitKind.Message, default, channel, correlationId);
+
+    /// <summary>Creates a §18 debugger pause wait: the run is held at a stop point (a breakpoint or an
+    /// after-each-step stop) with no external wake trigger, so only an explicit resume or step re-drives it.</summary>
+    /// <returns>The wait.</returns>
+    public static WorkflowWait Pause() => new(WorkflowWaitKind.Pause, default, null, null);
 }
