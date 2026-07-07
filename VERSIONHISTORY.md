@@ -1,5 +1,13 @@
 # Version History
 
+## V5.2.4
+
+V5.2.4 fixes the V4 engine so that a schema typed as a nullable boolean — `"type": ["boolean", "null"]` — again generates code that compiles on .NET 8 and later.
+
+### Bug fixes
+
+- **A `["boolean", "null"]` (nullable boolean) schema generated with the V4 engine now compiles on .NET 8+** — The generated type carries `[JsonConverter(typeof(JsonValueConverter<T>))]` and explicit `IJsonValue`/`IJsonValue<T>` member implementations, all of which require the type to implement `IJsonValue<T>`. A single-type value obtains `IJsonValue<T>` transitively from its type-family interface (`IJsonBoolean<T>`, `IJsonString<T>`, and so on), and a union obtains it from whichever of those interfaces its member types contribute. On .NET 8+, `IJsonBoolean<T>` declares a `static abstract implicit operator bool(T)`, which a union cannot satisfy because a union converts to `bool` *explicitly* (the value may not be a boolean); the boolean interface is therefore declared only on pre-.NET 8 frameworks for a multi-type union. For a `["boolean", "null"]` union the boolean is the **only** member contributing a type-family interface (`null` contributes none), so on .NET 8+ nothing supplied `IJsonValue<T>` and the generated code failed to compile with `CS0315` (the `JsonValueConverter<T>` constraint) and `CS0540` (the explicit `IJsonValue` implementations). The generator now declares `IJsonValue<T>` directly on the core partial for such a union on .NET 8+, so the type implements it on every target framework. Other unions containing a boolean (for example `["boolean", "string"]`) were unaffected — they already obtained `IJsonValue<T>` from their other member's interface — and their output is unchanged. This is a V4 code-generation fix; regenerate any affected models to pick it up. See [#832](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/832).
+
 ## V5.2.3
 
 V5.2.3 fixes the `HttpClient`-backed OpenAPI transport so that a base URL carrying a path prefix — for example an API-gateway route — is preserved in every request URI.
