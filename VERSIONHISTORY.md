@@ -1,5 +1,21 @@
 # Version History
 
+## V5.2.4
+
+V5.2.4 fixes the V4 engine so that a schema typed as a nullable boolean — `"type": ["boolean", "null"]` — again generates code that compiles on .NET 8 and later.
+
+### Bug fixes
+
+- **A `["boolean", "null"]` (nullable boolean) schema generated with the V4 engine now compiles on .NET 8+** — The generated type carries `[JsonConverter(typeof(JsonValueConverter<T>))]` and explicit `IJsonValue`/`IJsonValue<T>` member implementations, all of which require the type to implement `IJsonValue<T>`. A single-type value obtains `IJsonValue<T>` transitively from its type-family interface (`IJsonBoolean<T>`, `IJsonString<T>`, and so on), and a union obtains it from whichever of those interfaces its member types contribute. On .NET 8+, `IJsonBoolean<T>` declares a `static abstract implicit operator bool(T)`, which a union cannot satisfy because a union converts to `bool` *explicitly* (the value may not be a boolean); the boolean interface is therefore declared only on pre-.NET 8 frameworks for a multi-type union. For a `["boolean", "null"]` union the boolean is the **only** member contributing a type-family interface (`null` contributes none), so on .NET 8+ nothing supplied `IJsonValue<T>` and the generated code failed to compile with `CS0315` (the `JsonValueConverter<T>` constraint) and `CS0540` (the explicit `IJsonValue` implementations). The generator now declares `IJsonValue<T>` directly on the core partial for such a union on .NET 8+, so the type implements it on every target framework. Other unions containing a boolean (for example `["boolean", "string"]`) were unaffected — they already obtained `IJsonValue<T>` from their other member's interface — and their output is unchanged. This is a V4 code-generation fix; regenerate any affected models to pick it up. See [#832](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/832).
+
+## V5.2.3
+
+V5.2.3 fixes the `HttpClient`-backed OpenAPI transport so that a base URL carrying a path prefix — for example an API-gateway route — is preserved in every request URI.
+
+### Bug fixes
+
+- **`HttpClientTransport` now preserves a base URL's path prefix** — Generated operation paths always begin with `/`, and the transport previously sent them as relative URIs for `HttpClient` to resolve against `HttpClient.BaseAddress`. Under RFC 3986 §5.3, an absolute-path reference such as `/transactions` **replaces** the base URI's entire path, so any deployment whose base URL carries a path prefix — the Azure API Management pattern, `https://apim.example/inventory/` — silently lost the prefix: requests landed on `https://apim.example/transactions` instead of `https://apim.example/inventory/transactions`, and because generated paths always start with `/` there was no `BaseAddress` spelling that avoided it. The transport now composes the final absolute URI itself — the base address up to and including its path, with any trailing `/` trimmed, followed by the resolved operation path and query — so the prefix is preserved; this is the same composition NSwag- and Kiota-generated clients use. For a base address with no path segment the composed URI is byte-identical to the previous resolution, and a client with no `BaseAddress` at all still fails with `HttpClient`'s usual invalid-request-URI error, so no other behavior changes. This is a runtime fix in `Corvus.Text.Json.OpenApi.HttpTransport`; no regeneration of generated clients is required.
+
 ## V5.2.2
 
 V5.2.2 lets the property-parameter `Build(...)` factory be used directly as an array element (or object-property value) inside a mutable builder callback.

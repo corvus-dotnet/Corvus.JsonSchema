@@ -84,6 +84,12 @@ public sealed class BooleanPartial : ICodeFileBuilder
                  : FrameworkType.NotEmitted;
         }
 
+        // A single-core-type boolean converts to bool implicitly, so it can satisfy
+        // IJsonBoolean<T>'s "static abstract implicit operator bool" on net8.0+ and declares
+        // the interface everywhere. A multi-core-type union (e.g. ["boolean", "null"]) converts
+        // to bool *explicitly* (the value may not be a boolean), so it cannot satisfy that static
+        // abstract member on net8.0+; there the interface is declared only on pre-net8.0
+        // frameworks. For such unions IJsonValue<T> is supplied on net8.0+ by CorePartial instead.
         static FrameworkType EmitIJsonBooleanInterface(TypeDeclaration typeDeclaration)
         {
             return typeDeclaration.ImpliedCoreTypes().CountTypes() == 1

@@ -27,6 +27,18 @@ namespace Corvus.Text.Json.OpenApi.HttpTransport;
 /// the <see langword="string"/> required by <see cref="HttpRequestMessage"/>.
 /// </para>
 /// <para>
+/// The final request URI is composed by the transport itself. The resolved operation path
+/// (which always begins with <c>/</c>) is appended textually to
+/// <see cref="HttpClient.BaseAddress"/>, preserving any path prefix the base address
+/// carries — for example an API-gateway route such as <c>https://apim.example/inventory/</c>,
+/// which yields <c>https://apim.example/inventory/pets</c>. Had resolution been left to
+/// <see cref="HttpClient"/>, RFC 3986 §5.3 absolute-path-reference semantics would replace
+/// the base address's entire path and silently drop the prefix. For a base address with no
+/// path segment the composed URI is identical to the RFC 3986 resolution. If the client has
+/// no <see cref="HttpClient.BaseAddress"/>, the request URI is left relative and
+/// <see cref="HttpClient"/> raises its usual error.
+/// </para>
+/// <para>
 /// The transport does not own the <see cref="HttpClient"/> by default.
 /// Pass <c>disposeClient: true</c> to the constructor if the transport should dispose
 /// the client when it is itself disposed.
@@ -170,8 +182,11 @@ public sealed class HttpClientTransport : IApiTransport
     {
         string relativePath = BuildUri(in request);
 
-        // Use the string-accepting constructor. HttpClient.SendAsync resolves
-        // this relative path against HttpClient.BaseAddress automatically.
+        // Use the string-accepting constructor to hold the relative operation URI.
+        // SendCoreAsync composes the final absolute URI itself (see ApplyBaseAddress),
+        // preserving any path prefix carried by HttpClient.BaseAddress — HttpClient's
+        // own RFC 3986 resolution would replace the base path entirely, because
+        // operation paths always begin with '/'.
         HttpRequestMessage httpRequest = new(MapMethod<TRequest>(TRequest.Method), relativePath);
 
         if (TRequest.HasHeaderParameters)
@@ -244,6 +259,8 @@ public sealed class HttpClientTransport : IApiTransport
         CancellationToken cancellationToken)
         where TResponse : struct, IApiResponse<TResponse>
     {
+        this.ApplyBaseAddress(httpRequest);
+
         if (this.authenticationProvider is not null)
         {
             await this.authenticationProvider
@@ -292,6 +309,68 @@ public sealed class HttpClientTransport : IApiTransport
         {
             httpResponse.Dispose();
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Composes the final absolute request URI from <see cref="HttpClient.BaseAddress"/>
+    /// and the relative operation URI produced by <see cref="BuildHttpRequest"/>,
+    /// preserving any path prefix carried by the base address.
+    /// </summary>
+    /// <param name="httpRequest">The request whose <see cref="HttpRequestMessage.RequestUri"/>
+    /// is rewritten in place.</param>
+    /// <remarks>
+    /// <para>
+    /// Generated operation paths always begin with <c>/</c>, so leaving resolution to
+    /// <see cref="HttpClient"/> would apply RFC 3986 §5.3 absolute-path-reference semantics
+    /// and replace the base address's entire path — silently dropping a prefix such as an
+    /// API-gateway route (<c>https://apim.example/inventory/</c>). Composing the URI
+    /// textually — the base up to its path with any trailing <c>/</c> trimmed, followed by
+    /// the operation path and query — keeps the prefix. For a base address with no path
+    /// segment the result is identical to the RFC 3986 resolution.
+    /// </para>
+    /// <para>
+    /// If the client has no <see cref="HttpClient.BaseAddress"/>, or the request URI is
+    /// already absolute or does not begin with <c>/</c>, the request is left untouched and
+    /// <see cref="HttpClient"/> behaves exactly as before.
+    /// </para>
+    /// <para>
+    /// The composition allocates exactly one string per request (the composed URI passed to
+    /// the <see cref="Uri"/> constructor). The base part is always a prefix of
+    /// <see cref="Uri.AbsoluteUri"/> — which the base <see cref="Uri"/> caches — because the
+    /// query/fragment cut and the trailing-<c>/</c> trim only ever shorten it from the end,
+    /// so both halves are written straight into the final string.
+    /// </para>
+    /// </remarks>
+    private void ApplyBaseAddress(HttpRequestMessage httpRequest)
+    {
+        if (this.httpClient.BaseAddress is Uri baseAddress
+            && httpRequest.RequestUri is { IsAbsoluteUri: false } relativeUri
+            && relativeUri.OriginalString.StartsWith('/'))
+        {
+            string baseUri = baseAddress.AbsoluteUri;
+            int baseLength = baseUri.AsSpan().IndexOfAny('?', '#');
+            if (baseLength < 0)
+            {
+                baseLength = baseUri.Length;
+            }
+
+            while (baseLength > 0 && baseUri[baseLength - 1] == '/')
+            {
+                baseLength--;
+            }
+
+            string relative = relativeUri.OriginalString;
+            string composed = string.Create(
+                baseLength + relative.Length,
+                (baseUri, baseLength, relative),
+                static (span, state) =>
+                {
+                    state.baseUri.AsSpan(0, state.baseLength).CopyTo(span);
+                    state.relative.CopyTo(span[state.baseLength..]);
+                });
+
+            httpRequest.RequestUri = new Uri(composed, UriKind.Absolute);
         }
     }
 
