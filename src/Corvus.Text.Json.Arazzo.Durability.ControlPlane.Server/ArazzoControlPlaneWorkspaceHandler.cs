@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Concurrent;
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
@@ -54,9 +53,16 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     private readonly TimeProvider timeProvider;
     private readonly string actor;
 
-    // §18 debug runs under the interim executor: in-memory for the deployment's lifetime, like a
-    // debugging session — the durable run store arrives with the engine seam.
-    private readonly ConcurrentDictionary<string, DebugRunSession> debugRuns = new(StringComparer.Ordinal);
+    // §18 debug runs on the durable host (workflow-designer design §18 slice 3e-2c): a debug run IS the durable
+    // $draft run the in-process runner executes — captured + enqueued through the DraftRunManagement, advanced by
+    // driving the runner's recording+tracing resumer directly (the stepper sets a per-advance pause the dispatcher
+    // cannot), its faulted-run remediation landing on the durable engine's native resume verbs. All four are needed
+    // for debug runs to be offered; absent any of them the debug-run endpoints fail closed (DebugRunsNotOffered).
+    private readonly IWorkflowStateStore? workflowStateStore;
+    private readonly IDraftRunStore? draftRunStore;
+    private readonly ISecuredWorkflowManagement? debugRunManagement;
+    private readonly InProcessDraftRunner? draftRunner;
+    private readonly DraftRunManagement? draftRunManagement;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
@@ -143,7 +149,20 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// debug runs fail closed when <see langword="null"/>.</param>
     /// <param name="credentials">The credential-binding store the §18 per-source readiness gate reads (references
     /// only — no secret material); debug runs fail closed when <see langword="null"/>.</param>
-    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null)
+    /// <param name="workflowStateStore">The durable run store §18 debug runs are captured into and loaded from
+    /// (workflow-designer design §18 slice 3e-2c); with <paramref name="draftRunStore"/> it also builds the
+    /// <see cref="DraftRunManagement"/>. Debug runs fail closed when <see langword="null"/>.</param>
+    /// <param name="draftRunStore">The sibling store the §18 draft capture (audit record + packed document/sources)
+    /// is written to and read back from. Debug runs fail closed when <see langword="null"/>.</param>
+    /// <param name="debugRunManagement">The run-management client the §18 debug-run reads (state), native
+    /// faulted-run resume verbs, and cancel delegate to — constructed with the same recording+tracing resumer the
+    /// <paramref name="draftRunner"/> exposes, so its native resume records+traces. Debug runs fail closed when
+    /// <see langword="null"/>.</param>
+    /// <param name="draftRunner">The optional in-process, environment-pinned draft-run runner the §18 stepper drives
+    /// each advance through (its <see cref="InProcessDraftRunner.Resumer"/>) and reads each trace from (its
+    /// <see cref="InProcessDraftRunner.TryGetTrace"/>). Interactive debug runs require it (a paused run is not
+    /// dispatch-claimable); debug runs fail closed when <see langword="null"/>.</param>
+    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null, IWorkflowStateStore? workflowStateStore = null, IDraftRunStore? draftRunStore = null, ISecuredWorkflowManagement? debugRunManagement = null, InProcessDraftRunner? draftRunner = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -157,6 +176,16 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         this.credentials = credentials;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.actor = actor;
+        this.workflowStateStore = workflowStateStore;
+        this.draftRunStore = draftRunStore;
+        this.debugRunManagement = debugRunManagement;
+        this.draftRunner = draftRunner;
+
+        // The capture-and-enqueue front end composes from the run store + the draft store (design §18 slice 3d);
+        // build it once when both are wired so a debug-run start has it ready.
+        this.draftRunManagement = workflowStateStore is not null && draftRunStore is not null
+            ? new DraftRunManagement(workflowStateStore, draftRunStore, this.timeProvider)
+            : null;
     }
 
     /// <inheritdoc/>
@@ -1028,13 +1057,26 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         }
     }
 
-    /// <summary>Debug runs (workflow-designer design §18) fail CLOSED when the deployment does not
-    /// wire the interim executor's dependencies (the simulator, the environment store for the
-    /// <c>allowsDraftRuns</c> gate, and the credential store for the readiness gate) — the same
-    /// staging the simulator itself used.</summary>
+    /// <summary>Whether this deployment offers §18 debug runs: the durable draft-run path is fully wired (the run
+    /// store, the draft-run store, the run-management client, and the in-process runner) AND the two start gates'
+    /// stores are present (the environment store for <c>allowsDraftRuns</c>, the credential store for readiness).
+    /// Interactive debug runs REQUIRE the in-process runner — a paused run is not dispatch-claimable, so the stepper
+    /// drives the runner's resumer directly (workflow-designer design §18 slice 3e-2c) — so an unwired runner fails
+    /// closed exactly as the interim simulator did.</summary>
+    private bool DebugRunsOffered
+        => this.draftRunManagement is not null
+        && this.debugRunManagement is not null
+        && this.draftRunner is not null
+        && this.workflowStateStore is not null
+        && this.draftRunStore is not null
+        && this.environments is not null
+        && this.credentials is not null;
+
+    /// <summary>The fail-closed refusal when a debug-run operation is attempted on a deployment that does not wire
+    /// the durable draft-run host (workflow-designer design §18).</summary>
     /// <param name="status">The status the failing operation answers with (400 on start; 404 elsewhere).</param>
     private static Models.ProblemDetails.Source DebugRunsNotOffered(int status = 400)
-        => Problem("debug-runs-not-offered", "Debug runs not offered", status, "This deployment does not offer draft debug runs (workflow-designer design §18): it wires no draft-run executor.");
+        => Problem("debug-runs-not-offered", "Debug runs not offered", status, "This deployment does not offer draft debug runs (workflow-designer design §18): it wires no in-process draft-run host.");
 
     private static Models.ProblemDetails.Source DebugRunNotFoundProblem()
         => Problem("debug-run-not-found", "Debug run not found", 404, "No such debug run exists for this working copy.");
@@ -1045,9 +1087,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// flag (403), the caller's reach to the working copy and the environment (404,
     /// non-disclosing), and per-source credential readiness in that environment (409 naming the
     /// gaps). The run record carries the audit tuple (who, which working copy, which document
-    /// etag, which environment, when). Execution is the interim executor: the deterministic
-    /// simulator replays the draft captured at start against spec-derived mocks — pause semantics
-    /// and the trace shape are real; real transport arrives with the engine seam.
+    /// etag, which environment, when). Execution is the durable host (workflow-designer design §18
+    /// slice 3e-2c): the captured draft is enqueued as a Pending <c>$draft</c> run and driven to
+    /// its first pause/completion/fault through the in-process runner against real transport.
     /// </summary>
     /// <param name="parameters">The request parameters.</param>
     /// <param name="workspace">The response workspace.</param>
@@ -1055,7 +1097,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// <returns>The created run, or the gate's problem.</returns>
     public async ValueTask<StartDebugRunResult> HandleStartDebugRunAsync(StartDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        if (this.simulator is null || this.environments is null || this.credentials is null)
+        if (!this.DebugRunsOffered)
         {
             return StartDebugRunResult.BadRequest(DebugRunsNotOffered(), workspace);
         }
@@ -1072,7 +1114,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
         // Gate 1 (§18): the environment must be within reach AND its administrators must have
         // deliberately opened it to drafts.
-        using (ParsedJsonDocument<Environment>? environment = await this.environments.GetAsync(environmentName, this.access.Current(), cancellationToken).ConfigureAwait(false))
+        using (ParsedJsonDocument<Environment>? environment = await this.environments!.GetAsync(environmentName, this.access.Current(), cancellationToken).ConfigureAwait(false))
         {
             if (environment is not { } env)
             {
@@ -1097,7 +1139,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             {
                 if (source.TryGetProperty("name"u8, out JsonElement sourceNameElement) && sourceNameElement.GetString() is { Length: > 0 } sourceName)
                 {
-                    using ParsedJsonDocument<SourceCredentialBinding>? binding = await this.credentials.GetAsync(sourceName, environmentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
+                    using ParsedJsonDocument<SourceCredentialBinding>? binding = await this.credentials!.GetAsync(sourceName, environmentName, this.access.Current(), cancellationToken).ConfigureAwait(false);
                     if (binding is null)
                     {
                         (missing ??= []).Add(sourceName);
@@ -1123,42 +1165,52 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         List<KeyValuePair<string, byte[]>> sourceBytes = await WorkspaceSimulationJson.SourceBytesAsync(
             (JsonElement)w.RootElement.Sources, this.sources, this.access.Current(), cancellationToken).ConfigureAwait(false);
 
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        var run = new DebugRunSession
-        {
-            DebugRunId = $"dbg-{Guid.NewGuid():N}",
-            WorkingCopyId = id,
-            WorkflowId = workflowId,
-            EnvironmentName = environmentName,
-            DocumentEtag = (string)w.RootElement.Etag,
-            StartedBy = this.actor,
-            StartedAt = now,
-            DocumentBytes = documentBytes,
-            SourceBytes = sourceBytes,
-            Mocks = DebugRunSession.SpecDerivedMocks(sourceBytes),
-            InputsUtf8 = body.Inputs.IsNotUndefined()
-                ? PersistedJson.ToArray((JsonElement)body.Inputs, static (Utf8JsonWriter writer, in JsonElement inputs) => inputs.WriteTo(writer))
-                : null,
-        };
-        (bool afterEachStep, string[] breakpoints) = ReadPause(body.Pause);
-        run.SetPause(afterEachStep, breakpoints);
+        // Capture + enqueue the durable $draft run (design §18 slice 3d): the audited record + the packed
+        // {document (chosen workflow first), sources} land in the draft store, then a Pending $draft run —
+        // env-pinned and sys:workingCopy-scoped (§14.2) — lands in the run store carrying the starter's ambient tags.
+        var start = new DraftRunStart(
+            WorkingCopyId: id,
+            WorkflowId: workflowId,
+            DocumentUtf8: documentBytes,
+            Sources: sourceBytes,
+            Environment: environmentName,
+            DocumentEtag: (string)w.RootElement.Etag,
+            StartedBy: this.actor);
+        JsonElement inputs = body.Inputs.IsNotUndefined() ? (JsonElement)body.Inputs : default;
+        SecurityTagSet securityTags = SecurityTagSet.FromTags(this.access.InternalTags());
+        WorkflowRunId runId = await this.draftRunManagement!.StartAsync(start, inputs, securityTags, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        string? failure = await this.AdvanceDebugRunAsync(run, cancellationToken).ConfigureAwait(false);
-        if (failure is not null)
+        // Drive the enqueued run to its first pause/completion/fault through the in-process runner (honouring any
+        // requested pause). The step ids come from the captured (chosen-first) document, so they map to cursor space.
+        using (ParsedJsonDocument<JsonElement> capturedDocument = ParsedJsonDocument<JsonElement>.Parse(documentBytes))
         {
-            return StartDebugRunResult.BadRequest(Problem("not-executable", "Not executable", 400, failure), workspace);
+            WorkflowPauseConfig? pause = TranslatePause(body.Pause, StepIds(capturedDocument.RootElement));
+            await this.DriveAsync(runId, pause, cancellationToken).ConfigureAwait(false);
         }
 
-        this.debugRuns[run.DebugRunId] = run;
-        ParsedJsonDocument<Models.DebugRun> view = run.View();
-        workspace.TakeOwnership(view);
-        return StartDebugRunResult.Created(view.RootElement, workspace);
+        ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
+        if (view is not { } created)
+        {
+            return StartDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
+        }
+
+        workspace.TakeOwnership(created);
+        return StartDebugRunResult.Created(created.RootElement, workspace);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Reads a §18 debug run's current durable state (workflow-designer design §18 slice 3e-2c): the run's status
+    /// and cursor from its authoritative checkpoint (reach-filtered, §14.2), plus the in-process runner's cached
+    /// metadata trace. The <c>wait</c> long-poll param is best-effort — the run is advanced synchronously in-process,
+    /// so the current state is returned without blocking.
+    /// </summary>
+    /// <param name="parameters">The request parameters.</param>
+    /// <param name="workspace">The response workspace.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The run, or the problem.</returns>
     public async ValueTask<GetDebugRunResult> HandleGetDebugRunAsync(GetDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        if (this.simulator is null || this.environments is null || this.credentials is null)
+        if (!this.DebugRunsOffered)
         {
             return GetDebugRunResult.NotFound(DebugRunsNotOffered(404), workspace);
         }
@@ -1170,25 +1222,23 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return GetDebugRunResult.NotFound(NotFoundProblem(id), workspace);
         }
 
-        if (!this.debugRuns.TryGetValue((string)parameters.DebugRunId, out DebugRunSession? run) || run.WorkingCopyId != id)
+        ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(new WorkflowRunId((string)parameters.DebugRunId), id, cancellationToken).ConfigureAwait(false);
+        if (view is not { } v)
         {
             return GetDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
 
-        ParsedJsonDocument<Models.DebugRun> view = run.View();
-        workspace.TakeOwnership(view);
-        return GetDebugRunResult.Ok(view.RootElement, workspace);
+        workspace.TakeOwnership(v);
+        return GetDebugRunResult.Ok(v.RootElement, workspace);
     }
 
     /// <summary>
-    /// Advances a §18 debug run: a bare resume continues to the next pause point (the request may
-    /// re-aim the pause first — single-step, breakpoints, or run-to-completion). A
-    /// <c>ResumeRequest</c> action applies the runs-view union to the session before advancing
-    /// (§15 8b): <c>Skip</c> provides the targeted step's outputs so the replay records it skipped
-    /// instead of executing it, <c>Rewind</c> resets the position (the forward replay's
-    /// re-execution of real side effects is the developer's deliberate act), <c>StatePatch</c>
-    /// patches the context <c>{ inputs, stepOutputs }</c> (patched entries become overrides), and
-    /// <c>RetryFaultedStep</c> is the plain re-advance.
+    /// Advances a §18 debug run on the durable host (workflow-designer design §18 slice 3e-2c). A <c>pause</c>
+    /// (afterEachStep / breakpoints) reconfigures the stop points for the next advance; a bare resume clears the
+    /// pause-hold and continues — both driven directly through the in-process runner. A <c>ResumeRequest</c>
+    /// <c>action</c> is FAULT REMEDIATION on the durable engine's native resume verbs (retry / skip past the faulted
+    /// step / rewind / state-patch), which act only on a faulted run; step-over of a non-faulted paused step is a
+    /// replay-debugger operation (slice 3e-3), not a live-run one.
     /// </summary>
     /// <param name="parameters">The request parameters.</param>
     /// <param name="workspace">The response workspace.</param>
@@ -1196,7 +1246,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// <returns>The advanced run, or the problem.</returns>
     public async ValueTask<ResumeDebugRunResult> HandleResumeDebugRunAsync(ResumeDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        if (this.simulator is null || this.environments is null || this.credentials is null)
+        if (!this.DebugRunsOffered)
         {
             return ResumeDebugRunResult.NotFound(DebugRunsNotOffered(404), workspace);
         }
@@ -1208,57 +1258,65 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return ResumeDebugRunResult.NotFound(NotFoundProblem(id), workspace);
         }
 
-        if (!this.debugRuns.TryGetValue((string)parameters.DebugRunId, out DebugRunSession? run) || run.WorkingCopyId != id)
+        var runId = new WorkflowRunId((string)parameters.DebugRunId);
+        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
         {
             return ResumeDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
 
-        string status = run.StatusSnapshot;
-        if (status is "completed" or "cancelled")
+        WorkflowRunDetail? detailOpt = await this.debugRunManagement!.GetAsync(runId, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (detailOpt is not { } detail)
+        {
+            return ResumeDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
+        }
+
+        if (detail.Status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
         {
             return ResumeDebugRunResult.Conflict(
-                Problem("not-resumable", "Not resumable", 409, $"The debug run is {status}."), workspace);
+                Problem("not-resumable", "Not resumable", 409, $"The debug run is {MapStatus(detail.Status, detail.Wait)}."), workspace);
         }
 
         Models.DebugRunResume body = parameters.Body;
         if (body.Action.IsNotUndefined())
         {
-            switch (ApplyResumeAction(run, body.Action))
+            // Fault remediation on the durable engine's NATIVE resume verbs; the management client was constructed
+            // with the runner's recording+tracing resumer, so a successful resume records+caches a fresh trace.
+            ResumeOptions options = ArazzoControlPlaneHandler.ToResumeOptions(body.Action);
+            bool applied = await this.debugRunManagement.ResumeAsync(runId, options, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            if (!applied)
             {
-                case ResumeActionOutcome.SkipTargetUnknown:
-                    return ResumeDebugRunResult.Conflict(
-                        Problem("skip-target-unknown", "Skip target unknown", 409, "The Skip resume names no resolvable step: targetCursor - 1 (or the current position) is outside the workflow's steps, and the run has no trace to fall back to."), workspace);
-
-                case ResumeActionOutcome.PatchFailed:
-                    return ResumeDebugRunResult.Conflict(
-                        Problem("state-patch-failed", "State patch failed", 409, "The RFC 6902 patch does not apply to the run's context object { \"inputs\": …, \"stepOutputs\": { … } } — an operation's path or test failed."), workspace);
-
-                default:
-                    break;
+                return ResumeDebugRunResult.Conflict(
+                    Problem("resume-not-applied", "Resume not applied", 409, "The resume verb did not apply: the debug run is not faulted, the state patch did not apply to its context { \"inputs\": …, \"stepOutputs\": { … } }, or the run changed concurrently. Live-run resume verbs are fault remediation; step-over of a paused step is a replay-debugger action."), workspace);
             }
         }
-
-        if (body.Pause.IsNotUndefined())
+        else
         {
-            (bool afterEachStep, string[] breakpoints) = ReadPause(body.Pause);
-            run.SetPause(afterEachStep, breakpoints);
+            // A pause reconfiguration for the next advance, or a bare resume that continues — driven directly.
+            WorkflowPauseConfig? pause = body.Pause.IsNotUndefined()
+                ? TranslatePause(body.Pause, await this.CapturedStepIdsAsync(runId, cancellationToken).ConfigureAwait(false))
+                : null;
+            await this.DriveAsync(runId, pause, cancellationToken).ConfigureAwait(false);
         }
 
-        string? failure = await this.AdvanceDebugRunAsync(run, cancellationToken).ConfigureAwait(false);
-        if (failure is not null)
+        ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
+        if (view is not { } v)
         {
-            return ResumeDebugRunResult.Conflict(Problem("not-executable", "Not executable", 409, failure), workspace);
+            return ResumeDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
 
-        ParsedJsonDocument<Models.DebugRun> view = run.View();
-        workspace.TakeOwnership(view);
-        return ResumeDebugRunResult.Ok(view.RootElement, workspace);
+        workspace.TakeOwnership(v);
+        return ResumeDebugRunResult.Ok(v.RootElement, workspace);
     }
 
-    /// <inheritdoc/>
+    /// <summary>Cancels a §18 debug run (workflow-designer design §18 slice 3e-2c): the durable run is marked
+    /// Cancelled (terminal + idempotent); an already-terminal run is a no-op and its current state is returned.</summary>
+    /// <param name="parameters">The request parameters.</param>
+    /// <param name="workspace">The response workspace.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The cancelled run, or the problem.</returns>
     public async ValueTask<CancelDebugRunResult> HandleCancelDebugRunAsync(CancelDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        if (this.simulator is null || this.environments is null || this.credentials is null)
+        if (!this.DebugRunsOffered)
         {
             return CancelDebugRunResult.NotFound(DebugRunsNotOffered(404), workspace);
         }
@@ -1270,83 +1328,144 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return CancelDebugRunResult.NotFound(NotFoundProblem(id), workspace);
         }
 
-        if (!this.debugRuns.TryGetValue((string)parameters.DebugRunId, out DebugRunSession? run) || run.WorkingCopyId != id)
+        var runId = new WorkflowRunId((string)parameters.DebugRunId);
+        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
         {
             return CancelDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
 
-        run.Cancel(this.timeProvider.GetUtcNow());
-        ParsedJsonDocument<Models.DebugRun> view = run.View();
-        workspace.TakeOwnership(view);
-        return CancelDebugRunResult.Ok(view.RootElement, workspace);
-    }
+        // Terminal + idempotent: a non-terminal run is marked Cancelled; an already-terminal (or out-of-reach) run
+        // returns false and the current state below is returned unchanged.
+        await this.debugRunManagement!.CancelAsync(runId, "debug-run cancelled by developer", this.access.Current(), cancellationToken).ConfigureAwait(false);
 
-    /// <summary>How a §18 resume action landed on the session.</summary>
-    private enum ResumeActionOutcome
-    {
-        /// <summary>The action applied (or needed no session change); the advance proceeds.</summary>
-        Applied,
-
-        /// <summary>A Skip resume named no resolvable step.</summary>
-        SkipTargetUnknown,
-
-        /// <summary>A StatePatch resume's patch did not apply to the context.</summary>
-        PatchFailed,
-    }
-
-    /// <summary>
-    /// Applies a §18 resume action to the session — the runs-view <c>ResumeRequest</c> union in its
-    /// verbatim shape (§15 8b), mapped through the same <see cref="ResumeOptions"/> the runs
-    /// endpoint uses: Skip accumulates a step-output override (an absent <c>skipOutputs</c> still
-    /// skips, recording the empty object — the mock's rule), Rewind resets the cursor, StatePatch
-    /// patches <c>{ inputs, stepOutputs }</c>, and RetryFaultedStep needs no session change (the
-    /// advance replays the run).
-    /// </summary>
-    private static ResumeActionOutcome ApplyResumeAction(DebugRunSession run, in Models.ResumeRequest action)
-    {
-        ResumeOptions options = ArazzoControlPlaneHandler.ToResumeOptions(action);
-        switch (options.Mode)
+        ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
+        if (view is not { } v)
         {
-            case ResumeMode.Rewind:
-                run.Rewind(options.TargetCursor ?? 0);
-                return ResumeActionOutcome.Applied;
+            return CancelDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
+        }
 
-            case ResumeMode.Skip:
+        workspace.TakeOwnership(v);
+        return CancelDebugRunResult.Ok(v.RootElement, workspace);
+    }
+
+    /// <summary>Whether a run's captured record names this working copy (the nested route's parent) — the
+    /// non-disclosing cross-working-copy isolation a debug-run sub-route enforces (§14.2). A missing capture is
+    /// "not this working copy".</summary>
+    private async ValueTask<bool> RunBelongsToWorkingCopyAsync(WorkflowRunId runId, string workingCopyId, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<DraftRun>? record = await this.draftRunStore!.GetAsync(runId, cancellationToken).ConfigureAwait(false);
+        return record is { } r && r.RootElement.WorkingCopyIdValue == workingCopyId;
+    }
+
+    /// <summary>Drives one advance of a debug run through the in-process runner's recording+tracing resumer (design
+    /// §18 slice 3e-2c). A paused run is not dispatch-claimable, so the stepper loads the run itself and awaits the
+    /// runner's resumer directly (NOT <c>RunPendingAsync</c>): the resumer records the run's metadata-only exchanges,
+    /// honours the per-advance pause (→ Suspended + Pause wait), and assembles+caches the trace the view reads back.</summary>
+    private async ValueTask DriveAsync(WorkflowRunId runId, WorkflowPauseConfig? pause, CancellationToken cancellationToken)
+    {
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.workflowStateStore!, runId, this.timeProvider, cancellationToken).ConfigureAwait(false);
+        if (run is null)
+        {
+            return;
+        }
+
+        if (pause is { } pauseConfig)
+        {
+            run.SetPause(pauseConfig);
+        }
+
+        await this.draftRunner!.Resumer(run, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Builds the <c>DebugRun</c> view from the durable run: the audit tuple + executed workflow id from the
+    /// capture record, the live status/cursor from the reach-filtered checkpoint (§14.2), and the in-process runner's
+    /// cached metadata trace (with the handler-computed <c>pausedBefore</c> injected for a paused run). Returns
+    /// <see langword="null"/> when the run does not belong to this working copy or is outside the caller's reach.</summary>
+    private async ValueTask<ParsedJsonDocument<Models.DebugRun>?> BuildDebugRunViewAsync(WorkflowRunId runId, string workingCopyId, CancellationToken cancellationToken)
+    {
+        string workflowId, environment, documentEtag, startedBy;
+        DateTimeOffset startedAt;
+        using (ParsedJsonDocument<DraftRun>? record = await this.draftRunStore!.GetAsync(runId, cancellationToken).ConfigureAwait(false))
+        {
+            if (record is not { } r || r.RootElement.WorkingCopyIdValue != workingCopyId)
             {
-                string? stepId = run.ResolveSkipStepId(options.TargetCursor);
-                if (stepId is null)
-                {
-                    return ResumeActionOutcome.SkipTargetUnknown;
-                }
-
-                byte[] outputs = options.SkipOutputs.ValueKind is JsonValueKind.Undefined
-                    ? "{}"u8.ToArray()
-                    : PersistedJson.ToArray(options.SkipOutputs, static (Utf8JsonWriter writer, in JsonElement value) => value.WriteTo(writer));
-                run.Skip(stepId, outputs);
-                return ResumeActionOutcome.Applied;
+                return null;
             }
 
-            case ResumeMode.StatePatch:
-                return run.TryApplyStatePatch(options.Patch)
-                    ? ResumeActionOutcome.Applied
-                    : ResumeActionOutcome.PatchFailed;
-
-            default:
-                return ResumeActionOutcome.Applied; // RetryFaultedStep: the advance below replays the run
+            workflowId = (string)r.RootElement.WorkflowId;
+            environment = (string)r.RootElement.Environment;
+            documentEtag = (string)r.RootElement.DocumentEtag;
+            startedBy = (string)r.RootElement.StartedBy;
+            startedAt = ((JsonElement)r.RootElement.StartedAt).GetDateTimeOffset();
         }
+
+        WorkflowRunDetail? detailOpt = await this.debugRunManagement!.GetAsync(runId, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (detailOpt is not { } detail)
+        {
+            return null;
+        }
+
+        string status = MapStatus(detail.Status, detail.Wait);
+
+        // pausedBefore = the step the run resumes at (the step at the current cursor). The runner's cached trace
+        // carries pausedBefore:null (it holds no step-id↔cursor map); the handler DOES, so it injects it here.
+        string? pausedBefore = null;
+        if (status == "paused")
+        {
+            List<string> stepIds = await this.CapturedStepIdsAsync(runId, cancellationToken).ConfigureAwait(false);
+            pausedBefore = detail.Cursor >= 0 && detail.Cursor < stepIds.Count ? stepIds[detail.Cursor] : null;
+        }
+
+        ReadOnlyMemory<byte>? trace = this.draftRunner!.TryGetTrace(runId, out ReadOnlyMemory<byte> traceUtf8) ? traceUtf8 : null;
+
+        var view = new DebugRunView(
+            runId.Value, workflowId, environment, status, detail.Cursor, trace, pausedBefore,
+            documentEtag, startedBy, startedAt, this.timeProvider.GetUtcNow());
+        return PersistedJson.ToPooledDocument<Models.DebugRun, DebugRunView>(
+            view, static (Utf8JsonWriter writer, in DebugRunView v) => WriteDebugRun(writer, v));
     }
 
-    /// <summary>Reads the request's pause points (single-step and/or breakpoints); an absent or
-    /// empty pause means the run proceeds to completion, a wait, or a fault.</summary>
-    private static (bool AfterEachStep, string[] Breakpoints) ReadPause(in Models.DebugRunPause pause)
+    /// <summary>Reads the executed workflow's step ids, in declaration order, from the run's captured package (the
+    /// document has the chosen workflow first, so its step order IS cursor space). Empty when no capture exists.</summary>
+    private async ValueTask<List<string>> CapturedStepIdsAsync(WorkflowRunId runId, CancellationToken cancellationToken)
+    {
+        ReadOnlyMemory<byte>? package = await this.draftRunStore!.GetPackageAsync(runId, cancellationToken).ConfigureAwait(false);
+        if (package is not { } packageBytes)
+        {
+            return [];
+        }
+
+        WorkflowPackageContents contents = WorkflowPackage.Open(packageBytes);
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(contents.Workflow);
+        return StepIds(document.RootElement);
+    }
+
+    /// <summary>Maps the durable run status + wait-kind to the contract's debug-run status enum: a
+    /// <see cref="WorkflowWaitKind.Pause"/> suspend is <c>paused</c>, a timer/message suspend is <c>suspended</c>,
+    /// and Pending/Running present as <c>running</c>.</summary>
+    private static string MapStatus(WorkflowRunStatus status, WorkflowWait? wait)
+        => status switch
+        {
+            WorkflowRunStatus.Completed => "completed",
+            WorkflowRunStatus.Faulted => "faulted",
+            WorkflowRunStatus.Cancelled => "cancelled",
+            WorkflowRunStatus.Suspended => wait is { Kind: WorkflowWaitKind.Pause } ? "paused" : "suspended",
+            _ => "running",
+        };
+
+    /// <summary>Translates the request's step-id pause points to the durable engine's cursor-space
+    /// <see cref="WorkflowPauseConfig"/>: <c>afterEachStep</c> carries through, and each <c>beforeSteps</c> step id
+    /// maps to its declaration-order cursor (the state index the run pauses at, having completed the previous step).
+    /// An absent/empty pause returns <see langword="null"/> — the advance runs to completion, a wait, or a fault.</summary>
+    private static WorkflowPauseConfig? TranslatePause(in Models.DebugRunPause pause, List<string> stepIds)
     {
         if (pause.IsUndefined())
         {
-            return (false, []);
+            return null;
         }
 
         bool afterEachStep = ((JsonElement)pause.AfterEachStep).ValueKind == JsonValueKind.True;
-        var breakpoints = new List<string>();
+        HashSet<int>? cursors = null;
         JsonElement beforeSteps = (JsonElement)pause.BeforeSteps;
         if (beforeSteps.ValueKind == JsonValueKind.Array)
         {
@@ -1354,83 +1473,142 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             {
                 if (step.GetString() is { Length: > 0 } stepId)
                 {
-                    breakpoints.Add(stepId);
+                    int cursor = stepIds.IndexOf(stepId);
+                    if (cursor >= 0)
+                    {
+                        (cursors ??= []).Add(cursor);
+                    }
                 }
             }
         }
 
-        return (afterEachStep, breakpoints.ToArray());
+        return !afterEachStep && cursors is null
+            ? null
+            : new WorkflowPauseConfig(afterEachStep, cursors ?? []);
     }
 
-    /// <summary>
-    /// Advances the debug run under the interim executor: replay the draft captured at start
-    /// through the simulator to the run's pause point (single-step = a budget of cursor + 1;
-    /// breakpoints = the stop condition) and apply the outcome onto the run atomically.
-    /// Forward-only in presentation; the replay is stateless underneath — exactly what the engine
-    /// seam replaces with genuinely incremental resumption.
-    /// </summary>
-    /// <returns>The failure detail when the document does not compile; otherwise <see langword="null"/>.</returns>
-    private async ValueTask<string?> AdvanceDebugRunAsync(DebugRunSession run, CancellationToken cancellationToken)
+    /// <summary>Reads a document's FIRST workflow's step ids in declaration order (the run executes the chosen
+    /// workflow, reordered first at capture).</summary>
+    private static List<string> StepIds(in JsonElement document)
     {
-        DebugRunSession.AdvancePlan plan = run.Plan();
-        using ParsedJsonDocument<JsonElement>? inputs = plan.InputsUtf8 is { } inputBytes ? ParsedJsonDocument<JsonElement>.Parse(inputBytes) : null;
-
-        // The accumulated Skip/StatePatch overrides ride the scenario (§15 8b). Each parses for
-        // the replay's lifetime — the trace serializes inside this scope, before they dispose.
-        var overrideDocuments = new List<ParsedJsonDocument<JsonElement>>(plan.StepOutputOverrides.Length);
-        try
+        var ids = new List<string>();
+        if (document.TryGetProperty("workflows"u8, out JsonElement workflows) && workflows.ValueKind == JsonValueKind.Array)
         {
-            Dictionary<string, JsonElement>? overrides = null;
-            foreach (KeyValuePair<string, byte[]> entry in plan.StepOutputOverrides)
+            foreach (JsonElement workflow in workflows.EnumerateArray())
             {
-                ParsedJsonDocument<JsonElement> parsed = ParsedJsonDocument<JsonElement>.Parse(entry.Value);
-                overrideDocuments.Add(parsed);
-                (overrides ??= new(StringComparer.Ordinal))[entry.Key] = parsed.RootElement;
-            }
+                if (workflow.TryGetProperty("steps"u8, out JsonElement steps) && steps.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement step in steps.EnumerateArray())
+                    {
+                        if (step.TryGetProperty("stepId"u8, out JsonElement stepId) && stepId.GetString() is { Length: > 0 } stepIdValue)
+                        {
+                            ids.Add(stepIdValue);
+                        }
+                    }
+                }
 
-            var scenario = new SimulationScenario
-            {
-                Inputs = inputs is { } parsedInputs ? parsedInputs.RootElement : default,
-                Mocks = run.Mocks,
-                StepOutputOverrides = overrides ?? (IReadOnlyDictionary<string, JsonElement>)System.Collections.ObjectModel.ReadOnlyDictionary<string, JsonElement>.Empty,
-            };
-
-            SimulationStop? stop = !plan.AfterEachStep && plan.Breakpoints.Length > 0
-                ? new SimulationStop { Breakpoints = new HashSet<string>(plan.Breakpoints, StringComparer.Ordinal) }
-                : null;
-            SimulationBudget? budget = plan.AfterEachStep ? new SimulationBudget { MaxSteps = plan.Cursor + 1 } : null;
-
-            using SimulationResult result = await this.simulator!.SimulateAsync(run.DocumentBytes, run.SourceBytes, scenario, stop, budget, cancellationToken).ConfigureAwait(false);
-            if (result.Outcome == SimulationOutcome.NotExecutable)
-            {
-                return "The document does not compile to an executable workflow (e.g. it references another Arazzo document as a source, or has no workflows).";
-            }
-
-            string status = result.Outcome switch
-            {
-                SimulationOutcome.Completed => "completed",
-                SimulationOutcome.Faulted => "faulted",
-                SimulationOutcome.Suspended => "suspended",
-
-                // Paused (a breakpoint) and BudgetExhausted (the deliberate single-step budget) both
-                // present as the contract's paused — the dock's controls apply.
-                _ => "paused",
-            };
-            byte[] trace = PersistedJson.ToArray(result, static (Utf8JsonWriter writer, in SimulationResult simulation) => ScenarioSuite.WriteTrace(writer, simulation));
-
-            // The cursor is the position the dock scrubs to: the RECORDED steps. On a budget stop,
-            // SimulationResult.StepsExecuted also counts the boundary the budget aborted, so it sits
-            // one past the last recorded step — the trace's step list is the honest position.
-            run.Apply(status, result.Steps.Count, trace, this.timeProvider.GetUtcNow());
-            return null;
-        }
-        finally
-        {
-            foreach (ParsedJsonDocument<JsonElement> document in overrideDocuments)
-            {
-                document.Dispose();
+                break;
             }
         }
+
+        return ids;
+    }
+
+    /// <summary>Writes the <c>DebugRun</c> contract shape (debugRunId, workflowId, environment, status, cursor,
+    /// trace, and the audit tuple) into a pooled document the caller owns.</summary>
+    private static void WriteDebugRun(Utf8JsonWriter writer, in DebugRunView v)
+    {
+        writer.WriteStartObject();
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.DebugRunIdUtf8, v.DebugRunId);
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.WorkflowIdUtf8, v.WorkflowId);
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.EnvironmentUtf8, v.Environment);
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.StatusUtf8, v.Status);
+        writer.WriteNumber(Models.DebugRun.JsonPropertyNames.CursorUtf8, v.Cursor);
+        if (v.Trace is ReadOnlyMemory<byte> trace)
+        {
+            writer.WritePropertyName(Models.DebugRun.JsonPropertyNames.TraceUtf8);
+            WriteTraceWithPausedBefore(writer, trace, v.PausedBefore);
+        }
+
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.DocumentEtagUtf8, v.DocumentEtag);
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.StartedByUtf8, v.StartedBy);
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.StartedAtUtf8, v.StartedAt);
+        writer.WriteString(Models.DebugRun.JsonPropertyNames.UpdatedAtUtf8, v.UpdatedAt);
+        writer.WriteEndObject();
+    }
+
+    /// <summary>Writes the runner's cached metadata trace verbatim, but for a paused run substitutes the
+    /// handler-computed <c>pausedBefore</c> step id (the runner assembles the trace with <c>pausedBefore:null</c>).</summary>
+    private static void WriteTraceWithPausedBefore(Utf8JsonWriter writer, ReadOnlyMemory<byte> traceUtf8, string? pausedBeforeStepId)
+    {
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(traceUtf8);
+        JsonElement root = document.RootElement;
+        if (pausedBeforeStepId is null)
+        {
+            root.WriteTo(writer);
+            return;
+        }
+
+        writer.WriteStartObject();
+        bool wrotePausedBefore = false;
+        foreach (JsonProperty<JsonElement> property in root.EnumerateObject())
+        {
+            if (property.NameEquals("pausedBefore"u8))
+            {
+                writer.WriteString("pausedBefore"u8, pausedBeforeStepId);
+                wrotePausedBefore = true;
+                continue;
+            }
+
+            using UnescapedUtf8JsonString name = property.Utf8NameSpan;
+            writer.WritePropertyName(name.Span);
+            property.Value.WriteTo(writer);
+        }
+
+        if (!wrotePausedBefore)
+        {
+            writer.WriteString("pausedBefore"u8, pausedBeforeStepId);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    /// <summary>The pooled-serialization state for one <c>DebugRun</c> view (the audit tuple + live status/cursor +
+    /// the runner's trace).</summary>
+    private readonly struct DebugRunView(
+        string debugRunId,
+        string workflowId,
+        string environment,
+        string status,
+        int cursor,
+        ReadOnlyMemory<byte>? trace,
+        string? pausedBefore,
+        string documentEtag,
+        string startedBy,
+        DateTimeOffset startedAt,
+        DateTimeOffset updatedAt)
+    {
+        public string DebugRunId { get; } = debugRunId;
+
+        public string WorkflowId { get; } = workflowId;
+
+        public string Environment { get; } = environment;
+
+        public string Status { get; } = status;
+
+        public int Cursor { get; } = cursor;
+
+        public ReadOnlyMemory<byte>? Trace { get; } = trace;
+
+        public string? PausedBefore { get; } = pausedBefore;
+
+        public string DocumentEtag { get; } = documentEtag;
+
+        public string StartedBy { get; } = startedBy;
+
+        public DateTimeOffset StartedAt { get; } = startedAt;
+
+        public DateTimeOffset UpdatedAt { get; } = updatedAt;
     }
 
     /// <inheritdoc/>

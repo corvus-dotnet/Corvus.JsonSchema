@@ -81,7 +81,10 @@ public static class ControlPlaneEndpointExtensions
     /// </remarks>
     public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IWorkspaceWorkflowStore? workspaceWorkflowStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null, SourceDocumentFetcher? sourceFetcher = null,
         Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? workflowSimulator = null,
-        GitHubBroker? gitHubBroker = null)
+        GitHubBroker? gitHubBroker = null,
+        IWorkflowStateStore? workflowStateStore = null,
+        IDraftRunStore? draftRunStore = null,
+        InProcessDraftRunner? draftRunner = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -164,7 +167,20 @@ public static class ControlPlaneEndpointExtensions
         ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
         var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher);
         IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
-        var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore);
+
+        // §18 debug runs on the durable host (workflow-designer design §18 slice 3e-2c): a debug run IS a durable
+        // $draft run the in-process runner executes. When the run store, the draft store, and the in-process runner
+        // are all wired, build the capture front end's peer — a run-management client constructed with the SAME
+        // recording+tracing resumer the runner exposes (InProcessDraftRunner.Resumer), so its native faulted-run
+        // resume verbs (retry/skip/rewind/state-patch) also record+trace. Absent any of these the debug-run endpoints
+        // fail closed (the analogue of the retired interim simulator's null gate); interactive debug runs REQUIRE the
+        // runner because a paused run is not dispatch-claimable and must be stepped through the runner's resumer.
+        ISecuredWorkflowManagement? debugRunManagement = workflowStateStore is not null && draftRunner is not null
+            ? new SecuredWorkflowManagement(workflowStateStore, "arazzo-debug-runs", draftRunner.Resumer)
+            : null;
+        var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(
+            wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,
+            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner);
 
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
