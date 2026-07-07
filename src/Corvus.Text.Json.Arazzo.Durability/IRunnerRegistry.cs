@@ -95,6 +95,38 @@ public interface IRunnerRegistry
     ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Determines whether any registered runner serving <paramref name="environment"/> declares that it hosts §18
+    /// draft runs (<see cref="RunnerRegistration.HostsDraftRunsValue"/>) — the draft analogue of
+    /// <see cref="IsVersionHostedAsync"/>, and the predicate behind the control plane's fail-closed
+    /// <c>no-runner</c> gate on a debug-run start (workflow-designer design §18). Environment-scoped because
+    /// draft dispatch is environment-pinned: a draft-hosting runner in another environment cannot claim the run.
+    /// </summary>
+    /// <param name="environment">The environment the draft run targets.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns><see langword="true"/> if a registered runner serving the environment hosts draft runs.</returns>
+    /// <remarks>
+    /// The default scans <see cref="ListAsync(CancellationToken)"/> — the documented full-read hosting/scan seam,
+    /// bounded by the number of registered runner processes (unlike the per-version hosting index, which scales
+    /// with runners × hosted versions and sits on the hot trigger path). A backend may override it with a native
+    /// indexed query if a deployment's registry grows past that.
+    /// </remarks>
+    async ValueTask<bool> IsDraftRunsHostedAsync(string environment, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+
+        IReadOnlyList<RunnerRegistration> runners = await this.ListAsync(cancellationToken).ConfigureAwait(false);
+        foreach (RunnerRegistration runner in runners)
+        {
+            if (runner.HostsDraftRunsValue && ((JsonElement)runner.Environment).EqualsString(environment))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Removes every runner whose last heartbeat is strictly older than <paramref name="deadBefore"/>.
     /// </summary>
     /// <param name="deadBefore">Runners last seen before this instant are considered dead and pruned.</param>
