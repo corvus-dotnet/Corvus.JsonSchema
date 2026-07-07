@@ -88,6 +88,13 @@ public sealed class DraftWorkflowResumer : IDisposable
         {
             return await hosted.RunAsync(transports.ApiTransports, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
         }
+        catch (WorkflowPauseException)
+        {
+            // §18: the draft executor unwound at a debugger pause point. CheckpointAsync already persisted the
+            // run as Suspended with a Pause wait (no wake trigger), so this is a clean suspend — report the same
+            // tri-state Suspended a timer or message suspend returns; the finally still disposes the transports.
+            return WorkflowRunResultKind.Suspended;
+        }
         finally
         {
             foreach (IApiTransport apiTransport in transports.ApiTransports.Values)

@@ -157,7 +157,7 @@ public static class WorkflowCheckpointSerializer
                 {
                     writer.WriteString("dueAt"u8, w.DueAt);
                 }
-                else
+                else if (w.Kind == WorkflowWaitKind.Message)
                 {
                     writer.WriteString("channel"u8, w.Channel);
                     if (w.CorrelationId is { } waitCorrelationId)
@@ -166,6 +166,7 @@ public static class WorkflowCheckpointSerializer
                     }
                 }
 
+                // A §18 Pause wait carries no wake trigger — the kind alone is the whole record.
                 writer.WriteEndObject();
             }
 
@@ -282,11 +283,14 @@ public static class WorkflowCheckpointSerializer
             if (root.TryGetProperty("wait"u8, out JsonElement waitElement))
             {
                 WorkflowWaitKind kind = Enum.Parse<WorkflowWaitKind>(waitElement.GetProperty("kind"u8).GetString() ?? nameof(WorkflowWaitKind.Timer));
-                wait = kind == WorkflowWaitKind.Timer
-                    ? WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset())
-                    : WorkflowWait.Message(
+                wait = kind switch
+                {
+                    WorkflowWaitKind.Timer => WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset()),
+                    WorkflowWaitKind.Pause => WorkflowWait.Pause(),
+                    _ => WorkflowWait.Message(
                         waitElement.GetProperty("channel"u8).GetString() ?? string.Empty,
-                        waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null);
+                        waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null),
+                };
             }
 
             WorkflowFault? fault = null;
@@ -394,6 +398,7 @@ public static class WorkflowCheckpointSerializer
     {
         WorkflowWaitKind.Timer => nameof(WorkflowWaitKind.Timer),
         WorkflowWaitKind.Message => nameof(WorkflowWaitKind.Message),
+        WorkflowWaitKind.Pause => nameof(WorkflowWaitKind.Pause),
         _ => kind.ToString(),
     };
 }
