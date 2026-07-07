@@ -993,3 +993,48 @@ live-attach mode to build against. (2) The dock's attached mode: forward-only co
 (resume/step/skip/cancel), readiness in the run dialog, capture-to-scenario. (3) The engine seam:
 the execution host runs the draft with the environment's credential bindings and real transport —
 the only slice that touches the host. §15 item 3 is superseded by this section.
+
+**Delivery (stage 3, 2026-07-07).** Slices 1–3c are built (contract + server lifecycle with the
+interim simulator executor; the dock's attached mode; `allowsDraftRuns`; the real resume-action
+seam, §15 item 8b). Stage 3 — the engine seam — is split three ways:
+
+- **3d (built): durable draft runs, forward-only.** A debug run is an ordinary durable run of the
+  working copy's captured document, riding the runs machinery. `DraftRunManagement` writes the
+  capture to a sibling `IDraftRunStore` (the catalog/run split — the audited record beside the
+  packed `{document, sources}` blob, content-hash-cached on the runner) then enqueues a Pending run
+  carrying the reserved `$draft` id, environment-pinned and row-scoped to its working copy
+  (`sys:workingCopy`, §14.2); `DraftWorkflowResumer` compiles the captured bytes rather than a
+  catalog `executor.dll` and runs it forward-only, durable waits resuming through the existing
+  `WorkflowWorker`; the dispatcher claims `$draft` runs under `runnerEnvironment` pinning.
+  `IDraftRunStore` fans out across every durability backend, each bind held to the #803 bytes-native
+  bar — the package is streamed copy-free (`ReadOnlyMemoryStream.Rent`, native `ReadOnlyMemory`
+  parameters, or base64 written straight into the item writer), never a per-put `ToArray`; the
+  measured floor and the bind mandate live in `DraftRunStoreBenchmarks`. The workspace handler stays
+  on the interim simulator through 3d, so nothing user-visible changes until 3e.
+- **3e: the pause seam + handler swap.** `afterEachStep`/`beforeSteps` honoured at the run's step
+  boundary (the simulator's `CheckStop` precedent, no emitter change expected); the workspace handler
+  routes debug runs through the host, and the resume verbs land on the durable engine's native
+  `TryApplyResumeMutationAsync` rather than the 3c simulator override. The interim simulator executor
+  retires here (ruling below).
+- **3f: trace parity.** A host-executed run emits the `SimulationTrace`-shaped record the dock
+  renders, so capture-to-scenario works on real traces.
+
+**Ruling — the simulator's role (2026-07-07).** The simulator-backed debug-run path is *interim*: it
+retires at the 3e handler swap. The simulator remains permanent for the simulate/replay endpoints,
+scenario suites, and failed-test debugging — deterministic, side-effect-free re-execution from step 0
+is the right tool there, and a real debug-run capture saved via capture-to-scenario becomes a mock
+scenario the simulator replays with full time travel. The additive `SimulateRequest.overrides` +
+declared `SimulationTrace.skipped` contract rev (server-side step-over / what-if for the replay
+debugger) is promoted into stage-3 scope alongside the swap.
+
+**Ruling — trace body posture (2026-07-07).** A debug-run trace records **no request or response
+bodies by default.** The baseline is metadata only: method, pre-authentication operation path,
+status, byte counts, timing, step records, outputs, and wait state, with success-criteria verdicts
+recorded *at source* by the runner (never re-derived post-hoc, which would need the response bodies).
+Body capture is a per-environment administrative opt-in — default off, development-class only,
+audited, the same shape and ceremony as `allowsDraftRuns`. Recording happens **pre-authentication**
+as an invariant, so no credential material the auth provider adds can reach the trace (§13.5,
+absolute). Bodies are size-capped with an explicit `truncated` marker, traces are purged with the
+run, and capture-to-scenario shows the developer exactly which recorded bodies enter the
+(git-reachable) working copy before they confirm. Any later expansion of body or PII persistence is a
+fresh design decision, not an implementation detail.

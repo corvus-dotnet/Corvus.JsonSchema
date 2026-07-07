@@ -23,5 +23,8 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <!-- The real HttpClientTransport, so DraftRunHostEndToEndTests can drive a captured draft against a
+         live local HTTP endpoint through the same transport a runner uses in production (no mock transport). -->
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
   </ItemGroup>
 </Project>
