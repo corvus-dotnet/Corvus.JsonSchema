@@ -246,6 +246,128 @@ public class HttpClientTransportTests
     }
 
     [TestMethod]
+    public async Task SendAsync_BaseAddressWithPathPrefixAndTrailingSlash_PrefixPreserved()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; },
+            baseAddress: "https://apim.example/inventory/");
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://apim.example/inventory/pets/1", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_BaseAddressWithPathPrefixNoTrailingSlash_PrefixPreserved()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; },
+            baseAddress: "https://apim.example/inventory");
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://apim.example/inventory/pets/1", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_BaseAddressWithoutPathPrefix_ResolvesAsBefore()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; },
+            baseAddress: "https://api.example/");
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://api.example/pets/1", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_QueryParameters_WithPathPrefixedBaseAddress_PathAndQueryPreserved()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; },
+            baseAddress: "https://apim.example/inventory/");
+
+        await using HttpClientTransport transport = new(client);
+
+        TestQueryRequest request = new(limit: 10, offset: 20);
+        await using TestResponse response =
+            await transport.SendAsync<TestQueryRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://apim.example/inventory/pets?limit=10&offset=20", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_PathAndQueryParameters_WithPathPrefixedBaseAddress_AllPreserved()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; },
+            baseAddress: "https://apim.example/inventory/");
+
+        await using HttpClientTransport transport = new(client);
+
+        TestPathAndQueryRequest request = new(42, 10);
+        await using TestResponse response =
+            await transport.SendAsync<TestPathAndQueryRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("https://apim.example/inventory/pets/42?limit=10", captured.RequestUri?.AbsoluteUri);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_NoBaseAddress_ThrowsInvalidOperationException()
+    {
+        using MockHandler handler = new(HttpStatusCode.OK, "[]"u8.ToArray());
+        using HttpClient client = new(handler);
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+        {
+            await using TestResponse response =
+                await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+        });
+    }
+
+    [TestMethod]
     public async Task SendAsync_PutMethod_MapsCorrectly()
     {
         HttpRequestMessage? captured = null;
@@ -516,10 +638,11 @@ public class HttpClientTransportTests
     private static HttpClient CreateMockClient(
         HttpStatusCode statusCode,
         byte[] responseBody,
-        Func<HttpRequestMessage, Task>? onRequest = null)
+        Func<HttpRequestMessage, Task>? onRequest = null,
+        string baseAddress = "http://localhost")
     {
         MockHandler handler = new(statusCode, responseBody, onRequest);
-        return new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+        return new HttpClient(handler) { BaseAddress = new Uri(baseAddress) };
     }
 
     private sealed class MockHandler : HttpMessageHandler
