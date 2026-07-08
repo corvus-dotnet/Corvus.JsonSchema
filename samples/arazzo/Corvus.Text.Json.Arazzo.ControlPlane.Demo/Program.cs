@@ -25,6 +25,7 @@ using OnboardingApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.ApiEn
 using OnboardingService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.OnboardingService;
 using LedgerApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.ApiEndpointRegistration;
 using LedgerService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.LedgerService;
+using CpEnvironment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -84,6 +85,29 @@ SqliteEnvironmentRunnerAuthorizationStore runnerAuthorizations = await SqliteEnv
 // binds to the secret store (the §13/§13.5 invariant); the runner is the read-only secret consumer. This lights
 // up the /credentials surface (and the CLI + web UI) over the shared store.
 SqliteSourceCredentialStore sourceCredentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
+
+// §18 debug runs: the durable draft-run stores — the captured {document, sources} blob and the SimulationTrace-shaped
+// metadata trace, both shared with any out-of-process runner — plus a governed environment store (drafts run only in
+// an environment whose administrators allow it). The IN-PROCESS runner executes the enqueued $draft debug runs against
+// this host's own /svc backends: a single-process deployment advances debug runs by pumping this runner (started once
+// the host is listening, below). The control plane only marks runs claimable — it never executes (§18).
+SqliteDraftRunStore draftRunStore = await SqliteDraftRunStore.ConnectAsync(connectionString);
+SqliteDraftRunTraceStore draftRunTraceStore = await SqliteDraftRunTraceStore.ConnectAsync(connectionString);
+SqliteEnvironmentStore environmentStore = await SqliteEnvironmentStore.ConnectAsync(connectionString);
+var draftRunner = new InProcessDraftRunner(
+    stateStore,
+    owner: "arazzo-inprocess-draft-runner",
+    // Pinned to the draft-enabled environment: the dispatcher claims only the $draft runs started in THIS environment
+    // (a real deployment runs one runner per environment). This must match the environment debug runs are started in.
+    runnerEnvironment: "development",
+    draftRunStore,
+    draftRunTraceStore,
+    new WorkflowExecutorProvider(),
+    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started.")),
+    // Do NOT host timer waits here: the worker's ResumeDueTimersAsync resumes EVERY due-timer run in the shared store,
+    // including seeded CATALOG runs this draft-only resumer cannot host. A draft run that suspends on a retry timer is
+    // out of scope for the minimum stand-up (the base onboard-customer workflow has none).
+    hostTimerWaits: false);
 
 // The row-security authoring API (§14.2) is served from a security-policy store, seeded with the editable
 // bootstrap rules (tenant-scoped / ABAC superset / intersection) so /security/* is populated out of the box.
@@ -214,17 +238,30 @@ await DemoData.SeedAsync(catalog, stateStore, specsDir);
 // Seed demo source-credential bindings — references only (the §13 invariant: never secret material). Each points
 // at the Vault path the AppHost's provisioner seeds (vault://secret/arazzo/<source>#api-key); the runner resolves
 // it with its read-only token. This populates /credentials (and the CLI + web UI) out of the box.
-foreach (string source in new[] { "onboarding", "ledger" })
+foreach (string environment in new[] { "production", "development" })
 {
-    // AddAsync returns the persisted binding as a pooled document — dispose it (the seed doesn't read it back).
-    using ParsedJsonDocument<SourceCredentialBinding> seeded = await sourceCredentials.AddAsync(
-        new SourceCredentialDefinition(
-            source,
-            "production",
-            SourceCredentialKind.ApiKey,
-            [new SecretReferenceDefinition("api-key", $"vault://secret/arazzo/{source}#api-key")]),
-        "demo",
-        default);
+    foreach (string source in new[] { "onboarding", "ledger" })
+    {
+        // AddAsync returns the persisted binding as a pooled document — dispose it (the seed doesn't read it back).
+        using ParsedJsonDocument<SourceCredentialBinding> seeded = await sourceCredentials.AddAsync(
+            new SourceCredentialDefinition(
+                source,
+                environment,
+                SourceCredentialKind.ApiKey,
+                [new SecretReferenceDefinition("api-key", $"vault://secret/arazzo/{source}#api-key")]),
+            "demo",
+            default);
+    }
+}
+
+// §18: seed a development-class environment that ALLOWS working-copy drafts to run as debug runs (default off
+// everywhere else — crossing that line is an explicit per-environment decision by its administrators). Its two sources
+// are credentialed above, so the run dialog's readiness gate passes and a debug run executes against this host's own
+// /svc backends. The environment store is the governed, reach-scoped one the debug-run seam reads.
+using (ParsedJsonDocument<CpEnvironment> developmentEnvironment = ParsedJsonDocument<CpEnvironment>.Parse(
+    """{"name":"development","displayName":"Development","description":"Developer sandbox — working-copy drafts may run here as debug runs (§18).","allowsDraftRuns":true}"""u8.ToArray()))
+{
+    (await environmentStore.AddAsync(developmentEnvironment.RootElement, "demo", default)).Dispose();
 }
 
 WebApplication app = builder.Build();
@@ -290,7 +327,14 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     accessRequestStore: accessRequests,
     accessRequestSubjectClaimType: "preferred_username",
     selfElevationEligibility: eligibleForSelfElevation,
-    environmentRunnerAuthorizationStore: runnerAuthorizations);
+    environmentRunnerAuthorizationStore: runnerAuthorizations,
+    // §18 debug-run seam: the governed environment store, the run state store, the captured-draft store, the
+    // in-process runner that advances the marked runs, and the durable trace store the dock reads back.
+    environmentStore: environmentStore,
+    workflowStateStore: stateStore,
+    draftRunStore: draftRunStore,
+    draftRunner: draftRunner,
+    draftRunTraceStore: draftRunTraceStore);
 
 // The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
 OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
@@ -301,7 +345,16 @@ LedgerApi.MapApiEndpoints(app.MapGroup("/svc/ledger"), new LedgerService());
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     selfBaseUrl.Value = app.Urls.FirstOrDefault();
+
+    // §18: start the in-process draft runner's pump now the host is listening (its /svc binder needs the base URL). It
+    // claims the Pending and resume-claimable $draft debug runs the control plane marks, advances each one step (or to
+    // its next pause), records the metadata trace, and persists it — a short poll keeps the designer's dock responsive.
+    draftRunner.Start(TimeSpan.FromMilliseconds(200), onError: ex => app.Logger.LogError(ex, "Draft runner pump failed."));
+
     _ = DemoData.RunLiveOnboardingAsync(stateStore, liveResumer, message => app.Logger.LogInformation("{Message}", message));
 });
+
+// Stop the draft runner's pump cleanly on shutdown (best-effort; the process exit would end it regardless).
+app.Lifetime.ApplicationStopping.Register(() => draftRunner.StopAsync().AsTask().GetAwaiter().GetResult());
 
 app.Run();

@@ -217,15 +217,19 @@
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import { createMockControlPlane } from './mock-api.js';
 
-    // The demo runs standalone against the in-memory mock control plane; a real deployment sets a
-    // base-url instead. One working copy from the fixture is seeded so the workspace is not empty.
-    const mock = createMockControlPlane({ latencyMs: 0 });
-    const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    // By default the designer runs standalone against the in-memory mock control plane. Adding ?live points the SAME
+    // designer at a REAL control-plane server on this origin under /arazzo/v1 (the samples/arazzo host, §18): the mock
+    // is not created, and the fixture seed below is skipped — a working copy is created from a catalog version through
+    // the real API instead, and a debug run executes on a real runner against a real dev environment.
+    const isLive = new URLSearchParams(location.search).has('live');
+    const mock = isLive ? null : createMockControlPlane({ latencyMs: 0 });
+    const client = isLive
+      ? new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1' })
+      : new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
 
-    // The mock's authorize URL is a fake that self-completes when FETCHED — a real window.open
-    // would 404 in an actual browser tab. A real deployment omits this: the default opener pops
-    // GitHub's genuine authorize page.
-    const mockAuthOpener = (url) => { mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
+    // The mock's authorize URL is a fake that self-completes when FETCHED — a real window.open would 404 in an actual
+    // browser tab. Live mode omits it: the default opener pops the genuine authorize page.
+    const mockAuthOpener = isLive ? undefined : (url) => { mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
 
     const surface = document.getElementById('surface');
     const textEditor = document.getElementById('text');
@@ -248,7 +252,7 @@
     const acqDialog = document.getElementById('acqdialog');
     opBrowser.client = client;
     acqDialog.client = client;
-    acqDialog.windowOpener = mockAuthOpener;
+    if (mockAuthOpener) { acqDialog.windowOpener = mockAuthOpener; } // live mode uses the default (real) window.open
     const operationIndex = new Map();
     function rebuildOperationIndex() {
       operationIndex.clear();
@@ -669,6 +673,8 @@
     // Seed one working copy from the fixture — with its two sources attached inline, so the rail,
     // the operation browser, and the inspector templates all run on real listSourceOperations data.
     (async () => {
+      // §18 live mode: skip the fixture seed — a working copy is created from a catalog version through the real API.
+      if (isLive) { return; }
       const wc = await client.createWorkingCopy({ name: designerFixture.info.title, document: designerFixture, designerState: { nodes: {} } });
       await client.attachWorkingCopySource(wc.id, 'payments', { document: paymentsOpenApi });
       await client.attachWorkingCopySource(wc.id, 'order-events', { document: orderEventsAsyncApi });

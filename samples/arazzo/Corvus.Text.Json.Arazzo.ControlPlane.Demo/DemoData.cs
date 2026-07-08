@@ -36,6 +36,21 @@ public static class DemoData
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
 
+        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider));
+        return resumer.AsResumer();
+    }
+
+    /// <summary>Builds the transport binder that routes each source's generated client at this host's own
+    /// <c>/svc/&lt;source&gt;</c> backends — the live-execution transport shared by the catalog resumer (<see
+    /// cref="CreateLiveResumer"/>) and the §18 in-process draft runner. In production this is
+    /// <c>SourceCredentialTransports.CreateBinder</c> (credentials resolved as the runner's identity via Vault); here
+    /// it is the self-hosted <c>/svc</c> variant so the sample runs single-process with no external endpoints.</summary>
+    /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
+    /// <returns>The transport binder.</returns>
+    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider)
+    {
+        ArgumentNullException.ThrowIfNull(baseUrlProvider);
+
         // One client per source, each rooted at the host with a handler that prefixes the source's /svc base path —
         // the generated client emits absolute operation paths (e.g. /accounts), so rooting at the host + prefixing in
         // a handler routes them to /svc/<source>/... (a base address WITH a path is dropped by absolute-path resolution).
@@ -50,16 +65,12 @@ public static class DemoData
         // in-process transport satisfies that and would also serve any Tier-1 blocking receive. Shared across runs.
         var messageTransport = new InMemoryMessageTransport();
 
-        var resumer = new HostedWorkflowResumer(
-            catalog,
-            new WorkflowExecutorLoader(),
-            (descriptor, runTags) => new WorkflowTransports(
-                descriptor.Sources.ToDictionary(
-                    source => source,
-                    source => (IApiTransport)new HttpClientApiTransportFactory(ClientFor(source)).CreateTransport(),
-                    StringComparer.Ordinal),
-                descriptor.NeedsMessageTransport ? messageTransport : null));
-        return resumer.AsResumer();
+        return (descriptor, runTags) => new WorkflowTransports(
+            descriptor.Sources.ToDictionary(
+                source => source,
+                source => (IApiTransport)new HttpClientApiTransportFactory(ClientFor(source)).CreateTransport(),
+                StringComparer.Ordinal),
+            descriptor.NeedsMessageTransport ? messageTransport : null);
     }
 
     /// <summary>Executes fresh onboarding runs live, to demonstrate real execution: each creates a Pending run with
@@ -216,7 +227,7 @@ public static class DemoData
 
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
-        (await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, AccessContext.System, default).ConfigureAwait(false)).Document?.Dispose();
+        (await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, securityTags: null, internalTagPrefix: null, AccessContext.System, default).ConfigureAwait(false)).Document?.Dispose();
 
         // Runs across statuses. Faulted runs sit on the steps whose outputs carry the rich shapes, so the
         // resume dialog's "Record outputs" editor shows the union / map / tuple controls — and validates them.
