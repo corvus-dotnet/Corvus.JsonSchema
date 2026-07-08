@@ -320,9 +320,20 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         return this.PersistAsync(default, cancellationToken);
     }
 
+    /// <summary>Gets or sets an optional callback the runner invokes at each durable step checkpoint to mark a §18
+    /// debug step boundary — the point at which a step's recorded API exchanges are complete (typically
+    /// <see cref="RecordingApiTransport.MarkStepBoundary"/>, so a trace assembler can attribute exchanges to steps
+    /// by range). It is <see langword="null"/> for a non-debug run, so an ordinary run pays only a single
+    /// null-check on the checkpoint path — debug support has no allocation or write impact on non-debug runs.</summary>
+    public Action? OnCheckpointed { get; set; }
+
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
     {
+        // §18: mark this step boundary for the (debug-only) exchange recorder before recording the checkpoint — the
+        // exchanges recorded up to now are this step's, across its retries. Null (skipped) for a non-debug run.
+        this.OnCheckpointed?.Invoke();
+
         this.Cursor = cursor;
         this.Status = WorkflowRunStatus.Running;
         this.wait = null;

@@ -312,7 +312,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
         {
-            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, id, exchanges, pausedBeforeStepId: null, cancellationToken).ConfigureAwait(false);
+            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, id, exchanges, pausedBeforeStepId: null, cancellationToken: cancellationToken).ConfigureAwait(false);
             writer.Flush();
         }
 

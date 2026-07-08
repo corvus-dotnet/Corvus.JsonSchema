@@ -30,10 +30,12 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <para>
 /// <b>What is derived, and what is gracefully omitted.</b> Step boundaries come from the checkpoint: each
 /// per-step <c>outputs</c> entry is a completed step, taken in the checkpoint's document (insertion =
-/// execution) order, plus the faulting step for a faulted run. The ordered recorded exchanges are attributed
-/// to those steps one-to-one — exact for the forward-only, one-call-per-step shape the §18 draft-run debugger
-/// targets — with any trailing surplus attached to the last executed step so no exchange is dropped. The
-/// per-criterion <c>successCriteria</c> verdicts and the routing <c>actionTaken</c> are omitted: reconstructing
+/// execution) order, plus the faulting step for a faulted run. The recorded exchanges are attributed to those
+/// steps by the runner's per-step exchange boundaries (§18 R3) when supplied — a step's exchanges are those
+/// recorded before its durable checkpoint, so a step's retries are grouped under it faithfully — or, without
+/// boundaries, by the legacy forward-only one-call-per-step position; either way any trailing surplus attaches
+/// to the last executed step so no exchange is dropped. The per-criterion
+/// <c>successCriteria</c> verdicts and the routing <c>actionTaken</c> are omitted: reconstructing
 /// them needs response bodies or at-source capture (a later increment), and the dock already renders a step
 /// without them. A step that neither produced outputs nor faulted leaves no checkpoint evidence and is not
 /// individually represented; faithful per-step boundaries across loops and branches likewise need at-source
@@ -56,6 +58,9 @@ public static class MetadataTraceAssembler
     /// <see cref="RecordingApiTransport.Exchanges"/>).</param>
     /// <param name="pausedBeforeStepId">For a paused run, the id of the step the run resumes at (the breakpoint
     /// target the runner holds); ignored for any other outcome.</param>
+    /// <param name="stepBoundaries">The runner's recorded per-step exchange boundaries (§18 R3,
+    /// <see cref="RecordingApiTransport.StepBoundaries"/>) used to attribute exchanges to steps by range; when
+    /// <see langword="null"/> or empty, exchanges are attributed by the legacy one-per-step position.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the trace has been written.</returns>
     /// <exception cref="InvalidOperationException">No run with <paramref name="id"/> exists in the store.</exception>
@@ -65,12 +70,13 @@ public static class MetadataTraceAssembler
         WorkflowRunId id,
         IReadOnlyList<RecordedApiExchange> exchanges,
         string? pausedBeforeStepId = null,
+        IReadOnlyList<int>? stepBoundaries = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
         WorkflowCheckpoint checkpoint = await store.LoadAsync(id, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"No run '{id.Value}' exists to assemble a metadata trace for.");
-        WriteTrace(writer, checkpoint.Utf8, exchanges, pausedBeforeStepId);
+        WriteTrace(writer, checkpoint.Utf8, exchanges, pausedBeforeStepId, stepBoundaries);
     }
 
     /// <summary>Writes the metadata trace for a run from its serialized checkpoint and recorded exchanges.</summary>
@@ -79,11 +85,16 @@ public static class MetadataTraceAssembler
     /// <see cref="WorkflowCheckpointSerializer"/> — read only, never modified.</param>
     /// <param name="exchanges">The metadata-only exchanges recorded for the run, in call order.</param>
     /// <param name="pausedBeforeStepId">For a paused run, the id of the step the run resumes at; ignored otherwise.</param>
+    /// <param name="stepBoundaries">The runner's recorded per-step exchange boundaries (§18 R3,
+    /// <see cref="RecordingApiTransport.StepBoundaries"/>) — the cumulative exchange count at each checkpointed
+    /// step — used to attribute exchanges to steps by range (faithful across retries). When <see langword="null"/>
+    /// or empty, exchanges are attributed by the legacy one-per-step position.</param>
     public static void WriteTrace(
         Utf8JsonWriter writer,
         ReadOnlyMemory<byte> checkpointUtf8,
         IReadOnlyList<RecordedApiExchange> exchanges,
-        string? pausedBeforeStepId = null)
+        string? pausedBeforeStepId = null,
+        IReadOnlyList<int>? stepBoundaries = null)
     {
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(exchanges);
@@ -158,12 +169,12 @@ public static class MetadataTraceAssembler
             writer.WriteEndObject();
         }
 
-        WriteSteps(writer, root, status, exchanges);
+        WriteSteps(writer, root, status, exchanges, stepBoundaries);
 
         writer.WriteEndObject();
     }
 
-    private static void WriteSteps(Utf8JsonWriter writer, in JsonElement root, WorkflowRunStatus status, IReadOnlyList<RecordedApiExchange> exchanges)
+    private static void WriteSteps(Utf8JsonWriter writer, in JsonElement root, WorkflowRunStatus status, IReadOnlyList<RecordedApiExchange> exchanges, IReadOnlyList<int>? stepBoundaries)
     {
         var steps = new List<ExecutedStep>();
         root.TryGetProperty("retryCounters"u8, out JsonElement retryCounters);
@@ -195,6 +206,12 @@ public static class MetadataTraceAssembler
             }
         }
 
+        // §18 R3: attribute exchanges to steps by the runner's recorded per-step boundaries when they are present
+        // and aligned (one boundary per checkpointed step; a step that faulted before it checkpointed has none) —
+        // step i's exchanges are the range [boundary[i-1], boundary[i]), faithful across a step's retries. Without
+        // usable boundaries, fall back to the legacy positional one-per-step with trailing surplus on the last step.
+        bool useBoundaries = stepBoundaries is { Count: > 0 } && stepBoundaries.Count >= steps.Count - 1;
+
         writer.WriteStartArray("steps"u8);
         for (int i = 0; i < steps.Count; i++)
         {
@@ -210,17 +227,25 @@ public static class MetadataTraceAssembler
                 step.Outputs.WriteTo(writer);
             }
 
-            // One recorded exchange per executed step, in order; any trailing surplus attaches to the last step.
-            int exchangeCount = i < exchanges.Count ? 1 : 0;
-            if (i == steps.Count - 1 && exchanges.Count > steps.Count)
+            int start;
+            int end;
+            if (useBoundaries)
             {
-                exchangeCount += exchanges.Count - steps.Count;
+                // The last step absorbs any tail past the last boundary (a step that faulted before checkpointing,
+                // or surplus), so no exchange is dropped; an interior step ends at its own boundary.
+                start = i == 0 ? 0 : stepBoundaries![i - 1];
+                end = i == steps.Count - 1 ? exchanges.Count : stepBoundaries![i];
+            }
+            else
+            {
+                start = Math.Min(i, exchanges.Count);
+                end = i == steps.Count - 1 ? exchanges.Count : Math.Min(i + 1, exchanges.Count);
             }
 
-            if (exchangeCount > 0)
+            if (end > start)
             {
                 writer.WriteStartArray("requests"u8);
-                for (int e = i; e < i + exchangeCount; e++)
+                for (int e = start; e < end; e++)
                 {
                     RecordedApiExchange exchange = exchanges[e];
                     writer.WriteStartObject();
