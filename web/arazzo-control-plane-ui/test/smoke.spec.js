@@ -352,3 +352,32 @@ test('§18 debug run: starting against a dev environment pumps get-debug-run to 
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('§18 debug run: a transient fault surfaces ↻ Retry, which recovers the run (R-UI-3b)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await page.locator('#run-inputs-env').selectOption('development');
+  await page.locator('#run-inputs-fault-cb').check(); // opt into the transient-fault illustration
+  await dlg.locator('.ri-run').click();
+
+  // §18 R-UI-3b: validate-order's endpoint is DOWN on the first attempt → the durable run faults (transport-level, not
+  // caught by status-based onFailure) and the dock offers ↻ Retry.
+  await expect(page.locator('#debug-dock')).toBeVisible();
+  await expect(page.locator('#save-status')).toHaveText(/debug run faulted in development/i, { timeout: 5000 });
+  const retry = page.locator('#retry-faulted');
+  await expect(retry).toBeVisible();
+
+  // Retry — the endpoint recovered → the run advances past the fault (no longer faulted), faithfully to a real service.
+  await retry.click();
+  await expect(page.locator('#save-status')).not.toHaveText(/faulted/i, { timeout: 5000 });
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
