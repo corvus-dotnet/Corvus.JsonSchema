@@ -1613,4 +1613,8 @@ test('debug runs (§18): gated start, single-step forward, step-over via Skip, c
 
   const cancelled = await c.cancelDebugRun(wc.id, started.debugRunId);
   assert.equal(cancelled.status, 'cancelled');
+
+  // §18 R5c: delete PURGES the run — its captured draft, metadata trace, and durable run — so it is then 404.
+  assert.equal(await c.deleteDebugRun(wc.id, started.debugRunId), undefined, 'delete returns 204 (no content)');
+  await assert.rejects(() => c.getDebugRun(wc.id, started.debugRunId), (err) => err.status === 404, 'a purged run is gone');
 });

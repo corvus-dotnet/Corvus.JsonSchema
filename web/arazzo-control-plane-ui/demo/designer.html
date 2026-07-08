@@ -1251,7 +1251,13 @@
 
       applyDebugFrame();
     });
-    tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
+    tray.addEventListener('clear-requested', () => {
+      // §18 R-UI-2: clearing a REMOTE debug session PURGES the run — its captured draft, metadata trace, and durable
+      // run die with it (deleteDebugRun, §18 R5c) — distinct from Stop (cancel, which leaves the run inspectable).
+      if (shell.debugRun) { void client.deleteDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); }
+      tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k];
+      document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi();
+    });
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
     tray.addEventListener('trigger-injected', (e) => {
       logEvent('trigger-injected', e.detail);

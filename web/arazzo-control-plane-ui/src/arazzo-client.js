@@ -973,6 +973,11 @@ export class ArazzoControlPlaneClient {
     return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/cancel`, { body: {}, signal: opts.signal });
   }
 
+  /** `deleteDebugRun` — purge the run's captured draft, metadata trace, and durable run (§18 R5c); 204, idempotent. */
+  deleteDebugRun(id, debugRunId, opts = {}) {
+    return this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}`, { signal: opts.signal });
+  }
+
   /**
    * `getWorkingCopySource` — one attachment WITH its stored inline document (or registry
    * reference) — the full payload needed to re-attach it (restore after a detach).
