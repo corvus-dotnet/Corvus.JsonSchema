@@ -122,6 +122,7 @@
           <div id="run-inputs-env-hint" style="font-size:11px; color:var(--arazzo-muted,#6b7280);" hidden>
             A DEBUG RUN (§18): durable and forward-only in that environment — the runner resolves the credentials; step over uses the runs Skip; capture the trace to replay with time travel.
           </div>
+          <div id="run-inputs-readiness" style="font-size:11px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; color:var(--arazzo-muted,#6b7280);" hidden></div>
           <label id="run-inputs-fault" style="font-size:11px; color:var(--arazzo-muted,#6b7280); display:flex; gap:6px; align-items:flex-start; line-height:1.3;" hidden>
             <input type="checkbox" id="run-inputs-fault-cb" style="margin:2px 0 0 0;">
             <span>⚡ Simulate a transient fault — the first step's endpoint is down on the first attempt, so you can try fault-remediation (↻ Retry recovers it, like a real service that came back).</span>
@@ -1358,8 +1359,43 @@
       return draftRunEnvironments;
     }
 
+    // §18 R-UI-3c: per-source credential readiness — which sources have a credential bound in each environment, so the
+    // run dialog shows "payments ✓ · order-events ✗" BEFORE the attempt (starting with gaps is a 409 at the runner).
+    let credentialCoverage = null;
+    async function loadCredentialCoverage() {
+      if (credentialCoverage) return credentialCoverage;
+      const map = new Map();
+      try {
+        for await (const page of client.listCredentialsPaged({ limit: 200 })) {
+          for (const b of page.credentials ?? []) {
+            if (!map.has(b.sourceName)) map.set(b.sourceName, new Set());
+            map.get(b.sourceName).add(b.environment);
+          }
+        }
+      } catch { /* no credentials:read → surface nothing rather than a false negative */ }
+      credentialCoverage = map;
+      return map;
+    }
+
+    function renderReadiness(container, envName, coverage) {
+      const sources = (doc.sourceDescriptions ?? []).map((s) => s.name);
+      if (!envName || !sources.length) { container.hidden = true; container.replaceChildren(); return; }
+      container.hidden = false;
+      const label = document.createElement('span');
+      label.textContent = `Credentials in ${envName}: `;
+      const parts = sources.map((s) => {
+        const ok = !!coverage.get(s)?.has(envName);
+        const span = document.createElement('span');
+        span.textContent = `${s} ${ok ? '✓' : '✗'}`;
+        span.style.color = ok ? 'var(--arazzo-status-online,#16a34a)' : 'var(--arazzo-status-faulted,#d4351c)';
+        return span;
+      });
+      container.replaceChildren(label, ...parts.flatMap((p, i) => (i ? [document.createTextNode(' · '), p] : [p])));
+    }
+
     async function askForInputs(schema) {
       const envs = await loadDraftRunEnvironments();
+      const coverage = await loadCredentialCoverage();
       return new Promise((resolve) => {
         const dlg = document.getElementById('run-inputs-dialog');
         const editor = document.getElementById('run-inputs-editor');
@@ -1370,7 +1406,12 @@
         envSelect.innerHTML = '<option value="">Mocks (simulated)</option>'
           + envs.map((e) => `<option value="${e.name}">${e.displayName ?? e.name} — debug run (§18)</option>`).join('');
         // The transient-fault toggle + hint only apply to a real (durable) debug run, not the canned simulator.
-        const syncEnv = () => { const dbg = !!envSelect.value; document.getElementById('run-inputs-env-hint').hidden = !dbg; faultLabel.hidden = !dbg; };
+        const syncEnv = () => {
+          const dbg = !!envSelect.value;
+          document.getElementById('run-inputs-env-hint').hidden = !dbg;
+          faultLabel.hidden = !dbg;
+          renderReadiness(document.getElementById('run-inputs-readiness'), envSelect.value, coverage);
+        };
         envSelect.onchange = syncEnv;
         syncEnv();
         editor.seed = sessionInputs ?? undefined;
