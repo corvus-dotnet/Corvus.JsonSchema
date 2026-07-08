@@ -73,6 +73,7 @@ public sealed class DraftRunManagement
         DraftRunStart start,
         JsonElement inputs,
         SecurityTagSet securityTags = default,
+        WorkflowPauseConfig? pause = null,
         string? correlationId = null,
         TagSet tags = default,
         CancellationToken cancellationToken = default)
@@ -115,6 +116,10 @@ public sealed class DraftRunManagement
             tags,
             scopedTags,
             start.Environment);
+
+        // §18 R5: persist the debugger pause on the Pending run so the runner that claims it honours the stops on its
+        // first advance. The control plane never executes the run; a runner does. Null leaves the run unpaused.
+        run.SetPause(pause);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
