@@ -44,6 +44,7 @@ public sealed class RecordingApiTransport : IApiTransport
 {
     private readonly IApiTransport inner;
     private readonly List<RecordedApiExchange> exchanges = [];
+    private readonly List<int> stepBoundaries = [];
     private readonly Lock gate = new();
 
     /// <summary>Initializes a new instance of the <see cref="RecordingApiTransport"/> class.</summary>
@@ -64,6 +65,34 @@ public sealed class RecordingApiTransport : IApiTransport
             {
                 return this.exchanges.ToArray();
             }
+        }
+    }
+
+    /// <summary>Gets the cumulative recorded-exchange count at each marked §18 step boundary, in order: boundary
+    /// <c>i</c> is the total exchanges recorded through the <c>i</c>-th checkpointed step, so that step's exchanges
+    /// are the range <c>[boundary i-1, boundary i)</c> of <see cref="Exchanges"/> (boundary <c>-1</c> being 0). A
+    /// trace assembler attributes exchanges to steps by these ranges — faithful across a step's retries — instead
+    /// of by position.</summary>
+    public IReadOnlyList<int> StepBoundaries
+    {
+        get
+        {
+            lock (this.gate)
+            {
+                return this.stepBoundaries.ToArray();
+            }
+        }
+    }
+
+    /// <summary>Records the current recorded-exchange count as a §18 step boundary. The runner calls this at each
+    /// per-step durable checkpoint (via the run's checkpoint hook), so the exchanges a step made are exactly those
+    /// recorded since the previous boundary — every attempt of a retried step is recorded before that step
+    /// checkpoints, so all its attempts fall inside its boundary range.</summary>
+    public void MarkStepBoundary()
+    {
+        lock (this.gate)
+        {
+            this.stepBoundaries.Add(this.exchanges.Count);
         }
     }
 
