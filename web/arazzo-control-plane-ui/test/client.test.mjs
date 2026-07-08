@@ -1617,4 +1617,8 @@ test('debug runs (§18): gated start, single-step forward, step-over via Skip, c
   // §18 R5c: delete PURGES the run — its captured draft, metadata trace, and durable run — so it is then 404.
   assert.equal(await c.deleteDebugRun(wc.id, started.debugRunId), undefined, 'delete returns 204 (no content)');
   await assert.rejects(() => c.getDebugRun(wc.id, started.debugRunId), (err) => err.status === 404, 'a purged run is gone');
+
+  // §18 R-UI-3: a breakpoint rides pause.beforeSteps — the run advances to the named step and stops before it.
+  const bp = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', inputs: { petId: 'p-2' }, pause: { beforeSteps: ['adopt'] } });
+  assert.equal((await pump(bp.debugRunId)).status, 'paused', 'a breakpoint pauses the run before the named step');
 });
