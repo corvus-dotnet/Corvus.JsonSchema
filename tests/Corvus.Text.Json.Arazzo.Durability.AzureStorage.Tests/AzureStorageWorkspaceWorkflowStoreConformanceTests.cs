@@ -4,6 +4,8 @@
 
 using Azure;
 using Azure.Data.Tables;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Corvus.Text.Json.Arazzo.Durability.Conformance;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -14,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests;
 /// <summary>
 /// Runs the shared <see cref="WorkspaceWorkflowStoreConformance"/> suite against
 /// <see cref="AzureStorageWorkspaceWorkflowStore"/> over the Azurite emulator in a container. Each test gets an empty
-/// store (the working-copies table is dropped and re-provisioned).
+/// store (the working-copies blob container and index table are both drained and re-provisioned).
 /// </summary>
 [TestClass]
 [TestCategory("integration")]
@@ -22,6 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests;
 public sealed class AzureStorageWorkspaceWorkflowStoreConformanceTests : WorkspaceWorkflowStoreConformance
 {
     private const string WorkspaceWorkflowsTable = "arazzoWorkspaceWorkflows";
+    private const string WorkspaceWorkflowsContainer = "arazzo-workspace-workflows";
     private static AzuriteContainer container = null!;
 
     [ClassInitialize]
@@ -45,15 +48,26 @@ public sealed class AzureStorageWorkspaceWorkflowStoreConformanceTests : Workspa
     /// <inheritdoc/>
     protected override async ValueTask<IWorkspaceWorkflowStore> CreateStoreAsync(TimeProvider timeProvider)
     {
-        var tableService = new TableServiceClient(container.GetConnectionString());
-        await AzureStorageWorkspaceWorkflowStore.PrepareAsync(tableService);
+        string connectionString = container.GetConnectionString();
 
-        TableClient client = tableService.GetTableClient(WorkspaceWorkflowsTable);
-        await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+        // Pin the blob API version the Azurite emulator supports (its default is the newest, which Azurite rejects).
+        var blobService = new BlobServiceClient(connectionString, new BlobClientOptions(BlobClientOptions.ServiceVersion.V2024_11_04));
+        var tableService = new TableServiceClient(connectionString);
+        await AzureStorageWorkspaceWorkflowStore.PrepareAsync(blobService, tableService);
+
+        // Drain the index table and the document container so each test starts empty.
+        TableClient table = tableService.GetTableClient(WorkspaceWorkflowsTable);
+        await foreach (TableEntity entity in table.QueryAsync<TableEntity>())
         {
-            await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            await table.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
         }
 
-        return await AzureStorageWorkspaceWorkflowStore.ConnectAsync(tableService, timeProvider);
+        BlobContainerClient blobs = blobService.GetBlobContainerClient(WorkspaceWorkflowsContainer);
+        await foreach (BlobItem blob in blobs.GetBlobsAsync())
+        {
+            await blobs.DeleteBlobIfExistsAsync(blob.Name);
+        }
+
+        return await AzureStorageWorkspaceWorkflowStore.ConnectAsync(blobService, tableService, timeProvider);
     }
 }

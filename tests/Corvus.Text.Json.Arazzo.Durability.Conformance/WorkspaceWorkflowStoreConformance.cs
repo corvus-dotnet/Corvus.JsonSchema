@@ -317,9 +317,54 @@ public abstract class WorkspaceWorkflowStoreConformance
         detached!.RootElement.Sources.GetArrayLength().ShouldBe(0);
     }
 
+    [TestMethod]
+    public async Task A_document_larger_than_the_table_property_limit_round_trips()
+    {
+        // A working copy's Arazzo document (plus attached sources) routinely exceeds the 64 KB Azure Table
+        // per-property limit, so every backend must round-trip an arbitrarily large document verbatim. The AzureStorage
+        // backend spills the document to blob storage for exactly this reason; the SQL/document backends store it in a
+        // large column. This is the regression guard that a backend never silently truncates or rejects a big document.
+        IWorkspaceWorkflowStore store = await this.NewStoreAsync();
+        string id;
+        WorkflowEtag etag;
+        using (ParsedJsonDocument<WorkspaceWorkflow> seed = WorkspaceWorkflow.Draft("huge", BigDocUtf8("v1", 100_000), default, null, null, default))
+        using (ParsedJsonDocument<WorkspaceWorkflow> added = await store.AddAsync(seed.RootElement, "alice", default))
+        {
+            id = added.RootElement.IdValue;
+            etag = added.RootElement.EtagValue;
+            DocJson(added.RootElement).Length.ShouldBeGreaterThan(65_536);
+        }
+
+        // The whole large document comes back on a single read, verbatim.
+        using (ParsedJsonDocument<WorkspaceWorkflow>? fetched = await store.GetAsync(id, AccessContext.System, default))
+        {
+            fetched.ShouldNotBeNull();
+            string doc = DocJson(fetched!.RootElement);
+            doc.Length.ShouldBeGreaterThan(65_536);
+            doc.ShouldContain("marker-v1");
+        }
+
+        // A large document also round-trips through a save.
+        using (ParsedJsonDocument<WorkspaceWorkflow> save = WorkspaceWorkflow.Draft("huge", BigDocUtf8("v2", 120_000), default, null, null, default))
+        using (ParsedJsonDocument<WorkspaceWorkflow>? saved = await store.UpdateAsync(id, save.RootElement, etag, "bob", AccessContext.System, default))
+        {
+            saved.ShouldNotBeNull();
+            DocJson(saved!.RootElement).ShouldContain("marker-v2");
+        }
+
+        // And it lists (the list reach-filters and fetches the page's documents).
+        using WorkspaceWorkflowPage page = await store.ListAsync(AccessContext.System, 1000, default, default);
+        page.WorkingCopies.Select(w => w.IdValue).ShouldBe([id]);
+    }
+
     // A minimal, marker-bearing Arazzo document for round-trip / replacement assertions.
     private static ReadOnlyMemory<byte> DocUtf8(string marker)
         => Encoding.UTF8.GetBytes($$"""{"arazzo":"1.1.0","x-marker":"{{marker}}"}""");
+
+    // A marker-bearing Arazzo document padded (via an extension property) past a target byte size, to exceed the 64 KB
+    // Azure Table per-property limit and exercise the AzureStorage backend's blob spill-over.
+    private static ReadOnlyMemory<byte> BigDocUtf8(string version, int sizeBytes)
+        => Encoding.UTF8.GetBytes($$"""{"arazzo":"1.1.0","x-marker":"marker-{{version}}","x-bulk":"{{new string('x', sizeBytes)}}"}""");
 
     // Serializes a working copy's Arazzo document back to a JSON string (the raw stored bytes) for content assertions.
     private static string DocJson(WorkspaceWorkflow workingCopy)
