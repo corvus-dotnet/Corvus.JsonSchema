@@ -271,8 +271,33 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         run.OnCheckpointed = recording.MarkStepBoundary;
         try
         {
-            WorkflowRunResultKind kind = await this.resumer.ResumeAsync(run, cancellationToken).ConfigureAwait(false);
-            await this.AssembleTraceAsync(run.Id, recording, cancellationToken).ConfigureAwait(false);
+            WorkflowRunResultKind kind;
+            try
+            {
+                kind = await this.resumer.ResumeAsync(run, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // A debug run whose captured document does not compile — or whose execution fails hard — must NOT abort
+                // the pump's batch (which would block every other claimable run) or be retried forever. Fault it
+                // (terminal, so the dispatcher moves on and it is never re-claimed); the developer sees the reason on
+                // the run. It stays isolated to this run — the dispatcher sees a normal outcome and advances the rest.
+                await run.FaultAsync(string.Empty, attempt: 1, ex.Message, cancellationToken).ConfigureAwait(false);
+                kind = WorkflowRunResultKind.Faulted;
+            }
+
+            // Assemble the trace for whatever state the run reached (executed, paused, or faulted-before-a-step).
+            // Best-effort for a faulted run that produced no checkpoint — its persisted fault is the durable record,
+            // and a trace-assembly hiccup must not re-throw and abort the pump's batch.
+            try
+            {
+                await this.AssembleTraceAsync(run.Id, recording, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception) when (kind == WorkflowRunResultKind.Faulted)
+            {
+                // Nothing to assemble; the fault on the run is the record.
+            }
+
             return kind;
         }
         finally
