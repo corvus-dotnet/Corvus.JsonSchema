@@ -39,6 +39,22 @@ internal static class DraftRunHost
             null);
     }
 
+    /// <summary>Builds one <see cref="HttpClient"/> per named source, each rooted at the control plane host with the
+    /// source's <c>/svc/&lt;source&gt;</c> prefix — the endpoint set the §13.5 credential-aware binder applies each
+    /// source's Vault-resolved secret to (the demo routes at the control plane's own /svc backends; the credential is
+    /// real, the endpoint is the demo stand-in for a real one).</summary>
+    /// <param name="sourcesBaseUrl">The control plane host the source clients are rooted at.</param>
+    /// <param name="sources">The source names to build clients for.</param>
+    /// <returns>A source-name → client map for <c>SourceCredentialTransports.CreateBinder</c>.</returns>
+    public static Dictionary<string, HttpClient> CreateSvcClients(string sourcesBaseUrl, params string[] sources)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(sourcesBaseUrl);
+        return sources.ToDictionary(
+            source => source,
+            source => new HttpClient(new SvcPrefixHandler($"/svc/{source}") { InnerHandler = new HttpClientHandler() }) { BaseAddress = new Uri(sourcesBaseUrl) },
+            StringComparer.Ordinal);
+    }
+
     // Prefixes the source's /svc base path onto each outgoing request (the control plane host root is the client's base address).
     private sealed class SvcPrefixHandler(string prefix) : DelegatingHandler
     {
