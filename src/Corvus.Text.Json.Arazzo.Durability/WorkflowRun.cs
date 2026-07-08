@@ -279,10 +279,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public ValueTask EnqueueAsync(CancellationToken cancellationToken) => this.PersistAsync(default, cancellationToken);
 
     /// <summary>
-    /// Sets the §18 debugger pause configuration for the NEXT advance of this run (the imminent re-entry of the
-    /// executor) and records the cursor the advance starts at, so a pause fires only at a step boundary PAST it.
-    /// Ephemeral and per-advance: a run instance is loaded fresh for each advance, so an advance on which
-    /// <see cref="SetPause"/> is not called behaves exactly like an ordinary run (the default — no pause).
+    /// Sets the §18 debugger pause configuration for the run and records the cursor the advance starts at, so a pause
+    /// fires only at a step boundary PAST it. The pause is serialized with the run state on the next persist (§18 R1),
+    /// so a runner that later claims and loads the run restores and honours it — this is how the control plane hands a
+    /// runner a paused advance (§18 R5). A run that was never given a pause behaves as an ordinary run (no pause).
     /// </summary>
     /// <param name="pause">The pause configuration to honour for the next advance, or <see langword="null"/> to
     /// <em>clear</em> any persisted pause-hold so the advance runs to completion (a bare resume of a paused run).</param>

@@ -1182,15 +1182,17 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             StartedBy: this.actor);
         JsonElement inputs = body.Inputs.IsNotUndefined() ? (JsonElement)body.Inputs : default;
         SecurityTagSet securityTags = SecurityTagSet.FromTags(this.access.InternalTags());
-        WorkflowRunId runId = await this.draftRunManagement!.StartAsync(start, inputs, securityTags, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        // Drive the enqueued run to its first pause/completion/fault through the in-process runner (honouring any
-        // requested pause). The step ids come from the captured (chosen-first) document, so they map to cursor space.
+        // §18 R5: enqueue a Pending run carrying the requested pause; a RUNNER (this process's pump, or a separate
+        // process) claims and advances it. The control plane never executes. The step ids come from the captured
+        // (chosen-first) document, so they map to cursor space.
+        WorkflowPauseConfig? pause;
         using (ParsedJsonDocument<JsonElement> capturedDocument = ParsedJsonDocument<JsonElement>.Parse(documentBytes))
         {
-            WorkflowPauseConfig? pause = TranslatePause(body.Pause, StepIds(capturedDocument.RootElement));
-            await this.DriveAsync(runId, pause, cancellationToken).ConfigureAwait(false);
+            pause = TranslatePause(body.Pause, StepIds(capturedDocument.RootElement));
         }
+
+        WorkflowRunId runId = await this.draftRunManagement!.StartAsync(start, inputs, securityTags, pause, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
         if (view is not { } created)
@@ -1295,11 +1297,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         }
         else
         {
-            // A pause reconfiguration for the next advance, or a bare resume that continues — driven directly.
+            // §18 R5: a pause reconfiguration for the next advance, or a bare resume that continues — the control
+            // plane MARKS the run resume-claimable with the requested pause (a bare resume clears the pause-hold);
+            // a runner claims and advances it. The control plane never executes.
             WorkflowPauseConfig? pause = body.Pause.IsNotUndefined()
                 ? TranslatePause(body.Pause, await this.CapturedStepIdsAsync(runId, cancellationToken).ConfigureAwait(false))
                 : null;
-            await this.DriveAsync(runId, pause, cancellationToken).ConfigureAwait(false);
+            await this.MarkResumeClaimableAsync(runId, pause, cancellationToken).ConfigureAwait(false);
         }
 
         ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
@@ -1361,11 +1365,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         return record is { } r && r.RootElement.WorkingCopyIdValue == workingCopyId;
     }
 
-    /// <summary>Drives one advance of a debug run through the in-process runner's recording+tracing resumer (design
-    /// §18 slice 3e-2c). A paused run is not dispatch-claimable, so the stepper loads the run itself and awaits the
-    /// runner's resumer directly (NOT <c>RunPendingAsync</c>): the resumer records the run's metadata-only exchanges,
-    /// honours the per-advance pause (→ Suspended + Pause wait), and assembles+caches the trace the view reads back.</summary>
-    private async ValueTask DriveAsync(WorkflowRunId runId, WorkflowPauseConfig? pause, CancellationToken cancellationToken)
+    /// <summary>Marks a §18 debug run resume-claimable with the requested pause (design §18 R5): the control plane
+    /// persists the pause-hold (or clears it on a bare resume) and stamps the resume-requested marker, then returns —
+    /// it never executes the run. A runner surfaces the run through its dispatch index, claims it, applies the
+    /// persisted pause, advances it, and persists the trace; the UI polls <c>get-debug-run</c> for the new state.</summary>
+    private async ValueTask MarkResumeClaimableAsync(WorkflowRunId runId, WorkflowPauseConfig? pause, CancellationToken cancellationToken)
     {
         using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.workflowStateStore!, runId, this.timeProvider, cancellationToken).ConfigureAwait(false);
         if (run is null)
@@ -1373,11 +1377,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return;
         }
 
-        // A non-null pause reconfigures the stops for this advance; a bare resume (null) clears the run's persisted
-        // pause-hold (a prior after-each-step stop) so it runs to completion instead of re-pausing at the restored stops.
-        run.SetPause(pause);
-
-        await this.draftRunner!.Resumer(run, cancellationToken).ConfigureAwait(false);
+        await run.RequestResumeAsync(pause, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Builds the <c>DebugRun</c> view from the durable run: the audit tuple + executed workflow id from the
