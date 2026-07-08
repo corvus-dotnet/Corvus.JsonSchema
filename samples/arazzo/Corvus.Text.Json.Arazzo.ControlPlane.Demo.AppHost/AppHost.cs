@@ -91,7 +91,11 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithEnvironment("Runner__SourcesBaseUrl", controlplane.GetEndpoint("http"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
-    .WaitForCompletion(vaultInit)
+    // Depend on Vault being reachable, not on the DCP detecting the one-shot provisioner's exit. The runner resolves
+    // credentials resiliently at bind time (and its startup self-check tolerates a not-yet-provisioned token), so it
+    // does not need to hard-block on vault-init's completion — which is also more robust than coupling a long-running
+    // worker to a run-once container's terminal signal. (vault-init still runs and provisions; it just isn't a gate.)
+    .WaitFor(vault)
     // Aspire-managed HTTP endpoint (no hardcoded port). The runner is an internal worker, so Aspire proxies this
     // endpoint; letting Aspire assign the port (rather than the old launchSettings applicationUrl=5280) is what stops
     // the app from binding the same port as the DCP proxy — the collision that was crashing the runner on startup.
