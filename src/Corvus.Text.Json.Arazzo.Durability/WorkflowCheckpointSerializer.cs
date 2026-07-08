@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Frozen;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
@@ -345,13 +346,22 @@ public static class WorkflowCheckpointSerializer
             if (root.TryGetProperty("pause"u8, out JsonElement pauseElement) && pauseElement.ValueKind == JsonValueKind.Object)
             {
                 bool afterEachStep = pauseElement.TryGetProperty("afterEachStep"u8, out JsonElement afterEachStepElement) && afterEachStepElement.GetBoolean();
-                var breakpoints = new HashSet<int>();
-                if (pauseElement.TryGetProperty("breakpoints"u8, out JsonElement breakpointsElement) && breakpointsElement.ValueKind == JsonValueKind.Array)
+
+                // Allocate the breakpoint set only when there are actually breakpoints. The common debug shape is a
+                // single-step (afterEachStep, no breakpoints), which shares the cached empty set — no per-resume-load
+                // HashSet. (A non-debug run has no pause object at all and never reaches this branch.)
+                IReadOnlySet<int> breakpoints = FrozenSet<int>.Empty;
+                if (pauseElement.TryGetProperty("breakpoints"u8, out JsonElement breakpointsElement)
+                    && breakpointsElement.ValueKind == JsonValueKind.Array
+                    && breakpointsElement.GetArrayLength() > 0)
                 {
+                    var cursors = new HashSet<int>();
                     foreach (JsonElement breakpoint in breakpointsElement.EnumerateArray())
                     {
-                        breakpoints.Add(breakpoint.GetInt32());
+                        cursors.Add(breakpoint.GetInt32());
                     }
+
+                    breakpoints = cursors;
                 }
 
                 pause = new WorkflowPauseConfig(afterEachStep, breakpoints);
