@@ -2748,6 +2748,22 @@ export function createMockControlPlane(options = {}) {
       const wc = workingCopies.find((x) => x.id === decodeURIComponent(dbg[1]));
       if (!wc) return problem(404, 'Working copy not found');
 
+      // §18 R-UI-3b2: a minimal RFC 6902 applier for StatePatch remediation — /inputs/* and /stepOutputs/<step>/*
+      // paths over the run context (add/replace/remove), enough for the dock's "correct a value and continue".
+      const applyStatePatch = (run, patch) => {
+        for (const op of Array.isArray(patch) ? patch : []) {
+          const m = /^\/(inputs|stepOutputs)\/(.+)$/.exec(op?.path ?? '');
+          if (!m) continue;
+          const root = m[1] === 'inputs' ? (run.inputs ??= {}) : (run.overrides ??= {});
+          const segs = m[2].split('/').map((s) => s.replace(/~1/g, '/').replace(/~0/g, '~'));
+          const key = segs.pop();
+          let target = root;
+          for (const s of segs) { target = (target[s] ??= {}); }
+          if (op?.op === 'remove') delete target[key];
+          else target[key] = op?.value;
+        }
+      };
+
       // The interim executor (§18 slice 2): the stateless simulator plays the environment's
       // runner — the trace shape, pause semantics, and resume verbs are the real contract;
       // real transport arrives with the engine seam (slice 3).
@@ -2863,6 +2879,11 @@ export function createMockControlPlane(options = {}) {
       if (dbg[3] === 'resume' && method === 'POST') {
         if (['completed', 'cancelled'].includes(run.status)) return problem(409, 'Not resumable', `The debug run is ${run.status}.`);
         const action = body?.action;
+        const faultedStepId = run.trace?.fault?.stepId ?? run.trace?.steps?.at(-1)?.stepId;
+        // A remediation cycle passes, so a TRANSIENT (endpoint-down) fault clears — the re-run step now succeeds.
+        const recoverTransientFault = () => {
+          if (faultedStepId) run.attempts = { ...(run.attempts ?? {}), [faultedStepId]: (run.attempts?.[faultedStepId] ?? 0) + 1 };
+        };
         if (action?.mode === 'Skip') {
           // Step over: the paused/faulted step's outputs are PROVIDED; it does not execute.
           const wf = wc.document.workflows.find((w) => w.workflowId === run.workflowId);
@@ -2871,10 +2892,12 @@ export function createMockControlPlane(options = {}) {
           if (stepId) run.overrides[stepId] = action.skipOutputs ?? {};
         } else if (action?.mode === 'Rewind') {
           run.cursor = Math.max(0, (action.targetCursor ?? 0)); // deliberate re-execution forward from here
+          recoverTransientFault();
         } else if (action?.mode === 'RetryFaultedStep') {
-          // The endpoint recovered: bump the faulted step's attempt so its transient-down state clears next execute.
-          const faultedStepId = run.trace?.fault?.stepId ?? run.trace?.steps?.at(-1)?.stepId;
-          if (faultedStepId) run.attempts = { ...(run.attempts ?? {}), [faultedStepId]: (run.attempts?.[faultedStepId] ?? 0) + 1 };
+          recoverTransientFault(); // the endpoint recovered — the retried step's transient-down state clears
+        } else if (action?.mode === 'StatePatch') {
+          applyStatePatch(run, action.patch); // correct the run context (inputs / step outputs), then continue
+          recoverTransientFault();
         }
         if (body?.pause !== undefined) run.pause = body.pause;
         // §18 R5: mark the run resume-claimable and return the un-advanced state; the runner (mock) advances it on the
