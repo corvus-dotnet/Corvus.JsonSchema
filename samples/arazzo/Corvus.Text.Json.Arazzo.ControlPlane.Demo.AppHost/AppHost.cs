@@ -61,6 +61,9 @@ var keycloak = builder.AddKeycloak("keycloak")
 // validation (§16.3) and waits for the realm import. Externally reachable; OTel flows to the dashboard.
 var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo>("controlplane")
     .WithEnvironment("ConnectionStrings__workflowstore", sharedStore)
+    // §18 multi-process: a SEPARATE runner process hosts $draft debug runs, so the control plane must NOT run its own
+    // in-process draft pump (else both would claim the same runs). The control plane only MARKS runs claimable.
+    .WithEnvironment("ControlPlane__HostDraftRunnerInProcess", "false")
     .WithReference(keycloak)
     .WaitFor(keycloak)
     .WithExternalHttpEndpoints()
@@ -74,6 +77,10 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithEnvironment("ConnectionStrings__workflowstore", sharedStore)
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     .WithEnvironment("VAULT_TOKEN", vaultRunnerReadOnlyToken)
+    // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
+    // executing each against the control plane's own /svc source backends (the demo stand-in for real endpoints).
+    .WithEnvironment("Runner__Environment", "development")
+    .WithEnvironment("Runner__SourcesBaseUrl", controlplane.GetEndpoint("http"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
     .WaitForCompletion(vaultInit)

@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
     <IsPackable>false</IsPackable>
+    <!-- §18: the runner compiles a captured draft at runtime through WorkflowExecutorProvider (durable mode); the
+         Roslyn compile needs the reference assemblies preserved, exactly as the control-plane host requires. -->
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +20,10 @@
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Sqlite\Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <!-- The §13 secret consumer: the HashiCorp Vault ISecretResolver (vault://), pulls in VaultSharp transitively. -->
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Vault\Corvus.Text.Json.Arazzo.Durability.Vault.csproj" />
+    <!-- §18 out-of-process draft hosting: the durable executor provider (compiles a captured draft) and the HTTP
+         transport factory the runner executes debug runs through. -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
   </ItemGroup>
 
 </Project>
