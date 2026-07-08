@@ -349,7 +349,13 @@ app.Lifetime.ApplicationStarted.Register(() =>
     // §18: start the in-process draft runner's pump now the host is listening (its /svc binder needs the base URL). It
     // claims the Pending and resume-claimable $draft debug runs the control plane marks, advances each one step (or to
     // its next pause), records the metadata trace, and persists it — a short poll keeps the designer's dock responsive.
-    draftRunner.Start(TimeSpan.FromMilliseconds(200), onError: ex => app.Logger.LogError(ex, "Draft runner pump failed."));
+    // UNLESS a SEPARATE runner process hosts $draft (the multi-process topology): set
+    // ControlPlane__HostDraftRunnerInProcess=false so the two runners never both claim the same runs. The runner
+    // instance is still constructed above (the debug-run endpoints require it to be wired); it is simply not pumped here.
+    if (builder.Configuration.GetValue("ControlPlane:HostDraftRunnerInProcess", true))
+    {
+        draftRunner.Start(TimeSpan.FromMilliseconds(200), onError: ex => app.Logger.LogError(ex, "Draft runner pump failed."));
+    }
 
     _ = DemoData.RunLiveOnboardingAsync(stateStore, liveResumer, message => app.Logger.LogInformation("{Message}", message));
 });
