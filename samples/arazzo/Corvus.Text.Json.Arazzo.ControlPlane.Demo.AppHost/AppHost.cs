@@ -35,6 +35,10 @@ const string provisionScript =
     "set -e; " +
     "until vault status >/dev/null 2>&1; do echo 'waiting for vault'; sleep 1; done; " +
     "echo 'path \"secret/data/arazzo/*\" { capabilities = [\"read\"] }' | vault policy write arazzo-runner-ro -; " +
+    // Idempotent: the orchestrator may run this one-shot provisioner more than once (a retry), and a fixed token id
+    // cannot be created twice. Revoke any prior token first (a no-op on the first run) so the create always succeeds
+    // with the current policy; the runner, which starts only after this completes, always gets a valid token.
+    $"vault token revoke {vaultRunnerReadOnlyToken} 2>/dev/null || true; " +
     $"vault token create -id={vaultRunnerReadOnlyToken} -policy=arazzo-runner-ro -period=24h; " +
     "vault kv put secret/arazzo/onboarding api-key=demo-onboarding-key; " +
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
@@ -66,6 +70,10 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__HostDraftRunnerInProcess", "false")
     .WithReference(keycloak)
     .WaitFor(keycloak)
+    // Aspire-managed HTTP endpoint (no hardcoded port): Aspire assigns the port, proxies it, and injects
+    // ASPNETCORE_URLS so the app binds what Aspire chose — this is what makes the health check and the runner's
+    // WithReference/GetEndpoint resolve to the real address without launchSettings pinning a fixed port.
+    .WithHttpEndpoint()
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 
@@ -84,6 +92,10 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithReference(controlplane)
     .WaitFor(controlplane)
     .WaitForCompletion(vaultInit)
+    // Aspire-managed HTTP endpoint (no hardcoded port). The runner is an internal worker, so Aspire proxies this
+    // endpoint; letting Aspire assign the port (rather than the old launchSettings applicationUrl=5280) is what stops
+    // the app from binding the same port as the DCP proxy — the collision that was crashing the runner on startup.
+    .WithHttpEndpoint()
     .WithHttpHealthCheck("/health");
 
 builder.Build().Run();
