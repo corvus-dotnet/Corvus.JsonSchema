@@ -158,12 +158,18 @@ public sealed class ControlPlaneDebugRunApiTests
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
         {
             debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
-            run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
-            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
             run.RootElement.GetProperty("environment").GetString().ShouldBe("development");
             run.RootElement.GetProperty("workflowId").GetString().ShouldBe("adopt");
             run.RootElement.GetProperty("documentEtag").GetString().ShouldNotBeNullOrEmpty();
             run.RootElement.GetProperty("startedBy").GetString().ShouldNotBeNullOrEmpty();
+        }
+
+        // §18 R5: the control plane enqueued the run paused-after-each-step; the runner advances it exactly one step
+        // and reports paused, carrying the audit tuple and the host-executed metadata trace (one step + its exchange).
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
+        {
+            run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
+            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
             Stj.JsonElement trace = run.RootElement.GetProperty("trace");
             trace.GetProperty("outcome").GetString().ShouldBe("paused");
             trace.GetProperty("pausedBefore").GetString().ShouldBe("adopt-pet");
@@ -174,19 +180,11 @@ public sealed class ControlPlaneDebugRunApiTests
             steps[0].GetProperty("requests")[0].GetProperty("method").GetString().ShouldBe("get");
         }
 
-        // GET reads the same state back.
-        HttpResponseMessage fetched = await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/debug-runs/{debugRunId}", "{}", "workspace:read");
-        fetched.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await fetched.Content.ReadAsStringAsync()))
-        {
-            run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
-            run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
-        }
-
-        // A plain resume carries the single-step pause off (bare resume): step 2 of 2 completes the run.
+        // A plain resume carries the single-step pause off (bare resume); the runner then advances step 2 of 2 to
+        // completion.
         HttpResponseMessage resumed = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
         resumed.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await resumed.Content.ReadAsStringAsync()))
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
             run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
@@ -231,7 +229,14 @@ public sealed class ControlPlaneDebugRunApiTests
         HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
             """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
         started.StatusCode.ShouldBe(HttpStatusCode.Created);
-        using Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync());
+        string debugRunId;
+        using (Stj.JsonDocument s = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
+        {
+            debugRunId = s.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        // §18 R5: the control plane enqueued the run; the runner advances it. Pump, then poll the completed state.
+        using Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId);
         run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
         run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
 
@@ -258,6 +263,11 @@ public sealed class ControlPlaneDebugRunApiTests
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
         {
             debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        // §18 R5: the runner executes get-pet and stops before adopt-pet at the breakpoint.
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
+        {
             run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
             run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(1);
             Stj.JsonElement steps = run.RootElement.GetProperty("trace").GetProperty("steps");
@@ -269,7 +279,7 @@ public sealed class ControlPlaneDebugRunApiTests
         // Bare resume (no breakpoint carried forward) runs off the end to completion.
         HttpResponseMessage completed = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
         completed.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await completed.Content.ReadAsStringAsync()))
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
             run.RootElement.GetProperty("cursor").GetInt32().ShouldBe(2);
@@ -290,6 +300,12 @@ public sealed class ControlPlaneDebugRunApiTests
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
         {
             debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        // §18 R5: the runner advances the run; get-pet's criterion fails against the 500 so it faults (a resumable
+        // terminal). The fault-remediation resume verbs below still drive in-process (R5b converts them to async).
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
+        {
             run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
             run.RootElement.GetProperty("trace").GetProperty("fault").GetProperty("stepId").GetString().ShouldBe("get-pet");
         }
@@ -375,6 +391,11 @@ public sealed class ControlPlaneDebugRunApiTests
         using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
         {
             debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        // §18 R5: the runner advances one step and pauses.
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
+        {
             run.RootElement.GetProperty("status").GetString().ShouldBe("paused");
         }
 
@@ -484,6 +505,28 @@ public sealed class ControlPlaneDebugRunApiTests
 
     private sealed class Scoped(WebApplication app, HttpClient client, InProcessDraftRunner? runner) : IAsyncDisposable
     {
+        // §18 R5: the control plane only marks a debug run claimable; a runner advances it out-of-band. In these
+        // single-process tests THIS is that runner — pump it to advance every marked run (start / resume) to its next
+        // pause, completion, or fault before asserting the state the UI would poll get-debug-run for.
+        public async Task PumpAsync()
+        {
+            if (runner is not null)
+            {
+                await runner.RunPendingAsync();
+            }
+        }
+
+        // §18 R5: pump the runner (advancing every marked run to its next pause / completion / fault), then read the
+        // debug run back exactly as the UI would poll get-debug-run for the new state and trace.
+        public async Task<Stj.JsonDocument> PumpAndGetAsync(string workingCopyId, string debugRunId)
+        {
+            await this.PumpAsync();
+            HttpResponseMessage got = await this.SendJsonAsync(
+                HttpMethod.Get, $"/workspace/workflows/{workingCopyId}/debug-runs/{debugRunId}", "{}", "workspace:read");
+            got.StatusCode.ShouldBe(HttpStatusCode.OK);
+            return Stj.JsonDocument.Parse(await got.Content.ReadAsStringAsync());
+        }
+
         public async Task<string> CreateWorkingCopyAsync(string workflowDoc, string? sourceDoc)
         {
             HttpResponseMessage created = await this.SendJsonAsync(
