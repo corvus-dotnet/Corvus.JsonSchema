@@ -60,6 +60,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     // for debug runs to be offered; absent any of them the debug-run endpoints fail closed (DebugRunsNotOffered).
     private readonly IWorkflowStateStore? workflowStateStore;
     private readonly IDraftRunStore? draftRunStore;
+    private readonly IDraftRunTraceStore? draftRunTraceStore;
     private readonly ISecuredWorkflowManagement? debugRunManagement;
     private readonly InProcessDraftRunner? draftRunner;
     private readonly DraftRunManagement? draftRunManagement;
@@ -159,10 +160,12 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
     /// <paramref name="draftRunner"/> exposes, so its native resume records+traces. Debug runs fail closed when
     /// <see langword="null"/>.</param>
     /// <param name="draftRunner">The optional in-process, environment-pinned draft-run runner the §18 stepper drives
-    /// each advance through (its <see cref="InProcessDraftRunner.Resumer"/>) and reads each trace from (its
-    /// <see cref="InProcessDraftRunner.TryGetTrace"/>). Interactive debug runs require it (a paused run is not
-    /// dispatch-claimable); debug runs fail closed when <see langword="null"/>.</param>
-    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null, IWorkflowStateStore? workflowStateStore = null, IDraftRunStore? draftRunStore = null, ISecuredWorkflowManagement? debugRunManagement = null, InProcessDraftRunner? draftRunner = null)
+    /// each advance through (its <see cref="InProcessDraftRunner.Resumer"/>). Interactive debug runs require it (a
+    /// paused run is not dispatch-claimable); debug runs fail closed when <see langword="null"/>.</param>
+    /// <param name="draftRunTraceStore">The durable trace store §18 <c>get-debug-run</c> reads each run's assembled
+    /// metadata trace from (§18 R4) — written by the runner, possibly in a different process. When <see langword="null"/>
+    /// the trace is omitted from the debug-run view.</param>
+    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null, IWorkflowStateStore? workflowStateStore = null, IDraftRunStore? draftRunStore = null, ISecuredWorkflowManagement? debugRunManagement = null, InProcessDraftRunner? draftRunner = null, IDraftRunTraceStore? draftRunTraceStore = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -178,6 +181,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         this.actor = actor;
         this.workflowStateStore = workflowStateStore;
         this.draftRunStore = draftRunStore;
+        this.draftRunTraceStore = draftRunTraceStore;
         this.debugRunManagement = debugRunManagement;
         this.draftRunner = draftRunner;
 
@@ -1369,10 +1373,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             return;
         }
 
-        if (pause is { } pauseConfig)
-        {
-            run.SetPause(pauseConfig);
-        }
+        // A non-null pause reconfigures the stops for this advance; a bare resume (null) clears the run's persisted
+        // pause-hold (a prior after-each-step stop) so it runs to completion instead of re-pausing at the restored stops.
+        run.SetPause(pause);
 
         await this.draftRunner!.Resumer(run, cancellationToken).ConfigureAwait(false);
     }
@@ -1407,8 +1410,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
         string status = MapStatus(detail.Status, detail.Wait);
 
-        // pausedBefore = the step the run resumes at (the step at the current cursor). The runner's cached trace
-        // carries pausedBefore:null (it holds no step-id↔cursor map); the handler DOES, so it injects it here.
+        // pausedBefore = the step the run resumes at (the step at the current cursor). The persisted trace carries
+        // pausedBefore:null (the runner holds no step-id↔cursor map); the handler DOES, so it injects it here.
         string? pausedBefore = null;
         if (status == "paused")
         {
@@ -1416,7 +1419,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             pausedBefore = detail.Cursor >= 0 && detail.Cursor < stepIds.Count ? stepIds[detail.Cursor] : null;
         }
 
-        ReadOnlyMemory<byte>? trace = this.draftRunner!.TryGetTrace(runId, out ReadOnlyMemory<byte> traceUtf8) ? traceUtf8 : null;
+        // §18 R4: read the run's metadata trace from the durable trace store (the runner persisted it, possibly in a
+        // different process), not an in-process cache. Absent a wired store, the view simply omits the trace.
+        ReadOnlyMemory<byte>? trace = this.draftRunTraceStore is { } traceStore
+            ? await traceStore.GetAsync(runId, cancellationToken).ConfigureAwait(false)
+            : null;
 
         var view = new DebugRunView(
             runId.Value, workflowId, environment, status, detail.Cursor, trace, pausedBefore,

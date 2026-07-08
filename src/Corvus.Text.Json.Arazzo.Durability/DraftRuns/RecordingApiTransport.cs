@@ -11,13 +11,13 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// An <see cref="IApiTransport"/> decorator that records a metadata-only exchange — the HTTP method, the
-/// resolved pre-auth request path, and the response status code — for every call it forwards to the wrapped
-/// transport (workflow-designer design §18 slice 3e-2a). It records no request or response body and no
-/// headers, so a <em>real</em> host-executed debug run yields the same <c>SimulationTrace</c>-shaped record
-/// the designer's debug dock already renders for a simulated run, without recording bodies (the ratified §18
-/// body posture: bodies are a later per-environment opt-in). Wrap the credential-aware transport the runner
-/// binds for a draft run — the decorator sees only the resolved operation path, never the authenticated
-/// request the inner transport builds.
+/// resolved pre-auth request path, and the response status code — into a shared <see cref="DraftRunRecording"/>
+/// for every call it forwards to the wrapped transport (workflow-designer design §18 slice 3e-2a). It records no
+/// request or response body and no headers, so a <em>real</em> host-executed debug run yields the same
+/// <c>SimulationTrace</c>-shaped record the designer's debug dock already renders for a simulated run, without
+/// recording bodies (the ratified §18 body posture: bodies are a later per-environment opt-in). Wrap the
+/// credential-aware transport the runner binds for a draft run — the decorator sees only the resolved operation
+/// path, never the authenticated request the inner transport builds.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -29,71 +29,34 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <see cref="System.Net.Http.HttpRequestMessage"/> the inner transport builds).
 /// </para>
 /// <para>
-/// Recorded exchanges are appended under a lock and <see cref="Exchanges"/> exposes them in order. A durable
-/// workflow run issues its API calls sequentially — Arazzo 1.x has no parallel steps — so an exchange is
-/// appended once its status is known and the order reflects the run's call path.
+/// Every source's decorator for one run shares a single <see cref="DraftRunRecording"/>, so a multi-source run's
+/// exchanges are appended in global call order. A durable workflow run issues its API calls sequentially — Arazzo
+/// 1.x has no parallel steps — so an exchange is appended once its status is known and the recording's order
+/// reflects the run's call path.
 /// </para>
 /// <para>
 /// The decorator does not own the wrapped transport in the sense of altering its lifetime beyond forwarding:
 /// <see cref="DisposeAsync"/> disposes the inner transport (the resumer disposes the bound transport per run),
-/// but the recorded <see cref="Exchanges"/> remain readable afterwards so a trace can be assembled once the
+/// but the shared <see cref="DraftRunRecording"/> remains readable afterwards so a trace can be assembled once the
 /// run has finished.
 /// </para>
 /// </remarks>
 public sealed class RecordingApiTransport : IApiTransport
 {
     private readonly IApiTransport inner;
-    private readonly List<RecordedApiExchange> exchanges = [];
-    private readonly List<int> stepBoundaries = [];
-    private readonly Lock gate = new();
+    private readonly DraftRunRecording recording;
 
     /// <summary>Initializes a new instance of the <see cref="RecordingApiTransport"/> class.</summary>
     /// <param name="inner">The transport each call is forwarded to (typically the credential-aware transport
     /// the runner binds for the draft run's source).</param>
-    public RecordingApiTransport(IApiTransport inner)
+    /// <param name="recording">The shared per-run recording each exchange is appended to (one instance per run,
+    /// shared across the run's sources so exchanges keep global call order).</param>
+    public RecordingApiTransport(IApiTransport inner, DraftRunRecording recording)
     {
         ArgumentNullException.ThrowIfNull(inner);
+        ArgumentNullException.ThrowIfNull(recording);
         this.inner = inner;
-    }
-
-    /// <summary>Gets a snapshot of the exchanges recorded so far, in call order.</summary>
-    public IReadOnlyList<RecordedApiExchange> Exchanges
-    {
-        get
-        {
-            lock (this.gate)
-            {
-                return this.exchanges.ToArray();
-            }
-        }
-    }
-
-    /// <summary>Gets the cumulative recorded-exchange count at each marked §18 step boundary, in order: boundary
-    /// <c>i</c> is the total exchanges recorded through the <c>i</c>-th checkpointed step, so that step's exchanges
-    /// are the range <c>[boundary i-1, boundary i)</c> of <see cref="Exchanges"/> (boundary <c>-1</c> being 0). A
-    /// trace assembler attributes exchanges to steps by these ranges — faithful across a step's retries — instead
-    /// of by position.</summary>
-    public IReadOnlyList<int> StepBoundaries
-    {
-        get
-        {
-            lock (this.gate)
-            {
-                return this.stepBoundaries.ToArray();
-            }
-        }
-    }
-
-    /// <summary>Records the current recorded-exchange count as a §18 step boundary. The runner calls this at each
-    /// per-step durable checkpoint (via the run's checkpoint hook), so the exchanges a step made are exactly those
-    /// recorded since the previous boundary — every attempt of a retried step is recorded before that step
-    /// checkpoints, so all its attempts fall inside its boundary range.</summary>
-    public void MarkStepBoundary()
-    {
-        lock (this.gate)
-        {
-            this.stepBoundaries.Add(this.exchanges.Count);
-        }
+        this.recording = recording;
     }
 
     /// <inheritdoc/>
@@ -171,11 +134,7 @@ public sealed class RecordingApiTransport : IApiTransport
         where TResponse : struct, IApiResponse<TResponse>
     {
         TResponse response = await pending.ConfigureAwait(false);
-        lock (this.gate)
-        {
-            this.exchanges.Add(new RecordedApiExchange(method, path, response.StatusCode));
-        }
-
+        this.recording.Record(new RecordedApiExchange(method, path, response.StatusCode));
         return response;
     }
 }

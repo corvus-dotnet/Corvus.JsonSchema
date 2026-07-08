@@ -134,15 +134,15 @@ public sealed class DraftRunMetadataTraceTests
     {
         using var endpoint = new LocalHttpEndpoint(200, """{"name":"Fido"}""");
         var runStore = new InMemoryWorkflowStateStore();
-        var recorders = new List<RecordingApiTransport>();
+        var recording = new DraftRunRecording();
 
-        WorkflowRunId id = await RunDraftAsync(runStore, endpoint, recorders);
+        WorkflowRunId id = await RunDraftAsync(runStore, endpoint, recording);
 
         using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
         // The recording decorator captured exactly the one metadata-only exchange the run made.
-        List<RecordedApiExchange> exchanges = AllExchanges(recorders);
+        IReadOnlyList<RecordedApiExchange> exchanges = recording.Exchanges;
         exchanges.Count.ShouldBe(1);
         exchanges[0].Method.ShouldBe(OperationMethod.Get);
         exchanges[0].Path.ShouldBe("/pets/42");
@@ -177,14 +177,14 @@ public sealed class DraftRunMetadataTraceTests
     {
         using var endpoint = new LocalHttpEndpoint(500, """{"error":"boom"}""");
         var runStore = new InMemoryWorkflowStateStore();
-        var recorders = new List<RecordingApiTransport>();
+        var recording = new DraftRunRecording();
 
-        WorkflowRunId id = await RunDraftAsync(runStore, endpoint, recorders);
+        WorkflowRunId id = await RunDraftAsync(runStore, endpoint, recording);
 
         using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, id);
         faulted!.Status.ShouldBe(WorkflowRunStatus.Faulted);
 
-        List<RecordedApiExchange> exchanges = AllExchanges(recorders);
+        IReadOnlyList<RecordedApiExchange> exchanges = recording.Exchanges;
         exchanges.Count.ShouldBe(1);
         exchanges[0].StatusCode.ShouldBe(500);
 
@@ -225,7 +225,8 @@ public sealed class DraftRunMetadataTraceTests
         var mock = new MockApiTransport();
         mock.SetResponse(OperationMethod.Post, "/accounts", 201, """{"accountId":"acc-42"}""");
         mock.SetResponse(OperationMethod.Post, "/accounts/{accountId}/identity", 200, """{"score":0.92}""");
-        var recorder = new RecordingApiTransport(mock);
+        var recording = new DraftRunRecording();
+        var recorder = new RecordingApiTransport(mock, recording);
 
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(
@@ -252,7 +253,7 @@ public sealed class DraftRunMetadataTraceTests
             paused.Wait!.Value.Kind.ShouldBe(WorkflowWaitKind.Pause);
         }
 
-        IReadOnlyList<RecordedApiExchange> exchanges = recorder.Exchanges;
+        IReadOnlyList<RecordedApiExchange> exchanges = recording.Exchanges;
         exchanges.Count.ShouldBe(1);
 
         // The runner that set the breakpoint knows the step it paused before; the assembler renders it verbatim.
@@ -281,7 +282,7 @@ public sealed class DraftRunMetadataTraceTests
     }
 
     // ── Composition: run the single-step $draft through the recording decorator over a real HttpClientTransport. ──
-    private static async Task<WorkflowRunId> RunDraftAsync(InMemoryWorkflowStateStore runStore, LocalHttpEndpoint endpoint, List<RecordingApiTransport> recorders)
+    private static async Task<WorkflowRunId> RunDraftAsync(InMemoryWorkflowStateStore runStore, LocalHttpEndpoint endpoint, DraftRunRecording recording)
     {
         var drafts = new InMemoryDraftRunStore();
         var management = new DraftRunManagement(runStore, drafts);
@@ -289,7 +290,7 @@ public sealed class DraftRunMetadataTraceTests
         WorkflowRunId id = await management.StartAsync(DraftStart(), inputs.RootElement);
 
         using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
-        using var resumer = new DraftWorkflowResumer(drafts, new WorkflowExecutorProvider(durable: true), Binder(httpClient, recorders));
+        using var resumer = new DraftWorkflowResumer(drafts, new WorkflowExecutorProvider(durable: true), Binder(httpClient, recording));
         var dispatcher = new WorkflowDispatcher(runStore, "runner-dev", runnerEnvironment: "development");
 
         int dispatched = await dispatcher.DispatchClaimableAsync([DraftRuns.RunWorkflowId], resumer.AsResumer(), default);
@@ -307,17 +308,15 @@ public sealed class DraftRunMetadataTraceTests
         StartedBy: "alice");
 
     // Binds each declared source to a RecordingApiTransport wrapping a fresh HttpClientTransport over the shared,
-    // test-owned client. Every recorder is captured so the test can read its metadata-only exchanges after the run
-    // (the resumer disposes the transports per run; the recorded exchanges outlive disposal).
-    private static WorkflowTransportBinder Binder(HttpClient client, List<RecordingApiTransport> recorders)
+    // test-owned client, all appending to one shared recording so the test can read the run's metadata-only exchanges
+    // after the run (the resumer disposes the transports per run; the shared recording outlives disposal).
+    private static WorkflowTransportBinder Binder(HttpClient client, DraftRunRecording recording)
         => (WorkflowDescriptor descriptor, SecurityTagSet runTags) =>
         {
             var apiTransports = new Dictionary<string, IApiTransport>(StringComparer.Ordinal);
             foreach (string source in descriptor.Sources)
             {
-                var recorder = new RecordingApiTransport(new HttpClientTransport(client, disposeClient: false));
-                recorders.Add(recorder);
-                apiTransports[source] = recorder;
+                apiTransports[source] = new RecordingApiTransport(new HttpClientTransport(client, disposeClient: false), recording);
             }
 
             return new WorkflowTransports(apiTransports, null);
@@ -337,16 +336,6 @@ public sealed class DraftRunMetadataTraceTests
 
     private static CatalogMetadata Meta() => new(new CatalogOwner("Team", "team@example.com"), "alice");
 
-    private static List<RecordedApiExchange> AllExchanges(IEnumerable<RecordingApiTransport> recorders)
-    {
-        var all = new List<RecordedApiExchange>();
-        foreach (RecordingApiTransport recorder in recorders)
-        {
-            all.AddRange(recorder.Exchanges);
-        }
-
-        return all;
-    }
 
     private static async Task<ParsedJsonDocument<JsonElement>> AssembleAsync(IWorkflowStateStore store, WorkflowRunId id, IReadOnlyList<RecordedApiExchange> exchanges, string? pausedBefore = null)
     {

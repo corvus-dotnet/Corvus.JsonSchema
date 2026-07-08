@@ -84,7 +84,8 @@ public static class ControlPlaneEndpointExtensions
         GitHubBroker? gitHubBroker = null,
         IWorkflowStateStore? workflowStateStore = null,
         IDraftRunStore? draftRunStore = null,
-        InProcessDraftRunner? draftRunner = null)
+        InProcessDraftRunner? draftRunner = null,
+        IDraftRunTraceStore? draftRunTraceStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -180,7 +181,7 @@ public static class ControlPlaneEndpointExtensions
             : null;
         var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(
             wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,
-            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner);
+            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner, draftRunTraceStore: draftRunTraceStore);
 
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the

@@ -419,16 +419,18 @@ public sealed class ControlPlaneDebugRunApiTests
         var workspaceStore = new Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows.InMemoryWorkspaceWorkflowStore();
 
         InMemoryDraftRunStore? drafts = null;
+        InMemoryDraftRunTraceStore? traceStore = null;
         InProcessDraftRunner? runner = null;
         if (withRunner)
         {
             drafts = new InMemoryDraftRunStore();
+            traceStore = new InMemoryDraftRunTraceStore();
             MockApiTransport mock = transport!;
             WorkflowTransportBinder binder = (WorkflowDescriptor descriptor, SecurityTagSet runTags) =>
                 new WorkflowTransports(
                     descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)mock, StringComparer.Ordinal),
                     null);
-            runner = new InProcessDraftRunner(store, "runner-dev", "development", drafts, SharedProvider, binder);
+            runner = new InProcessDraftRunner(store, "runner-dev", "development", drafts, traceStore, SharedProvider, binder);
         }
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
@@ -449,7 +451,8 @@ public sealed class ControlPlaneDebugRunApiTests
             workflowSimulator: SharedSimulator,
             workflowStateStore: withRunner ? store : null,
             draftRunStore: drafts,
-            draftRunner: runner);
+            draftRunner: runner,
+            draftRunTraceStore: traceStore);
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient(), runner);
     }

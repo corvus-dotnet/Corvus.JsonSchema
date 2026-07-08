@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Collections.Concurrent;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.OpenApi;
@@ -38,19 +37,19 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// id), and is invoked <em>after</em> an <c>await</c> inside the resume — so it cannot itself key recorders by run.
 /// Rather than widen <see cref="DraftWorkflowResumer"/>'s surface, the correlation is done one level out, at the
 /// <see cref="WorkflowResumer"/> delegate the dispatcher and worker actually call: that delegate establishes a
-/// per-run recording sink in an <see cref="AsyncLocal{T}"/>, drives the resume (the shared recording binder reads
-/// the ambient sink and deposits this run's recorders into it — <see cref="AsyncLocal{T}"/> flows down through the
-/// awaited resume and never leaks up to the dispatcher, so sequential and even concurrent pumps stay isolated),
-/// then assembles and caches the trace from the run plus exactly that run's recorders. No change to
-/// <see cref="DraftWorkflowResumer"/>, <see cref="RecordingApiTransport"/>, or <see cref="MetadataTraceAssembler"/>
-/// was needed.
+/// per-run <see cref="DraftRunRecording"/> in an <see cref="AsyncLocal{T}"/> and wires the run's
+/// <see cref="WorkflowRun.OnCheckpointed"/> hook to its step-boundary marker, drives the resume (the shared recording binder reads
+/// the ambient recording and wraps each source's transport in a <see cref="RecordingApiTransport"/> that appends to
+/// it (<see cref="AsyncLocal{T}"/> flows down through the awaited resume and never leaks up to the dispatcher, so
+/// sequential and even concurrent pumps stay isolated), then assembles the trace from the run plus that recording
+/// and persists it to the trace store.
 /// </para>
 /// <para>
-/// <b>The trace cache is in-process and ephemeral.</b> Assembled traces live in an in-memory, thread-safe map keyed
-/// by run id and are lost when the runner is disposed. This matches the in-process-runner scope: the process that
-/// advanced the run is the process that answers <c>get-debug-run</c> for it. A durable, cross-process draft trace
-/// (persisted so a different process can read it) is a deliberately-later increment and is <em>not</em> added here
-/// — there is no store, no fan-out, no persisted trace.
+/// <b>The trace is persisted durably (§18 R4).</b> Each run's assembled metadata trace is written to the injected
+/// <see cref="IDraftRunTraceStore"/>, keyed by run id, so a control plane in a <em>different</em> process reads it
+/// (the multi-process debug-run topology). In a single-process deployment the trace store is the in-memory one, so
+/// the same code path serves the live demo and the container-free tests
+/// — there is no separate in-process trace cache.
 /// </para>
 /// <para>
 /// <b>Pumping.</b> <see cref="RunPendingAsync"/> is the pump: it claims and advances one batch and is independently
@@ -65,13 +64,13 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     private static readonly string[] DraftHosting = [DraftRuns.RunWorkflowId];
 
     private readonly IWorkflowStateStore store;
+    private readonly IDraftRunTraceStore traceStore;
     private readonly WorkflowTransportBinder baseBinder;
     private readonly DraftWorkflowResumer resumer;
     private readonly WorkflowDispatcher dispatcher;
     private readonly WorkflowWorker? worker;
     private readonly WorkflowResumer tracingResumer;
-    private readonly ConcurrentDictionary<string, ReadOnlyMemory<byte>> traces = new(StringComparer.Ordinal);
-    private readonly AsyncLocal<List<RecordingApiTransport>?> currentRecording = new();
+    private readonly AsyncLocal<DraftRunRecording?> currentRecording = new();
     private readonly Lock loopGate = new();
     private CancellationTokenSource? loopCts;
     private Task? loop;
@@ -84,6 +83,9 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     /// <param name="runnerEnvironment">The single deployment environment this runner serves (design §5.5/§18); draft
     /// dispatch is fail-closed and requires it, so it must be non-empty.</param>
     /// <param name="drafts">The draft-run store the captured drafts are resolved from.</param>
+    /// <param name="traceStore">The durable trace store the runner persists each run's assembled metadata trace to
+    /// (§18 R2), so a control plane in a <em>different</em> process reads it. In a single-process deployment this is
+    /// the in-memory trace store, so the same code path serves both.</param>
     /// <param name="provider">The durable-mode executor provider that compiles a captured draft.</param>
     /// <param name="binder">The per-run transport binder each run executes through — the credential-aware
     /// <c>SourceCredentialTransports.CreateBinder</c> binder in production, or a caller-supplied binder in tests. The
@@ -101,6 +103,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         string owner,
         string runnerEnvironment,
         IDraftRunStore drafts,
+        IDraftRunTraceStore traceStore,
         IWorkflowExecutorProvider provider,
         WorkflowTransportBinder binder,
         WorkflowResumer? inner = null,
@@ -112,10 +115,12 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         ArgumentException.ThrowIfNullOrEmpty(owner);
         ArgumentException.ThrowIfNullOrEmpty(runnerEnvironment);
         ArgumentNullException.ThrowIfNull(drafts);
+        ArgumentNullException.ThrowIfNull(traceStore);
         ArgumentNullException.ThrowIfNull(provider);
         ArgumentNullException.ThrowIfNull(binder);
 
         this.store = store;
+        this.traceStore = traceStore;
         this.baseBinder = binder;
         this.resumer = new DraftWorkflowResumer(drafts, provider, this.RecordingBinder, inner, maxCachedExecutors);
         this.dispatcher = new WorkflowDispatcher(store, owner, timeProvider, runnerEnvironment: runnerEnvironment);
@@ -152,13 +157,6 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     /// records+traces through the same path. This exposes existing behaviour; it drives no dispatch, lease, or claim.
     /// </summary>
     public WorkflowResumer Resumer => this.tracingResumer;
-
-    /// <summary>Gets the latest assembled metadata trace for a run, if this runner has advanced it since starting.</summary>
-    /// <param name="id">The run id.</param>
-    /// <param name="traceUtf8">The <c>SimulationTrace</c>-shaped metadata trace as UTF-8 JSON, when one is cached.</param>
-    /// <returns><see langword="true"/> when a trace is cached for <paramref name="id"/>.</returns>
-    public bool TryGetTrace(WorkflowRunId id, out ReadOnlyMemory<byte> traceUtf8)
-        => this.traces.TryGetValue(id.Value, out traceUtf8);
 
     /// <summary>
     /// Starts the optional self-driving background loop: it pumps <see cref="RunPendingAsync"/> every
@@ -265,57 +263,63 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     // its just-persisted checkpoint plus exactly the recorders bound for it.
     private async ValueTask<WorkflowRunResultKind> RunAndTraceAsync(WorkflowRun run, CancellationToken cancellationToken)
     {
-        var recorders = new List<RecordingApiTransport>();
-        this.currentRecording.Value = recorders;
+        var recording = new DraftRunRecording();
+        this.currentRecording.Value = recording;
+
+        // §18 R3: mark a step boundary at each durable checkpoint, so the assembler attributes exchanges to steps by
+        // range (faithful across a step's retries). Always a debug run here, so the hook is always wired.
+        run.OnCheckpointed = recording.MarkStepBoundary;
         try
         {
             WorkflowRunResultKind kind = await this.resumer.ResumeAsync(run, cancellationToken).ConfigureAwait(false);
-            await this.AssembleTraceAsync(run.Id, recorders, cancellationToken).ConfigureAwait(false);
+            await this.AssembleTraceAsync(run.Id, recording, cancellationToken).ConfigureAwait(false);
             return kind;
         }
         finally
         {
+            run.OnCheckpointed = null;
             this.currentRecording.Value = null;
         }
     }
 
     // The shared binder the DraftWorkflowResumer is constructed with: it wraps every API transport the base binder
-    // yields in a RecordingApiTransport and deposits them into the ambient per-run sink (established by RunAndTraceAsync)
-    // so the run's exchanges are recorded and reachable once the resume returns. The message transport is passed through
-    // untouched — its lifetime is the binder's, not the resumer's, and it is not recorded here.
+    // yields in a RecordingApiTransport that appends to the ambient per-run recording (established by RunAndTraceAsync),
+    // so the run's exchanges keep global call order across sources and are reachable once the resume returns. The
+    // message transport is passed through untouched — its lifetime is the binder's, not the resumer's, and it is not
+    // recorded here.
     private WorkflowTransports RecordingBinder(WorkflowDescriptor descriptor, SecurityTagSet runTags)
     {
         WorkflowTransports bound = this.baseBinder(descriptor, runTags);
-        List<RecordingApiTransport>? sink = this.currentRecording.Value;
-        var recording = new Dictionary<string, IApiTransport>(bound.ApiTransports.Count, StringComparer.Ordinal);
+        DraftRunRecording? recording = this.currentRecording.Value;
+        if (recording is null)
+        {
+            // The binder was invoked outside a traced resume (no ambient recording); forward the transports untouched.
+            return bound;
+        }
+
+        var recordingTransports = new Dictionary<string, IApiTransport>(bound.ApiTransports.Count, StringComparer.Ordinal);
         foreach (KeyValuePair<string, IApiTransport> pair in bound.ApiTransports)
         {
-            var recorder = new RecordingApiTransport(pair.Value);
-            sink?.Add(recorder);
-            recording[pair.Key] = recorder;
+            recordingTransports[pair.Key] = new RecordingApiTransport(pair.Value, recording);
         }
 
-        return new WorkflowTransports(recording, bound.MessageTransport);
+        return new WorkflowTransports(recordingTransports, bound.MessageTransport);
     }
 
-    private async ValueTask AssembleTraceAsync(WorkflowRunId id, List<RecordingApiTransport> recorders, CancellationToken cancellationToken)
+    private async ValueTask AssembleTraceAsync(WorkflowRunId id, DraftRunRecording recording, CancellationToken cancellationToken)
     {
-        // A draft run issues its calls sequentially (Arazzo 1.x has no parallel steps); the assembler attributes the
-        // ordered exchanges to the executed steps one-to-one, so the per-source recorders are concatenated in bind
-        // order — the same shape slice 3e-2a established for a real host-executed run.
-        var exchanges = new List<RecordedApiExchange>();
-        foreach (RecordingApiTransport recorder in recorders)
-        {
-            exchanges.AddRange(recorder.Exchanges);
-        }
+        // Attribute the ordered exchanges to the executed steps by the per-step boundaries the checkpoint hook marked
+        // (§18 R3), then persist the trace durably so a control plane in a different process reads it (§18 R4).
+        IReadOnlyList<RecordedApiExchange> exchanges = recording.Exchanges;
+        IReadOnlyList<int> stepBoundaries = recording.StepBoundaries;
 
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
         {
-            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, id, exchanges, pausedBeforeStepId: null, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, id, exchanges, pausedBeforeStepId: null, stepBoundaries: stepBoundaries, cancellationToken: cancellationToken).ConfigureAwait(false);
             writer.Flush();
         }
 
-        this.traces[id.Value] = buffer.WrittenSpan.ToArray();
+        await this.traceStore.PutAsync(id, buffer.WrittenMemory, cancellationToken).ConfigureAwait(false);
     }
 }

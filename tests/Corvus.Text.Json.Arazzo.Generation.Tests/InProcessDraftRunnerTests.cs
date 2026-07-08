@@ -79,11 +79,12 @@ public sealed class InProcessDraftRunnerTests
         using var endpoint = new LocalHttpEndpoint(200, """{"name":"Fido"}""");
         var runStore = new InMemoryWorkflowStateStore();
         var drafts = new InMemoryDraftRunStore();
+        var traceStore = new InMemoryDraftRunTraceStore();
         WorkflowRunId id = await StartDraftAsync(runStore, drafts, environment: "development");
 
         using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
         await using var runner = new InProcessDraftRunner(
-            runStore, "runner-dev", "development", drafts, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
+            runStore, "runner-dev", "development", drafts, traceStore, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
 
         int advanced = await runner.RunPendingAsync();
 
@@ -98,8 +99,9 @@ public sealed class InProcessDraftRunnerTests
 
         // The ephemeral trace cache holds the run's metadata trace: outcome, outputs, the executed step, and its
         // single metadata-only exchange (method/path/status), with no request or response body anywhere.
-        runner.TryGetTrace(id, out ReadOnlyMemory<byte> traceUtf8).ShouldBeTrue();
-        using ParsedJsonDocument<JsonElement> traceDoc = ParsedJsonDocument<JsonElement>.Parse(traceUtf8);
+        ReadOnlyMemory<byte>? traceUtf8 = await traceStore.GetAsync(id, default);
+        traceUtf8.HasValue.ShouldBeTrue();
+        using ParsedJsonDocument<JsonElement> traceDoc = ParsedJsonDocument<JsonElement>.Parse(traceUtf8.Value);
         JsonElement trace = traceDoc.RootElement;
 
         trace.GetProperty("outcome"u8).GetString().ShouldBe("completed");
@@ -125,6 +127,7 @@ public sealed class InProcessDraftRunnerTests
         using var endpoint = new LocalHttpEndpoint(200, """{"name":"Fido"}""");
         var runStore = new InMemoryWorkflowStateStore();
         var drafts = new InMemoryDraftRunStore();
+        var traceStore = new InMemoryDraftRunTraceStore();
 
         // Two independent draft runs enqueued for the same environment; one pump must advance both and cache a
         // distinct trace per run id (the correlation of each run with its own recorded exchanges).
@@ -133,7 +136,7 @@ public sealed class InProcessDraftRunnerTests
 
         using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
         await using var runner = new InProcessDraftRunner(
-            runStore, "runner-dev", "development", drafts, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
+            runStore, "runner-dev", "development", drafts, traceStore, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
 
         int advanced = await runner.RunPendingAsync();
 
@@ -143,8 +146,9 @@ public sealed class InProcessDraftRunnerTests
             using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
             completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
-            runner.TryGetTrace(id, out ReadOnlyMemory<byte> traceUtf8).ShouldBeTrue();
-            using ParsedJsonDocument<JsonElement> traceDoc = ParsedJsonDocument<JsonElement>.Parse(traceUtf8);
+            ReadOnlyMemory<byte>? traceUtf8 = await traceStore.GetAsync(id, default);
+            traceUtf8.HasValue.ShouldBeTrue();
+            using ParsedJsonDocument<JsonElement> traceDoc = ParsedJsonDocument<JsonElement>.Parse(traceUtf8.Value);
             traceDoc.RootElement.GetProperty("outcome"u8).GetString().ShouldBe("completed");
             traceDoc.RootElement.GetProperty("stepsExecuted"u8).GetInt32().ShouldBe(1);
         }
@@ -156,11 +160,12 @@ public sealed class InProcessDraftRunnerTests
         using var endpoint = new LocalHttpEndpoint(500, """{"error":"boom"}""");
         var runStore = new InMemoryWorkflowStateStore();
         var drafts = new InMemoryDraftRunStore();
+        var traceStore = new InMemoryDraftRunTraceStore();
         WorkflowRunId id = await StartDraftAsync(runStore, drafts, environment: "development");
 
         using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
         await using var runner = new InProcessDraftRunner(
-            runStore, "runner-dev", "development", drafts, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
+            runStore, "runner-dev", "development", drafts, traceStore, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
 
         int advanced = await runner.RunPendingAsync();
 
@@ -170,8 +175,9 @@ public sealed class InProcessDraftRunnerTests
         using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, id);
         faulted!.Status.ShouldBe(WorkflowRunStatus.Faulted);
 
-        runner.TryGetTrace(id, out ReadOnlyMemory<byte> traceUtf8).ShouldBeTrue();
-        using ParsedJsonDocument<JsonElement> traceDoc = ParsedJsonDocument<JsonElement>.Parse(traceUtf8);
+        ReadOnlyMemory<byte>? traceUtf8 = await traceStore.GetAsync(id, default);
+        traceUtf8.HasValue.ShouldBeTrue();
+        using ParsedJsonDocument<JsonElement> traceDoc = ParsedJsonDocument<JsonElement>.Parse(traceUtf8.Value);
         JsonElement trace = traceDoc.RootElement;
 
         trace.GetProperty("outcome"u8).GetString().ShouldBe("faulted");
@@ -192,13 +198,14 @@ public sealed class InProcessDraftRunnerTests
         using var endpoint = new LocalHttpEndpoint(200, """{"name":"Fido"}""");
         var runStore = new InMemoryWorkflowStateStore();
         var drafts = new InMemoryDraftRunStore();
+        var traceStore = new InMemoryDraftRunTraceStore();
 
         // The run is pinned to "staging"; the runner serves "development" only.
         WorkflowRunId id = await StartDraftAsync(runStore, drafts, environment: "staging");
 
         using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
         await using var runner = new InProcessDraftRunner(
-            runStore, "runner-dev", "development", drafts, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
+            runStore, "runner-dev", "development", drafts, traceStore, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
 
         int advanced = await runner.RunPendingAsync();
 
@@ -206,7 +213,7 @@ public sealed class InProcessDraftRunnerTests
         // the run is left Pending for a runner that serves its environment.
         advanced.ShouldBe(0);
         endpoint.Requests.Count.ShouldBe(0);
-        runner.TryGetTrace(id, out _).ShouldBeFalse();
+        (await traceStore.GetAsync(id, default)).HasValue.ShouldBeFalse();
         using WorkflowRun? pending = await WorkflowRun.ResumeAsync(runStore, id);
         pending!.Status.ShouldBe(WorkflowRunStatus.Pending);
     }
