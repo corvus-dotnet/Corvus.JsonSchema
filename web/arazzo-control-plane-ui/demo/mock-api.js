@@ -2768,12 +2768,21 @@ export function createMockControlPlane(options = {}) {
           : run.pause?.beforeSteps?.length
             ? { breakBefore: run.pause.beforeSteps }
             : undefined;
+        // §18 R-UI-3b: when this debug run opts into the transient-fault illustration, its first HTTP step's endpoint
+        // is DOWN until it has been retried once (run.attempts), so the dock's Retry demonstrably recovers it.
+        const downSteps = [];
+        if (run.simulateTransientFault) {
+          const wfDoc = wc.document.workflows?.find((w) => w.workflowId === run.workflowId);
+          const firstHttp = (wfDoc?.steps ?? []).find((s) => s.operationId && !s.channelPath);
+          if (firstHttp && (run.attempts?.[firstHttp.stepId] ?? 0) < 1) downSteps.push(firstHttp.stepId);
+        }
         const request = {
           workflowId: run.workflowId,
           scenario: { inputs: run.inputs ?? {}, mocks },
           ...(budget?.maxSteps ? { budget: { maxSteps: budget.maxSteps } } : {}),
           ...(budget?.breakBefore ? { until: { breakpoints: budget.breakBefore } } : {}),
           ...(Object.keys(run.overrides).length ? { overrides: { stepOutputs: structuredClone(run.overrides) } } : {}),
+          ...(downSteps.length ? { downSteps } : {}),
         };
         const trace = simulateDocument(wc.document, request, undefined);
         if (trace instanceof Response) return trace;
@@ -2814,7 +2823,8 @@ export function createMockControlPlane(options = {}) {
         }
         const run = {
           id: `dbg-${nextEtag().replaceAll('"', '')}`, wcId: wc.id, workflowId: wfId, environment: env.name,
-          inputs: body?.inputs, pause: body?.pause, overrides: {}, cursor: 0, status: 'running',
+          inputs: body?.inputs, pause: body?.pause, overrides: {}, attempts: {},
+          simulateTransientFault: !!body?.simulateTransientFault, cursor: 0, status: 'running',
           documentEtag: wc.etag, startedBy: actingSubject(), startedAt: iso(0), updatedAt: iso(0), justCreated: true,
         };
         // §18 R5: the control plane enqueues a Pending run; a runner advances it out-of-band. The mock plays the
@@ -2861,6 +2871,10 @@ export function createMockControlPlane(options = {}) {
           if (stepId) run.overrides[stepId] = action.skipOutputs ?? {};
         } else if (action?.mode === 'Rewind') {
           run.cursor = Math.max(0, (action.targetCursor ?? 0)); // deliberate re-execution forward from here
+        } else if (action?.mode === 'RetryFaultedStep') {
+          // The endpoint recovered: bump the faulted step's attempt so its transient-down state clears next execute.
+          const faultedStepId = run.trace?.fault?.stepId ?? run.trace?.steps?.at(-1)?.stepId;
+          if (faultedStepId) run.attempts = { ...(run.attempts ?? {}), [faultedStepId]: (run.attempts?.[faultedStepId] ?? 0) + 1 };
         }
         if (body?.pause !== undefined) run.pause = body.pause;
         // §18 R5: mark the run resume-claimable and return the un-advanced state; the runner (mock) advances it on the
@@ -3414,6 +3428,10 @@ export function createMockControlPlane(options = {}) {
 
     const until = request.until ?? {};
     const breakpoints = new Set(until.breakpoints ?? []);
+    // §18 R-UI-3b: steps whose environment endpoint is DOWN this execution (debug-run transient-fault illustration).
+    // A down step's request never gets a status, so status-based onFailure/retry criteria do NOT apply — faithful to a
+    // real connection failure — and the step faults. A RetryFaultedStep resume clears it (the endpoint recovered).
+    const downSteps = new Set(request.downSteps ?? []);
     const maxSteps = Math.min(request.budget?.maxSteps ?? 256, 1024);
     const clockStart = Date.parse('2020-01-01T00:00:00Z');
     let clockMs = 0;
@@ -3548,6 +3566,20 @@ export function createMockControlPlane(options = {}) {
         steps.push(messageRecord);
         index += 1;
         continue;
+      }
+
+      // A DOWN endpoint faults at the transport level — no status, so status-based onFailure/retry never fires (the
+      // real behaviour of a connection failure); Retry (which clears the down state) is the remedy, not onFailure.
+      if (downSteps.has(step.stepId)) {
+        const at = (retries.get(step.stepId) ?? 0) + 1;
+        steps.push({
+          stepId: step.stepId, status: 'faulted', attempt: at,
+          requests: [{ method: op?.method ?? 'post', path: op?.path ?? `/${step.stepId}`, error: 'ECONNREFUSED — endpoint unreachable' }],
+          actionTaken: { type: 'fault' },
+        });
+        outcome = 'faulted';
+        fault = { stepId: step.stepId, attempt: at, error: `Connection refused: ${op?.path ?? step.stepId} is unreachable (the environment endpoint is down).` };
+        break;
       }
 
       const { status, body: respBody } = takeResponse(op ?? { method: 'get', path: `/${step.stepId}` });

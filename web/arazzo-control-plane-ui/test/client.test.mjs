@@ -1621,4 +1621,11 @@ test('debug runs (§18): gated start, single-step forward, step-over via Skip, c
   // §18 R-UI-3: a breakpoint rides pause.beforeSteps — the run advances to the named step and stops before it.
   const bp = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', inputs: { petId: 'p-2' }, pause: { beforeSteps: ['adopt'] } });
   assert.equal((await pump(bp.debugRunId)).status, 'paused', 'a breakpoint pauses the run before the named step');
+
+  // §18 R-UI-3b: the transient-fault illustration — the first HTTP step's endpoint is DOWN until retried, so the fault
+  // is transport-level (status-based onFailure never fires) and a RetryFaultedStep resume (endpoint recovered) clears it.
+  const tf = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', simulateTransientFault: true, pause: { afterEachStep: true } });
+  assert.equal((await pump(tf.debugRunId)).status, 'faulted', 'a down endpoint faults the step');
+  await c.resumeDebugRun(wc.id, tf.debugRunId, { action: { mode: 'RetryFaultedStep' }, pause: { afterEachStep: true } });
+  assert.notEqual((await pump(tf.debugRunId)).status, 'faulted', 'retrying the recovered endpoint clears the fault');
 });
