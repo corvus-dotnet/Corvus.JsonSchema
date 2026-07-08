@@ -284,14 +284,16 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// Ephemeral and per-advance: a run instance is loaded fresh for each advance, so an advance on which
     /// <see cref="SetPause"/> is not called behaves exactly like an ordinary run (the default — no pause).
     /// </summary>
-    /// <param name="pause">The pause configuration to honour for the next advance.</param>
+    /// <param name="pause">The pause configuration to honour for the next advance, or <see langword="null"/> to
+    /// <em>clear</em> any persisted pause-hold so the advance runs to completion (a bare resume of a paused run).</param>
     /// <remarks>
     /// The recorded start cursor is the <see cref="Cursor"/> at the call: a pause is honoured only when a
     /// checkpoint lands at a cursor strictly greater than it (the simulator's <c>throwBeforeAnything</c>
     /// analogue), so a run never re-pauses at the cursor it just resumed from and every advance makes forward
-    /// progress.
+    /// progress. Passing <see langword="null"/> clears the run's persisted pause (from a prior after-each-step stop),
+    /// so a bare resume does not re-pause at the restored stop points.
     /// </remarks>
-    public void SetPause(WorkflowPauseConfig pause)
+    public void SetPause(WorkflowPauseConfig? pause)
     {
         this.pause = pause;
         this.pauseStartCursor = this.Cursor;
