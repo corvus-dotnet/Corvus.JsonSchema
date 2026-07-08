@@ -322,6 +322,18 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         return this.PersistAsync(default, cancellationToken);
     }
 
+    /// <summary>Marks the run resume-claimable WITHOUT changing its persisted pause (design §18 R5b): the control
+    /// plane's fault remediation applies its checkpoint mutation, then calls this to hand the re-execution to a runner
+    /// instead of driving it in-process. Preserving the pause keeps a paused-then-faulted debug run's stops on the retry.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the resume-claimable state is durable.</returns>
+    public ValueTask RequestResumeKeepingPauseAsync(CancellationToken cancellationToken)
+    {
+        this.pauseStartCursor = this.Cursor;
+        this.resumeRequestedAt = this.timeProvider.GetUtcNow();
+        return this.PersistAsync(default, cancellationToken);
+    }
+
     /// <summary>Gets or sets an optional callback the runner invokes at each durable step checkpoint to mark a §18
     /// debug step boundary — the point at which a step's recorded API exchanges are complete (typically
     /// <see cref="RecordingApiTransport.MarkStepBoundary"/>, so a trace assembler can attribute exchanges to steps

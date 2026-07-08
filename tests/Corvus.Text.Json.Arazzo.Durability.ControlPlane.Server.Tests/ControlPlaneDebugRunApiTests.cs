@@ -303,7 +303,8 @@ public sealed class ControlPlaneDebugRunApiTests
         }
 
         // §18 R5: the runner advances the run; get-pet's criterion fails against the 500 so it faults (a resumable
-        // terminal). The fault-remediation resume verbs below still drive in-process (R5b converts them to async).
+        // terminal). The fault-remediation resume verbs below are also mark-claimable (R5b) — each marks the run and
+        // the runner re-executes it, so each is followed by a pump + poll.
         using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
@@ -314,7 +315,7 @@ public sealed class ControlPlaneDebugRunApiTests
         HttpResponseMessage retried = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
             """{"action":{"mode":"RetryFaultedStep"}}""", StartScopes);
         retried.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await retried.Content.ReadAsStringAsync()))
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
         }
@@ -329,7 +330,7 @@ public sealed class ControlPlaneDebugRunApiTests
         HttpResponseMessage patched = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
             """{"action":{"mode":"StatePatch","patch":[{"op":"replace","path":"/inputs/petId","value":"99"}]}}""", StartScopes);
         patched.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await patched.Content.ReadAsStringAsync()))
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
         }
@@ -338,7 +339,7 @@ public sealed class ControlPlaneDebugRunApiTests
         HttpResponseMessage rewound = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
             """{"action":{"mode":"Rewind","targetCursor":0}}""", StartScopes);
         rewound.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await rewound.Content.ReadAsStringAsync()))
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("faulted");
         }
@@ -348,7 +349,7 @@ public sealed class ControlPlaneDebugRunApiTests
         HttpResponseMessage skipped = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume",
             """{"action":{"mode":"Skip","targetCursor":1,"skipOutputs":{}}}""", StartScopes);
         skipped.StatusCode.ShouldBe(HttpStatusCode.OK);
-        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await skipped.Content.ReadAsStringAsync()))
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
         {
             run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
 

@@ -1285,10 +1285,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         Models.DebugRunResume body = parameters.Body;
         if (body.Action.IsNotUndefined())
         {
-            // Fault remediation on the durable engine's NATIVE resume verbs; the management client was constructed
-            // with the runner's recording+tracing resumer, so a successful resume records+caches a fresh trace.
+            // §18 R5b: fault remediation on the durable engine's NATIVE resume verbs, MARK-CLAIMABLE — the control
+            // plane applies the mutation and marks the run resume-claimable; a runner re-executes it and persists a
+            // fresh trace. The control plane never executes.
             ResumeOptions options = ArazzoControlPlaneHandler.ToResumeOptions(body.Action);
-            bool applied = await this.debugRunManagement.ResumeAsync(runId, options, this.access.Current(), cancellationToken).ConfigureAwait(false);
+            bool applied = await this.debugRunManagement.RequestFaultedResumeAsync(runId, options, this.access.Current(), cancellationToken).ConfigureAwait(false);
             if (!applied)
             {
                 return ResumeDebugRunResult.Conflict(

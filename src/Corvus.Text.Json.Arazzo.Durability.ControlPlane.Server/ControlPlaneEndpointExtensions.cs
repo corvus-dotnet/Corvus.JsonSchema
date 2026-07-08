@@ -173,11 +173,11 @@ public static class ControlPlaneEndpointExtensions
         // $draft run the in-process runner executes. When the run store, the draft store, and the in-process runner
         // are all wired, build the capture front end's peer — a run-management client constructed with the SAME
         // recording+tracing resumer the runner exposes (InProcessDraftRunner.Resumer), so its native faulted-run
-        // resume verbs (retry/skip/rewind/state-patch) also record+trace. Absent any of these the debug-run endpoints
-        // fail closed (the analogue of the retired interim simulator's null gate); interactive debug runs REQUIRE the
-        // runner because a paused run is not dispatch-claimable and must be stepped through the runner's resumer.
+        // resume verbs (retry/skip/rewind/state-patch) are mark-claimable (§18 R5b), so the management client needs no
+        // resumer — a runner performs the re-execution. Absent a run store or a runner the debug-run endpoints fail
+        // closed; debug runs REQUIRE a runner to advance the runs the control plane marks claimable.
         ISecuredWorkflowManagement? debugRunManagement = workflowStateStore is not null && draftRunner is not null
-            ? new SecuredWorkflowManagement(workflowStateStore, "arazzo-debug-runs", draftRunner.Resumer)
+            ? new SecuredWorkflowManagement(workflowStateStore, "arazzo-debug-runs")
             : null;
         var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(
             wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,
