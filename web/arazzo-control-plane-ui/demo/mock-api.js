@@ -2840,6 +2840,11 @@ export function createMockControlPlane(options = {}) {
         }
         return view(run);
       }
+      if (!dbg[3] && method === 'DELETE') {
+        // §18 R5c: purge the debug run — its captured draft, metadata trace, and durable run die with it. Idempotent 204.
+        debugRunsStore.delete(run.id);
+        return new Response(null, { status: 204 });
+      }
       if (dbg[3] === 'cancel' && method === 'POST') {
         run.status = 'cancelled';
         run.updatedAt = iso(0);
