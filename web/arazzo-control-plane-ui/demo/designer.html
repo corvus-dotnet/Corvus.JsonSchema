@@ -1254,10 +1254,17 @@
     tray.addEventListener('clear-requested', () => { tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
     tray.addEventListener('trigger-injected', (e) => {
-      // The injected message joins the session scenario; the replay delivers it at the wait and
+      logEvent('trigger-injected', e.detail);
+      // §18: on a REMOTE debug run a message wait is a genuine suspension; injection publishes the real message (or
+      // the developer does it out of band) — wiring that publish is a later slice. Do NOT kick off a local
+      // simulation here, which would abandon the durable run.
+      if (shell.debugRun) {
+        showToast('Trigger injection on a remote debug run publishes the real message — not yet wired in the demo.', 'info');
+        return;
+      }
+      // Simulator: the injected message joins the session scenario; the replay delivers it at the wait and
       // runs on to the next pause or the end (§3.3).
       sessionTriggers.push(e.detail);
-      logEvent('trigger-injected', e.detail);
       runSimulation();
     });
     simBtn.addEventListener('click', async () => {
@@ -1278,6 +1285,7 @@
               pause: { afterEachStep: true },
             }));
             logEvent('debug-run-started', { environment: staged.environment });
+            await pumpDebugRun();
           } catch (err) {
             showToast(`Debug run refused — ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
           }
@@ -1320,6 +1328,12 @@
     }
 
     // ── §18 attached mode: the dock drives a DURABLE debug run — forward-only ─────────────────────
+    // §18 R5: the control plane MARKS the run claimable and returns the un-advanced state; a RUNNER advances it
+    // out-of-band. The dock never trusts the enqueue/mark response's trace — it PUMPS get-debug-run until the run
+    // reaches a settled status, painting each polled state (so a slow runner shows "waiting" then the result).
+    const DEBUG_POLL_MS = 200;
+    const DEBUG_SETTLED = new Set(['paused', 'suspended', 'completed', 'faulted', 'cancelled']);
+
     function applyDebugRun(run) {
       shell.debugRun = { id: run.debugRunId, environment: run.environment, status: run.status };
       tray.trace = run.trace;
@@ -1327,7 +1341,23 @@
       void feedTraySchemas();
       applyDebugFrame();
       setDebugUi();
-      setSaveUi(`debug run ${run.status} in ${run.environment} · step ${run.cursor}`);
+      setSaveUi(DEBUG_SETTLED.has(run.status)
+        ? `debug run ${run.status} in ${run.environment} · step ${run.cursor}`
+        : `debug run in ${run.environment} — waiting for runner…`);
+    }
+
+    // Poll get-debug-run until the marked run reaches a settled status (a runner advanced it), painting each state.
+    async function pumpDebugRun() {
+      for (let i = 0; i < 150; i++) {
+        if (!shell.debugRun || DEBUG_SETTLED.has(shell.debugRun.status)) return;
+        let run;
+        try { run = await client.getDebugRun(shell.id, shell.debugRun.id); }
+        catch (err) { showToast(`Debug run: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error'); return; }
+        if (!shell.debugRun) return; // detached mid-poll (stop / close)
+        applyDebugRun(run);
+        if (DEBUG_SETTLED.has(run.status)) return;
+        await new Promise((r) => setTimeout(r, DEBUG_POLL_MS));
+      }
     }
 
     function detachDebugRun() {
@@ -1338,6 +1368,7 @@
       if (!shell.debugRun) return;
       try {
         applyDebugRun(await client.resumeDebugRun(shell.id, shell.debugRun.id, command));
+        await pumpDebugRun();
       } catch (err) {
         showToast(`Debug run: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
       }
