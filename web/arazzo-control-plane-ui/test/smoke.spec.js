@@ -342,6 +342,9 @@ test('§18 debug run: starting against a dev environment pumps get-debug-run to 
   const dlg = page.locator('#run-inputs-dialog');
   await expect(dlg).toBeVisible();
   await page.locator('#run-inputs-env').selectOption('development');
+  // §18 R-UI-3c: the run dialog shows per-source credential readiness for the chosen environment BEFORE starting.
+  await expect(page.locator('#run-inputs-readiness')).toContainText(/payments ✓/);
+  await expect(page.locator('#run-inputs-readiness')).toContainText(/order-events ✓/);
   await dlg.locator('.ri-run').click();
 
   // §18 R5: the control plane MARKS the run and returns un-advanced; the dock must PUMP get-debug-run until a runner
