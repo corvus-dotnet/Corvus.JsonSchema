@@ -1088,6 +1088,16 @@
       else debugBreakpoints.delete(e.detail.stepId);
     });
 
+    // §18 R-UI-3: derive a REMOTE debug run's pause from the canvas breakpoints (pause.beforeSteps = step ids), so
+    // breakpoints govern the durable run, not only the simulator. 'step' = single-step (afterEachStep); 'continue' =
+    // run to the next breakpoint, or the end when none are set; 'start' = run to the first breakpoint, else single-step.
+    function debugRunPause(mode) {
+      const beforeSteps = [...debugBreakpoints];
+      if (mode === 'step') return { afterEachStep: true };
+      if (beforeSteps.length) return { beforeSteps };
+      return mode === 'continue' ? {} : { afterEachStep: true };
+    }
+
     // Triggers injected mid-session (the tray's ⚡ form on a suspended message wait). Stateless
     // stepping means every replay re-supplies them; Stop/Clear ends the session and drops them.
     const sessionTriggers = [];
@@ -1274,7 +1284,7 @@
       runSimulation();
     });
     simBtn.addEventListener('click', async () => {
-      if (shell.debugRun) { void advanceDebugRun({ pause: {} }); return; } // attached ▶ = continue
+      if (shell.debugRun) { void advanceDebugRun({ pause: debugRunPause('continue') }); return; } // attached ▶ = run to next breakpoint / end
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
       const properties = wf?.inputs?.properties;
       const envs = await loadDraftRunEnvironments();
@@ -1288,7 +1298,7 @@
               workflowId: select.value,
               environment: staged.environment,
               ...(sessionInputs && Object.keys(sessionInputs).length ? { inputs: sessionInputs } : {}),
-              pause: { afterEachStep: true },
+              pause: debugRunPause('start'),
             }));
             logEvent('debug-run-started', { environment: staged.environment });
             await pumpDebugRun();
@@ -1380,7 +1390,7 @@
       }
     }
     stepBtn.addEventListener('click', () => {
-      if (shell.debugRun) { void advanceDebugRun({ pause: { afterEachStep: true } }); return; } // forward-only single step
+      if (shell.debugRun) { void advanceDebugRun({ pause: debugRunPause('step') }); return; } // forward-only single step
       if (tray.trace && tray.cursor < tray.length) tray.cursor += 1;
       else runSimulation({ stepPastEnd: !!tray.trace });
     });
