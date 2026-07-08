@@ -12,6 +12,7 @@ using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
+using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Runner.Demo;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -58,6 +59,30 @@ builder.Services.AddSingleton<IEnvironmentStore>(environments);
 builder.Services.AddSingleton<IEnvironmentRunnerAuthorizationStore>(runnerAuthorizations);
 builder.Services.AddSingleton<ISourceCredentialStore>(credentials);
 builder.Services.AddSingleton(catalog);
+
+// §18 out-of-process draft hosting (the multi-process debug-run topology): the control plane only MARKS $draft debug
+// runs claimable; THIS runner claims and executes them. It reads the shared draft stores (the control plane wrote the
+// capture) and runs each against the environment's endpoints. The demo routes at the control plane's own /svc backends
+// (Runner:SourcesBaseUrl); production swaps CreateSvcBinder for the Vault-credentialed SourceCredentialTransports
+// binder. Disabled with Runner:HostDraftRuns=false (e.g. a catalog-only runner).
+if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
+{
+    SqliteDraftRunStore draftRunStore = await SqliteDraftRunStore.ConnectAsync(connectionString);
+    SqliteDraftRunTraceStore draftRunTraceStore = await SqliteDraftRunTraceStore.ConnectAsync(connectionString);
+    string sourcesBaseUrl = builder.Configuration["Runner:SourcesBaseUrl"]
+        ?? throw new InvalidOperationException("Runner:SourcesBaseUrl must be set (the control plane host serving the sources' /svc backends) when Runner:HostDraftRuns is on.");
+    var draftRunner = new InProcessDraftRunner(
+        stateStore,
+        options.RunnerId,
+        runnerEnvironment,
+        draftRunStore,
+        draftRunTraceStore,
+        new WorkflowExecutorProvider(),
+        DraftRunHost.CreateSvcBinder(sourcesBaseUrl),
+        hostTimerWaits: false);
+    builder.Services.AddSingleton(draftRunner);
+    builder.Services.AddHostedService<DraftRunPumpService>();
+}
 
 // The two long-running loops (design §5.4 registration/heartbeat, §7 dispatch + resume).
 builder.Services.AddHostedService<RunnerRegistrationService>();
