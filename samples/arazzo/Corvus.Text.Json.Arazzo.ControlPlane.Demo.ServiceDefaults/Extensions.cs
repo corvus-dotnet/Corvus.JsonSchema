@@ -113,19 +113,21 @@ public static class Extensions
     /// <returns>The application, for chaining.</returns>
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
-        // Adding health-check endpoints in non-development environments has security implications.
-        // See https://aka.ms/aspire/healthchecks for details before enabling these outside development.
-        if (app.Environment.IsDevelopment())
-        {
-            // All health checks must pass for the app to be considered ready to accept traffic.
-            app.MapHealthChecks(HealthEndpointPath);
+        // Map the health endpoints in EVERY environment, not only development. Orchestrators depend on them in
+        // production as well as locally: Aspire's WaitFor gates on /health, and a real deployment's Kubernetes
+        // liveness/readiness probes poll /health and /alive. Leaving them unmapped outside development (the stock
+        // ServiceDefaults template does exactly that) silently breaks that orchestration in production. The security
+        // concern noted at https://aka.ms/aspire/healthchecks — do not expose health publicly — is addressed by
+        // network policy or authorization in a real deployment, not by refusing to map the endpoints at all.
 
-            // Only health checks tagged "live" must pass for the app to be considered alive.
-            app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
-            {
-                Predicate = r => r.Tags.Contains("live"),
-            });
-        }
+        // All health checks must pass for the app to be considered ready to accept traffic.
+        app.MapHealthChecks(HealthEndpointPath);
+
+        // Only health checks tagged "live" must pass for the app to be considered alive.
+        app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
+        {
+            Predicate = r => r.Tags.Contains("live"),
+        });
 
         return app;
     }
