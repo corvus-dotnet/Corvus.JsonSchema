@@ -12,8 +12,12 @@ using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
+using Corvus.Text.Json.Arazzo.Durability.Vault;
 using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Runner.Demo;
+using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
+using VaultSharp;
+using VaultSharp.V1.AuthMethods.Token;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +75,29 @@ if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
     SqliteDraftRunTraceStore draftRunTraceStore = await SqliteDraftRunTraceStore.ConnectAsync(connectionString);
     string sourcesBaseUrl = builder.Configuration["Runner:SourcesBaseUrl"]
         ?? throw new InvalidOperationException("Runner:SourcesBaseUrl must be set (the control plane host serving the sources' /svc backends) when Runner:HostDraftRuns is on.");
+
+    // The transport binder each debug run executes through. When Vault is configured (VAULT_ADDR/VAULT_TOKEN — the
+    // AppHost injects the runner's read-only token), this is the §13.5 production path: the runner resolves each
+    // source's credential as its OWN read-only Vault identity at bind time and applies it to the request — the secret
+    // never leaves Vault and never reaches the control plane, the designer, or the developer. Without Vault (the
+    // standalone two-process run) it falls back to plain /svc transports, enough to prove the multi-process loop.
+    string? vaultAddress = builder.Configuration["VAULT_ADDR"];
+    string? vaultToken = builder.Configuration["VAULT_TOKEN"];
+    WorkflowTransportBinder binder;
+    if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultToken))
+    {
+        IVaultClient vaultClient = new VaultClient(new VaultClientSettings(vaultAddress, new TokenAuthMethodInfo(vaultToken)));
+        ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
+        var providerFactory = new SourceCredentialProviderFactory(secretResolver);
+        var credentialCache = new SourceCredentialCache(credentials, providerFactory);
+        Dictionary<string, HttpClient> sourceClients = DraftRunHost.CreateSvcClients(sourcesBaseUrl, "onboarding", "ledger");
+        binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache);
+    }
+    else
+    {
+        binder = DraftRunHost.CreateSvcBinder(sourcesBaseUrl);
+    }
+
     var draftRunner = new InProcessDraftRunner(
         stateStore,
         options.RunnerId,
@@ -78,7 +105,7 @@ if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
         draftRunStore,
         draftRunTraceStore,
         new WorkflowExecutorProvider(),
-        DraftRunHost.CreateSvcBinder(sourcesBaseUrl),
+        binder,
         hostTimerWaits: false);
     builder.Services.AddSingleton(draftRunner);
     builder.Services.AddHostedService<DraftRunPumpService>();

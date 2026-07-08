@@ -248,7 +248,9 @@ foreach (string environment in new[] { "production", "development" })
                 source,
                 environment,
                 SourceCredentialKind.ApiKey,
-                [new SecretReferenceDefinition("api-key", $"vault://secret/arazzo/{source}#api-key")]),
+                // The ApiKey provider resolves the key from the secret reference named "value" (default header
+                // X-API-Key); the reference target is the Vault path's #api-key field the provisioner seeds.
+                [new SecretReferenceDefinition("value", $"vault://secret/arazzo/{source}#api-key")]),
             "demo",
             default);
     }
