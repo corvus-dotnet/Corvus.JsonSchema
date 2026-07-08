@@ -84,6 +84,7 @@
     <button id="simulate" class="tb designer-only" title="Simulate (canned trace)">▶</button>
     <button id="step" class="tb designer-only" title="Step through the trace">⏭</button>
     <button id="retry-faulted" class="tb" title="Retry the faulted step — the endpoint recovered; the debug run resumes forward (§18)" hidden>↻</button>
+    <button id="remediate" class="tb" title="Remediate the faulted step — Retry, Rewind, Skip, or State patch (the runs-view ResumeRequest verbs) (§18)" hidden>⚕</button>
     <button id="stop" class="tb" title="Stop and clear the overlay" hidden>■</button>
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
@@ -132,6 +133,7 @@
           <button class="ri-run" type="button" style="font-size:13px; font-weight:600;">▶ Run</button>
         </div>
       </dialog>
+      <arazzo-resume-dialog id="debug-remediate-dialog"></arazzo-resume-dialog>
       <!-- The debug session DOCKS across the bottom of the editor: it appears when a run starts
            and is removed by Stop/Clear — the trace gets the horizontal room a sidebar never had. -->
       <div id="debug-dock" hidden>
@@ -209,6 +211,7 @@
     import '../src/components/value-editor.js';
     import '../src/components/document-inspector.js';
     import '../src/components/debug-tray.js';
+    import '../src/components/resume-dialog.js';
     import '../src/components/scenario-panel.js';
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import { createMockControlPlane } from './mock-api.js';
@@ -1090,6 +1093,25 @@
     const retryBtn = document.getElementById('retry-faulted');
     // §18 R-UI-3b: Retry the faulted step — the ResumeRequest RetryFaultedStep verb; a transient fault recovers.
     retryBtn.addEventListener('click', () => { void advanceDebugRun({ action: { mode: 'RetryFaultedStep' }, pause: { afterEachStep: true } }); });
+    // §18 R-UI-3b2: the full remediation menu — reuse the runs-view resume-dialog, but drive it against the DEBUG run
+    // (resumeDebugRun) and feed it the WORKING-COPY steps (they are not in the catalog, so the picker takes them directly).
+    const remediateBtn = document.getElementById('remediate');
+    const remediateDialog = document.getElementById('debug-remediate-dialog');
+    remediateDialog.client = client;
+    remediateDialog.addEventListener('resume-submitted', (e) => { if (e.detail?.run) applyDebugRun(e.detail.run); void pumpDebugRun(); });
+    remediateBtn.addEventListener('click', () => {
+      if (!shell.debugRun) return;
+      const wf = (doc.workflows ?? []).find((w) => w.workflowId === (shell.debugWorkflow ?? select.value)) ?? doc.workflows?.[0];
+      const faultStepId = tray.trace?.fault?.stepId;
+      const cursor = faultStepId ? (wf?.steps ?? []).findIndex((s) => s.stepId === faultStepId) : tray.cursor;
+      remediateDialog.open(
+        { id: shell.debugRun.id, workflowId: wf?.workflowId, cursor: cursor < 0 ? 0 : cursor, fault: tray.trace?.fault },
+        {
+          steps: (wf?.steps ?? []).map((s) => ({ stepId: s.stepId })),
+          resume: (request) => client.resumeDebugRun(shell.id, shell.debugRun.id, { action: request }),
+        },
+      );
+    });
     const debugBreakpoints = new Set();
     surface.addEventListener('breakpoint-toggled', (e) => {
       if (e.detail.enabled) debugBreakpoints.add(e.detail.stepId);
@@ -1140,8 +1162,10 @@
     function setDebugUi() {
       stopBtn.hidden = !tray.trace;
       saveScenarioBtn.disabled = !tray.trace;
-      // §18 R-UI-3b: fault-remediation — offer Retry when a durable debug run has faulted (the endpoint may have recovered).
-      retryBtn.hidden = !(shell.debugRun && shell.debugRun.status === 'faulted');
+      // §18 R-UI-3b/3b2: fault-remediation — offer Retry (quick) and the full Remediate menu when the durable run faulted.
+      const faultedRun = !!(shell.debugRun && shell.debugRun.status === 'faulted');
+      retryBtn.hidden = !faultedRun;
+      remediateBtn.hidden = !faultedRun;
     }
 
     async function runSimulation({ until, stepPastEnd = false } = {}) {

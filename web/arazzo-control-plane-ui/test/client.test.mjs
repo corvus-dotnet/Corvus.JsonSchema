@@ -1628,4 +1628,13 @@ test('debug runs (§18): gated start, single-step forward, step-over via Skip, c
   assert.equal((await pump(tf.debugRunId)).status, 'faulted', 'a down endpoint faults the step');
   await c.resumeDebugRun(wc.id, tf.debugRunId, { action: { mode: 'RetryFaultedStep' }, pause: { afterEachStep: true } });
   assert.notEqual((await pump(tf.debugRunId)).status, 'faulted', 'retrying the recovered endpoint clears the fault');
+
+  // §18 R-UI-3b2: the other ResumeRequest verbs also clear a transient fault (a remediation cycle passes) — Rewind
+  // (re-run from an earlier point) and StatePatch (correct the run context, then continue).
+  for (const action of [{ mode: 'Rewind', targetCursor: 0 }, { mode: 'StatePatch', patch: [{ op: 'replace', path: '/inputs/petId', value: 'p-9' }] }]) {
+    const r = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', simulateTransientFault: true, pause: { afterEachStep: true } });
+    assert.equal((await pump(r.debugRunId)).status, 'faulted', `${action.mode}: the down endpoint faults first`);
+    await c.resumeDebugRun(wc.id, r.debugRunId, { action, pause: { afterEachStep: true } });
+    assert.notEqual((await pump(r.debugRunId)).status, 'faulted', `${action.mode} clears the transient fault`);
+  }
 });

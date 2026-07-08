@@ -381,3 +381,35 @@ test('§18 debug run: a transient fault surfaces ↻ Retry, which recovers the r
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('§18 debug run: the ⚕ Remediate menu resolves working-copy steps and clears the fault (R-UI-3b2)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#simulate').click();
+  await expect(page.locator('#run-inputs-dialog')).toBeVisible();
+  await page.locator('#run-inputs-env').selectOption('development');
+  await page.locator('#run-inputs-fault-cb').check();
+  await page.locator('#run-inputs-dialog .ri-run').click();
+  await expect(page.locator('#save-status')).toHaveText(/faulted in development/i, { timeout: 5000 });
+
+  // Open the full remediation menu — the runs-view resume-dialog, reused for the debug run.
+  await page.locator('#remediate').click();
+  const dlg = page.locator('#debug-remediate-dialog');
+  await expect(dlg.locator('dialog')).toBeVisible();
+
+  // §18 R-UI-3b2: the step picker resolves the WORKING-COPY steps (de-coupled from the catalog) — Skip lists the
+  // later steps by name, which only works if the picker took the supplied steps rather than a catalog lookup.
+  await dlg.locator('input[name="mode"][value="Skip"]').check();
+  await expect(dlg.locator('.skip-picker')).toContainText(/authorize-payment|await-confirmation|capture-payment/);
+
+  // Remediate via Retry (the endpoint recovered) through the dialog → resumeDebugRun clears the fault.
+  await dlg.locator('input[name="mode"][value="RetryFaultedStep"]').check();
+  await dlg.locator('.confirm').click();
+  await expect(page.locator('#save-status')).not.toHaveText(/faulted/i, { timeout: 5000 });
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
