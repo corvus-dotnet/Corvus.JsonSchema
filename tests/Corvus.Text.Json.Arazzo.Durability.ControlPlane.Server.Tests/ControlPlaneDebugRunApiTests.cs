@@ -417,6 +417,35 @@ public sealed class ControlPlaneDebugRunApiTests
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    [TestMethod]
+    public async Task Deleting_a_debug_run_purges_its_capture_and_trace()
+    {
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
+
+        HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
+            """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
+        started.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string debugRunId;
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
+        {
+            debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        // The runner advances it to completion and persists a trace; get-debug-run then returns it.
+        await host.PumpAsync();
+        (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/debug-runs/{debugRunId}", "{}", "workspace:read"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // §18 R5c: DELETE purges the run's captured draft, metadata trace, and durable run (204).
+        (await host.SendJsonAsync(HttpMethod.Delete, $"/workspace/workflows/{id}/debug-runs/{debugRunId}", "{}", StartScopes))
+            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        // It is gone: get-debug-run is now 404 (the purged capture is what the reach check reads).
+        (await host.SendJsonAsync(HttpMethod.Get, $"/workspace/workflows/{id}/debug-runs/{debugRunId}", "{}", "workspace:read"))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
     private static MockApiTransport HappyMock()
     {
         var mock = new MockApiTransport();

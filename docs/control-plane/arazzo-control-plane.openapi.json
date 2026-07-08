@@ -2326,6 +2326,20 @@
           "200": {"description": "The debug run.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
           "404": {"$ref": "#/components/responses/NotFound"}
         }
+      },
+      "delete": {
+        "tags": ["workspace"],
+        "operationId": "deleteDebugRun",
+        "summary": "Delete the debug run and purge its captured draft and metadata trace; idempotent.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "204": {"description": "The debug run was deleted (or did not exist)."},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
       }
     },
     "/workspace/workflows/{id}/debug-runs/{debugRunId}/resume": {

@@ -6108,6 +6108,107 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("bearer", new[] { "workspace:read" }, null) }, false) }),
             __GetDebugRunEndpoint);
 
+        IEndpointConventionBuilder __DeleteDebugRunEndpoint = app.MapDelete("/workspace/workflows/{id}/debug-runs/{debugRunId}", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString IdValue = default;
+                if (context.Request.RouteValues.TryGetValue("id", out object? IdRouteVal) && IdRouteVal is string IdRaw)
+                {
+                    IdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(IdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DebugRunIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("debugRunId", out object? DebugRunIdRouteVal) && DebugRunIdRouteVal is string DebugRunIdRaw)
+                {
+                    DebugRunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(DebugRunIdRaw, workspace);
+                }
+
+                if (IdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (DebugRunIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'debugRunId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdValue.IsUndefined() && !IdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!DebugRunIdValue.IsUndefined() && !DebugRunIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'debugRunId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                DeleteDebugRunParams parameters = new()
+                {
+                    Id = IdValue,
+                    DebugRunId = DebugRunIdValue,
+                }
+                ;
+
+                DeleteDebugRunResult result = await workspaceHandler.HandleDeleteDebugRunAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "deleteDebugRun",
+                methodName: "DeleteDebugRun",
+                httpMethod: "DELETE",
+                routeTemplate: "/workspace/workflows/{id}/debug-runs/{debugRunId}",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("bearer", new[] { "workspace:write", "runs:write" }, null) }, false) }),
+            __DeleteDebugRunEndpoint);
+
         IEndpointConventionBuilder __ResumeDebugRunEndpoint = app.MapPost("/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -12567,6 +12668,11 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>GetDebugRun</c> for the <c>Bearer</c> scheme.
         /// </summary>
         public static readonly string[] GetDebugRunBearerScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>DeleteDebugRun</c> for the <c>Bearer</c> scheme.
+        /// </summary>
+        public static readonly string[] DeleteDebugRunBearerScopes = ["workspace:write", "runs:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>ResumeDebugRun</c> for the <c>Bearer</c> scheme.
