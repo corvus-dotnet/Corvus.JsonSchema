@@ -256,6 +256,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         // bytes-to-bytes, the carry-over bytes, or an inline blank skeleton — no interim buffers.
         ReadOnlyMemory<byte> catalogDocumentUtf8 = default;
         ReadOnlyMemory<byte> carriedScenariosUtf8 = default;
+        IReadOnlyList<KeyValuePair<string, byte[]>>? carriedSources = null;
         string? baseWorkflowId = null;
         int? basedOnVersion = null;
         if (fromVersion)
@@ -297,6 +298,10 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
             {
                 carriedScenariosUtf8 = scenarios;
             }
+
+            // §18/§9: the version's referenced sources travel forward too, so a working copy opened from a version can
+            // be simulated or DEBUG-RUN immediately, with no manual re-attach. They are attached inline after the create.
+            carriedSources = WorkflowPackage.Open(ownedPackage).Sources;
         }
 
         try
@@ -308,6 +313,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
                 (JsonElement)body.Name, (JsonElement)body.Document, catalogDocumentUtf8, (JsonElement)body.DesignerState, baseWorkflowId, basedOnVersion, managementTags, carriedScenariosUtf8);
             ParsedJsonDocument<WorkspaceWorkflow> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
+            // §18/§9: carry the version's sources into the new working copy (inline), so it simulates / debug-runs
+            // immediately with no manual re-attach. Each attaches under the running etag; the final copy is returned.
+            if (carriedSources is { Count: > 0 } toAttach)
+            {
+                created = await this.AttachCarriedSourcesAsync(created, toAttach, cancellationToken).ConfigureAwait(false);
+            }
+
             // The full working copy (document included) is congruent with the API model — a free whole-document re-wrap.
             workspace.TakeOwnership(created);
             return CreateWorkspaceWorkflowResult.Created(Models.WorkingCopy.From(created.RootElement), workspace);
@@ -316,6 +328,37 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         {
             return CreateWorkspaceWorkflowResult.BadRequest(Problem("invalid-working-copy", "Invalid working copy", 400, ex.Message), workspace);
         }
+    }
+
+    // Attaches a set of carried-over sources (name → document bytes) inline onto a just-created working copy, one
+    // etag-guarded write per source through the same DraftReplacingAttachment path an interactive attach uses. Takes
+    // ownership of <paramref name="workingCopy"/> and returns the final (fully-attached) working copy for the caller
+    // to own; intermediate documents are disposed.
+    private async ValueTask<ParsedJsonDocument<WorkspaceWorkflow>> AttachCarriedSourcesAsync(ParsedJsonDocument<WorkspaceWorkflow> workingCopy, IReadOnlyList<KeyValuePair<string, byte[]>> sources, CancellationToken cancellationToken)
+    {
+        string id = (string)workingCopy.RootElement.Id;
+        AccessContext context = this.access.Current();
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        ParsedJsonDocument<WorkspaceWorkflow> current = workingCopy;
+        foreach (KeyValuePair<string, byte[]> source in sources)
+        {
+            using ParsedJsonDocument<JsonElement> sourceDocument = ParsedJsonDocument<JsonElement>.Parse(source.Value);
+            string? type = WorkspaceSourceJson.DetectDocumentType(sourceDocument.RootElement);
+            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceSourceJson.DraftReplacingAttachment(
+                (JsonElement)current.RootElement.Sources, source.Key, "inline", sourceName: null, (JsonElement)sourceDocument.RootElement, type, this.actor, now);
+            ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, current.RootElement.EtagValue, this.actor, context, cancellationToken).ConfigureAwait(false);
+            current.Dispose();
+            if (saved is not { } next)
+            {
+                // The just-created copy vanished mid-carry (should not happen); surface the best current state.
+                return await this.store.GetAsync(id, context, cancellationToken).ConfigureAwait(false)
+                    ?? throw new InvalidOperationException($"Working copy '{id}' vanished during source carry-over.");
+            }
+
+            current = next;
+        }
+
+        return current;
     }
 
     /// <inheritdoc/>

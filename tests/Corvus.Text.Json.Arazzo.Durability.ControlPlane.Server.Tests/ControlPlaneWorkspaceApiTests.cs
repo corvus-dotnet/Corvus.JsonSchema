@@ -194,6 +194,31 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Opening_from_a_version_carries_its_sources_inline()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        await host.Catalog.SeedVersionWithSourceAsync("flow-1", "payments");
+
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/workspace/workflows", """{"fromBaseWorkflowId":"flow-1","fromVersionNumber":1}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string id;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            id = doc.RootElement.GetProperty("id").GetString()!;
+        }
+
+        // §18/§9: the version's referenced source travelled forward INLINE, so the working copy resolves it with no
+        // manual re-attach — a debug run or simulation created from a version compiles immediately.
+        using Stj.JsonDocument sources = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/workspace/workflows/{id}/sources", Read));
+        Stj.JsonElement list = sources.RootElement.GetProperty("sources");
+        list.GetArrayLength().ShouldBe(1);
+        list[0].GetProperty("name").GetString().ShouldBe("payments");
+        list[0].GetProperty("kind").GetString().ShouldBe("inline");
+        list[0].GetProperty("type").GetString().ShouldBe("openapi");
+    }
+
+    [TestMethod]
     public async Task Listing_keyset_pages_with_a_continuation_token()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
@@ -685,6 +710,23 @@ public sealed class ControlPlaneWorkspaceApiTests
             }
             """);
             ReadOnlyMemory<byte> package = CatalogPackage.Build(workflow, []);
+            using ParsedJsonDocument<CatalogVersion> version = await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, default);
+        }
+
+        public async Task SeedVersionWithSourceAsync(string workflowId, string sourceName)
+        {
+            byte[] workflow = Encoding.UTF8.GetBytes($$"""
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "Flow", "description": "A flow." },
+              "sourceDescriptions": [ { "name": "{{sourceName}}", "type": "openapi" } ],
+              "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
+            }
+            """);
+            byte[] source = Encoding.UTF8.GetBytes($$"""
+            { "openapi": "3.0.0", "info": { "title": "{{sourceName}}", "version": "1.0.0" }, "paths": { } }
+            """);
+            ReadOnlyMemory<byte> package = CatalogPackage.Build(workflow, [new KeyValuePair<string, byte[]>(sourceName, source)]);
             using ParsedJsonDocument<CatalogVersion> version = await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, default);
         }
     }
