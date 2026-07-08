@@ -73,6 +73,66 @@ public sealed class InProcessDraftRunnerTests
     private static readonly IReadOnlyList<KeyValuePair<string, byte[]>> Sources =
         [new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))];
 
+    // A two-step draft (getPet → adoptPet, each one operation-bound HTTP call) for the paused/resumed multi-segment
+    // trace-attribution regression: with pause-after-each-step, segment 1 runs getPet and segment 2 runs adoptPet.
+    private const string TwoStepWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Adopt", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                },
+                {
+                  "stepId": "adoptPet",
+                  "operationId": "adoptPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "adopted": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "name": "$steps.adoptPet.outputs.adopted" }
+            }
+          ]
+        }
+        """;
+
+    private const string TwoStepPetstoreOpenApi = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Pets", "version": "1.0.0" },
+          "paths": {
+            "/pets/{petId}": {
+              "get": {
+                "operationId": "getPet",
+                "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+                "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" } } } } } } }
+              }
+            },
+            "/pets/{petId}/adopt": {
+              "post": {
+                "operationId": "adoptPet",
+                "parameters": [ { "name": "petId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+                "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" } } } } } } }
+              }
+            }
+          }
+        }
+        """;
+
+    private static readonly byte[] TwoStepWorkflowUtf8 = Encoding.UTF8.GetBytes(TwoStepWorkflowJson);
+
+    private static readonly IReadOnlyList<KeyValuePair<string, byte[]>> TwoStepSources =
+        [new("petstore", Encoding.UTF8.GetBytes(TwoStepPetstoreOpenApi))];
+
     [TestMethod]
     public async Task Pumping_a_pending_draft_run_advances_completes_it_and_caches_a_matching_metadata_trace()
     {
@@ -247,6 +307,71 @@ public sealed class InProcessDraftRunnerTests
         (await traceStore.GetAsync(id, default)).HasValue.ShouldBeFalse();
         using WorkflowRun? pending = await WorkflowRun.ResumeAsync(runStore, id);
         pending!.Status.ShouldBe(WorkflowRunStatus.Pending);
+    }
+
+    [TestMethod]
+    public async Task A_paused_run_resumed_attributes_each_segments_exchanges_to_its_own_step()
+    {
+        // Regression (§18 R3, multi-segment): a debug run paused after each step advances one step per pump, but its
+        // checkpoint accumulates every executed step. A fresh per-segment recording would hold only the latest
+        // segment's exchange, so the assembler would give the first step the second's request and leave the second
+        // with none. The runner accumulates the recording across the run's segments so each step keeps its own request.
+        using var endpoint = new LocalHttpEndpoint(200, """{"name":"Fido"}""");
+        var runStore = new InMemoryWorkflowStateStore();
+        var drafts = new InMemoryDraftRunStore();
+        var traceStore = new InMemoryDraftRunTraceStore();
+
+        var pause = new WorkflowPauseConfig(true, new HashSet<int>());
+        WorkflowRunId id = await StartTwoStepDraftAsync(runStore, drafts, "development", pause);
+
+        using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
+        await using var runner = new InProcessDraftRunner(
+            runStore, "runner-dev", "development", drafts, traceStore, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
+
+        // Segment 1: getPet runs, then the run pauses after the step; mark it resume-claimable for the next pump.
+        (await runner.RunPendingAsync()).ShouldBe(1);
+        using (WorkflowRun? afterFirst = await WorkflowRun.ResumeAsync(runStore, id))
+        {
+            afterFirst!.Status.ShouldBe(WorkflowRunStatus.Suspended);
+            await afterFirst.RequestResumeAsync(pause, default);
+        }
+
+        // Segment 2: adoptPet runs against the same runner instance (its accumulated recording now holds both).
+        (await runner.RunPendingAsync()).ShouldBe(1);
+
+        endpoint.Requests.ShouldBe([("GET", "/pets/42"), ("POST", "/pets/42/adopt")]);
+
+        // The final trace attributes each step's single request to that step — not both to the first (the bug left
+        // adoptPet with zero requests).
+        ReadOnlyMemory<byte>? traceUtf8 = await traceStore.GetAsync(id, default);
+        traceUtf8.HasValue.ShouldBeTrue();
+        using ParsedJsonDocument<JsonElement> traceDoc = ParsedJsonDocument<JsonElement>.Parse(traceUtf8.Value);
+        JsonElement steps = traceDoc.RootElement.GetProperty("steps"u8);
+
+        JsonElement getPet = At(steps, 0);
+        getPet.GetProperty("stepId"u8).GetString().ShouldBe("getPet");
+        At(getPet.GetProperty("requests"u8), 0).GetProperty("path"u8).GetString().ShouldBe("/pets/42");
+
+        JsonElement adoptPet = At(steps, 1);
+        adoptPet.GetProperty("stepId"u8).GetString().ShouldBe("adoptPet");
+        At(adoptPet.GetProperty("requests"u8), 0).GetProperty("path"u8).GetString().ShouldBe("/pets/42/adopt");
+
+        AssertNoBodies(traceDoc.RootElement);
+    }
+
+    private static async Task<WorkflowRunId> StartTwoStepDraftAsync(InMemoryWorkflowStateStore runStore, InMemoryDraftRunStore drafts, string environment, WorkflowPauseConfig pause)
+    {
+        var management = new DraftRunManagement(runStore, drafts);
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        var start = new DraftRunStart(
+            WorkingCopyId: "wc-2",
+            WorkflowId: "adopt",
+            DocumentUtf8: TwoStepWorkflowUtf8,
+            Sources: TwoStepSources,
+            Environment: environment,
+            DocumentEtag: "etag-2",
+            StartedBy: "alice");
+        return await management.StartAsync(start, inputs.RootElement, pause: pause);
     }
 
     private static async Task<WorkflowRunId> StartDraftAsync(InMemoryWorkflowStateStore runStore, InMemoryDraftRunStore drafts, string environment)
