@@ -245,6 +245,71 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
     }
 
+    /// <summary>Marks a faulted run resume-claimable after applying a resume mutation (design §18 R5b), instead of
+    /// re-executing it in-process. The multi-process fault-remediation path: the control plane applies the mutation
+    /// (rewind / skip / patch) under optimistic concurrency, stamps the resume-requested marker, and returns; a runner
+    /// surfaces the run through its dispatch index, claims it, and re-enters the executor. Unlike <see cref="ResumeAsync"/>
+    /// it needs no <see cref="WorkflowResumer"/> — the control plane never executes.</summary>
+    /// <param name="id">The faulted run.</param>
+    /// <param name="options">The resume verb (retry / skip / rewind / patch).</param>
+    /// <param name="context">The caller's access context (must have write reach, §14.2).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> when the run was marked resume-claimable; <see langword="false"/> when it is out
+    /// of reach, leased by another owner, not faulted, or the mutation did not apply.</returns>
+    public async ValueTask<bool> RequestFaultedResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // A run outside the caller's write reach is not actionable (§14.2).
+        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
+        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.resume.request");
+        if (activity is { IsAllDataRequested: true })
+        {
+            activity.SetTag(ArazzoTelemetry.RunIdTag, id.Value);
+            activity.SetTag(ArazzoTelemetry.ActorTag, this.owner);
+            activity.SetTag(ArazzoTelemetry.ResumeModeTag, options.Mode.ToString());
+        }
+
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        if (lease is null)
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
+            return false;
+        }
+
+        try
+        {
+            // For every mode but a plain retry, mutate the checkpoint (cursor/state) under optimistic concurrency
+            // before handing off: rewind the cursor, skip past the faulted step, or apply a state patch.
+            if (options.Mode != ResumeMode.RetryFaultedStep &&
+                !await this.TryApplyResumeMutationAsync(id, options, activity, cancellationToken).ConfigureAwait(false))
+            {
+                return false;
+            }
+
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            if (run is null || run.Status != WorkflowRunStatus.Faulted)
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-faulted");
+                return false;
+            }
+
+            // Hand the (possibly mutated) faulted run to a runner: stamp the resume-requested marker, preserving the
+            // run's pause. QueryClaimable surfaces it; a runner claims it and its first checkpoint clears the fault.
+            await run.RequestResumeKeepingPauseAsync(cancellationToken).ConfigureAwait(false);
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "resume-requested");
+            return true;
+        }
+        finally
+        {
+            await this.store.ReleaseLeaseAsync(lease.Value, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     /// <inheritdoc/>
     public async ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, AccessContext context, CancellationToken cancellationToken)
     {

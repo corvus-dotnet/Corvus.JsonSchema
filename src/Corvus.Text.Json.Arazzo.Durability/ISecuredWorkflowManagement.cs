@@ -72,6 +72,16 @@ public interface ISecuredWorkflowManagement
     /// <returns><see langword="true"/> if the run was resumed; <see langword="false"/> if it was not faulted, was outside the caller's write reach, was held by another owner, was changed concurrently, or no longer exists.</returns>
     ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken);
 
+    /// <summary>Applies a resume mutation to a faulted run then marks it resume-claimable instead of re-executing it
+    /// in-process (design §18 R5b) — the multi-process fault-remediation path, where a runner performs the
+    /// re-execution. Needs no <see cref="WorkflowResumer"/>: the control plane never executes.</summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="options">How to resume — retry the faulted step, rewind to an earlier cursor, skip the faulted step, or apply a state patch first.</param>
+    /// <param name="context">The caller's access grant; the run must be within its write reach (§14.2).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if the run was marked resume-claimable; <see langword="false"/> if it was not faulted, was outside the caller's write reach, was held by another owner, or the mutation did not apply.</returns>
+    ValueTask<bool> RequestFaultedResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken);
+
     /// <summary>Cancels a non-terminal run, marking it <see cref="WorkflowRunStatus.Cancelled"/>.</summary>
     /// <param name="id">The run id.</param>
     /// <param name="reason">An operator-supplied reason for the cancellation.</param>
