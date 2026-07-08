@@ -2817,8 +2817,10 @@ export function createMockControlPlane(options = {}) {
           inputs: body?.inputs, pause: body?.pause, overrides: {}, cursor: 0, status: 'running',
           documentEtag: wc.etag, startedBy: actingSubject(), startedAt: iso(0), updatedAt: iso(0), justCreated: true,
         };
-        const fail = execute(run);
-        if (fail) return fail;
+        // §18 R5: the control plane enqueues a Pending run; a runner advances it out-of-band. The mock plays the
+        // runner on the next getDebugRun poll (pendingAdvance), so the dock must PUMP getDebugRun — it must NOT read
+        // the advanced state from this enqueue response (which reports the un-advanced 'running').
+        run.pendingAdvance = true;
         debugRunsStore.set(run.id, run);
         auditEvents.push?.({ kind: 'debug-run-started', workingCopyId: wc.id, environment: env.name, documentEtag: run.documentEtag, by: run.startedBy, at: run.startedAt });
         const response = view(run);
@@ -2828,7 +2830,16 @@ export function createMockControlPlane(options = {}) {
 
       const run = debugRunsStore.get(decodeURIComponent(dbg[2] ?? ''));
       if (!run || run.wcId !== wc.id) return problem(404, 'Debug run not found');
-      if (!dbg[3] && method === 'GET') return view(run);
+      if (!dbg[3] && method === 'GET') {
+        // §18 R5: the mock plays the runner — the first poll after a start/resume mark advances the run one segment,
+        // so a dock that pumps getDebugRun sees the run progress from 'running' to paused/completed/faulted.
+        if (run.pendingAdvance) {
+          run.pendingAdvance = false;
+          const fail = execute(run);
+          if (fail) return fail;
+        }
+        return view(run);
+      }
       if (dbg[3] === 'cancel' && method === 'POST') {
         run.status = 'cancelled';
         run.updatedAt = iso(0);
@@ -2847,9 +2858,10 @@ export function createMockControlPlane(options = {}) {
           run.cursor = Math.max(0, (action.targetCursor ?? 0)); // deliberate re-execution forward from here
         }
         if (body?.pause !== undefined) run.pause = body.pause;
-        if (run.pause?.afterEachStep) run.cursor = Math.min(run.cursor + 0, run.cursor); // budget computed from cursor below
-        const fail = execute(run);
-        if (fail) return fail;
+        // §18 R5: mark the run resume-claimable and return the un-advanced state; the runner (mock) advances it on the
+        // next getDebugRun poll. The dock must pump getDebugRun rather than read this mark response.
+        run.status = 'running';
+        run.pendingAdvance = true;
         return view(run);
       }
       return problem(405, 'Method not allowed');

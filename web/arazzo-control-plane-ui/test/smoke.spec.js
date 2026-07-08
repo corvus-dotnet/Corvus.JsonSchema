@@ -328,3 +328,27 @@ test('an operation dropped onto the designer starts templated from its documente
   // The declared parameters arrive with the step too — nothing schema-derivable hides behind a button.
   await expect(page.locator('arazzo-step-inspector .prow .pfixed').first()).toContainText('checks');
 });
+
+test('§18 debug run: starting against a dev environment pumps get-debug-run to a paused state (R5 async)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+
+  // ▶ Run offers the development debug-run environment (§18: allowsDraftRuns, its sources credentialed there).
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await page.locator('#run-inputs-env').selectOption('development');
+  await dlg.locator('.ri-run').click();
+
+  // §18 R5: the control plane MARKS the run and returns un-advanced; the dock must PUMP get-debug-run until a runner
+  // advances it. So the dock first shows "waiting for runner…", then settles at paused-after-step-1 — proving the
+  // browser poll loop drives progress rather than trusting the (now un-advanced) enqueue response.
+  await expect(page.locator('#debug-dock')).toBeVisible();
+  await expect(page.locator('#save-status')).toHaveText(/debug run paused in development/i, { timeout: 5000 });
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});

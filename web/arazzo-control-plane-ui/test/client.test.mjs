@@ -1585,20 +1585,32 @@ test('debug runs (§18): gated start, single-step forward, step-over via Skip, c
     err.status === 409 && /petstore/.test(err.problem?.detail ?? ''));
   await c.createCredential({ sourceName: 'petstore', environment: 'development', authKind: 'httpBearer', secretRefs: [{ name: 'token', ref: 'vault://kv/dev/petstore#token' }] });
 
-  // Forward-only lifecycle: start paused after step 1, resume advances exactly one step.
-  const run = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', inputs: { petId: 'p-1' }, pause: { afterEachStep: true } });
+  // §18 R5: advance is ASYNC — start/resume MARK the run and a runner advances it out-of-band, so the client PUMPS
+  // get-debug-run until it settles (it never trusts the mark response's un-advanced trace).
+  const SETTLED = new Set(['paused', 'suspended', 'completed', 'faulted', 'cancelled']);
+  const pump = async (runId) => {
+    let r;
+    for (let i = 0; i < 50; i++) { r = await c.getDebugRun(wc.id, runId); if (SETTLED.has(r.status)) return r; }
+    throw new Error(`debug run ${runId} did not settle (last: ${r?.status})`);
+  };
+
+  // Forward-only lifecycle: start enqueues (un-advanced 'running'); pumping observes paused-after-step-1.
+  const started = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', inputs: { petId: 'p-1' }, pause: { afterEachStep: true } });
+  assert.equal(started.status, 'running', 'the enqueue response is un-advanced — a runner advances it');
+  const run = await pump(started.debugRunId);
   assert.equal(run.status, 'paused');
   assert.equal(run.cursor, 1, 'paused after the first step');
   assert.ok(run.trace.steps[0].requests?.length, 'the trace carries the as-sent exchange');
 
-  // Step over: the runs Skip verbatim — the next step does not execute; its outputs are provided.
-  const over = await c.resumeDebugRun(wc.id, run.debugRunId, { action: { mode: 'Skip', skipOutputs: { forced: true } }, pause: { afterEachStep: true } });
+  // Step over: the runs Skip verbatim — mark, then pump; the next step does not execute, its outputs are provided.
+  await c.resumeDebugRun(wc.id, started.debugRunId, { action: { mode: 'Skip', skipOutputs: { forced: true } }, pause: { afterEachStep: true } });
+  const over = await pump(started.debugRunId);
   const skipped = over.trace.steps.find((s) => s.stepId === 'adopt');
   assert.equal(skipped?.skipped, true, 'the stepped-over step did not execute');
   assert.deepEqual(skipped?.outputs, { forced: true });
   assert.equal(over.status, 'completed', 'skipping the final step completes the run');
-  await assert.rejects(() => c.resumeDebugRun(wc.id, run.debugRunId, {}), (err) => err.status === 409, 'terminal runs refuse resume');
+  await assert.rejects(() => c.resumeDebugRun(wc.id, started.debugRunId, {}), (err) => err.status === 409, 'terminal runs refuse resume');
 
-  const cancelled = await c.cancelDebugRun(wc.id, run.debugRunId);
+  const cancelled = await c.cancelDebugRun(wc.id, started.debugRunId);
   assert.equal(cancelled.status, 'cancelled');
 });
