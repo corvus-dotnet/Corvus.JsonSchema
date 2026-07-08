@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Collections.Concurrent;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.OpenApi;
@@ -71,6 +72,12 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     private readonly WorkflowWorker? worker;
     private readonly WorkflowResumer tracingResumer;
     private readonly AsyncLocal<DraftRunRecording?> currentRecording = new();
+
+    // A run's recording accumulates across ITS segments: a paused/resumed debug run advances one segment per pump, but
+    // its checkpoint accumulates every executed step, so the trace must be assembled from every segment's exchanges — a
+    // fresh per-segment recording would hold only the latest segment's and mis-attribute the earlier steps. Keyed by run
+    // id, so concurrent pumps of different runs stay isolated; evicted when the run reaches a terminal state.
+    private readonly ConcurrentDictionary<WorkflowRunId, DraftRunRecording> recordings = new();
     private readonly Lock loopGate = new();
     private CancellationTokenSource? loopCts;
     private Task? loop;
@@ -263,11 +270,14 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     // its just-persisted checkpoint plus exactly the recorders bound for it.
     private async ValueTask<WorkflowRunResultKind> RunAndTraceAsync(WorkflowRun run, CancellationToken cancellationToken)
     {
-        var recording = new DraftRunRecording();
+        // The recording is keyed by run id and reused across ITS segments (§18 R3): a paused/resumed debug run advances
+        // one segment per pump, so a later segment's exchanges accumulate onto the earlier ones — the trace is assembled
+        // from all of them and attributes every executed step faithfully. A terminal run's recording is evicted below.
+        DraftRunRecording recording = this.recordings.GetOrAdd(run.Id, static _ => new DraftRunRecording());
         this.currentRecording.Value = recording;
 
         // §18 R3: mark a step boundary at each durable checkpoint, so the assembler attributes exchanges to steps by
-        // range (faithful across a step's retries). Always a debug run here, so the hook is always wired.
+        // range (faithful across a step's retries and across resume segments). Always a debug run here, so it is wired.
         run.OnCheckpointed = recording.MarkStepBoundary;
         try
         {
@@ -296,6 +306,13 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
             catch (Exception) when (kind == WorkflowRunResultKind.Faulted)
             {
                 // Nothing to assemble; the fault on the run is the record.
+            }
+
+            // A terminal run will accumulate nothing more, so drop its recording; a suspended (paused / timer / message)
+            // run keeps it so the next segment's exchanges attribute onto the steps already recorded.
+            if (kind != WorkflowRunResultKind.Suspended)
+            {
+                this.recordings.TryRemove(run.Id, out _);
             }
 
             return kind;

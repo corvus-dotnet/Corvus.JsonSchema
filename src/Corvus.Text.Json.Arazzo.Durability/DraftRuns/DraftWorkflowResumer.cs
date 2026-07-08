@@ -83,7 +83,10 @@ public sealed class DraftWorkflowResumer : IDisposable
         IHostedWorkflow hosted = await this.ResolveAsync(run.Id, cancellationToken).ConfigureAwait(false);
         WorkflowTransports transports = this.transportBinder(hosted.Descriptor, run.SecurityTags);
 
-        using JsonWorkspace workspace = JsonWorkspace.Create();
+        // Unrented (no thread affinity): RunAsync is awaited and a paused/resumed run's continuation can complete on a
+        // different thread than the one that created the workspace, so a thread-local rented workspace would fail its
+        // return-to-cache invariant. This is the same posture the generated OpenAPI response handlers take.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         try
         {
             return await hosted.RunAsync(transports.ApiTransports, transports.MessageTransport, workspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
