@@ -155,6 +155,37 @@ public sealed class InProcessDraftRunnerTests
     }
 
     [TestMethod]
+    public async Task An_uncompilable_draft_run_is_faulted_without_aborting_the_rest_of_the_batch()
+    {
+        using var endpoint = new LocalHttpEndpoint(200, """{"name":"Fido"}""");
+        var runStore = new InMemoryWorkflowStateStore();
+        var drafts = new InMemoryDraftRunStore();
+        var traceStore = new InMemoryDraftRunTraceStore();
+
+        // One draft whose captured document does NOT compile (it declares a source that is not attached, so the
+        // operation cannot bind), then one valid draft. A single pump must FAULT the bad one (terminal — never
+        // re-claimed) and still advance the good one: a bad run must not abort the batch or block every other run.
+        WorkflowRunId bad = await StartUncompilableDraftAsync(runStore, drafts, environment: "development");
+        WorkflowRunId good = await StartDraftAsync(runStore, drafts, environment: "development");
+
+        using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
+        await using var runner = new InProcessDraftRunner(
+            runStore, "runner-dev", "development", drafts, traceStore, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
+
+        // The pump does not throw — the failure is isolated to the bad run — and both runs are advanced.
+        int advanced = await runner.RunPendingAsync();
+        advanced.ShouldBe(2);
+
+        using WorkflowRun? badRun = await WorkflowRun.ResumeAsync(runStore, bad);
+        badRun!.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        using WorkflowRun? goodRun = await WorkflowRun.ResumeAsync(runStore, good);
+        goodRun!.Status.ShouldBe(WorkflowRunStatus.Completed);
+
+        // A second pump does not re-claim the faulted run (it is terminal), so it never blocks the pump again.
+        (await runner.RunPendingAsync()).ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task A_draft_run_whose_endpoint_returns_5xx_is_advanced_and_caches_a_faulted_trace()
     {
         using var endpoint = new LocalHttpEndpoint(500, """{"error":"boom"}""");
@@ -233,6 +264,23 @@ public sealed class InProcessDraftRunnerTests
         Environment: environment,
         DocumentEtag: "etag-1",
         StartedBy: "alice");
+
+    private static async Task<WorkflowRunId> StartUncompilableDraftAsync(InMemoryWorkflowStateStore runStore, InMemoryDraftRunStore drafts, string environment)
+    {
+        var management = new DraftRunManagement(runStore, drafts);
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        // Declares a source ('missing') but attaches none, so the step's operation cannot bind — the durable compile fails.
+        var start = new DraftRunStart(
+            WorkingCopyId: "wc-bad",
+            WorkflowId: "broken",
+            DocumentUtf8: Encoding.UTF8.GetBytes("""{"arazzo":"1.1.0","info":{"title":"Broken","version":"1.0.0"},"sourceDescriptions":[{"name":"missing","type":"openapi"}],"workflows":[{"workflowId":"broken","steps":[{"stepId":"s1","operationId":"nope"}]}]}"""),
+            Sources: [],
+            Environment: environment,
+            DocumentEtag: "etag-bad",
+            StartedBy: "alice");
+        return await management.StartAsync(start, inputs.RootElement);
+    }
 
     // Binds each declared source to a plain, unauthenticated HttpClientTransport over the shared, test-owned client
     // (disposeClient: false — the resumer disposes the transport per run; the test owns the client). The runner itself
