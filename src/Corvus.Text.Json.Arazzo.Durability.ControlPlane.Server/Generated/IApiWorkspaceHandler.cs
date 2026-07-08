@@ -156,6 +156,15 @@ public interface IApiWorkspaceHandler
     ValueTask<GetDebugRunResult> HandleGetDebugRunAsync(GetDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles DELETE /workspace/workflows/{id}/debug-runs/{debugRunId} — Delete the debug run and purge its captured draft and metadata trace; idempotent.
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<DeleteDebugRunResult> HandleDeleteDebugRunAsync(DeleteDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /workspace/workflows/{id}/debug-runs/{debugRunId}/resume — Advance the debug run: plain resume continues to the next pause point (pause.afterEachStep = single-step; pause.beforeSteps = breakpoints); an optional action applies the SAME ResumeRequest union the runs view uses — Skip with outputs is 'step over', Rewind deliberately re-executes.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

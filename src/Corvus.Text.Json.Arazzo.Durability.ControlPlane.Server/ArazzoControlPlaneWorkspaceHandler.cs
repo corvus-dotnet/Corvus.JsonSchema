@@ -1357,6 +1357,46 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
         return CancelDebugRunResult.Ok(v.RootElement, workspace);
     }
 
+    /// <summary>Deletes a §18 debug run and purges its metadata trace and captured draft (design §18 R5c): a
+    /// dual-store delete keyed by run id — the trace store, the draft-run capture, and the durable run — so a run's
+    /// artifacts die with it. Reach-checked against the parent working copy (§14.2); a run not belonging to it is 404.</summary>
+    /// <param name="parameters">The request parameters.</param>
+    /// <param name="workspace">The response workspace.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>204 No Content when deleted, or the problem.</returns>
+    public async ValueTask<DeleteDebugRunResult> HandleDeleteDebugRunAsync(DeleteDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (!this.DebugRunsOffered)
+        {
+            return DeleteDebugRunResult.NotFound(DebugRunsNotOffered(404), workspace);
+        }
+
+        string id = (string)parameters.Id;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is null)
+        {
+            return DeleteDebugRunResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        var runId = new WorkflowRunId((string)parameters.DebugRunId);
+        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
+        {
+            return DeleteDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
+        }
+
+        // §18 R5c: purge the run's metadata trace, its captured draft, and the durable run itself. Idempotent per
+        // store — an id with no entry is a no-op. The trace store may be unwired (trace was optional); guard it.
+        if (this.draftRunTraceStore is { } traceStore)
+        {
+            await traceStore.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
+        }
+
+        await this.draftRunStore!.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
+        await this.workflowStateStore!.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
+
+        return DeleteDebugRunResult.NoContent();
+    }
+
     /// <summary>Whether a run's captured record names this working copy (the nested route's parent) — the
     /// non-disclosing cross-working-copy isolation a debug-run sub-route enforces (§14.2). A missing capture is
     /// "not this working copy".</summary>
