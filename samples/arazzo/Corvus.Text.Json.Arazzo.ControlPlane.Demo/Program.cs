@@ -94,6 +94,10 @@ SqliteSourceCredentialStore sourceCredentials = await SqliteSourceCredentialStor
 SqliteDraftRunStore draftRunStore = await SqliteDraftRunStore.ConnectAsync(connectionString);
 SqliteDraftRunTraceStore draftRunTraceStore = await SqliteDraftRunTraceStore.ConnectAsync(connectionString);
 SqliteEnvironmentStore environmentStore = await SqliteEnvironmentStore.ConnectAsync(connectionString);
+
+// The durable working-copy store (workflow-designer design §4.1): a designer's in-progress edits survive a restart and
+// are shared across control-plane instances, rather than living only in memory. One of the nine fanned-out backends.
+SqliteWorkspaceWorkflowStore workspaceStore = await SqliteWorkspaceWorkflowStore.ConnectAsync(connectionString);
 var draftRunner = new InProcessDraftRunner(
     stateStore,
     owner: "arazzo-inprocess-draft-runner",
@@ -333,6 +337,7 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // §18 debug-run seam: the governed environment store, the run state store, the captured-draft store, the
     // in-process runner that advances the marked runs, and the durable trace store the dock reads back.
     environmentStore: environmentStore,
+    workspaceWorkflowStore: workspaceStore,
     workflowStateStore: stateStore,
     draftRunStore: draftRunStore,
     draftRunner: draftRunner,
