@@ -137,14 +137,23 @@ SQLite backend. Missing any one of them stalls the DCP or breaks container start
 
 ### Stopping it cleanly — do NOT `kill -9`
 
-Stop the AppHost with **`aspire stop`**. It SIGTERMs the AppHost *and waits for the DCP to finish tearing
-down its containers and the `aspire-session-network-*` networks it created* — that wait is the important
-part. (`aspire ps` and `aspire stop` can see an AppHost started with `dotnet run`.) Ctrl+C in the AppHost's
-own terminal is equivalent. A raw `kill -15` only sends the signal without waiting for the async teardown,
-so an immediate restart can race leftover network state; and `kill -9` is worse — it orphans the containers
-and networks outright, along with their aardvark-dns / conmon / rootlessport helper processes, and the
-podman store fills with ghost `Terminated` records. That bloat makes even an idle `podman ps` take 30s+, at
-which point the DCP can no longer drive the runtime. If you get into that state, reset the rootless store:
+Because `aspire run` can't be used on this box (the SDK 10.0.103 dev-cert regression above), the AppHost is
+started with `dotnet run` — and that changes how you stop it. `aspire stop` can *see* a `dotnet run`-started
+AppHost (`aspire ps` lists it) but **cannot reliably stop it**: the `CLI PID` is unknown, so it reports
+"stopped successfully" without actually signalling the process. Stop it yourself with SIGTERM to the AppHost
+process — `kill -15 <apphost-pid>` — or Ctrl+C if you started it in a foreground terminal. (`aspire stop`
+*is* the right tool, but only for an AppHost you started with `aspire run`.)
+
+The teardown is **asynchronous**: the AppHost hands off to the DCP, which removes its containers and the
+`aspire-session-network-*` networks over the next several seconds. **Wait for that to finish before
+restarting** — poll until `podman ps -a` is empty and no `aspire-session-network-*` remains. Restarting into
+a half-torn-down state races the network setup, and the first container up (Vault) can fail to start, which
+cascades to everything that waits on it.
+
+Never `kill -9` the AppHost or DCP: it orphans the containers and networks outright, along with their
+aardvark-dns / conmon / rootlessport helper processes, and the podman store fills with ghost `Terminated`
+records. That bloat makes even an idle `podman ps` take 30s+, at which point the DCP can no longer drive the
+runtime. If you get into that state, reset the rootless store:
 
 ```bash
 pkill -9 -x aardvark-dns; pkill -9 -x conmon; pkill -9 -x rootlessport; pkill -9 -x slirp4netns
