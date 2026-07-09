@@ -22,8 +22,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.FileProviders;
-using OnboardingApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.ApiEndpointRegistration;
-using OnboardingService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.OnboardingService;
 using LedgerApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.ApiEndpointRegistration;
 using LedgerService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.LedgerService;
 using CpEnvironment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
@@ -69,7 +67,13 @@ PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.C
 // resumer is built now but invoked only after the server is listening, so it reads the host base URL lazily (set in
 // the ApplicationStarted callback below) — the same delegate also drives one fresh run at startup to demonstrate it.
 var selfBaseUrl = new System.Runtime.CompilerServices.StrongBox<string?>(null);
-WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."));
+
+// The onboarding source is a real external service (its own process + database — the AppHost stands it up and injects
+// its endpoint). Both this host's live-execution transports and the out-of-process runner route the onboarding source
+// there; the former inline /svc/onboarding mock is gone. Required: this host runs under the AppHost.
+string onboardingBaseUrl = builder.Configuration["ControlPlane:Sources:Onboarding"]
+    ?? throw new InvalidOperationException("ControlPlane:Sources:Onboarding (the onboarding service endpoint) is required — the AppHost injects it.");
+WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl);
 var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
@@ -113,7 +117,7 @@ var draftRunner = new InProcessDraftRunner(
     draftRunStore,
     draftRunTraceStore,
     new WorkflowExecutorProvider(),
-    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started.")),
+    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl),
     // Do NOT host timer waits here: the worker's ResumeDueTimersAsync resumes EVERY due-timer run in the shared store,
     // including seeded CATALOG runs this draft-only resumer cannot host. A draft run that suspends on a retry timer is
     // out of scope for the minimum stand-up (the base onboard-customer workflow has none).
@@ -216,6 +220,10 @@ if (requireAuthorization)
             {
                 options.Keys["demo-admin-key"] = string.Join(' ', ControlPlaneScopes.All);
                 options.Keys["demo-readonly-key"] = $"{ControlPlaneScopes.CatalogRead} {ControlPlaneScopes.RunsRead}";
+                // The admin key is a member of the arazzo-admins group, so it inherits the §16.2 genesis grant's full
+                // row reach — making it a true full administrator (all scopes AND reach over every workflow), which is
+                // what lets it read the catalog and trigger runs of the prod/kyc-tagged workflows.
+                options.Groups["demo-admin-key"] = "arazzo-admins";
             })
         .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
         {
@@ -376,8 +384,8 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     draftRunner: draftRunner,
     draftRunTraceStore: draftRunTraceStore);
 
-// The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
-OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
+// The ledger backend the nightly-reconcile workflow calls (still a control-plane /svc mock — Phase C moves it out,
+// as the onboarding service already has). Onboarding is now a real external service (its own process + database).
 LedgerApi.MapApiEndpoints(app.MapGroup("/svc/ledger"), new LedgerService());
 
 // Once the server is listening, resolve its own base URL (for the live resumer's /svc transports) and execute one

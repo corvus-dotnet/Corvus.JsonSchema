@@ -30,35 +30,39 @@ public static class DemoData
     /// (the resumer is built before the server binds, but invoked only after).</summary>
     /// <param name="catalog">The catalog store the baked executor is loaded from.</param>
     /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
+    /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
     /// <returns>The resumer delegate.</returns>
-    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider)
+    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider, string onboardingBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
 
-        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider));
+        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl));
         return resumer.AsResumer();
     }
 
-    /// <summary>Builds the transport binder that routes each source's generated client at this host's own
-    /// <c>/svc/&lt;source&gt;</c> backends — the live-execution transport shared by the catalog resumer (<see
-    /// cref="CreateLiveResumer"/>) and the §18 in-process draft runner. In production this is
-    /// <c>SourceCredentialTransports.CreateBinder</c> (credentials resolved as the runner's identity via Vault); here
-    /// it is the self-hosted <c>/svc</c> variant so the sample runs single-process with no external endpoints.</summary>
+    /// <summary>Builds the live-execution transport binder shared by the catalog resumer (<see cref="CreateLiveResumer"/>)
+    /// and the §18 in-process draft runner. The <c>onboarding</c> source is a real external service (its own host +
+    /// database), so its client is rooted directly at that service; every other source is still a control-plane
+    /// <c>/svc/&lt;source&gt;</c> mock. In production every source is a real endpoint and this is
+    /// <c>SourceCredentialTransports.CreateBinder</c> (credentials resolved as the runner's identity via Vault).</summary>
     /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
+    /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
     /// <returns>The transport binder.</returns>
-    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider)
+    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
+        ArgumentException.ThrowIfNullOrEmpty(onboardingBaseUrl);
 
-        // One client per source, each rooted at the host with a handler that prefixes the source's /svc base path —
-        // the generated client emits absolute operation paths (e.g. /accounts), so rooting at the host + prefixing in
-        // a handler routes them to /svc/<source>/... (a base address WITH a path is dropped by absolute-path resolution).
+        // The onboarding client is rooted directly at the onboarding service (its absolute operation paths — /accounts,
+        // etc. — hit the service). Every other source is still a control-plane /svc mock: the generated client emits
+        // absolute paths, so rooting at the control-plane host + prefixing /svc/<source> in a handler routes them there
+        // (a base address WITH a path is dropped by absolute-path resolution).
+        var onboardingUri = new Uri(onboardingBaseUrl);
         var clients = new ConcurrentDictionary<string, HttpClient>(StringComparer.Ordinal);
-        HttpClient ClientFor(string source) => clients.GetOrAdd(source, s => new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() })
-        {
-            BaseAddress = new Uri(baseUrlProvider()),
-        });
+        HttpClient ClientFor(string source) => clients.GetOrAdd(source, s => s == "onboarding"
+            ? new HttpClient { BaseAddress = onboardingUri }
+            : new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() }) { BaseAddress = new Uri(baseUrlProvider()) });
 
         // A workflow with an AsyncAPI receive step needs an IMessageTransport supplied to its executor even though
         // the durable suspend/resume itself flows through the worker (WorkflowWorker.DeliverMessageAsync); the
