@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The onboarding aggregate: an account and its progress through the journey (created -&gt; identity-verified/blocked -&gt; provisioned -&gt; welcomed). This is the read model the onboarding console renders.
+/// The onboarding aggregate: an account and its progress through the journey (created -&gt; provisioned -&gt; welcomed). Identity verification is owned by the KYC service and rendered in the KYC console, not here. This is the read model the onboarding console renders.
 /// </para>
 /// </remarks>
 public readonly partial struct AccountView
@@ -556,17 +556,13 @@ public readonly partial struct AccountView
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
         /// <param name="matchCreated">Match 1st item.</param>
-        /// <param name="matchVerified">Match 2nd item.</param>
-        /// <param name="matchBlocked">Match 3rd item.</param>
-        /// <param name="matchProvisioned">Match 4th item.</param>
-        /// <param name="matchWelcomed">Match 5th item.</param>
+        /// <param name="matchProvisioned">Match 2nd item.</param>
+        /// <param name="matchWelcomed">Match 3rd item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
             in TContext context,
             Func<TContext, TResult> matchCreated,
-            Func<TContext, TResult> matchVerified,
-            Func<TContext, TResult> matchBlocked,
             Func<TContext, TResult> matchProvisioned,
             Func<TContext, TResult> matchWelcomed,
             Func<TContext, TResult> defaultMatch)
@@ -581,20 +577,10 @@ public readonly partial struct AccountView
 
             if (this.ValueEquals(Constants.Enum2))
             {
-                return matchVerified(context);
-            }
-
-            if (this.ValueEquals(Constants.Enum3))
-            {
-                return matchBlocked(context);
-            }
-
-            if (this.ValueEquals(Constants.Enum4))
-            {
                 return matchProvisioned(context);
             }
 
-            if (this.ValueEquals(Constants.Enum5))
+            if (this.ValueEquals(Constants.Enum3))
             {
                 return matchWelcomed(context);
             }
@@ -607,16 +593,12 @@ public readonly partial struct AccountView
         /// </summary>
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="matchCreated">Match 1st item.</param>
-        /// <param name="matchVerified">Match 2nd item.</param>
-        /// <param name="matchBlocked">Match 3rd item.</param>
-        /// <param name="matchProvisioned">Match 4th item.</param>
-        /// <param name="matchWelcomed">Match 5th item.</param>
+        /// <param name="matchProvisioned">Match 2nd item.</param>
+        /// <param name="matchWelcomed">Match 3rd item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
             Func<TResult> matchCreated,
-            Func<TResult> matchVerified,
-            Func<TResult> matchBlocked,
             Func<TResult> matchProvisioned,
             Func<TResult> matchWelcomed,
             Func<TResult> defaultMatch)
@@ -628,20 +610,10 @@ public readonly partial struct AccountView
 
             if (this.ValueEquals(Constants.Enum2))
             {
-                return matchVerified();
-            }
-
-            if (this.ValueEquals(Constants.Enum3))
-            {
-                return matchBlocked();
-            }
-
-            if (this.ValueEquals(Constants.Enum4))
-            {
                 return matchProvisioned();
             }
 
-            if (this.ValueEquals(Constants.Enum5))
+            if (this.ValueEquals(Constants.Enum3))
             {
                 return matchWelcomed();
             }

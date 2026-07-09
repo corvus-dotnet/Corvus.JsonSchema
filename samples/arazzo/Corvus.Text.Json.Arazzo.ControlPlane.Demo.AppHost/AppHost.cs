@@ -28,6 +28,12 @@ var onboardingDb = onboardingPostgres.AddDatabase("onboardingdb");
 var ledgerPostgres = builder.AddPostgres("ledger-postgres");
 var ledgerDb = ledgerPostgres.AddDatabase("ledgerdb");
 
+// The KYC service's OWN database — likewise a dedicated Postgres instance. The KYC service owns identity-verification
+// records (the synchronous verifyIdentity step persists a record here; the manual-recovery verdict updates it). It
+// provisions its schema (its own PrepareAsync) on startup.
+var kycPostgres = builder.AddPostgres("kyc-postgres");
+var kycDb = kycPostgres.AddDatabase("kycdb");
+
 // Dev-only fixed Vault tokens — the locally-runnable stand-in for production secret-store auth (design §13.5.1).
 // In prod the runner's identity comes from platform attestation / AppRole (never a token baked into the workload),
 // and provisioning runs as a CI/IaC identity. Here the orchestrator delivers a fixed dev root token to the
@@ -57,6 +63,7 @@ const string provisionScript =
     $"vault token create -id={vaultRunnerReadOnlyToken} -policy=arazzo-runner-ro -period=24h; " +
     "vault kv put secret/arazzo/onboarding api-key=demo-onboarding-key; " +
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
+    "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; " +
     "echo provisioning-complete; " +
     // Linger briefly after the work is done so the orchestrator observes the container reach 'Running' before it
     // exits. A sub-second exit is read as a start failure (FailedToStart) and retried; with this the container goes
@@ -105,6 +112,18 @@ var ledger = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Ledger_
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 
+// The KYC domain service — the third real external source (its own process + its own database). It owns ALL identity
+// verification: the workflow's synchronous verifyIdentity step (createAccount@onboarding -> verifyIdentity@kyc ->
+// provision@onboarding), and later the manual-recovery verdict published onto the bus (design §8). It provisions its
+// own schema on startup and serves the generated KYC API (verifyIdentity plus list/get for the manual-recovery
+// console). Externally reachable for that console.
+var kyc = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Kyc_Host>("kyc")
+    .WithReference(kycDb)
+    .WaitFor(kycDb)
+    .WithHttpEndpoint()
+    .WithExternalHttpEndpoints()
+    .WithHttpHealthCheck("/health");
+
 // The ASP.NET control-plane host: the real server surface (catalog, runs, credentials, administrators, security)
 // plus the build-free web UI and the demo /svc backends. It stores credential *references* only (never binds to
 // Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
@@ -123,12 +142,14 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__RequireAuthorization", "true")
     .WithReference(keycloak)
     .WaitFor(keycloak)
-    // Onboarding and ledger are real external sources: inject their endpoints so the control plane's live-execution
-    // transports route those sources there (its startup live runs call them), and wait for them to be healthy.
+    // Onboarding, ledger, and kyc are real external sources: inject their endpoints so the control plane's live-
+    // execution transports route those sources there (its startup live runs call them), and wait for them to be healthy.
     .WithEnvironment("ControlPlane__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("ControlPlane__Sources__Ledger", ledger.GetEndpoint("http"))
+    .WithEnvironment("ControlPlane__Sources__Kyc", kyc.GetEndpoint("http"))
     .WaitFor(onboarding)
     .WaitFor(ledger)
+    .WaitFor(kyc)
     // Aspire-managed HTTP endpoint (no hardcoded port): Aspire assigns the port, proxies it, and injects
     // ASPNETCORE_URLS so the app binds what Aspire chose — this is what makes the health check and the runner's
     // WithReference/GetEndpoint resolve to the real address without launchSettings pinning a fixed port.
@@ -148,14 +169,16 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
     // executing each against the control plane's own /svc source backends (the demo stand-in for real endpoints).
     .WithEnvironment("Runner__Environment", "development")
-    // Both source backends are real external services (their own processes + databases); the runner routes each at its
+    // All source backends are real external services (their own processes + databases); the runner routes each at its
     // endpoint and waits for them (its executed runs call them). There is no /svc mock backend to point at any more.
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
+    .WithEnvironment("Runner__Sources__Kyc", kyc.GetEndpoint("http"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
     .WaitFor(onboarding)
     .WaitFor(ledger)
+    .WaitFor(kyc)
     // Wait for the provisioner to FINISH, not just for Vault to be reachable. vault-init writes the read-only policy
     // and mints the runner's token; if the runner starts the moment Vault is up, its startup credential self-check can
     // beat that provisioning and get a 403 from Vault (a transient-but-ugly error trace). This is now safe to gate on:

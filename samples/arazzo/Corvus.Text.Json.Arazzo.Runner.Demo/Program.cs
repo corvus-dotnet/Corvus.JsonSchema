@@ -83,6 +83,8 @@ string onboardingBaseUrl = builder.Configuration["Runner:Sources:Onboarding"]
     ?? throw new InvalidOperationException("Runner:Sources:Onboarding (the onboarding service endpoint) is required — the AppHost injects it.");
 string ledgerBaseUrl = builder.Configuration["Runner:Sources:Ledger"]
     ?? throw new InvalidOperationException("Runner:Sources:Ledger (the ledger service endpoint) is required — the AppHost injects it.");
+string kycBaseUrl = builder.Configuration["Runner:Sources:Kyc"]
+    ?? throw new InvalidOperationException("Runner:Sources:Kyc (the KYC service endpoint) is required — the AppHost injects it.");
 var messageTransport = new InMemoryMessageTransport();
 
 // Both HTTP sources are now real external services (their own hosts + databases) — there is no /svc mock left. The
@@ -93,6 +95,7 @@ var sourceClients = new Dictionary<string, HttpClient>(StringComparer.Ordinal)
 {
     ["onboarding"] = new HttpClient { BaseAddress = new Uri(onboardingBaseUrl) },
     ["ledger"] = new HttpClient { BaseAddress = new Uri(ledgerBaseUrl) },
+    ["kyc"] = new HttpClient { BaseAddress = new Uri(kycBaseUrl) },
 };
 
 string? vaultAddress = builder.Configuration["VAULT_ADDR"];
