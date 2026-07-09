@@ -80,6 +80,38 @@ public sealed class KeycloakClaimsTransformerTests
         scopes.ShouldNotContain(ControlPlaneScopes.SecurityWrite);
     }
 
+    /// <summary>
+    /// §16.2 tier 3 — the genesis administrator. With the deployment-policy grant seeded (the <c>arazzo-admins</c>
+    /// group claim mapped to all capability scopes + unrestricted reach — exactly the binding the demo host seeds),
+    /// an <c>arazzo-admins</c> member's effective scopes ARE the full service-operator set. This is a STORED grant
+    /// (config-as-code), so it does not contradict <see cref="AdminGroupConfersReadOnlyNoAmbientWrite"/>: membership
+    /// alone still confers nothing; the deliberate, auditable deployment binding is what confers it — the identity
+    /// analogue of secret-zero, bootstrapped by config rather than an in-system grant.
+    /// </summary>
+    [TestMethod]
+    public async Task GenesisAdminGrantConfersAllScopes()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await SecurityBootstrap.SeedAsync(store);
+
+        using (ParsedJsonDocument<SecurityBindingDocument> tier3 = SecurityBindingDocument.Draft("groups", "arazzo-admins", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, scopes: ControlPlaneScopes.All))
+        {
+            (await store.AddBindingAsync(tier3.RootElement, "bootstrap", default)).Dispose();
+        }
+
+        var entitlements = new PersistentRowSecurityPolicy(store);
+        await entitlements.RefreshAsync();
+        var transformer = new KeycloakClaimsTransformer(entitlements);
+
+        ClaimsPrincipal admin = Principal(("preferred_username", "arazzo-admin"), ("groups", "arazzo-admins"));
+        ClaimsPrincipal mapped = await transformer.TransformAsync(admin);
+
+        HashSet<string> scopes = Scopes(mapped);
+        scopes.ShouldBe([.. ControlPlaneScopes.All], ignoreOrder: true);
+        scopes.ShouldContain(ControlPlaneScopes.RunsWrite);
+        scopes.ShouldContain(ControlPlaneScopes.SecurityWrite);
+    }
+
     /// <summary>A principal carrying no <c>groups</c> claim (e.g. a DevApiKey principal) is left untouched.</summary>
     [TestMethod]
     public async Task PrincipalWithoutGroupsIsUntouched()

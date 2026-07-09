@@ -126,6 +126,19 @@ using (ParsedJsonDocument<SecurityBindingDocument> readAllBinding = SecurityBind
     (await securityPolicy.AddBindingAsync(readAllBinding.RootElement, "bootstrap", default)).Dispose();
 }
 
+// §16.2 tier 3 — the genesis administrator. The realm import (tier 2) seeds the arazzo-admins group + the arazzo-admin
+// seed user; this deployment-policy grant maps that group claim to the "service operator": all capability scopes +
+// unrestricted reach (read/write/purge Full). So the first admin logs in via OIDC and ALREADY HOLDS admin —
+// bootstrapped by config, not an in-system grant (the identity analogue of secret-zero, exactly as vault-init
+// bootstraps the secret store, §13.5). It is a STORED grant keyed on the group claim, consistent with the
+// no-ambient-elevation rule: no group confers capability by mere membership; this binding IS the deliberate, auditable
+// deployment policy §14.1 leaves open. Everyone else earns reach through the §16.5 access-request -> approval flow,
+// approved by these admins. Break-glass for recovery remains the dev API-key scheme.
+using (ParsedJsonDocument<SecurityBindingDocument> adminBootstrap = SecurityBindingDocument.Draft("groups", "arazzo-admins", read: VerbGrant.Full, write: VerbGrant.Full, purge: VerbGrant.Full, scopes: ControlPlaneScopes.All, description: "§16.2 tier 3: the arazzo-admins group is the deployment's genesis administrator (service operator) — all capability scopes + unrestricted reach."))
+{
+    (await securityPolicy.AddBindingAsync(adminBootstrap.RootElement, "bootstrap", default)).Dispose();
+}
+
 // The entitlement resolver (§16.5.2 Decision-A): ONE PersistentRowSecurityPolicy over the security-policy store
 // backs both layers — the claims transformer unions its ResolveGrantedScopes into the scope claim (capability), and
 // it is passed to MapArazzoControlPlane as the row-reach policy. A grant the approval service writes is refreshed
@@ -234,6 +247,12 @@ if (requireAuthorization)
     builder.Services.AddSingleton(entitlements);
     builder.Services.AddSingleton<IClaimsTransformation, KeycloakClaimsTransformer>();
     builder.Services.AddArazzoControlPlaneAuthorization();
+
+    // Scoped-mode row security reads the caller's principal through IHttpContextAccessor; the library requires the host
+    // to register it to switch enforcement on (ControlPlaneRowSecurity: "the host must register it ... to switch
+    // enforcement on"). Without this, MapArazzoControlPlane throws at startup in Scoped mode — the gap that stayed
+    // hidden while the demo ran Open.
+    builder.Services.AddHttpContextAccessor();
 }
 
 string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
