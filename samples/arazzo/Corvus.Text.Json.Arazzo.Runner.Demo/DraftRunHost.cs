@@ -4,6 +4,7 @@
 
 using System.Collections.Concurrent;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 
@@ -16,13 +17,16 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// </summary>
 internal static class DraftRunHost
 {
-    /// <summary>Builds the transport binder the runner executes debug runs through — each declared source's generated
-    /// client rooted at the CONTROL PLANE host with the <c>/svc/&lt;source&gt;</c> prefix (the demo's "real endpoints"
-    /// are the control plane's own /svc backends). The production binder is the Vault-credentialed
-    /// <c>SourceCredentialTransports.CreateBinder</c>, which resolves secrets as the runner's own identity (§13.5).</summary>
+    /// <summary>Builds the un-credentialed transport binder every run executes through when Vault is not configured
+    /// (the standalone two-process run) — each declared source's generated client rooted at the CONTROL PLANE host with
+    /// the <c>/svc/&lt;source&gt;</c> prefix (the demo's "real endpoints" are the control plane's own /svc backends). The
+    /// production binder is the Vault-credentialed <c>SourceCredentialTransports.CreateBinder</c>, which resolves secrets
+    /// as the runner's own identity (§13.5).</summary>
     /// <param name="sourcesBaseUrl">The base URL the source clients are rooted at (the control plane host).</param>
+    /// <param name="messageTransport">The message transport handed to workflows with an AsyncAPI receive step (the
+    /// durable suspend/resume itself flows through the shared store + worker); <see langword="null"/> if none is needed.</param>
     /// <returns>The transport binder.</returns>
-    public static WorkflowTransportBinder CreateSvcBinder(string sourcesBaseUrl)
+    public static WorkflowTransportBinder CreateSvcBinder(string sourcesBaseUrl, IMessageTransport? messageTransport = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(sourcesBaseUrl);
         var clients = new ConcurrentDictionary<string, HttpClient>(StringComparer.Ordinal);
@@ -36,7 +40,7 @@ internal static class DraftRunHost
                 source => source,
                 source => (IApiTransport)new HttpClientApiTransportFactory(ClientFor(source)).CreateTransport(),
                 StringComparer.Ordinal),
-            null);
+            descriptor.NeedsMessageTransport ? messageTransport : null);
     }
 
     /// <summary>Builds one <see cref="HttpClient"/> per named source, each rooted at the control plane host with the

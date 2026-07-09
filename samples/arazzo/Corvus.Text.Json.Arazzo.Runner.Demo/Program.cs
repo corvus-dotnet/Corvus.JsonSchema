@@ -13,9 +13,11 @@ using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using Corvus.Text.Json.Arazzo.Durability.Vault;
+using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Runner.Demo;
 using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
+using Corvus.Text.Json.AsyncApi.Testing;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
@@ -64,40 +66,50 @@ builder.Services.AddSingleton<IEnvironmentRunnerAuthorizationStore>(runnerAuthor
 builder.Services.AddSingleton<ISourceCredentialStore>(credentials);
 builder.Services.AddSingleton(catalog);
 
+// The one transport binder EVERY run executes through — catalogued runs AND §18 $draft debug runs. In the demo the
+// sources are the control plane's own /svc backends (Runner:SourcesBaseUrl); a real deployment points them at the
+// environment's real endpoints. When Vault is configured (VAULT_ADDR/VAULT_TOKEN — the AppHost injects the runner's
+// read-only token), this is the §13.5 production path: the runner resolves each source's credential as its OWN
+// read-only Vault identity at bind time and applies it to the request — the secret never leaves Vault and never
+// reaches the control plane, the designer, or the developer. Without Vault (a standalone two-process run) it falls
+// back to plain /svc transports, enough to prove the loop. The shared in-memory message transport satisfies an
+// AsyncAPI receive step's need for an IMessageTransport (the durable suspend/resume itself flows through the shared
+// store + worker); a real broker adapter replaces it in production (design §8).
+string sourcesBaseUrl = builder.Configuration["Runner:SourcesBaseUrl"]
+    ?? throw new InvalidOperationException("Runner:SourcesBaseUrl must be set (the host serving the sources — the control plane's /svc backends in the demo).");
+var messageTransport = new InMemoryMessageTransport();
+string? vaultAddress = builder.Configuration["VAULT_ADDR"];
+string? vaultToken = builder.Configuration["VAULT_TOKEN"];
+WorkflowTransportBinder binder;
+if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultToken))
+{
+    IVaultClient vaultClient = new VaultClient(new VaultClientSettings(vaultAddress, new TokenAuthMethodInfo(vaultToken)));
+    ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
+    var providerFactory = new SourceCredentialProviderFactory(secretResolver);
+    var credentialCache = new SourceCredentialCache(credentials, providerFactory);
+    Dictionary<string, HttpClient> sourceClients = DraftRunHost.CreateSvcClients(sourcesBaseUrl, "onboarding", "ledger");
+    binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache, messageTransport);
+}
+else
+{
+    binder = DraftRunHost.CreateSvcBinder(sourcesBaseUrl, messageTransport);
+}
+
+// Catalogued-run execution (design §5/§8, §11 Phase 2): the runner claims a Pending run and re-enters the version's
+// baked executor.dll through the real HostedWorkflowResumer — loading it into a collectible ALC on first use and
+// running it against the binder above. This is the same live-execution path the control-plane host runs in-process;
+// wiring it here is what makes the separate runner genuinely EXECUTE catalogued runs (it previously only leased them
+// and marked them complete via a stub). The dispatch/timer-resume loops consume it as their WorkflowResumer.
+WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(), binder).AsResumer();
+builder.Services.AddSingleton(catalogResumer);
+
 // §18 out-of-process draft hosting (the multi-process debug-run topology): the control plane only MARKS $draft debug
-// runs claimable; THIS runner claims and executes them. It reads the shared draft stores (the control plane wrote the
-// capture) and runs each against the environment's endpoints. The demo routes at the control plane's own /svc backends
-// (Runner:SourcesBaseUrl); production swaps CreateSvcBinder for the Vault-credentialed SourceCredentialTransports
-// binder. Disabled with Runner:HostDraftRuns=false (e.g. a catalog-only runner).
+// runs claimable; THIS runner claims and executes them, reusing the same binder. Disabled with Runner:HostDraftRuns=false
+// (e.g. a catalog-only runner — catalogued-run execution above stays on regardless).
 if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
 {
     SqliteDraftRunStore draftRunStore = await SqliteDraftRunStore.ConnectAsync(connectionString);
     SqliteDraftRunTraceStore draftRunTraceStore = await SqliteDraftRunTraceStore.ConnectAsync(connectionString);
-    string sourcesBaseUrl = builder.Configuration["Runner:SourcesBaseUrl"]
-        ?? throw new InvalidOperationException("Runner:SourcesBaseUrl must be set (the control plane host serving the sources' /svc backends) when Runner:HostDraftRuns is on.");
-
-    // The transport binder each debug run executes through. When Vault is configured (VAULT_ADDR/VAULT_TOKEN — the
-    // AppHost injects the runner's read-only token), this is the §13.5 production path: the runner resolves each
-    // source's credential as its OWN read-only Vault identity at bind time and applies it to the request — the secret
-    // never leaves Vault and never reaches the control plane, the designer, or the developer. Without Vault (the
-    // standalone two-process run) it falls back to plain /svc transports, enough to prove the multi-process loop.
-    string? vaultAddress = builder.Configuration["VAULT_ADDR"];
-    string? vaultToken = builder.Configuration["VAULT_TOKEN"];
-    WorkflowTransportBinder binder;
-    if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultToken))
-    {
-        IVaultClient vaultClient = new VaultClient(new VaultClientSettings(vaultAddress, new TokenAuthMethodInfo(vaultToken)));
-        ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
-        var providerFactory = new SourceCredentialProviderFactory(secretResolver);
-        var credentialCache = new SourceCredentialCache(credentials, providerFactory);
-        Dictionary<string, HttpClient> sourceClients = DraftRunHost.CreateSvcClients(sourcesBaseUrl, "onboarding", "ledger");
-        binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache);
-    }
-    else
-    {
-        binder = DraftRunHost.CreateSvcBinder(sourcesBaseUrl);
-    }
-
     var draftRunner = new InProcessDraftRunner(
         stateStore,
         options.RunnerId,

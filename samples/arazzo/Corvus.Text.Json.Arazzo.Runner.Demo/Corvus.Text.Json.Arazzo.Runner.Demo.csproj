@@ -26,6 +26,8 @@
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.SourceCredentials.Http\Corvus.Text.Json.Arazzo.SourceCredentials.Http.csproj" />
+    <!-- InMemoryMessageTransport: the demo's stand-in broker for AsyncAPI channel steps (a real broker adapter replaces it in production, design §8). Same reference the control-plane host uses. -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
   </ItemGroup>
 
 </Project>
