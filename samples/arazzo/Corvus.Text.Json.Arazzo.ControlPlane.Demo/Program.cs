@@ -2,9 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-// A self-contained demo host: the REAL Arazzo control-plane server over a fresh-on-startup SQLite store,
-// seeded with demo workflows + runs, serving the build-free web UI from the same origin. Run it with
-// `dotnet run --project samples/Corvus.Text.Json.Arazzo.ControlPlane.Demo` and open the printed URL.
+// The REAL Arazzo control-plane server over a fresh-on-startup Postgres database, seeded with demo workflows + runs,
+// serving the build-free web UI from the same origin. Runs under the AppHost (which stands up its Postgres, Vault,
+// Keycloak, and the runner) — see the AppHost README for the `aspire start` command.
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.ControlPlane.Demo;
@@ -13,7 +13,8 @@ using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
-using Corvus.Text.Json.Arazzo.Durability.Sqlite;
+using Corvus.Text.Json.Arazzo.Durability.Postgres;
+using Npgsql;
 using System.Security.Claims;
 using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 using Microsoft.AspNetCore.Authentication;
@@ -31,33 +32,38 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Aspire service defaults: OpenTelemetry (incl. the Corvus.Arazzo workflow source/meter), health checks,
 // service discovery, and HTTP resilience. Under the AppHost this exports traces/logs/metrics to the dashboard;
-// run standalone it is a no-op exporter (no OTLP endpoint configured), so `dotnet run` on this project alone
-// still works exactly as before.
+// run standalone it is a no-op exporter (no OTLP endpoint configured). This host now requires the AppHost, which
+// injects the Postgres connection string — there is no standalone store to open.
 builder.AddServiceDefaults();
 
-// The shared durability store. The AppHost injects ConnectionStrings:workflowstore so the control plane and the
-// runner open the same store (the SQLite file is the local stand-in for the production shared store, e.g.
-// Postgres later); the temp-file fallback keeps this host runnable standalone.
+// The shared durability store — a real Postgres database provided by the AppHost's AddPostgres resource. Both this
+// host and the runner open ConnectionStrings:workflowstore (the same database, so they share state). This host now
+// runs under the AppHost, which stands up Postgres; there is no standalone SQLite fallback.
 string connectionString = builder.Configuration.GetConnectionString("workflowstore")
-    ?? $"Data Source={Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo.db")}";
+    ?? throw new InvalidOperationException("ConnectionStrings:workflowstore (the shared Postgres database) is required — run this host under the AppHost.");
+NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 
-// The control plane owns reset + seed: delete the store the connection string points at, so the demo always
-// starts from the seed. (The runner waits for this host's health before connecting, so it never races the wipe.)
-string dbPath = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString).DataSource;
-foreach (string path in new[] { dbPath, dbPath + "-wal", dbPath + "-shm" })
-{
-    if (File.Exists(path))
-    {
-        File.Delete(path);
-    }
-}
+// Postgres adapters do NOT create their schema on ConnectAsync (unlike SQLite, which self-creates on open). The
+// control plane owns the schema: run each store's PrepareAsync (idempotent CREATE TABLE IF NOT EXISTS) once, before
+// any store opens. The runner never runs DDL — it waits for this host's health, by which point the tables exist. The
+// AppHost's Postgres container is ephemeral (no data volume), so every run starts from an empty database — the
+// fresh-each-run reset with no file to wipe.
+await PostgresWorkflowStateStore.PrepareAsync(dataSource);
+await PostgresWorkflowCatalogStore.PrepareAsync(dataSource);
+await PostgresRunnerRegistry.PrepareAsync(dataSource);
+await PostgresEnvironmentRunnerAuthorizationStore.PrepareAsync(dataSource);
+await PostgresSourceCredentialStore.PrepareAsync(dataSource);
+await PostgresDraftRunStore.PrepareAsync(dataSource);
+await PostgresDraftRunTraceStore.PrepareAsync(dataSource);
+await PostgresEnvironmentStore.PrepareAsync(dataSource);
+await PostgresWorkspaceWorkflowStore.PrepareAsync(dataSource);
 
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();
-SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsync(connectionString);
+PostgresWorkflowStateStore stateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
 // The executor provider compiles a runnable executor into each catalogued version at add time (alongside the typed
 // metadata) — so a resumed run can re-enter the real generated Arazzo executor (live execution, §5/§8).
-SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider());
+PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider());
 
 // Live execution (§5/§8): a resumed run re-enters its baked executor, calling this host's own /svc backends. The
 // resumer is built now but invoked only after the server is listening, so it reads the host base URL lazily (set in
@@ -74,30 +80,30 @@ var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "demo", admin
 
 // The runner registry is store-backed and shared, so a runner registering in its own process is visible to this
 // control plane's GET /runners (§5.4) — not an in-memory table only this process can see.
-SqliteRunnerRegistry runners = await SqliteRunnerRegistry.ConnectAsync(connectionString);
+PostgresRunnerRegistry runners = await PostgresRunnerRegistry.ConnectAsync(dataSource);
 
 // The §5.5 runner-authorization store, shared with the runner process: a runner records a Pending authorization to
 // serve its environment when it registers; this control plane reads that inbox and an environment administrator
-// authorizes (or revokes) it. It must be the same store both processes open — hence shared SQLite, not in-memory.
-SqliteEnvironmentRunnerAuthorizationStore runnerAuthorizations = await SqliteEnvironmentRunnerAuthorizationStore.ConnectAsync(connectionString);
+// authorizes (or revokes) it. It must be the same store both processes open — hence the shared Postgres database.
+PostgresEnvironmentRunnerAuthorizationStore runnerAuthorizations = await PostgresEnvironmentRunnerAuthorizationStore.ConnectAsync(dataSource);
 
 // The §13 source-credential store. The control plane manages credential *references* + metadata only — it never
 // binds to the secret store (the §13/§13.5 invariant); the runner is the read-only secret consumer. This lights
 // up the /credentials surface (and the CLI + web UI) over the shared store.
-SqliteSourceCredentialStore sourceCredentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
+PostgresSourceCredentialStore sourceCredentials = await PostgresSourceCredentialStore.ConnectAsync(dataSource);
 
 // §18 debug runs: the durable draft-run stores — the captured {document, sources} blob and the SimulationTrace-shaped
 // metadata trace, both shared with any out-of-process runner — plus a governed environment store (drafts run only in
 // an environment whose administrators allow it). The IN-PROCESS runner executes the enqueued $draft debug runs against
 // this host's own /svc backends: a single-process deployment advances debug runs by pumping this runner (started once
 // the host is listening, below). The control plane only marks runs claimable — it never executes (§18).
-SqliteDraftRunStore draftRunStore = await SqliteDraftRunStore.ConnectAsync(connectionString);
-SqliteDraftRunTraceStore draftRunTraceStore = await SqliteDraftRunTraceStore.ConnectAsync(connectionString);
-SqliteEnvironmentStore environmentStore = await SqliteEnvironmentStore.ConnectAsync(connectionString);
+PostgresDraftRunStore draftRunStore = await PostgresDraftRunStore.ConnectAsync(dataSource);
+PostgresDraftRunTraceStore draftRunTraceStore = await PostgresDraftRunTraceStore.ConnectAsync(dataSource);
+PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 
 // The durable working-copy store (workflow-designer design §4.1): a designer's in-progress edits survive a restart and
 // are shared across control-plane instances, rather than living only in memory. One of the nine fanned-out backends.
-SqliteWorkspaceWorkflowStore workspaceStore = await SqliteWorkspaceWorkflowStore.ConnectAsync(connectionString);
+PostgresWorkspaceWorkflowStore workspaceStore = await PostgresWorkspaceWorkflowStore.ConnectAsync(dataSource);
 var draftRunner = new InProcessDraftRunner(
     stateStore,
     owner: "arazzo-inprocess-draft-runner",

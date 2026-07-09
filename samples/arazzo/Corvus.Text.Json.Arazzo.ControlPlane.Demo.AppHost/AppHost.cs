@@ -8,10 +8,14 @@
 // HashiCorp Vault for source credentials (design §13); Keycloak for OIDC and optionally Postgres join here next.
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-// The shared durability store. SQLite is the local stand-in for the production shared store (becomes an
-// AddPostgres resource later); injecting one connection string into both processes is how they share it — the
-// exact shape that generalizes to a real database. The control plane owns reset + seed; the runner reads + claims.
-string sharedStore = $"Data Source={Path.Combine(Path.GetTempPath(), "arazzo-demo-shared.db")}";
+// The shared durability store — a real Postgres database. AddPostgres stands up a Postgres server container;
+// AddDatabase declares the shared 'workflowstore' database both processes open (its name IS the connection-string
+// name the apps look up, so no app-side config-key change is needed). Ephemeral (no data volume): a fresh empty
+// database each run — the reset-each-run theme without a wipe. The control plane owns the schema (each store's
+// PrepareAsync) + seed; the runner reads + claims. WithReference injects ConnectionStrings__workflowstore (the Npgsql
+// connection string) into each process, and WaitFor gates each on the database being healthy.
+var postgres = builder.AddPostgres("postgres");
+var workflowstore = postgres.AddDatabase("workflowstore");
 
 // Dev-only fixed Vault tokens — the locally-runnable stand-in for production secret-store auth (design §13.5.1).
 // In prod the runner's identity comes from platform attestation / AppRole (never a token baked into the workload),
@@ -73,7 +77,8 @@ var keycloak = builder.AddKeycloak("keycloak")
 // Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
 // validation (§16.3) and waits for the realm import. Externally reachable; OTel flows to the dashboard.
 var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo>("controlplane")
-    .WithEnvironment("ConnectionStrings__workflowstore", sharedStore)
+    .WithReference(workflowstore)
+    .WaitFor(workflowstore)
     // §18 multi-process: a SEPARATE runner process hosts $draft debug runs, so the control plane must NOT run its own
     // in-process draft pump (else both would claim the same runs). The control plane only MARKS runs claimable.
     .WithEnvironment("ControlPlane__HostDraftRunnerInProcess", "false")
@@ -97,7 +102,8 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
 // read-only Vault token (least privilege), waits for provisioning to finish, and resolves credentials at bind
 // time. It waits for the control plane to seed the store + holds a reference for the future /svc executor calls.
 builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
-    .WithEnvironment("ConnectionStrings__workflowstore", sharedStore)
+    .WithReference(workflowstore)
+    .WaitFor(workflowstore)
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     .WithEnvironment("VAULT_TOKEN", vaultRunnerReadOnlyToken)
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
