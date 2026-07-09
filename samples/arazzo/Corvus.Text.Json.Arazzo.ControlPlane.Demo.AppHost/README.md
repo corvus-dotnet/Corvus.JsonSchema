@@ -63,6 +63,17 @@ patched SDK (10.0.104+). Note that on WSL the browser runs on **Windows**, so a 
 *also* be trusted in the Windows certificate store — another reason the HTTP profile is the least-friction
 path here.
 
+### The DCP container tunnel is disabled (`ASPIRE_ENABLE_CONTAINER_TUNNEL=false`)
+
+Aspire 13.4 added an on-by-default **container tunnel** — an `aspire-container-network-tunnelproxy`
+container that provides container-to-host connectivity. On rootless podman under WSL2 the DCP's start of
+the *first* container (Vault) times out while setting that tunnel up (`context deadline exceeded`), even
+though `podman start` runs the container instantly — and because vault-init and the runner depend on Vault,
+the whole composition stalls. This composition doesn't need the tunnel (the host processes reach the
+containers by their published ports; nothing dials back to the host), so it is turned off with
+`ASPIRE_ENABLE_CONTAINER_TUNNEL=false` in the launch profile. With it off, Vault starts in ~20s and the
+full composition is up in ~50s. If you run on Docker or native-Linux podman you can leave the tunnel on.
+
 ## Appendix — podman 5.x on WSL2 without a distro upgrade
 
 Ubuntu 22.04's packaged podman (3.4.4) is too old for the Aspire DCP, the OpenSUSE/Kubic repo is gone,
