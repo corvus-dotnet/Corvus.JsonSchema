@@ -44,24 +44,29 @@ traces, and endpoints. Follow the **controlplane** resource's HTTP endpoint to r
 trusted dev cert you could drop it — but read the next note first, because on some SDKs you cannot get a
 trusted dev cert at all.
 
-### HTTPS dev certificate: a .NET SDK 10.0.103 regression (use `--launch-profile http`)
+### HTTPS dev certificate on WSL2 — use `--launch-profile http`, not `aspire run`
 
-Trusting the ASP.NET Core HTTPS dev certificate — `dotnet dev-certs https --trust`, or the Aspire wrapper
-`aspire certs trust` — is **broken in .NET SDK 10.0.103**. It fails with an EventSource id mismatch
-(`Event WslWindowsTrustSucceeded was assigned event ID 115 but 113 was passed to WriteEvent`) that surfaces
-as `MapOpenSsl30Code reported unhandled error code '30'` / `PartiallyFailedToTrustTheCertificate`. This is a
-confirmed SDK regression, not a machine problem: **10.0.102 works, 10.0.103 does not**
-([dotnet/aspnetcore#65391](https://github.com/dotnet/aspnetcore/issues/65391),
-[dotnet/sdk#52978](https://github.com/dotnet/sdk/issues/52978)).
+Two separate things make the HTTPS dev-cert path unreliable for the **Aspire CLI** on WSL2:
 
-The consequence for Aspire: **`aspire run` runs a dev-cert trust check at startup, so it also fails on
-10.0.103** (`AppHost process exited with code 2`). On that SDK, start the AppHost with
-`dotnet run --launch-profile http` (as above), not `aspire run`. If you specifically need the HTTPS
-dashboard or native `aspire run`, either pin the working SDK in `global.json`
-(`"sdk": { "version": "10.0.102", "rollForward": "disable" }`) and run `aspire certs trust`, or wait for the
-patched SDK (10.0.104+). Note that on WSL the browser runs on **Windows**, so a Linux-trusted cert must
-*also* be trusted in the Windows certificate store — another reason the HTTP profile is the least-friction
-path here.
+1. **A .NET SDK 10.0.103 regression** broke `dotnet dev-certs https --trust` (an EventSource id mismatch,
+   `Event WslWindowsTrustSucceeded was assigned event ID 115 but 113 was passed to WriteEvent`). This is
+   **fixed in 10.0.104+** ([dotnet/aspnetcore#65391](https://github.com/dotnet/aspnetcore/issues/65391),
+   [dotnet/sdk#52978](https://github.com/dotnet/sdk/issues/52978)) — on 10.0.109 with ASP.NET Core runtime
+   10.0.9, `dotnet dev-certs` works again.
+
+2. **`aspire run` / `aspire start` still crash** (`AppHost process exited with code 2`) on WSL2 *even on the
+   fixed SDK/runtime*: the CLI's dev-cert trust check throws an unhandled OpenSSL verify status code —
+   `MapOpenSsl30Code reported unhandled error code '30'`, from `X509Chain.Build` in `GetTrustLevel`. Tracked
+   as [microsoft/aspire#18703](https://github.com/microsoft/aspire/issues/18703); it is distinct from the SDK
+   regression and from the `certutil`-cleanup fix ([#18580](https://github.com/microsoft/aspire/pull/18580)).
+   Installing `libnss3-tools`, trusting the cert, and setting `SSL_CERT_DIR` do **not** resolve it — it needs
+   a CLI fix. `dotnet dev-certs https --check` on the same box does not throw; only the CLI's check does.
+
+Because of (2), start the AppHost with **`dotnet run --launch-profile http`** (HTTP dashboard, no cert check),
+not `aspire run`/`aspire start`. If you want the HTTPS dashboard, `dotnet run --launch-profile https` works on
+10.0.109 (Kestrel serves HTTPS). The cert will be only partially trusted, so browsers warn — and on WSL the
+browser runs on **Windows**, which trusts certs from the Windows store, so the Linux dev cert is not trusted
+there regardless. The HTTP profile stays the least-friction path.
 
 ### The DCP container tunnel is disabled (`ASPIRE_ENABLE_CONTAINER_TUNNEL=false`)
 
