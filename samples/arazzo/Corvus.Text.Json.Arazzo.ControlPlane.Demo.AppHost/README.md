@@ -39,9 +39,29 @@ Open it. You will see every resource (vault, vault-init, keycloak, controlplane,
 traces, and endpoints. Follow the **controlplane** resource's HTTP endpoint to reach the designer at
 `/ui/demo/designer.html?live`.
 
-`--launch-profile http` avoids the HTTPS dev-certificate (which does not import cleanly on WSL/OpenSSL);
-the profile sets `ASPIRE_ALLOW_UNSECURED_TRANSPORT` for the dashboard. On a box with a trusted dev cert
-you can drop it and use the default profile.
+`--launch-profile http` runs the dashboard and services over HTTP (the profile sets
+`ASPIRE_ALLOW_UNSECURED_TRANSPORT`), sidestepping the HTTPS developer certificate. On a box with a
+trusted dev cert you could drop it — but read the next note first, because on some SDKs you cannot get a
+trusted dev cert at all.
+
+### HTTPS dev certificate: a .NET SDK 10.0.103 regression (use `--launch-profile http`)
+
+Trusting the ASP.NET Core HTTPS dev certificate — `dotnet dev-certs https --trust`, or the Aspire wrapper
+`aspire certs trust` — is **broken in .NET SDK 10.0.103**. It fails with an EventSource id mismatch
+(`Event WslWindowsTrustSucceeded was assigned event ID 115 but 113 was passed to WriteEvent`) that surfaces
+as `MapOpenSsl30Code reported unhandled error code '30'` / `PartiallyFailedToTrustTheCertificate`. This is a
+confirmed SDK regression, not a machine problem: **10.0.102 works, 10.0.103 does not**
+([dotnet/aspnetcore#65391](https://github.com/dotnet/aspnetcore/issues/65391),
+[dotnet/sdk#52978](https://github.com/dotnet/sdk/issues/52978)).
+
+The consequence for Aspire: **`aspire run` runs a dev-cert trust check at startup, so it also fails on
+10.0.103** (`AppHost process exited with code 2`). On that SDK, start the AppHost with
+`dotnet run --launch-profile http` (as above), not `aspire run`. If you specifically need the HTTPS
+dashboard or native `aspire run`, either pin the working SDK in `global.json`
+(`"sdk": { "version": "10.0.102", "rollForward": "disable" }`) and run `aspire certs trust`, or wait for the
+patched SDK (10.0.104+). Note that on WSL the browser runs on **Windows**, so a Linux-trusted cert must
+*also* be trusted in the Windows certificate store — another reason the HTTP profile is the least-friction
+path here.
 
 ## Appendix — podman 5.x on WSL2 without a distro upgrade
 
@@ -117,12 +137,14 @@ SQLite backend. Missing any one of them stalls the DCP or breaks container start
 
 ### Stopping it cleanly — do NOT `kill -9`
 
-Stop the AppHost **gracefully** (Ctrl+C, or `kill -15 <apphost-pid>`) and let it finish. Aspire's DCP
-then tears down its own containers and the `aspire-session-network-*` networks it created. If you
-`kill -9` the AppHost or the DCP, those containers and networks are orphaned — along with their
-aardvark-dns / conmon / rootlessport helper processes — and the podman store fills with ghost
-`Terminated` records. That bloat makes even an idle `podman ps` take 30s+, at which point the DCP can no
-longer drive the runtime. If you get into that state, reset the rootless store:
+Stop the AppHost with **`aspire stop`**. It SIGTERMs the AppHost *and waits for the DCP to finish tearing
+down its containers and the `aspire-session-network-*` networks it created* — that wait is the important
+part. (`aspire ps` and `aspire stop` can see an AppHost started with `dotnet run`.) Ctrl+C in the AppHost's
+own terminal is equivalent. A raw `kill -15` only sends the signal without waiting for the async teardown,
+so an immediate restart can race leftover network state; and `kill -9` is worse — it orphans the containers
+and networks outright, along with their aardvark-dns / conmon / rootlessport helper processes, and the
+podman store fills with ghost `Terminated` records. That bloat makes even an idle `podman ps` take 30s+, at
+which point the DCP can no longer drive the runtime. If you get into that state, reset the rootless store:
 
 ```bash
 pkill -9 -x aardvark-dns; pkill -9 -x conmon; pkill -9 -x rootlessport; pkill -9 -x slirp4netns
