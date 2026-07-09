@@ -1,0 +1,76 @@
+/*
+ * Reconciliation console — theme tokens.
+ *
+ * A self-contained theme for the ledger product's reconciliation console. This is a separate application from the
+ * Arazzo control plane (it ships independently and consumes the workflow engine), so it carries its own token kit.
+ * The `<reconciliation-console>` component reads these `--ldg-*` custom properties, which inherit through its Shadow
+ * DOM. Dark mode follows the OS by default; force it with data-theme="dark|light" on <html>.
+ */
+:root {
+  --ldg-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ldg-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
+  --ldg-radius: 10px;
+
+  --ldg-bg: #f4f6f9;
+  --ldg-surface: #ffffff;
+  --ldg-surface-2: #f2f4f8;
+  --ldg-border: #e1e5ea;
+  --ldg-text: #1a1d21;
+  --ldg-muted: #6b7280;
+  --ldg-accent: #3b6cf6;
+  --ldg-pos: #2a8a4a;
+  --ldg-neg: #d4351c;
+
+  /* Discrepancy severity. */
+  --ldg-sev-info: #5a7fa6;
+  --ldg-sev-warning: #b07d18;
+  --ldg-sev-critical: #d4351c;
+  --ldg-published: #2a8a4a;
+  --ldg-pending: #8a91a0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ldg-bg: #101317;
+    --ldg-surface: #1a1e24;
+    --ldg-surface-2: #222831;
+    --ldg-border: #2c323b;
+    --ldg-text: #e6e9ee;
+    --ldg-muted: #99a2ae;
+    --ldg-accent: #6f9bff;
+    --ldg-pos: #4cc472;
+    --ldg-neg: #ff6b5e;
+
+    --ldg-sev-info: #7fa0c4;
+    --ldg-sev-warning: #e0a93f;
+    --ldg-sev-critical: #ff6b5e;
+    --ldg-published: #4cc472;
+    --ldg-pending: #99a2ae;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ldg-bg: #101317;
+  --ldg-surface: #1a1e24;
+  --ldg-surface-2: #222831;
+  --ldg-border: #2c323b;
+  --ldg-text: #e6e9ee;
+  --ldg-muted: #99a2ae;
+  --ldg-accent: #6f9bff;
+  --ldg-pos: #4cc472;
+  --ldg-neg: #ff6b5e;
+
+  --ldg-sev-info: #7fa0c4;
+  --ldg-sev-warning: #e0a93f;
+  --ldg-sev-critical: #ff6b5e;
+  --ldg-published: #4cc472;
+  --ldg-pending: #99a2ae;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ldg-font);
+  background: var(--ldg-bg);
+  color: var(--ldg-text);
+  -webkit-font-smoothing: antialiased;
+}

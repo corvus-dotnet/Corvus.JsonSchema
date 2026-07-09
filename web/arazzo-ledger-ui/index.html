@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reconciliation Console</title>
+  <link rel="stylesheet" href="src/ledger-kit.css">
+  <script type="module" src="src/ledger-console.js"></script>
+</head>
+<body>
+  <!-- Same-origin: the ledger host serves this app alongside its API, so no base-url is needed.
+       poll="5" auto-refreshes every 5s so new reconciliation runs appear live. -->
+  <reconciliation-console poll="5"></reconciliation-console>
+</body>
+</html>
