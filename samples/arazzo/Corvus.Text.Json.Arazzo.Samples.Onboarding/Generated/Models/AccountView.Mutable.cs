@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The onboarding aggregate: an account and its progress through the journey (created -&gt; identity-verified/blocked -&gt; provisioned -&gt; welcomed). This is the read model the onboarding console renders.
+/// The onboarding aggregate: an account and its progress through the journey (created -&gt; provisioned -&gt; welcomed). Identity verification is owned by the KYC service and rendered in the KYC console, not here. This is the read model the onboarding console renders.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -287,18 +287,13 @@ public readonly partial struct AccountView
         }
 
         /// <summary>
-        /// Gets the (optional) <c>applicant</c> property.
+        /// Gets the (optional) <c>email</c> property.
         /// </summary>
-        /// <remarks>
-        /// <para>
-        /// The resolved identity.
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Mutable Applicant
+        public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Mutable Email
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Mutable value))
                 {
                     return value;
                 }
@@ -308,13 +303,13 @@ public readonly partial struct AccountView
         }
 
         /// <summary>
-        /// Gets the (optional) <c>identity</c> property.
+        /// Gets the (optional) <c>plan</c> property.
         /// </summary>
-        public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Mutable Identity
+        public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Mutable Plan
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdentityUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PlanUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Mutable value))
                 {
                     return value;
                 }
@@ -389,22 +384,6 @@ public readonly partial struct AccountView
             get
             {
                 if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubmittedAtUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>verifiedAt</c> property.
-        /// </summary>
-        public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Mutable VerifiedAt
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VerifiedAtUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Mutable value))
                 {
                     return value;
                 }
@@ -500,22 +479,22 @@ public readonly partial struct AccountView
         }
 
         /// <summary>
-        /// Set the <c>applicant</c> property.
+        /// Set the <c>email</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetApplicant(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source value)
+        public void SetEmail(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ApplicantUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.EmailUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -524,7 +503,7 @@ public readonly partial struct AccountView
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Applicant, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -533,70 +512,34 @@ public readonly partial struct AccountView
         }
 
         /// <summary>
-        /// Set the <c>applicant</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetApplicant<TContext>(in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ApplicantUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Applicant, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>applicant</c> property, if present.
+        /// Remove the <c>email</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveApplicant()
+        public bool RemoveEmail()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ApplicantUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.EmailUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
 
         /// <summary>
-        /// Set the <c>identity</c> property.
+        /// Set the <c>plan</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIdentity(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source value)
+        public void SetPlan(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IdentityUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.PlanUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdentityUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PlanUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -605,7 +548,7 @@ public readonly partial struct AccountView
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plan, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -614,49 +557,13 @@ public readonly partial struct AccountView
         }
 
         /// <summary>
-        /// Set the <c>identity</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetIdentity<TContext>(in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IdentityUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdentityUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>identity</c> property, if present.
+        /// Remove the <c>plan</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveIdentity()
+        public bool RemovePlan()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IdentityUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.PlanUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -847,51 +754,6 @@ public readonly partial struct AccountView
             }
 
             _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>verifiedAt</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetVerifiedAt(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VerifiedAtUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VerifiedAtUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VerifiedAt, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>verifiedAt</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveVerifiedAt()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VerifiedAtUtf8);
-            _documentVersion = _parent.Version;
-            return result;
         }
 
         /// <summary>
@@ -1272,12 +1134,11 @@ public readonly partial struct AccountView
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source _createArg5;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg6;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source _createArg7;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg8;
-        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg9;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1292,7 +1153,7 @@ public readonly partial struct AccountView
 
         internal Source(Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg9)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1302,7 +1163,6 @@ public readonly partial struct AccountView
             _createArg6 = arg6;
             _createArg7 = arg7;
             _createArg8 = arg8;
-            _createArg9 = arg9;
             _kind = Kind.Create;
         }
 
@@ -1323,7 +1183,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1348,7 +1208,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1373,7 +1233,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1398,7 +1258,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1423,7 +1283,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1454,12 +1314,11 @@ public readonly partial struct AccountView
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source _createArg5;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg6;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> _createArg7;
         private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg8;
-        private readonly Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source _createArg9;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1472,7 +1331,7 @@ public readonly partial struct AccountView
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg9)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1483,7 +1342,6 @@ public readonly partial struct AccountView
             _createArg6 = arg6;
             _createArg7 = arg7;
             _createArg8 = arg8;
-            _createArg9 = arg9;
             _kind = Kind.Create;
         }
 
@@ -1502,7 +1360,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1527,7 +1385,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1552,7 +1410,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1577,7 +1435,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1602,7 +1460,7 @@ public readonly partial struct AccountView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1639,21 +1497,19 @@ public readonly partial struct AccountView
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source applicant = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source identity = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source provisioning = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
         {
             accountId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccountId, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
             submittedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubmittedAt, ref builder);
-            applicant.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Applicant, ref builder);
-            identity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref builder);
+            email.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref builder);
+            plan.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plan, ref builder);
             provisionedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProvisionedAt, ref builder);
             provisioning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Provisioning, ref builder);
-            verifiedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VerifiedAt, ref builder);
             welcomedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WelcomedAt, ref builder);
         }
 
@@ -1664,14 +1520,13 @@ public readonly partial struct AccountView
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source applicant = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source identity = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source provisioning = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
         {
-            Create(ref _builder, accountId, status, submittedAt, applicant, identity, provisionedAt, provisioning, verifiedAt, welcomedAt);
+            Create(ref _builder, accountId, status, submittedAt, email, plan, provisionedAt, provisioning, welcomedAt);
         }
 
         /// <summary>
@@ -1683,11 +1538,10 @@ public readonly partial struct AccountView
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> applicant = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> identity = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> provisioning = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -1696,11 +1550,10 @@ public readonly partial struct AccountView
             accountId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccountId, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
             submittedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubmittedAt, ref builder);
-            applicant.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Applicant, ref builder);
-            identity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref builder);
+            email.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref builder);
+            plan.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plan, ref builder);
             provisionedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProvisionedAt, ref builder);
             provisioning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Provisioning, ref builder);
-            verifiedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VerifiedAt, ref builder);
             welcomedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WelcomedAt, ref builder);
         }
 
@@ -1712,17 +1565,16 @@ public readonly partial struct AccountView
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> applicant = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> identity = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default,
+            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> provisioning = default,
-            in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default,
             in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, accountId, status, submittedAt, applicant, identity, provisionedAt, provisioning, verifiedAt, welcomedAt);
+            Create(context, ref _builder, accountId, status, submittedAt, email, plan, provisionedAt, provisioning, welcomedAt);
         }
 
         /// <summary>
@@ -1828,12 +1680,11 @@ public readonly partial struct AccountView
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
         /// <param name="arg8">The value of the property.</param>
-        /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg9, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
 
@@ -1850,15 +1701,14 @@ public readonly partial struct AccountView
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
         /// <param name="arg8">The value of the property.</param>
-        /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg9, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source arg1, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg3, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source arg4, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg6, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
     }
@@ -1898,16 +1748,15 @@ public readonly partial struct AccountView
     /// <param name="accountId">The value of the <c>"accountId"</c> property.</param>
     /// <param name="status">The value of the <c>"status"</c> property.</param>
     /// <param name="submittedAt">The value of the <c>"submittedAt"</c> property.</param>
-    /// <param name="applicant">The value of the <c>"applicant"</c> property.</param>
-    /// <param name="identity">The value of the <c>"identity"</c> property.</param>
+    /// <param name="email">The value of the <c>"email"</c> property.</param>
+    /// <param name="plan">The value of the <c>"plan"</c> property.</param>
     /// <param name="provisionedAt">The value of the <c>"provisionedAt"</c> property.</param>
     /// <param name="provisioning">The value of the <c>"provisioning"</c> property.</param>
-    /// <param name="verifiedAt">The value of the <c>"verifiedAt"</c> property.</param>
     /// <param name="welcomedAt">The value of the <c>"welcomedAt"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source applicant = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source identity = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source provisioning = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source provisioning = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
     {
-        return new Source(accountId, status, submittedAt, applicant, identity, provisionedAt, provisioning, verifiedAt, welcomedAt);
+        return new Source(accountId, status, submittedAt, email, plan, provisionedAt, provisioning, welcomedAt);
     }
 
     /// <summary>
@@ -1918,19 +1767,18 @@ public readonly partial struct AccountView
     /// <param name="accountId">The value of the <c>"accountId"</c> property.</param>
     /// <param name="status">The value of the <c>"status"</c> property.</param>
     /// <param name="submittedAt">The value of the <c>"submittedAt"</c> property.</param>
-    /// <param name="applicant">The value of the <c>"applicant"</c> property.</param>
-    /// <param name="identity">The value of the <c>"identity"</c> property.</param>
+    /// <param name="email">The value of the <c>"email"</c> property.</param>
+    /// <param name="plan">The value of the <c>"plan"</c> property.</param>
     /// <param name="provisionedAt">The value of the <c>"provisionedAt"</c> property.</param>
     /// <param name="provisioning">The value of the <c>"provisioning"</c> property.</param>
-    /// <param name="verifiedAt">The value of the <c>"verifiedAt"</c> property.</param>
     /// <param name="welcomedAt">The value of the <c>"welcomedAt"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> applicant = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> identity = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> provisioning = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> provisioning = default, scoped in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, accountId, status, submittedAt, applicant, identity, provisionedAt, provisioning, verifiedAt, welcomedAt);
+        return new Source<TContext>(context, accountId, status, submittedAt, email, plan, provisionedAt, provisioning, welcomedAt);
     }
 
     /// <summary>
@@ -2029,21 +1877,20 @@ public readonly partial struct AccountView
     /// <param name="accountId">The value of the property.</param>
     /// <param name="status">The value of the property.</param>
     /// <param name="submittedAt">The value of the property.</param>
-    /// <param name="applicant">The value of the property.</param>
-    /// <param name="identity">The value of the property.</param>
+    /// <param name="email">The value of the property.</param>
+    /// <param name="plan">The value of the property.</param>
     /// <param name="provisionedAt">The value of the property.</param>
     /// <param name="provisioning">The value of the property.</param>
-    /// <param name="verifiedAt">The value of the property.</param>
     /// <param name="welcomedAt">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source applicant = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source identity = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source provisioning = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source provisioning = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(accountId, status, submittedAt, applicant, identity, provisionedAt, provisioning, verifiedAt, welcomedAt);
+        ovb.Create(accountId, status, submittedAt, email, plan, provisionedAt, provisioning, welcomedAt);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2059,15 +1906,14 @@ public readonly partial struct AccountView
     /// <param name="accountId">The value of the property.</param>
     /// <param name="status">The value of the property.</param>
     /// <param name="submittedAt">The value of the property.</param>
-    /// <param name="applicant">The value of the property.</param>
-    /// <param name="identity">The value of the property.</param>
+    /// <param name="email">The value of the property.</param>
+    /// <param name="plan">The value of the property.</param>
     /// <param name="provisionedAt">The value of the property.</param>
     /// <param name="provisioning">The value of the property.</param>
-    /// <param name="verifiedAt">The value of the property.</param>
     /// <param name="welcomedAt">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.Source<TContext> applicant = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.Source<TContext> identity = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> provisioning = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source verifiedAt = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonUuid.Source accountId, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source submittedAt, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.Source email = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.Source plan = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source provisionedAt = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Provisioning.Source<TContext> provisioning = default, in Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.Source welcomedAt = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2076,7 +1922,7 @@ public readonly partial struct AccountView
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, accountId, status, submittedAt, applicant, identity, provisionedAt, provisioning, verifiedAt, welcomedAt);
+        ovb.Create(context, accountId, status, submittedAt, email, plan, provisionedAt, provisioning, welcomedAt);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

@@ -9,32 +9,30 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding;
 
 /// <summary>
 /// The real onboarding service: a stateful implementation of the generated onboarding API. It persists customer
-/// accounts to its own store, verifies identity through a KYC policy, and provisions per-account resources — so the
-/// onboard-customer workflow orchestrates a genuine backend, and the onboarding console reads real state, rather
-/// than either hitting canned responses.
+/// accounts (with the signup facts it owns — email and chosen plan) to its own store and provisions per-account
+/// resources — so the onboard-customer workflow orchestrates a genuine backend, and the onboarding console reads
+/// real state, rather than either hitting canned responses. Identity verification is a separate concern owned by
+/// the KYC service (the workflow's verifyIdentity step resolves there), not conflated into onboarding.
 /// </summary>
 /// <remarks>
-/// The four write operations (create -> verify -> provision -> welcome) advance an account through its lifecycle and
-/// each persist the wire document they emit; the two read operations (list, get) compose the <c>AccountView</c>
-/// aggregate from the stored documents. Every response is a generated, schema-validated model (the generated
-/// endpoint middleware re-validates each body), so the contract stays type-checked end to end.
+/// The three write operations (create -> provision -> welcome) advance an account through its lifecycle; provision
+/// persists the wire document it emits. The two read operations (list, get) compose the <c>AccountView</c> aggregate
+/// from the stored row + document. Every response is a generated, schema-validated model (the generated endpoint
+/// middleware re-validates each body), so the contract stays type-checked end to end.
 /// </remarks>
 public sealed class OnboardingService : IApiDefaultHandler
 {
     private readonly OnboardingAccountStore store;
-    private readonly IdentityVerificationPolicy policy;
     private readonly ResourceAllocator allocator;
     private readonly TimeProvider timeProvider;
 
     /// <summary>Initializes a new instance of the <see cref="OnboardingService"/> class.</summary>
     /// <param name="store">The account store (the service's own database).</param>
-    /// <param name="policy">The identity-verification (KYC) policy.</param>
     /// <param name="allocator">The resource allocator.</param>
     /// <param name="timeProvider">The time source; defaults to <see cref="TimeProvider.System"/>.</param>
-    public OnboardingService(OnboardingAccountStore store, IdentityVerificationPolicy policy, ResourceAllocator allocator, TimeProvider? timeProvider = null)
+    public OnboardingService(OnboardingAccountStore store, ResourceAllocator allocator, TimeProvider? timeProvider = null)
     {
         this.store = store ?? throw new ArgumentNullException(nameof(store));
-        this.policy = policy ?? throw new ArgumentNullException(nameof(policy));
         this.allocator = allocator ?? throw new ArgumentNullException(nameof(allocator));
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
@@ -43,7 +41,8 @@ public sealed class OnboardingService : IApiDefaultHandler
     public async ValueTask<CreateAccountResult> HandleCreateAccountAsync(CreateAccountParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string accountId = Guid.NewGuid().ToString();
-        await this.store.CreateAsync(accountId, this.timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        (string? email, string? plan) = ReadSignup(parameters.Body);
+        await this.store.CreateAsync(accountId, email, plan, this.timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
 
         byte[] account = OnboardingJson.Serialize(writer =>
         {
@@ -57,20 +56,6 @@ public sealed class OnboardingService : IApiDefaultHandler
         var doc = ParsedJsonDocument<Models.Account>.Parse(account);
         workspace.TakeOwnership(doc);
         return CreateAccountResult.Created(doc.RootElement, workspace);
-    }
-
-    /// <inheritdoc/>
-    public async ValueTask<VerifyIdentityResult> HandleVerifyIdentityAsync(VerifyIdentityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-    {
-        string accountId = AccountId(parameters.AccountId);
-        (string fullName, string? documentNumber) = ReadApplicant(parameters.Body);
-
-        IdentityOutcome outcome = this.policy.Evaluate(accountId, fullName, documentNumber, this.timeProvider.GetUtcNow());
-        await this.store.RecordIdentityAsync(accountId, outcome.Status, outcome.FullName, outcome.ApplicantBytes, outcome.IdentityBytes, this.timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
-
-        var doc = ParsedJsonDocument<Models.IdentityResult>.Parse(outcome.IdentityBytes);
-        workspace.TakeOwnership(doc);
-        return VerifyIdentityResult.Ok(doc.RootElement, workspace);
     }
 
     /// <inheritdoc/>
@@ -143,21 +128,24 @@ public sealed class OnboardingService : IApiDefaultHandler
         return ListAccountsResult.Ok(doc.RootElement, workspace);
     }
 
-    // Composes the AccountView aggregate by writing the envelope fields and splicing the stored wire documents.
+    // Composes the AccountView aggregate by writing the envelope fields and splicing the stored provisioning document.
     private static void WriteAccountView(Utf8JsonWriter writer, OnboardingAccountRecord record)
     {
         writer.WriteStartObject();
         writer.WriteString("accountId", record.AccountId);
         writer.WriteString("status", record.Status);
-        writer.WriteString("submittedAt", record.SubmittedAt);
-        OnboardingJson.WriteDocumentProperty(writer, "applicant", record.Applicant);
-        OnboardingJson.WriteDocumentProperty(writer, "identity", record.Identity);
-        OnboardingJson.WriteDocumentProperty(writer, "provisioning", record.Provisioning);
-        if (record.VerifiedAt is { } verifiedAt)
+        if (record.Email is not null)
         {
-            writer.WriteString("verifiedAt", verifiedAt);
+            writer.WriteString("email", record.Email);
         }
 
+        if (record.Plan is not null)
+        {
+            writer.WriteString("plan", record.Plan);
+        }
+
+        writer.WriteString("submittedAt", record.SubmittedAt);
+        OnboardingJson.WriteDocumentProperty(writer, "provisioning", record.Provisioning);
         if (record.ProvisionedAt is { } provisionedAt)
         {
             writer.WriteString("provisionedAt", provisionedAt);
@@ -171,29 +159,30 @@ public sealed class OnboardingService : IApiDefaultHandler
         writer.WriteEndObject();
     }
 
-    private static string AccountId(Models.JsonString accountId)
-        => ((JsonElement)accountId).GetString() ?? throw new InvalidOperationException("The accountId path parameter is required.");
-
-    private static (string FullName, string? DocumentNumber) ReadApplicant(Models.IdentityRequest body)
+    // Reads the signup facts the onboarding service owns (email + chosen plan) from the createAccount request body.
+    private static (string? Email, string? Plan) ReadSignup(Models.CreateAccountRequest body)
     {
-        string fullName = "Applicant";
-        string? documentNumber = null;
+        string? email = null;
+        string? plan = null;
         var element = (JsonElement)body;
         if (element.ValueKind == JsonValueKind.Object)
         {
-            if (element.TryGetProperty("fullName"u8, out JsonElement name) && name.ValueKind == JsonValueKind.String)
+            if (element.TryGetProperty("email"u8, out JsonElement e) && e.ValueKind == JsonValueKind.String)
             {
-                fullName = name.GetString()!;
+                email = e.GetString();
             }
 
-            if (element.TryGetProperty("documentNumber"u8, out JsonElement document) && document.ValueKind == JsonValueKind.String)
+            if (element.TryGetProperty("plan"u8, out JsonElement p) && p.ValueKind == JsonValueKind.String)
             {
-                documentNumber = document.GetString();
+                plan = p.GetString();
             }
         }
 
-        return (fullName, documentNumber);
+        return (email, plan);
     }
+
+    private static string AccountId(Models.JsonString accountId)
+        => ((JsonElement)accountId).GetString() ?? throw new InvalidOperationException("The accountId path parameter is required.");
 
     private static int ReadLimit(Models.GetAccountsLimit limit)
     {

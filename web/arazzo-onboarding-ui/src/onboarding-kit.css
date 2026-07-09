@@ -21,12 +21,10 @@
   --onb-accent: #3b6cf6;
   --onb-danger: #d4351c;
 
-  /* Lifecycle status colours (created -> verified/blocked -> provisioned -> welcomed). */
+  /* Lifecycle status colours (created -> provisioned -> welcomed). */
   --onb-status-created: #8a91a0;
-  --onb-status-verified: #2f74d0;
   --onb-status-provisioned: #7a52d0;
   --onb-status-welcomed: #2a8a4a;
-  --onb-status-blocked: #d4351c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -41,10 +39,8 @@
     --onb-danger: #ff6b5e;
 
     --onb-status-created: #99a2ae;
-    --onb-status-verified: #6f9bff;
     --onb-status-provisioned: #b190f5;
     --onb-status-welcomed: #4cc472;
-    --onb-status-blocked: #ff6b5e;
   }
 }
 
@@ -59,10 +55,8 @@
   --onb-danger: #ff6b5e;
 
   --onb-status-created: #99a2ae;
-  --onb-status-verified: #6f9bff;
   --onb-status-provisioned: #b190f5;
   --onb-status-welcomed: #4cc472;
-  --onb-status-blocked: #ff6b5e;
 }
 
 body {

@@ -5,6 +5,7 @@
     "/accounts": {
       "post": {
         "operationId": "createAccount",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateAccountRequest" } } } },
         "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Account" } } } } }
       },
       "get": {
@@ -26,14 +27,6 @@
         }
       }
     },
-    "/accounts/{accountId}/identity": {
-      "post": {
-        "operationId": "verifyIdentity",
-        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
-        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdentityRequest" } } } },
-        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdentityResult" } } } } }
-      }
-    },
     "/accounts/{accountId}/resources": {
       "post": {
         "operationId": "provisionResources",
@@ -51,77 +44,16 @@
   },
   "components": {
     "schemas": {
+      "CreateAccountRequest": {
+        "type": "object",
+        "description": "The signup facts the onboarding service owns: who the account is for and the plan they chose. Identity verification is a separate concern owned by the KYC service.",
+        "properties": {
+          "email": { "type": "string", "format": "idn-email", "description": "The customer's email." },
+          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ], "description": "The chosen plan." }
+        },
+        "required": [ "email" ]
+      },
       "Account": { "type": "object", "properties": { "accountId": { "type": "string", "format": "uuid" } }, "required": [ "accountId" ] },
-      "IdentityRequest": {
-        "type": "object",
-        "properties": {
-          "fullName": { "type": "string", "maxLength": 120 },
-          "documentNumber": { "type": "string", "maxLength": 40 }
-        },
-        "required": [ "fullName" ]
-      },
-      "IdentityResult": {
-        "type": "object",
-        "properties": {
-          "verified": { "type": "boolean" },
-          "score": { "type": "number", "minimum": 0, "maximum": 1, "description": "Match confidence (0-1)." },
-          "method": { "type": "string", "enum": [ "document", "biometric", "knowledge-based" ] },
-          "reviewedAt": { "type": "string", "format": "date-time" },
-          "applicant": { "$ref": "#/components/schemas/Applicant" },
-          "flags": { "type": "array", "items": { "type": "string", "enum": [ "pep", "sanctions", "adverse-media" ] } },
-          "evidence": { "$ref": "#/components/schemas/Evidence" }
-        }
-      },
-      "Applicant": {
-        "type": "object",
-        "description": "The resolved identity.",
-        "properties": {
-          "fullName": { "type": "string", "maxLength": 120 },
-          "dateOfBirth": { "type": "string", "format": "date" },
-          "email": { "type": "string", "format": "idn-email" },
-          "country": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "ISO 3166-1 alpha-2." }
-        },
-        "required": [ "fullName" ]
-      },
-      "Evidence": {
-        "description": "The evidence that established the identity.",
-        "discriminator": { "propertyName": "kind" },
-        "oneOf": [
-          { "$ref": "#/components/schemas/DocumentEvidence" },
-          { "$ref": "#/components/schemas/BiometricEvidence" },
-          { "$ref": "#/components/schemas/KnowledgeEvidence" }
-        ]
-      },
-      "DocumentEvidence": {
-        "type": "object",
-        "title": "Document",
-        "properties": {
-          "kind": { "type": "string", "const": "document" },
-          "documentType": { "type": "string", "enum": [ "passport", "driving-licence", "national-id" ] },
-          "documentNumber": { "type": "string", "maxLength": 40 },
-          "expiry": { "type": "string", "format": "date" }
-        },
-        "required": [ "kind", "documentType", "documentNumber" ]
-      },
-      "BiometricEvidence": {
-        "type": "object",
-        "title": "Biometric",
-        "properties": {
-          "kind": { "type": "string", "const": "biometric" },
-          "modality": { "type": "string", "enum": [ "face", "fingerprint", "voice" ] },
-          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
-        },
-        "required": [ "kind", "modality", "confidence" ]
-      },
-      "KnowledgeEvidence": {
-        "type": "object",
-        "title": "Knowledge-based",
-        "properties": {
-          "kind": { "type": "string", "const": "knowledge-based" },
-          "questionsPassed": { "type": "integer", "minimum": 0, "maximum": 5 }
-        },
-        "required": [ "kind", "questionsPassed" ]
-      },
       "Provisioning": {
         "type": "object",
         "properties": {
@@ -143,15 +75,14 @@
       },
       "AccountView": {
         "type": "object",
-        "description": "The onboarding aggregate: an account and its progress through the journey (created -> identity-verified/blocked -> provisioned -> welcomed). This is the read model the onboarding console renders.",
+        "description": "The onboarding aggregate: an account and its progress through the journey (created -> provisioned -> welcomed). Identity verification is owned by the KYC service and rendered in the KYC console, not here. This is the read model the onboarding console renders.",
         "properties": {
           "accountId": { "type": "string", "format": "uuid" },
-          "status": { "type": "string", "enum": [ "created", "verified", "blocked", "provisioned", "welcomed" ] },
+          "status": { "type": "string", "enum": [ "created", "provisioned", "welcomed" ] },
+          "email": { "type": "string", "format": "idn-email" },
+          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ] },
           "submittedAt": { "type": "string", "format": "date-time" },
-          "applicant": { "$ref": "#/components/schemas/Applicant" },
-          "identity": { "$ref": "#/components/schemas/IdentityResult" },
           "provisioning": { "$ref": "#/components/schemas/Provisioning" },
-          "verifiedAt": { "type": "string", "format": "date-time" },
           "provisionedAt": { "type": "string", "format": "date-time" },
           "welcomedAt": { "type": "string", "format": "date-time" }
         },

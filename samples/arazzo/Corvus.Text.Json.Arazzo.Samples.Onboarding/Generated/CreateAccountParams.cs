@@ -19,4 +19,9 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding;
 /// </summary>
 public readonly struct CreateAccountParams
 {
+
+    /// <summary>
+    /// Gets the request body.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.CreateAccountRequest Body { get; init; }
 }

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The KYC (know-your-customer) domain service: owns ALL identity verification — the synchronous verifyIdentity the
+       onboard-customer workflow calls, and (in a later slice) the asynchronous, manual-recovery verdict published onto
+       the notifications bus. A first-class library the Arazzo sample orchestrates as a real external source, with its
+       own PostgreSQL database. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The service contract, kept beside the generated server. Regenerate with the Corvus.Json.Cli openapi-server
+         command over this spec (rootNamespace Corvus.Text.Json.Arazzo.Samples.Kyc, outputPath the Generated folder). -->
+    <None Include="specs\**\*.json" />
+  </ItemGroup>
+
+</Project>
