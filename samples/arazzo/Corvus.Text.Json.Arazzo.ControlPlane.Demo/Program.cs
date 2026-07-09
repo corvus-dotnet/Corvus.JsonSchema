@@ -22,8 +22,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.FileProviders;
-using LedgerApi = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.ApiEndpointRegistration;
-using LedgerService = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Ledger.LedgerService;
 using CpEnvironment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -73,7 +71,9 @@ var selfBaseUrl = new System.Runtime.CompilerServices.StrongBox<string?>(null);
 // there; the former inline /svc/onboarding mock is gone. Required: this host runs under the AppHost.
 string onboardingBaseUrl = builder.Configuration["ControlPlane:Sources:Onboarding"]
     ?? throw new InvalidOperationException("ControlPlane:Sources:Onboarding (the onboarding service endpoint) is required — the AppHost injects it.");
-WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl);
+string ledgerBaseUrl = builder.Configuration["ControlPlane:Sources:Ledger"]
+    ?? throw new InvalidOperationException("ControlPlane:Sources:Ledger (the ledger service endpoint) is required — the AppHost injects it.");
+WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl);
 var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
@@ -117,7 +117,7 @@ var draftRunner = new InProcessDraftRunner(
     draftRunStore,
     draftRunTraceStore,
     new WorkflowExecutorProvider(),
-    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl),
+    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl),
     // Do NOT host timer waits here: the worker's ResumeDueTimersAsync resumes EVERY due-timer run in the shared store,
     // including seeded CATALOG runs this draft-only resumer cannot host. A draft run that suspends on a retry timer is
     // out of scope for the minimum stand-up (the base onboard-customer workflow has none).
@@ -384,9 +384,8 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     draftRunner: draftRunner,
     draftRunTraceStore: draftRunTraceStore);
 
-// The ledger backend the nightly-reconcile workflow calls (still a control-plane /svc mock — Phase C moves it out,
-// as the onboarding service already has). Onboarding is now a real external service (its own process + database).
-LedgerApi.MapApiEndpoints(app.MapGroup("/svc/ledger"), new LedgerService());
+// Both source backends the workflows call — onboarding and ledger — are now real external services (their own
+// processes + databases); no inline /svc mock remains (notifications is an AsyncAPI message source, not HTTP).
 
 // Once the server is listening, resolve its own base URL (for the live resumer's /svc transports) and execute one
 // fresh onboarding run live — so the demo shows a genuinely-executed run, not only hand-seeded states.

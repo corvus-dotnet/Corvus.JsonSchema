@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The ledger/reconciliation domain service: a real, stateful reconciliation backend (a book of ledger accounts
+       with bank balances, and the nightly-reconcile runs it produces) presented through its generated OpenAPI server.
+       Like the onboarding service it is a first-class library the Arazzo sample orchestrates as a genuine external
+       source, with its own PostgreSQL database. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The generated ApiEndpointRegistration maps the operations onto ASP.NET Core minimal-API routes. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The store persists the account book + reconciliation runs to the service's own Postgres database. -->
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The service contract, kept beside the generated server it produces. Regenerate with the
+         Corvus.Json.Cli openapi-server command over this spec (rootNamespace
+         Corvus.Text.Json.Arazzo.Samples.Ledger, outputPath the Generated folder) - see README. -->
+    <None Include="specs\**\*.json" />
+  </ItemGroup>
+
+</Project>
