@@ -50,12 +50,27 @@ and the podman snap is strictly confined (it can't bind-mount arbitrary host fil
 realm import needs). A **self-contained static podman 5.x bundle** is the reliable path. It needs no
 distro upgrade; the only `sudo` is the one-time helper packages.
 
-**1. Rootless helpers (one-time, needs sudo):**
+**1. Rootless helpers + shared mount propagation (one-time, needs sudo):**
 
 ```bash
 sudo apt-get update && sudo apt-get install -y uidmap slirp4netns fuse-overlayfs
 loginctl enable-linger "$USER"    # a persistent user session for rootless container lifecycle
+sudo mount --make-rshared /       # CRITICAL on WSL2 — see below
 ```
+
+The `mount --make-rshared /` is the single most important step. WSL2 mounts `/` with
+**private** propagation, and rootless podman then does its per-container mount/namespace work
+slowly — `podman ps` stalls for 25–40s, which makes the Aspire DCP's container inspects time
+out and the composition stall. Making `/` a shared mount fixes it (idle `podman ps` drops to
+sub-second). It applies instantly with no restart. Persist it across WSL restarts by adding it
+to `/etc/wsl.conf`:
+
+```toml
+[boot]
+command = mount --make-rshared /
+```
+
+Verify with `findmnt -no PROPAGATION /` — it must read `shared`.
 
 **2. The static podman 5.x bundle (no sudo):**
 
@@ -100,12 +115,27 @@ Then run the AppHost with that podman on `PATH` (and `SUPPRESS_BOLTDB_WARNING=1`
 noise). Every choice above was necessary on WSL2: short-name registry, cgroupfs, runc-not-crun, and the
 SQLite backend. Missing any one of them stalls the DCP or breaks container start.
 
-### Known limitation on this setup
+### Stopping it cleanly — do NOT `kill -9`
 
-Under the full composition, rootless podman on WSL2 can become slow while several containers are running
-and the DCP is polling them, and an occasional container inspect exceeds the DCP's timeout — most often
-the one-shot **vault-init**, which leaves the **runner** waiting on it. The control plane, Keycloak, and
-Vault come up and the control plane serves; the credentialed-runner tail is the fragile part. If you hit
-it, a Docker Desktop or a native-Linux podman host (no WSL storage/lock contention) runs the whole
-composition cleanly. This is an environment performance limit, not a wiring problem — the same AppHost
-runs end-to-end on Docker.
+Stop the AppHost **gracefully** (Ctrl+C, or `kill -15 <apphost-pid>`) and let it finish. Aspire's DCP
+then tears down its own containers and the `aspire-session-network-*` networks it created. If you
+`kill -9` the AppHost or the DCP, those containers and networks are orphaned — along with their
+aardvark-dns / conmon / rootlessport helper processes — and the podman store fills with ghost
+`Terminated` records. That bloat makes even an idle `podman ps` take 30s+, at which point the DCP can no
+longer drive the runtime. If you get into that state, reset the rootless store:
+
+```bash
+pkill -9 -x aardvark-dns; pkill -9 -x conmon; pkill -9 -x rootlessport; pkill -9 -x slirp4netns
+rm -rf ~/.local/share/containers /run/user/1000/containers /run/user/1000/libpod
+# then re-pull the three images on the next run
+```
+
+`podman ps` should be back to sub-second afterwards.
+
+### Notes
+
+With the shared mount (above) and a graceful stop, the whole five-resource composition — Vault,
+vault-init, Keycloak, the control plane, and the **runner** (which registers in the control plane's
+runner registry and hosts the catalogued workflow versions) — comes up and stays up on WSL2. Docker
+Desktop or a native-Linux podman host avoids the WSL-specific mount/teardown fragility entirely and is
+the easiest path if you would rather not manage the rootless podman details.
