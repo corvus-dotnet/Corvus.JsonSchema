@@ -145,6 +145,7 @@
          Aspire.Hosting.AppHost is *not* listed here: the Aspire.AppHost.Sdk injects it already-versioned, and CPM
          forbids a PackageVersion for an implicitly-versioned reference (NU1009). -->
     <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.4.6-preview.1.26319.6" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
     <PackageVersion Include="Aspire.Keycloak.Authentication" Version="13.4.6-preview.1.26319.6" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />

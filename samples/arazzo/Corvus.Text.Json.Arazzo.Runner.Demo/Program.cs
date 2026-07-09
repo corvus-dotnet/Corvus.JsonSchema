@@ -11,7 +11,8 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
-using Corvus.Text.Json.Arazzo.Durability.Sqlite;
+using Corvus.Text.Json.Arazzo.Durability.Postgres;
+using Npgsql;
 using Corvus.Text.Json.Arazzo.Durability.Vault;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Generation;
@@ -26,30 +27,33 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // OpenTelemetry, health checks, service discovery, HTTP resilience → the Aspire dashboard.
 builder.AddServiceDefaults();
 
-// The shared durability store. The AppHost injects ConnectionStrings:workflowstore so both processes open the
-// same store (the SQLite file is the local stand-in for the production shared store, e.g. Postgres later). The
-// temp-file fallback lets the runner start standalone; it matches the control-plane host's own fallback.
+// The shared durability store — the same Postgres database the control plane opens (the AppHost injects
+// ConnectionStrings:workflowstore). Required: the runner runs under the AppHost, which stands up Postgres. Read-mostly:
+// the control plane owns the schema (each store's PrepareAsync) + reset + seed, so the runner never runs DDL — its
+// WaitFor(controlplane) gating means the tables already exist when it connects. One NpgsqlDataSource, shared across
+// the stores it opens.
 string connectionString = builder.Configuration.GetConnectionString("workflowstore")
-    ?? $"Data Source={Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo.db")}";
+    ?? throw new InvalidOperationException("ConnectionStrings:workflowstore (the shared Postgres database) is required — run the runner under the AppHost.");
+NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 
 // Connect read-mostly: the control plane owns reset+seed, so the runner never deletes or seeds. It reads the
 // catalog (to learn which versions to host) and claims/leases/advances runs against the shared state store.
-SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsync(connectionString);
-SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString);
-SqliteRunnerRegistry registry = await SqliteRunnerRegistry.ConnectAsync(connectionString);
+PostgresWorkflowStateStore stateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
+PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource);
+PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(dataSource);
 
 // The §13 source-credential store, shared with the control plane: the control plane registers the binding
 // (reference + metadata, never the secret), and the runner reads it to learn which Vault references to resolve.
-SqliteSourceCredentialStore credentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
+PostgresSourceCredentialStore credentials = await PostgresSourceCredentialStore.ConnectAsync(dataSource);
 
 // The §7.7 environments registry, shared with the control plane: the runner reads the environment it serves to
 // inherit its reach (managementTags → the registration's reachTags, design §5.5). The control plane owns writes.
-SqliteEnvironmentStore environments = await SqliteEnvironmentStore.ConnectAsync(connectionString);
+PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 
 // The §5.5 runner-authorization store, shared with the control plane: registering only records this runner's intent
 // to serve its environment (an idempotent Pending authorization); an administrator of that environment authorizes it
 // before it is dispatchable. The runner writes Pending here; the control plane reads/decides over the same store.
-SqliteEnvironmentRunnerAuthorizationStore runnerAuthorizations = await SqliteEnvironmentRunnerAuthorizationStore.ConnectAsync(connectionString);
+PostgresEnvironmentRunnerAuthorizationStore runnerAuthorizations = await PostgresEnvironmentRunnerAuthorizationStore.ConnectAsync(dataSource);
 var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "runner");
 
 // The single environment this runner serves (design §5.5). Configurable so one host image can be deployed per
@@ -108,8 +112,8 @@ builder.Services.AddSingleton(catalogResumer);
 // (e.g. a catalog-only runner — catalogued-run execution above stays on regardless).
 if (builder.Configuration.GetValue("Runner:HostDraftRuns", true))
 {
-    SqliteDraftRunStore draftRunStore = await SqliteDraftRunStore.ConnectAsync(connectionString);
-    SqliteDraftRunTraceStore draftRunTraceStore = await SqliteDraftRunTraceStore.ConnectAsync(connectionString);
+    PostgresDraftRunStore draftRunStore = await PostgresDraftRunStore.ConnectAsync(dataSource);
+    PostgresDraftRunTraceStore draftRunTraceStore = await PostgresDraftRunTraceStore.ConnectAsync(dataSource);
     var draftRunner = new InProcessDraftRunner(
         stateStore,
         options.RunnerId,
