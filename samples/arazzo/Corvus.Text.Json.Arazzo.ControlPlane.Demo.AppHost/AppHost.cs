@@ -77,6 +77,12 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     // §18 multi-process: a SEPARATE runner process hosts $draft debug runs, so the control plane must NOT run its own
     // in-process draft pump (else both would claim the same runs). The control plane only MARKS runs claimable.
     .WithEnvironment("ControlPlane__HostDraftRunnerInProcess", "false")
+    // §14.1/§16: ENFORCE authentication + row security. This activates the whole (already-built) auth stack — Keycloak
+    // JWT-bearer + BFF cookie/OIDC + dev-API-key, ControlPlaneSecurityMode.Scoped, and the per-row reach policy — so the
+    // API is no longer anonymous. The first administrator is bootstrapped declaratively (§16.2): the Keycloak realm
+    // import seeds the arazzo-admins group + seed admin, and the control plane's tier-3 deployment-policy grant maps that
+    // group to the service operator. Everyone else earns reach through the §16.5 access-request -> approval flow.
+    .WithEnvironment("ControlPlane__RequireAuthorization", "true")
     .WithReference(keycloak)
     .WaitFor(keycloak)
     // Aspire-managed HTTP endpoint (no hardcoded port): Aspire assigns the port, proxies it, and injects
