@@ -42,14 +42,23 @@ const string provisionScript =
     $"vault token create -id={vaultRunnerReadOnlyToken} -policy=arazzo-runner-ro -period=24h; " +
     "vault kv put secret/arazzo/onboarding api-key=demo-onboarding-key; " +
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
-    "echo provisioning-complete";
+    "echo provisioning-complete; " +
+    // Linger briefly after the work is done so the orchestrator observes the container reach 'Running' before it
+    // exits. A sub-second exit is read as a start failure (FailedToStart) and retried; with this the container goes
+    // Running -> exit 0 -> Finished, and WithHiddenOnCompletion(0) below then hides it as a completed init step.
+    "sleep 15";
 
 var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     .WithEnvironment("VAULT_TOKEN", vaultRootToken)
     .WithEntrypoint("/bin/sh")
     .WithArgs("-c", provisionScript)
-    .WaitFor(vault);
+    .WaitFor(vault)
+    // This is a run-to-completion provisioner: it does its work and exits 0. Tell the orchestrator that exit 0 is a
+    // valid terminal completion (not an unexpected stop to restart, nor a start failure) and hide it from the
+    // dashboard once done — the standard init-container pattern. Without this the DCP treats the quick exit as
+    // "failed to start" and retries it (harmless because the script is idempotent, but noisy and misleading).
+    .WithHiddenOnCompletion(0);
 
 // Keycloak — the identity provider (design §16). It is bootstrapped declaratively: the realm import seeds the
 // `arazzo` realm with an `arazzo-admins` group (→ the first system admin, §16.2), demo domain groups, a seed
