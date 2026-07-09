@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Runner.Demo\Corvus.Text.Json.Arazzo.Runner.Demo.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Onboarding.Host\Corvus.Text.Json.Arazzo.Samples.Onboarding.Host.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Ledger.Host\Corvus.Text.Json.Arazzo.Samples.Ledger.Host.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Kyc.Host\Corvus.Text.Json.Arazzo.Samples.Kyc.Host.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,9 +1,10 @@
 // Onboarding console — the <onboarding-console> custom element.
 //
 // A build-free web component (Shadow DOM) rendering the onboarding product's operator console: the paged list of
-// onboarded customers and, per account, the expandable journey (created -> identity-verified/blocked -> provisioned
-// -> welcomed). It reads the onboarding service through OnboardingClient. This is a separate app from the Arazzo
-// control-plane UI; it merely consumes the workflow engine's effects.
+// onboarded customers and, per account, the expandable journey (created -> provisioned -> welcomed). It reads the
+// onboarding service through OnboardingClient. Identity verification is owned by the KYC service and shown in its
+// own console, not here. This is a separate app from the Arazzo control-plane UI; it merely consumes the workflow
+// engine's effects.
 //
 //   <link rel="stylesheet" href="onboarding-kit.css">
 //   <onboarding-console poll="5"></onboarding-console>
@@ -12,11 +13,9 @@
 
 import { OnboardingClient, ProblemError } from './onboarding-client.js';
 
-const STATUS_ORDER = ['created', 'verified', 'blocked', 'provisioned', 'welcomed'];
+const STATUS_ORDER = ['created', 'provisioned', 'welcomed'];
 const STATUS_LABEL = {
   created: 'Created',
-  verified: 'Verified',
-  blocked: 'Blocked',
   provisioned: 'Provisioned',
   welcomed: 'Welcomed',
 };
@@ -270,7 +269,15 @@ class OnboardingConsole extends HTMLElement {
 
     const name = document.createElement('span');
     name.className = 'name';
-    name.textContent = applicantName(account) ?? '(no applicant yet)';
+    name.textContent = account.email ?? '(no email)';
+
+    const plan = document.createElement('span');
+    plan.className = 'plan';
+    if (account.plan) {
+      plan.textContent = account.plan;
+    } else {
+      plan.hidden = true;
+    }
 
     const id = document.createElement('span');
     id.className = 'id';
@@ -279,14 +286,14 @@ class OnboardingConsole extends HTMLElement {
 
     const when = document.createElement('span');
     when.className = 'when';
-    when.textContent = formatWhen(account.welcomedAt ?? account.provisionedAt ?? account.verifiedAt ?? account.submittedAt);
+    when.textContent = formatWhen(account.welcomedAt ?? account.provisionedAt ?? account.submittedAt);
     when.title = account.submittedAt ?? '';
 
     const chevron = document.createElement('span');
     chevron.className = 'chevron';
     chevron.setAttribute('aria-hidden', 'true');
 
-    summary.append(badge, name, id, when, chevron);
+    summary.append(badge, name, plan, id, when, chevron);
 
     const detail = document.createElement('div');
     detail.className = 'detail';
@@ -320,29 +327,15 @@ class OnboardingConsole extends HTMLElement {
     const wrap = document.createElement('div');
     wrap.className = 'journey';
 
-    // Stage 1 — account created.
+    // Stage 1 — account created (with the signup facts onboarding owns). Identity verification is the KYC
+    // service's concern and appears in the KYC console, not here.
     wrap.appendChild(stage('created', 'Account created', account.submittedAt, [
       field('Account id', account.accountId, true),
+      field('Email', account.email ?? '—'),
+      field('Plan', account.plan ?? '—'),
     ]));
 
-    // Stage 2 — identity verification (present once verifyIdentity has run).
-    const identity = account.identity;
-    if (identity) {
-      const verified = identity.verified === true;
-      const flags = Array.isArray(identity.flags) ? identity.flags : [];
-      const applicant = identity.applicant ?? account.applicant ?? {};
-      const evidence = identity.evidence ?? {};
-      const rows = [
-        field('Outcome', verified ? 'Verified' : (flags.length ? `Blocked (${flags.join(', ')})` : 'Not verified')),
-        field('Confidence', typeof identity.score === 'number' ? `${Math.round(identity.score * 100)}%` : '—'),
-        field('Method', identity.method ?? '—'),
-        field('Applicant', [applicant.fullName, applicant.country, applicant.email].filter(Boolean).join(' · ') || '—'),
-        field('Evidence', evidenceLabel(evidence)),
-      ];
-      wrap.appendChild(stage(verified ? 'verified' : 'blocked', 'Identity verification', account.verifiedAt, rows));
-    }
-
-    // Stage 3 — provisioning.
+    // Stage 2 — provisioning.
     const provisioning = account.provisioning;
     if (provisioning) {
       const resources = Array.isArray(provisioning.resources) ? provisioning.resources : [];
@@ -355,7 +348,7 @@ class OnboardingConsole extends HTMLElement {
       wrap.appendChild(stage('provisioned', 'Resources provisioned', account.provisionedAt, rows));
     }
 
-    // Stage 4 — welcome.
+    // Stage 3 — welcome.
     if (account.welcomedAt) {
       wrap.appendChild(stage('welcomed', 'Welcome sent', account.welcomedAt, []));
     }
@@ -413,25 +406,8 @@ function field(label, value, mono = false) {
 
 // ---- data helpers ------------------------------------------------------------------------------
 
-function applicantName(account) {
-  return account.applicant?.fullName ?? account.identity?.applicant?.fullName ?? null;
-}
-
 function shortId(id) {
   return typeof id === 'string' && id.length > 8 ? id.slice(0, 8) : (id ?? '');
-}
-
-function evidenceLabel(evidence) {
-  switch (evidence.kind) {
-    case 'document':
-      return `Document · ${evidence.documentType ?? 'document'} ${evidence.documentNumber ?? ''}`.trim();
-    case 'biometric':
-      return `Biometric · ${evidence.modality ?? ''}`.trim();
-    case 'knowledge-based':
-      return `Knowledge-based · ${evidence.questionsPassed ?? 0} passed`;
-    default:
-      return '—';
-  }
 }
 
 function formatTags(tags) {
@@ -496,10 +472,11 @@ select { background: var(--onb-surface, #fff); border: 1px solid var(--onb-borde
 .stat .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dot, currentColor); }
 .list { display: flex; flex-direction: column; gap: 8px; }
 .card { background: var(--onb-surface, #fff); border: 1px solid var(--onb-border, #e1e5ea); border-radius: var(--onb-radius, 10px); overflow: hidden; }
-.summary { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; align-items: center; gap: 12px; padding: 12px 14px; background: none; border: 0; cursor: pointer; text-align: left; }
+.summary { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto auto; align-items: center; gap: 12px; padding: 12px 14px; background: none; border: 0; cursor: pointer; text-align: left; }
 .summary:hover { background: var(--onb-surface-2, #f2f4f8); }
 .badge { font-size: .72rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: #fff; background: var(--c, #888); white-space: nowrap; }
 .name { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan { font-size: .72rem; text-transform: capitalize; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--onb-border, #e1e5ea); color: var(--onb-muted, #6b7280); white-space: nowrap; }
 .id { font-family: var(--onb-mono, monospace); font-size: .78rem; color: var(--onb-muted, #6b7280); }
 .when { font-size: .78rem; color: var(--onb-muted, #6b7280); white-space: nowrap; }
 .chevron { width: 8px; height: 8px; border-right: 2px solid var(--onb-muted, #6b7280); border-bottom: 2px solid var(--onb-muted, #6b7280); transform: rotate(45deg); transition: transform .15s; }

@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The onboarding aggregate: an account and its progress through the journey (created -&gt; identity-verified/blocked -&gt; provisioned -&gt; welcomed). This is the read model the onboarding console renders.
+/// The onboarding aggregate: an account and its progress through the journey (created -&gt; provisioned -&gt; welcomed). Identity verification is owned by the KYC service and rendered in the KYC console, not here. This is the read model the onboarding console renders.
 /// </para>
 /// </remarks>
 public readonly partial struct AccountView
@@ -52,35 +52,19 @@ public readonly partial struct AccountView
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly byte[] Enum2 = "verified"u8.ToArray();
+            public static readonly byte[] Enum2 = "provisioned"u8.ToArray();
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly StatusEntity EnumJson2 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"verified\""u8]);
+            public static readonly StatusEntity EnumJson2 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"provisioned\""u8]);
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly byte[] Enum3 = "blocked"u8.ToArray();
+            public static readonly byte[] Enum3 = "welcomed"u8.ToArray();
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly StatusEntity EnumJson3 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"blocked\""u8]);
-            /// <summary>
-            /// A constant for the <c>enum</c> keyword.
-            /// </summary>
-            public static readonly byte[] Enum4 = "provisioned"u8.ToArray();
-            /// <summary>
-            /// A constant for the <c>enum</c> keyword.
-            /// </summary>
-            public static readonly StatusEntity EnumJson4 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"provisioned\""u8]);
-            /// <summary>
-            /// A constant for the <c>enum</c> keyword.
-            /// </summary>
-            public static readonly byte[] Enum5 = "welcomed"u8.ToArray();
-            /// <summary>
-            /// A constant for the <c>enum</c> keyword.
-            /// </summary>
-            public static readonly StatusEntity EnumJson5 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"welcomed\""u8]);
+            public static readonly StatusEntity EnumJson3 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"welcomed\""u8]);
         }
 
         /// <summary>
@@ -100,65 +84,30 @@ public readonly partial struct AccountView
             public static ReadOnlySpan<byte> CreatedUtf8 => Constants.Enum1;
 
             /// <summary>
-            /// Gets the string "verified"
-            /// as a <see cref="StatusEntity"/>.
-            /// </summary>
-            public static StatusEntity Verified { get; } = Constants.EnumJson2;
-            /// <summary>
-            /// Gets the string "verified"
-            /// as a UTF8 byte array.
-            /// </summary>
-            public static ReadOnlySpan<byte> VerifiedUtf8 => Constants.Enum2;
-
-            /// <summary>
-            /// Gets the string "blocked"
-            /// as a <see cref="StatusEntity"/>.
-            /// </summary>
-            public static StatusEntity Blocked { get; } = Constants.EnumJson3;
-            /// <summary>
-            /// Gets the string "blocked"
-            /// as a UTF8 byte array.
-            /// </summary>
-            public static ReadOnlySpan<byte> BlockedUtf8 => Constants.Enum3;
-
-            /// <summary>
             /// Gets the string "provisioned"
             /// as a <see cref="StatusEntity"/>.
             /// </summary>
-            public static StatusEntity Provisioned { get; } = Constants.EnumJson4;
+            public static StatusEntity Provisioned { get; } = Constants.EnumJson2;
             /// <summary>
             /// Gets the string "provisioned"
             /// as a UTF8 byte array.
             /// </summary>
-            public static ReadOnlySpan<byte> ProvisionedUtf8 => Constants.Enum4;
+            public static ReadOnlySpan<byte> ProvisionedUtf8 => Constants.Enum2;
 
             /// <summary>
             /// Gets the string "welcomed"
             /// as a <see cref="StatusEntity"/>.
             /// </summary>
-            public static StatusEntity Welcomed { get; } = Constants.EnumJson5;
+            public static StatusEntity Welcomed { get; } = Constants.EnumJson3;
             /// <summary>
             /// Gets the string "welcomed"
             /// as a UTF8 byte array.
             /// </summary>
-            public static ReadOnlySpan<byte> WelcomedUtf8 => Constants.Enum5;
+            public static ReadOnlySpan<byte> WelcomedUtf8 => Constants.Enum3;
         }
 
         public static partial class JsonSchema
         {
-            private static EnumStringSet BuildEnumStringSet()
-            {
-                return new EnumStringSet([
-                    static () => "created"u8,
-                    static () => "verified"u8,
-                    static () => "blocked"u8,
-                    static () => "provisioned"u8,
-                    static () => "welcomed"u8,
-                ]);
-            }
-
-            private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
-
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
@@ -204,7 +153,17 @@ public readonly partial struct AccountView
                 {
                     using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
-                    if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
+                    if (unescapedUtf8JsonString.Span.SequenceEqual("created"u8))
+                    {
+                        goto enumShortCircuitSuccess;
+                    }
+
+                    if (unescapedUtf8JsonString.Span.SequenceEqual("provisioned"u8))
+                    {
+                        goto enumShortCircuitSuccess;
+                    }
+
+                    if (unescapedUtf8JsonString.Span.SequenceEqual("welcomed"u8))
                     {
                         goto enumShortCircuitSuccess;
                     }

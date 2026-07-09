@@ -61,9 +61,10 @@ PostgresWorkflowStateStore stateStore = await PostgresWorkflowStateStore.Connect
 // metadata) — so a resumed run can re-enter the real generated Arazzo executor (live execution, §5/§8).
 PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider());
 
-// Live execution (§5/§8): a resumed run re-enters its baked executor, calling this host's own /svc backends. The
-// resumer is built now but invoked only after the server is listening, so it reads the host base URL lazily (set in
-// the ApplicationStarted callback below) — the same delegate also drives one fresh run at startup to demonstrate it.
+// Live execution (§5/§8): a resumed run re-enters its baked executor, calling the real external source services
+// (onboarding, ledger, kyc — their own processes + databases). The resumer is built now but invoked only after the
+// server is listening, so it reads the host base URL lazily (set in the ApplicationStarted callback below — used only
+// as the never-hit /svc fallback root) — the same delegate also drives one fresh run at startup to demonstrate it.
 var selfBaseUrl = new System.Runtime.CompilerServices.StrongBox<string?>(null);
 
 // The onboarding source is a real external service (its own process + database — the AppHost stands it up and injects
@@ -73,7 +74,9 @@ string onboardingBaseUrl = builder.Configuration["ControlPlane:Sources:Onboardin
     ?? throw new InvalidOperationException("ControlPlane:Sources:Onboarding (the onboarding service endpoint) is required — the AppHost injects it.");
 string ledgerBaseUrl = builder.Configuration["ControlPlane:Sources:Ledger"]
     ?? throw new InvalidOperationException("ControlPlane:Sources:Ledger (the ledger service endpoint) is required — the AppHost injects it.");
-WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl);
+string kycBaseUrl = builder.Configuration["ControlPlane:Sources:Kyc"]
+    ?? throw new InvalidOperationException("ControlPlane:Sources:Kyc (the KYC service endpoint) is required — the AppHost injects it.");
+WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl);
 var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
@@ -99,8 +102,8 @@ PostgresSourceCredentialStore sourceCredentials = await PostgresSourceCredential
 // §18 debug runs: the durable draft-run stores — the captured {document, sources} blob and the SimulationTrace-shaped
 // metadata trace, both shared with any out-of-process runner — plus a governed environment store (drafts run only in
 // an environment whose administrators allow it). The IN-PROCESS runner executes the enqueued $draft debug runs against
-// this host's own /svc backends: a single-process deployment advances debug runs by pumping this runner (started once
-// the host is listening, below). The control plane only marks runs claimable — it never executes (§18).
+// the real external source services: a single-process deployment advances debug runs by pumping this runner (started
+// once the host is listening, below). The control plane only marks runs claimable — it never executes (§18).
 PostgresDraftRunStore draftRunStore = await PostgresDraftRunStore.ConnectAsync(dataSource);
 PostgresDraftRunTraceStore draftRunTraceStore = await PostgresDraftRunTraceStore.ConnectAsync(dataSource);
 PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.ConnectAsync(dataSource);
@@ -117,7 +120,7 @@ var draftRunner = new InProcessDraftRunner(
     draftRunStore,
     draftRunTraceStore,
     new WorkflowExecutorProvider(),
-    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl),
+    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl),
     // Do NOT host timer waits here: the worker's ResumeDueTimersAsync resumes EVERY due-timer run in the shared store,
     // including seeded CATALOG runs this draft-only resumer cannot host. A draft run that suspends on a retry timer is
     // out of scope for the minimum stand-up (the base onboard-customer workflow has none).
@@ -277,7 +280,7 @@ await DemoData.SeedAsync(catalog, stateStore, specsDir);
 // it with its read-only token. This populates /credentials (and the CLI + web UI) out of the box.
 foreach (string environment in new[] { "production", "development" })
 {
-    foreach (string source in new[] { "onboarding", "ledger" })
+    foreach (string source in new[] { "onboarding", "ledger", "kyc" })
     {
         // AddAsync returns the persisted binding as a pooled document — dispose it (the seed doesn't read it back).
         using ParsedJsonDocument<SourceCredentialBinding> seeded = await sourceCredentials.AddAsync(
@@ -295,8 +298,8 @@ foreach (string environment in new[] { "production", "development" })
 
 // §18: seed a development-class environment that ALLOWS working-copy drafts to run as debug runs (default off
 // everywhere else — crossing that line is an explicit per-environment decision by its administrators). Its two sources
-// are credentialed above, so the run dialog's readiness gate passes and a debug run executes against this host's own
-// /svc backends. The environment store is the governed, reach-scoped one the debug-run seam reads.
+// are credentialed above, so the run dialog's readiness gate passes and a debug run executes against the real external
+// source services. The environment store is the governed, reach-scoped one the debug-run seam reads.
 using (ParsedJsonDocument<CpEnvironment> developmentEnvironment = ParsedJsonDocument<CpEnvironment>.Parse(
     """{"name":"development","displayName":"Development","description":"Developer sandbox — working-copy drafts may run here as debug runs (§18).","allowsDraftRuns":true}"""u8.ToArray()))
 {
@@ -384,16 +387,18 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     draftRunner: draftRunner,
     draftRunTraceStore: draftRunTraceStore);
 
-// Both source backends the workflows call — onboarding and ledger — are now real external services (their own
-// processes + databases); no inline /svc mock remains (notifications is an AsyncAPI message source, not HTTP).
+// The source backends the workflows call — onboarding, ledger, and kyc — are all real external services (their own
+// processes + databases); no inline /svc mock remains (notifications is an AsyncAPI message source, not HTTP). This
+// host serves ONLY the control-plane API (/arazzo/v1), its auth BFF, and the console — never any example-service API.
 
-// Once the server is listening, resolve its own base URL (for the live resumer's /svc transports) and execute one
-// fresh onboarding run live — so the demo shows a genuinely-executed run, not only hand-seeded states.
+// Once the server is listening, resolve its own base URL (the live resumer's never-hit /svc fallback root) and execute
+// one fresh onboarding run live — so the demo shows a genuinely-executed run, not only hand-seeded states.
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     selfBaseUrl.Value = app.Urls.FirstOrDefault();
 
-    // §18: start the in-process draft runner's pump now the host is listening (its /svc binder needs the base URL). It
+    // §18: start the in-process draft runner's pump now the host is listening (its transport binder needs the base URL
+    // for the never-hit /svc fallback root; real runs route to the external source services). It
     // claims the Pending and resume-claimable $draft debug runs the control plane marks, advances each one step (or to
     // its next pause), records the metadata trace, and persists it — a short poll keeps the designer's dock responsive.
     // UNLESS a SEPARATE runner process hosts $draft (the multi-process topology): set

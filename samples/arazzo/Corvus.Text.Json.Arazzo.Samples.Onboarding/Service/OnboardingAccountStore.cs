@@ -9,10 +9,11 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding;
 
 /// <summary>
 /// The onboarding service's own durable store: customer accounts and their progress through the onboarding
-/// journey (created -> identity-verified/blocked -> provisioned -> welcomed), persisted to the service's own
-/// PostgreSQL database. Each account is a row keyed by its id; the accumulated wire documents (the resolved
-/// applicant, the identity result, and the provisioning result) are held as <c>bytea</c> columns exactly as the
-/// service emitted them, so the read model (<c>AccountView</c>) is composed by splicing them at the leaf.
+/// journey (created -> provisioned -> welcomed), persisted to the service's own PostgreSQL database. Each account
+/// is a row keyed by its id, holding the signup facts the service owns (the customer's email and chosen plan) and
+/// the provisioning wire document as a <c>bytea</c> column exactly as the service emitted it, so the read model
+/// (<c>AccountView</c>) is composed by writing the scalars and splicing the document at the leaf. Identity
+/// verification is owned by the KYC service, so no identity is held here.
 /// </summary>
 /// <remarks>
 /// This is a real backend, not a mock: it owns its schema and data independently of the Arazzo control plane's
@@ -77,45 +78,24 @@ public sealed class OnboardingAccountStore : IAsyncDisposable
         return new ValueTask<OnboardingAccountStore>(new OnboardingAccountStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true));
     }
 
-    /// <summary>Creates a new account in the <c>created</c> state.</summary>
+    /// <summary>Creates a new account in the <c>created</c> state with the signup facts the service owns.</summary>
     /// <param name="accountId">The new account's id.</param>
+    /// <param name="email">The customer's email, or <see langword="null"/> if none was supplied.</param>
+    /// <param name="plan">The chosen plan, or <see langword="null"/> if none was supplied.</param>
     /// <param name="submittedAt">The moment the account was created.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes once the row is inserted.</returns>
-    public async ValueTask CreateAsync(string accountId, DateTimeOffset submittedAt, CancellationToken cancellationToken = default)
+    public async ValueTask CreateAsync(string accountId, string? email, string? plan, DateTimeOffset submittedAt, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(accountId);
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
-        insert.CommandText = "INSERT INTO Accounts (AccountId, Status, SubmittedAt) VALUES (@id, 'created', @submitted);";
+        insert.CommandText = "INSERT INTO Accounts (AccountId, Status, Email, Plan, SubmittedAt) VALUES (@id, 'created', @email, @plan, @submitted);";
         insert.Parameters.AddWithValue("id", accountId);
+        insert.Parameters.AddWithValue("email", (object?)email ?? DBNull.Value);
+        insert.Parameters.AddWithValue("plan", (object?)plan ?? DBNull.Value);
         insert.Parameters.AddWithValue("submitted", NpgsqlDbType.TimestampTz, submittedAt);
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>Records an identity-verification outcome against an account.</summary>
-    /// <param name="accountId">The account id.</param>
-    /// <param name="status">The resulting account status (<c>verified</c>, <c>blocked</c>, or <c>created</c> when a pending re-check is expected).</param>
-    /// <param name="fullName">The resolved applicant name (for display and search).</param>
-    /// <param name="applicant">The resolved applicant document (JSON), as emitted.</param>
-    /// <param name="identity">The identity-result document (JSON), as emitted.</param>
-    /// <param name="verifiedAt">The moment the check completed.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns><see langword="true"/> if the account existed and was updated; otherwise <see langword="false"/>.</returns>
-    public async ValueTask<bool> RecordIdentityAsync(string accountId, string status, string fullName, byte[] applicant, byte[] identity, DateTimeOffset verifiedAt, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(accountId);
-        await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using NpgsqlCommand update = connection.CreateCommand();
-        update.CommandText =
-            "UPDATE Accounts SET Status = @status, FullName = @name, Applicant = @applicant, Identity = @identity, VerifiedAt = @verified WHERE AccountId = @id;";
-        update.Parameters.AddWithValue("status", status);
-        update.Parameters.AddWithValue("name", fullName);
-        update.Parameters.AddWithValue("applicant", NpgsqlDbType.Bytea, applicant);
-        update.Parameters.AddWithValue("identity", NpgsqlDbType.Bytea, identity);
-        update.Parameters.AddWithValue("verified", NpgsqlDbType.TimestampTz, verifiedAt);
-        update.Parameters.AddWithValue("id", accountId);
-        return await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) > 0;
     }
 
     /// <summary>Records a provisioning outcome against an account and moves it to <c>provisioned</c>.</summary>
@@ -229,29 +209,25 @@ public sealed class OnboardingAccountStore : IAsyncDisposable
     private static OnboardingAccountRecord ReadRecord(NpgsqlDataReader reader) => new(
         AccountId: reader.GetString(0),
         Status: reader.GetString(1),
-        FullName: reader.IsDBNull(2) ? null : reader.GetString(2),
-        Applicant: reader.IsDBNull(3) ? null : reader.GetFieldValue<byte[]>(3),
-        Identity: reader.IsDBNull(4) ? null : reader.GetFieldValue<byte[]>(4),
-        Provisioning: reader.IsDBNull(5) ? null : reader.GetFieldValue<byte[]>(5),
-        SubmittedAt: reader.GetFieldValue<DateTimeOffset>(6),
-        VerifiedAt: reader.IsDBNull(7) ? null : reader.GetFieldValue<DateTimeOffset>(7),
-        ProvisionedAt: reader.IsDBNull(8) ? null : reader.GetFieldValue<DateTimeOffset>(8),
-        WelcomedAt: reader.IsDBNull(9) ? null : reader.GetFieldValue<DateTimeOffset>(9));
+        Email: reader.IsDBNull(2) ? null : reader.GetString(2),
+        Plan: reader.IsDBNull(3) ? null : reader.GetString(3),
+        Provisioning: reader.IsDBNull(4) ? null : reader.GetFieldValue<byte[]>(4),
+        SubmittedAt: reader.GetFieldValue<DateTimeOffset>(5),
+        ProvisionedAt: reader.IsDBNull(6) ? null : reader.GetFieldValue<DateTimeOffset>(6),
+        WelcomedAt: reader.IsDBNull(7) ? null : reader.GetFieldValue<DateTimeOffset>(7));
 
     private const string SelectColumns =
-        "SELECT AccountId, Status, FullName, Applicant, Identity, Provisioning, SubmittedAt, VerifiedAt, ProvisionedAt, WelcomedAt FROM Accounts";
+        "SELECT AccountId, Status, Email, Plan, Provisioning, SubmittedAt, ProvisionedAt, WelcomedAt FROM Accounts";
 
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS Accounts (
             AccountId TEXT NOT NULL PRIMARY KEY,
             Status TEXT NOT NULL,
-            FullName TEXT,
-            Applicant BYTEA,
-            Identity BYTEA,
+            Email TEXT,
+            Plan TEXT,
             Provisioning BYTEA,
             SubmittedAt TIMESTAMPTZ NOT NULL,
-            VerifiedAt TIMESTAMPTZ,
             ProvisionedAt TIMESTAMPTZ,
             WelcomedAt TIMESTAMPTZ
         );

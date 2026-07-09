@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The onboarding aggregate: an account and its progress through the journey (created -&gt; identity-verified/blocked -&gt; provisioned -&gt; welcomed). This is the read model the onboarding console renders.
+/// The onboarding aggregate: an account and its progress through the journey (created -&gt; provisioned -&gt; welcomed). Identity verification is owned by the KYC service and rendered in the KYC console, not here. This is the read model the onboarding console renders.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -53,13 +53,12 @@ public readonly partial struct AccountView
         private const uint RequiredBitMask0 =
             RequiredBitForAccountId | RequiredBitForStatus | RequiredBitForSubmittedAt;
         private static readonly JsonSchemaPathProvider AccountIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/accountId"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider ApplicantSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/applicant/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider IdentitySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/identity/$ref"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider EmailSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/email"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider PlanSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/plan"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ProvisionedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/provisionedAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ProvisioningSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/provisioning/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SubmittedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/submittedAt"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider VerifiedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/verifiedAt"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WelcomedAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/welcomedAt"u8, buffer, out written);
 
         private static void MatchAccountId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
@@ -84,33 +83,33 @@ public readonly partial struct AccountView
             requiredBitBuffer[RequiredOffsetForAccountId] |= RequiredBitForAccountId;
         }
 
-        private static void MatchApplicant(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchEmail(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.ApplicantUtf8,
-                    evaluationPath: ApplicantSchemaEvaluationPath);
+                    JsonPropertyNames.EmailUtf8,
+                    evaluationPath: EmailSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchIdentity(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchPlan(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.JsonSchema.PushChildContextUnescaped(
+                Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.IdentityUtf8,
-                    evaluationPath: IdentitySchemaEvaluationPath);
+                    JsonPropertyNames.PlanUtf8,
+                    evaluationPath: PlanSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
@@ -188,7 +187,7 @@ public readonly partial struct AccountView
             requiredBitBuffer[RequiredOffsetForSubmittedAt] |= RequiredBitForSubmittedAt;
         }
 
-        private static void MatchVerifiedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchWelcomedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext7 =
@@ -196,39 +195,23 @@ public readonly partial struct AccountView
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.VerifiedAtUtf8,
-                    evaluationPath: VerifiedAtSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
-            context.CommitChildContext(childContext7.IsMatch, ref childContext7);
-        }
-
-        private static void MatchWelcomedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext8 =
-                Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
                     JsonPropertyNames.WelcomedAtUtf8,
                     evaluationPath: WelcomedAtSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
-            context.CommitChildContext(childContext8.IsMatch, ref childContext8);
+            Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
+            context.CommitChildContext(childContext7.IsMatch, ref childContext7);
         }
 
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.AccountIdUtf8, MatchAccountId),
-                (static () => JsonPropertyNames.ApplicantUtf8, MatchApplicant),
-                (static () => JsonPropertyNames.IdentityUtf8, MatchIdentity),
+                (static () => JsonPropertyNames.EmailUtf8, MatchEmail),
+                (static () => JsonPropertyNames.PlanUtf8, MatchPlan),
                 (static () => JsonPropertyNames.ProvisionedAtUtf8, MatchProvisionedAt),
                 (static () => JsonPropertyNames.ProvisioningUtf8, MatchProvisioning),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
                 (static () => JsonPropertyNames.SubmittedAtUtf8, MatchSubmittedAt),
-                (static () => JsonPropertyNames.VerifiedAtUtf8, MatchVerifiedAt),
                 (static () => JsonPropertyNames.WelcomedAtUtf8, MatchWelcomedAt),
             ]);
         }

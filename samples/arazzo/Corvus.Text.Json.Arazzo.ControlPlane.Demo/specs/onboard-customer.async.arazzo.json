@@ -1,9 +1,21 @@
 {
   "arazzo": "1.1.0",
-  "info": { "title": "Onboard Customer (async KYC)", "version": "1.0.0", "description": "Create an account, then await an out-of-band identity-verification (KYC) verdict delivered asynchronously on the kyc.results channel before provisioning and welcoming the customer. The run suspends durably until the verdict message arrives." },
+  "info": {
+    "title": "Onboard Customer (async KYC)",
+    "version": "1.0.0",
+    "description": "Create an account, then await an out-of-band identity-verification (KYC) verdict delivered asynchronously on the kyc.results channel before provisioning and welcoming the customer. The run suspends durably until the verdict message arrives."
+  },
   "sourceDescriptions": [
-    { "name": "onboarding", "url": "./onboarding.openapi.json", "type": "openapi" },
-    { "name": "notifications", "url": "./notifications.asyncapi.json", "type": "asyncapi" }
+    {
+      "name": "onboarding",
+      "url": "./onboarding.openapi.json",
+      "type": "openapi"
+    },
+    {
+      "name": "notifications",
+      "url": "./notifications.asyncapi.json",
+      "type": "asyncapi"
+    }
   ],
   "workflows": [
     {
@@ -11,14 +23,53 @@
       "inputs": {
         "type": "object",
         "properties": {
-          "email": { "type": "string", "format": "idn-email", "description": "The applicant's email." },
-          "fullName": { "type": "string", "description": "The applicant's full name." },
-          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ] }
+          "email": {
+            "type": "string",
+            "format": "idn-email",
+            "description": "The applicant's email."
+          },
+          "fullName": {
+            "type": "string",
+            "description": "The applicant's full name."
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "pro",
+              "enterprise"
+            ]
+          }
         },
-        "required": [ "email" ]
+        "required": [
+          "email"
+        ]
       },
       "steps": [
-        { "stepId": "createAccount", "operationId": "createAccount", "outputs": { "accountId": "$response.body#/accountId" } },
+        {
+          "stepId": "createAccount",
+          "operationId": "createAccount",
+          "requestBody": {
+            "contentType": "application/json",
+            "payload": {
+              "email": "customer@example.com",
+              "plan": "free"
+            },
+            "replacements": [
+              {
+                "target": "/email",
+                "value": "$inputs.email"
+              },
+              {
+                "target": "/plan",
+                "value": "$inputs.plan"
+              }
+            ]
+          },
+          "outputs": {
+            "accountId": "$response.body#/accountId"
+          }
+        },
         {
           "stepId": "awaitKycVerdict",
           "channelPath": "kyc.verdict",
@@ -31,7 +82,13 @@
         {
           "stepId": "provisionResources",
           "operationId": "provisionResources",
-          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "parameters": [
+            {
+              "name": "accountId",
+              "in": "path",
+              "value": "$steps.createAccount.outputs.accountId"
+            }
+          ],
           "outputs": {
             "accountUrl": "$response.body#/accountUrl",
             "quotaGb": "$response.body#/quotaGb",
@@ -42,7 +99,13 @@
         {
           "stepId": "notifyApplicant",
           "operationId": "sendWelcome",
-          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "parameters": [
+            {
+              "name": "accountId",
+              "in": "path",
+              "value": "$steps.createAccount.outputs.accountId"
+            }
+          ],
           "outputs": {}
         }
       ]

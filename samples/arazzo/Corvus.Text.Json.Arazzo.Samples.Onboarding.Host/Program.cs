@@ -26,7 +26,7 @@ await OnboardingAccountStore.PrepareAsync(connectionString);
 NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 builder.Services.AddSingleton(dataSource);
 OnboardingAccountStore store = await OnboardingAccountStore.ConnectAsync(dataSource);
-var handler = new OnboardingService(store, new IdentityVerificationPolicy(), new ResourceAllocator());
+var handler = new OnboardingService(store, new ResourceAllocator());
 
 WebApplication app = builder.Build();
 

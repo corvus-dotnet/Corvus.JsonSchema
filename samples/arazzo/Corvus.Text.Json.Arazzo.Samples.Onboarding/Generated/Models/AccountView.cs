@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Samples.Onboarding.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The onboarding aggregate: an account and its progress through the journey (created -&gt; identity-verified/blocked -&gt; provisioned -&gt; welcomed). This is the read model the onboarding console renders.
+/// The onboarding aggregate: an account and its progress through the journey (created -&gt; provisioned -&gt; welcomed). Identity verification is owned by the KYC service and rendered in the KYC console, not here. This is the read model the onboarding console renders.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -180,18 +180,13 @@ public readonly partial struct AccountView
     }
 
     /// <summary>
-    /// Gets the (optional) <c>applicant</c> property.
+    /// Gets the (optional) <c>email</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The resolved identity.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant Applicant
+    public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail Email
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicantUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.Applicant value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonIdnEmail value))
             {
                 return value;
             }
@@ -201,13 +196,13 @@ public readonly partial struct AccountView
     }
 
     /// <summary>
-    /// Gets the (optional) <c>identity</c> property.
+    /// Gets the (optional) <c>plan</c> property.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult Identity
+    public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity Plan
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdentityUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityResult value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PlanUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.AccountView.PlanEntity value))
             {
                 return value;
             }
@@ -282,22 +277,6 @@ public readonly partial struct AccountView
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubmittedAtUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>verifiedAt</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime VerifiedAt
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VerifiedAtUtf8, out Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -771,14 +750,14 @@ public readonly partial struct AccountView
         public const string AccountId = "accountId";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Applicant"/>.
+        /// Gets the JSON property name for <see cref="Email"/>.
         /// </summary>
-        public const string Applicant = "applicant";
+        public const string Email = "email";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Identity"/>.
+        /// Gets the JSON property name for <see cref="Plan"/>.
         /// </summary>
-        public const string Identity = "identity";
+        public const string Plan = "plan";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="ProvisionedAt"/>.
@@ -801,11 +780,6 @@ public readonly partial struct AccountView
         public const string SubmittedAt = "submittedAt";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="VerifiedAt"/>.
-        /// </summary>
-        public const string VerifiedAt = "verifiedAt";
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="WelcomedAt"/>.
         /// </summary>
         public const string WelcomedAt = "welcomedAt";
@@ -816,14 +790,14 @@ public readonly partial struct AccountView
         public static ReadOnlySpan<byte> AccountIdUtf8 => "accountId"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Applicant"/>.
+        /// Gets the JSON property name for <see cref="Email"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ApplicantUtf8 => "applicant"u8;
+        public static ReadOnlySpan<byte> EmailUtf8 => "email"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Identity"/>.
+        /// Gets the JSON property name for <see cref="Plan"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> IdentityUtf8 => "identity"u8;
+        public static ReadOnlySpan<byte> PlanUtf8 => "plan"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="ProvisionedAt"/>.
@@ -846,11 +820,6 @@ public readonly partial struct AccountView
         public static ReadOnlySpan<byte> SubmittedAtUtf8 => "submittedAt"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="VerifiedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> VerifiedAtUtf8 => "verifiedAt"u8;
-
-        /// <summary>
         /// Gets the JSON property name for <see cref="WelcomedAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> WelcomedAtUtf8 => "welcomedAt"u8;
@@ -867,14 +836,14 @@ public readonly partial struct AccountView
         public static ReadOnlySpan<byte> AccountId => "accountId"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Applicant"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Email"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Applicant => "applicant"u8;
+        public static ReadOnlySpan<byte> Email => "email"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Identity"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Plan"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Identity => "identity"u8;
+        public static ReadOnlySpan<byte> Plan => "plan"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="ProvisionedAt"/>.
@@ -897,11 +866,6 @@ public readonly partial struct AccountView
         public static ReadOnlySpan<byte> SubmittedAt => "submittedAt"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="VerifiedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> VerifiedAt => "verifiedAt"u8;
-
-        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="WelcomedAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> WelcomedAt => "welcomedAt"u8;
@@ -919,14 +883,14 @@ public readonly partial struct AccountView
         public static ReadOnlySpan<byte> AccountId => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x63, 0x63, 0x6F, 0x75, 0x6E, 0x74, 0x49, 0x64, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Applicant"/>.
+        /// Gets the pre-baked property name blob for <see cref="Email"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Applicant => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x70, 0x70, 0x6C, 0x69, 0x63, 0x61, 0x6E, 0x74, 0x22];
+        public static ReadOnlySpan<byte> Email => [0x75, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6D, 0x61, 0x69, 0x6C, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Identity"/>.
+        /// Gets the pre-baked property name blob for <see cref="Plan"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Identity => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x74, 0x79, 0x22];
+        public static ReadOnlySpan<byte> Plan => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6C, 0x61, 0x6E, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="ProvisionedAt"/>.
@@ -947,11 +911,6 @@ public readonly partial struct AccountView
         /// Gets the pre-baked property name blob for <see cref="SubmittedAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SubmittedAt => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x62, 0x6D, 0x69, 0x74, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="VerifiedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> VerifiedAt => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x69, 0x66, 0x69, 0x65, 0x64, 0x41, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="WelcomedAt"/>.

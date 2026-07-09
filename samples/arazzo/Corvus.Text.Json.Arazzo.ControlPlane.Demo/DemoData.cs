@@ -32,42 +32,46 @@ public static class DemoData
     /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
     /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
     /// <returns>The resumer delegate.</returns>
-    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl)
+    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
 
-        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl, ledgerBaseUrl));
+        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl));
         return resumer.AsResumer();
     }
 
     /// <summary>Builds the live-execution transport binder shared by the catalog resumer (<see cref="CreateLiveResumer"/>)
-    /// and the §18 in-process draft runner. The <c>onboarding</c> and <c>ledger</c> sources are real external services
-    /// (their own hosts + databases), so their clients are rooted directly at those services. The demo has no
-    /// control-plane <c>/svc</c> mock left (notifications is an AsyncAPI message source, not an HTTP one), so that
-    /// branch is a defensive fallback. In production every source is a real endpoint and this is
+    /// and the §18 in-process draft runner. The <c>onboarding</c>, <c>ledger</c>, and <c>kyc</c> sources are real
+    /// external services (their own hosts + databases), so their clients are rooted directly at those services. The
+    /// demo has no control-plane <c>/svc</c> mock left (notifications is an AsyncAPI message source, not an HTTP one),
+    /// so that branch is a defensive fallback. In production every source is a real endpoint and this is
     /// <c>SourceCredentialTransports.CreateBinder</c> (credentials resolved as the runner's identity via Vault).</summary>
     /// <param name="baseUrlProvider">Yields this host's base URL (the defensive /svc fallback root).</param>
     /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
     /// <param name="ledgerBaseUrl">The ledger service's base URL (its own external host).</param>
+    /// <param name="kycBaseUrl">The KYC service's base URL (its own external host).</param>
     /// <returns>The transport binder.</returns>
-    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl)
+    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
         ArgumentException.ThrowIfNullOrEmpty(onboardingBaseUrl);
         ArgumentException.ThrowIfNullOrEmpty(ledgerBaseUrl);
+        ArgumentException.ThrowIfNullOrEmpty(kycBaseUrl);
 
-        // The onboarding and ledger clients are rooted directly at their services (their absolute operation paths hit
-        // the service). Any other source would be a control-plane /svc mock — the generated client emits absolute
-        // paths, so rooting at the control-plane host + prefixing /svc/<source> routes them there — but the demo has
-        // none left, so that is a defensive fallback.
+        // The onboarding, ledger, and kyc clients are rooted directly at their services (their absolute operation
+        // paths hit the service). Any other source would be a control-plane /svc mock — the generated client emits
+        // absolute paths, so rooting at the control-plane host + prefixing /svc/<source> routes them there — but the
+        // demo has none left, so that is a defensive fallback.
         var onboardingUri = new Uri(onboardingBaseUrl);
         var ledgerUri = new Uri(ledgerBaseUrl);
+        var kycUri = new Uri(kycBaseUrl);
         var clients = new ConcurrentDictionary<string, HttpClient>(StringComparer.Ordinal);
         HttpClient ClientFor(string source) => clients.GetOrAdd(source, s => s switch
         {
             "onboarding" => new HttpClient { BaseAddress = onboardingUri },
             "ledger" => new HttpClient { BaseAddress = ledgerUri },
+            "kyc" => new HttpClient { BaseAddress = kycUri },
             _ => new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() }) { BaseAddress = new Uri(baseUrlProvider()) },
         });
 
@@ -211,10 +215,10 @@ public static class DemoData
         ArgumentNullException.ThrowIfNull(specsDir);
         TimeProvider time = timeProvider ?? TimeProvider.System;
 
-        ReadOnlyMemory<byte> onboarding = Package(specsDir, "onboard-customer.arazzo.json", ("onboarding", "onboarding.openapi.json"));
-        ReadOnlyMemory<byte> onboardingV2 = Package(specsDir, "onboard-customer.v2.arazzo.json", ("onboarding", "onboarding.openapi.json"));
+        ReadOnlyMemory<byte> onboarding = Package(specsDir, "onboard-customer.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("kyc", "kyc.openapi.json"));
+        ReadOnlyMemory<byte> onboardingV2 = Package(specsDir, "onboard-customer.v2.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("kyc", "kyc.openapi.json"));
         ReadOnlyMemory<byte> onboardingAsync = Package(specsDir, "onboard-customer.async.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("notifications", "notifications.asyncapi.json"));
-        ReadOnlyMemory<byte> onboardingRetry = Package(specsDir, "onboard-customer.retry.arazzo.json", ("onboarding", "onboarding.openapi.json"));
+        ReadOnlyMemory<byte> onboardingRetry = Package(specsDir, "onboard-customer.retry.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("kyc", "kyc.openapi.json"));
         ReadOnlyMemory<byte> reconcile = Package(specsDir, "nightly-reconcile.arazzo.json", ("ledger", "ledger.openapi.json"));
 
         // Catalog: onboarding (one active version) and nightly-reconcile (a v1 that we obsolete, plus an active v2).

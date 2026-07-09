@@ -132,10 +132,40 @@ public static class ApiEndpointRegistration
         IEndpointConventionBuilder __CreateAccountEndpoint = app.MapPost("/accounts", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.CreateAccountRequest>? bodyDoc = null;
             try
             {
+                // An optional request body is read only when the request actually carries one;
+                // an absent body leaves the body parameter undefined rather than failing to parse.
+                if ((context.Request.ContentLength ?? 0) > 0 || context.Request.Headers.ContainsKey("Transfer-Encoding"))
+                {
+                    try
+                    {
+                        bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.CreateAccountRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
 
-                CreateAccountParams parameters = new();
+                    if (!bodyDoc!.RootElement.EvaluateSchema())
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
+
+                }
+
+                CreateAccountParams parameters = new()
+                {
+                    Body = bodyDoc is null ? default : bodyDoc.RootElement,
+                }
+                ;
 
                 CreateAccountResult result = await defaultHandler.HandleCreateAccountAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
@@ -168,6 +198,7 @@ public static class ApiEndpointRegistration
             finally
             {
                 workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
@@ -260,114 +291,6 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
             __GetAccountEndpoint);
-
-        IEndpointConventionBuilder __VerifyIdentityEndpoint = app.MapPost("/accounts/{accountId}/identity", async (HttpContext context) =>
-        {
-            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityRequest>? bodyDoc = null;
-            try
-            {
-                Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonString AccountIdValue = default;
-                if (context.Request.RouteValues.TryGetValue("accountId", out object? AccountIdRouteVal) && AccountIdRouteVal is string AccountIdRaw)
-                {
-                    AccountIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.JsonString>(AccountIdRaw, workspace);
-                }
-
-                if (AccountIdValue.IsUndefined())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'accountId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                if (!AccountIdValue.IsUndefined() && !AccountIdValue.EvaluateSchema())
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'accountId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-
-                // An optional request body is read only when the request actually carries one;
-                // an absent body leaves the body parameter undefined rather than failing to parse.
-                if ((context.Request.ContentLength ?? 0) > 0 || context.Request.Headers.ContainsKey("Transfer-Encoding"))
-                {
-                    try
-                    {
-                        bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Samples.Onboarding.Models.IdentityRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        context.Response.StatusCode = 400;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
-                        return;
-                    }
-
-                    if (!bodyDoc!.RootElement.EvaluateSchema())
-                    {
-                        context.Response.StatusCode = 400;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                        return;
-                    }
-
-                }
-
-                VerifyIdentityParams parameters = new()
-                {
-                    AccountId = AccountIdValue,
-                    Body = bodyDoc is null ? default : bodyDoc.RootElement,
-                }
-                ;
-
-                VerifyIdentityResult result = await defaultHandler.HandleVerifyIdentityAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
-
-                if (!result.ValidateBody())
-                {
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
-                    return;
-                }
-
-                context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
-                {
-                    context.Response.ContentType = result.ContentType ?? "application/json";
-                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                    try
-                    {
-                        result.WriteBody(writer);
-                        writer.Flush();
-                    }
-                    finally
-                    {
-                        workspace.ReturnWriter(writer);
-                    }
-
-                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                workspace.Dispose();
-                bodyDoc?.Dispose();
-            }
-        }
-        );
-        configureEndpoint?.Invoke(
-            new EndpointDescriptor(
-                operationId: "verifyIdentity",
-                methodName: "VerifyIdentity",
-                httpMethod: "POST",
-                routeTemplate: "/accounts/{accountId}/identity",
-                tags: System.Array.Empty<string>(),
-                isCallback: false,
-                securityRequirements: System.Array.Empty<EndpointSecurityRequirementSet>()),
-            __VerifyIdentityEndpoint);
 
         IEndpointConventionBuilder __ProvisionResourcesEndpoint = app.MapPost("/accounts/{accountId}/resources", async (HttpContext context) =>
         {
