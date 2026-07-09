@@ -7,5 +7,7 @@
     <Project Path="Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults/Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.Samples.Onboarding/Corvus.Text.Json.Arazzo.Samples.Onboarding.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.Samples.Onboarding.Host/Corvus.Text.Json.Arazzo.Samples.Onboarding.Host.csproj" />
+    <Project Path="Corvus.Text.Json.Arazzo.Samples.Ledger/Corvus.Text.Json.Arazzo.Samples.Ledger.csproj" />
+    <Project Path="Corvus.Text.Json.Arazzo.Samples.Ledger.Host/Corvus.Text.Json.Arazzo.Samples.Ledger.Host.csproj" />
   </Folder>
 </Solution>

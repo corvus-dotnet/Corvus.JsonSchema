@@ -32,37 +32,44 @@ public static class DemoData
     /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
     /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
     /// <returns>The resumer delegate.</returns>
-    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider, string onboardingBaseUrl)
+    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
 
-        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl));
+        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl, ledgerBaseUrl));
         return resumer.AsResumer();
     }
 
     /// <summary>Builds the live-execution transport binder shared by the catalog resumer (<see cref="CreateLiveResumer"/>)
-    /// and the §18 in-process draft runner. The <c>onboarding</c> source is a real external service (its own host +
-    /// database), so its client is rooted directly at that service; every other source is still a control-plane
-    /// <c>/svc/&lt;source&gt;</c> mock. In production every source is a real endpoint and this is
+    /// and the §18 in-process draft runner. The <c>onboarding</c> and <c>ledger</c> sources are real external services
+    /// (their own hosts + databases), so their clients are rooted directly at those services. The demo has no
+    /// control-plane <c>/svc</c> mock left (notifications is an AsyncAPI message source, not an HTTP one), so that
+    /// branch is a defensive fallback. In production every source is a real endpoint and this is
     /// <c>SourceCredentialTransports.CreateBinder</c> (credentials resolved as the runner's identity via Vault).</summary>
-    /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
+    /// <param name="baseUrlProvider">Yields this host's base URL (the defensive /svc fallback root).</param>
     /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
+    /// <param name="ledgerBaseUrl">The ledger service's base URL (its own external host).</param>
     /// <returns>The transport binder.</returns>
-    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl)
+    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl)
     {
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
         ArgumentException.ThrowIfNullOrEmpty(onboardingBaseUrl);
+        ArgumentException.ThrowIfNullOrEmpty(ledgerBaseUrl);
 
-        // The onboarding client is rooted directly at the onboarding service (its absolute operation paths — /accounts,
-        // etc. — hit the service). Every other source is still a control-plane /svc mock: the generated client emits
-        // absolute paths, so rooting at the control-plane host + prefixing /svc/<source> in a handler routes them there
-        // (a base address WITH a path is dropped by absolute-path resolution).
+        // The onboarding and ledger clients are rooted directly at their services (their absolute operation paths hit
+        // the service). Any other source would be a control-plane /svc mock — the generated client emits absolute
+        // paths, so rooting at the control-plane host + prefixing /svc/<source> routes them there — but the demo has
+        // none left, so that is a defensive fallback.
         var onboardingUri = new Uri(onboardingBaseUrl);
+        var ledgerUri = new Uri(ledgerBaseUrl);
         var clients = new ConcurrentDictionary<string, HttpClient>(StringComparer.Ordinal);
-        HttpClient ClientFor(string source) => clients.GetOrAdd(source, s => s == "onboarding"
-            ? new HttpClient { BaseAddress = onboardingUri }
-            : new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() }) { BaseAddress = new Uri(baseUrlProvider()) });
+        HttpClient ClientFor(string source) => clients.GetOrAdd(source, s => s switch
+        {
+            "onboarding" => new HttpClient { BaseAddress = onboardingUri },
+            "ledger" => new HttpClient { BaseAddress = ledgerUri },
+            _ => new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() }) { BaseAddress = new Uri(baseUrlProvider()) },
+        });
 
         // A workflow with an AsyncAPI receive step needs an IMessageTransport supplied to its executor even though
         // the durable suspend/resume itself flows through the worker (WorkflowWorker.DeliverMessageAsync); the

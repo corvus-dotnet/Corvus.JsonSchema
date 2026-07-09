@@ -79,18 +79,21 @@ builder.Services.AddSingleton(catalog);
 // back to plain /svc transports, enough to prove the loop. The shared in-memory message transport satisfies an
 // AsyncAPI receive step's need for an IMessageTransport (the durable suspend/resume itself flows through the shared
 // store + worker); a real broker adapter replaces it in production (design §8).
-string sourcesBaseUrl = builder.Configuration["Runner:SourcesBaseUrl"]
-    ?? throw new InvalidOperationException("Runner:SourcesBaseUrl must be set (the control plane host serving the /svc mock sources — e.g. ledger — in the demo).");
 string onboardingBaseUrl = builder.Configuration["Runner:Sources:Onboarding"]
     ?? throw new InvalidOperationException("Runner:Sources:Onboarding (the onboarding service endpoint) is required — the AppHost injects it.");
+string ledgerBaseUrl = builder.Configuration["Runner:Sources:Ledger"]
+    ?? throw new InvalidOperationException("Runner:Sources:Ledger (the ledger service endpoint) is required — the AppHost injects it.");
 var messageTransport = new InMemoryMessageTransport();
 
-// onboarding is now a real external service (its own host + database), so its client is rooted directly at that
-// service; ledger is still a control-plane /svc mock (Phase C). The SAME mixed client map drives both binders below:
-// the Vault-credentialed production binder (the runner resolves each source's secret as its own read-only Vault
-// identity and applies it — the onboarding service simply ignores the unused header) and the standalone fallback.
-Dictionary<string, HttpClient> sourceClients = DraftRunHost.CreateSvcClients(sourcesBaseUrl, "ledger");
-sourceClients["onboarding"] = new HttpClient { BaseAddress = new Uri(onboardingBaseUrl) };
+// Both HTTP sources are now real external services (their own hosts + databases) — there is no /svc mock left. The
+// SAME client map drives both binders below: the Vault-credentialed production binder (the runner resolves each
+// source's secret as its own read-only Vault identity and applies it — the service ignores the unused header) and the
+// standalone fallback. (notifications is an AsyncAPI message source, handled by the message transport, not here.)
+var sourceClients = new Dictionary<string, HttpClient>(StringComparer.Ordinal)
+{
+    ["onboarding"] = new HttpClient { BaseAddress = new Uri(onboardingBaseUrl) },
+    ["ledger"] = new HttpClient { BaseAddress = new Uri(ledgerBaseUrl) },
+};
 
 string? vaultAddress = builder.Configuration["VAULT_ADDR"];
 string? vaultToken = builder.Configuration["VAULT_TOKEN"];

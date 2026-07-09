@@ -1,0 +1,120 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Ledger API", "version": "1.0.0" },
+  "paths": {
+    "/ledger": { "get": { "operationId": "loadLedger", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "entries": { "type": "integer" } } } } } } } } },
+    "/transactions": { "get": { "operationId": "fetchTransactions", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "count": { "type": "integer" } } } } } } } } },
+    "/match": { "post": { "operationId": "matchEntries", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "matched": { "type": "integer" }, "unmatched": { "type": "integer" } } } } } } } } },
+    "/discrepancies": { "post": { "operationId": "flagDiscrepancies", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiscrepancyReport" } } } } } } },
+    "/corrections": { "post": { "operationId": "postCorrections", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "posted": { "type": "integer" } } } } } } } } },
+    "/report": { "post": { "operationId": "publishReport", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "reportUrl": { "type": "string", "format": "uri" } } } } } } } } },
+    "/reconciliations": {
+      "get": {
+        "operationId": "listReconciliations",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 200 } },
+          { "name": "pageToken", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReconciliationPage" } } } } }
+      }
+    },
+    "/reconciliations/{runId}": {
+      "get": {
+        "operationId": "getReconciliation",
+        "parameters": [ { "name": "runId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReconciliationView" } } } },
+          "404": { "description": "No such reconciliation" }
+        }
+      }
+    },
+    "/accounts": {
+      "get": {
+        "operationId": "listLedgerAccounts",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 500 } },
+          { "name": "pageToken", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LedgerAccountPage" } } } } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DiscrepancyReport": {
+        "type": "object",
+        "properties": {
+          "discrepancies": { "type": "array", "description": "Accounts whose ledger and bank balances disagree.", "items": { "$ref": "#/components/schemas/Discrepancy" } },
+          "range": {
+            "type": "array",
+            "description": "The [from, to] transaction sequence numbers scanned.",
+            "prefixItems": [ { "type": "integer", "minimum": 0, "title": "from" }, { "type": "integer", "minimum": 0, "title": "to" } ]
+          },
+          "totalDelta": { "type": "number" },
+          "reportUrl": { "type": "string", "format": "uri" }
+        }
+      },
+      "Discrepancy": {
+        "type": "object",
+        "properties": {
+          "account": { "type": "string", "pattern": "^[0-9]{8}$", "description": "Eight-digit account number." },
+          "delta": { "type": "number", "description": "Signed difference (bank - ledger)." },
+          "currency": { "type": "string", "enum": [ "GBP", "USD", "EUR" ] },
+          "severity": { "type": "string", "enum": [ "info", "warning", "critical" ] },
+          "firstSeen": { "type": "string", "format": "date" },
+          "contact": { "type": "object", "properties": { "email": { "type": "string", "format": "email" }, "runbook": { "type": "string", "format": "uri" } } }
+        },
+        "required": [ "account", "delta" ]
+      },
+      "ReconciliationView": {
+        "type": "object",
+        "description": "A single nightly-reconcile run and its outcome, as persisted by the ledger service.",
+        "properties": {
+          "runId": { "type": "string", "format": "uuid" },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "ledgerEntries": { "type": "integer" },
+          "bankTransactions": { "type": "integer" },
+          "matched": { "type": "integer" },
+          "unmatched": { "type": "integer" },
+          "totalDelta": { "type": "number" },
+          "discrepancies": { "type": "array", "items": { "$ref": "#/components/schemas/Discrepancy" } },
+          "reportUrl": { "type": "string", "format": "uri" },
+          "correctionsPosted": { "type": "integer" },
+          "published": { "type": "boolean" },
+          "publishedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [ "runId", "startedAt", "matched", "unmatched", "published" ]
+      },
+      "ReconciliationPage": {
+        "type": "object",
+        "description": "A page of reconciliation runs, newest first, with an opaque continuation token.",
+        "properties": {
+          "reconciliations": { "type": "array", "items": { "$ref": "#/components/schemas/ReconciliationView" } },
+          "nextPageToken": { "type": "string" }
+        },
+        "required": [ "reconciliations" ]
+      },
+      "LedgerAccount": {
+        "type": "object",
+        "description": "One account in the ledger book, with its ledger and bank balances.",
+        "properties": {
+          "account": { "type": "string", "pattern": "^[0-9]{8}$" },
+          "currency": { "type": "string", "enum": [ "GBP", "USD", "EUR" ] },
+          "ledgerBalance": { "type": "number" },
+          "bankBalance": { "type": "number" },
+          "delta": { "type": "number" },
+          "inSync": { "type": "boolean" }
+        },
+        "required": [ "account", "currency", "ledgerBalance", "bankBalance", "inSync" ]
+      },
+      "LedgerAccountPage": {
+        "type": "object",
+        "properties": {
+          "accounts": { "type": "array", "items": { "$ref": "#/components/schemas/LedgerAccount" } },
+          "nextPageToken": { "type": "string" }
+        },
+        "required": [ "accounts" ]
+      }
+    }
+  }
+}

@@ -23,6 +23,11 @@ var workflowstore = postgres.AddDatabase("workflowstore");
 var onboardingPostgres = builder.AddPostgres("onboarding-postgres");
 var onboardingDb = onboardingPostgres.AddDatabase("onboardingdb");
 
+// The ledger service's OWN database — likewise a dedicated Postgres instance. The ledger service provisions its schema
+// and seeds its account book (its own PrepareAsync) on startup.
+var ledgerPostgres = builder.AddPostgres("ledger-postgres");
+var ledgerDb = ledgerPostgres.AddDatabase("ledgerdb");
+
 // Dev-only fixed Vault tokens — the locally-runnable stand-in for production secret-store auth (design §13.5.1).
 // In prod the runner's identity comes from platform attestation / AppRole (never a token baked into the workload),
 // and provisioning runs as a CI/IaC identity. Here the orchestrator delivers a fixed dev root token to the
@@ -89,6 +94,17 @@ var onboarding = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Onb
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 
+// The ledger/reconciliation domain service — the second real external source (its own process + its own database). It
+// replaces the former inline /svc/ledger mock; the control plane's startup live runs and the runner's executed runs
+// both call it over the network. It seeds its account book on startup and serves the generated ledger API (the
+// nightly-reconcile workflow's ops, plus reconciliation/account reads). Externally reachable for a future console.
+var ledger = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Ledger_Host>("ledger")
+    .WithReference(ledgerDb)
+    .WaitFor(ledgerDb)
+    .WithHttpEndpoint()
+    .WithExternalHttpEndpoints()
+    .WithHttpHealthCheck("/health");
+
 // The ASP.NET control-plane host: the real server surface (catalog, runs, credentials, administrators, security)
 // plus the build-free web UI and the demo /svc backends. It stores credential *references* only (never binds to
 // Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
@@ -107,10 +123,12 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__RequireAuthorization", "true")
     .WithReference(keycloak)
     .WaitFor(keycloak)
-    // Onboarding is a real external source: inject its endpoint so the control plane's live-execution transports route
-    // the onboarding source there (its startup live runs call it), and wait for it to be healthy before starting.
+    // Onboarding and ledger are real external sources: inject their endpoints so the control plane's live-execution
+    // transports route those sources there (its startup live runs call them), and wait for them to be healthy.
     .WithEnvironment("ControlPlane__Sources__Onboarding", onboarding.GetEndpoint("http"))
+    .WithEnvironment("ControlPlane__Sources__Ledger", ledger.GetEndpoint("http"))
     .WaitFor(onboarding)
+    .WaitFor(ledger)
     // Aspire-managed HTTP endpoint (no hardcoded port): Aspire assigns the port, proxies it, and injects
     // ASPNETCORE_URLS so the app binds what Aspire chose — this is what makes the health check and the runner's
     // WithReference/GetEndpoint resolve to the real address without launchSettings pinning a fixed port.
@@ -130,13 +148,14 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
     // executing each against the control plane's own /svc source backends (the demo stand-in for real endpoints).
     .WithEnvironment("Runner__Environment", "development")
-    .WithEnvironment("Runner__SourcesBaseUrl", controlplane.GetEndpoint("http"))
-    // Onboarding is a real external source (its own service); ledger is still the control plane's /svc mock. The runner
-    // routes the onboarding source at this endpoint and waits for it (its executed runs call it).
+    // Both source backends are real external services (their own processes + databases); the runner routes each at its
+    // endpoint and waits for them (its executed runs call them). There is no /svc mock backend to point at any more.
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
+    .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
     .WaitFor(onboarding)
+    .WaitFor(ledger)
     // Wait for the provisioner to FINISH, not just for Vault to be reachable. vault-init writes the read-only policy
     // and mints the runner's token; if the runner starts the moment Vault is up, its startup credential self-check can
     // beat that provisioning and get a 403 from Vault (a transient-but-ugly error trace). This is now safe to gate on:
