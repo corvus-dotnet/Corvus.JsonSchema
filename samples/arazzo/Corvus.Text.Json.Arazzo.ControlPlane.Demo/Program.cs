@@ -270,6 +270,14 @@ using (ParsedJsonDocument<CpEnvironment> developmentEnvironment = ParsedJsonDocu
     (await environmentStore.AddAsync(developmentEnvironment.RootElement, "demo", default)).Dispose();
 }
 
+// DEMO: the open demo has no interactive administrator, so stand in for the development environment's administrator
+// (the "demo" identity that created it, §7.7) and authorize each runner that registers a Pending §5.5 authorization to
+// serve it — otherwise the out-of-process runner stays dispatch-paused and never claims catalogued runs. This keeps the
+// §5.5 semantic intact (an administrator, never the runner, grants authorization); production does it via the UI/API.
+builder.Services.AddHostedService(sp => new RunnerAutoAuthorizationService(
+    runnerAuthorizations,
+    sp.GetRequiredService<ILogger<RunnerAutoAuthorizationService>>()));
+
 WebApplication app = builder.Build();
 
 // /health (readiness) and /alive (liveness) — the AppHost's WithHttpHealthCheck("/health") polls these.
