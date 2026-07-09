@@ -18,7 +18,7 @@ everything. It composes:
 
 ## Prerequisites
 
-- **.NET 10 SDK** and the **Aspire CLI** (`dotnet tool install -g aspire` or the workload).
+- **.NET 10 SDK** and the **Aspire CLI** (`dotnet tool install -g Aspire.Cli`).
 - **A container runtime the Aspire DCP supports: Docker 20.10+ or podman 4.x+.** This is not optional —
   Aspire's orchestrator (DCP) drives the runtime, and **podman 3.x does not work** (the DCP creates
   containers but hangs before starting them; there is no error, it just stalls). If you are on a distro
@@ -27,46 +27,68 @@ everything. It composes:
 
 ## Run it
 
-From the repository root:
+The preferred launcher is the Aspire CLI. Build the AppHost first, then from the repository root:
+
+```bash
+dotnet build samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost -c Debug
+ASPIRE_ENABLE_CONTAINER_TUNNEL=false aspire start --no-build --isolated --non-interactive \
+  --apphost samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.csproj
+```
+
+It prints `✅ AppHost started successfully` with an HTTPS dashboard URL, e.g.
+`https://localhost:45047/login?t=...`. Open it (on WSL the browser runs on Windows, which does not trust the
+Linux dev cert, so click through the warning). You will see every resource (vault, vault-init, keycloak,
+controlplane, runner) with its logs, traces, and endpoints. Follow the **controlplane** resource's HTTP
+endpoint to reach the designer at `/ui/demo/designer.html?live`. Check status any time with `aspire ps`.
+
+Two flags matter on this box:
+
+- **`--no-build` is required** (hence the separate `dotnet build` first). Without it the detached AppHost
+  spends a couple of minutes building, the parent CLI's wait-for-backchannel times out mid-build, and the
+  child self-cancels at `DashboardServiceHost.StartAsync` — exiting 0 having never come up.
+- **`--isolated`** gives the run its own randomized ports and user secrets (needed when launching from a git
+  worktree, harmless otherwise).
+
+`aspire start` needs a trusted dev certificate and podman 5.x on the default `PATH` — see the two notes below
+if either is missing. To avoid the certificate entirely, the fallback launcher runs the dashboard over HTTP:
 
 ```bash
 dotnet run --project samples/arazzo/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost \
   -c Debug --launch-profile http
 ```
 
-The console prints a dashboard URL with a login token, e.g. `http://localhost:15154/login?t=...`.
-Open it. You will see every resource (vault, vault-init, keycloak, controlplane, runner) with its logs,
-traces, and endpoints. Follow the **controlplane** resource's HTTP endpoint to reach the designer at
-`/ui/demo/designer.html?live`.
+The `http` profile sets `ASPIRE_ALLOW_UNSECURED_TRANSPORT` and `ASPIRE_ENABLE_CONTAINER_TUNNEL=false`,
+sidestepping the certificate, and prints `http://localhost:15154/login?t=...`.
 
-`--launch-profile http` runs the dashboard and services over HTTP (the profile sets
-`ASPIRE_ALLOW_UNSECURED_TRANSPORT`), sidestepping the HTTPS developer certificate. On a box with a
-trusted dev cert you could drop it — but read the next note first, because on some SDKs you cannot get a
-trusted dev cert at all.
+### HTTPS dev certificate on WSL2 — regenerate it if `aspire start` crashes
 
-### HTTPS dev certificate on WSL2 — use `--launch-profile http`, not `aspire run`
-
-Two separate things make the HTTPS dev-cert path unreliable for the **Aspire CLI** on WSL2:
+The Aspire CLI runs a dev-cert trust check at startup. Two things went wrong with it on WSL2; both are resolved.
 
 1. **A .NET SDK 10.0.103 regression** broke `dotnet dev-certs https --trust` (an EventSource id mismatch,
-   `Event WslWindowsTrustSucceeded was assigned event ID 115 but 113 was passed to WriteEvent`). This is
-   **fixed in 10.0.104+** ([dotnet/aspnetcore#65391](https://github.com/dotnet/aspnetcore/issues/65391),
+   `Event WslWindowsTrustSucceeded was assigned event ID 115 but 113 was passed to WriteEvent`). Fixed in
+   **10.0.104+** ([dotnet/aspnetcore#65391](https://github.com/dotnet/aspnetcore/issues/65391),
    [dotnet/sdk#52978](https://github.com/dotnet/sdk/issues/52978)) — on 10.0.109 with ASP.NET Core runtime
    10.0.9, `dotnet dev-certs` works again.
 
-2. **`aspire run` / `aspire start` still crash** (`AppHost process exited with code 2`) on WSL2 *even on the
-   fixed SDK/runtime*: the CLI's dev-cert trust check throws an unhandled OpenSSL verify status code —
-   `MapOpenSsl30Code reported unhandled error code '30'`, from `X509Chain.Build` in `GetTrustLevel`. Tracked
-   as [microsoft/aspire#18703](https://github.com/microsoft/aspire/issues/18703); it is distinct from the SDK
-   regression and from the `certutil`-cleanup fix ([#18580](https://github.com/microsoft/aspire/pull/18580)).
-   Installing `libnss3-tools`, trusting the cert, and setting `SSL_CERT_DIR` do **not** resolve it — it needs
-   a CLI fix. `dotnet dev-certs https --check` on the same box does not throw; only the CLI's check does.
+2. **The CLI crashed with `MapOpenSsl30Code reported unhandled error code '30'`** (`AppHost process exited
+   with code 2`), from `X509Chain.Build` in `GetTrustLevel`, tracked as
+   [microsoft/aspire#18703](https://github.com/microsoft/aspire/issues/18703). The root cause turned out to be
+   a **corrupt/stale dev-cert file** — not purely a .NET/OpenSSL bug (the CLI just isn't guarded against
+   `X509Chain.Build` throwing). The fix is to **regenerate the certificate**:
 
-Because of (2), start the AppHost with **`dotnet run --launch-profile http`** (HTTP dashboard, no cert check),
-not `aspire run`/`aspire start`. If you want the HTTPS dashboard, `dotnet run --launch-profile https` works on
-10.0.109 (Kestrel serves HTTPS). The cert will be only partially trusted, so browsers warn — and on WSL the
-browser runs on **Windows**, which trusts certs from the Windows store, so the Linux dev cert is not trusted
-there regardless. The HTTP profile stays the least-friction path.
+   ```bash
+   aspire certs clean && aspire certs trust
+   ```
+
+   That rewrites the three files Linux needs — two `.pfx` under
+   `~/.dotnet/corefx/cryptography/x509stores/{my,root}` and a `.pem` (with its OpenSSL symlink) under
+   `~/.aspnet/dev-certs/trust`. Afterwards `aspire doctor` no longer throws (it reports the cert "partially
+   trusted"), and `aspire start` sets `SSL_CERT_DIR` itself and comes up over HTTPS. If `aspire certs` errors,
+   fall back to `dotnet dev-certs https --clean` then `--trust`.
+
+On WSL the browser runs on **Windows**, which trusts certs from the Windows store, so the Linux dev cert is
+never fully trusted there — browsers warn on the HTTPS dashboard regardless; click through. To skip the
+certificate entirely, use the `dotnet run --launch-profile http` fallback above.
 
 ### The DCP container tunnel is disabled (`ASPIRE_ENABLE_CONTAINER_TUNNEL=false`)
 
@@ -147,18 +169,33 @@ podman system reset -f            # only needed if you changed database_backend 
 podman run --rm docker.io/library/hello-world     # should print "Hello from Docker!" in a couple of seconds
 ```
 
+**6. Make it the system default (required for `aspire start`):**
+
+Steps above put podman 5.x on `PATH` only for shells that source `~/.bashrc`. The Aspire CLI's dev-cert check
+and DCP need podman 5.x on the *default* `PATH`, or they find the distro's `/usr/bin/podman` 3.4.4. Promote
+the bundle into `/usr/local` so it wins for every shell and service:
+
+```bash
+sudo cp -a ~/podman5/usr/local/* /usr/local/     # /usr/local/bin is ahead of /usr/bin on the default PATH
+sudo apt remove -y podman                         # drop the distro's 3.4.4 so nothing shadows it
+hash -r; podman --version                          # -> 5.8.4 from /usr/local/bin
+```
+
+Then repoint the `helper_binaries_dir` and `runc` paths in `containers.conf` (step 4) from
+`~/podman5/usr/local/...` to `/usr/local/...`.
+
 Then run the AppHost with that podman on `PATH` (and `SUPPRESS_BOLTDB_WARNING=1` to quieten migration
 noise). Every choice above was necessary on WSL2: short-name registry, cgroupfs, runc-not-crun, and the
 SQLite backend. Missing any one of them stalls the DCP or breaks container start.
 
 ### Stopping it cleanly — do NOT `kill -9`
 
-Because `aspire run` can't be used on this box (the SDK 10.0.103 dev-cert regression above), the AppHost is
-started with `dotnet run` — and that changes how you stop it. `aspire stop` can *see* a `dotnet run`-started
-AppHost (`aspire ps` lists it) but **cannot reliably stop it**: the `CLI PID` is unknown, so it reports
-"stopped successfully" without actually signalling the process. Stop it yourself with SIGTERM to the AppHost
-process — `kill -15 <apphost-pid>` — or Ctrl+C if you started it in a foreground terminal. (`aspire stop`
-*is* the right tool, but only for an AppHost you started with `aspire run`.)
+**`aspire stop` is unreliable on this box — do not trust its output.** It prints "stopped successfully" but
+regularly leaves the AppHost, its `dcp` processes, and the containers running. This was verified even for an
+`aspire start`-launched host: it reported success while the AppHost, 7 `dcp` processes, and 2 containers were
+still up 45s later. So stop it yourself the same way regardless of how you launched it — SIGTERM the AppHost
+process (`kill -15 <apphost-pid>`, or Ctrl+C for a foreground `dotnet run`), then reap what the DCP leaves
+behind.
 
 The teardown is **asynchronous**, and — importantly — **the DCP is not a child of the AppHost**. The `dcp`
 process and its `dcptun` network helper reparent to init and live in their *own* process group, so SIGTERM to
