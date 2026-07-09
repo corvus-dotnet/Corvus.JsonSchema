@@ -90,7 +90,10 @@ public sealed class DraftRunManagement
         byte[] package = WorkflowPackage.Pack(start.DocumentUtf8, start.Sources);
 
         // The capture first, the run second: a claimable Pending run must always find its draft.
-        using (JsonWorkspace workspace = JsonWorkspace.Create())
+        // Unrented (no thread affinity): the builder's RootElement is held across the awaited PutAsync below, so this
+        // workspace is disposed on the store call's continuation thread — a rented (thread-local) one would fail its
+        // return-to-cache invariant there and abort the process. Same fix as HostedWorkflowResumer/DraftWorkflowResumer.
+        using (JsonWorkspace workspace = JsonWorkspace.CreateUnrented())
         {
             using JsonDocumentBuilder<DraftRun.Mutable> builder = DraftRun.CreateBuilder(
                 workspace,
