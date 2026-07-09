@@ -160,11 +160,22 @@ AppHost (`aspire ps` lists it) but **cannot reliably stop it**: the `CLI PID` is
 process — `kill -15 <apphost-pid>` — or Ctrl+C if you started it in a foreground terminal. (`aspire stop`
 *is* the right tool, but only for an AppHost you started with `aspire run`.)
 
-The teardown is **asynchronous**: the AppHost hands off to the DCP, which removes its containers and the
-`aspire-session-network-*` networks over the next several seconds. **Wait for that to finish before
-restarting** — poll until `podman ps -a` is empty and no `aspire-session-network-*` remains. Restarting into
-a half-torn-down state races the network setup, and the first container up (Vault) can fail to start, which
-cascades to everything that waits on it.
+The teardown is **asynchronous**, and — importantly — **the DCP is not a child of the AppHost**. The `dcp`
+process and its `dcptun` network helper reparent to init and live in their *own* process group, so SIGTERM to
+the AppHost does *not* directly signal them; the AppHost asks them to stop over a control channel, which can be
+slow or incomplete. So a clean stop is three steps: signal, wait, **reap survivors**:
+
+```bash
+kill -15 <apphost-pid>                                  # ask the AppHost to shut down
+while podman ps -aq | grep -q .; do sleep 1; done       # wait until its containers are gone
+pkill -9 -x dcp; pkill -9 -f dcptun; pkill -9 -x aardvark-dns   # reap any DCP/tunnel/helper that outlived it
+podman network prune -f                                 # drop leftover aspire-session-network-*
+```
+
+Restarting into a half-torn-down state — or, more often, **with an orphaned `dcp`/`dcptun` from a previous run
+still alive** — races the network setup, and the first container up (Vault) fails to start
+(`context deadline exceeded`), cascading to everything that waits on it. `ps -eo pid,etime,comm | grep -E
+'dcp|dcptun'` reveals orphans by their long elapsed time.
 
 Never `kill -9` the AppHost or DCP: it orphans the containers and networks outright, along with their
 aardvark-dns / conmon / rootlessport helper processes, and the podman store fills with ghost `Terminated`
