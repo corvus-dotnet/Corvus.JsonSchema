@@ -80,8 +80,18 @@ builder.Services.AddSingleton(catalog);
 // AsyncAPI receive step's need for an IMessageTransport (the durable suspend/resume itself flows through the shared
 // store + worker); a real broker adapter replaces it in production (design §8).
 string sourcesBaseUrl = builder.Configuration["Runner:SourcesBaseUrl"]
-    ?? throw new InvalidOperationException("Runner:SourcesBaseUrl must be set (the host serving the sources — the control plane's /svc backends in the demo).");
+    ?? throw new InvalidOperationException("Runner:SourcesBaseUrl must be set (the control plane host serving the /svc mock sources — e.g. ledger — in the demo).");
+string onboardingBaseUrl = builder.Configuration["Runner:Sources:Onboarding"]
+    ?? throw new InvalidOperationException("Runner:Sources:Onboarding (the onboarding service endpoint) is required — the AppHost injects it.");
 var messageTransport = new InMemoryMessageTransport();
+
+// onboarding is now a real external service (its own host + database), so its client is rooted directly at that
+// service; ledger is still a control-plane /svc mock (Phase C). The SAME mixed client map drives both binders below:
+// the Vault-credentialed production binder (the runner resolves each source's secret as its own read-only Vault
+// identity and applies it — the onboarding service simply ignores the unused header) and the standalone fallback.
+Dictionary<string, HttpClient> sourceClients = DraftRunHost.CreateSvcClients(sourcesBaseUrl, "ledger");
+sourceClients["onboarding"] = new HttpClient { BaseAddress = new Uri(onboardingBaseUrl) };
+
 string? vaultAddress = builder.Configuration["VAULT_ADDR"];
 string? vaultToken = builder.Configuration["VAULT_TOKEN"];
 WorkflowTransportBinder binder;
@@ -91,12 +101,11 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
     ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
     var providerFactory = new SourceCredentialProviderFactory(secretResolver);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
-    Dictionary<string, HttpClient> sourceClients = DraftRunHost.CreateSvcClients(sourcesBaseUrl, "onboarding", "ledger");
     binder = SourceCredentialTransports.CreateBinder(sourceClients, runnerEnvironment, credentialCache, messageTransport);
 }
 else
 {
-    binder = DraftRunHost.CreateSvcBinder(sourcesBaseUrl, messageTransport);
+    binder = DraftRunHost.CreateBinder(sourceClients, messageTransport);
 }
 
 // Catalogued-run execution (design §5/§8, §11 Phase 2): the runner claims a Pending run and re-enters the version's

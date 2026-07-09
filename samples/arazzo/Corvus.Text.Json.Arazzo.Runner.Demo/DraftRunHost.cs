@@ -59,6 +59,23 @@ internal static class DraftRunHost
             StringComparer.Ordinal);
     }
 
+    /// <summary>Builds a transport binder over a caller-supplied source-name → client map (no credentials) — the
+    /// un-credentialed sibling of <c>SourceCredentialTransports.CreateBinder</c>, used on the standalone (no-Vault)
+    /// path so the same mixed client map (the real onboarding service + the /svc mocks) routes both paths.</summary>
+    /// <param name="clients">The source-name → client map (must contain every source a run declares).</param>
+    /// <param name="messageTransport">The message transport for an AsyncAPI receive step, or <see langword="null"/>.</param>
+    /// <returns>The transport binder.</returns>
+    public static WorkflowTransportBinder CreateBinder(IReadOnlyDictionary<string, HttpClient> clients, IMessageTransport? messageTransport = null)
+    {
+        ArgumentNullException.ThrowIfNull(clients);
+        return (descriptor, runTags) => new WorkflowTransports(
+            descriptor.Sources.ToDictionary(
+                source => source,
+                source => (IApiTransport)new HttpClientApiTransportFactory(clients[source]).CreateTransport(),
+                StringComparer.Ordinal),
+            descriptor.NeedsMessageTransport ? messageTransport : null);
+    }
+
     // Prefixes the source's /svc base path onto each outgoing request (the control plane host root is the client's base address).
     private sealed class SvcPrefixHandler(string prefix) : DelegatingHandler
     {

@@ -17,6 +17,12 @@ IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(ar
 var postgres = builder.AddPostgres("postgres");
 var workflowstore = postgres.AddDatabase("workflowstore");
 
+// The onboarding service's OWN database — a dedicated Postgres instance (the microservice-owns-its-data pattern: the
+// onboarding backend owns its schema + data independently of the control plane's shared workflowstore). Ephemeral,
+// like the workflowstore. The onboarding service provisions its schema (its own PrepareAsync) on startup.
+var onboardingPostgres = builder.AddPostgres("onboarding-postgres");
+var onboardingDb = onboardingPostgres.AddDatabase("onboardingdb");
+
 // Dev-only fixed Vault tokens — the locally-runnable stand-in for production secret-store auth (design §13.5.1).
 // In prod the runner's identity comes from platform attestation / AppRole (never a token baked into the workload),
 // and provisioning runs as a CI/IaC identity. Here the orchestrator delivers a fixed dev root token to the
@@ -72,6 +78,17 @@ var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
 var keycloak = builder.AddKeycloak("keycloak")
     .WithRealmImport("realms");
 
+// The onboarding domain service — a real external source: its own process + its own database (above). It replaces the
+// former inline /svc/onboarding mock; the control plane's startup live runs and the runner's executed runs both call
+// it over the network. It provisions its own schema on startup and serves the generated onboarding API (the workflow's
+// create/verify/provision/welcome ops, plus list/get for the onboarding console). Externally reachable for the console.
+var onboarding = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Onboarding_Host>("onboarding")
+    .WithReference(onboardingDb)
+    .WaitFor(onboardingDb)
+    .WithHttpEndpoint()
+    .WithExternalHttpEndpoints()
+    .WithHttpHealthCheck("/health");
+
 // The ASP.NET control-plane host: the real server surface (catalog, runs, credentials, administrators, security)
 // plus the build-free web UI and the demo /svc backends. It stores credential *references* only (never binds to
 // Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
@@ -90,6 +107,10 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__RequireAuthorization", "true")
     .WithReference(keycloak)
     .WaitFor(keycloak)
+    // Onboarding is a real external source: inject its endpoint so the control plane's live-execution transports route
+    // the onboarding source there (its startup live runs call it), and wait for it to be healthy before starting.
+    .WithEnvironment("ControlPlane__Sources__Onboarding", onboarding.GetEndpoint("http"))
+    .WaitFor(onboarding)
     // Aspire-managed HTTP endpoint (no hardcoded port): Aspire assigns the port, proxies it, and injects
     // ASPNETCORE_URLS so the app binds what Aspire chose — this is what makes the health check and the runner's
     // WithReference/GetEndpoint resolve to the real address without launchSettings pinning a fixed port.
@@ -110,8 +131,12 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // executing each against the control plane's own /svc source backends (the demo stand-in for real endpoints).
     .WithEnvironment("Runner__Environment", "development")
     .WithEnvironment("Runner__SourcesBaseUrl", controlplane.GetEndpoint("http"))
+    // Onboarding is a real external source (its own service); ledger is still the control plane's /svc mock. The runner
+    // routes the onboarding source at this endpoint and waits for it (its executed runs call it).
+    .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
+    .WaitFor(onboarding)
     // Wait for the provisioner to FINISH, not just for Vault to be reachable. vault-init writes the read-only policy
     // and mints the runner's token; if the runner starts the moment Vault is up, its startup credential self-check can
     // beat that provisioning and get a 403 from Vault (a transient-but-ugly error trace). This is now safe to gate on:
