@@ -1178,8 +1178,12 @@
       for (const [, ops] of opBrowser.surfaces) {
         for (const op of ops) {
           if (op.kind !== 'openapi' || !op.method || !op.path) continue;
-          const success = Object.keys(op.responses ?? {}).find((c) => /^2\d\d$/.test(c));
-          mocks.push({ method: op.method.toLowerCase(), path: op.path, status: Number(success ?? 200), body: {} });
+          const status = Object.keys(op.responses ?? {}).find((c) => /^2\d\d$/.test(c)) ?? '200';
+          // A SCHEMA-SHAPED body (not empty {}), so the workflow's $response.body#/… output pointers resolve and
+          // the trace shows values flowing between steps. Falls back to {} when the response documents no schema.
+          const schema = op.responses?.[status]?.schema;
+          const body = (schema && payloadSkeletonFromSchema(schema)) || {};
+          mocks.push({ method: op.method.toLowerCase(), path: op.path, status: Number(status), body });
         }
       }
 
