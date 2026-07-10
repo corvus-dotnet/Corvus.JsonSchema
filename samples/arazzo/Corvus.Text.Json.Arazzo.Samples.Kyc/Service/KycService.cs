@@ -63,19 +63,21 @@ public sealed class KycService : IApiDefaultHandler
         string status = verified ? "verified" : "blocked";
         string resolvedName = fullName ?? "Applicant";
 
-        // A manual verdict is an operator decision, so the identity result is minimal (no synthetic evidence).
-        byte[] identity = KycJson.Serialize(writer =>
+        // A manual verdict is an operator decision, so the identity result is minimal (no synthetic evidence). Composed
+        // through the pooled writer into owned arrays (the store columns need byte[]); state by `in` context, static lambdas.
+        var identityContext = new VerdictIdentityContext(verified, score, now);
+        byte[] identity = KycJson.ToArray<VerdictIdentityContext>(in identityContext, static (writer, in c) =>
         {
             writer.WriteStartObject();
-            writer.WriteBoolean("verified", verified);
-            writer.WriteNumber("score", score);
-            writer.WriteString("reviewedAt", now);
+            writer.WriteBoolean("verified", c.Verified);
+            writer.WriteNumber("score", c.Score);
+            writer.WriteString("reviewedAt", c.ReviewedAt);
             writer.WriteEndObject();
         });
-        byte[] applicant = KycJson.Serialize(writer =>
+        byte[] applicant = KycJson.ToArray<string>(in resolvedName, static (writer, in name) =>
         {
             writer.WriteStartObject();
-            writer.WriteString("fullName", resolvedName);
+            writer.WriteString("fullName", name);
             writer.WriteEndObject();
         });
 
@@ -95,14 +97,12 @@ public sealed class KycService : IApiDefaultHandler
     public async ValueTask<GetVerificationResult> HandleGetVerificationAsync(GetVerificationParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string accountId = AccountId(parameters.AccountId);
-        VerificationRecord? record = await this.store.GetAsync(accountId, cancellationToken).ConfigureAwait(false);
-        if (record is null)
+        if (await this.store.GetAsync(accountId, cancellationToken).ConfigureAwait(false) is not { } record)
         {
             return GetVerificationResult.NotFound();
         }
 
-        byte[] view = KycJson.Serialize(writer => WriteVerificationView(writer, record));
-        var doc = ParsedJsonDocument<Models.VerificationView>.Parse(view);
+        ParsedJsonDocument<Models.VerificationView> doc = KycJson.ToPooledDocument<Models.VerificationView, VerificationRecord>(in record, static (writer, in r) => WriteVerificationView(writer, r));
         workspace.TakeOwnership(doc);
         return GetVerificationResult.Ok(doc.RootElement, workspace);
     }
@@ -114,25 +114,24 @@ public sealed class KycService : IApiDefaultHandler
         string? pageToken = ReadOptionalString((JsonElement)parameters.PageToken);
         (IReadOnlyList<VerificationRecord> verifications, string? nextPageToken) = await this.store.ListVerificationsAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
 
-        byte[] page = KycJson.Serialize(writer =>
+        var page = new VerificationPageContext(verifications, nextPageToken);
+        ParsedJsonDocument<Models.VerificationPage> doc = KycJson.ToPooledDocument<Models.VerificationPage, VerificationPageContext>(in page, static (writer, in ctx) =>
         {
             writer.WriteStartObject();
             writer.WriteStartArray("verifications");
-            foreach (VerificationRecord record in verifications)
+            foreach (VerificationRecord record in ctx.Verifications)
             {
                 WriteVerificationView(writer, record);
             }
 
             writer.WriteEndArray();
-            if (nextPageToken is not null)
+            if (ctx.NextPageToken is not null)
             {
-                writer.WriteString("nextPageToken", nextPageToken);
+                writer.WriteString("nextPageToken", ctx.NextPageToken);
             }
 
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.VerificationPage>.Parse(page);
         workspace.TakeOwnership(doc);
         return ListVerificationsResult.Ok(doc.RootElement, workspace);
     }
@@ -215,4 +214,9 @@ public sealed class KycService : IApiDefaultHandler
 
     private static string? ReadOptionalString(JsonElement value)
         => value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    // Carries state to the pooled compose so the write callbacks stay static (no closure allocation).
+    private readonly record struct VerdictIdentityContext(bool Verified, double Score, DateTimeOffset ReviewedAt);
+
+    private readonly record struct VerificationPageContext(IReadOnlyList<VerificationRecord> Verifications, string? NextPageToken);
 }

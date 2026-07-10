@@ -27,35 +27,41 @@ public sealed class ResourceAllocator
         string plan = quotaGb >= 64 ? "scale" : "standard";
         const string region = "eu-west-1";
 
-        return OnboardingJson.Serialize(writer =>
+        // Composed through the pooled writer/buffer into one owned array (the store column needs a byte[]); the state is
+        // carried by an `in` context so the write callback is static (no closure allocation).
+        var context = new ProvisioningContext(accountId, shortId, quotaGb, plan, region);
+        return OnboardingJson.ToArray<ProvisioningContext>(in context, static (writer, in c) =>
         {
             writer.WriteStartObject();
-            writer.WriteString("accountUrl", string.Concat("https://app.onboarding.example/accounts/", accountId));
-            writer.WriteNumber("quotaGb", quotaGb);
+            writer.WriteString("accountUrl", string.Concat("https://app.onboarding.example/accounts/", c.AccountId));
+            writer.WriteNumber("quotaGb", c.QuotaGb);
 
             writer.WriteStartArray("resources");
-            WriteResource(writer, "database", string.Concat("db-", shortId), region, string.Concat("https://db.onboarding.example/", shortId));
-            WriteResource(writer, "bucket", string.Concat("assets-", shortId), region, string.Concat("https://storage.onboarding.example/", shortId, "/assets"));
+            WriteResource(writer, "database", string.Concat("db-", c.ShortId), c.Region, string.Concat("https://db.onboarding.example/", c.ShortId));
+            WriteResource(writer, "bucket", string.Concat("assets-", c.ShortId), c.Region, string.Concat("https://storage.onboarding.example/", c.ShortId, "/assets"));
             writer.WriteEndArray();
 
             writer.WritePropertyName("tags");
             writer.WriteStartObject();
             writer.WriteString("env", "production");
-            writer.WriteString("plan", plan);
-            writer.WriteString("region", region);
+            writer.WriteString("plan", c.Plan);
+            writer.WriteString("region", c.Region);
             writer.WriteEndObject();
 
             writer.WriteEndObject();
+
+            static void WriteResource(Utf8JsonWriter writer, string kind, string name, string region, string endpoint)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", kind);
+                writer.WriteString("name", name);
+                writer.WriteString("region", region);
+                writer.WriteString("endpoint", endpoint);
+                writer.WriteEndObject();
+            }
         });
-
-        static void WriteResource(Utf8JsonWriter writer, string kind, string name, string region, string endpoint)
-        {
-            writer.WriteStartObject();
-            writer.WriteString("kind", kind);
-            writer.WriteString("name", name);
-            writer.WriteString("region", region);
-            writer.WriteString("endpoint", endpoint);
-            writer.WriteEndObject();
-        }
     }
+
+    // Carries the provisioning state to the pooled compose so the write callback stays static (no closure allocation).
+    private readonly record struct ProvisioningContext(string AccountId, string ShortId, int QuotaGb, string Plan, string Region);
 }

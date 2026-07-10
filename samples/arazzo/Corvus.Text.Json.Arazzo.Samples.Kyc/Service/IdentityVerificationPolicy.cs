@@ -63,26 +63,30 @@ public sealed class IdentityVerificationPolicy
         string dateOfBirth = DeriveDateOfBirth(fullName);
         string expiry = reviewedAt.AddYears(6).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-        byte[] applicant = KycJson.Serialize(writer =>
+        // Composed through the pooled writer into owned arrays (the store columns need byte[]); state by `in` context,
+        // static lambdas (no closure).
+        var applicantContext = new ApplicantContext(fullName, dateOfBirth, email);
+        byte[] applicant = KycJson.ToArray<ApplicantContext>(in applicantContext, static (writer, in c) =>
         {
             writer.WriteStartObject();
-            writer.WriteString("fullName", fullName);
-            writer.WriteString("dateOfBirth", dateOfBirth);
-            writer.WriteString("email", email);
+            writer.WriteString("fullName", c.FullName);
+            writer.WriteString("dateOfBirth", c.DateOfBirth);
+            writer.WriteString("email", c.Email);
             writer.WriteString("country", "GB");
             writer.WriteEndObject();
         });
 
-        byte[] identity = KycJson.Serialize(writer =>
+        var identityContext = new IdentityContext(verified, score, reviewedAt, applicant, flags, resolvedDocumentNumber, expiry);
+        byte[] identity = KycJson.ToArray<IdentityContext>(in identityContext, static (writer, in c) =>
         {
             writer.WriteStartObject();
-            writer.WriteBoolean("verified", verified);
-            writer.WriteNumber("score", score);
+            writer.WriteBoolean("verified", c.Verified);
+            writer.WriteNumber("score", c.Score);
             writer.WriteString("method", "document");
-            writer.WriteString("reviewedAt", reviewedAt);
-            KycJson.WriteDocumentProperty(writer, "applicant", applicant);
+            writer.WriteString("reviewedAt", c.ReviewedAt);
+            KycJson.WriteDocumentProperty(writer, "applicant", c.Applicant);
             writer.WriteStartArray("flags");
-            foreach (string flag in flags)
+            foreach (string flag in c.Flags)
             {
                 writer.WriteStringValue(flag);
             }
@@ -92,8 +96,8 @@ public sealed class IdentityVerificationPolicy
             writer.WriteStartObject();
             writer.WriteString("kind", "document");
             writer.WriteString("documentType", "passport");
-            writer.WriteString("documentNumber", resolvedDocumentNumber);
-            writer.WriteString("expiry", expiry);
+            writer.WriteString("documentNumber", c.DocumentNumber);
+            writer.WriteString("expiry", c.Expiry);
             writer.WriteEndObject();
             writer.WriteEndObject();
         });
@@ -133,6 +137,11 @@ public sealed class IdentityVerificationPolicy
         string user = local.Length > 0 ? local.ToString().Trim('.') : "applicant";
         return string.Concat(user, "@example.com");
     }
+
+    // Carry the compose state to the pooled writer so the write callbacks stay static (no closure allocation).
+    private readonly record struct ApplicantContext(string FullName, string DateOfBirth, string Email);
+
+    private readonly record struct IdentityContext(bool Verified, double Score, DateTimeOffset ReviewedAt, byte[] Applicant, string[] Flags, string DocumentNumber, string Expiry);
 }
 
 /// <summary>

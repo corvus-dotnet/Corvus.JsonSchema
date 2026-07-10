@@ -44,16 +44,15 @@ public sealed class OnboardingService : IApiDefaultHandler
         (string? email, string? plan) = ReadSignup(parameters.Body);
         await this.store.CreateAsync(accountId, email, plan, this.timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
 
-        byte[] account = OnboardingJson.Serialize(writer =>
+        // Compose the body through the pooled writer + ownership model (no fresh writer/buffer, no re-parse). The
+        // response Body references this document, so the workspace owns it — disposed only after the endpoint
+        // middleware has validated and written the response.
+        ParsedJsonDocument<Models.Account> doc = OnboardingJson.ToPooledDocument<Models.Account, string>(in accountId, static (writer, in id) =>
         {
             writer.WriteStartObject();
-            writer.WriteString("accountId", accountId);
+            writer.WriteString("accountId", id);
             writer.WriteEndObject();
         });
-
-        // The response Body is materialised into the workspace but references this parsed document, so the workspace
-        // must own it — it is disposed only after the endpoint middleware has validated and written the response.
-        var doc = ParsedJsonDocument<Models.Account>.Parse(account);
         workspace.TakeOwnership(doc);
         return CreateAccountResult.Created(doc.RootElement, workspace);
     }
@@ -85,14 +84,12 @@ public sealed class OnboardingService : IApiDefaultHandler
     public async ValueTask<GetAccountResult> HandleGetAccountAsync(GetAccountParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string accountId = AccountId(parameters.AccountId);
-        OnboardingAccountRecord? record = await this.store.GetAsync(accountId, cancellationToken).ConfigureAwait(false);
-        if (record is null)
+        if (await this.store.GetAsync(accountId, cancellationToken).ConfigureAwait(false) is not { } record)
         {
             return GetAccountResult.NotFound();
         }
 
-        byte[] view = OnboardingJson.Serialize(writer => WriteAccountView(writer, record));
-        var doc = ParsedJsonDocument<Models.AccountView>.Parse(view);
+        ParsedJsonDocument<Models.AccountView> doc = OnboardingJson.ToPooledDocument<Models.AccountView, OnboardingAccountRecord>(in record, static (writer, in r) => WriteAccountView(writer, r));
         workspace.TakeOwnership(doc);
         return GetAccountResult.Ok(doc.RootElement, workspace);
     }
@@ -105,25 +102,24 @@ public sealed class OnboardingService : IApiDefaultHandler
 
         (IReadOnlyList<OnboardingAccountRecord> accounts, string? nextPageToken) = await this.store.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
 
-        byte[] page = OnboardingJson.Serialize(writer =>
+        var page = new AccountPageContext(accounts, nextPageToken);
+        ParsedJsonDocument<Models.AccountPage> doc = OnboardingJson.ToPooledDocument<Models.AccountPage, AccountPageContext>(in page, static (writer, in ctx) =>
         {
             writer.WriteStartObject();
             writer.WriteStartArray("accounts");
-            foreach (OnboardingAccountRecord account in accounts)
+            foreach (OnboardingAccountRecord account in ctx.Accounts)
             {
                 WriteAccountView(writer, account);
             }
 
             writer.WriteEndArray();
-            if (nextPageToken is not null)
+            if (ctx.NextPageToken is not null)
             {
-                writer.WriteString("nextPageToken", nextPageToken);
+                writer.WriteString("nextPageToken", ctx.NextPageToken);
             }
 
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.AccountPage>.Parse(page);
         workspace.TakeOwnership(doc);
         return ListAccountsResult.Ok(doc.RootElement, workspace);
     }
@@ -195,4 +191,7 @@ public sealed class OnboardingService : IApiDefaultHandler
         var element = (JsonElement)value;
         return element.ValueKind == JsonValueKind.String ? element.GetString() : null;
     }
+
+    // Carries the list-page state to the pooled compose so the write callback stays static (no closure allocation).
+    private readonly record struct AccountPageContext(IReadOnlyList<OnboardingAccountRecord> Accounts, string? NextPageToken);
 }
