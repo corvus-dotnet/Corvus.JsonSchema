@@ -150,11 +150,14 @@ class ArazzoCatalogTable extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
         table { width: 100%; border-collapse: collapse; }
         thead th {
           text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
           padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
+          position: sticky; top: 0; z-index: 1;
         }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
         tbody tr:last-child td { border-bottom: none; }
@@ -171,16 +174,19 @@ class ArazzoCatalogTable extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         ${PAGER_CSS}
+        .pager { flex: none; }
       </style>
       <div class="wrap" part="table">
-        <table>
-          <thead>
-            <tr>
-              <th>Workflow</th><th>Latest</th><th>Status</th><th>Owner</th><th>Updated</th><th>Tags</th>
-            </tr>
-          </thead>
-          <tbody part="rows"></tbody>
-        </table>
+        <div class="tablescroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Workflow</th><th>Latest</th><th>Status</th><th>Owner</th><th>Updated</th><th>Tags</th>
+              </tr>
+            </thead>
+            <tbody part="rows"></tbody>
+          </table>
+        </div>
         <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;
