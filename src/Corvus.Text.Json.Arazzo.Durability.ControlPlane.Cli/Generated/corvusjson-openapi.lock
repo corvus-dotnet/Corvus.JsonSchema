@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-06T16:19:29.4323339\u002B00:00",
+  "generatedAt": "2026-07-10T17:19:58.0812513\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -124,10 +124,14 @@
     "StartDebugRunResponse.cs",
     "GetDebugRunRequest.cs",
     "GetDebugRunResponse.cs",
+    "DeleteDebugRunRequest.cs",
+    "DeleteDebugRunResponse.cs",
     "ResumeDebugRunRequest.cs",
     "ResumeDebugRunResponse.cs",
     "CancelDebugRunRequest.cs",
     "CancelDebugRunResponse.cs",
+    "InjectDebugRunMessageRequest.cs",
+    "InjectDebugRunMessageResponse.cs",
     "SimulateWorkingCopyRequest.cs",
     "SimulateWorkingCopyResponse.cs",
     "ListWorkingCopySourcesRequest.cs",
@@ -256,6 +260,8 @@
     "ApiWorkspaceClient.cs",
     "IApiGithubClient.cs",
     "ApiGithubClient.cs",
+    "IApiDebugRunsClient.cs",
+    "ApiDebugRunsClient.cs",
     "IApiSourcesClient.cs",
     "ApiSourcesClient.cs",
     "IApiEnvironmentsClient.cs",
@@ -540,6 +546,9 @@
     "Models/DebugRun.StatusEntity.cs",
     "Models/DebugRun.StatusEntity.Mutable.cs",
     "Models/DebugRun.StatusEntity.JsonSchema.cs",
+    "Models/DebugRunMessageInjection.cs",
+    "Models/DebugRunMessageInjection.Mutable.cs",
+    "Models/DebugRunMessageInjection.JsonSchema.cs",
     "Models/DebugRunPause.cs",
     "Models/DebugRunPause.Mutable.cs",
     "Models/DebugRunPause.JsonSchema.cs",
@@ -1262,9 +1271,9 @@
     "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bcab90344272a2acd25096a05655f77490c366b9a",
+  "generatorVersion": "1.0.0\u002B306692ace12814ea0b8eaf2c88061efe52a0bcff",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "7f07394fb924639a25e360c410ea52467d0d5e5e034def85b1d9bd3f6f2028d1",
+  "specFileHash": "584ccea0069a7161fbb7bac3e2a155ec8bc544d60c972a989e1c10e6ffc0b3f2",
   "specVersion": "3.2"
 }
