@@ -183,7 +183,7 @@ public partial class WorkflowExecutorEndToEndTests
             {
                 workspace.Reset();
                 await store.DeleteAsync("leak", default).ConfigureAwait(false);
-                using var run = Durability.WorkflowRun.CreateNew(store, "leak", "adopt", inputs);
+                using var run = Durability.WorkflowRun.CreateNew(store, "leak", "adopt", inputs, "development");
                 _ = await execute(transport, workspace, inputs, run, default, null).ConfigureAwait(false);
             }
         }

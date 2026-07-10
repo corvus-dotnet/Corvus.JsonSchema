@@ -198,20 +198,20 @@ public sealed partial class CliIntegrationTests
 
     private static async Task FaultRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         await run.FaultAsync("step1", attempt: 1, "boom", default);
     }
 
     private static async Task FaultRunAtAsync(InMemoryWorkflowStateStore store, string id, int cursor, string faultStep, TimeProvider clock)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         await run.CheckpointAsync(cursor, default);
         await run.FaultAsync(faultStep, attempt: 1, "boom", default);
     }
 
     private static async Task CompleteRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         await run.CompleteAsync(default, default);
     }
 

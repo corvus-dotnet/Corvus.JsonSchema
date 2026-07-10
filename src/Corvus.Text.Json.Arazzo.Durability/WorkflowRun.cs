@@ -145,6 +145,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="id">The run id.</param>
     /// <param name="workflowId">The id of the workflow the run executes.</param>
     /// <param name="inputs">The workflow inputs.</param>
+    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — <strong>required</strong>:
+    /// it selects the credential set and constrains dispatch to runners serving it. A run cannot be created without one.</param>
     /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="correlationId">The run-wide telemetry correlation id; defaults to the ambient
     /// <see cref="Activity.Current"/> trace id, so the run correlates to the trace that created it.</param>
@@ -156,14 +158,19 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         WorkflowRunId id,
         string workflowId,
         JsonElement inputs,
+        string environment,
         TimeProvider? timeProvider = null,
         string? correlationId = null,
         TagSet tags = default,
-        SecurityTagSet securityTags = default,
-        string? environment = null)
+        SecurityTagSet securityTags = default)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
+
+        // §5.5: every run is pinned to a deployment environment at creation — it selects the credential set and
+        // constrains dispatch to runners serving it. An environment-less run cannot be created (it would also be inert:
+        // no environment-pinned runner would ever claim it).
+        ArgumentException.ThrowIfNullOrEmpty(environment);
 
         TimeProvider time = timeProvider ?? TimeProvider.System;
         return new WorkflowRun(

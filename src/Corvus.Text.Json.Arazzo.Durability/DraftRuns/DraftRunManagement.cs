@@ -114,11 +114,11 @@ public sealed class DraftRunManagement
             id,
             DraftRuns.RunWorkflowId,
             inputs,
+            start.Environment,
             this.timeProvider,
             correlationId,
             tags,
-            scopedTags,
-            start.Environment);
+            scopedTags);
 
         // §18 R5: persist the debugger pause on the Pending run so the runner that claims it honours the stops on its
         // first advance. The control plane never executes the run; a runner does. Null leaves the run unpaused.

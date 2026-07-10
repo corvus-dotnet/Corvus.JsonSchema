@@ -140,7 +140,7 @@ public static class DemoData
             // First leg: the identity check fails (transient incomplete result), so the step schedules a retry with
             // a backoff and the run suspends on a durable timer (returns Suspended).
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"katherine@example.com","fullName":"Katherine Transient","plan":"pro"}"""u8.ToArray());
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-retry-v1", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-retry-v1", inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind first = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live retry onboarding run '{runId}' first leg: {first} (identity check backing off, retry on a durable timer).");
 
@@ -165,7 +165,7 @@ public static class DemoData
             // against the ledger backend and completes with the computed counts + discrepancy report.
             string date = time.GetUtcNow().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes($$"""{"date":"{{date}}"}"""));
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "nightly-reconcile-v2", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["prod", "billing"]));
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "nightly-reconcile-v2", inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["prod", "billing"]));
             WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live nightly-reconcile run '{runId}' executed against the ledger service: {result}.");
         }
@@ -185,7 +185,7 @@ public static class DemoData
             // by submitting a verdict (POST /accounts/{id}/kyc-verdict on the KYC service), which publishes to kyc.verdict
             // and the runner's consumer resumes it. This is a genuine pending-manual-recovery case in the demo's data.
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"grace@example.com","fullName":"Grace Hopper","plan":"enterprise"}"""u8.ToArray());
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-async-v1", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-async-v1", inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind first = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live async onboarding run '{runId}': {first} (review requested on kyc.requests; awaiting an out-of-band verdict).");
         }
@@ -200,7 +200,7 @@ public static class DemoData
         try
         {
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(inputsJson));
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, workflowId, inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, workflowId, inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live onboarding run '{runId}' executed against /svc: {result}.");
         }
