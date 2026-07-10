@@ -14,6 +14,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
+using Corvus.Text.Json.AsyncApi.Nats;
 using Npgsql;
 using System.Security.Claims;
 using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
@@ -76,7 +77,23 @@ string ledgerBaseUrl = builder.Configuration["ControlPlane:Sources:Ledger"]
     ?? throw new InvalidOperationException("ControlPlane:Sources:Ledger (the ledger service endpoint) is required — the AppHost injects it.");
 string kycBaseUrl = builder.Configuration["ControlPlane:Sources:Kyc"]
     ?? throw new InvalidOperationException("ControlPlane:Sources:Kyc (the KYC service endpoint) is required — the AppHost injects it.");
-WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl);
+
+// The application-owned message bus (NATS JetStream) — the AppHost injects its URL. The control plane's live resumer
+// executes the seeded async onboarding run, whose requestKycReview send step publishes to kyc.requests through this
+// transport (each channel is its own JetStream stream, so this is scoped to kyc-requests). The verdict receive is
+// durable (the run suspends), so this transport only sends here; the runner's consumer resumes the run when a verdict
+// arrives. This replaces the former in-process InMemoryMessageTransport (design §8).
+string natsUrl = builder.Configuration["Nats:Url"]
+    ?? throw new InvalidOperationException("Nats:Url (the KYC message bus) is required — the AppHost injects it.");
+NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+{
+    Url = natsUrl,
+    Name = "controlplane-requests-out",
+    UseJetStream = true,
+    StreamName = "kyc-requests",
+    StorageType = StorageType.File,
+});
+WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport);
 var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
@@ -120,7 +137,7 @@ var draftRunner = new InProcessDraftRunner(
     draftRunStore,
     draftRunTraceStore,
     new WorkflowExecutorProvider(),
-    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl),
+    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport),
     // Do NOT host timer waits here: the worker's ResumeDueTimersAsync resumes EVERY due-timer run in the shared store,
     // including seeded CATALOG runs this draft-only resumer cannot host. A draft run that suspends on a retry timer is
     // out of scope for the minimum stand-up (the base onboard-customer workflow has none).

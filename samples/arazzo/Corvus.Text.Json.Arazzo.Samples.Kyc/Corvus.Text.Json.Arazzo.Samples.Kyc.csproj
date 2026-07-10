@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- The KYC (know-your-customer) domain service: owns ALL identity verification — the synchronous verifyIdentity the
-       onboard-customer workflow calls, and (in a later slice) the asynchronous, manual-recovery verdict published onto
-       the notifications bus. A first-class library the Arazzo sample orchestrates as a real external source, with its
-       own PostgreSQL database. -->
+       onboard-customer workflow calls, and the asynchronous, manual-recovery verdict (submitVerdict) published onto the
+       notifications bus via the generated AsyncAPI producer. A first-class library the Arazzo sample orchestrates as a
+       real external source, with its own PostgreSQL database. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -23,6 +23,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <!-- The generated AsyncAPI producer (PublishKycVerdictProducer) the manual-recovery verdict publishes through. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Notifications\Corvus.Text.Json.Arazzo.Samples.Notifications.csproj" />
   </ItemGroup>
 
   <ItemGroup>

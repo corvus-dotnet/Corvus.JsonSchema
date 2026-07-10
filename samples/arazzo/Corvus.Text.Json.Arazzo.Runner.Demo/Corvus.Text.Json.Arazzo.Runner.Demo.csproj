@@ -26,8 +26,10 @@
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.SourceCredentials.Http\Corvus.Text.Json.Arazzo.SourceCredentials.Http.csproj" />
-    <!-- InMemoryMessageTransport: the demo's stand-in broker for AsyncAPI channel steps (a real broker adapter replaces it in production, design §8). Same reference the control-plane host uses. -->
-    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
+    <!-- The real broker: NATS JetStream transport for AsyncAPI channel steps (replaces the former InMemoryMessageTransport, design §8). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Nats\Corvus.Text.Json.AsyncApi.Nats.csproj" />
+    <!-- The generated AsyncAPI consumer (ReceiveKycVerdictConsumer) the runner subscribes with to resume suspended runs. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Notifications\Corvus.Text.Json.Arazzo.Samples.Notifications.csproj" />
   </ItemGroup>
 
 </Project>

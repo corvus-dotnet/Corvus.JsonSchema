@@ -3,7 +3,9 @@
 // </copyright>
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Samples.Notifications;
 using Models = Corvus.Text.Json.Arazzo.Samples.Kyc.Models;
+using NModels = Corvus.Text.Json.Arazzo.Samples.Notifications.Models;
 
 namespace Corvus.Text.Json.Arazzo.Samples.Kyc;
 
@@ -20,16 +22,19 @@ public sealed class KycService : IApiDefaultHandler
 {
     private readonly KycStore store;
     private readonly IdentityVerificationPolicy policy;
+    private readonly PublishKycVerdictProducer verdictProducer;
     private readonly TimeProvider timeProvider;
 
     /// <summary>Initializes a new instance of the <see cref="KycService"/> class.</summary>
     /// <param name="store">The verification store (the service's own database).</param>
     /// <param name="policy">The identity-verification (KYC) policy.</param>
+    /// <param name="verdictProducer">The AsyncAPI producer that publishes a manual-recovery verdict onto the bus.</param>
     /// <param name="timeProvider">The time source; defaults to <see cref="TimeProvider.System"/>.</param>
-    public KycService(KycStore store, IdentityVerificationPolicy policy, TimeProvider? timeProvider = null)
+    public KycService(KycStore store, IdentityVerificationPolicy policy, PublishKycVerdictProducer verdictProducer, TimeProvider? timeProvider = null)
     {
         this.store = store ?? throw new ArgumentNullException(nameof(store));
         this.policy = policy ?? throw new ArgumentNullException(nameof(policy));
+        this.verdictProducer = verdictProducer ?? throw new ArgumentNullException(nameof(verdictProducer));
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -46,6 +51,44 @@ public sealed class KycService : IApiDefaultHandler
         var doc = ParsedJsonDocument<Models.IdentityResult>.Parse(outcome.IdentityBytes);
         workspace.TakeOwnership(doc);
         return VerifyIdentityResult.Ok(doc.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<SubmitVerdictResult> HandleSubmitVerdictAsync(SubmitVerdictParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string accountId = AccountId(parameters.AccountId);
+        (bool verified, double score, string? fullName) = ReadVerdict(parameters.Body);
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        string status = verified ? "verified" : "blocked";
+        string resolvedName = fullName ?? "Applicant";
+
+        // A manual verdict is an operator decision, so the identity result is minimal (no synthetic evidence).
+        byte[] identity = KycJson.Serialize(writer =>
+        {
+            writer.WriteStartObject();
+            writer.WriteBoolean("verified", verified);
+            writer.WriteNumber("score", score);
+            writer.WriteString("reviewedAt", now);
+            writer.WriteEndObject();
+        });
+        byte[] applicant = KycJson.Serialize(writer =>
+        {
+            writer.WriteStartObject();
+            writer.WriteString("fullName", resolvedName);
+            writer.WriteEndObject();
+        });
+
+        // Persist the verdict (channel 'manual'), then PUBLISH it onto the bus. The runner consumes the message and
+        // resumes the workflow run that suspended awaiting the KYC verdict — the application owns this exchange.
+        await this.store.RecordVerificationAsync(accountId, status, resolvedName, applicant, identity, now, now, "manual", cancellationToken).ConfigureAwait(false);
+
+        // CreateUnrented: the workspace is disposed after the publish await, so it must not be a thread-affine rented one.
+        using JsonWorkspace payloadWorkspace = JsonWorkspace.CreateUnrented();
+        NModels.KycVerdictPayload verdict = NModels.KycVerdictPayload.CreateBuilder(payloadWorkspace, accountId, score, verified).RootElement;
+        await this.verdictProducer.PublishKycVerdictAsync(verdict, cancellationToken).ConfigureAwait(false);
+
+        return SubmitVerdictResult.Accepted();
     }
 
     /// <inheritdoc/>
@@ -138,6 +181,33 @@ public sealed class KycService : IApiDefaultHandler
         }
 
         return (fullName, documentNumber);
+    }
+
+    private static (bool Verified, double Score, string? FullName) ReadVerdict(Models.VerdictRequest body)
+    {
+        bool verified = false;
+        double score = 0;
+        string? fullName = null;
+        var element = (JsonElement)body;
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            if (element.TryGetProperty("verified"u8, out JsonElement v) && (v.ValueKind == JsonValueKind.True || v.ValueKind == JsonValueKind.False))
+            {
+                verified = v.GetBoolean();
+            }
+
+            if (element.TryGetProperty("score"u8, out JsonElement s) && s.ValueKind == JsonValueKind.Number)
+            {
+                score = s.GetDouble();
+            }
+
+            if (element.TryGetProperty("fullName"u8, out JsonElement n) && n.ValueKind == JsonValueKind.String)
+            {
+                fullName = n.GetString();
+            }
+        }
+
+        return (verified, score, fullName);
     }
 
     private static int ReadLimit(JsonElement limit)

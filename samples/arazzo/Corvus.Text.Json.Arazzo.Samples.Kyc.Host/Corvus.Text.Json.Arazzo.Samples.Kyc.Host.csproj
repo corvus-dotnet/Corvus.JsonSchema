@@ -17,6 +17,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults\Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Kyc\Corvus.Text.Json.Arazzo.Samples.Kyc.csproj" />
+    <!-- The NATS JetStream transport the KYC verdict producer publishes through. -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Nats\Corvus.Text.Json.AsyncApi.Nats.csproj" />
   </ItemGroup>
 
 </Project>

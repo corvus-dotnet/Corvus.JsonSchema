@@ -49,6 +49,15 @@ var vault = builder.AddContainer("vault", "hashicorp/vault", "1.18")
     .WithArgs("server", "-dev")
     .WithHttpEndpoint(targetPort: 8200, name: "http");
 
+// The application-owned message bus — NATS with JetStream (durable, file-backed) so a message published before its
+// consumer subscribes is not lost. It carries the async KYC exchange (design §8): the onboard-customer-async workflow
+// publishes a review request to kyc.requests and suspends awaiting a verdict on kyc.verdict; the KYC service is the
+// manual-recovery inbox (consumes requests) + verdict publisher, and the runner subscribes to kyc.verdict to resume
+// the suspended run. Owned by the application, NOT the control plane. Ephemeral (no volume), like the rest of the demo.
+var nats = builder.AddContainer("nats", "nats", "2.10")
+    .WithArgs("-js")
+    .WithEndpoint(targetPort: 4222, scheme: "nats", name: "nats");
+
 // The provisioner: a one-shot Vault-CLI container — the *only* write-capable identity (the "CI/IaC provisioning
 // step" stand-in, design §13.5.1). It writes a read-only, path-scoped policy, mints the runner's read-only token
 // bound to it, seeds the demo secret values (dev dummies), then exits. The runner never has these privileges.
@@ -120,6 +129,10 @@ var ledger = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Ledger_
 var kyc = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Kyc_Host>("kyc")
     .WithReference(kycDb)
     .WaitFor(kycDb)
+    // The KYC service is both sides of the async exchange: it consumes review requests (kyc.requests) and publishes
+    // verdicts (kyc.verdict) on the application bus.
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WaitFor(nats)
     .WithHttpEndpoint()
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
@@ -147,9 +160,12 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("ControlPlane__Sources__Ledger", ledger.GetEndpoint("http"))
     .WithEnvironment("ControlPlane__Sources__Kyc", kyc.GetEndpoint("http"))
+    // The control plane's live resumer executes the seeded async run, whose send step publishes to the bus.
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
     .WaitFor(onboarding)
     .WaitFor(ledger)
     .WaitFor(kyc)
+    .WaitFor(nats)
     // Aspire-managed HTTP endpoint (no hardcoded port): Aspire assigns the port, proxies it, and injects
     // ASPNETCORE_URLS so the app binds what Aspire chose — this is what makes the health check and the runner's
     // WithReference/GetEndpoint resolve to the real address without launchSettings pinning a fixed port.
@@ -174,11 +190,15 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Kyc", kyc.GetEndpoint("http"))
+    // The runner subscribes to kyc.verdict to resume suspended async runs, and publishes review requests when it
+    // executes an async run's send step.
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
     .WaitFor(onboarding)
     .WaitFor(ledger)
     .WaitFor(kyc)
+    .WaitFor(nats)
     // Wait for the provisioner to FINISH, not just for Vault to be reachable. vault-init writes the read-only policy
     // and mints the runner's token; if the runner starts the moment Vault is up, its startup credential self-check can
     // beat that provisioning and get a 403 from Vault (a transient-but-ugly error trace). This is now safe to gate on:

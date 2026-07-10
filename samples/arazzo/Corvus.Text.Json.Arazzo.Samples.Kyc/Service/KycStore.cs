@@ -80,7 +80,7 @@ public sealed class KycStore : IAsyncDisposable
     /// <param name="channel">How the verdict was produced (<c>synchronous</c>/<c>manual</c>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes once the record is written.</returns>
-    public async ValueTask RecordVerificationAsync(string accountId, string status, string fullName, byte[] applicant, byte[] identity, DateTimeOffset submittedAt, DateTimeOffset verifiedAt, string channel, CancellationToken cancellationToken = default)
+    public async ValueTask RecordVerificationAsync(string accountId, string status, string fullName, byte[] applicant, byte[] identity, DateTimeOffset submittedAt, DateTimeOffset? verifiedAt, string channel, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(accountId);
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -99,7 +99,7 @@ public sealed class KycStore : IAsyncDisposable
         upsert.Parameters.AddWithValue("applicant", NpgsqlDbType.Bytea, applicant);
         upsert.Parameters.AddWithValue("identity", NpgsqlDbType.Bytea, identity);
         upsert.Parameters.AddWithValue("submitted", NpgsqlDbType.TimestampTz, submittedAt);
-        upsert.Parameters.AddWithValue("verified", NpgsqlDbType.TimestampTz, verifiedAt);
+        upsert.Parameters.AddWithValue("verified", NpgsqlDbType.TimestampTz, (object?)verifiedAt ?? DBNull.Value);
         upsert.Parameters.AddWithValue("channel", channel);
         await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
