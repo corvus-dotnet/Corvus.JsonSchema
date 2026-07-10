@@ -38,31 +38,37 @@ string connectionString = builder.Configuration.GetConnectionString("workflowsto
     ?? throw new InvalidOperationException("ConnectionStrings:workflowstore (the shared Postgres database) is required — run this host under the AppHost.");
 NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 
-// Postgres adapters do NOT create their schema on ConnectAsync (unlike SQLite, which self-creates on open). The
-// control plane owns the schema: run each store's PrepareAsync (idempotent CREATE TABLE IF NOT EXISTS) once, before
-// any store opens. The runner never runs DDL — it waits for this host's health, by which point the tables exist. The
-// AppHost's Postgres container is ephemeral (no data volume), so every run starts from an empty database — the
-// fresh-each-run reset with no file to wipe.
-await PostgresWorkflowStateStore.PrepareAsync(dataSource);
-await PostgresWorkflowCatalogStore.PrepareAsync(dataSource);
-await PostgresRunnerRegistry.PrepareAsync(dataSource);
-await PostgresEnvironmentRunnerAuthorizationStore.PrepareAsync(dataSource);
-await PostgresSourceCredentialStore.PrepareAsync(dataSource);
-await PostgresDraftRunStore.PrepareAsync(dataSource);
-await PostgresDraftRunTraceStore.PrepareAsync(dataSource);
-await PostgresEnvironmentStore.PrepareAsync(dataSource);
-await PostgresWorkspaceWorkflowStore.PrepareAsync(dataSource);
-await PostgresWorkflowAdministratorStore.PrepareAsync(dataSource);
-await PostgresSecurityPolicyStore.PrepareAsync(dataSource);
-await PostgresAccessRequestStore.PrepareAsync(dataSource);
-// Governance stores (§7.6-§7.8, §16.5.4): availability ("Available in"), availability (promotion) requests, the
-// source registry, per-environment administrators, and the observed-identity typeahead. Durable + shared with the
-// runner, exactly like every other store — no capability quietly falls back to an ephemeral in-memory instance.
-await PostgresAvailabilityStore.PrepareAsync(dataSource);
-await PostgresAvailabilityRequestStore.PrepareAsync(dataSource);
-await PostgresSourceStore.PrepareAsync(dataSource);
-await PostgresEnvironmentAdministratorStore.PrepareAsync(dataSource);
-await PostgresObservedIdentityStore.PrepareAsync(dataSource);
+// Provision the Postgres control-plane deployment BEFORE any store opens: the ControlPlane.Deployment.Postgres library
+// creates every control-plane store's schema (idempotent CREATE TABLE IF NOT EXISTS) AND runs the deployment-agnostic
+// security bootstrap (§14.2 rules + read-all shell binding + §16.2-tier-3 genesis-admin grant — the arazzo-admins group
+// gets all capability scopes + unrestricted reach; the first admin logs in via OIDC already holding admin, the identity
+// analogue of secret-zero) in one call. That library is coupled to Postgres but identity-provider agnostic — the IdP
+// (Keycloak here, but any OIDC provider) is wired separately in the composition root below. A real ZeroFailed
+// deployment calls exactly this, binding its DeploymentBootstrapOptions from config; here the config is expressed AS
+// JSON (validated against the generated schema) so the demo is self-contained. Postgres adapters do not self-create
+// schema on ConnectAsync (unlike SQLite), and the runner never runs DDL — it waits for this host's health, by which
+// point the tables exist. The AppHost's Postgres is ephemeral (no volume): every run starts empty — reset, no file to wipe.
+string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => $"\"{s}\""));
+using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
+    ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions>.Parse(
+        System.Text.Encoding.UTF8.GetBytes($$"""
+        {
+          "genesisAdminGroup": "arazzo-admins",
+          "genesisScopes": [{{genesisScopesJson}}],
+          "identityClaimType": "groups",
+          "internalTagPrefix": "sys:",
+          "selfElevationGroups": ["arazzo-admins"],
+          "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] },
+          "seedExampleData": true
+        }
+        """));
+Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions bootstrapOptions = bootstrapOptionsDoc.RootElement;
+await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.PostgresControlPlaneDeployment.ProvisionAsync(dataSource, bootstrapOptions);
+
+// The demo opts into the example seed (seedExampleData: true above); a production deployment leaves it false (schema
+// default) and provisions only the real store + policy. This one flag gates every piece of demo fiction below — the
+// example catalog + credential references + developer sandbox, the stand-in runner authorizer, and the live sample run.
+bool seedExampleData = bootstrapOptions.SeedExampleData.IsNotUndefined() && (bool)bootstrapOptions.SeedExampleData;
 
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();
@@ -166,34 +172,9 @@ var draftRunner = new InProcessDraftRunner(
 // The row-security authoring API (§14.2) is served from a security-policy store.
 var securityPolicy = await PostgresSecurityPolicyStore.ConnectAsync(dataSource);
 
-// The REAL, deployment-agnostic bootstrap runs from config (the seeding split — see the ControlPlane.Bootstrap
-// library): the editable §14.2 rules, the read-all shell binding, and the §16.2-tier-3 genesis-admin grant (the
-// arazzo-admins group → all capability scopes + unrestricted reach; the first admin logs in via OIDC already holding
-// admin, the identity analogue of secret-zero). This deployment's config is expressed AS JSON, validated against the
-// generated DeploymentBootstrapOptions schema — a production deployment binds it from ZeroFailed / appsettings; here
-// it is inline so the demo is self-contained. The demo/example content (sample workflows, personas, credential
-// references) is layered on separately below, never by this real bootstrap.
-string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => $"\"{s}\""));
-using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
-    ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions>.Parse(
-        System.Text.Encoding.UTF8.GetBytes($$"""
-        {
-          "genesisAdminGroup": "arazzo-admins",
-          "genesisScopes": [{{genesisScopesJson}}],
-          "identityClaimType": "groups",
-          "internalTagPrefix": "sys:",
-          "selfElevationGroups": ["arazzo-admins"],
-          "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] },
-          "seedExampleData": true
-        }
-        """));
-Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions bootstrapOptions = bootstrapOptionsDoc.RootElement;
-await new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap().BootstrapSecurityAsync(securityPolicy, bootstrapOptions);
-
-// The demo opts into the example seed (seedExampleData: true above); a production deployment leaves it false (schema
-// default) and runs only the real bootstrap. This one flag gates every piece of demo fiction below — the example
-// catalog + credential references + developer sandbox, the stand-in runner authorizer, and the live sample run.
-bool seedExampleData = bootstrapOptions.SeedExampleData.IsNotUndefined() && (bool)bootstrapOptions.SeedExampleData;
+// The security policy the runtime reads was seeded by PostgresControlPlaneDeployment.ProvisionAsync above (the
+// genesis-admin grant, the read-all shell binding, and the §14.2 rules). securityPolicy (connected above) now reads
+// those rows; labelOrderings comes from the same bootstrapOptions.
 
 // The entitlement resolver (§16.5.2 Decision-A): ONE PersistentRowSecurityPolicy over the security-policy store backs
 // both layers — the claims transformer unions its ResolveGrantedScopes into the scope claim (capability), and it is
