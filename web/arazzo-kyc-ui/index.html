@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KYC Console</title>
+  <link rel="stylesheet" href="src/kyc-kit.css">
+  <script type="module" src="src/kyc-console.js"></script>
+</head>
+<body>
+  <!-- Same-origin: the KYC host serves this app alongside its API, so no base-url is needed.
+       poll="5" auto-refreshes every 5s so a submitted verdict (and the resumed workflow run's effect) appears live. -->
+  <kyc-console poll="5"></kyc-console>
+</body>
+</html>
