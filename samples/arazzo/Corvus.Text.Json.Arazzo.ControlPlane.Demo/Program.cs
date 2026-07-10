@@ -22,7 +22,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.FileProviders;
-using CpEnvironment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -184,11 +183,17 @@ using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstr
           "identityClaimType": "groups",
           "internalTagPrefix": "sys:",
           "selfElevationGroups": ["arazzo-admins"],
-          "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] }
+          "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] },
+          "seedExampleData": true
         }
         """));
 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions bootstrapOptions = bootstrapOptionsDoc.RootElement;
 await new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap().BootstrapSecurityAsync(securityPolicy, bootstrapOptions);
+
+// The demo opts into the example seed (seedExampleData: true above); a production deployment leaves it false (schema
+// default) and runs only the real bootstrap. This one flag gates every piece of demo fiction below — the example
+// catalog + credential references + developer sandbox, the stand-in runner authorizer, and the live sample run.
+bool seedExampleData = bootstrapOptions.SeedExampleData.IsNotUndefined() && (bool)bootstrapOptions.SeedExampleData;
 
 // The entitlement resolver (§16.5.2 Decision-A): ONE PersistentRowSecurityPolicy over the security-policy store backs
 // both layers — the claims transformer unions its ResolveGrantedScopes into the scope claim (capability), and it is
@@ -303,51 +308,28 @@ if (requireAuthorization)
     builder.Services.AddHttpContextAccessor();
 }
 
-string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
-await DemoData.SeedAsync(catalog, specsDir);
-
-// Seed demo source-credential bindings — references only (the §13 invariant: never secret material). Each points
-// at the Vault path the AppHost's provisioner seeds (vault://secret/arazzo/<source>#api-key); the runner resolves
-// it with its read-only token. This populates /credentials (and the CLI + web UI) out of the box.
-foreach (string environment in new[] { "production", "development" })
+// The example seed layers the demo fiction on top of the real bootstrap above: catalogued workflow versions, the
+// source-credential references, and the developer sandbox environment (§18). It is the counterpart to the config-driven
+// bootstrap — a production deployment omits it entirely; the demo opts in via seedExampleData. The instance is created
+// unconditionally because the live-sample run below (post-startup) also goes through it.
+IExampleSeed exampleSeed = new ArazzoExampleSeed();
+if (seedExampleData)
 {
-    // 'notifications' is the AsyncAPI (NATS) source onboard-customer-async binds (kyc.requests / kyc.verdict). Its
-    // transport is the message binder, not a per-source API key, but the debug-run readiness gate requires a binding
-    // for EVERY referenced source — so it is seeded here too (its Vault #api-key is provisioned but never resolved
-    // for the channel). Without it, a debug run of the async workflow fails 409 "No credential bound for: notifications".
-    foreach (string source in new[] { "onboarding", "ledger", "kyc", "notifications" })
-    {
-        // AddAsync returns the persisted binding as a pooled document — dispose it (the seed doesn't read it back).
-        using ParsedJsonDocument<SourceCredentialBinding> seeded = await sourceCredentials.AddAsync(
-            new SourceCredentialDefinition(
-                source,
-                environment,
-                SourceCredentialKind.ApiKey,
-                // The ApiKey provider resolves the key from the secret reference named "value" (default header
-                // X-API-Key); the reference target is the Vault path's #api-key field the provisioner seeds.
-                [new SecretReferenceDefinition("value", $"vault://secret/arazzo/{source}#api-key")]),
-            "demo",
-            default);
-    }
-}
-
-// §18: seed a development-class environment that ALLOWS working-copy drafts to run as debug runs (default off
-// everywhere else — crossing that line is an explicit per-environment decision by its administrators). Its two sources
-// are credentialed above, so the run dialog's readiness gate passes and a debug run executes against the real external
-// source services. The environment store is the governed, reach-scoped one the debug-run seam reads.
-using (ParsedJsonDocument<CpEnvironment> developmentEnvironment = ParsedJsonDocument<CpEnvironment>.Parse(
-    """{"name":"development","displayName":"Development","description":"Developer sandbox — working-copy drafts may run here as debug runs (§18).","allowsDraftRuns":true}"""u8.ToArray()))
-{
-    (await environmentStore.AddAsync(developmentEnvironment.RootElement, "demo", default)).Dispose();
+    string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
+    await exampleSeed.SeedAsync(new ExampleSeedContext(catalog, sourceCredentials, environmentStore, specsDir));
 }
 
 // DEMO: the open demo has no interactive administrator, so stand in for the development environment's administrator
 // (the "demo" identity that created it, §7.7) and authorize each runner that registers a Pending §5.5 authorization to
 // serve it — otherwise the out-of-process runner stays dispatch-paused and never claims catalogued runs. This keeps the
-// §5.5 semantic intact (an administrator, never the runner, grants authorization); production does it via the UI/API.
-builder.Services.AddHostedService(sp => new RunnerAutoAuthorizationService(
-    runnerAuthorizations,
-    sp.GetRequiredService<ILogger<RunnerAutoAuthorizationService>>()));
+// §5.5 semantic intact (an administrator, never the runner, grants authorization); production does it via the UI/API — so
+// it is part of the example fiction and only wired when the deployment opts in.
+if (seedExampleData)
+{
+    builder.Services.AddHostedService(sp => new RunnerAutoAuthorizationService(
+        runnerAuthorizations,
+        sp.GetRequiredService<ILogger<RunnerAutoAuthorizationService>>()));
+}
 
 WebApplication app = builder.Build();
 
@@ -501,7 +483,11 @@ app.Lifetime.ApplicationStarted.Register(() =>
         draftRunner.Start(TimeSpan.FromMilliseconds(200), onError: ex => app.Logger.LogError(ex, "Draft runner pump failed."));
     }
 
-    _ = DemoData.RunLiveOnboardingAsync(stateStore, liveResumer, message => app.Logger.LogInformation("{Message}", message));
+    // Example fiction: one genuinely-executed onboarding run so the demo shows a real run, not only seeded states.
+    if (seedExampleData)
+    {
+        _ = exampleSeed.RunLiveSampleAsync(stateStore, liveResumer, message => app.Logger.LogInformation("{Message}", message));
+    }
 });
 
 // Stop the draft runner's pump cleanly on shutdown (best-effort; the process exit would end it regardless).
