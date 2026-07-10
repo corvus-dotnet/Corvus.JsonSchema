@@ -9,6 +9,7 @@
 using Corvus.Text.Json.Arazzo.Samples.Kyc;
 using Corvus.Text.Json.Arazzo.Samples.Notifications;
 using Corvus.Text.Json.AsyncApi.Nats;
+using Microsoft.Extensions.FileProviders;
 using Npgsql;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -63,10 +64,19 @@ WebApplication app = builder.Build();
 // /health (readiness) and /alive (liveness) — the AppHost's health check polls these.
 app.MapDefaultEndpoints();
 
-// The generated KYC API: POST /accounts/{id}/identity (verifyIdentity), GET /verifications, GET /accounts/{id}/verification.
-ApiEndpointRegistration.MapApiEndpoints(app, handler);
+// The KYC manual-recovery console (a separate, build-free web app under web/arazzo-kyc-ui) is served at the host root,
+// same origin as the API it calls (GET /verifications, POST /accounts/{id}/kyc-verdict) — so it needs no cross-origin
+// configuration. In reality this operator tool ships independently and merely consumes the workflow engine's effects.
+string uiRoot = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "..", "..", "web", "arazzo-kyc-ui"));
+if (Directory.Exists(uiRoot))
+{
+    var uiFiles = new PhysicalFileProvider(uiRoot);
+    app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = uiFiles });
+    app.UseStaticFiles(new StaticFileOptions { FileProvider = uiFiles });
+}
 
-// A tiny identity endpoint so the dashboard's resource link lands somewhere informative.
-app.MapGet("/", () => Results.Text("Arazzo KYC service — verifications under /verifications, health at /health.", "text/plain"));
+// The generated KYC API: POST /accounts/{id}/identity (verifyIdentity), POST /accounts/{id}/kyc-verdict (submitVerdict),
+// GET /verifications, GET /accounts/{id}/verification.
+ApiEndpointRegistration.MapApiEndpoints(app, handler);
 
 app.Run();
