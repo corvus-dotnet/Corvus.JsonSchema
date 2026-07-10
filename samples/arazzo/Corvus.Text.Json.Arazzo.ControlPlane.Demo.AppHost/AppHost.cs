@@ -8,6 +8,13 @@
 // HashiCorp Vault for source credentials (design §13); Keycloak for OIDC and optionally Postgres join here next.
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
+// The single AppHost-level switch for the *example* seeding — the infrastructure counterpart to the runtime
+// IExampleSeed / seedExampleData split (W4). When true (the demo default) the provisioner seeds the demo source
+// secrets; a real deployment sets SeedExampleData=false and provisions only the real AppRole trust, then supplies its
+// own source secrets from its secret-management. Read via the plain indexer (the config Binder's GetValue<T> extension
+// is not in the AppHost's assembly set — same constraint as the GitHub-App read below): default true unless "false".
+bool seedExampleData = !string.Equals(builder.Configuration["SeedExampleData"], "false", StringComparison.OrdinalIgnoreCase);
+
 // Optional local, UNCOMMITTED GitHub App credentials for the designer's Git integration (workflow-designer §4.7 / D3).
 // Copy github-app.local.json.example → github-app.local.json and fill in your own App (see the README); absent means
 // the control plane brokers no App and the Git panel stays off. The client id is public; the secret never enters git.
@@ -101,8 +108,15 @@ var nats = builder.AddContainer("nats", "nats", "2.10")
 
 // The provisioner: a one-shot Vault-CLI container — the *only* write-capable identity (the "CI/IaC provisioning
 // step" stand-in, design §13.5.1). It writes a read-only, path-scoped policy, mints the runner's read-only token
-// bound to it, seeds the demo secret values (dev dummies), then exits. The runner never has these privileges.
-const string provisionScript =
+// bound to it, then exits. The runner never has these privileges. The script splits along the same seam as the
+// runtime IExampleSeed (W4): the REAL AppRole-trust provisioning every deployment performs, then — only for the
+// example deployment (seedExampleData) — the demo source secrets. A real provisioner runs the trust half and seeds
+// its OWN real secrets from its secret-management, so the two halves are kept separate and assembled below.
+
+// REAL (every deployment): wait for Vault, write the read-only, path-scoped policy, enable AppRole, (re)create the
+// runner's role bound to that policy with a short-TTL renewable token, pin the non-secret RoleID, and hand off a
+// response-wrapped single-use SecretID via the shared dir. The runner never gets write privileges.
+const string approleTrustScript =
     "set -e; " +
     "until vault status >/dev/null 2>&1; do echo 'waiting for vault'; sleep 1; done; " +
     "echo 'path \"secret/data/arazzo/*\" { capabilities = [\"read\"] }' | vault policy write arazzo-runner-ro -; " +
@@ -119,15 +133,25 @@ const string provisionScript =
     // gap until the runner reads it: the runner starts only after the control plane is healthy (Keycloak realm import,
     // ~5 min), so a short wrap-ttl would expire first. Idempotent on a retry (upsert role; the file is overwritten).
     "vault write -f -wrap-ttl=1800s -field=wrapping_token auth/approle/role/arazzo-runner/secret-id > /shared/secretid.wrap; " +
-    "chmod 644 /shared/secretid.wrap; " +
+    "chmod 644 /shared/secretid.wrap; ";
+
+// EXAMPLE-ONLY (seedExampleData): dev-dummy API keys for the sample's source services, at the Vault paths the seeded
+// credential *references* point at (vault://secret/arazzo/<source>#api-key). A real deployment omits this and provisions
+// its own real secrets. 'notifications' is a NATS source (no per-source api-key), so it is not seeded here.
+const string exampleSecretSeedScript =
     "vault kv put secret/arazzo/onboarding api-key=demo-onboarding-key; " +
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
-    "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; " +
-    "echo provisioning-complete; " +
-    // Linger briefly after the work is done so the orchestrator observes the container reach 'Running' before it
-    // exits. A sub-second exit is read as a start failure (FailedToStart) and retried; with this the container goes
-    // Running -> exit 0 -> Finished, and WithHiddenOnCompletion(0) below then hides it as a completed init step.
-    "sleep 15";
+    "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; ";
+
+// Completion tail (infra): announce done, then linger briefly so the orchestrator observes the container reach
+// 'Running' before it exits. A sub-second exit is read as a start failure (FailedToStart) and retried; with this the
+// container goes Running -> exit 0 -> Finished, and WithHiddenOnCompletion(0) below then hides it as a completed step.
+const string provisionCompletionScript = "echo provisioning-complete; sleep 15";
+
+// Assemble: real trust always; the demo secrets only for the example deployment.
+string provisionScript = approleTrustScript
+    + (seedExampleData ? exampleSecretSeedScript : string.Empty)
+    + provisionCompletionScript;
 
 var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
