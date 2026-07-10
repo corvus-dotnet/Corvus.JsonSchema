@@ -115,7 +115,7 @@ public sealed class WorkflowWorkerTests
     private static async ValueTask SuspendTimer(InMemoryWorkflowStateStore store, TimeProvider time, string id, TimeSpan delay)
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray());
-        using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, time);
+        using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", time);
         await run.SuspendForTimerAsync(1, delay, default);
     }
 

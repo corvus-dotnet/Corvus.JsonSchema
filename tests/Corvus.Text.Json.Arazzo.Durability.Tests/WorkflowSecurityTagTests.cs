@@ -24,7 +24,7 @@ public sealed class WorkflowSecurityTagTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments"), new("team", "billing")];
-        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, tags: TagSet.FromTags(["nightly"]), securityTags: SecurityTagSet.FromTags(security)))
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time,tags: TagSet.FromTags(["nightly"]), securityTags: SecurityTagSet.FromTags(security)))
         {
             run.SecurityTags.ToList().ShouldBe(security);
             await run.EnqueueAsync(default);
@@ -44,7 +44,7 @@ public sealed class WorkflowSecurityTagTests
         var management = new SecuredWorkflowManagement(store, owner: "ops");
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
-        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, securityTags: SecurityTagSet.FromTags([new("tenant", "acme")])))
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time,securityTags: SecurityTagSet.FromTags([new("tenant", "acme")])))
         {
             await run.EnqueueAsync(default);
         }
@@ -61,7 +61,7 @@ public sealed class WorkflowSecurityTagTests
         var store = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
-        using WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time);
 
         run.SecurityTags.IsEmpty.ShouldBeTrue();
     }

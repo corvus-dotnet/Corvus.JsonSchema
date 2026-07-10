@@ -444,8 +444,16 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int versionNumber = (int)parameters.VersionNumber;
         AccessContext ctx = this.access.Current();
 
-        // The run is pinned to the required deployment environment (§5.5); it is validated below when the registries are wired.
-        string? environment = parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null;
+        // §5.5: a run MUST be pinned to a deployment environment. The OpenAPI marks `environment` required (the generated
+        // server 400s without it), so this fail-closed guard is defence-in-depth against a direct/internal call — refuse
+        // rather than create an environment-less run.
+        if (!parameters.Environment.IsNotUndefined())
+        {
+            return StartCatalogWorkflowRunResult.Conflict(
+                Problem("environment-required", "Environment required", 409, "A run must be pinned to a deployment environment (§5.5)."), workspace);
+        }
+
+        string environment = (string)parameters.Environment;
 
         // Gated by read reach (§14.2): a version outside it reads back null → 404 (triggering is gated by it). The
         // pooled document is held (its fields — runnable/workflowId/securityTags — are owned copies) until the run is
@@ -458,13 +466,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         // The pinned environment must exist and be in the caller's reach (non-disclosing 404) when an environment
         // registry is wired; without one the pin is recorded unvalidated. `var` avoids the Environment type-name clash.
-        if (environment is { } environmentName && this.environmentStore is { } envStore)
+        if (this.environmentStore is { } envStore)
         {
-            using var environmentDoc = await envStore.GetAsync(environmentName, ctx, cancellationToken).ConfigureAwait(false);
+            using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
             if (environmentDoc is null)
             {
                 return StartCatalogWorkflowRunResult.NotFound(
-                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environmentName}' does not exist or is outside your reach."), workspace);
+                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environment}' does not exist or is outside your reach."), workspace);
             }
         }
 
@@ -492,13 +500,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         // The version must be available in the pinned environment (§7.8) when an availability registry is wired.
-        if (environment is { } availabilityEnvironment && this.availabilityStore is { } availStore)
+        if (this.availabilityStore is { } availStore)
         {
-            using var availabilityEntry = await availStore.GetAsync(baseWorkflowId, versionNumber, availabilityEnvironment, cancellationToken).ConfigureAwait(false);
+            using var availabilityEntry = await availStore.GetAsync(baseWorkflowId, versionNumber, environment, cancellationToken).ConfigureAwait(false);
             if (availabilityEntry is null)
             {
                 return StartCatalogWorkflowRunResult.Conflict(
-                    Problem("not-available", "Version not available in environment", 409, $"Version {versionNumber} of '{baseWorkflowId}' is not available in environment '{availabilityEnvironment}' (§7.8); make it available and retry."), workspace);
+                    Problem("not-available", "Version not available in environment", 409, $"Version {versionNumber} of '{baseWorkflowId}' is not available in environment '{environment}' (§7.8); make it available and retry."), workspace);
             }
         }
 

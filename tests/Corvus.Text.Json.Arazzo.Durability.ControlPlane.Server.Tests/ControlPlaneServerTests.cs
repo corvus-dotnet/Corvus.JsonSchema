@@ -259,7 +259,7 @@ public sealed class ControlPlaneServerTests
         await using (host.App)
         {
             using (ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{ "x": 1 }"""u8.ToArray()))
-            using (WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r1", "wf", inputs.RootElement, host.Clock))
+            using (WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r1", "wf", inputs.RootElement, "development", host.Clock))
             {
                 await run.CheckpointAsync(cursor: 1, default);
                 await run.FaultAsync("step1", attempt: 1, "bad input", default);
@@ -375,13 +375,13 @@ public sealed class ControlPlaneServerTests
 
     private static async Task FaultRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         await run.FaultAsync("step1", attempt: 1, "boom", default);
     }
 
     private static async Task CompleteRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         await run.CompleteAsync(default, default);
     }
 
@@ -866,7 +866,7 @@ public sealed class ControlPlaneServerTests
 
     private static async Task TaggedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, string correlationId, string[] tags)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, correlationId: correlationId, tags: TagSet.FromTags(tags));
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock, correlationId: correlationId, tags: TagSet.FromTags(tags));
         await run.CompleteAsync(default, default);
     }
 
@@ -898,7 +898,7 @@ public sealed class ControlPlaneServerTests
 
     private static async Task FaultRunAtAsync(InMemoryWorkflowStateStore store, string id, int cursor, string faultStep, TimeProvider clock)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         if (cursor > 0)
         {
             await run.CheckpointAsync(cursor, default);

@@ -72,7 +72,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development", clock))
         {
             await pending.EnqueueAsync(default);
         }
@@ -102,7 +102,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development", clock))
         {
             await pending.EnqueueAsync(default);
         }
@@ -125,7 +125,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun orphan = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
+        using (WorkflowRun orphan = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development", clock))
         {
             // A crashed runner left it Running at cursor 0 and never released its lease.
             await orphan.CheckpointAsync(0, default);
@@ -156,7 +156,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development", clock))
         {
             await pending.EnqueueAsync(default);
         }
@@ -194,12 +194,12 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun prod = WorkflowRun.CreateNew(runStore, "run-prod", "adopt-v1", inputs.RootElement, clock, environment: "production"))
+        using (WorkflowRun prod = WorkflowRun.CreateNew(runStore, "run-prod", "adopt-v1", inputs.RootElement, "production", clock))
         {
             await prod.EnqueueAsync(default);
         }
 
-        using (WorkflowRun staging = WorkflowRun.CreateNew(runStore, "run-staging", "adopt-v1", inputs.RootElement, clock, environment: "staging"))
+        using (WorkflowRun staging = WorkflowRun.CreateNew(runStore, "run-staging", "adopt-v1", inputs.RootElement, "staging", clock))
         {
             await staging.EnqueueAsync(default);
         }
@@ -240,7 +240,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development", clock))
         {
             await pending.EnqueueAsync(default);
         }

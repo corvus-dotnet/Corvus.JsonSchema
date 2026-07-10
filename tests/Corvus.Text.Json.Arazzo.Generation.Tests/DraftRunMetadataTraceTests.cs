@@ -235,7 +235,7 @@ public sealed class DraftRunMetadataTraceTests
             (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)recorder, StringComparer.Ordinal), null));
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"email":"ada@example.com"}"""));
-        using (WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-paused", versionId, inputs.RootElement))
+        using (WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-paused", versionId, inputs.RootElement, "development"))
         {
             await run.EnqueueAsync(default);
         }

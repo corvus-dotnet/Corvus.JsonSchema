@@ -54,7 +54,7 @@ public partial class WorkflowExecutorEndToEndTests
         using (Activity request = incoming.StartActivity("incoming.request")!)
         {
             correlationId = request.TraceId.ToString();
-            using var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement);
+            using var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement, "development");
             run.CorrelationId.ShouldBe(correlationId, "the run adopts the ambient trace id as its correlation id");
 
             var faultingInner = new MockApiTransport();

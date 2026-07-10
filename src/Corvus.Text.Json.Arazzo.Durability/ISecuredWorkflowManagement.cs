@@ -24,10 +24,10 @@ public interface ISecuredWorkflowManagement
     /// <param name="correlationId">An optional telemetry correlation id (a W3C trace id); a new one is captured when omitted.</param>
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
-    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — it selects the credential set and constrains dispatch to runners serving it; <see langword="null"/> leaves the run unpinned (dispatchable by any runner).</param>
+    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — <strong>required</strong>: it selects the credential set and constrains dispatch to runners serving it. A run cannot be started without one.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the newly created pending run.</returns>
-    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string? environment, CancellationToken cancellationToken);
+    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken);
 
     /// <summary>
     /// Starts a run idempotently: the run id is derived deterministically from
@@ -38,12 +38,13 @@ public interface ISecuredWorkflowManagement
     /// <param name="workflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
     /// <param name="inputs">The workflow inputs (used only when the run is first created).</param>
     /// <param name="idempotencyKey">A stable key identifying the logical start (e.g. a message id or a scheduled-slot timestamp).</param>
+    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — <strong>required</strong>: it selects the credential set and constrains dispatch to runners serving it. A run cannot be started without one.</param>
     /// <param name="correlationId">An optional telemetry correlation id; a new one is captured when omitted.</param>
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the run for this key (newly created, or the pre-existing one).</returns>
-    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
+    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
 
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged), scoped to the
     /// caller's read reach (§14.2).</summary>

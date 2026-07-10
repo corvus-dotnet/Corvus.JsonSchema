@@ -269,19 +269,19 @@ public sealed class ControlPlaneRowSecurityTests
 
     private static async Task SeedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock, securityTags: SecurityTagSet.FromTags(security));
         await run.EnqueueAsync(default);
     }
 
     private static async Task CompleteRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock, securityTags: SecurityTagSet.FromTags(security));
         await run.CompleteAsync(default, default);
     }
 
     private static async Task FaultRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock, securityTags: SecurityTagSet.FromTags(security));
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock, securityTags: SecurityTagSet.FromTags(security));
         await run.FaultAsync("step1", attempt: 1, "boom", default);
     }
 
