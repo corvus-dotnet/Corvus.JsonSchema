@@ -6,9 +6,8 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Vault;
+using Microsoft.Extensions.DependencyInjection;
 using VaultSharp;
-using VaultSharp.V1.AuthMethods;
-using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.Core;
 
 namespace Corvus.Text.Json.Arazzo.Runner.Demo;
@@ -16,18 +15,20 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// <summary>
 /// A one-off startup self-check (design §13.5) that proves the runner's §13 secret-consumer wiring end to end
 /// against the real Vault: for every seeded credential binding it resolves the secret reference the control plane
-/// registered, using ONLY the runner's read-only token, then asserts that the same token is <em>refused</em> a
-/// write (HTTP 403). Resolution succeeding + write being denied together demonstrate the separation-of-duties
-/// boundary is real — the runner reads its scoped secrets and can do nothing else.
+/// registered, using ONLY the runner's read-only (AppRole-issued) token, then asserts that the same token is
+/// <em>refused</em> a write (HTTP 403). Resolution succeeding + write being denied together demonstrate the
+/// separation-of-duties boundary is real — the runner reads its scoped secrets and can do nothing else.
 /// </summary>
 /// <remarks>
-/// This is not production behaviour; it is the Vault equivalent of the dispatch smoke test. In production the
-/// runner resolves credentials at transport-bind time during live execution (the paused phase), never on a
-/// timer, and its identity comes from platform attestation/AppRole rather than an injected token.
+/// This is not production behaviour; it is the Vault equivalent of the dispatch smoke test. In production the runner
+/// resolves credentials at transport-bind time during live execution (the paused phase), never on a timer. Its
+/// identity comes from AppRole secure introduction (design §13.5.1): the shared <see cref="IVaultClient"/> injected
+/// here is authenticated with the AppRole SecretID the runner unwrapped at startup, so this exercises the real
+/// AppRole-issued token, not a pre-minted one.
 /// </remarks>
 public sealed class VaultCredentialSelfCheckService(
     ISourceCredentialStore credentials,
-    IConfiguration configuration,
+    IServiceProvider services,
     ILogger<VaultCredentialSelfCheckService> logger) : BackgroundService
 {
     // The demo sources whose bindings the control plane seeds; kept in sync with the AppHost's provisioned paths.
@@ -37,18 +38,17 @@ public sealed class VaultCredentialSelfCheckService(
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        string? address = configuration["VAULT_ADDR"];
-        string? token = configuration["VAULT_TOKEN"];
-        if (string.IsNullOrWhiteSpace(address) || string.IsNullOrWhiteSpace(token))
+        // The shared, AppRole-authenticated Vault client (registered by Program.cs after it unwrapped the SecretID).
+        // Absent when Vault is not configured (a standalone two-process run) — then there is nothing to self-check.
+        IVaultClient? client = services.GetService<IVaultClient>();
+        if (client is null)
         {
-            logger.LogInformation("No Vault configured (VAULT_ADDR/VAULT_TOKEN unset); skipping the credential self-check.");
+            logger.LogInformation("No Vault configured (no AppRole-authenticated client registered); skipping the credential self-check.");
             return;
         }
 
         try
         {
-            IAuthMethodInfo auth = new TokenAuthMethodInfo(token);
-            IVaultClient client = new VaultClient(new VaultClientSettings(address, auth));
             ISecretResolver resolver = new SecretResolverBuilder().AddHashiCorpVault(client).Build();
 
             await this.ResolveSeededReferencesAsync(resolver, stoppingToken).ConfigureAwait(false);
