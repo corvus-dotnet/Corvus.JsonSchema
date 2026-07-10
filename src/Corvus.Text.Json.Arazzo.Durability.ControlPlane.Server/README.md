@@ -24,8 +24,10 @@ app.MapArazzoControlPlane(management, catalog, runners);
 app.Run();
 ```
 
-This maps all eight resource groups the OpenAPI description declares — runs, runners, catalog, security,
-credentials, administrators, access-requests, and identity — each onto its handler. The run operations
+This maps every resource group the OpenAPI description declares — runs, runners, catalog, security,
+credentials, administrators, environments, sources, workspace (designer working copies), debugRuns
+(§18 debug runs, including `inject-message`), github, availability, availability-requests,
+runner-authorizations, access-requests, and identity — each onto its handler. The run operations
 (`GET /runs`, `GET /runs/{runId}`, `POST /runs/{runId}/resume`, `POST /runs/{runId}/cancel`, `PURGE /runs`)
 delegate to the management client; the catalog operations (`/catalog…`, including
 `GET /catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` and
