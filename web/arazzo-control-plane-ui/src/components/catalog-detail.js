@@ -163,7 +163,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
         ${SHARED_CSS}
         /* overflow visible so the embedded administrators-panel's grantee-picker dropdown isn't clipped by the card. */
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; }
+        /* Sticky header: stays put while the body/security sections scroll under it (.detail-pane is the scroll container).
+           The panel stays overflow:visible so the source credential / grantee popovers aren't clipped. */
+        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
         header .wf { font-weight: 700; font-size: 15px; }
         header .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
         header .vswitch { font-size: 12px; color: var(--_muted); display: inline-flex; gap: 5px; align-items: center; }

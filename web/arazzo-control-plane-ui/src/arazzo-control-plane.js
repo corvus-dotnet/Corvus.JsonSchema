@@ -157,7 +157,7 @@ class ArazzoControlPlane extends ArazzoElement {
         .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
         @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
         .layout > * { min-height: 0; }
-        .detail-pane { min-height: 0; overflow: auto; }
+        .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         /* When no run is selected the pane is empty; drop it from the grid so the table fills the whole row (not half). */
         .detail-pane:empty { display: none; }
         .placeholder { border: 1px dashed var(--_border); border-radius: var(--_radius); color: var(--_muted); padding: 28px; text-align: center; }

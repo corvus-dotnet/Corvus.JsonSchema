@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="/ui/src/arazzo-kit.css">
   <style>
     html, body { height: 100%; }
+    /* Theme-correct native scrollbars + form controls (inherits into every shadow-DOM scroller). Matches the toggle:
+       auto = follow the OS, else the forced choice. Without this the dark theme showed light OS scrollbars. */
+    :root { color-scheme: light dark; }
+    :root[data-theme="light"] { color-scheme: light; }
+    :root[data-theme="dark"] { color-scheme: dark; }
     body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; overflow: hidden; }
     /* Application shell: fill the viewport, never scroll the page — the active view scrolls its own list/grid. */
     .page { height: 100vh; display: flex; flex-direction: column; padding: 14px 18px; box-sizing: border-box; }
