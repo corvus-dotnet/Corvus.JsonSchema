@@ -115,8 +115,15 @@ internal static class SubWorkflowStepEmitter
         statements.AppendLine("    {");
         for (int i = 0; i < arguments.Count; i++)
         {
-            statements.Append("        builder.AddProperty(").Append(EmitText.Quote(arguments[i].Name))
-                .Append("u8, values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+            // Omit a sub-workflow argument whose expression did not resolve (a default/Undefined JsonElement):
+            // the sub-workflow sees the input as absent (Arazzo semantics). Adding a None-valued property trips
+            // the builder's assert, which terminates the process in a Debug build. A resolved null is kept.
+            string index = i.ToString(CultureInfo.InvariantCulture);
+            statements.Append("        if (values[").Append(index).AppendLine("].IsNotUndefined())");
+            statements.AppendLine("        {");
+            statements.Append("            builder.AddProperty(").Append(EmitText.Quote(arguments[i].Name))
+                .Append("u8, values[").Append(index).AppendLine("]);");
+            statements.AppendLine("        }");
         }
 
         statements.AppendLine("    });");
