@@ -430,6 +430,11 @@ if (!string.IsNullOrWhiteSpace(gitHubClientId))
 // The real control-plane API, under a conventional base path the UI points at. Row security (reach scoping) is
 // applied only when authorization is on — the open, unauthenticated demo stays fully visible. The access-request
 // surface keys a grant on the requester's `preferred_username`, the same claim the resolver matches.
+// The deterministic simulator (design §8) powers the designer's Mock runs: a working copy replayed against
+// auto-scripted mocks, forward to completion (or a breakpoint) with no live environment or credentials. An output
+// whose pointer misses an absent field is omitted, not fatal (OutputExtractionEmitter / AppendWorkflowOutputs guard).
+var workflowSimulator = new Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+
 app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     management,
     catalog,
@@ -450,7 +455,8 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     draftRunStore: draftRunStore,
     draftRunner: draftRunner,
     draftRunTraceStore: draftRunTraceStore,
-    gitHubBroker: gitHubBroker);
+    gitHubBroker: gitHubBroker,
+    workflowSimulator: workflowSimulator);
 
 // The source backends the workflows call — onboarding, ledger, and kyc — are all real external services (their own
 // processes + databases); no inline /svc mock remains (notifications is an AsyncAPI message source, not HTTP). This
