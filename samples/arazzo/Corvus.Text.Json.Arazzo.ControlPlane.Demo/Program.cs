@@ -54,6 +54,9 @@ await PostgresDraftRunStore.PrepareAsync(dataSource);
 await PostgresDraftRunTraceStore.PrepareAsync(dataSource);
 await PostgresEnvironmentStore.PrepareAsync(dataSource);
 await PostgresWorkspaceWorkflowStore.PrepareAsync(dataSource);
+await PostgresWorkflowAdministratorStore.PrepareAsync(dataSource);
+await PostgresSecurityPolicyStore.PrepareAsync(dataSource);
+await PostgresAccessRequestStore.PrepareAsync(dataSource);
 
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();
@@ -99,7 +102,7 @@ var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
 // The submitter of version 1 establishes administration (DemoData seeds the workflows as administered by the
 // arazzo-admins group); the access-request approval flow routes a request to these administrators.
-var administrators = new InMemoryWorkflowAdministratorStore();
+var administrators = await PostgresWorkflowAdministratorStore.ConnectAsync(dataSource);
 var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "demo", administrators: administrators);
 
 // The runner registry is store-backed and shared, so a runner registering in its own process is visible to this
@@ -145,7 +148,7 @@ var draftRunner = new InProcessDraftRunner(
 
 // The row-security authoring API (§14.2) is served from a security-policy store, seeded with the editable
 // bootstrap rules (tenant-scoped / ABAC superset / intersection) so /security/* is populated out of the box.
-var securityPolicy = new Corvus.Text.Json.Arazzo.Durability.Security.InMemorySecurityPolicyStore();
+var securityPolicy = await PostgresSecurityPolicyStore.ConnectAsync(dataSource);
 await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(securityPolicy);
 
 // Every authenticated principal may READ the whole control plane; WRITE/run reach is deny-by-default and conferred
@@ -189,7 +192,7 @@ var entitlements = new PersistentRowSecurityPolicy(
 await entitlements.RefreshAsync();
 
 // The access-request store (§16.5). In-memory like the security policy; the demo reseeds on every start.
-var accessRequests = new Corvus.Text.Json.Arazzo.Durability.Security.InMemoryAccessRequestStore();
+var accessRequests = await PostgresAccessRequestStore.ConnectAsync(dataSource);
 
 // arazzo-admins members are eligible to self-elevate (JIT activation, no human approver, §16.5.3); everyone else
 // must submit a request and be approved by a §15 administrator of the target workflow.
