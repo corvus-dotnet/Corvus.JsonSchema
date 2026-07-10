@@ -1,0 +1,94 @@
+// <copyright file="DefaultDeploymentBootstrapTests.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Linq;
+using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
+using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Tests;
+
+/// <summary>
+/// Coverage of <see cref="DefaultDeploymentBootstrap"/>: the deployment-agnostic security bootstrap must be idempotent,
+/// because a deployment runs it on every startup — appending the same bootstrap bindings each time would accumulate
+/// duplicates.
+/// </summary>
+[TestClass]
+public sealed class DefaultDeploymentBootstrapTests
+{
+    private const string OptionsJson =
+        """{"genesisAdminGroup":"arazzo-admins","genesisScopes":["catalog:read","catalog:write"],"identityClaimType":"groups"}""";
+
+    [TestMethod]
+    public async Task Bootstrap_seeds_the_shell_and_genesis_bindings_once()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        using ParsedJsonDocument<DeploymentBootstrapOptions> optionsDoc = ParsedJsonDocument<DeploymentBootstrapOptions>.Parse(OptionsJson);
+        DeploymentBootstrapOptions options = optionsDoc.RootElement;
+        var bootstrap = new DefaultDeploymentBootstrap();
+
+        await bootstrap.BootstrapSecurityAsync(store, options);
+
+        using PooledDocumentList<SecurityBindingDocument> bindings = await store.ListBindingsAsync(default);
+        bindings.Count.ShouldBe(2); // the read-all shell binding + the genesis-admin binding
+
+        // The two bindings are distinguished by their subject (claim type + value).
+        bindings.Select(b => (b.ClaimTypeValue, b.ClaimValueOrNull))
+            .ShouldBe([("*", (string?)null), ("groups", "arazzo-admins")], ignoreOrder: true);
+    }
+
+    [TestMethod]
+    public async Task Bootstrap_is_idempotent_across_repeated_runs()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        using ParsedJsonDocument<DeploymentBootstrapOptions> optionsDoc = ParsedJsonDocument<DeploymentBootstrapOptions>.Parse(OptionsJson);
+        DeploymentBootstrapOptions options = optionsDoc.RootElement;
+        var bootstrap = new DefaultDeploymentBootstrap();
+
+        // Three runs, as a deployment would across three restarts.
+        await bootstrap.BootstrapSecurityAsync(store, options);
+        await bootstrap.BootstrapSecurityAsync(store, options);
+        await bootstrap.BootstrapSecurityAsync(store, options);
+
+        // Bindings must NOT accumulate (the regression: they used to grow by two on every run).
+        using (PooledDocumentList<SecurityBindingDocument> bindings = await store.ListBindingsAsync(default))
+        {
+            bindings.Count.ShouldBe(2);
+        }
+
+        // Rules are seeded idempotently too (only missing names added).
+        using (PooledDocumentList<SecurityRuleDocument> rules = await store.ListRulesAsync(default))
+        {
+            rules.Count.ShouldBe(3);
+        }
+    }
+
+    [TestMethod]
+    public async Task Bootstrap_restores_a_deleted_genesis_binding_on_the_next_run()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        using ParsedJsonDocument<DeploymentBootstrapOptions> optionsDoc = ParsedJsonDocument<DeploymentBootstrapOptions>.Parse(OptionsJson);
+        DeploymentBootstrapOptions options = optionsDoc.RootElement;
+        var bootstrap = new DefaultDeploymentBootstrap();
+        await bootstrap.BootstrapSecurityAsync(store, options);
+
+        // An operator deletes the genesis-admin binding.
+        string genesisId;
+        using (PooledDocumentList<SecurityBindingDocument> bindings = await store.ListBindingsAsync(default))
+        {
+            genesisId = bindings.Single(b => b.ClaimValueOrNull == "arazzo-admins").IdValue;
+        }
+
+        (await store.DeleteBindingAsync(genesisId, WorkflowEtag.None, default)).ShouldBeTrue();
+
+        // The next run restores it (subject missing again), and still does not duplicate the read-all shell.
+        await bootstrap.BootstrapSecurityAsync(store, options);
+        using (PooledDocumentList<SecurityBindingDocument> bindings = await store.ListBindingsAsync(default))
+        {
+            bindings.Count.ShouldBe(2);
+            bindings.ShouldContain(b => b.ClaimValueOrNull == "arazzo-admins");
+        }
+    }
+}
