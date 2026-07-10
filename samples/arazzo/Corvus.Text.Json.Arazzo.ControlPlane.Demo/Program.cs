@@ -17,7 +17,6 @@ using Corvus.Text.Json.Arazzo.Durability.Postgres;
 using Corvus.Text.Json.AsyncApi.Nats;
 using Npgsql;
 using System.Security.Claims;
-using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -165,44 +164,37 @@ var draftRunner = new InProcessDraftRunner(
     // out of scope for the minimum stand-up (the base onboard-customer workflow has none).
     hostTimerWaits: false);
 
-// The row-security authoring API (§14.2) is served from a security-policy store, seeded with the editable
-// bootstrap rules (tenant-scoped / ABAC superset / intersection) so /security/* is populated out of the box.
+// The row-security authoring API (§14.2) is served from a security-policy store.
 var securityPolicy = await PostgresSecurityPolicyStore.ConnectAsync(dataSource);
-await Corvus.Text.Json.Arazzo.Durability.Security.SecurityBootstrap.SeedAsync(securityPolicy);
 
-// Every authenticated principal may READ the whole control plane; WRITE/run reach is deny-by-default and conferred
-// per-principal only through the access-request → approval flow (§16.5). So a stored grant is what lets a principal
-// *act*, scoped to exactly the workflow it names — the worked example's "alice may trigger that workflow, and only it".
-using (ParsedJsonDocument<SecurityBindingDocument> readAllBinding = SecurityBindingDocument.Draft("*", null, read: VerbGrant.Full, write: VerbGrant.None, purge: VerbGrant.None, description: "Authenticated principals may read the whole control plane."))
-{
-    (await securityPolicy.AddBindingAsync(readAllBinding.RootElement, "bootstrap", default)).Dispose();
-}
+// The REAL, deployment-agnostic bootstrap runs from config (the seeding split — see the ControlPlane.Bootstrap
+// library): the editable §14.2 rules, the read-all shell binding, and the §16.2-tier-3 genesis-admin grant (the
+// arazzo-admins group → all capability scopes + unrestricted reach; the first admin logs in via OIDC already holding
+// admin, the identity analogue of secret-zero). This deployment's config is expressed AS JSON, validated against the
+// generated DeploymentBootstrapOptions schema — a production deployment binds it from ZeroFailed / appsettings; here
+// it is inline so the demo is self-contained. The demo/example content (sample workflows, personas, credential
+// references) is layered on separately below, never by this real bootstrap.
+string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => $"\"{s}\""));
+using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
+    ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions>.Parse(
+        System.Text.Encoding.UTF8.GetBytes($$"""
+        {
+          "genesisAdminGroup": "arazzo-admins",
+          "genesisScopes": [{{genesisScopesJson}}],
+          "identityClaimType": "groups",
+          "internalTagPrefix": "sys:",
+          "selfElevationGroups": ["arazzo-admins"],
+          "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] }
+        }
+        """));
+Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions bootstrapOptions = bootstrapOptionsDoc.RootElement;
+await new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap().BootstrapSecurityAsync(securityPolicy, bootstrapOptions);
 
-// §16.2 tier 3 — the genesis administrator. The realm import (tier 2) seeds the arazzo-admins group + the arazzo-admin
-// seed user; this deployment-policy grant maps that group claim to the "service operator": all capability scopes +
-// unrestricted reach (read/write/purge Full). So the first admin logs in via OIDC and ALREADY HOLDS admin —
-// bootstrapped by config, not an in-system grant (the identity analogue of secret-zero, exactly as vault-init
-// bootstraps the secret store, §13.5). It is a STORED grant keyed on the group claim, consistent with the
-// no-ambient-elevation rule: no group confers capability by mere membership; this binding IS the deliberate, auditable
-// deployment policy §14.1 leaves open. Everyone else earns reach through the §16.5 access-request -> approval flow,
-// approved by these admins. Break-glass for recovery remains the dev API-key scheme.
-using (ParsedJsonDocument<SecurityBindingDocument> adminBootstrap = SecurityBindingDocument.Draft("groups", "arazzo-admins", read: VerbGrant.Full, write: VerbGrant.Full, purge: VerbGrant.Full, scopes: ControlPlaneScopes.All, description: "§16.2 tier 3: the arazzo-admins group is the deployment's genesis administrator (service operator) — all capability scopes + unrestricted reach."))
-{
-    (await securityPolicy.AddBindingAsync(adminBootstrap.RootElement, "bootstrap", default)).Dispose();
-}
-
-// The entitlement resolver (§16.5.2 Decision-A): ONE PersistentRowSecurityPolicy over the security-policy store
-// backs both layers — the claims transformer unions its ResolveGrantedScopes into the scope claim (capability), and
-// it is passed to MapArazzoControlPlane as the row-reach policy. A grant the approval service writes is refreshed
-// into this same instance in-process, taking effect immediately. The principal's Keycloak groups become its sys:
-// identity — the §15-administrator identity and the label stamped on rows it creates.
-// The deployment's ordered tag dimensions (§14.2): a classification taxonomy the ordered rule templates (classification
-// <= 'confidential', …) rank against. Baked into every compiled rule and surfaced read-only via GET /security/orderings
-// so the authoring UI offers those templates with exactly these labels.
-var labelOrderings = new SecurityLabelOrderings(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
-{
-    ["classification"] = ["public", "internal", "confidential", "restricted"],
-});
+// The entitlement resolver (§16.5.2 Decision-A): ONE PersistentRowSecurityPolicy over the security-policy store backs
+// both layers — the claims transformer unions its ResolveGrantedScopes into the scope claim (capability), and it is
+// passed to MapArazzoControlPlane as the row-reach policy. The principal's Keycloak groups become its sys: identity.
+// The ordered tag dimensions (§14.2) come from the same config — surfaced read-only via GET /security/orderings.
+var labelOrderings = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap.BuildLabelOrderings(bootstrapOptions);
 var entitlements = new PersistentRowSecurityPolicy(
     securityPolicy,
     internalTagResolver: static principal => principal?.FindAll("groups")
