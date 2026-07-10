@@ -53,26 +53,28 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string? environment, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
-        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags, environment);
+        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(DeterministicRunId(workflowId, idempotencyKey));
         try
         {
-            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags);
+            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (WorkflowConflictException)
@@ -366,6 +368,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 string? errorType = root.TryGetProperty("fault"u8, out JsonElement faultElement) && faultElement.TryGetProperty("error"u8, out JsonElement errorElement) ? errorElement.GetString() : null;
                 TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) ? TagSet.CopyFrom(tagsElement) : default;
                 SecurityTagSet securityTags = WorkflowCheckpointSerializer.ReadSecurityTags(root);
+                string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
 
                 // Mark cancelled and clear any wait by rewriting the document verbatim — the run-creation metadata and
                 // the working state (retry counters, correlation tokens, step outputs) are carried through as raw JSON,
@@ -380,7 +383,8 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     ErrorType: errorType,
                     CorrelationId: correlationId,
                     Tags: tags,
-                    SecurityTags: securityTags);
+                    SecurityTags: securityTags,
+                    Environment: environment);
 
                 if (activity is { IsAllDataRequested: true } && correlationId is { } cid)
                 {
@@ -598,7 +602,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                         throw new ArgumentOutOfRangeException(nameof(options), options.Mode, "Unknown resume mode.");
                 }
 
-                // Carry the immutable run-creation metadata (correlation id + tags) through the mutation.
+                // Carry the immutable run-creation metadata (correlation id, pinned environment, tags) through the
+                // mutation — the run does not change environment when it is remediated, and dropping it here would make
+                // the run unclaimable (§5.5: a runner claims only runs pinned to exactly its environment).
                 mutated = WorkflowCheckpointSerializer.Serialize(
                     state.RunId,
                     state.WorkflowId,
@@ -613,6 +619,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     wait: null,
                     fault: state.Fault,
                     correlationId: state.CorrelationId,
+                    environment: state.Environment,
                     tags: state.Tags,
                     securityTags: state.SecurityTags);
 
@@ -624,7 +631,8 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     ErrorType: state.Fault?.Error,
                     CorrelationId: state.CorrelationId,
                     Tags: state.Tags,
-                    SecurityTags: state.SecurityTags);
+                    SecurityTags: state.SecurityTags,
+                    Environment: state.Environment);
             }
         }
         finally

@@ -75,7 +75,7 @@ public class HostedWorkflowResumerTests
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement, "development");
 
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
@@ -103,7 +103,7 @@ public class HostedWorkflowResumerTests
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement, "development");
 
         // The source's transport raises a credential-expired condition at bind time (as the runner cache would for an
         // expired binding). The durable executor must catch it and fault the run as a typed, resumable credentials
@@ -134,7 +134,7 @@ public class HostedWorkflowResumerTests
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development");
 
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
@@ -198,7 +198,7 @@ public class HostedWorkflowResumerTests
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement, "development");
 
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido","profile":{"breed":"Labrador","tags":["good-boy","house-trained"]}}""");
@@ -287,7 +287,7 @@ public class HostedWorkflowResumerTests
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"email":"ada@example.com"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement, "development");
 
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Post, "/accounts", 201, """{"accountId":"acc-42"}""");
@@ -370,7 +370,7 @@ public class HostedWorkflowResumerTests
 
         var runStore = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"name":"Ada"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", versionDoc.RootElement.Ref.WorkflowId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", versionDoc.RootElement.Ref.WorkflowId, inputs.RootElement, "development");
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Post, "/submit", 200, """{"ok":true}""");
         using var loader = new WorkflowExecutorLoader();

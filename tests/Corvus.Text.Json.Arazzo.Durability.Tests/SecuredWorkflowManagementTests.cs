@@ -340,7 +340,7 @@ public sealed class SecuredWorkflowManagementTests
 
     private static async Task FaultRunAtAsync(InMemoryWorkflowStateStore store, string id, int cursor, string faultStep, JsonElement inputs = default, TimeProvider? clock = null)
     {
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", inputs, clock);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", inputs, "development", clock);
         if (cursor > 0)
         {
             // Advance the cursor to the faulting step before recording the fault (FaultAsync keeps the cursor).
@@ -352,13 +352,13 @@ public sealed class SecuredWorkflowManagementTests
 
     private static async Task FaultRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider? clock = null)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         await run.FaultAsync("step1", attempt: 1, "boom", default);
     }
 
     private static async Task CompleteRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider? clock = null)
     {
-        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, clock);
+        WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", default, "development", clock);
         await run.CompleteAsync(default, default);
     }
 

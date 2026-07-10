@@ -26,7 +26,7 @@ public sealed class WorkflowRunSuspendTests
         var store = new InMemoryWorkflowStateStore(time);
 
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray()))
-        using (var run = WorkflowRun.CreateNew(store, "tel-1", "wf", doc.RootElement, time))
+        using (var run = WorkflowRun.CreateNew(store, "tel-1", "wf", doc.RootElement, "development", time))
         {
             await run.CheckpointAsync(cursor: 1, default);
             await run.SuspendForTimerAsync(cursor: 2, TimeSpan.FromMinutes(5), default);
@@ -46,7 +46,7 @@ public sealed class WorkflowRunSuspendTests
         WorkflowRunId id = "timer-1";
 
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray()))
-        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, time))
+        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", time))
         {
             WorkflowWait wait = await run.SuspendForTimerAsync(cursor: 2, TimeSpan.FromMinutes(5), default);
 
@@ -72,7 +72,7 @@ public sealed class WorkflowRunSuspendTests
         WorkflowRunId id = "msg-1";
 
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray()))
-        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, time))
+        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", time))
         {
             await run.SuspendForMessageAsync(cursor: 1, "responses", "order-9", default);
         }
@@ -93,7 +93,7 @@ public sealed class WorkflowRunSuspendTests
         WorkflowRunId id = "fault-1";
 
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray()))
-        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, time))
+        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", time))
         {
             WorkflowFault fault = await run.FaultAsync("charge", 3, "gateway timeout", default);
             fault.At.ShouldBe(Start);
@@ -117,7 +117,7 @@ public sealed class WorkflowRunSuspendTests
         WorkflowRunId id = "timer-2";
 
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray()))
-        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, time))
+        using (var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", time))
         {
             await run.SuspendForTimerAsync(cursor: 1, TimeSpan.FromMinutes(5), default);
             await run.CheckpointAsync(cursor: 2, default);
@@ -136,7 +136,7 @@ public sealed class WorkflowRunSuspendTests
     {
         var store = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "lumens": 150 }"""u8.ToArray());
-        using var run = WorkflowRun.CreateNew(store, "deliver-1", "wf", default);
+        using var run = WorkflowRun.CreateNew(store, "deliver-1", "wf", default, "development");
 
         run.TryTakeDeliveredMessage(out _).ShouldBeFalse();
 
