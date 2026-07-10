@@ -17,8 +17,9 @@ using Corvus.Text.Json.Arazzo.Durability.Vault;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Runner.Demo;
+using Corvus.Text.Json.Arazzo.Samples.Notifications;
 using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
-using Corvus.Text.Json.AsyncApi.Testing;
+using Corvus.Text.Json.AsyncApi.Nats;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
@@ -85,7 +86,23 @@ string ledgerBaseUrl = builder.Configuration["Runner:Sources:Ledger"]
     ?? throw new InvalidOperationException("Runner:Sources:Ledger (the ledger service endpoint) is required — the AppHost injects it.");
 string kycBaseUrl = builder.Configuration["Runner:Sources:Kyc"]
     ?? throw new InvalidOperationException("Runner:Sources:Kyc (the KYC service endpoint) is required — the AppHost injects it.");
-var messageTransport = new InMemoryMessageTransport();
+
+// The application-owned message bus (NATS JetStream) — the AppHost injects its URL. This transport is the one the
+// executor uses for an AsyncAPI SEND step: when the runner drives the onboard-customer-async workflow, its
+// requestKycReview step publishes to kyc.requests through here (each channel is its own JetStream stream, so this
+// transport is scoped to kyc-requests). The verdict RECEIVE is durable (the run suspends), so it does not subscribe
+// here — a separate consumer (below) subscribes to kyc.verdict and resumes the suspended run. This replaces the old
+// in-process InMemoryMessageTransport (design §8): the exchange now flows through the real broker.
+string natsUrl = builder.Configuration["Nats:Url"]
+    ?? throw new InvalidOperationException("Nats:Url (the KYC message bus) is required — the AppHost injects it.");
+NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+{
+    Url = natsUrl,
+    Name = "runner-requests-out",
+    UseJetStream = true,
+    StreamName = "kyc-requests",
+    StorageType = StorageType.File,
+});
 
 // Both HTTP sources are now real external services (their own hosts + databases) — there is no /svc mock left. The
 // SAME client map drives both binders below: the Vault-credentialed production binder (the runner resolves each
@@ -122,6 +139,22 @@ else
 WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(), binder).AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 
+// The consumer side of the async KYC verdict exchange (design §8): subscribe to kyc.verdict and, per verdict, resume
+// the run suspended awaiting it (matched by account-id correlation) over the shared store. A dedicated transport
+// because each channel is its own JetStream stream; DeliverPolicy.All so a verdict published before this consumer
+// subscribed is not lost. Started once the host is listening (below).
+NatsMessageTransport verdictsTransport = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+{
+    Url = natsUrl,
+    Name = "runner-verdicts-in",
+    UseJetStream = true,
+    StreamName = "kyc-verdicts",
+    ConsumerName = "runner-verdict-consumer",
+    DeliverPolicy = DeliverPolicy.All,
+    StorageType = StorageType.File,
+});
+var verdictConsumer = new ReceiveKycVerdictConsumer(verdictsTransport, new KycVerdictResumeHandler(new WorkflowWorker(stateStore, options.RunnerId), catalogResumer));
+
 // §18 out-of-process draft hosting (the multi-process debug-run topology): the control plane only MARKS $draft debug
 // runs claimable; THIS runner claims and executes them, reusing the same binder. Disabled with Runner:HostDraftRuns=false
 // (e.g. a catalog-only runner — catalogued-run execution above stays on regardless).
@@ -151,6 +184,9 @@ builder.Services.AddHostedService<WorkflowDispatchService>();
 builder.Services.AddHostedService<VaultCredentialSelfCheckService>();
 
 WebApplication app = builder.Build();
+
+// Start the KYC verdict consumer now the process is up: it subscribes to kyc.verdict and resumes suspended async runs.
+await verdictConsumer.StartAsync();
 
 // /health (readiness) and /alive (liveness) — the AppHost's WithHttpHealthCheck("/health") polls these.
 app.MapDefaultEndpoints();

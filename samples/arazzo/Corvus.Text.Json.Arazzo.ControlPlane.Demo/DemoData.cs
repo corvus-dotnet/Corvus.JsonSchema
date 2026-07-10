@@ -7,7 +7,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Execution;
-using Corvus.Text.Json.AsyncApi.Testing;
+using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 
@@ -32,12 +32,12 @@ public static class DemoData
     /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
     /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
     /// <returns>The resumer delegate.</returns>
-    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl)
+    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl, IMessageTransport messageTransport)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
 
-        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl));
+        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport));
         return resumer.AsResumer();
     }
 
@@ -51,13 +51,17 @@ public static class DemoData
     /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
     /// <param name="ledgerBaseUrl">The ledger service's base URL (its own external host).</param>
     /// <param name="kycBaseUrl">The KYC service's base URL (its own external host).</param>
+    /// <param name="messageTransport">The application's message bus (NATS JetStream) — an AsyncAPI send step (e.g. the
+    /// async workflow's requestKycReview) publishes through it; the durable verdict receive suspends and is resumed by a
+    /// separate consumer, so this is used only for sends here.</param>
     /// <returns>The transport binder.</returns>
-    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl)
+    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl, IMessageTransport messageTransport)
     {
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
         ArgumentException.ThrowIfNullOrEmpty(onboardingBaseUrl);
         ArgumentException.ThrowIfNullOrEmpty(ledgerBaseUrl);
         ArgumentException.ThrowIfNullOrEmpty(kycBaseUrl);
+        ArgumentNullException.ThrowIfNull(messageTransport);
 
         // The onboarding, ledger, and kyc clients are rooted directly at their services (their absolute operation
         // paths hit the service). Any other source would be a control-plane /svc mock — the generated client emits
@@ -75,11 +79,9 @@ public static class DemoData
             _ => new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() }) { BaseAddress = new Uri(baseUrlProvider()) },
         });
 
-        // A workflow with an AsyncAPI receive step needs an IMessageTransport supplied to its executor even though
-        // the durable suspend/resume itself flows through the worker (WorkflowWorker.DeliverMessageAsync); the
-        // in-process transport satisfies that and would also serve any Tier-1 blocking receive. Shared across runs.
-        var messageTransport = new InMemoryMessageTransport();
-
+        // A workflow with an AsyncAPI send step (e.g. the async workflow's requestKycReview) publishes through the
+        // supplied message transport (the real NATS JetStream bus); the durable verdict receive suspends rather than
+        // blocking on it, and a separate consumer resumes the run. Shared across runs.
         return (descriptor, runTags) => new WorkflowTransports(
             descriptor.Sources.ToDictionary(
                 source => source,
@@ -119,7 +121,7 @@ public static class DemoData
 
         // An asynchronous onboarding: the run suspends durably awaiting an out-of-band KYC verdict on the
         // kyc.verdict channel, then a delivered verdict message resumes it to completion — live suspend + resume.
-        await RunLiveSuspendResumeAsync(runStore, resumer, time, "run-onb-live04", "live04", log).ConfigureAwait(false);
+        await RunLiveSuspendAwaitingKycAsync(runStore, resumer, time, "run-onb-live04", "live04", log).ConfigureAwait(false);
 
         // A resilient onboarding: the identity provider returns a transient incomplete result on the first check,
         // so the step retries with a backoff — the run suspends on a durable TIMER between attempts and resumes
@@ -151,22 +153,19 @@ public static class DemoData
         }
     }
 
-    private static async ValueTask RunLiveSuspendResumeAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
+    private static async ValueTask RunLiveSuspendAwaitingKycAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
     {
         try
         {
-            // First leg: create the account, then suspend at the awaitKycVerdict receive step (returns Suspended).
+            // Execute the run: create the account, PUBLISH a KYC review request to the real bus (kyc.requests — the KYC
+            // service records it as a pending review), then SUSPEND at the awaitKycVerdict receive step. The run stays
+            // suspended awaiting an out-of-band verdict; there is no synthetic delivery — an operator resumes it for real
+            // by submitting a verdict (POST /accounts/{id}/kyc-verdict on the KYC service), which publishes to kyc.verdict
+            // and the runner's consumer resumes it. This is a genuine pending-manual-recovery case in the demo's data.
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"grace@example.com","fullName":"Grace Hopper","plan":"enterprise"}"""u8.ToArray());
             using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-async-v1", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind first = await resumer(run, default).ConfigureAwait(false);
-            log?.Invoke($"Live async onboarding run '{runId}' first leg: {first} (awaiting kyc.verdict message).");
-
-            // The KYC provider posts its verdict out-of-band → deliver it on the channel, which wakes and resumes
-            // the suspended run through the same live resumer, driving it to completion.
-            using ParsedJsonDocument<JsonElement> verdict = ParsedJsonDocument<JsonElement>.Parse("""{"accountId":"3f2504e0-4f89-41d3-9a0c-0305e82c3301","verified":true,"score":0.95}"""u8.ToArray());
-            var worker = new WorkflowWorker(runStore, "demo", time);
-            int resumed = await worker.DeliverMessageAsync("kyc.verdict", null, verdict.RootElement, resumer, default).ConfigureAwait(false);
-            log?.Invoke($"Live async onboarding run '{runId}': delivered kyc.verdict message, resumed {resumed} run(s) to completion.");
+            log?.Invoke($"Live async onboarding run '{runId}': {first} (review requested on kyc.requests; awaiting an out-of-band verdict).");
         }
         catch (Exception ex)
         {

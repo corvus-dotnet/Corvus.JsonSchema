@@ -29,6 +29,15 @@
           "404": { "description": "No such verification" }
         }
       }
+    },
+    "/accounts/{accountId}/kyc-verdict": {
+      "post": {
+        "operationId": "submitVerdict",
+        "description": "The manual-recovery action: an operator records a KYC verdict for an account whose sync verification could not complete. The service persists it (channel 'manual') and PUBLISHES a kycVerdict message onto the bus, which resumes the workflow run suspended awaiting it.",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VerdictRequest" } } } },
+        "responses": { "202": { "description": "Accepted" } }
+      }
     }
   },
   "components": {
@@ -125,6 +134,16 @@
           "nextPageToken": { "type": "string" }
         },
         "required": [ "verifications" ]
+      },
+      "VerdictRequest": {
+        "type": "object",
+        "description": "A manual-recovery KYC verdict submitted by an operator, to be recorded and published onto the bus.",
+        "properties": {
+          "verified": { "type": "boolean" },
+          "score": { "type": "number", "minimum": 0, "maximum": 1, "description": "Match confidence (0-1)." },
+          "fullName": { "type": "string", "maxLength": 120, "description": "The resolved applicant name." }
+        },
+        "required": [ "verified" ]
       }
     }
   }

@@ -11,5 +11,6 @@
     <Project Path="Corvus.Text.Json.Arazzo.Samples.Ledger.Host/Corvus.Text.Json.Arazzo.Samples.Ledger.Host.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.Samples.Kyc/Corvus.Text.Json.Arazzo.Samples.Kyc.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.Samples.Kyc.Host/Corvus.Text.Json.Arazzo.Samples.Kyc.Host.csproj" />
+    <Project Path="Corvus.Text.Json.Arazzo.Samples.Notifications/Corvus.Text.Json.Arazzo.Samples.Notifications.csproj" />
   </Folder>
 </Solution>
