@@ -57,6 +57,14 @@ await PostgresWorkspaceWorkflowStore.PrepareAsync(dataSource);
 await PostgresWorkflowAdministratorStore.PrepareAsync(dataSource);
 await PostgresSecurityPolicyStore.PrepareAsync(dataSource);
 await PostgresAccessRequestStore.PrepareAsync(dataSource);
+// Governance stores (§7.6-§7.8, §16.5.4): availability ("Available in"), availability (promotion) requests, the
+// source registry, per-environment administrators, and the observed-identity typeahead. Durable + shared with the
+// runner, exactly like every other store — no capability quietly falls back to an ephemeral in-memory instance.
+await PostgresAvailabilityStore.PrepareAsync(dataSource);
+await PostgresAvailabilityRequestStore.PrepareAsync(dataSource);
+await PostgresSourceStore.PrepareAsync(dataSource);
+await PostgresEnvironmentAdministratorStore.PrepareAsync(dataSource);
+await PostgresObservedIdentityStore.PrepareAsync(dataSource);
 
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();
@@ -131,6 +139,17 @@ PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.Conne
 // The durable working-copy store (workflow-designer design §4.1): a designer's in-progress edits survive a restart and
 // are shared across control-plane instances, rather than living only in memory. One of the nine fanned-out backends.
 PostgresWorkspaceWorkflowStore workspaceStore = await PostgresWorkspaceWorkflowStore.ConnectAsync(dataSource);
+
+// The governance stores (§7.6-§7.8, §16.5.4). Passing these to MapArazzoControlPlane makes the availability matrix,
+// promotion requests, the source registry, per-environment administration, and grantee typeahead durable + shared —
+// previously each fell back to a fresh in-memory instance (ephemeral, empty, invisible to the runner). Wiring
+// availabilityStore also restores run-creation availability gating (the catalog handler was getting null).
+PostgresAvailabilityStore availabilityStore = await PostgresAvailabilityStore.ConnectAsync(dataSource);
+PostgresAvailabilityRequestStore availabilityRequestStore = await PostgresAvailabilityRequestStore.ConnectAsync(dataSource);
+PostgresSourceStore sourceStore = await PostgresSourceStore.ConnectAsync(dataSource);
+PostgresEnvironmentAdministratorStore environmentAdministratorStore = await PostgresEnvironmentAdministratorStore.ConnectAsync(dataSource);
+PostgresObservedIdentityStore observedIdentityStore = await PostgresObservedIdentityStore.ConnectAsync(dataSource);
+
 var draftRunner = new InProcessDraftRunner(
     stateStore,
     owner: "arazzo-inprocess-draft-runner",
@@ -454,6 +473,12 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // §18 debug-run seam: the governed environment store, the run state store, the captured-draft store, the
     // in-process runner that advances the marked runs, and the durable trace store the dock reads back.
     environmentStore: environmentStore,
+    // Governance stores (§7.6-§7.8, §16.5.4) — durable, no in-memory fallback.
+    environmentAdministratorStore: environmentAdministratorStore,
+    sourceStore: sourceStore,
+    availabilityStore: availabilityStore,
+    availabilityRequestStore: availabilityRequestStore,
+    observedIdentityStore: observedIdentityStore,
     workspaceWorkflowStore: workspaceStore,
     workflowStateStore: stateStore,
     draftRunStore: draftRunStore,
