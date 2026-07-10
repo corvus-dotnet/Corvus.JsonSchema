@@ -138,51 +138,6 @@ public interface IApiWorkspaceHandler
     ValueTask<GetWorkingCopySchemasResult> HandleGetWorkingCopySchemasAsync(GetWorkingCopySchemasParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles POST /workspace/workflows/{id}/debug-runs — Start a DEBUG RUN of the working copy's stored document in a development-class environment (workflow-designer design §18): a durable run under the environment's credential bindings — the runner resolves secrets as its own identity; nothing reaches the browser. Forward-only; gated by the environment's allowsDraftRuns flag, the caller's entitlement, and per-source credential readiness. Every start is audited.
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<StartDebugRunResult> HandleStartDebugRunAsync(StartDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles GET /workspace/workflows/{id}/debug-runs/{debugRunId} — The debug run's current state: status, cursor, the trace so far (the same shape simulation emits — exchanges as sent), and any wait it is suspended on.
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<GetDebugRunResult> HandleGetDebugRunAsync(GetDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles DELETE /workspace/workflows/{id}/debug-runs/{debugRunId} — Delete the debug run and purge its captured draft and metadata trace; idempotent.
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<DeleteDebugRunResult> HandleDeleteDebugRunAsync(DeleteDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles POST /workspace/workflows/{id}/debug-runs/{debugRunId}/resume — Advance the debug run: plain resume continues to the next pause point (pause.afterEachStep = single-step; pause.beforeSteps = breakpoints); an optional action applies the SAME ResumeRequest union the runs view uses — Skip with outputs is 'step over', Rewind deliberately re-executes.
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<ResumeDebugRunResult> HandleResumeDebugRunAsync(ResumeDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Handles POST /workspace/workflows/{id}/debug-runs/{debugRunId}/cancel — Cancel the debug run; a terminal state, idempotent.
-    /// </summary>
-    /// <param name="parameters">The operation parameters.</param>
-    /// <param name="workspace">The workspace for building response values.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The operation result.</returns>
-    ValueTask<CancelDebugRunResult> HandleCancelDebugRunAsync(CancelDebugRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Handles POST /workspace/workflows/{id}/simulate — Simulate a working copy deterministically
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

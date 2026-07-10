@@ -300,7 +300,11 @@ await DemoData.SeedAsync(catalog, specsDir);
 // it with its read-only token. This populates /credentials (and the CLI + web UI) out of the box.
 foreach (string environment in new[] { "production", "development" })
 {
-    foreach (string source in new[] { "onboarding", "ledger", "kyc" })
+    // 'notifications' is the AsyncAPI (NATS) source onboard-customer-async binds (kyc.requests / kyc.verdict). Its
+    // transport is the message binder, not a per-source API key, but the debug-run readiness gate requires a binding
+    // for EVERY referenced source — so it is seeded here too (its Vault #api-key is provisioned but never resolved
+    // for the channel). Without it, a debug run of the async workflow fails 409 "No credential bound for: notifications".
+    foreach (string source in new[] { "onboarding", "ledger", "kyc", "notifications" })
     {
         // AddAsync returns the persisted binding as a pooled document — dispose it (the seed doesn't read it back).
         using ParsedJsonDocument<SourceCredentialBinding> seeded = await sourceCredentials.AddAsync(
