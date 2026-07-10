@@ -207,7 +207,20 @@ internal static class WorkspaceSourceJson
                 }
                 else if (!s.CatalogDocument.IsEmpty)
                 {
-                    writer.WriteRawValue(s.CatalogDocument.Span);
+                    // A working copy opened from version N is the draft of version N+1: it must carry the BASE
+                    // workflow id, not the catalog's internal {base}-v{N} stamp. CatalogPackage.Project adds that
+                    // stamp on publish, and publish REJECTS a versioned id ("already carries a version suffix").
+                    // Strip it on carry — otherwise a from-version working copy can never be published, and the
+                    // designer surfaces the versioned id as if it were the author's. Only the carry path (both the
+                    // base id and its version known) can name the stamp; any other document copies verbatim.
+                    if (s.BaseWorkflowId is { } carryBaseId && s.BasedOnVersion is { } carryVersion)
+                    {
+                        WriteDocumentWithBaseWorkflowId(writer, s.CatalogDocument, carryBaseId, carryVersion);
+                    }
+                    else
+                    {
+                        writer.WriteRawValue(s.CatalogDocument.Span);
+                    }
                 }
                 else
                 {
@@ -378,6 +391,71 @@ internal static class WorkspaceSourceJson
             && entry.TryGetProperty("name"u8, out JsonElement n)
             && n.ValueKind == JsonValueKind.String
             && n.ValueEquals(name);
+
+    // Re-emits a carried catalog document, stripping the catalog's {base}-v{N} version stamp back to {base} on
+    // every workflow definition's id. This is a rare, user-initiated create-from-version carry (not a hot path).
+    // A parse + re-emit is the codebase's idiom for a targeted document transform (cf. WorkspaceSimulationJson
+    // .DocumentBytes) — a typed-model round-trip would realise the whole document graph. The stamp is named
+    // exactly ({base}-v{version}), so the match is a string-free ValueEquals — no JSON value is realised.
+    private static void WriteDocumentWithBaseWorkflowId(Utf8JsonWriter writer, ReadOnlyMemory<byte> documentUtf8, string baseWorkflowId, int basedOnVersion)
+    {
+        string versionStamp = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{baseWorkflowId}-v{basedOnVersion}");
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(documentUtf8);
+        JsonElement root = doc.RootElement;
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            root.WriteTo(writer);
+            return;
+        }
+
+        writer.WriteStartObject();
+        foreach (JsonProperty<JsonElement> property in root.EnumerateObject())
+        {
+            if (property.NameEquals("workflows"u8) && property.Value.ValueKind == JsonValueKind.Array)
+            {
+                writer.WritePropertyName("workflows"u8);
+                writer.WriteStartArray();
+                foreach (JsonElement workflow in property.Value.EnumerateArray())
+                {
+                    WriteWorkflowWithBaseId(writer, workflow, baseWorkflowId, versionStamp);
+                }
+
+                writer.WriteEndArray();
+            }
+            else
+            {
+                property.WriteTo(writer);
+            }
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteWorkflowWithBaseId(Utf8JsonWriter writer, in JsonElement workflow, string baseWorkflowId, string versionStamp)
+    {
+        if (workflow.ValueKind != JsonValueKind.Object)
+        {
+            workflow.WriteTo(writer);
+            return;
+        }
+
+        writer.WriteStartObject();
+        foreach (JsonProperty<JsonElement> property in workflow.EnumerateObject())
+        {
+            // String-free compare (cf. WorkspaceSimulationJson.IsWorkflow): ValueEquals matches the JSON value's
+            // bytes against the known stamp without realising a string.
+            if (property.NameEquals("workflowId"u8) && property.Value.ValueEquals(versionStamp))
+            {
+                writer.WriteString("workflowId"u8, baseWorkflowId);
+            }
+            else
+            {
+                property.WriteTo(writer);
+            }
+        }
+
+        writer.WriteEndObject();
+    }
 
     // The create draft's write context.
     private readonly struct CreateState(JsonElement name, JsonElement document, ReadOnlyMemory<byte> catalogDocument, JsonElement designerState, string? baseWorkflowId, int? basedOnVersion, SecurityTagSet tags, ReadOnlyMemory<byte> carriedScenarios)
