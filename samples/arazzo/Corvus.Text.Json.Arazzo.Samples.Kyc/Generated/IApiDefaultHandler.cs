@@ -46,4 +46,13 @@ public interface IApiDefaultHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<GetVerificationResult> HandleGetVerificationAsync(GetVerificationParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /accounts/{accountId}/kyc-verdict.
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<SubmitVerdictResult> HandleSubmitVerdictAsync(SubmitVerdictParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }
