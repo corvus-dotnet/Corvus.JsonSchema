@@ -45,7 +45,7 @@
       <h1>Arazzo Control Plane</h1>
       <div class="topbar-right">
         <a class="designer-link" href="/designer" title="Open the workflow designer">✎ Designer</a>
-        <div id="auth" class="authbar" hidden></div>
+        <arazzo-auth-status class="authbar"></arazzo-auth-status>
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Theme"></button>
       </div>
     </header>
@@ -73,6 +73,7 @@
     import '/ui/src/arazzo-control-plane.js';
     import '/ui/src/arazzo-catalog.js';
     import '/ui/src/components/access-requests-panel.js';
+    import '/ui/src/components/auth-status.js';
 
     const panel = document.querySelector('arazzo-control-plane');
     const catalog = document.querySelector('arazzo-catalog');
@@ -95,36 +96,8 @@
     catalog.fetch = authFetch;
     access.fetch = authFetch;
 
-    // Sign-in bar: show who is signed in (from /me) with a sign-out, or a sign-in link; hidden when auth is off.
-    const authEl = document.getElementById('auth');
-    (async () => {
-      let me;
-      try {
-        const r = await fetch('/me', { credentials: 'include' });
-        if (r.status === 404) return;                 // authorization disabled — no BFF endpoints
-        me = r.ok ? await r.json() : null;
-      } catch { return; }
-      authEl.hidden = false;
-      if (me) {
-        const who = document.createElement('span');
-        who.className = 'sub';
-        who.textContent = 'Signed in as ' + me.name + (me.groups?.length ? ' (' + me.groups.join(', ') + ')' : '');
-        const out = document.createElement('button');
-        out.className = 'linklike';
-        out.textContent = 'Sign out';
-        out.addEventListener('click', () => {
-          const f = document.createElement('form'); f.method = 'post'; f.action = '/logout';
-          document.body.appendChild(f); f.submit();   // POST navigation so the OIDC sign-out redirect chain runs
-        });
-        authEl.replaceChildren(who, out);
-      } else {
-        const a = document.createElement('a');
-        a.className = 'linklike';
-        a.href = loginUrl();
-        a.textContent = 'Sign in';
-        authEl.replaceChildren(a);
-      }
-    })();
+    // Sign-in / sign-out chrome is the shared <arazzo-auth-status> element in the title bar (it self-discovers
+    // /me and stays invisible when authorization is off). The same element serves the designer (§16.3).
 
     // Tri-state theme toggle: one title-bar button cycling System → Light → Dark, showing the current mode's icon.
     // Theme drives the panels (their `theme` attribute) and the page (arazzo-kit.css honours data-theme on <html>);
