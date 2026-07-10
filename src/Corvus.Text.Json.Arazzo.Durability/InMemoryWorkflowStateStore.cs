@@ -257,10 +257,13 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         }
     }
 
-    // §5.5 dispatch env-match: a run pinned to an environment is claimable only by a runner serving it; an unpinned run
-    // (null environment) or an unscoped/legacy dispatcher (null runnerEnvironment) matches anything (backward-compatible).
+    // §5.5 dispatch env-match: a real runner (non-null runnerEnvironment) claims a run only when it is pinned to EXACTLY
+    // its environment — an unpinned run, or a run pinned elsewhere, is never claimed (the credential boundary). A runner
+    // always declares its environment (the WorkflowDispatcher rejects an unscoped one), so this is the dispatch rule.
+    // A null runnerEnvironment is the env-agnostic base overload (list all claimable regardless of environment) — a
+    // diagnostics / pre-pinning primitive, never a runner.
     private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
+        => runnerEnvironment is null || (runEnvironment is not null && string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal));
 
     // Must be called while holding the gate.
     private bool HasLiveLease(string id, DateTimeOffset now)

@@ -72,7 +72,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
         {
             await pending.EnqueueAsync(default);
         }
@@ -81,7 +81,7 @@ public class WorkflowDispatcherTests
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, runnerEnvironment: "development");
 
         int dispatched = await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default);
 
@@ -102,7 +102,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
         {
             await pending.EnqueueAsync(default);
         }
@@ -112,7 +112,7 @@ public class WorkflowDispatcherTests
 
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, runnerEnvironment: "development");
 
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
     }
@@ -125,7 +125,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun orphan = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock))
+        using (WorkflowRun orphan = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
         {
             // A crashed runner left it Running at cursor 0 and never released its lease.
             await orphan.CheckpointAsync(0, default);
@@ -139,7 +139,7 @@ public class WorkflowDispatcherTests
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-2", clock);
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-2", clock, runnerEnvironment: "development");
 
         int dispatched = await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default);
 
@@ -156,7 +156,7 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
         {
             await pending.EnqueueAsync(default);
         }
@@ -169,7 +169,7 @@ public class WorkflowDispatcherTests
         // The §5.5 authorization gate: while the runner is not authorized for its environment it claims nothing, even
         // though a Pending run is waiting for a version it hosts. The run stays Pending (claimable by an authorized peer).
         bool authorized = false;
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, dispatchGate: _ => ValueTask.FromResult(authorized));
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, dispatchGate: _ => ValueTask.FromResult(authorized), runnerEnvironment: "development");
 
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
         using (WorkflowRun? stillPending = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default))
@@ -240,14 +240,14 @@ public class WorkflowDispatcherTests
         var runStore = new InMemoryWorkflowStateStore(clock);
 
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
-        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock))
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock, environment: "development"))
         {
             await pending.EnqueueAsync(default);
         }
 
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), null));
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock);
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, runnerEnvironment: "development");
 
         (await dispatcher.DispatchClaimableAsync(["other-v3"], resumer.AsResumer(), default)).ShouldBe(0);
     }
