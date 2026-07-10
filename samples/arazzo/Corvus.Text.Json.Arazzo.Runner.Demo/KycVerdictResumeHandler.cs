@@ -5,6 +5,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Samples.Notifications;
+using Microsoft.Extensions.Logging;
 using NModels = Corvus.Text.Json.Arazzo.Samples.Notifications.Models;
 
 namespace Corvus.Text.Json.Arazzo.Runner.Demo;
@@ -20,14 +21,17 @@ public sealed class KycVerdictResumeHandler : IReceiveKycVerdictHandler
 {
     private readonly WorkflowWorker worker;
     private readonly WorkflowResumer resumer;
+    private readonly ILogger<KycVerdictResumeHandler> logger;
 
     /// <summary>Initializes a new instance of the <see cref="KycVerdictResumeHandler"/> class.</summary>
     /// <param name="worker">The worker that leases + resumes suspended runs over the shared store.</param>
     /// <param name="resumer">The resumer that re-enters a run's generated executor.</param>
-    public KycVerdictResumeHandler(WorkflowWorker worker, WorkflowResumer resumer)
+    /// <param name="logger">Logs each verdict receipt and how many suspended runs it resumed, so the async exchange is visible in the runner's logs.</param>
+    public KycVerdictResumeHandler(WorkflowWorker worker, WorkflowResumer resumer, ILogger<KycVerdictResumeHandler> logger)
     {
         this.worker = worker ?? throw new ArgumentNullException(nameof(worker));
         this.resumer = resumer ?? throw new ArgumentNullException(nameof(resumer));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc/>
@@ -40,6 +44,12 @@ public sealed class KycVerdictResumeHandler : IReceiveKycVerdictHandler
 
         // Deliver on the channel matched by the account-id correlation: only the run that suspended awaiting this
         // account's verdict resumes; any other suspended async runs stay put.
-        await this.worker.DeliverMessageAsync("kyc.verdict", accountId, element, this.resumer, cancellationToken).ConfigureAwait(false);
+        int resumed = await this.worker.DeliverMessageAsync("kyc.verdict", accountId, element, this.resumer, cancellationToken).ConfigureAwait(false);
+
+        // Make the async exchange visible: without this the runner resumes the run silently and the operator sees "nothing happened".
+        this.logger.LogInformation(
+            "KYC verdict received for account {AccountId}; resumed {ResumedCount} suspended run(s).",
+            accountId ?? "(none)",
+            resumed);
     }
 }

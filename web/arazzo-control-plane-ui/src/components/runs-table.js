@@ -182,7 +182,7 @@ class ArazzoRunsTable extends ArazzoElement {
         <table>
           <thead>
             <tr>
-              <th>Status</th><th>Workflow</th><th>Environment</th><th>Run</th><th>Age</th><th>Waiting on</th><th>Error</th><th>Tags</th>
+              <th>Status</th><th>Workflow</th><th>Environment</th><th>Run</th><th>Age</th><th>Updated</th><th>Waiting on</th><th>Error</th><th>Tags</th>
             </tr>
           </thead>
           <tbody part="rows"></tbody>
@@ -200,7 +200,7 @@ class ArazzoRunsTable extends ArazzoElement {
     const selectable = this.hasAttribute('selectable');
 
     if (this._error) {
-      tbody.innerHTML = `<tr><td colspan="8">
+      tbody.innerHTML = `<tr><td colspan="9">
         <div class="error-banner">
           <span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span>
           <button class="retry" type="button">Retry</button>
@@ -212,13 +212,13 @@ class ArazzoRunsTable extends ArazzoElement {
 
     if (this._loading && this._runs.length === 0) {
       tbody.innerHTML = Array.from({ length: 4 }, () =>
-        `<tr>${'<td><div class="skl"></div></td>'.repeat(8)}</tr>`).join('');
+        `<tr>${'<td><div class="skl"></div></td>'.repeat(9)}</tr>`).join('');
       this.updatePager();
       return;
     }
 
     if (this._runs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty">No runs match the current filters.</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty">No runs match the current filters.</div></td></tr>`;
       this.updatePager();
       return;
     }
@@ -261,6 +261,7 @@ class ArazzoRunsTable extends ArazzoElement {
         <td part="cell" class="env">${run.environment ? `<span class="tag">${escapeHtml(run.environment)}</span>` : '<span class="muted">—</span>'}</td>
         <td part="cell" class="id"><span title="${escapeHtml(run.id)}">${escapeHtml(shortId(run.id))}</span><button class="copy ghost" type="button" data-id="${escapeHtml(run.id)}" title="Copy run id" aria-label="Copy run id">⧉</button></td>
         <td part="cell" class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</td>
+        <td part="cell" class="muted" title="${escapeHtml(absoluteTime(run.updatedAt))}">${escapeHtml(relativeTime(run.updatedAt))}</td>
         <td part="cell">${waiting}</td>
         <td part="cell">${err}</td>
         <td part="cell">${tags}</td>
