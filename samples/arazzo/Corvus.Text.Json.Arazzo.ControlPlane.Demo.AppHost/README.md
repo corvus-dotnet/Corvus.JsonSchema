@@ -41,6 +41,32 @@ So the *mechanism* (AppRole, response-wrapping, unwrap-then-login, least privile
 **delivery of the workload's identity** is simulated by the orchestrator rather than a real service
 principal / attestation. The dev root token on the provisioner is likewise a stand-in for a CI/IaC identity.
 
+## GitHub App — the designer's Git integration (workflow-designer §4.7)
+
+The workflow designer can bind a working copy to a Git branch and commit/pull **as the signed-in
+user's own GitHub identity** — a real GitHub App *user-to-server* OAuth flow (each user authorizes
+themselves in a popup; the token is exchanged server-side and never reaches the browser). It is
+**off by default**; enable it for your own instance by registering a GitHub App and dropping its
+credentials into a local, **uncommitted** file.
+
+1. **Register a GitHub App** — GitHub → Settings → Developer settings → **GitHub Apps** → *New GitHub App*:
+   - **User authorization callback URL**: `http://localhost:8090/arazzo/v1/github/auth/callback`
+     (the control plane is pinned to port **8090** precisely so this callback is stable across runs).
+   - **Permissions → Repository**: **Contents = Read & write**, **Pull requests = Read & write**.
+   - Webhooks can be disabled. Then **Install** the App on the repo(s) you want to sync.
+2. **Generate a client secret** on the App, and note its **Client ID**.
+3. **Copy the credentials into a local file** (never committed — it is `.gitignore`d):
+   ```bash
+   cp github-app.local.json.example github-app.local.json
+   # then edit github-app.local.json with your App's ClientId + ClientSecret
+   ```
+   The client id is public (it rides the authorize URL); the secret stays in this local file only.
+   The AppHost injects the secret into the control plane as an environment variable it resolves via
+   `env://GITHUB_APP_CLIENT_SECRET` — it is never written to the repo, Vault, or a container image.
+
+Without `github-app.local.json` the control plane brokers no App and the designer's **Git** panel
+reports that Git is unavailable — everything else works unchanged.
+
 ## Prerequisites
 
 - **.NET 10 SDK** and the **Aspire CLI** (`dotnet tool install -g Aspire.Cli`).

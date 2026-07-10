@@ -8,6 +8,24 @@
 // HashiCorp Vault for source credentials (design §13); Keycloak for OIDC and optionally Postgres join here next.
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
+// Optional local, UNCOMMITTED GitHub App credentials for the designer's Git integration (workflow-designer §4.7 / D3).
+// Copy github-app.local.json.example → github-app.local.json and fill in your own App (see the README); absent means
+// the control plane brokers no App and the Git panel stays off. The client id is public; the secret never enters git.
+// Read directly (not via Configuration.AddJsonFile — that extension is not in the AppHost's assembly set) into two
+// locals the controlplane resource injects below as GitHubApp__ClientId (config) + GITHUB_APP_CLIENT_SECRET (env).
+string? githubClientId = null;
+string? githubClientSecret = null;
+string githubAppConfigPath = Path.Combine(builder.AppHostDirectory, "github-app.local.json");
+if (File.Exists(githubAppConfigPath))
+{
+    using System.Text.Json.JsonDocument githubAppConfig = System.Text.Json.JsonDocument.Parse(File.ReadAllText(githubAppConfigPath));
+    if (githubAppConfig.RootElement.TryGetProperty("GitHubApp", out System.Text.Json.JsonElement githubAppSection))
+    {
+        githubClientId = githubAppSection.TryGetProperty("ClientId", out System.Text.Json.JsonElement idElement) ? idElement.GetString() : null;
+        githubClientSecret = githubAppSection.TryGetProperty("ClientSecret", out System.Text.Json.JsonElement secretElement) ? secretElement.GetString() : null;
+    }
+}
+
 // The shared durability store — a real Postgres database. AddPostgres stands up a Postgres server container;
 // AddDatabase declares the shared 'workflowstore' database both processes open (its name IS the connection-string
 // name the apps look up, so no app-side config-key change is needed). Ephemeral (no data volume): a fresh empty
@@ -209,6 +227,16 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithHttpEndpoint(port: 8090, isProxied: false)
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
+
+// Enable the designer's GitHub App broker (§4.7 / D3) when local credentials are present (read at the top). The client
+// id is public (it rides the authorize URL) so it goes in as config; the secret is injected as an env var the control
+// plane resolves through env://GITHUB_APP_CLIENT_SECRET — never committed. Absent → "brokers no App" (Git panel off).
+if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(githubClientSecret))
+{
+    controlplane
+        .WithEnvironment("GitHubApp__ClientId", githubClientId)
+        .WithEnvironment("GITHUB_APP_CLIENT_SECRET", githubClientSecret);
+}
 
 // The runner ("execution-host") — the second process in the topology. It shares the store, registers in the
 // runner registry, and claims/resumes runs (design §5/§7). It is the §13 secret *consumer*: it holds ONLY the
