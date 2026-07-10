@@ -54,11 +54,15 @@ const string runnerRoleId = "arazzo-runner-approle";
 // host user); the provisioner chmod 644s the file so the host-side runner process can read it. Ephemeral per run.
 string vaultHandoffDir = Path.Combine(Path.GetTempPath(), "arazzo-vault-approle-" + Guid.NewGuid().ToString("N")[..12]);
 Directory.CreateDirectory(vaultHandoffDir);
-File.SetUnixFileMode(
-    vaultHandoffDir,
-    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
-    | UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
-    | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+if (!OperatingSystem.IsWindows())
+{
+    // POSIX permissions only apply to the rootless-podman (Linux) host this sample targets; a no-op elsewhere.
+    File.SetUnixFileMode(
+        vaultHandoffDir,
+        UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+        | UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
+        | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+}
 string vaultWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid.wrap");
 
 // HashiCorp Vault, dev mode: unsealed, in-memory (fresh each run), KV v2 mounted at secret/. The secret *store*.

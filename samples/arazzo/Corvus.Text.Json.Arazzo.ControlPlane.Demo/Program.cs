@@ -290,7 +290,7 @@ if (requireAuthorization)
 }
 
 string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
-await DemoData.SeedAsync(catalog, stateStore, specsDir);
+await DemoData.SeedAsync(catalog, specsDir);
 
 // Seed demo source-credential bindings — references only (the §13 invariant: never secret material). Each points
 // at the Vault path the AppHost's provisioner seeds (vault://secret/arazzo/<source>#api-key); the runner resolves
@@ -350,13 +350,21 @@ if (requireAuthorization)
     // sends the browser to /login (the OIDC challenge → Keycloak), and reads /me to show who is signed in.
     app.MapGet("/login", (string? returnUrl) =>
         Results.Challenge(
-            new AuthenticationProperties { RedirectUri = string.IsNullOrEmpty(returnUrl) ? "/ui/" : returnUrl },
+            new AuthenticationProperties { RedirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl },
             [OpenIdConnectDefaults.AuthenticationScheme]));
 
-    app.MapPost("/logout", () =>
-        Results.SignOut(
-            new AuthenticationProperties { RedirectUri = "/ui/" },
-            [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
+    app.MapPost("/logout", async (HttpContext http) =>
+    {
+        // RP-initiated logout. Carry the stored id token (SaveTokens) into the OIDC sign-out so Keycloak's end-session
+        // endpoint receives a valid id_token_hint — a fresh AuthenticationProperties would omit it, and Keycloak then
+        // rejects the request ("Invalid parameter: id_token_hint"). Land back on the app root (/ — the UI is served
+        // there; /ui only hosts its source assets).
+        AuthenticateResult auth = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        AuthenticationProperties props = auth.Properties ?? new AuthenticationProperties();
+        props.RedirectUri = "/";
+        await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await http.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, props);
+    });
 
     app.MapGet("/me", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true
         ? Results.Json(new
