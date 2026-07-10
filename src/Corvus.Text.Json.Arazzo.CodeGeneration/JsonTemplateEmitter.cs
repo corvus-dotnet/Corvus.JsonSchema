@@ -151,8 +151,14 @@ internal static class JsonTemplateEmitter
                 statements.AppendLine("    {");
                 for (int i = 0; i < names.Count; i++)
                 {
-                    statements.Append("        builder.AddProperty(").Append(EmitText.Quote(names[i])).Append("u8, values[")
-                        .Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+                    // Omit a template property whose value expression did not resolve (Undefined): never add a
+                    // None-valued property (the builder's assert terminates the process in Debug). A resolved null is kept.
+                    string idx = i.ToString(CultureInfo.InvariantCulture);
+                    statements.Append("        if (values[").Append(idx).AppendLine("].IsNotUndefined())");
+                    statements.AppendLine("        {");
+                    statements.Append("            builder.AddProperty(").Append(EmitText.Quote(names[i])).Append("u8, values[")
+                        .Append(idx).AppendLine("]);");
+                    statements.AppendLine("        }");
                 }
 
                 statements.AppendLine("    });");
@@ -177,7 +183,10 @@ internal static class JsonTemplateEmitter
                 statements.AppendLine("    {");
                 for (int i = 0; i < locals.Count; i++)
                 {
-                    statements.Append("        builder.AddItem(values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+                    // An array item whose expression did not resolve (Undefined) becomes explicit null, preserving
+                    // the array's length and positions — AddItem asserts on a None value (process-terminating in Debug).
+                    string idx = i.ToString(CultureInfo.InvariantCulture);
+                    statements.Append("        if (values[").Append(idx).Append("].IsNotUndefined()) { builder.AddItem(values[").Append(idx).Append("]); } else { builder.AddItemNull(); }").AppendLine();
                 }
 
                 statements.AppendLine("    });");

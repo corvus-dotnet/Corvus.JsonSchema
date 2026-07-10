@@ -74,6 +74,9 @@ public class StepBodyEmitterTests
             new StepBody("""{"name":"$inputs.name","status":"available"}""", ArgumentValueKind.CompositeTemplate));
 
         code.Statements.ShouldContain("JsonElement.ObjectBuilder builder");
+        // A template property whose value expression does not resolve is omitted, never added as a None value
+        // (which would trip the builder's assert and terminate the process in a Debug build).
+        code.Statements.ShouldContain("if (values[0].IsNotUndefined())");
         code.Statements.ShouldContain("builder.AddProperty(\"name\"u8");
         code.Statements.ShouldContain("builder.AddProperty(\"status\"u8");
         code.Statements.ShouldContain("CreatePetAsync(body:");

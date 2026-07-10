@@ -94,6 +94,9 @@ public class WorkflowExecutorEmitterTests
         // The workflow output `name` = $steps.getPet.outputs.petName resolves statically against the
         // step's outputs local — direct navigation, no dictionary lookup.
         source.ShouldContain("getPetOutputsElement.TryGetProperty(\"petName\"u8, out JsonElement workflowOutput0);");
+        // Both the step outputs and the workflow outputs guard each property: an unresolved value (default/Undefined)
+        // is omitted, never added as a None value (which would trip the builder's assert and terminate the process).
+        source.ShouldContain("if (values[0].IsNotUndefined())");
         source.ShouldContain("builder.AddProperty(\"name\"u8, values[0]);");
         source.ShouldContain("return workflowOutputsElement;");
     }

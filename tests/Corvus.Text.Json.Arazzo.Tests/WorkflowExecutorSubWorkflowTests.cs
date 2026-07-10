@@ -82,6 +82,9 @@ public partial class WorkflowExecutorEndToEndTests
 
         // The parameters are projected into an inputs object and handed to the child's ExecuteAsync; its
         // result becomes the step's outputs (read by the workflow output via $steps.callChild.outputs).
+        // A sub-workflow argument that does not resolve is OMITTED (the child sees it as absent) — never a
+        // None-valued AddProperty, which would trip the builder's assert and terminate the process in Debug.
+        source.ShouldContain("if (values[0].IsNotUndefined())");
         source.ShouldContain("builder.AddProperty(\"petId\"u8, values[0]);");
         source.ShouldContain("JsonElement callChildOutputsElement = await GeneratedWorkflows.ChildWorkflow.ExecuteAsync(transport, workspace,");
         source.ShouldContain("callChildOutputsElement.TryGetProperty(\"petName\"u8");
