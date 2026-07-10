@@ -1,0 +1,4 @@
+# Local, uncommitted GitHub App credentials for the designer's Git integration (§4.7 / D3).
+# Copy github-app.local.json.example to github-app.local.json and fill in your own GitHub App's
+# client id + secret. NEVER commit real secrets — this file keeps them out of the repo.
+github-app.local.json
