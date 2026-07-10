@@ -24,12 +24,34 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         // (1) The editable bootstrap rules (§14.2) — idempotent (only missing rule names are added).
         await SecurityBootstrap.SeedAsync(securityStore, "bootstrap", cancellationToken).ConfigureAwait(false);
 
+        // Bindings carry a store-assigned id (no natural key like a rule name), so this bootstrap must dedupe by the
+        // binding SUBJECT (claim type + value) to stay idempotent: a deployment runs it on every startup, and appending
+        // the same bootstrap bindings each time would accumulate duplicates. Load the current set once and add only the
+        // subjects that are missing (mirrors how SecurityBootstrap.SeedAsync adds only missing rule names). If an
+        // operator has since deleted a bootstrap binding, a re-run restores it; if they still hold it, the re-run is a
+        // no-op.
+        using PooledDocumentList<SecurityBindingDocument> existingBindings = await securityStore.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        bool BindingExists(string claimType, string? claimValue)
+        {
+            foreach (SecurityBindingDocument binding in existingBindings)
+            {
+                if (string.Equals(binding.ClaimTypeValue, claimType, StringComparison.Ordinal)
+                    && string.Equals(binding.ClaimValueOrNull, claimValue, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // (2) The read-all shell binding: every authenticated principal may READ the whole control plane; WRITE/purge
         // reach is deny-by-default, conferred per-principal only through the access-request → approval flow (§16.5).
-        using (ParsedJsonDocument<SecurityBindingDocument> readAll = SecurityBindingDocument.Draft(
-            "*", null, read: VerbGrant.Full, write: VerbGrant.None, purge: VerbGrant.None,
-            description: "Authenticated principals may read the whole control plane."))
+        if (!BindingExists("*", null))
         {
+            using ParsedJsonDocument<SecurityBindingDocument> readAll = SecurityBindingDocument.Draft(
+                "*", null, read: VerbGrant.Full, write: VerbGrant.None, purge: VerbGrant.None,
+                description: "Authenticated principals may read the whole control plane.");
             (await securityStore.AddBindingAsync(readAll.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
         }
 
@@ -39,11 +61,12 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         // confers capability by mere membership; everyone else earns reach through the §16.5 approval flow.
         string claimType = options.IdentityClaimType.IsNotUndefined() ? (string)options.IdentityClaimType : "groups";
         string genesisGroup = (string)options.GenesisAdminGroup;
-        using (ParsedJsonDocument<SecurityBindingDocument> admin = SecurityBindingDocument.Draft(
-            claimType, genesisGroup, read: VerbGrant.Full, write: VerbGrant.Full, purge: VerbGrant.Full,
-            scopes: ReadScopes(options),
-            description: $"Genesis administrator (§16.2 tier 3): the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach."))
+        if (!BindingExists(claimType, genesisGroup))
         {
+            using ParsedJsonDocument<SecurityBindingDocument> admin = SecurityBindingDocument.Draft(
+                claimType, genesisGroup, read: VerbGrant.Full, write: VerbGrant.Full, purge: VerbGrant.Full,
+                scopes: ReadScopes(options),
+                description: $"Genesis administrator (§16.2 tier 3): the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach.");
             (await securityStore.AddBindingAsync(admin.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
         }
     }
