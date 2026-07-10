@@ -228,26 +228,6 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] GetWorkingCopySchemasOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>StartDebugRun</c> for the <c>Bearer</c> scheme.
-        /// </summary>
-        public static readonly string[] StartDebugRunBearerScopes = ["workspace:write", "runs:write"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>GetDebugRun</c> for the <c>Bearer</c> scheme.
-        /// </summary>
-        public static readonly string[] GetDebugRunBearerScopes = ["workspace:read"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>ResumeDebugRun</c> for the <c>Bearer</c> scheme.
-        /// </summary>
-        public static readonly string[] ResumeDebugRunBearerScopes = ["workspace:write", "runs:write"];
-
-        /// <summary>
-        /// Gets the scopes required by <c>CancelDebugRun</c> for the <c>Bearer</c> scheme.
-        /// </summary>
-        public static readonly string[] CancelDebugRunBearerScopes = ["workspace:write", "runs:write"];
-
-        /// <summary>
         /// Gets the scopes required by <c>SimulateWorkingCopy</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] SimulateWorkingCopyOauth2Scopes = ["workspace:read"];
@@ -315,7 +295,7 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Bearer</c> scheme.
         /// </summary>
-        public static readonly string[] AllBearerScopes = ["runs:write", "workspace:read", "workspace:write"];
+        public static readonly string[] AllBearerScopes = ["workspace:read"];
     }
 
     /// <summary>
@@ -451,39 +431,6 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="id">The id parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GetWorkingCopySchemasResponse> GetWorkingCopySchemasAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Start a DEBUG RUN of the working copy's stored document in a development-class environment (workflow-designer design §18): a durable run under the environment's credential bindings — the runner resolves secrets as its own identity; nothing reaches the browser. Forward-only; gated by the environment's allowsDraftRuns flag, the caller's entitlement, and per-source credential readiness. Every start is audited.
-    /// </summary>
-    /// <param name="id">The id parameter.</param>
-    /// <param name="body">The request body..</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<StartDebugRunResponse> StartDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunStart.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// The debug run's current state: status, cursor, the trace so far (the same shape simulation emits — exchanges as sent), and any wait it is suspended on.
-    /// </summary>
-    /// <param name="id">The id parameter.</param>
-    /// <param name="debugRunId">The debugRunId parameter.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<GetDebugRunResponse> GetDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Advance the debug run: plain resume continues to the next pause point (pause.afterEachStep = single-step; pause.beforeSteps = breakpoints); an optional action applies the SAME ResumeRequest union the runs view uses — Skip with outputs is 'step over', Rewind deliberately re-executes.
-    /// </summary>
-    /// <param name="id">The id parameter.</param>
-    /// <param name="debugRunId">The debugRunId parameter.</param>
-    /// <param name="body">The request body..</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ResumeDebugRunResponse> ResumeDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DebugRunResume.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
-
-    /// <summary>
-    /// Cancel the debug run; a terminal state, idempotent.
-    /// </summary>
-    /// <param name="id">The id parameter.</param>
-    /// <param name="debugRunId">The debugRunId parameter.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<CancelDebugRunResponse> CancelDebugRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source debugRunId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Simulate a working copy deterministically
