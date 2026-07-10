@@ -118,8 +118,9 @@ class ArazzoRunDetail extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: visible; }
+        /* Sticky header: it stays put while the body scrolls under it (the .detail-pane is the scroll container). */
+        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
         header .wf { font-weight: 700; font-size: 15px; }
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
