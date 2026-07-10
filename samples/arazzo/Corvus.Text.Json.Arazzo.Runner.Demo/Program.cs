@@ -21,7 +21,7 @@ using Corvus.Text.Json.Arazzo.Samples.Notifications;
 using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
 using Corvus.Text.Json.AsyncApi.Nats;
 using VaultSharp;
-using VaultSharp.V1.AuthMethods.Token;
+using VaultSharp.V1.AuthMethods.AppRole;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -71,15 +71,14 @@ builder.Services.AddSingleton<IEnvironmentRunnerAuthorizationStore>(runnerAuthor
 builder.Services.AddSingleton<ISourceCredentialStore>(credentials);
 builder.Services.AddSingleton(catalog);
 
-// The one transport binder EVERY run executes through — catalogued runs AND §18 $draft debug runs. In the demo the
-// sources are the control plane's own /svc backends (Runner:SourcesBaseUrl); a real deployment points them at the
-// environment's real endpoints. When Vault is configured (VAULT_ADDR/VAULT_TOKEN — the AppHost injects the runner's
-// read-only token), this is the §13.5 production path: the runner resolves each source's credential as its OWN
-// read-only Vault identity at bind time and applies it to the request — the secret never leaves Vault and never
-// reaches the control plane, the designer, or the developer. Without Vault (a standalone two-process run) it falls
-// back to plain /svc transports, enough to prove the loop. The shared in-memory message transport satisfies an
-// AsyncAPI receive step's need for an IMessageTransport (the durable suspend/resume itself flows through the shared
-// store + worker); a real broker adapter replaces it in production (design §8).
+// The one transport binder EVERY run executes through — catalogued runs AND §18 $draft debug runs. The HTTP sources
+// (onboarding/ledger/kyc) are real external services routed at their own endpoints. When Vault is configured (VAULT_ADDR
+// + the AppRole RoleID/wrapping-token below — the §13.5 production path), the runner resolves each source's credential
+// as its OWN AppRole-authenticated Vault identity at bind time and applies it to the request — the secret never leaves
+// Vault and never reaches the control plane, the designer, or the developer. Without Vault (a standalone two-process
+// run) it falls back to uncredentialed transports, enough to prove the loop. The message transport below is the real
+// NATS JetStream bus (design §8): the async workflow's send step publishes through it (the durable suspend/resume flows
+// through the shared store + worker, and a separate consumer resumes on a verdict).
 string onboardingBaseUrl = builder.Configuration["Runner:Sources:Onboarding"]
     ?? throw new InvalidOperationException("Runner:Sources:Onboarding (the onboarding service endpoint) is required — the AppHost injects it.");
 string ledgerBaseUrl = builder.Configuration["Runner:Sources:Ledger"]
@@ -115,12 +114,37 @@ var sourceClients = new Dictionary<string, HttpClient>(StringComparer.Ordinal)
     ["kyc"] = new HttpClient { BaseAddress = new Uri(kycBaseUrl) },
 };
 
+// Secure introduction (design §13.5.1): the runner holds NO pre-minted token. It reads the single-use, short-TTL
+// wrapping token the provisioner left in the shared handoff file (its stand-in for a runtime host / service principal
+// delivering the workload's identity), UNWRAPS it to obtain the AppRole SecretID (which never travelled in plaintext),
+// then AUTHENTICATES via AppRole — RoleID (plain config) + SecretID — for a dynamically-issued, short-TTL, renewable
+// token scoped to the read-only policy. VaultSharp renews it. See the samples README: in production this identity
+// comes from the runtime host's service principal / platform attestation; the sample simulates that here.
 string? vaultAddress = builder.Configuration["VAULT_ADDR"];
-string? vaultToken = builder.Configuration["VAULT_TOKEN"];
+string? vaultRoleId = builder.Configuration["Runner:Vault:RoleId"];
+string? vaultWrapTokenFile = builder.Configuration["Runner:Vault:WrapTokenFile"];
 WorkflowTransportBinder binder;
-if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultToken))
+if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultRoleId) && !string.IsNullOrWhiteSpace(vaultWrapTokenFile))
 {
-    IVaultClient vaultClient = new VaultClient(new VaultClientSettings(vaultAddress, new TokenAuthMethodInfo(vaultToken)));
+    // Self-unwrap: POST sys/wrapping/unwrap authenticated AS the wrapping token, with NO body token (exactly what
+    // `vault unwrap` does). Passing the token in the body as well double-consumes it, so a raw request is clearest.
+    string wrappingToken = (await File.ReadAllTextAsync(vaultWrapTokenFile)).Trim();
+    string secretId;
+    using (var unwrapHttp = new HttpClient { BaseAddress = new Uri(vaultAddress) })
+    using (var unwrapRequest = new HttpRequestMessage(HttpMethod.Post, "v1/sys/wrapping/unwrap"))
+    {
+        unwrapRequest.Headers.Add("X-Vault-Token", wrappingToken);
+        using HttpResponseMessage unwrapResponse = await unwrapHttp.SendAsync(unwrapRequest);
+        unwrapResponse.EnsureSuccessStatusCode();
+        await using Stream unwrapStream = await unwrapResponse.Content.ReadAsStreamAsync();
+        using System.Text.Json.JsonDocument unwrapDoc = await System.Text.Json.JsonDocument.ParseAsync(unwrapStream);
+        secretId = unwrapDoc.RootElement.GetProperty("data").GetProperty("secret_id").GetString()!;
+    }
+
+    IVaultClient vaultClient = new VaultClient(new VaultClientSettings(vaultAddress, new AppRoleAuthMethodInfo(vaultRoleId, secretId)));
+    // Share the AppRole-authenticated client with the startup self-check: the wrapping token was single-use (consumed
+    // by the unwrap above), so the self-check cannot re-derive the SecretID — it reuses this client.
+    builder.Services.AddSingleton(vaultClient);
     ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
     var providerFactory = new SourceCredentialProviderFactory(secretResolver);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
