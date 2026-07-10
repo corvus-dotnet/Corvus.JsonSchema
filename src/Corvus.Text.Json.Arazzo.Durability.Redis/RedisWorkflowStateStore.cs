@@ -459,6 +459,9 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private static RedisKey AwaitingKey(string channel) => Prefix + "awaiting:" + channel;
 
     // §5.5 null-matches-anything: an unpinned run or an unscoped dispatcher matches any environment.
+    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (an
+    // unpinned or differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload
+    // (list all claimable regardless of environment), never a runner.
     private static bool MatchesEnvironment(string? entryEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || entryEnvironment is null || string.Equals(entryEnvironment, runnerEnvironment, StringComparison.Ordinal);
+        => runnerEnvironment is null || (entryEnvironment is not null && string.Equals(entryEnvironment, runnerEnvironment, StringComparison.Ordinal));
 }

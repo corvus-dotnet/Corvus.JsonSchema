@@ -270,7 +270,7 @@ public class DurableRunPauseTests
         MockApiTransport transport = Transport();
         using var loader = new WorkflowExecutorLoader();
         WorkflowResumer resume = Resumer(catalog, loader, transport);
-        var dispatcher = new WorkflowDispatcher(runStore, "runner-1");
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", runnerEnvironment: "development");
         var dispatch = (IWorkflowDispatchIndex)runStore;
 
         WorkflowRunId id = await EnqueueAsync(runStore, versionId);
@@ -325,7 +325,7 @@ public class DurableRunPauseTests
     private static async Task<WorkflowRunId> EnqueueAsync(IWorkflowStateStore runStore, string versionId)
     {
         using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"email":"ada@example.com"}"""));
-        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", versionId, inputs.RootElement);
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", versionId, inputs.RootElement, environment: "development");
         await run.EnqueueAsync(default);
         return run.Id;
     }

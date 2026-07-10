@@ -35,15 +35,20 @@ public sealed class WorkflowDispatcher
     /// in-flight runs it already leased drain normally. Default (<see langword="null"/>) is "always dispatch".
     /// </param>
     /// <param name="runnerEnvironment">
-    /// The single deployment environment this runner serves (design §5.5): claims are constrained to runs pinned to it (an
-    /// unpinned/legacy run still matches). <see langword="null"/> (the default) claims regardless of a run's environment —
-    /// the pre-pinning behaviour.
+    /// The single deployment environment this runner serves (design §5.5): claims are constrained to runs pinned to
+    /// exactly it. <strong>Required</strong> — a runner must declare its environment; an unscoped dispatcher is
+    /// rejected, so no runner can claim a run that is not pinned to its own environment (the §5.5 credential boundary).
     /// </param>
-    /// <exception cref="ArgumentException">The store does not implement <see cref="IWorkflowDispatchIndex"/>.</exception>
+    /// <exception cref="ArgumentException">The store does not implement <see cref="IWorkflowDispatchIndex"/>, or <paramref name="runnerEnvironment"/> is null or empty.</exception>
     public WorkflowDispatcher(IWorkflowStateStore store, string owner, TimeProvider? timeProvider = null, TimeSpan? leaseTtl = null, Func<CancellationToken, ValueTask<bool>>? dispatchGate = null, string? runnerEnvironment = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(owner);
+
+        // A runner MUST declare the single environment it serves (design §5.5): dispatch is constrained to runs pinned
+        // to exactly this environment, so a runner never claims another environment's run (nor an unpinned one). An
+        // unscoped runner is rejected here rather than silently claiming nothing.
+        ArgumentException.ThrowIfNullOrEmpty(runnerEnvironment);
         this.store = store;
         this.index = store as IWorkflowDispatchIndex
             ?? throw new ArgumentException("The state store must implement IWorkflowDispatchIndex to drive a dispatcher.", nameof(store));
@@ -68,14 +73,9 @@ public sealed class WorkflowDispatcher
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         ArgumentNullException.ThrowIfNull(resume);
 
-        // §18 fail-closed: draft runs are always environment-pinned, so a runner may declare draft hosting (the
-        // reserved $draft id) only when it is itself pinned to one environment — an unpinned dispatcher claiming
-        // drafts would cross the §5.5 credential boundary (it could claim any environment's draft runs).
-        if (this.runnerEnvironment is null && hostedWorkflowIds.Contains(DraftRuns.RunWorkflowId))
-        {
-            throw new InvalidOperationException(
-                "Draft-run dispatch requires an environment-pinned runner (design §5.5/§18): construct the WorkflowDispatcher with a runnerEnvironment to claim draft runs.");
-        }
+        // The runner is environment-pinned (enforced at construction), so dispatch is constrained to runs pinned to
+        // exactly its environment — including the §18 draft runs, which are always environment-pinned. A runner never
+        // claims another environment's run, nor an unpinned one, so the §5.5 credential boundary cannot be crossed.
 
         // §5.5 authorization gate: a runner not currently authorized to serve its environment claims nothing — it stays
         // registered + heartbeating (visible, reclaimable) but takes no new or orphaned work until authorized.

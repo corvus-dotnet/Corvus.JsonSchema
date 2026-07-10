@@ -259,19 +259,21 @@ public abstract class WorkflowStateStoreConformance
         await store.SaveAsync("staging", Bytes("a"), InEnvironment("staging"), WorkflowEtag.None, default);
         await store.SaveAsync("legacy", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default); // unpinned (null environment)
 
-        // §5.5: a runner serving production claims the production-pinned run AND the unpinned legacy run (which matches any
-        // environment), but never the staging run — a production run only lands on a production runner.
+        // §5.5: a runner serving production claims ONLY the production-pinned run — never the staging run, and never the
+        // unpinned legacy run. A real runner never claims a run outside its exact environment (the credential boundary).
         List<string> production = (await Collect(index.QueryClaimableAsync(["wf"], "production", T0, default))).Select(r => r.Value).ToList();
-        production.ShouldContain("prod");
-        production.ShouldContain("legacy");
-        production.ShouldNotContain("staging");
+        production.ShouldBe(["prod"]);
 
-        // An unscoped dispatcher (null environment) claims regardless of a run's environment (the pre-pinning behaviour) —
-        // confirming the environment persisted and round-trips through the store's index.
-        List<string> unscoped = (await Collect(index.QueryClaimableAsync(["wf"], null, T0, default))).Select(r => r.Value).ToList();
-        unscoped.ShouldContain("prod");
-        unscoped.ShouldContain("staging");
-        unscoped.ShouldContain("legacy");
+        // A runner serving staging claims only the staging run (confirming each environment round-trips through the index).
+        List<string> staging = (await Collect(index.QueryClaimableAsync(["wf"], "staging", T0, default))).Select(r => r.Value).ToList();
+        staging.ShouldBe(["staging"]);
+
+        // The env-agnostic base overload (null runnerEnvironment) is not a runner: it lists ALL claimable runs regardless
+        // of environment — the pinned runs and the unpinned legacy one alike.
+        List<string> agnostic = (await Collect(index.QueryClaimableAsync(["wf"], null, T0, default))).Select(r => r.Value).ToList();
+        agnostic.ShouldContain("prod");
+        agnostic.ShouldContain("staging");
+        agnostic.ShouldContain("legacy");
     }
 
     [TestMethod]

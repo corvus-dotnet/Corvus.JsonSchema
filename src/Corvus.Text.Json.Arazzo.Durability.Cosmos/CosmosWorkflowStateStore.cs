@@ -346,12 +346,12 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         // Candidate runs are Pending (always claimable) or Running (claimable only if no live lease holds them).
         // §18: a paused (or faulted) run the control plane marked resume-claimable (c.resumeRequestedAt defined) also
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
-        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
-        // unpinned run (c.environment absent) or an unscoped dispatcher (@runnerEnvironment is null) matches anything.
-        // (Cosmos SQL has no `@p IS NULL`; a null-valued parameter is tested with IS_NULL, and an absent doc field with
-        // NOT IS_DEFINED — mirroring this store's IS_DEFINED idiom for optional properties.)
+        // §5.5 environment-scoped dispatch: a real runner (non-null @runnerEnvironment) claims a run only when pinned to
+        // EXACTLY its environment — `c.environment = @runnerEnvironment` excludes an unpinned run (undefined = value →
+        // false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base overload (list all
+        // claimable): NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by hosted id only, never a runner.
         var candidateQuery = new QueryDefinition(
-            "SELECT c.id, c.status FROM c WHERE ((c.status = @pending OR c.status = @running) OR ((c.status = @suspended OR c.status = @faulted) AND IS_DEFINED(c.resumeRequestedAt))) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR NOT IS_DEFINED(c.environment) OR c.environment = @runnerEnvironment)")
+            "SELECT c.id, c.status FROM c WHERE ((c.status = @pending OR c.status = @running) OR ((c.status = @suspended OR c.status = @faulted) AND IS_DEFINED(c.resumeRequestedAt))) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@pending", PendingStatus)
             .WithParameter("@running", RunningStatus)
             .WithParameter("@suspended", SuspendedStatus)

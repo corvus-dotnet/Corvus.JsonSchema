@@ -142,15 +142,14 @@ public sealed class DraftRunTests
     }
 
     [TestMethod]
-    public async Task An_unpinned_dispatcher_refuses_to_claim_draft_runs()
+    public void An_unpinned_dispatcher_is_rejected_at_construction()
     {
         var store = new InMemoryWorkflowStateStore();
-        var dispatcher = new WorkflowDispatcher(store, "runner-1");
 
-        // Fail-closed (§5.5/§18): declaring draft hosting without an environment pin is a composition error —
-        // an unpinned runner could otherwise claim any environment's draft runs.
-        await Should.ThrowAsync<InvalidOperationException>(async () =>
-            await dispatcher.DispatchClaimableAsync([DraftRuns.RunWorkflowId], static (run, ct) => ValueTask.FromResult(WorkflowRunResultKind.Completed), default));
+        // Fail-closed (§5.5/§18): a runner must declare the environment it serves — an unscoped dispatcher could
+        // otherwise claim any environment's runs (incl. draft runs), crossing the credential boundary. Rejected here,
+        // at construction, rather than silently claiming nothing.
+        Should.Throw<ArgumentException>(() => new WorkflowDispatcher(store, "runner-1"));
     }
 
     private static AccessContext Scope(string rule) => AccessContext.Uniform(
