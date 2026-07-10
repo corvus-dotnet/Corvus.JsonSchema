@@ -47,6 +47,11 @@ class ArazzoGitDialog extends ArazzoElement {
   /** Opens for a working copy — fetched fresh, so flush any pending save first. */
   async open({ workingCopyId } = {}) {
     this._workingCopy = null;
+    // render() below rebuilds the shadow DOM, wiping the .commits list. The history load dedups on
+    // _historyKey, so without clearing it here loadHistory would early-return on every RE-open and
+    // leave the freshly-wiped list empty — "history doesn't load when you select the Git tab".
+    this._historyKey = '';
+    this._historyPage = 0;
     this.render();
     this.$('.gh-connect').client = this._client;
     if (this.windowOpener) this.$('.gh-connect').windowOpener = this.windowOpener;
@@ -107,8 +112,8 @@ class ArazzoGitDialog extends ArazzoElement {
         .spec-row { display: grid; grid-template-columns: minmax(9ch, auto) 1fr; gap: 8px; align-items: center; }
         .spec-row .sname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
         .spec-row .stale { color: var(--_muted); font-size: 10.5px; }
-        .result { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
-        .result[hidden], .error-banner[hidden] { display: none; }
+        .result, .load-result { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
+        .result[hidden], .load-result[hidden], .error-banner[hidden] { display: none; }
         .result .file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .commits { display: grid; gap: 6px; }
@@ -165,14 +170,19 @@ class ArazzoGitDialog extends ArazzoElement {
             </div>
             <div class="row-actions"><button class="save-binding" type="button" disabled>Save binding</button></div>
             </div>
-          </fieldset>
-          <div class="stage-hint bound-hint" hidden>Save the binding — pull and commit work against the bound branch.</div>
-          <fieldset class="roundtrip-section" hidden>
-            <legend>Round-trip <a class="gh-link" target="_blank" rel="noopener" hidden style="margin-left:6px; font-size:11.5px;" title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
-            <div class="row-actions">
-              <button class="pull" type="button" disabled title="Refresh the document, bound specs, and scenarios from the branch (etag-guarded; nothing partially applies)">⤓ Pull</button>
-              <span class="hint">Pull replaces the document, bound specs, and scenario set from the branch.</span>
+            <!-- Load lives with the binding: it syncs the working copy FROM the branch (a replace, not a git
+                 merge). The forward round-trip is Commit; going backward is the History's roll back. -->
+            <div class="load-section" hidden>
+              <div class="row-actions">
+                <button class="pull" type="button" disabled title="Load the bound branch's current contents into this working copy — replaces the document, bound specs, and scenarios (nothing partially applies)">⤓ Load from branch</button>
+                <span class="hint">Load replaces this working copy's document, bound specs, and scenarios with the branch's current contents. To go back to an earlier commit instead, use the History below.</span>
+              </div>
+              <div class="load-result" hidden></div>
             </div>
+          </fieldset>
+          <div class="stage-hint bound-hint" hidden>Save the binding — Load and Commit work against the bound branch.</div>
+          <fieldset class="roundtrip-section" hidden>
+            <legend>Commit <a class="gh-link" target="_blank" rel="noopener" hidden style="margin-left:6px; font-size:11.5px;" title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
             <label>Commit message <input class="c-message" type="text" placeholder="what changed"></label>
             <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <select class="c-base" disabled title="Pick a repository first"></select></label>
             <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity (§4.7)">⤒ Commit</button></div>
@@ -193,12 +203,12 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.gh-connect').addEventListener('github-disconnected', () => this.renderBinding());
     this.$('.save-binding').addEventListener('click', () => this.saveBinding());
     this.$('.pull').addEventListener('click', async () => {
-      // Pull is a REPLACE, not a merge (§4.7): the branch's document, bound specs, and scenario
-      // set overwrite the working copy under the etag guard. Say so before doing it.
+      // Load is a REPLACE, not a git merge (§4.7): the branch's document, bound specs, and scenario
+      // set overwrite the working copy. Say so before doing it — and point at History for going back.
       const sure = await this.$('.ask').ask({
-        title: 'Pull replaces this working copy',
-        message: 'The branch’s document, bound specs, and scenario set replace what is here — local edits since the last commit are lost. (A true merge is on the roadmap; commit first if in doubt.)',
-        confirmLabel: 'Pull & replace',
+        title: 'Load replaces this working copy',
+        message: 'The branch’s document, bound specs, and scenario set replace what is here — local edits since the last save are lost. This is a load, not a merge. To go back to an earlier commit instead, use the History.',
+        confirmLabel: 'Load & replace',
         danger: true,
       });
       if (sure) this.pull();
@@ -395,6 +405,7 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.paths-hint').hidden = picked;
     this.$('.paths-section').hidden = !picked;
     this.$('.bound-hint').hidden = !connected || bound;
+    this.$('.load-section').hidden = !bound;   // Load lives with the binding, and only once bound.
     this.$('.roundtrip-section').hidden = !bound;
     this.$('.history-section').hidden = !connected || !bound;
     if (connected && bound) void this.loadHistory();
@@ -418,8 +429,8 @@ class ArazzoGitDialog extends ArazzoElement {
     const pull = this.$('.pull');
     pull.disabled = !connected || !bound;
     pull.title = pull.disabled
-      ? (!connected ? 'Connect GitHub first' : 'Save a binding first — Pull reads from the bound branch')
-      : 'Refresh the document, bound specs, and scenarios from the branch (etag-guarded; nothing partially applies)';
+      ? (!connected ? 'Connect GitHub first' : 'Save a binding first — Load reads from the bound branch')
+      : 'Load the bound branch into this working copy — replaces the document, bound specs, and scenarios (nothing partially applies)';
     for (const sel of ['.browse-path', '.browse-scenarios', '.browse-specs']) {
       const browse = this.$(sel);
       if (browse) {
@@ -480,12 +491,19 @@ class ArazzoGitDialog extends ArazzoElement {
     this.clearError();
     this.$('.pull').disabled = true;
     try {
+      // Pull is a discard-and-REPLACE, so operate on the CURRENT stored copy. The panel captured its
+      // etag when it opened, but the canvas stays editable beside it — an edit since then bumped the
+      // working copy's etag, and pulling against the stale one 409s ("re-fetch and pull against the
+      // fresh state") and never reverts. 'pull-starting' lets the host cancel a pending autosave
+      // synchronously first; then re-read for the live etag.
+      this.emit('pull-starting');
+      this._workingCopy = await this._client.getWorkingCopy(this._workingCopy.id);
       const pulled = await this._client.pullWorkingCopy(this._workingCopy.id, { expectedEtag: this._workingCopy.etag });
       this._workingCopy = pulled;
       this.renderBinding();
-      const result = this.$('.result');
+      const result = this.$('.load-result');
       result.hidden = false;
-      result.innerHTML = `<span>Pulled from <strong>${escapeHtml(`${pulled.gitBinding.owner}/${pulled.gitBinding.repo}@${pulled.gitBinding.branch}`)}</strong>.</span>`;
+      result.innerHTML = `<span>Loaded from <strong>${escapeHtml(`${pulled.gitBinding.owner}/${pulled.gitBinding.repo}@${pulled.gitBinding.branch}`)}</strong>.</span>`;
       this.emit('pulled', { workingCopy: pulled });
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);
@@ -606,6 +624,10 @@ class ArazzoGitDialog extends ArazzoElement {
     if (!sure) return;
     this.clearError();
     try {
+      // Same discard-and-replace semantics as pull() — refresh to the live etag first (a canvas edit
+      // beside the open panel would otherwise 409 the rollback and leave the document unchanged).
+      this.emit('pull-starting');
+      this._workingCopy = await this._client.getWorkingCopy(this._workingCopy.id);
       const pulled = await this._client.pullWorkingCopy(this._workingCopy.id, { expectedEtag: this._workingCopy.etag, ref: commit.sha });
       this._workingCopy = pulled;
       this.renderBinding();

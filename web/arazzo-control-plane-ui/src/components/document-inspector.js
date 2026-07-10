@@ -74,6 +74,12 @@ class ArazzoDocumentInspector extends ArazzoElement {
         label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
         h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
         h4 { font-size: 11px; color: var(--_muted); margin: 4px 0 2px; }
+        /* Each component kind is a delineated section: a bordered card with a headed, underlined title. */
+        .components { display: grid; gap: 14px; }
+        .component-group { border: 1px solid var(--_border); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px;
+                           background: color-mix(in srgb, var(--_muted) 8%, transparent); }
+        .component-group > h4 { margin: 0; padding-bottom: 7px; border-bottom: 1px solid var(--_border); font-size: 11px;
+                                font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--_text); }
         input[type="text"], select, textarea {
           width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
           border: 1px solid var(--_border); border-radius: var(--_radius);
@@ -206,6 +212,7 @@ class ArazzoDocumentInspector extends ArazzoElement {
     box.innerHTML = '';
     for (const [kind, label] of COMPONENT_KINDS) {
       const group = document.createElement('div');
+      group.className = 'component-group';
       group.innerHTML = `
         <h4>${kind}</h4>
         <div class="entries"></div>
