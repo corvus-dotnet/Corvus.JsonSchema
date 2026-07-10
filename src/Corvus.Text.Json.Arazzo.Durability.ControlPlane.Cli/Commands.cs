@@ -156,6 +156,19 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiWorkspaceClient(transport));
     }
 
+    /// <summary>Builds the §18 debug-runs API client (and the HTTP client / transport it owns) for this invocation.
+    /// Debug runs are the durable, forward-only runs a designer drives against a working copy (workflow-designer
+    /// design §18): start / inspect / step / inject-message / cancel / delete.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and debug-runs API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiDebugRunsClient Client)> CreateDebugRunsClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiDebugRunsClient(transport));
+    }
+
     private string? ResolveServer() => this.Server ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_SERVER");
 
     /// <summary>
