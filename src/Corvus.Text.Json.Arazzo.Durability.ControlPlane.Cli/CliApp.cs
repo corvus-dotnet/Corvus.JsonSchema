@@ -43,6 +43,23 @@ public static class CliApp
                     .WithDescription("Run scenario files against a workflow document in-process (standalone), or a working copy's stored suite remotely.");
             });
 
+            c.AddBranch<CommandSettings>("debug-runs", debugRuns =>
+            {
+                debugRuns.SetDescription("Drive §18 debug runs against a working copy (start / step / inject-message / cancel; workflow-designer §18).");
+                debugRuns.AddCommand<DebugRunStartCommand>("start")
+                    .WithDescription("Start a debug run of a working copy's draft in a development-class environment.");
+                debugRuns.AddCommand<DebugRunGetCommand>("get")
+                    .WithDescription("Show a debug run's status, cursor, and recorded trace.");
+                debugRuns.AddCommand<DebugRunResumeCommand>("resume")
+                    .WithDescription("Advance a paused/suspended debug run (step/continue, or a RetryFaultedStep/Rewind/Skip/StatePatch action).");
+                debugRuns.AddCommand<DebugRunInjectCommand>("inject-message")
+                    .WithDescription("Deliver a message to a debug run suspended on an AsyncAPI receive (the debug stand-in for the real publisher).");
+                debugRuns.AddCommand<DebugRunCancelCommand>("cancel")
+                    .WithDescription("Cancel a non-terminal debug run.");
+                debugRuns.AddCommand<DebugRunDeleteCommand>("delete")
+                    .WithDescription("Permanently delete a debug run and its trace.");
+            });
+
             c.AddBranch<CommandSettings>("catalog", catalog =>
             {
                 catalog.SetDescription("Work with the workflow catalog (versioned, hashed package store).");
