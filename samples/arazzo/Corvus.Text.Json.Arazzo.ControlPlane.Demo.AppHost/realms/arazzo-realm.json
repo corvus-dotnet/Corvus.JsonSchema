@@ -10,28 +10,6 @@
     { "name": "payments" },
     { "name": "onboarding" }
   ],
-  "users": [
-    {
-      "username": "arazzo-admin",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "admin@arazzo.example",
-      "firstName": "Arazzo",
-      "lastName": "Admin",
-      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
-      "groups": ["/arazzo-admins"]
-    },
-    {
-      "username": "alice",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "alice@arazzo.example",
-      "firstName": "Alice",
-      "lastName": "Payments",
-      "credentials": [{ "type": "password", "value": "alice", "temporary": false }],
-      "groups": ["/payments"]
-    }
-  ],
   "clients": [
     {
       "clientId": "arazzo-ui",
