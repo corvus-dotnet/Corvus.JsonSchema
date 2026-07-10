@@ -3,19 +3,28 @@
 // </copyright>
 
 using System.Buffers;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Samples.Onboarding;
 
 /// <summary>
-/// Small helpers for composing the service's UTF-8 JSON wire documents at the leaf. The composed bytes are always
-/// parsed back into the generated, schema-validated model before they leave the service (and the generated endpoint
-/// middleware re-validates every response body), so the wire contract stays type-checked end to end.
+/// Pooled UTF-8 JSON composition helpers for the onboarding service, following the durability-layer best practice
+/// (<c>PersistedJson</c>): the scratch <see cref="Utf8JsonWriter"/> and its backing buffer are rented from a workspace
+/// pool and returned — never a fresh <see cref="ArrayBufferWriter{T}"/> per call — and a composed response document is
+/// materialised through the ownership model (the document adopts an <see cref="ArrayPool{T}"/>-rented buffer) rather
+/// than being serialized to a <see cref="byte"/> array and re-parsed. The write callback takes its state by
+/// <see langword="in"/> context so callers pass a <see langword="static"/> lambda and avoid a closure allocation.
 /// </summary>
 internal static class OnboardingJson
 {
-    /// <summary>A callback that writes a JSON value to a pooled writer.</summary>
-    /// <param name="writer">The writer to write to.</param>
-    internal delegate void WriteValue(Utf8JsonWriter writer);
+    private const int DefaultBufferSize = 512;
+
+    /// <summary>A callback that writes JSON into a rented writer, taking its state by <see langword="in"/> context.</summary>
+    /// <typeparam name="TContext">The state type (may be a <see langword="ref"/> struct).</typeparam>
+    /// <param name="writer">The rented writer to write into.</param>
+    /// <param name="context">The caller's state.</param>
+    internal delegate void WriteCallback<TContext>(Utf8JsonWriter writer, in TContext context)
+        where TContext : allows ref struct;
 
     /// <summary>A stable, process-independent hash of a string, so demo-derived values are reproducible across restarts.</summary>
     /// <param name="value">The value to hash.</param>
@@ -31,19 +40,68 @@ internal static class OnboardingJson
         return hash;
     }
 
-    /// <summary>Serializes a JSON value to a fresh byte array via a pooled writer.</summary>
-    /// <param name="write">The callback that writes the value.</param>
-    /// <returns>The UTF-8 JSON bytes.</returns>
-    internal static byte[] Serialize(WriteValue write)
+    /// <summary>
+    /// Composes JSON into a pooled scratch buffer and materialises it as a pooled, owned document via the ownership
+    /// model (the document adopts an <see cref="ArrayPool{T}"/>-rented copy — no fresh writer/buffer, no re-parse). The
+    /// caller hands the result to <see cref="JsonWorkspace.TakeOwnership"/> so the response workspace disposes it.
+    /// </summary>
+    /// <typeparam name="T">The generated model type the body is validated as.</typeparam>
+    /// <typeparam name="TContext">The write-callback state type.</typeparam>
+    /// <param name="context">The state passed to <paramref name="write"/>.</param>
+    /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
+    /// <returns>The pooled, owned document.</returns>
+    internal static ParsedJsonDocument<T> ToPooledDocument<T, TContext>(in TContext context, WriteCallback<TContext> write)
+        where T : struct, IJsonElement<T>
+        where TContext : allows ref struct
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
+        using JsonWorkspace scratch = JsonWorkspace.Create();
+        Utf8JsonWriter writer = scratch.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
+        try
         {
-            write(writer);
+            write(writer, in context);
             writer.Flush();
+            ReadOnlySpan<byte> written = buffer.WrittenSpan;
+            byte[] rented = ArrayPool<byte>.Shared.Rent(written.Length);
+            try
+            {
+                written.CopyTo(rented);
+                return ParsedJsonDocument<T>.Parse(rented.AsMemory(0, written.Length), rented);
+            }
+            catch
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+                throw;
+            }
         }
+        finally
+        {
+            scratch.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
 
-        return buffer.WrittenSpan.ToArray();
+    /// <summary>
+    /// Composes JSON into a pooled scratch buffer and copies it into a single owned <see cref="byte"/> array — the one
+    /// allocation, for a store column that requires a <see cref="byte"/> array. The scratch writer/buffer are pooled.
+    /// </summary>
+    /// <typeparam name="TContext">The write-callback state type.</typeparam>
+    /// <param name="context">The state passed to <paramref name="write"/>.</param>
+    /// <param name="write">Writes the JSON (pass a <see langword="static"/> lambda to avoid a closure).</param>
+    /// <returns>The owned UTF-8 JSON bytes.</returns>
+    internal static byte[] ToArray<TContext>(in TContext context, WriteCallback<TContext> write)
+        where TContext : allows ref struct
+    {
+        using JsonWorkspace scratch = JsonWorkspace.Create();
+        Utf8JsonWriter writer = scratch.RentWriterAndBuffer(DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            write(writer, in context);
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            scratch.ReturnWriterAndBuffer(writer, buffer);
+        }
     }
 
     /// <summary>Writes a stored JSON document (or nothing, if absent) as a named property, splicing its raw bytes.</summary>

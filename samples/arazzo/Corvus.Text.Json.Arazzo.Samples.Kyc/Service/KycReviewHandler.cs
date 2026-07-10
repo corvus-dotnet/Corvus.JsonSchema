@@ -43,10 +43,10 @@ public sealed class KycReviewHandler : IReceiveKycReviewHandler
             ? n.GetString()!
             : "Applicant";
 
-        byte[] applicant = KycJson.Serialize(writer =>
+        byte[] applicant = KycJson.ToArray<string>(in fullName, static (writer, in name) =>
         {
             writer.WriteStartObject();
-            writer.WriteString("fullName", fullName);
+            writer.WriteString("fullName", name);
             writer.WriteEndObject();
         });
 
