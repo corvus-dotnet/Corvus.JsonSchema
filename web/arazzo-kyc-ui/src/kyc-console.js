@@ -107,7 +107,7 @@ class KycConsole extends HTMLElement {
   }
 
   /** @private Submits an operator verdict for a pending review, then reloads. */
-  async _submitVerdict(accountId, verified, score) {
+  async _submitVerdict(accountId, verified, score, fullName) {
     if (this._submitting) {
       return;
     }
@@ -116,7 +116,9 @@ class KycConsole extends HTMLElement {
     this._error = null;
     this._renderBody();
     try {
-      await this._client.submitVerdict(accountId, { verified, score });
+      // Carry the applicant's name through the verdict so the resolved record keeps its context (the service would
+      // otherwise fall back to a placeholder). Omit it when the pending review had no name rather than sending empty.
+      await this._client.submitVerdict(accountId, fullName ? { verified, score, fullName } : { verified, score });
       this._expanded.delete(accountId);
       await this._loadFirstPage({ quiet: true });
     } catch (err) {
@@ -384,7 +386,7 @@ class KycConsole extends HTMLElement {
     submit.disabled = busy;
     submit.addEventListener('click', () => {
       const score = Math.max(0, Math.min(1, Number(scoreInput.value) || 0));
-      this._submitVerdict(verification.accountId, verifiedInput.checked, score);
+      this._submitVerdict(verification.accountId, verifiedInput.checked, score, verification.fullName);
     });
 
     row.append(verifiedLabel, scoreLabel, submit);

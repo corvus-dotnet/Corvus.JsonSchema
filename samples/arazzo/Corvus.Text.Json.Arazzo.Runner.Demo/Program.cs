@@ -177,7 +177,6 @@ NatsMessageTransport verdictsTransport = await NatsMessageTransport.CreateAsync(
     DeliverPolicy = DeliverPolicy.All,
     StorageType = StorageType.File,
 });
-var verdictConsumer = new ReceiveKycVerdictConsumer(verdictsTransport, new KycVerdictResumeHandler(new WorkflowWorker(stateStore, options.RunnerId), catalogResumer));
 
 // §18 out-of-process draft hosting (the multi-process debug-run topology): the control plane only MARKS $draft debug
 // runs claimable; THIS runner claims and executes them, reusing the same binder. Disabled with Runner:HostDraftRuns=false
@@ -208,6 +207,15 @@ builder.Services.AddHostedService<WorkflowDispatchService>();
 builder.Services.AddHostedService<VaultCredentialSelfCheckService>();
 
 WebApplication app = builder.Build();
+
+// The consumer of the async KYC verdict exchange, built here so it gets a categorized logger from the running host —
+// each verdict receipt (and the number of runs it resumed) is logged, so a resume is visible rather than silent.
+var verdictConsumer = new ReceiveKycVerdictConsumer(
+    verdictsTransport,
+    new KycVerdictResumeHandler(
+        new WorkflowWorker(stateStore, options.RunnerId),
+        catalogResumer,
+        app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<KycVerdictResumeHandler>()));
 
 // Start the KYC verdict consumer now the process is up: it subscribes to kyc.verdict and resumes suspended async runs.
 await verdictConsumer.StartAsync();

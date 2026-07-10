@@ -61,7 +61,12 @@ public sealed class KycService : IApiDefaultHandler
 
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         string status = verified ? "verified" : "blocked";
-        string resolvedName = fullName ?? "Applicant";
+
+        // Keep the applicant's context: prefer the name the operator submitted, else the name the pending review already
+        // carried (so a manual verdict never overwrites it with a placeholder), else a last-resort default.
+        string resolvedName = fullName
+            ?? (await this.store.GetAsync(accountId, cancellationToken).ConfigureAwait(false))?.FullName
+            ?? "Applicant";
 
         // A manual verdict is an operator decision, so the identity result is minimal (no synthetic evidence). Composed
         // through the pooled writer into owned arrays (the store columns need byte[]); state by `in` context, static lambdas.
