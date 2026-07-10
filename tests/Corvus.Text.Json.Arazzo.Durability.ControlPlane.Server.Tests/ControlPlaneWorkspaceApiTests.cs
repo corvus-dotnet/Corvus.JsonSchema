@@ -182,6 +182,11 @@ public sealed class ControlPlaneWorkspaceApiTests
             // The catalog version's workflow document was copied in as the starting point.
             doc.RootElement.GetProperty("document").GetProperty("arazzo").GetString().ShouldBe("1.1.0");
             doc.RootElement.GetProperty("document").TryGetProperty("workflows", out _).ShouldBeTrue();
+
+            // The catalog stamps {base}-v{N} on publish, but a working copy is the draft of the NEXT version, so the
+            // carried document is stripped back to the base id — otherwise it could never be published ("already
+            // carries a version suffix"). See WorkspaceSourceJson.WriteDocumentWithBaseWorkflowId.
+            doc.RootElement.GetProperty("document").GetProperty("workflows")[0].GetProperty("workflowId").GetString().ShouldBe("flow-1");
         }
 
         // The version number is required with the base workflow id...
