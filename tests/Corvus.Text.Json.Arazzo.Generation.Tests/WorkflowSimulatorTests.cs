@@ -194,6 +194,36 @@ public sealed class WorkflowSimulatorTests
     }
 
     [TestMethod]
+    public async Task An_output_whose_pointer_misses_an_absent_field_is_omitted_not_crashed()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> emptyBody = ParsedJsonDocument<JsonElement>.Parse("{}"u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks =
+            [
+                // 200, but the body has no 'name' — so get-pet's petName ($response.body#/name) does not resolve.
+                new("get", "/pets/{petId}", 200, emptyBody.RootElement),
+                new("post", "/pets/{petId}/adopt", 200, default),
+            ],
+        };
+
+        // Before OutputExtractionEmitter guarded each property, an unresolved output stayed a default
+        // (Undefined) JsonElement, and adding it tripped the builder's Debug.Assert — terminating the process
+        // in a Debug build. An unresolved output must simply be ABSENT and the run must complete.
+        using SimulationResult result = await simulator.SimulateAsync(WorkflowUtf8, Sources, scenario);
+
+        result.Outcome.ShouldBe(SimulationOutcome.Completed);
+        result.StepsExecuted.ShouldBe(2);
+        result.Steps[0].Outputs.ValueKind.ShouldBe(JsonValueKind.Object);
+        result.Steps[0].Outputs.TryGetProperty("petName"u8, out _).ShouldBeFalse("the pointer missed, so petName is omitted");
+        result.Outputs.ValueKind.ShouldBe(JsonValueKind.Object);
+        result.Outputs.TryGetProperty("name"u8, out _).ShouldBeFalse("the workflow output derives from the absent petName, so it too is omitted");
+    }
+
+    [TestMethod]
     public async Task A_matched_failure_action_ends_the_run_and_the_truth_table_shows_the_failed_criterion()
     {
         using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
