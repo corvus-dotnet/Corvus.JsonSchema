@@ -1152,13 +1152,15 @@
     });
 
     // §18 R-UI-3: derive a REMOTE debug run's pause from the canvas breakpoints (pause.beforeSteps = step ids), so
-    // breakpoints govern the durable run, not only the simulator. 'step' = single-step (afterEachStep); 'continue' =
-    // run to the next breakpoint, or the end when none are set; 'start' = run to the first breakpoint, else single-step.
+    // breakpoints govern the durable run, not only the simulator. 'step' = single-step (afterEachStep); 'start' and
+    // 'continue' both run to the next breakpoint, or to the END when none are set. (▶ Run runs; ⏭ Step single-steps;
+    // breakpoints pause — like the mock ▶, and like any debugger. Previously 'start' with no breakpoints single-stepped,
+    // so a debug run "executed exactly one step and stopped".)
     function debugRunPause(mode) {
       const beforeSteps = [...debugBreakpoints];
       if (mode === 'step') return { afterEachStep: true };
       if (beforeSteps.length) return { beforeSteps };
-      return mode === 'continue' ? {} : { afterEachStep: true };
+      return {};
     }
 
     // Triggers injected mid-session (the tray's ⚡ form on a suspended message wait). Stateless
@@ -1465,7 +1467,7 @@
     const DEBUG_SETTLED = new Set(['paused', 'suspended', 'completed', 'faulted', 'cancelled']);
 
     function applyDebugRun(run) {
-      shell.debugRun = { id: run.debugRunId, environment: run.environment, status: run.status };
+      shell.debugRun = { id: run.debugRunId, environment: run.environment, status: run.status, cursor: run.cursor };
       tray.trace = run.trace;
       document.getElementById('debug-dock').hidden = false;
       void feedTraySchemas();
@@ -1477,15 +1479,26 @@
     }
 
     // Poll get-debug-run until the marked run reaches a settled status (a runner advanced it), painting each state.
-    async function pumpDebugRun() {
+    // Subtlety: a RESUME marks the run claimable and returns its CURRENT (pre-advance) pause — SAME cursor — before
+    // the runner picks it up. 'paused' is a settled status, so without awaitAdvanceFrom the pump would exit at that
+    // stale pause and never poll the runner's advance (Step/Run appear to "do nothing"). When resuming, pass the
+    // cursor we are leaving: keep polling through the still-old pause until the cursor moves or the run terminates.
+    function debugRunPumpDone(awaitAdvanceFrom) {
+      if (!shell.debugRun) return true;
+      const { status, cursor } = shell.debugRun;
+      if (!DEBUG_SETTLED.has(status)) return false;
+      if (awaitAdvanceFrom !== null && status === 'paused' && cursor === awaitAdvanceFrom) return false;
+      return true;
+    }
+    async function pumpDebugRun({ awaitAdvanceFrom = null } = {}) {
       for (let i = 0; i < 150; i++) {
-        if (!shell.debugRun || DEBUG_SETTLED.has(shell.debugRun.status)) return;
+        if (debugRunPumpDone(awaitAdvanceFrom)) return;
         let run;
         try { run = await client.getDebugRun(shell.id, shell.debugRun.id); }
         catch (err) { showToast(`Debug run: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error'); return; }
         if (!shell.debugRun) return; // detached mid-poll (stop / close)
         applyDebugRun(run);
-        if (DEBUG_SETTLED.has(run.status)) return;
+        if (debugRunPumpDone(awaitAdvanceFrom)) return;
         await new Promise((r) => setTimeout(r, DEBUG_POLL_MS));
       }
     }
@@ -1496,9 +1509,15 @@
 
     async function advanceDebugRun(command) {
       if (!shell.debugRun) return;
+      // A finished run cannot be resumed — do not fire the request just to surface "The debug run is completed".
+      if (['completed', 'faulted', 'cancelled'].includes(shell.debugRun.status)) {
+        showToast(`The debug run has ${shell.debugRun.status}. Press ■ Stop to start a new one.`, 'info');
+        return;
+      }
+      const fromCursor = shell.debugRun.cursor;
       try {
         applyDebugRun(await client.resumeDebugRun(shell.id, shell.debugRun.id, command));
-        await pumpDebugRun();
+        await pumpDebugRun({ awaitAdvanceFrom: fromCursor });
       } catch (err) {
         showToast(`Debug run: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
       }
