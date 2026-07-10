@@ -968,6 +968,15 @@ export class ArazzoControlPlaneClient {
     return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/resume`, { body: command, signal: opts.signal });
   }
 
+  /**
+   * `injectDebugRunMessage` — DEBUG-ONLY (§18 / §3.3): deliver a message to a debug run suspended on an
+   * AsyncAPI receive, standing in for the real publisher so it advances. Body `{channel, payload, correlationId?}`.
+   * Delivered straight to the awaiting run; nothing is published to a real broker. 409 when it awaits no such message.
+   */
+  injectDebugRunMessage(id, debugRunId, message, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/inject-message`, { body: message, signal: opts.signal });
+  }
+
   /** `cancelDebugRun` — terminal, idempotent (§18). */
   cancelDebugRun(id, debugRunId, opts = {}) {
     return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/cancel`, { body: {}, signal: opts.signal });

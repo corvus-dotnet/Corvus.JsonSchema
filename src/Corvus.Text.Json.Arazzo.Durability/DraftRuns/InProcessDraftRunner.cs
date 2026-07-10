@@ -69,7 +69,8 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     private readonly WorkflowTransportBinder baseBinder;
     private readonly DraftWorkflowResumer resumer;
     private readonly WorkflowDispatcher dispatcher;
-    private readonly WorkflowWorker? worker;
+    private readonly WorkflowWorker worker;
+    private readonly bool hostTimerWaits;
     private readonly WorkflowResumer tracingResumer;
     private readonly AsyncLocal<DraftRunRecording?> currentRecording = new();
 
@@ -131,7 +132,13 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         this.baseBinder = binder;
         this.resumer = new DraftWorkflowResumer(drafts, provider, this.RecordingBinder, inner, maxCachedExecutors);
         this.dispatcher = new WorkflowDispatcher(store, owner, timeProvider, runnerEnvironment: runnerEnvironment);
-        this.worker = hostTimerWaits ? new WorkflowWorker(store, owner, timeProvider) : null;
+
+        // Compose the worker ALWAYS: it is the message-delivery seam (DeliverMessageAsync — the §18 debug-run trigger
+        // injection). hostTimerWaits gates only whether the PUMP also resumes due timer waits — a separate concern,
+        // because ResumeDueTimersAsync resumes EVERY due-timer run in the shared store, including catalog runs a
+        // draft-only resumer cannot host.
+        this.worker = new WorkflowWorker(store, owner, timeProvider);
+        this.hostTimerWaits = hostTimerWaits;
         this.tracingResumer = this.RunAndTraceAsync;
     }
 
@@ -145,9 +152,9 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     public async ValueTask<int> RunPendingAsync(CancellationToken cancellationToken = default)
     {
         int advanced = await this.dispatcher.DispatchClaimableAsync(DraftHosting, this.tracingResumer, cancellationToken).ConfigureAwait(false);
-        if (this.worker is { } timerWorker)
+        if (this.hostTimerWaits)
         {
-            advanced += await timerWorker.ResumeDueTimersAsync(this.tracingResumer, cancellationToken).ConfigureAwait(false);
+            advanced += await this.worker.ResumeDueTimersAsync(this.tracingResumer, cancellationToken).ConfigureAwait(false);
         }
 
         return advanced;
@@ -164,6 +171,20 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     /// records+traces through the same path. This exposes existing behaviour; it drives no dispatch, lease, or claim.
     /// </summary>
     public WorkflowResumer Resumer => this.tracingResumer;
+
+    /// <summary>
+    /// Delivers a message to a draft run suspended on an AsyncAPI receive on <paramref name="channel"/> (and, when
+    /// set, matching <paramref name="correlationId"/>), resuming it through the recording+tracing resumer — the §18
+    /// debug-run trigger-injection seam. Message-wait delivery is deliberately NOT driven by the pump (a suspended
+    /// message wait has no due time), so a host calls this directly.
+    /// </summary>
+    /// <param name="channel">The AsyncAPI channel the suspended run awaits.</param>
+    /// <param name="correlationId">The correlation the receive matches on, or <see langword="null"/> to match the channel alone.</param>
+    /// <param name="payload">The message payload delivered to the awaiting receive step.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The number of runs the message resumed (0 when none awaited it).</returns>
+    public ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, CancellationToken cancellationToken = default)
+        => this.worker.DeliverMessageAsync(channel, correlationId, payload, this.tracingResumer, cancellationToken);
 
     /// <summary>
     /// Starts the optional self-driving background loop: it pumps <see cref="RunPendingAsync"/> every

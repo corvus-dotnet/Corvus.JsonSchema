@@ -62,6 +62,10 @@
     "description": "Designer working copies (workflow-designer design §4.1): mutable Arazzo documents saved during development without minting catalog versions. Reach-scoped, etag-guarded; publish mints an immutable catalog version."
   },
   {
+    "name": "debugRuns",
+    "description": "DEBUG a working copy (workflow-designer design §18): start, step/resume, inspect, inject a message into, cancel, and purge a durable debug run in a development-class environment. These are debugging affordances — a driven, forward-only run under governed dev credentials with no production analogue; message injection stands in for the real publisher (capability scopes workspace:write + runs:write; read is workspace:read)."
+  },
+  {
     "name": "github",
     "description": "Brokered GitHub integration (workflow-designer design §4.7): the control plane holds a GitHub App's credentials and each principal's short-lived user-to-server token — the kit never sees a GitHub credential. Authorship is the signed-in user's GitHub-held git identity, stamped by GitHub rather than composed by the control plane; reach is the user ∩ installation ∩ App-permission intersection; token custody is server-side, keyed by control-plane principal; unattended actions use the App's bot identity or don't happen. Deployment-configured (a deployment that brokers no App refuses these operations)."
   },
@@ -2294,7 +2298,7 @@
     },
     "/workspace/workflows/{id}/debug-runs": {
       "post": {
-        "tags": ["workspace"],
+        "tags": ["debugRuns"],
         "operationId": "startDebugRun",
         "summary": "Start a DEBUG RUN of the working copy's stored document in a development-class environment (workflow-designer design \u00a718): a durable run under the environment's credential bindings \u2014 the runner resolves secrets as its own identity; nothing reaches the browser. Forward-only; gated by the environment's allowsDraftRuns flag, the caller's entitlement, and per-source credential readiness. Every start is audited.",
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
@@ -2314,7 +2318,7 @@
     },
     "/workspace/workflows/{id}/debug-runs/{debugRunId}": {
       "get": {
-        "tags": ["workspace"],
+        "tags": ["debugRuns"],
         "operationId": "getDebugRun",
         "summary": "The debug run's current state: status, cursor, the trace so far (the same shape simulation emits \u2014 exchanges as sent), and any wait it is suspended on.",
         "security": [{"bearer": ["workspace:read"]}],
@@ -2328,7 +2332,7 @@
         }
       },
       "delete": {
-        "tags": ["workspace"],
+        "tags": ["debugRuns"],
         "operationId": "deleteDebugRun",
         "summary": "Delete the debug run and purge its captured draft and metadata trace; idempotent.",
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
@@ -2344,7 +2348,7 @@
     },
     "/workspace/workflows/{id}/debug-runs/{debugRunId}/resume": {
       "post": {
-        "tags": ["workspace"],
+        "tags": ["debugRuns"],
         "operationId": "resumeDebugRun",
         "summary": "Advance the debug run: plain resume continues to the next pause point (pause.afterEachStep = single-step; pause.beforeSteps = breakpoints); an optional action applies the SAME ResumeRequest union the runs view uses \u2014 Skip with outputs is 'step over', Rewind deliberately re-executes.",
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
@@ -2365,7 +2369,7 @@
     },
     "/workspace/workflows/{id}/debug-runs/{debugRunId}/cancel": {
       "post": {
-        "tags": ["workspace"],
+        "tags": ["debugRuns"],
         "operationId": "cancelDebugRun",
         "summary": "Cancel the debug run; a terminal state, idempotent.",
         "security": [{"bearer": ["workspace:write", "runs:write"]}],
@@ -2376,6 +2380,27 @@
         "responses": {
           "200": {"description": "The debug run, cancelled.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
           "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}/inject-message": {
+      "post": {
+        "tags": ["debugRuns"],
+        "operationId": "injectDebugRunMessage",
+        "summary": "Debug-only: deliver a message to a debug run that is suspended on an AsyncAPI receive, standing in for the real publisher so the run advances. The payload is delivered STRAIGHT to the awaiting run (matched by channel and, when set, correlationId) — nothing is published to a real broker, and there is no production analogue (a live workflow's message arrives from its real source). Answers the 'what if the webhook arrives now / late / malformed?' question.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRunMessageInjection"}}}
+        },
+        "responses": {
+          "200": {"description": "The debug run after the injected message was delivered and it advanced.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "409": {"description": "The run is not suspended on a message wait for that channel.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}}
         }
       }
     },
@@ -5994,6 +6019,16 @@
       "properties": {
         "action": { "$ref": "#/components/schemas/ResumeRequest" },
         "pause": { "$ref": "#/components/schemas/DebugRunPause" }
+      }
+    },
+    "DebugRunMessageInjection": {
+      "type": "object",
+      "description": "A message injected into a debug run suspended on an AsyncAPI receive (workflow-designer design §18 / §3.3). Debug-only: the payload is delivered straight to the awaiting run, standing in for the real publisher.",
+      "required": ["channel", "payload"],
+      "properties": {
+        "channel": { "type": "string", "description": "The AsyncAPI channel the run awaits (from the suspended run's wait descriptor)." },
+        "correlationId": { "type": "string", "description": "The correlation the receive step matches on, when the channel carries several conversations; omit to match the channel alone." },
+        "payload": { "description": "The message payload delivered to the awaiting receive step. Any JSON value; typed from the channel's message schema in the designer's inject form." }
       }
     },
     "DebugRun": {

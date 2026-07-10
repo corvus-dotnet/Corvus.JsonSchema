@@ -38,7 +38,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// (<see cref="Models.WorkingCopy"/><c>.From</c>). The list returns a document-less
 /// <see cref="Models.WorkingCopySummary"/>, so each list row is field-selected.</para>
 /// </remarks>
-public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
+public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, IApiDebugRunsHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
     private const int MaxValidationErrors = 200;
@@ -1358,6 +1358,70 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler
 
         workspace.TakeOwnership(v);
         return ResumeDebugRunResult.Ok(v.RootElement, workspace);
+    }
+
+    /// <summary>Debug-only (workflow-designer design §18 / §3.3): delivers a message to a debug run suspended on an
+    /// AsyncAPI receive, standing in for the real publisher so the run advances. The payload is delivered STRAIGHT to
+    /// the awaiting run through the in-process runner (matched by channel and, when set, correlationId) — nothing is
+    /// published to a real broker, and there is no production analogue. 409 when no suspended run awaits that channel.</summary>
+    /// <param name="parameters">The request parameters (working-copy id, debug-run id, and the {channel, payload, correlationId} body).</param>
+    /// <param name="workspace">The response workspace.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The debug run after the message was delivered and it advanced, or the problem.</returns>
+    public async ValueTask<InjectDebugRunMessageResult> HandleInjectDebugRunMessageAsync(InjectDebugRunMessageParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (!this.DebugRunsOffered)
+        {
+            return InjectDebugRunMessageResult.NotFound(DebugRunsNotOffered(404), workspace);
+        }
+
+        string id = (string)parameters.Id;
+        using ParsedJsonDocument<WorkspaceWorkflow>? workingCopy = await this.store.GetAsync(id, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (workingCopy is null)
+        {
+            return InjectDebugRunMessageResult.NotFound(NotFoundProblem(id), workspace);
+        }
+
+        var runId = new WorkflowRunId((string)parameters.DebugRunId);
+        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
+        {
+            return InjectDebugRunMessageResult.NotFound(DebugRunNotFoundProblem(), workspace);
+        }
+
+        WorkflowRunDetail? detailOpt = await this.debugRunManagement!.GetAsync(runId, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (detailOpt is not { } detail)
+        {
+            return InjectDebugRunMessageResult.NotFound(DebugRunNotFoundProblem(), workspace);
+        }
+
+        if (detail.Status != WorkflowRunStatus.Suspended)
+        {
+            return InjectDebugRunMessageResult.Conflict(
+                Problem("not-awaiting-message", "Not awaiting a message", 409, $"The debug run is {MapStatus(detail.Status, detail.Wait)}; a message can only be injected while it is suspended on an AsyncAPI receive."), workspace);
+        }
+
+        Models.DebugRunMessageInjection body = parameters.Body;
+        string channel = (string)body.Channel;
+        string? correlationId = body.CorrelationId.IsNotUndefined() ? (string)body.CorrelationId : null;
+
+        // Deliver STRAIGHT to the awaiting draft run (matched by channel + correlationId), resuming it through the
+        // runner's recording+tracing resumer. Nothing is published to a real broker — this is the debug stand-in for
+        // the real publisher (§18: "a host calls DeliverMessageAsync directly"; message waits are not pump-driven).
+        int resumed = await this.draftRunner!.DeliverMessageAsync(channel, correlationId, body.Payload, cancellationToken).ConfigureAwait(false);
+        if (resumed == 0)
+        {
+            return InjectDebugRunMessageResult.Conflict(
+                Problem("not-awaiting-message", "Not awaiting a message", 409, $"The debug run is not suspended on a receive for channel '{channel}'{(correlationId is null ? string.Empty : $" with correlation '{correlationId}'")}."), workspace);
+        }
+
+        ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
+        if (view is not { } v)
+        {
+            return InjectDebugRunMessageResult.NotFound(DebugRunNotFoundProblem(), workspace);
+        }
+
+        workspace.TakeOwnership(v);
+        return InjectDebugRunMessageResult.Ok(v.RootElement, workspace);
     }
 
     /// <summary>Cancels a §18 debug run (workflow-designer design §18 slice 3e-2c): the durable run is marked
