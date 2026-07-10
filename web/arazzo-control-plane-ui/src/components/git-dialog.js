@@ -70,6 +70,12 @@ class ArazzoGitDialog extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
+        /* The panel lives in the designer's narrow sidebar: everything must fit its width, never clip. Selects carry
+           long options (repo, branch), so without min-width:0 they set a large min-content size that grid/flex items
+           refuse to shrink below — the classic horizontal-overflow trap. Force fields to fill and shrink. */
+        :host { display: block; min-width: 0; }
+        .panel, .body, fieldset, label, .two, .pathrow, .new-branch, .specs, .spec-row { min-width: 0; }
+        input, select, textarea { width: 100%; min-width: 0; box-sizing: border-box; }
         .panel { background: var(--_bg); color: inherit; }
         .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
         .head h2 { margin: 0; font-size: 14px; }
@@ -162,7 +168,7 @@ class ArazzoGitDialog extends ArazzoElement {
           </fieldset>
           <div class="stage-hint bound-hint" hidden>Save the binding — pull and commit work against the bound branch.</div>
           <fieldset class="roundtrip-section" hidden>
-            <legend>Round-trip</legend>
+            <legend>Round-trip <a class="gh-link" target="_blank" rel="noopener" hidden style="margin-left:6px; font-size:11.5px;" title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
             <div class="row-actions">
               <button class="pull" type="button" disabled title="Refresh the document, bound specs, and scenarios from the branch (etag-guarded; nothing partially applies)">⤓ Pull</button>
               <span class="hint">Pull replaces the document, bound specs, and scenario set from the branch.</span>
@@ -393,6 +399,18 @@ class ArazzoGitDialog extends ArazzoElement {
     this.$('.history-section').hidden = !connected || !bound;
     if (connected && bound) void this.loadHistory();
 
+    // A jump to the bound branch on GitHub — encode each branch segment but keep the slashes so
+    // `feature/foo` lands correctly (a whole-string encode would turn `/` into %2F and 404).
+    const ghLink = this.$('.gh-link');
+    const b = this._workingCopy?.gitBinding;
+    if (bound && b?.owner && b?.repo && b?.branch) {
+      const branchPath = b.branch.split('/').map(encodeURIComponent).join('/');
+      ghLink.href = `https://github.com/${encodeURIComponent(b.owner)}/${encodeURIComponent(b.repo)}/tree/${branchPath}`;
+      ghLink.hidden = false;
+    } else {
+      ghLink.hidden = true;
+    }
+
     // A disabled control carries its reason — nothing greys out silently.
     const save = this.$('.save-binding');
     save.disabled = !this._workingCopy || !formed;
@@ -487,7 +505,7 @@ class ArazzoGitDialog extends ArazzoElement {
       const box = this.$('.result');
       box.hidden = false;
       box.innerHTML = `
-        <span>Committed as <strong>${escapeHtml(this.$('.gh-connect').session?.login ?? 'you')}</strong> — your GitHub identity, not a service account (§4.7):</span>
+        <span>Committed as <strong>${escapeHtml(this.$('.gh-connect').session?.login ?? 'you')}</strong>:</span>
         ${result.files.map((f) => `<span class="file">${escapeHtml(f.path)}</span>`).join('')}
         ${result.pullRequest ? `<span>Pull request: <a href="${escapeHtml(result.pullRequest.url)}" target="_blank" rel="noopener">#${escapeHtml(String(result.pullRequest.number))}</a></span>` : ''}`;
       this.emit('committed', { result });
