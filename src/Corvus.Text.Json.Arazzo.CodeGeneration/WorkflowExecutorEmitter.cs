@@ -967,8 +967,15 @@ public static class WorkflowExecutorEmitter
         statements.AppendLine("    {");
         for (int i = 0; i < names.Count; i++)
         {
-            statements.Append("        builder.AddProperty(").Append(EmitText.Quote(names[i]))
-                .Append("u8, values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+            // Omit a workflow output whose expression did not resolve (a default/Undefined JsonElement) — Arazzo
+            // treats it as absent. Adding a None-valued property trips the builder's assert (process-terminating
+            // in a Debug build). Mirrors the per-step guard in OutputExtractionEmitter; a resolved null is kept.
+            string index = i.ToString(CultureInfo.InvariantCulture);
+            statements.Append("        if (values[").Append(index).AppendLine("].IsNotUndefined())");
+            statements.AppendLine("        {");
+            statements.Append("            builder.AddProperty(").Append(EmitText.Quote(names[i]))
+                .Append("u8, values[").Append(index).AppendLine("]);");
+            statements.AppendLine("        }");
         }
 
         statements.AppendLine("    });");
