@@ -5,8 +5,10 @@ This AppHost is the single launch point for the *real* multi-process topology, o
 everything. It composes:
 
 - **Vault** (HashiCorp, dev mode) — the source-credential secret store (design §13), with a one-shot
-  **vault-init** provisioner that writes a read-only, path-scoped policy, mints the runner's read-only
-  token, and seeds the demo secrets. The provisioner is the *only* write-capable identity.
+  **vault-init** provisioner (the *only* write-capable identity) that writes a read-only, path-scoped
+  policy, provisions the runner's **AppRole**, and seeds the demo secrets. The runner is not handed a
+  pre-minted token: it authenticates via AppRole and receives a dynamically-issued, short-TTL token (see
+  *Secure introduction* below).
 - **Keycloak** — the OIDC identity provider (design §16), bootstrapped from `realms/` (the `arazzo`
   realm, groups, seed users, and the UI + CLI clients).
 - **controlplane** — the ASP.NET control-plane host (catalog, runs, credentials, administrators,
@@ -15,6 +17,29 @@ everything. It composes:
 - **runner** — the execution host: a separate process that claims and executes catalogued runs and §18
   `$draft` debug runs, resolving each source's credential as its own read-only Vault identity at bind
   time. The control plane never executes; the runner does.
+
+## Secure introduction — a simulation of the runtime host's identity (design §13.5.1)
+
+In production the runner's identity — its Vault **AppRole SecretID**, or equivalently a cloud/Kubernetes
+**workload identity** — is supplied by the **runtime host's service principal / platform attestation**:
+the platform vouches for the workload and delivers (or lets it fetch) a short-lived credential the app
+never has to embed. There is no such platform on this dev box, so **this sample simulates that delivery**
+with the trusted orchestrator (the AppHost) standing in for the runtime host:
+
+1. **vault-init** (the CI/IaC identity) enables AppRole, creates the `arazzo-runner` role bound to the
+   read-only policy (short token TTL), pins a fixed, non-secret **RoleID** (like a username), and generates
+   a **response-wrapped SecretID** — the SecretID itself never leaves Vault in plaintext, only a single-use,
+   short-TTL *wrapping token* does. That wrapping token is written to a shared handoff directory.
+2. The AppHost injects the runner's non-secret RoleID and the path to the wrapping token (this stands in for
+   the runtime host handing the workload its identity material).
+3. The **runner** reads the wrapping token, **unwraps** it to obtain the SecretID (still never in its env),
+   then authenticates via **AppRole** for a dynamically-issued, short-TTL, renewable token scoped to
+   read-only. A startup self-check then proves that token resolves the seeded secrets **and is refused a
+   write** (HTTP 403) — separation of duties, demonstrated.
+
+So the *mechanism* (AppRole, response-wrapping, unwrap-then-login, least privilege) is real; only the
+**delivery of the workload's identity** is simulated by the orchestrator rather than a real service
+principal / attestation. The dev root token on the provisioner is likewise a stand-in for a CI/IaC identity.
 
 ## Prerequisites
 

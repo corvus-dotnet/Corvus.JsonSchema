@@ -34,13 +34,32 @@ var ledgerDb = ledgerPostgres.AddDatabase("ledgerdb");
 var kycPostgres = builder.AddPostgres("kyc-postgres");
 var kycDb = kycPostgres.AddDatabase("kycdb");
 
-// Dev-only fixed Vault tokens — the locally-runnable stand-in for production secret-store auth (design §13.5.1).
-// In prod the runner's identity comes from platform attestation / AppRole (never a token baked into the workload),
-// and provisioning runs as a CI/IaC identity. Here the orchestrator delivers a fixed dev root token to the
-// write-capable provisioner and a separate fixed read-only token to the runner. The security-critical split —
-// provisioner writes, runner reads (path-scoped) — is preserved exactly.
+// Vault secure introduction (design §13.5.1). Provisioning runs as a CI/IaC identity (here, a fixed dev root token on
+// the one-shot provisioner). The runner does NOT get a pre-minted token: it authenticates via Vault AppRole and
+// receives a dynamically-issued, short-TTL token. In production the runner's identity (its AppRole SecretID, or a
+// cloud/Kubernetes workload identity) is supplied by the runtime host's service principal / platform attestation;
+// THIS SAMPLE SIMULATES that by having the trusted orchestrator provision an AppRole and hand the runner a
+// response-wrapped SecretID (see web/../samples README). The security-critical split — provisioner writes, runner
+// reads (path-scoped) — is preserved exactly.
 const string vaultRootToken = "arazzo-dev-root-token";
-const string vaultRunnerReadOnlyToken = "arazzo-runner-ro-token";
+
+// The runner's AppRole RoleID — non-secret (like a username), so the orchestrator delivers it as plain config. The
+// SecretID is NOT here: the provisioner generates a response-wrapped SecretID at provision time and writes the
+// single-use wrapping token to a shared handoff dir; the runner unwraps it (never seeing the SecretID in plaintext).
+const string runnerRoleId = "arazzo-runner-approle";
+
+// The handoff directory for the response-wrapped SecretID: the provisioner (vault-init) writes the single-use wrapping
+// token here and the runner reads + unwraps it. It stands in for the runtime host delivering the workload's identity.
+// World-writable so the rootless-podman container user can write into it (the bind-mounted host dir is owned by the
+// host user); the provisioner chmod 644s the file so the host-side runner process can read it. Ephemeral per run.
+string vaultHandoffDir = Path.Combine(Path.GetTempPath(), "arazzo-vault-approle-" + Guid.NewGuid().ToString("N")[..12]);
+Directory.CreateDirectory(vaultHandoffDir);
+File.SetUnixFileMode(
+    vaultHandoffDir,
+    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+    | UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
+    | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+string vaultWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid.wrap");
 
 // HashiCorp Vault, dev mode: unsealed, in-memory (fresh each run), KV v2 mounted at secret/. The secret *store*.
 var vault = builder.AddContainer("vault", "hashicorp/vault", "1.18")
@@ -65,11 +84,20 @@ const string provisionScript =
     "set -e; " +
     "until vault status >/dev/null 2>&1; do echo 'waiting for vault'; sleep 1; done; " +
     "echo 'path \"secret/data/arazzo/*\" { capabilities = [\"read\"] }' | vault policy write arazzo-runner-ro -; " +
-    // Idempotent: the orchestrator may run this one-shot provisioner more than once (a retry), and a fixed token id
-    // cannot be created twice. Revoke any prior token first (a no-op on the first run) so the create always succeeds
-    // with the current policy; the runner, which starts only after this completes, always gets a valid token.
-    $"vault token revoke {vaultRunnerReadOnlyToken} 2>/dev/null || true; " +
-    $"vault token create -id={vaultRunnerReadOnlyToken} -policy=arazzo-runner-ro -period=24h; " +
+    // Enable the AppRole auth method (idempotent) and (re)create the runner's role bound to the read-only policy. The
+    // TOKEN is short-TTL + renewable (the short-lived-credential property, design §13.5.1). The SecretID is left
+    // session-lived (ttl/num_uses unlimited) so VaultSharp can transparently re-login when the token expires over the
+    // demo's lifetime; in production the platform would rotate the SecretID.
+    "vault auth enable approle 2>/dev/null || true; " +
+    "vault write auth/approle/role/arazzo-runner token_policies=arazzo-runner-ro token_ttl=20m token_max_ttl=2h secret_id_ttl=0 secret_id_num_uses=0; " +
+    // Pin a fixed, non-secret RoleID (like a username) the orchestrator injects to the runner as plain config.
+    $"vault write auth/approle/role/arazzo-runner/role-id role_id={runnerRoleId}; " +
+    // Generate a RESPONSE-WRAPPED SecretID: the SecretID never leaves Vault in plaintext — only a single-use wrapping
+    // token does. Write it to the shared handoff dir for the runner to unwrap. The wrap-ttl must comfortably exceed the
+    // gap until the runner reads it: the runner starts only after the control plane is healthy (Keycloak realm import,
+    // ~5 min), so a short wrap-ttl would expire first. Idempotent on a retry (upsert role; the file is overwritten).
+    "vault write -f -wrap-ttl=1800s -field=wrapping_token auth/approle/role/arazzo-runner/secret-id > /shared/secretid.wrap; " +
+    "chmod 644 /shared/secretid.wrap; " +
     "vault kv put secret/arazzo/onboarding api-key=demo-onboarding-key; " +
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
     "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; " +
@@ -82,6 +110,9 @@ const string provisionScript =
 var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     .WithEnvironment("VAULT_TOKEN", vaultRootToken)
+    // The response-wrapped SecretID handoff: the provisioner writes the single-use wrapping token to /shared, which is
+    // the host dir the runner reads (its stand-in for a runtime host delivering the workload's identity).
+    .WithBindMount(vaultHandoffDir, "/shared")
     .WithEntrypoint("/bin/sh")
     .WithArgs("-c", provisionScript)
     .WaitFor(vault)
@@ -181,7 +212,12 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithReference(workflowstore)
     .WaitFor(workflowstore)
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
-    .WithEnvironment("VAULT_TOKEN", vaultRunnerReadOnlyToken)
+    // Secure introduction: NOT a pre-minted token. The runner gets its non-secret AppRole RoleID as plain config and
+    // the PATH to the single-use wrapping token the provisioner left behind; it unwraps that to obtain the SecretID and
+    // authenticates via AppRole for a dynamically-issued, short-TTL token. (In production the runtime host's service
+    // principal / platform attestation supplies this; the sample simulates it — see the samples README.)
+    .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)
+    .WithEnvironment("Runner__Vault__WrapTokenFile", vaultWrapTokenPath)
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
     // executing each against the control plane's own /svc source backends (the demo stand-in for real endpoints).
     .WithEnvironment("Runner__Environment", "development")
