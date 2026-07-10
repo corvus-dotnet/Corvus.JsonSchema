@@ -1,0 +1,67 @@
+/*
+ * KYC console — theme tokens.
+ *
+ * A self-contained theme for the KYC service's console. This is a separate application from the Arazzo control plane
+ * (it ships independently and consumes the workflow engine), so it carries its own token kit rather than depending on
+ * the control-plane one. The `<kyc-console>` component reads these `--kyc-*` custom properties, which inherit through
+ * its Shadow DOM. Dark mode follows the OS by default; force it with data-theme="dark|light" on <html>.
+ */
+:root {
+  --kyc-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --kyc-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
+  --kyc-radius: 10px;
+
+  --kyc-bg: #f4f6f9;
+  --kyc-surface: #ffffff;
+  --kyc-surface-2: #f2f4f8;
+  --kyc-border: #e1e5ea;
+  --kyc-text: #1a1d21;
+  --kyc-muted: #6b7280;
+  --kyc-accent: #3b6cf6;
+  --kyc-danger: #d4351c;
+
+  /* Verification status colours (pending -> verified/blocked). */
+  --kyc-status-pending: #c98a12;
+  --kyc-status-verified: #2a8a4a;
+  --kyc-status-blocked: #d4351c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kyc-bg: #101317;
+    --kyc-surface: #1a1e24;
+    --kyc-surface-2: #222831;
+    --kyc-border: #2c323b;
+    --kyc-text: #e6e9ee;
+    --kyc-muted: #99a2ae;
+    --kyc-accent: #6f9bff;
+    --kyc-danger: #ff6b5e;
+
+    --kyc-status-pending: #e0a83a;
+    --kyc-status-verified: #4cc472;
+    --kyc-status-blocked: #ff6b5e;
+  }
+}
+
+:root[data-theme="dark"] {
+  --kyc-bg: #101317;
+  --kyc-surface: #1a1e24;
+  --kyc-surface-2: #222831;
+  --kyc-border: #2c323b;
+  --kyc-text: #e6e9ee;
+  --kyc-muted: #99a2ae;
+  --kyc-accent: #6f9bff;
+  --kyc-danger: #ff6b5e;
+
+  --kyc-status-pending: #e0a83a;
+  --kyc-status-verified: #4cc472;
+  --kyc-status-blocked: #ff6b5e;
+}
+
+body {
+  margin: 0;
+  font-family: var(--kyc-font);
+  background: var(--kyc-bg);
+  color: var(--kyc-text);
+  -webkit-font-smoothing: antialiased;
+}
