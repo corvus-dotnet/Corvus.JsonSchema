@@ -11,6 +11,11 @@
        minmax(0, 1fr) row fills the rest of the dynamic viewport exactly; the canvas and the
        sidebar scroll INDEPENDENTLY — the page itself never scrolls. minmax(0, …) tracks make
        every region shrinkable without min-height/min-width ceremony. */
+    /* Theme-correct native scrollbars (the designer sets data-theme on <html>); without this the dark theme
+       rendered light OS scrollbars, unlike the rest of the app. */
+    :root { color-scheme: light dark; }
+    :root[data-theme="light"] { color-scheme: light; }
+    :root[data-theme="dark"] { color-scheme: dark; }
     body { margin: 0; height: 100dvh; overflow: clip;
            display: grid; grid-template-rows: auto minmax(0, 1fr);
            font: 14px var(--arazzo-font, system-ui, sans-serif); background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); }
@@ -223,8 +228,18 @@
     // the real API instead, and a debug run executes on a real runner against a real dev environment.
     const isLive = new URLSearchParams(location.search).has('live');
     const mock = isLive ? null : createMockControlPlane({ latencyMs: 0 });
+    // Live mode talks to the real control plane on this origin. Use the BFF auth fetch (same as the main app):
+    // carry the session cookie + X-CSRF and bounce to /login on a 401 — so the designer is a genuinely
+    // authenticated surface, not an anonymous one.
+    const authFetch = async (input, init = {}) => {
+      const headers = new Headers(init.headers || {});
+      headers.set('X-CSRF', '1');
+      const res = await fetch(input, { credentials: 'include', ...init, headers });
+      if (res.status === 401) { location.assign('/login?returnUrl=' + encodeURIComponent(location.pathname + location.search)); return new Promise(() => {}); }
+      return res;
+    };
     const client = isLive
-      ? new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1' })
+      ? new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1', fetch: authFetch })
       : new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
 
     // The mock's authorize URL is a fake that self-completes when FETCHED — a real window.open would 404 in an actual
