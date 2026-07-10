@@ -847,8 +847,11 @@ compile; it serves recorded fixtures, clearly marked).
    `<arazzo-github-connect>` (the popup flow — the opener polls the session and closes the popup;
    injectable for tests), the acquisition dialog's fourth mode (GitHub: repo picker from the
    user ∩ installation intersection, contents browser, picked spec attaches through the same
-   inline seam), and `<arazzo-git-dialog>` on the designer toolbar (⎇): binding form, Pull, and
-   Commit + optional draft PR, the result naming the signed-in identity. The binding form browses
+   inline seam), and `<arazzo-git-dialog>` on the designer toolbar (⎇): binding form, and
+   Commit + optional draft PR, the result naming the signed-in identity. (UI framing: the
+   `pullWorkingCopy` action is surfaced as **Load** inside the *binding* section — loading the
+   document from the branch, not a round-trip verb — kept apart from the roll-back-oriented history
+   browser; only Commit lives in the round-trip UI. See open question 8c.) The binding form browses
    the repo's REAL branches (`listRepoBranches` — default branch marked) with in-dialog branch
    creation (`createRepoBranch` — a ref from a base head, no commit, no composed identity), and
    spec paths are one row per ATTACHED source (names from the working copy, only the path typed;
@@ -956,9 +959,11 @@ machinery, not the simulator:
   `pause.afterEachStep`, *step over — provide outputs* = the runs `Skip` resume (verbatim shape),
   *breakpoints* = `pause.beforeSteps`, *retry/rewind/state-patch* = the same `ResumeRequest` union
   the runs view uses, with rewind's side-effect re-execution being the developer's deliberate act.
-- **Real waits.** A message step is a genuine suspension: the runner subscribes, the dock watches;
-  trigger *injection* on a debug run is publishing the real message (or the developer does it out
-  of band) — not scenario staging.
+- **Real waits.** A message step is a genuine suspension. Trigger *injection* on a debug run delivers
+  the message STRAIGHT to the suspended run — the debug stand-in for the real publisher — and it
+  advances (the `inject-message` endpoint below; the runner's `DeliverMessageAsync`, matched by
+  channel + optional correlation). Nothing is staged into a scenario and nothing is published to a
+  broker; a production run's message arrives from its real source.
 - **Capture, then time-travel.** A debug run records its exchanges in the same trace shape the
   simulator emits (`SimulationTrace`, request bodies as sent). "Save as scenario" over that trace
   yields a mock scenario carrying *real recorded reality* — and the full replay debugger (rewind,
@@ -979,13 +984,17 @@ Credential *readiness* is surfaced before the attempt: the run dialog reuses the
 credential-coverage machinery (§7.5–7.8) to show "development: payments ✓ · order-events ✗ (no
 credential bound)" per source; starting with gaps is a 409 carrying that detail.
 
-**Contract.** `Environment{Create,Update,Summary}.allowsDraftRuns`; under the working copy:
+**Contract.** `Environment{Create,Update,Summary}.allowsDraftRuns`. The debug-run operations form
+their own OpenAPI group — the **`debugRuns`** tag — so the surface reads unmistakably as debugging,
+not part of the general workspace API. Under the working copy:
 `POST …/{id}/debug-runs` (`{workflowId, environment, inputs?, pause?}` → 201, 403 on the flag or
 entitlement, 409 on readiness), `GET …/debug-runs/{debugRunId}` (status
 `running·paused·suspended·completed·faulted·cancelled`, cursor, `SimulationTrace`-shaped trace,
 wait), `POST …/debug-runs/{debugRunId}/resume` (`{action?: ResumeRequest, pause?}`),
-`POST …/debug-runs/{debugRunId}/cancel`. Capture-to-scenario is client-side over the trace — no
-endpoint.
+`POST …/debug-runs/{debugRunId}/inject-message` (`{channel, payload, correlationId?}` — debug-only:
+delivers a message to a run suspended on an AsyncAPI receive; 409 when it awaits no such message),
+`POST …/debug-runs/{debugRunId}/cancel`, `DELETE …/debug-runs/{debugRunId}`. Capture-to-scenario is
+client-side over the trace — no endpoint.
 
 **Staging.** (1) Contract + server lifecycle with the simulator as interim executor (validation,
 gates, pause/resume semantics real; transport still mock) + mock parity — this gives the dock its
@@ -1051,3 +1060,17 @@ absolute). Bodies are size-capped with an explicit `truncated` marker, traces ar
 run, and capture-to-scenario shows the developer exactly which recorded bodies enter the
 (git-reachable) working copy before they confirm. Any later expansion of body or PII persistence is a
 fresh design decision, not an implementation detail.
+
+**Built — mock runs + trigger injection wired (2026-07-10).** Both designer run modes are live.
+*Mock:* the control plane wires the deterministic simulator (the simulate endpoint had been failing
+closed), and the auto-mock answers each operation with a **schema-shaped** body (from the response's
+JSON Schema), so `$response.body#/…` output pointers resolve and the trace shows values flowing.
+*Remote debug run:* a message wait now advances via `POST …/debug-runs/{debugRunId}/inject-message`
+(`{channel, payload, correlationId?}`, the `debugRuns` tag) — the payload is delivered **straight to
+the suspended run** (the runner's `DeliverMessageAsync`, matched by channel + optional correlation),
+the debug stand-in for the real publisher; nothing is published to a broker. A guard sits under both:
+an Arazzo output (or workflow output, sub-workflow argument, request-body template value) whose
+expression does not resolve is now **omitted**, never added as a `None`-valued property/item — the
+generator would otherwise emit a builder call that trips a `Debug.Assert` and terminates the host on
+the first such run. Verified live: a debug run of `onboard-customer-async` suspends on the
+`kyc.verdict` receive and an injected `{verified, score}` resumes it to completion.
