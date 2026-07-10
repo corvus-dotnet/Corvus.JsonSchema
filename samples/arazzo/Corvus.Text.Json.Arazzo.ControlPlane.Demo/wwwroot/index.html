@@ -19,6 +19,8 @@
     h1 { font-size: 20px; margin: 0; }
     .sub { color: var(--arazzo-muted); font-size: 13px; }
     .topbar-right { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
+    .designer-link { font-size: 13px; text-decoration: none; color: var(--arazzo-accent); border: 1px solid var(--arazzo-border); border-radius: 6px; padding: 5px 12px; white-space: nowrap; }
+    .designer-link:hover { border-color: var(--arazzo-accent); background: color-mix(in srgb, var(--arazzo-accent) 10%, transparent); }
     /* Tri-state theme toggle: a single button cycling System → Light → Dark, showing the current mode's icon. */
     .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--arazzo-border); border-radius: 6px; background: var(--arazzo-surface); color: var(--arazzo-text); cursor: pointer; }
     .theme-toggle:hover { border-color: var(--arazzo-accent); color: var(--arazzo-accent); }
@@ -42,6 +44,7 @@
     <header class="top">
       <h1>Arazzo Control Plane</h1>
       <div class="topbar-right">
+        <a class="designer-link" href="/designer" title="Open the workflow designer">✎ Designer</a>
         <div id="auth" class="authbar" hidden></div>
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Theme"></button>
       </div>

@@ -201,10 +201,12 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WaitFor(ledger)
     .WaitFor(kyc)
     .WaitFor(nats)
-    // Aspire-managed HTTP endpoint (no hardcoded port): Aspire assigns the port, proxies it, and injects
-    // ASPNETCORE_URLS so the app binds what Aspire chose — this is what makes the health check and the runner's
-    // WithReference/GetEndpoint resolve to the real address without launchSettings pinning a fixed port.
-    .WithHttpEndpoint()
+    // PINNED external port (8090), isProxied:false so the app binds :8090 DIRECTLY (no DCP proxy on a random port) —
+    // the browser-facing control-plane URL is then stable across runs. Two things need a fixed URL: the GitHub App's
+    // OAuth callback (http://localhost:8090/arazzo/v1/github/auth/callback is registered on the App, and a dynamic
+    // port would change it every run), and the designer/app links a user keeps open. The runner's WithReference/
+    // GetEndpoint and the health check resolve to :8090.
+    .WithHttpEndpoint(port: 8090, isProxied: false)
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 

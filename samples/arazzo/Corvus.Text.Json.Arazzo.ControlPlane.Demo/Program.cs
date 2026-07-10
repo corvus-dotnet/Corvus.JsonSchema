@@ -391,6 +391,15 @@ else
     app.Logger.LogWarning("Web UI not found at {UiRoot}; the API is still available under /arazzo/v1.", uiRoot);
 }
 
+// The workflow designer's production entry: a clean, app-linked route that serves the design surface in LIVE mode
+// (the page detects the /designer path → its data calls go through the real /arazzo/v1 with the BFF auth fetch, so
+// it authenticates like the rest of the app). The page's own assets load absolutely from /ui.
+string designerPage = Path.Combine(uiRoot, "demo", "designer.html");
+if (File.Exists(designerPage))
+{
+    app.MapGet("/designer", () => Results.File(designerPage, "text/html"));
+}
+
 // The real control-plane API, under a conventional base path the UI points at. Row security (reach scoping) is
 // applied only when authorization is on — the open, unauthenticated demo stays fully visible. The access-request
 // surface keys a grant on the requester's `preferred_username`, the same claim the resolver matches.

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Arazzo Workflow Designer — design-surface spike</title>
-  <link rel="icon" href="./favicon.svg">
-  <link rel="stylesheet" href="../src/arazzo-kit.css">
+  <link rel="icon" href="/ui/demo/favicon.svg">
+  <link rel="stylesheet" href="/ui/src/arazzo-kit.css">
   <style>
     /* App shell — modern grid: the toolbar row takes its natural (possibly wrapped) height, the
        minmax(0, 1fr) row fills the rest of the dynamic viewport exactly; the canvas and the
@@ -197,36 +197,39 @@
   <div id="toast" hidden style="position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 50; max-width: min(620px, 90vw); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--arazzo-border, #e3e6ea); background: var(--arazzo-bg, #fff); box-shadow: 0 6px 24px rgba(0,0,0,0.18); font-size: 13px;"></div>
 
   <script type="module">
-    import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from './designer-fixture.js';
-    import { projectWorkflow, listWorkflows } from '../src/workflow-graph.js';
-    import { EXPRESSION_ROOTS, resolveAgainstFrame } from '../src/expression-language.js';
-    import { templatesFromResponses, payloadSkeletonFromSchema } from '../src/operation-templates.js';
-    import { WorkflowDocumentModel } from '../src/workflow-document-model.js';
-    import '../src/components/design-surface.js';
-    import '../src/components/expression-input.js';
-    import '../src/components/criteria-editor.js';
-    import '../src/components/action-editor.js';
-    import '../src/components/step-inspector.js';
-    import '../src/components/workflow-inspector.js';
-    import '../src/components/text-editor.js';
-    import '../src/components/workspace-table.js';
-    import '../src/components/operation-browser.js';
-    import '../src/components/source-acquisition-dialog.js';
-    import '../src/components/git-dialog.js';
-    import '../src/components/input-dialog.js';
-    import '../src/components/value-editor.js';
-    import '../src/components/document-inspector.js';
-    import '../src/components/debug-tray.js';
-    import '../src/components/resume-dialog.js';
-    import '../src/components/scenario-panel.js';
-    import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
-    import { createMockControlPlane } from './mock-api.js';
+    import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from '/ui/demo/designer-fixture.js';
+    import { projectWorkflow, listWorkflows } from '/ui/src/workflow-graph.js';
+    import { EXPRESSION_ROOTS, resolveAgainstFrame } from '/ui/src/expression-language.js';
+    import { templatesFromResponses, payloadSkeletonFromSchema } from '/ui/src/operation-templates.js';
+    import { WorkflowDocumentModel } from '/ui/src/workflow-document-model.js';
+    import '/ui/src/components/design-surface.js';
+    import '/ui/src/components/expression-input.js';
+    import '/ui/src/components/criteria-editor.js';
+    import '/ui/src/components/action-editor.js';
+    import '/ui/src/components/step-inspector.js';
+    import '/ui/src/components/workflow-inspector.js';
+    import '/ui/src/components/text-editor.js';
+    import '/ui/src/components/workspace-table.js';
+    import '/ui/src/components/operation-browser.js';
+    import '/ui/src/components/source-acquisition-dialog.js';
+    import '/ui/src/components/git-dialog.js';
+    import '/ui/src/components/input-dialog.js';
+    import '/ui/src/components/value-editor.js';
+    import '/ui/src/components/document-inspector.js';
+    import '/ui/src/components/debug-tray.js';
+    import '/ui/src/components/resume-dialog.js';
+    import '/ui/src/components/scenario-panel.js';
+    import { ArazzoControlPlaneClient } from '/ui/src/arazzo-client.js';
+    import { createMockControlPlane } from '/ui/demo/mock-api.js';
 
     // By default the designer runs standalone against the in-memory mock control plane. Adding ?live points the SAME
     // designer at a REAL control-plane server on this origin under /arazzo/v1 (the samples/arazzo host, §18): the mock
     // is not created, and the fixture seed below is skipped — a working copy is created from a catalog version through
     // the real API instead, and a debug run executes on a real runner against a real dev environment.
-    const isLive = new URLSearchParams(location.search).has('live');
+    // The production entry (/designer, served by the control plane and linked from the app) is ALWAYS live; the
+    // standalone spike page (/ui/demo/designer.html) stays mock unless ?live is passed.
+    const isLive = new URLSearchParams(location.search).has('live')
+      || location.pathname === '/designer' || location.pathname === '/designer/';
     const mock = isLive ? null : createMockControlPlane({ latencyMs: 0 });
     // Live mode talks to the real control plane on this origin. Use the BFF auth fetch (same as the main app):
     // carry the session cookie + X-CSRF and bounce to /login on a 401 — so the designer is a genuinely
