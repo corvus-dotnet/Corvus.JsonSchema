@@ -219,6 +219,7 @@ public static class ControlPlaneEndpointExtensions
             credentialsHandler,
             workspaceHandler,
             gitHubHandler,
+            workspaceHandler, // debugRunsHandler — the same instance implements IApiDebugRunsHandler (§18 debug runs).
             sourcesHandler,
             environmentsHandler,
             runnerAuthorizationsHandler,

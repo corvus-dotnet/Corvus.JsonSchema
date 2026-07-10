@@ -1344,11 +1344,21 @@
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
     tray.addEventListener('trigger-injected', (e) => {
       logEvent('trigger-injected', e.detail);
-      // §18: on a REMOTE debug run a message wait is a genuine suspension; injection publishes the real message (or
-      // the developer does it out of band) — wiring that publish is a later slice. Do NOT kick off a local
-      // simulation here, which would abandon the durable run.
+      // §18 / §3.3: on a REMOTE debug run a message wait is a genuine suspension. Deliver the message to the run
+      // through the control plane (which hands it STRAIGHT to the awaiting draft run — the debug stand-in for the
+      // real publisher; nothing is published to a broker), then pump it forward like a resume. Do NOT kick off a
+      // local simulation here, which would abandon the durable run.
       if (shell.debugRun) {
-        showToast('Trigger injection on a remote debug run publishes the real message — not yet wired in the demo.', 'info');
+        void (async () => {
+          const fromCursor = shell.debugRun.cursor;
+          const message = { channel: e.detail.channel, payload: e.detail.payload ?? {}, ...(e.detail.correlationId ? { correlationId: e.detail.correlationId } : {}) };
+          try {
+            applyDebugRun(await client.injectDebugRunMessage(shell.id, shell.debugRun.id, message));
+            await pumpDebugRun({ awaitAdvanceFrom: fromCursor });
+          } catch (err) {
+            showToast(`Inject message: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
+          }
+        })();
         return;
       }
       // Simulator: the injected message joins the session scenario; the replay delivers it at the wait and
