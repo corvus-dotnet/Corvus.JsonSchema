@@ -86,17 +86,20 @@ public static class ReconciliationEngine
         string reportUrl = string.Concat("https://reports.ledger.example/reconciliations/", runId);
         var asOf = DateOnly.FromDateTime(startedAt.UtcDateTime);
 
-        byte[] discrepancies = LedgerJson.Serialize(writer =>
+        // Composed through the pooled writer into owned arrays (discrepancies is stored, report is returned); state by
+        // `in` context, static lambdas (no closure).
+        var discrepanciesContext = new DiscrepanciesContext(discrepant, asOf);
+        byte[] discrepancies = LedgerJson.ToArray<DiscrepanciesContext>(in discrepanciesContext, static (writer, in c) =>
         {
             writer.WriteStartArray();
-            foreach (LedgerAccountRecord account in discrepant)
+            foreach (LedgerAccountRecord account in c.Discrepant)
             {
                 writer.WriteStartObject();
                 writer.WriteString("account", account.Account);
                 writer.WriteNumber("delta", account.Delta);
                 writer.WriteString("currency", account.Currency);
                 writer.WriteString("severity", Severity(account.Delta));
-                writer.WriteString("firstSeen", FirstSeen(account.Account, asOf));
+                writer.WriteString("firstSeen", FirstSeen(account.Account, c.AsOf));
                 writer.WritePropertyName("contact");
                 writer.WriteStartObject();
                 writer.WriteString("email", ContactEmail);
@@ -108,16 +111,17 @@ public static class ReconciliationEngine
             writer.WriteEndArray();
         });
 
-        byte[] report = LedgerJson.Serialize(writer =>
+        var reportContext = new ReportContext(discrepancies, counts.BankTransactions, totalDelta, reportUrl);
+        byte[] report = LedgerJson.ToArray<ReportContext>(in reportContext, static (writer, in c) =>
         {
             writer.WriteStartObject();
-            LedgerJson.WriteDocumentProperty(writer, "discrepancies", discrepancies);
+            LedgerJson.WriteDocumentProperty(writer, "discrepancies", c.Discrepancies);
             writer.WriteStartArray("range");
             writer.WriteNumberValue(0);
-            writer.WriteNumberValue(counts.BankTransactions);
+            writer.WriteNumberValue(c.BankTransactions);
             writer.WriteEndArray();
-            writer.WriteNumber("totalDelta", totalDelta);
-            writer.WriteString("reportUrl", reportUrl);
+            writer.WriteNumber("totalDelta", c.TotalDelta);
+            writer.WriteString("reportUrl", c.ReportUrl);
             writer.WriteEndObject();
         });
 
@@ -150,6 +154,11 @@ public static class ReconciliationEngine
 
     private static string FirstSeen(string account, DateOnly asOf)
         => asOf.AddDays(-1 - (int)(LedgerJson.StableHash(account) % 14)).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    // Carry the compose state to the pooled writer so the write callbacks stay static (no closure allocation).
+    private readonly record struct DiscrepanciesContext(IReadOnlyList<LedgerAccountRecord> Discrepant, DateOnly AsOf);
+
+    private readonly record struct ReportContext(byte[] Discrepancies, int BankTransactions, decimal TotalDelta, string ReportUrl);
 }
 
 /// <summary>The entry/transaction counts of a reconciliation.</summary>

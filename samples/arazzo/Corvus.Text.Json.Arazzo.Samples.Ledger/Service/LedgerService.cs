@@ -37,14 +37,13 @@ public sealed class LedgerService : IApiDefaultHandler
     public async ValueTask<LoadLedgerResult> HandleLoadLedgerAsync(LoadLedgerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         ReconciliationCounts counts = ReconciliationEngine.ComputeCounts(await this.store.GetAccountsAsync(cancellationToken).ConfigureAwait(false));
-        byte[] bytes = LedgerJson.Serialize(writer =>
+        int ledgerEntries = counts.LedgerEntries;
+        ParsedJsonDocument<Models.GetLedgerOk> doc = LedgerJson.ToPooledDocument<Models.GetLedgerOk, int>(in ledgerEntries, static (writer, in entries) =>
         {
             writer.WriteStartObject();
-            writer.WriteNumber("entries", counts.LedgerEntries);
+            writer.WriteNumber("entries", entries);
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.GetLedgerOk>.Parse(bytes);
         workspace.TakeOwnership(doc);
         return LoadLedgerResult.Ok(doc.RootElement, workspace);
     }
@@ -53,14 +52,13 @@ public sealed class LedgerService : IApiDefaultHandler
     public async ValueTask<FetchTransactionsResult> HandleFetchTransactionsAsync(FetchTransactionsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         ReconciliationCounts counts = ReconciliationEngine.ComputeCounts(await this.store.GetAccountsAsync(cancellationToken).ConfigureAwait(false));
-        byte[] bytes = LedgerJson.Serialize(writer =>
+        int bankTransactions = counts.BankTransactions;
+        ParsedJsonDocument<Models.GetTransactionsOk> doc = LedgerJson.ToPooledDocument<Models.GetTransactionsOk, int>(in bankTransactions, static (writer, in count) =>
         {
             writer.WriteStartObject();
-            writer.WriteNumber("count", counts.BankTransactions);
+            writer.WriteNumber("count", count);
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.GetTransactionsOk>.Parse(bytes);
         workspace.TakeOwnership(doc);
         return FetchTransactionsResult.Ok(doc.RootElement, workspace);
     }
@@ -69,15 +67,14 @@ public sealed class LedgerService : IApiDefaultHandler
     public async ValueTask<MatchEntriesResult> HandleMatchEntriesAsync(MatchEntriesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         ReconciliationCounts counts = ReconciliationEngine.ComputeCounts(await this.store.GetAccountsAsync(cancellationToken).ConfigureAwait(false));
-        byte[] bytes = LedgerJson.Serialize(writer =>
+        var match = new MatchContext(counts.Matched, counts.Unmatched);
+        ParsedJsonDocument<Models.PostMatchOk> doc = LedgerJson.ToPooledDocument<Models.PostMatchOk, MatchContext>(in match, static (writer, in c) =>
         {
             writer.WriteStartObject();
-            writer.WriteNumber("matched", counts.Matched);
-            writer.WriteNumber("unmatched", counts.Unmatched);
+            writer.WriteNumber("matched", c.Matched);
+            writer.WriteNumber("unmatched", c.Unmatched);
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.PostMatchOk>.Parse(bytes);
         workspace.TakeOwnership(doc);
         return MatchEntriesResult.Ok(doc.RootElement, workspace);
     }
@@ -113,14 +110,12 @@ public sealed class LedgerService : IApiDefaultHandler
     public async ValueTask<PostCorrectionsResult> HandlePostCorrectionsAsync(PostCorrectionsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         int posted = await this.store.PostCorrectionsToLatestAsync(cancellationToken).ConfigureAwait(false);
-        byte[] bytes = LedgerJson.Serialize(writer =>
+        ParsedJsonDocument<Models.PostCorrectionsOk> doc = LedgerJson.ToPooledDocument<Models.PostCorrectionsOk, int>(in posted, static (writer, in p) =>
         {
             writer.WriteStartObject();
-            writer.WriteNumber("posted", posted);
+            writer.WriteNumber("posted", p);
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.PostCorrectionsOk>.Parse(bytes);
         workspace.TakeOwnership(doc);
         return PostCorrectionsResult.Ok(doc.RootElement, workspace);
     }
@@ -130,14 +125,12 @@ public sealed class LedgerService : IApiDefaultHandler
     {
         string reportUrl = await this.store.PublishLatestAsync(this.timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false)
             ?? "https://reports.ledger.example/reconciliations/none";
-        byte[] bytes = LedgerJson.Serialize(writer =>
+        ParsedJsonDocument<Models.PostReportOk> doc = LedgerJson.ToPooledDocument<Models.PostReportOk, string>(in reportUrl, static (writer, in url) =>
         {
             writer.WriteStartObject();
-            writer.WriteString("reportUrl", reportUrl);
+            writer.WriteString("reportUrl", url);
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.PostReportOk>.Parse(bytes);
         workspace.TakeOwnership(doc);
         return PublishReportResult.Ok(doc.RootElement, workspace);
     }
@@ -149,25 +142,24 @@ public sealed class LedgerService : IApiDefaultHandler
         string? pageToken = ReadOptionalString((JsonElement)parameters.PageToken);
         (IReadOnlyList<ReconciliationRecord> reconciliations, string? nextPageToken) = await this.store.ListReconciliationsAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
 
-        byte[] page = LedgerJson.Serialize(writer =>
+        var page = new ReconciliationPageContext(reconciliations, nextPageToken);
+        ParsedJsonDocument<Models.ReconciliationPage> doc = LedgerJson.ToPooledDocument<Models.ReconciliationPage, ReconciliationPageContext>(in page, static (writer, in ctx) =>
         {
             writer.WriteStartObject();
             writer.WriteStartArray("reconciliations");
-            foreach (ReconciliationRecord run in reconciliations)
+            foreach (ReconciliationRecord run in ctx.Reconciliations)
             {
                 WriteReconciliationView(writer, run);
             }
 
             writer.WriteEndArray();
-            if (nextPageToken is not null)
+            if (ctx.NextPageToken is not null)
             {
-                writer.WriteString("nextPageToken", nextPageToken);
+                writer.WriteString("nextPageToken", ctx.NextPageToken);
             }
 
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.ReconciliationPage>.Parse(page);
         workspace.TakeOwnership(doc);
         return ListReconciliationsResult.Ok(doc.RootElement, workspace);
     }
@@ -176,14 +168,12 @@ public sealed class LedgerService : IApiDefaultHandler
     public async ValueTask<GetReconciliationResult> HandleGetReconciliationAsync(GetReconciliationParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = ((JsonElement)parameters.RunId).GetString() ?? throw new InvalidOperationException("The runId path parameter is required.");
-        ReconciliationRecord? run = await this.store.GetReconciliationAsync(runId, cancellationToken).ConfigureAwait(false);
-        if (run is null)
+        if (await this.store.GetReconciliationAsync(runId, cancellationToken).ConfigureAwait(false) is not { } run)
         {
             return GetReconciliationResult.NotFound();
         }
 
-        byte[] view = LedgerJson.Serialize(writer => WriteReconciliationView(writer, run));
-        var doc = ParsedJsonDocument<Models.ReconciliationView>.Parse(view);
+        ParsedJsonDocument<Models.ReconciliationView> doc = LedgerJson.ToPooledDocument<Models.ReconciliationView, ReconciliationRecord>(in run, static (writer, in r) => WriteReconciliationView(writer, r));
         workspace.TakeOwnership(doc);
         return GetReconciliationResult.Ok(doc.RootElement, workspace);
     }
@@ -195,11 +185,12 @@ public sealed class LedgerService : IApiDefaultHandler
         string? pageToken = ReadOptionalString((JsonElement)parameters.PageToken);
         (IReadOnlyList<LedgerAccountRecord> accounts, string? nextPageToken) = await this.store.ListAccountsAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
 
-        byte[] page = LedgerJson.Serialize(writer =>
+        var page = new LedgerAccountPageContext(accounts, nextPageToken);
+        ParsedJsonDocument<Models.LedgerAccountPage> doc = LedgerJson.ToPooledDocument<Models.LedgerAccountPage, LedgerAccountPageContext>(in page, static (writer, in ctx) =>
         {
             writer.WriteStartObject();
             writer.WriteStartArray("accounts");
-            foreach (LedgerAccountRecord account in accounts)
+            foreach (LedgerAccountRecord account in ctx.Accounts)
             {
                 writer.WriteStartObject();
                 writer.WriteString("account", account.Account);
@@ -212,15 +203,13 @@ public sealed class LedgerService : IApiDefaultHandler
             }
 
             writer.WriteEndArray();
-            if (nextPageToken is not null)
+            if (ctx.NextPageToken is not null)
             {
-                writer.WriteString("nextPageToken", nextPageToken);
+                writer.WriteString("nextPageToken", ctx.NextPageToken);
             }
 
             writer.WriteEndObject();
         });
-
-        var doc = ParsedJsonDocument<Models.LedgerAccountPage>.Parse(page);
         workspace.TakeOwnership(doc);
         return ListLedgerAccountsResult.Ok(doc.RootElement, workspace);
     }
@@ -253,4 +242,11 @@ public sealed class LedgerService : IApiDefaultHandler
 
     private static string? ReadOptionalString(JsonElement value)
         => value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    // Carry the compose state to the pooled writer so the write callbacks stay static (no closure allocation).
+    private readonly record struct MatchContext(int Matched, int Unmatched);
+
+    private readonly record struct ReconciliationPageContext(IReadOnlyList<ReconciliationRecord> Reconciliations, string? NextPageToken);
+
+    private readonly record struct LedgerAccountPageContext(IReadOnlyList<LedgerAccountRecord> Accounts, string? NextPageToken);
 }
