@@ -145,8 +145,8 @@ class ArazzoControlPlane extends ArazzoElement {
       <style>
         ${this.themeTokens()}
         ${SHARED_CSS}
-        :host { display: block; }
-        .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .toolbar { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
         .chips { display: flex; gap: 6px; flex-wrap: wrap; }
         .chip { font-size: 12px; padding: 4px 11px; border-radius: 999px; }
         .chip[aria-pressed="true"] { background: var(--_accent); border-color: var(--_accent); color: #fff; }
@@ -154,11 +154,14 @@ class ArazzoControlPlane extends ArazzoElement {
         .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
         .toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--_muted); white-space: nowrap; }
         .grow { flex: 1; }
-        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1.4fr 1fr; align-items: start; } }
-        .detail-pane:empty::before { content: ""; }
+        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+        .layout > * { min-height: 0; }
+        .detail-pane { min-height: 0; overflow: auto; }
+        /* When no run is selected the pane is empty; drop it from the grid so the table fills the whole row (not half). */
+        .detail-pane:empty { display: none; }
         .placeholder { border: 1px dashed var(--_border); border-radius: var(--_radius); color: var(--_muted); padding: 28px; text-align: center; }
-        .timewindow { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+        .timewindow { flex: none; display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
         .timewindow fieldset { display: flex; gap: 8px; flex-wrap: wrap; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; margin: 0; }
         .timewindow legend { font-size: 11px; color: var(--_muted); padding: 0 4px; }
         .timewindow label { font-size: 11px; color: var(--_muted); display: inline-flex; flex-direction: column; gap: 2px; }

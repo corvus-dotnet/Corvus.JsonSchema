@@ -6,9 +6,11 @@
   <title>Arazzo Control Plane</title>
   <link rel="stylesheet" href="/ui/src/arazzo-kit.css">
   <style>
-    body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; }
-    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
-    header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+    html, body { height: 100%; }
+    body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; overflow: hidden; }
+    /* Application shell: fill the viewport, never scroll the page — the active view scrolls its own list/grid. */
+    .page { height: 100vh; display: flex; flex-direction: column; padding: 14px 18px; box-sizing: border-box; }
+    header.top { flex: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     h1 { font-size: 20px; margin: 0; }
     .sub { color: var(--arazzo-muted); font-size: 13px; }
     .topbar-right { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
@@ -18,11 +20,15 @@
     .theme-toggle:focus-visible { outline: 2px solid var(--arazzo-accent); outline-offset: 2px; }
     .theme-toggle svg { display: block; width: 16px; height: 16px; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--arazzo-border); }
+    .tabs { flex: none; display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--arazzo-border); }
     .tabs button { font: inherit; font-size: 14px; cursor: pointer; border: none; background: none; color: var(--arazzo-muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
     .tabs button[aria-selected="true"] { color: var(--arazzo-text); border-bottom-color: var(--arazzo-accent); font-weight: 600; }
     .authbar { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; }
     .linklike { font: inherit; font-size: 13px; cursor: pointer; border: none; background: none; padding: 0; color: var(--arazzo-accent); text-decoration: underline; }
+    /* Each tab panel fills the remaining viewport; its component (flex child) scrolls internally, not the page. */
+    [role="tabpanel"] { flex: 1; min-height: 0; }
+    [role="tabpanel"]:not([hidden]) { display: flex; flex-direction: column; }
+    [role="tabpanel"] > * { flex: 1; min-height: 0; }
     [hidden] { display: none !important; }
   </style>
 </head>
