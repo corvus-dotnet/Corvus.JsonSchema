@@ -337,7 +337,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         await using MySqlCommand select = connection.CreateCommand();
 
         // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
-        // unpinned run (environment IS NULL) or an unscoped dispatcher (@runner_environment IS NULL) matches anything.
+        // A real runner (non-null @runner_environment) claims a run only when pinned to EXACTLY its environment (the
+        // equality excludes an unpinned run); a null @runner_environment is the env-agnostic base overload, never a runner.
         // §18: a paused (or faulted) run the control plane marked resume-claimable (resume_requested_at IS NOT NULL) also
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         select.CommandText =
@@ -345,7 +346,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             SELECT r.run_id FROM workflow_runs r
             LEFT JOIN workflow_leases l ON l.run_id = r.run_id
             WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
-              AND (@runner_environment IS NULL OR r.environment IS NULL OR r.environment = @runner_environment)
+              AND (@runner_environment IS NULL OR r.environment = @runner_environment)
               AND (r.status = @pending
                    OR (r.status = @running AND (l.run_id IS NULL OR l.expires_at <= @now))
                    OR (r.resume_requested_at IS NOT NULL AND r.status IN (@suspended, @faulted)));

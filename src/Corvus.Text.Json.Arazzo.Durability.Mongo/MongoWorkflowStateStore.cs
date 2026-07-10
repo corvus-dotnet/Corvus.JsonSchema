@@ -297,14 +297,13 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             claimableStatus,
             b.In("workflowId", hostedWorkflowIds));
 
-        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
-        // unpinned run (environment absent/null) or an unscoped dispatcher (runnerEnvironment is null) matches anything.
+        // §5.5 environment-scoped dispatch: a real runner (non-null runnerEnvironment) claims a run only when pinned to
+        // EXACTLY its environment — b.Eq excludes an unpinned run (absent/null environment) and a differently-pinned run.
+        // A null runnerEnvironment is the env-agnostic base overload (no environment filter), never a runner — the
+        // WorkflowDispatcher rejects an unscoped runner, so dispatch is always strict.
         if (runnerEnvironment is not null)
         {
-            filter = b.And(filter, b.Or(
-                b.Eq<BsonValue>("environment", BsonNull.Value),
-                b.Exists("environment", false),
-                b.Eq("environment", runnerEnvironment)));
+            filter = b.And(filter, b.Eq("environment", runnerEnvironment));
         }
 
         // Buffer the candidates so we can run the leases query without yielding inside the cursor.

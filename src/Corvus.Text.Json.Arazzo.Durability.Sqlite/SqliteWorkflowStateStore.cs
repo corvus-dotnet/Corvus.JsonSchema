@@ -493,8 +493,10 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             placeholders[i] = "@w" + i.ToString(CultureInfo.InvariantCulture);
         }
 
-        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
-        // unpinned run (Environment IS NULL) or an unscoped dispatcher (@runnerEnvironment IS NULL) matches anything.
+        // §5.5 environment-scoped dispatch: a real runner (non-null @runnerEnvironment) claims a run only when pinned to
+        // EXACTLY its environment — the equality excludes an unpinned run (Environment IS NULL, since NULL = value is
+        // never true) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base overload (list all
+        // claimable), never a runner — the WorkflowDispatcher rejects an unscoped runner, so dispatch is always strict.
         // §18: a paused (or faulted) run the control plane marked resume-claimable (ResumeRequestedAt IS NOT NULL) also
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         string sql =
@@ -502,7 +504,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             SELECT r.RunId FROM WorkflowRuns r
             LEFT JOIN WorkflowLeases l ON l.RunId = r.RunId
             WHERE r.WorkflowId IN ({string.Join(", ", placeholders)})
-              AND (@runnerEnvironment IS NULL OR r.Environment IS NULL OR r.Environment = @runnerEnvironment)
+              AND (@runnerEnvironment IS NULL OR r.Environment = @runnerEnvironment)
               AND (r.Status = @pending
                    OR (r.Status = @running AND (l.RunId IS NULL OR l.ExpiresAt <= @now))
                    OR (r.ResumeRequestedAt IS NOT NULL AND r.Status IN (@suspended, @faulted)));

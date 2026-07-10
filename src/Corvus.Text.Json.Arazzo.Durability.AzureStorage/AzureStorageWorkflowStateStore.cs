@@ -445,8 +445,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
     // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null run environment) matches
     // anything; otherwise the run's pinned environment must equal the runner's.
+    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (an
+    // unpinned or differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload
+    // (list all claimable regardless of environment), never a runner.
     private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
+        => runnerEnvironment is null || (runEnvironment is not null && string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal));
 
     private static TableEntity BuildIndexEntity(WorkflowRunId id, in WorkflowRunIndexEntry index)
     {
