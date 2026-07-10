@@ -1642,7 +1642,13 @@
       setSaveUi('git binding saved');
       logEvent('git-bound', e.detail.workingCopy.gitBinding);
     });
+    // Pull/rollback discard local edits by design. Cancel any pending autosave SYNCHRONOUSLY before the
+    // pull reads the live etag, so a queued save of the about-to-be-discarded edit cannot fire mid-pull
+    // (which would bump the etag and 409 the pull). clearTimeout is synchronous, so it completes before
+    // the panel's emit() returns and the pull proceeds.
+    gitDialog.addEventListener('pull-starting', () => { clearTimeout(autosaveTimer); });
     gitDialog.addEventListener('pulled', (e) => {
+      clearTimeout(autosaveTimer);
       const wc = e.detail.workingCopy;
       shell.etag = wc.etag;
       shell.dirty = false;
