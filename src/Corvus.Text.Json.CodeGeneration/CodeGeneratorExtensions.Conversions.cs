@@ -39,9 +39,69 @@ internal static partial class CodeGeneratorExtensions
 
         string typeName = forMutable ? "Mutable" : typeDeclaration.DotnetTypeName();
 
-        if (typeDeclaration.ImpliedCoreTypes().CountTypes() == 1)
+        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypes();
+
+        // Number and Integer are one numeric domain (constraint keywords such as minimum imply
+        // Number alongside Integer from "type"), and Null does not demote the numeric conversions:
+        // only a union that can hold a non-numeric value kind forces explicit operators.
+        bool isNumericDomain =
+            (impliedCoreTypes & (CoreTypes.Number | CoreTypes.Integer)) != 0 &&
+            (impliedCoreTypes & ~(CoreTypes.Number | CoreTypes.Integer | CoreTypes.Null)) == 0;
+
+        if (isNumericDomain)
         {
-            switch (typeDeclaration.ImpliedCoreTypes())
+            if (!handledNumber)
+            {
+                if (seenConversionOperators.Add("long"))
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                        .AppendLineIndent("public static implicit operator long(", typeName, " value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();");
+                }
+
+                if (seenConversionOperators.Add("double"))
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                        .AppendLineIndent("public static implicit operator double(", typeName, " value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();");
+                }
+
+                if (seenConversionOperators.Add("BigNumber"))
+                {
+                    // This is explicit because it allocates
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                        .AppendLineIndent("public static explicit operator Corvus.Numerics.BigNumber(", typeName, " value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();");
+                }
+
+                if (seenConversionOperators.Add("BigInteger"))
+                {
+                    // This is explicit because it allocates
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                        .AppendLineIndent("public static explicit operator System.Numerics.BigInteger(", typeName, " value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();");
+                }
+
+                if (seenConversionOperators.Add("decimal"))
+                {
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                        .AppendLineIndent("public static explicit operator decimal(", typeName, " value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();");
+                }
+            }
+
+            // Emit explicit operators for formats discovered in composition sub-types (a subschema's
+            // format-specific CLR type is not guaranteed to hold every value of the composed type).
+            AppendCompositionSubtypeFormatOperators(generator, typeDeclaration, seenConversionOperators, forMutable);
+        }
+        else if (impliedCoreTypes.CountTypes() == 1)
+        {
+            switch (impliedCoreTypes)
             {
                 case CoreTypes.String:
                     // We always add the string conversion to string handlers.
@@ -55,57 +115,6 @@ internal static partial class CodeGeneratorExtensions
 
                     break;
 
-                case CoreTypes.Number:
-                case CoreTypes.Integer:
-                    if (handledNumber)
-                    {
-                        // Don't add any more numeric conversion operators if we handled it.
-                        break;
-                    }
-
-                    if (seenConversionOperators.Add("long"))
-                    {
-                        generator
-                            .AppendSeparatorLine()
-                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
-                            .AppendLineIndent("public static implicit operator long(", typeName, " value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();");
-                    }
-
-                    if (seenConversionOperators.Add("double"))
-                    {
-                        generator
-                            .AppendSeparatorLine()
-                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
-                            .AppendLineIndent("public static implicit operator double(", typeName, " value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();");
-                    }
-
-                    if (seenConversionOperators.Add("BigNumber"))
-                    {
-                        // This is explicit because it allocates
-                        generator
-                            .AppendSeparatorLine()
-                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
-                            .AppendLineIndent("public static explicit operator Corvus.Numerics.BigNumber(", typeName, " value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();");
-                    }
-
-                    if (seenConversionOperators.Add("BigInteger"))
-                    {
-                        // This is explicit because it allocates
-                        generator
-                            .AppendSeparatorLine()
-                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
-                            .AppendLineIndent("public static explicit operator System.Numerics.BigInteger(", typeName, " value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();");
-                    }
-
-                    if (seenConversionOperators.Add("decimal"))
-                    {
-                        generator
-                            .AppendSeparatorLine()
-                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
-                            .AppendLineIndent("public static explicit operator decimal(", typeName, " value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();");
-                    }
-
-                    break;
                 case CoreTypes.Boolean:
                     if (seenConversionOperators.Add("bool"))
                     {
@@ -143,11 +152,11 @@ internal static partial class CodeGeneratorExtensions
                     break;
             }
         }
-        else if (typeDeclaration.ImpliedCoreTypes().CountTypes() > 1)
+        else if (impliedCoreTypes.CountTypes() > 1)
         {
-            // For multi-type declarations (e.g. unions), emit explicit conversion operators
-            // for each implied core type.
-            CoreTypes coreTypes = typeDeclaration.ImpliedCoreTypes();
+            // For multi-type declarations (unions holding a non-numeric value kind), emit explicit
+            // conversion operators for each implied core type.
+            CoreTypes coreTypes = impliedCoreTypes;
 
             if ((coreTypes & CoreTypes.String) != 0)
             {
