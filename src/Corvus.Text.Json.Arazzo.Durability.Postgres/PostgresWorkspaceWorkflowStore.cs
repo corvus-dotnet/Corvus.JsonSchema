@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Npgsql;
 
@@ -99,12 +101,20 @@ public sealed class PostgresWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IA
         WorkflowEtag etag = NewEtag();
         byte[] json = WorkspaceWorkflowSerialization.SerializeNew(draft, id, actor, this.timeProvider.GetUtcNow(), etag);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
+        insert.Transaction = transaction;
         insert.CommandText = "INSERT INTO WorkspaceWorkflows (Id, Etag, Document) VALUES (@id, @etag, @doc);";
         insert.Parameters.AddWithValue("id", id);
         insert.Parameters.AddWithValue("etag", etag.Value!);
         insert.Parameters.AddWithValue("doc", json);
         await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // Mirror the management tags into the queryable side table so the §14.2 read reach can be pushed into the
+        // list/count query (a correlated EXISTS). Atomic; tags are immutable so no re-sync on save.
+        await SyncSecurityTagsAsync(connection, transaction, id, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
         return PersistedJson.ToPooledDocument<WorkspaceWorkflow>(json);
     }
 
@@ -137,54 +147,42 @@ public sealed class PostgresWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IA
         try
         {
             // Keyset seek past the cursor id in id order — an indexed range scan over the primary key, not a table load
-            // (the id is globally unique, so it is the whole total order and the tie-breaker is empty). Reach is a
-            // per-row predicate applied in memory as we stream; the reader is consumed only until the page fills.
+            // (the id is globally unique, so it is the whole total order and the tie-breaker is empty) — with the §14.2
+            // read reach pushed into the query as a correlated EXISTS over WorkspaceWorkflowSecurityTags (the same
+            // predicate context.Admits evaluates, but applied in the database), so out-of-reach rows never leave it.
+            // LIMIT bounds the read.
             await using NpgsqlCommand select = connection.CreateCommand();
+            var conditions = new List<string>(2);
             if (hasCursor)
             {
-                select.CommandText = "SELECT Id, Document FROM WorkspaceWorkflows WHERE Id > @id ORDER BY Id;";
+                conditions.Add("Id > @id");
                 select.Parameters.AddWithValue("id", cursor.Id);
             }
-            else
+
+            AppendReachPredicate(conditions, select, context);
+
+            var sql = new StringBuilder("SELECT Id, Document FROM WorkspaceWorkflows");
+            if (conditions.Count > 0)
             {
-                select.CommandText = "SELECT Id, Document FROM WorkspaceWorkflows ORDER BY Id;";
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
             }
+
+            sql.Append(" ORDER BY Id LIMIT @limit;");
+            select.Parameters.AddWithValue("limit", pageSize + 1);
+            select.CommandText = sql.ToString();
 
             await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             string lastId = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string id = reader.GetString(0);
-                byte[] json = reader.GetFieldValue<byte[]>(1);
-                ParsedJsonDocument<WorkspaceWorkflow> cand = PersistedJson.ToPooledDocument<WorkspaceWorkflow>(json);
-                bool kept = false;
-                try
+                if (docs.Count == pageSize)
                 {
-                    SecurityTagSet tagSet = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tagSet))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastId = id;
+                    hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                    break;
                 }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
-                }
+
+                lastId = reader.GetString(0);
+                docs.Add(PersistedJson.ToPooledDocument<WorkspaceWorkflow>(reader.GetFieldValue<byte[]>(1)));
             }
 
             return hasMore
@@ -238,11 +236,41 @@ public sealed class PostgresWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IA
             WorkspaceWorkflowSerialization.EnsureEtag(id, expectedEtag, WorkspaceWorkflowSerialization.EtagOf(existing));
         }
 
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM WorkspaceWorkflows WHERE Id = @id;";
+        delete.Transaction = transaction;
+        delete.CommandText =
+            "DELETE FROM WorkspaceWorkflows WHERE Id = @id; " +
+            "DELETE FROM WorkspaceWorkflowSecurityTags WHERE Id = @id;";
         delete.Parameters.AddWithValue("id", id);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(1);
+        AppendReachPredicate(conditions, select, context);
+
+        // Bounded count: COUNT over a subquery capped at cap + 1, so the scan stops one row past the cap; the (cap+1)th
+        // row trips Capped. Same reach predicate as the list (AppendReachPredicate) — cannot drift.
+        var inner = new StringBuilder("SELECT 1 FROM WorkspaceWorkflows");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        select.Parameters.AddWithValue("cap", cap + 1);
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     /// <inheritdoc/>
@@ -251,6 +279,54 @@ public sealed class PostgresWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IA
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over WorkspaceWorkflowSecurityTags mirroring the
+    // caller's reach (the same rules context.Admits evaluates), keyed on the Id row discriminator. A null reach
+    // (unrestricted) adds nothing. Shared by ListAsync and CountAsync so the count can never drift from the list.
+    private static void AppendReachPredicate(List<string> conditions, NpgsqlCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "WorkspaceWorkflowSecurityTags",
+            ["Id"],
+            "TagKey",
+            "TagValue",
+            "WorkspaceWorkflows",
+            value =>
+            {
+                string p = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return "@" + p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors a working copy's management tags (one row per key/value) into the queryable side table, keyed by its id, so
+    // the reach can be pushed into the list/count query. Management tags are immutable after creation, so this runs only
+    // on add.
+    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string id, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using NpgsqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO WorkspaceWorkflowSecurityTags (Id, TagKey, TagValue) VALUES (@id, @key, @value);";
+            insert.Parameters.AddWithValue("id", id);
+            insert.Parameters.AddWithValue("key", tag.Key);
+            insert.Parameters.AddWithValue("value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -289,5 +365,12 @@ public sealed class PostgresWorkspaceWorkflowStore : IWorkspaceWorkflowStore, IA
             Etag TEXT NOT NULL,
             Document BYTEA NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS WorkspaceWorkflowSecurityTags (
+            Id TEXT NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_workspaceworkflowsecuritytags_owner ON WorkspaceWorkflowSecurityTags (Id);
+        CREATE INDEX IF NOT EXISTS ix_workspaceworkflowsecuritytags_kv ON WorkspaceWorkflowSecurityTags (TagKey, TagValue);
         """;
 }
