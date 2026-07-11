@@ -121,6 +121,18 @@ backends to side-table push-down + verify the reach test still passes on each (r
 backends) + the count conformance. (4) API-first `…/count` (reverted the earlier big-batch `/environments/count` etc. — re-add
 per-family) → regen → handler. (5) wire the console footer (`web/…/src/arazzo-client.js` count method + the list panel footer).
 
-**Status:** environments reach safety-net test committed + green (InMemory + Sqlite). NEXT = convert environments' relational backends
-(start Sqlite, then Postgres) to side-table push-down, verify the reach test holds, then the count. Composition is STOPPED. The
-podman socket for container conformance: see the note at the top of this file.
+**Status (2026-07-11):** environments row-security push-down **DONE + verified on Sqlite (in-process) and Postgres (real container)** —
+`f41c8f37ed` (Sqlite exemplar: `IEnvironmentStore.CountAsync` default + Sqlite side-table push-down + native COUNT + conformance),
+`706c74eba4` (Postgres, 10/10 on a real container). Deployment provisioning is **auto-covered**: the deployment libs call the
+store's `PrepareAsync` → `SchemaSql`, which now creates `EnvironmentSecurityTags` (`CREATE TABLE IF NOT EXISTS`). The reach safety-net
+(`Listing_is_scoped_to_the_read_reach`) + count test run in the SHARED `EnvironmentStoreConformance`, so they execute on every backend.
+
+**NEXT (environments):** (1) MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
+`SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). (2) The scan backends (Redis/Mongo/Cosmos/Nats/AzureStorage)
++ InMemory already apply reach in-memory in their ListAsync and get a correct bounded count from the interface DEFAULT — **run the env
+conformance on each to confirm the reach test passes (no leak) + count correct**; add a native bounded-scan `CountAsync` only if worth it.
+(3) Then `/environments/count` OpenAPI + handler + console footer. Then repeat the whole family cycle for sources, credentials, workingCopies.
+Per-backend recipe (relational): `using System.Text` + `System.Globalization`; side table in `SchemaSql`; transaction+`SyncSecurityTagsAsync`
+on add (tags immutable → none on update); cascade delete; `AppendReachPredicate` (composite owner cols `["Name","Tags"]`, tag table
+`EnvironmentSecurityTags`, main `Environments`) shared by ListAsync (WHERE + `ORDER BY … LIMIT @limit`) and the native `CountAsync`.
+Composition STOPPED. Podman socket for container conformance: note at top of this file.
