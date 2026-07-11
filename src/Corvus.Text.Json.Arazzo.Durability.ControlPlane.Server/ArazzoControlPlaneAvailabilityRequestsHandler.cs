@@ -31,6 +31,9 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The count operation's bound: badges/footers need "is there work / roughly how much", not exact-beyond-99.
+    private const int CountCap = 100;
+
     private readonly IAvailabilityRequestStore requests;
     private readonly IAvailabilityStore availability;
     private readonly IEnvironmentStore environments;
@@ -161,6 +164,46 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             availabilityRequests: Models.AvailabilityRequestList.AvailabilityRequestViewArray.Build(in requestList, BuildAvailabilityRequestViews),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListAvailabilityRequestsResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountAvailabilityRequestsResult> HandleCountAvailabilityRequestsAsync(CountAvailabilityRequestsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Mirrors HandleListAvailabilityRequestsAsync's reach/query build exactly (so the count can't drift from the list it
+        // annotates), minus paging — the store returns only a bounded total (§7.8 badges/footers), never rows.
+        AvailabilityRequestStatus? status = ParseCountStatus(parameters.Status);
+        string? environment = parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null;
+
+        AvailabilityRequestQuery query;
+        if (environment is not null)
+        {
+            // The environment queue — only a current administrator of it may count it (the list's 403).
+            if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
+            {
+                return CountAvailabilityRequestsResult.Forbidden(NotAdministratorProblem(environment), workspace);
+            }
+
+            query = new AvailabilityRequestQuery(status, Environment: environment);
+        }
+        else if (IsCountQueueScope(parameters.Scope))
+        {
+            // The approver inbox (§7.8): a caller who administers nothing counts zero — the store never sees an empty set.
+            IReadOnlyList<string> administered = await this.administration.ListAdministeredEnvironmentsAsync(this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            if (administered.Count == 0)
+            {
+                return CountResult(0, false, workspace);
+            }
+
+            query = new AvailabilityRequestQuery(status, AdministeredEnvironments: administered);
+        }
+        else
+        {
+            // The caller's own requests ("mine"), keyed on the audit actor recorded as createdBy.
+            query = new AvailabilityRequestQuery(status, CreatedBy: this.CallerActor());
+        }
+
+        (int count, bool capped) = await this.requests.CountAsync(query, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountResult(count, capped, workspace);
     }
 
     /// <inheritdoc/>
@@ -368,6 +411,17 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
     // Whether the caller asked for the approver inbox (scope=queue) rather than their own requests (scope=mine/absent).
     private static bool IsQueueScope(Models.GetAvailabilityRequestsScope scope)
         => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
+
+    // The count operation's own status/scope parameter types (distinct generated enums, same members as the list's).
+    private static AvailabilityRequestStatus? ParseCountStatus(Models.GetAvailabilityRequestsCountStatus status)
+        => status.IsNotUndefined() && Enum.TryParse((string)status, out AvailabilityRequestStatus parsed) ? parsed : null;
+
+    private static bool IsCountQueueScope(Models.GetAvailabilityRequestsCountScope scope)
+        => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
+
+    // A bounded count body: the store reports at most CountCap, and Capped tells the console to render e.g. "100+".
+    private static CountAvailabilityRequestsResult CountResult(int count, bool capped, JsonWorkspace workspace)
+        => CountAvailabilityRequestsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
 
     private static string? NoteReason(Models.AvailabilityRequestDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;

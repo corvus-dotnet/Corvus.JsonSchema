@@ -45,9 +45,19 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
   - 1c `8c31e750ae`: two shared conformance tests (cap boundary + filter reach) in `AccessRequestStoreConformance`. Verified
     green 2/2 on InMemory + Sqlite (in-process) and Postgres/MySql/SqlServer/Mongo/Redis/AzureStorage/NatsJetStream/Cosmos
     (real containers/emulator). Full `slnx` build was 0-warning (composition stopped to release DLL locks).
-- [ ] `availabilityRequests` (scope=queue, status) — `IAvailabilityRequestStore`  ← **NEXT (the exemplar to port from accessRequests)**
-- [ ] `runnerAuthorizations` (status) — `IEnvironmentRunnerAuthorizationStore`
+- [x] `availabilityRequests` (scope=queue/environment, status) — `IAvailabilityRequestStore`. **DONE — all backends verified,
+  commit pending.** `/availabilityRequests/count` (op `countAvailabilityRequests`, filters status/environment/scope) + handler
+  `HandleCountAvailabilityRequestsAsync` (mirrors the list; env-admin 403) + interface default + native `CountAsync` on all 10
+  backends. Availability backends already shared `AppendFilters`/`BuildFilter`/`Matches`, so count just reuses them (no
+  extraction). Conformance (cap boundary + filter reach) green 2/2 on InMemory + Sqlite + Postgres/MySql/SqlServer/Mongo/Redis/
+  AzureStorage/NatsJetStream/Cosmos.
+- [ ] `runnerAuthorizations` (status) — `IEnvironmentRunnerAuthorizationStore`  ← **NEXT**
 - [ ] then rewire the console Approvals badges (tab + sub-tabs) onto the three `/count` calls, restart composition, live-verify.
+
+> **Cosmos has NO bounded server-side COUNT** (verified on the emulator): a bare `COUNT` ignores the outer LIMIT and scans the
+> whole set, and wrapping COUNT around a cap-limited subquery is rejected — both `'OFFSET LIMIT' clause is not supported in
+> subqueries` and `'TOP' is not supported in subqueries`. So the Cosmos count uses the outer `SELECT c.id … OFFSET 0 LIMIT @lim`
+> (allowed) counted client-side (≤ cap+1 tiny id rows). A code comment on both Cosmos stores records this — do not "fix" to COUNT.
 
 > **Composition is currently STOPPED** (SIGTERM'd to release DLL locks for the build). Leave it down through the availability +
 > runner verticals + badge rewire, then restart ONCE at Slice 1 completion and live-verify all three badges rendering `N+`.
