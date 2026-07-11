@@ -52,11 +52,20 @@ Extract the **real** bootstrap into a new **product library**
 `Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap` (alongside `Security/SecurityBootstrap`),
 leaving example seeding in the sample. Design below. This is the ZeroFailed-configurable structure.
 
-### W2 — Seed the governance data (medium) — authored **into** the W4 structure
+### W2 — Seed the governance data (medium) — authored **into** the W4 structure — **DONE**
 `production` (+ `staging`) environments; environment administrators (`arazzo-admins` per env, the
 key unblock); register the four sources in the registry; ≥1 availability entry; a pending access
 request + a pending promotion request; `environment` stamped on the live runs. All as **example
 seed** (`IExampleSeed`), not bootstrap.
+
+**Done** — extended `ExampleSeedContext` with the five governance stores (`IEnvironmentAdministratorStore`,
+`ISourceStore`, `IAvailabilityStore`, `IAccessRequestStore`, `IAvailabilityRequestStore`) and `ArazzoExampleSeed.SeedAsync`:
+seeds `development`/`staging`/`production` environments; establishes `sys:group=arazzo-admins` as administrator of each
+(`SecuredEnvironmentAdministration.EstablishAsync` — the key unblock); registers onboarding/ledger/kyc (OpenAPI) +
+notifications (AsyncAPI) from their real specs (`RegisteredSource.Draft`); makes `onboard-customer` v1 "Available in"
+production; seeds a pending access request (alice → run scopes) and a pending promotion request (alice → onboard-customer
+v2 to production). Live runs already pin `development` (S2). Demo host builds warning-free; the governance store APIs are
+each conformance-tested against Postgres containers, so end-to-end live verification rides on the composition relaunch.
 
 ### W3 — Expand the live console (medium)
 Mount the already-built, already-wired admin panels in `wwwroot/index.html` (Runners, Environments,

@@ -297,7 +297,9 @@ IExampleSeed exampleSeed = new ArazzoExampleSeed();
 if (seedExampleData)
 {
     string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
-    await exampleSeed.SeedAsync(new ExampleSeedContext(catalog, sourceCredentials, environmentStore, specsDir));
+    await exampleSeed.SeedAsync(new ExampleSeedContext(
+        catalog, sourceCredentials, environmentStore, environmentAdministratorStore, sourceStore,
+        availabilityStore, accessRequests, availabilityRequestStore, specsDir));
 }
 
 // DEMO: the open demo has no interactive administrator, so stand in for the development environment's administrator
