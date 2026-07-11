@@ -319,6 +319,68 @@ public sealed class CosmosAvailabilityRequestStore : IAvailabilityRequestStore, 
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AvailabilityRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Bounded count over an id-only projection capped at cap + 1 (OFFSET 0 LIMIT), counting the returned ids
+        // client-side. Cosmos has NO bounded server-side COUNT: a bare COUNT ignores any outer LIMIT and scans the whole
+        // matching set, and wrapping COUNT around a cap-limited subquery is rejected (both 'OFFSET LIMIT' and 'TOP' are
+        // unsupported in subqueries). So the outer LIMIT + client-side count is the only bounded option; do not use COUNT.
+        var conditions = new List<string>(4);
+        if (query.Status is not null)
+        {
+            conditions.Add("c.status = @status");
+        }
+
+        if (query.Environment is not null)
+        {
+            conditions.Add("c.env = @env");
+        }
+
+        if (query.CreatedBy is not null)
+        {
+            conditions.Add("c.createdBy = @by");
+        }
+
+        string[]? adminNames = AppendAdministeredCondition(conditions, query.AdministeredEnvironments);
+
+        string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
+        var definition = new QueryDefinition("SELECT c.id FROM c" + where + " ORDER BY c.createdAt, c.id OFFSET 0 LIMIT @lim");
+        definition = definition.WithParameter("@lim", cap + 1);
+        if (query.Status is { } statusFilter)
+        {
+            definition = definition.WithParameter("@status", AvailabilityRequestStatusNames.ToWire(statusFilter));
+        }
+
+        if (query.Environment is { } environment)
+        {
+            definition = definition.WithParameter("@env", environment);
+        }
+
+        if (query.CreatedBy is { } createdBy)
+        {
+            definition = definition.WithParameter("@by", createdBy);
+        }
+
+        definition = WithAdministeredParameters(definition, query.AdministeredEnvironments, adminNames);
+
+        int total = 0;
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(definition);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
+            {
+                _ = element; // id-only projection — only its presence counts toward the bounded total
+                total++;
+            }
+        }
+
+        return total > cap ? (cap, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AvailabilityRequest>?> DecideAsync(string id, AvailabilityRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);

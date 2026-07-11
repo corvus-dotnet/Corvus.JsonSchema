@@ -3810,6 +3810,67 @@
         }
       }
     },
+    "/availabilityRequests/count": {
+      "get": {
+        "operationId": "countAvailabilityRequests",
+        "security": [
+          { "oauth2": [] },
+          { "openIdConnect": [] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "availabilityRequests"
+        ],
+        "summary": "Count availability requests",
+        "description": "Counts availability requests visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listAvailabilityRequests: with environment, that environment's request queue (administrator required, 403 otherwise); otherwise scope selects 'mine' (default) or 'queue' (the approver inbox); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Pending",
+                "Approved",
+                "Denied",
+                "Withdrawn"
+              ]
+            },
+            "description": "Only requests in this state."
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The target environment whose request queue to count (requires administrator of it); absent counts per scope."
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mine",
+                "queue"
+              ]
+            },
+            "description": "When environment is absent, which requests to count: 'mine' (default) the caller's own; 'queue' the approver inbox. Ignored when environment is present."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible availability requests.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
     "/availabilityRequests/{requestId}": {
       "parameters": [
         { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The availability request id." }
