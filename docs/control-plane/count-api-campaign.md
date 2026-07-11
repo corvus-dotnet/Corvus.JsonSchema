@@ -132,12 +132,18 @@ Postgres `706c74eba4`, MySql `d88a0bbda2`, SqlServer `7aa2357ce2`) push the reac
 side tables + `SqlSecurityRuleEmitter` with native `COUNT`; scan/InMemory (Redis/Mongo/Cosmos/Nats/AzureStorage/InMemory) keep
 in-memory `Admits` reach + the interface DEFAULT bounded count. The shared reach safety net (`Listing_is_scoped_to_the_read_reach`)
 + count test pass on every backend — no leaks. `IEnvironmentStore.CountAsync` default landed. Deployment auto-covered (PrepareAsync).
-**sources IN PROGRESS:** Sqlite push-down DONE + verified (`410dfb7484`) — SourceStore is structurally identical to
-EnvironmentStore ((Name,Tags) PK, canonical tags, in-memory Admits); ported verbatim (side table `SourceSecurityTags`, main
-`Sources`, type `RegisteredSource`, page `SourcePage.Sources`). `ISourceStore.CountAsync` default added. The sources conformance
-ALREADY had a reach safety net (`Management_reads_are_reach_filtered_and_non_disclosing`) — still green; added a count test. NEXT:
-fan sources to Postgres/MySql/SqlServer (mirror the environments commits — MySql/SqlServer likely hash the discriminator; CHECK),
-verify scan backends' reach+count, then the endpoints.
+**sources STORE-SIDE DONE — relational four verified across real containers (2026-07-11).** SourceStore is structurally
+identical to EnvironmentStore ((Name,Tags) PK, canonical tags, in-memory Admits); ported verbatim (side table
+`SourceSecurityTags`, main `Sources`, type `RegisteredSource`, page `SourcePage.Sources`). Relational four push the reach into
+SQL via `SourceSecurityTags` side tables + `SqlSecurityRuleEmitter` with native bounded `COUNT`: Sqlite `410dfb7484` (in-process),
+Postgres `0978d5624d`, MySql `b1a55894a9` (owner cols `["Name","TagsHash"]`, CHAR(64) hash), SqlServer `e289b81701` (owner cols
+`["Name","TagsHash"]`, BINARY(32) HASHBYTES, TOP-subquery COUNT) — each verified 2/2 (reach safety net + bounded count) on a real
+container. `ISourceStore.CountAsync` default added. Scan/InMemory (Redis/Mongo/Cosmos/Nats/AzureStorage/InMemory) keep in-memory
+`Admits` + the DEFAULT count — the shared conformance (`Management_reads_are_reach_filtered_and_non_disclosing` +
+`Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach`) runs on every backend. NEXT: confirm the scan backends' shared
+count test (InMemory in-process + a container spot-check), then the same store-side push-down for **credentials**
+(`ISourceCredentialStore`, 3-col PK `(SourceName, Environment, Tags/TagsHash)`) and **workingCopies** (`IWorkspaceWorkflowStore`),
+then the batch `/count` endpoints.
 
 **NEXT (API/UI layer, batch after the store-side families):** `/environments/count`, `/sources/count`, `/credentials/count`,
 `/workspace/workflows/count` OpenAPI ops (I reverted the earlier big-batch — re-add), ONE regen, then `HandleCount*Async` handlers
