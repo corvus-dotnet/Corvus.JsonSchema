@@ -127,7 +127,16 @@ per-family) → regen → handler. (5) wire the console footer (`web/…/src/ara
 store's `PrepareAsync` → `SchemaSql`, which now creates `EnvironmentSecurityTags` (`CREATE TABLE IF NOT EXISTS`). The reach safety-net
 (`Listing_is_scoped_to_the_read_reach`) + count test run in the SHARED `EnvironmentStoreConformance`, so they execute on every backend.
 
-**NEXT (environments):** (1) MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
+**environments STORE-SIDE DONE + verified across ALL 10 backends (2026-07-11).** Relational four (Sqlite `f41c8f37ed`,
+Postgres `706c74eba4`, MySql `d88a0bbda2`, SqlServer `7aa2357ce2`) push the reach into SQL via `EnvironmentSecurityTags`
+side tables + `SqlSecurityRuleEmitter` with native `COUNT`; scan/InMemory (Redis/Mongo/Cosmos/Nats/AzureStorage/InMemory) keep
+in-memory `Admits` reach + the interface DEFAULT bounded count. The shared reach safety net (`Listing_is_scoped_to_the_read_reach`)
++ count test pass on every backend — no leaks. `IEnvironmentStore.CountAsync` default landed. Deployment auto-covered (PrepareAsync).
+**NEXT (environments):** just the API/UI layer — `/environments/count` OpenAPI op + `HandleCountEnvironmentsAsync` (calls
+`store.CountAsync(access.Current(), CountCap)`) + regen + console footer. Then repeat the whole family for sources/credentials/
+workingCopies (same store-side recipe below; check each family's row discriminator — MySql/SqlServer likely hash like environments).
+
+**(prior fan-out notes)** MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
 `SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). **MySql wrinkle:** its `Environments` table discriminates rows
 by a fixed-size `TagsHash` column (MySql can't fully index a `TEXT` column, so it hashes Name+Tags), and Add inserts `(Name, TagsHash,
 Tags, …)`. So the MySql side table is `EnvironmentSecurityTags(Name, TagsHash, TagKey, TagValue)` and the emitter owner columns are
