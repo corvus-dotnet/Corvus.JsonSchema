@@ -132,9 +132,17 @@ Postgres `706c74eba4`, MySql `d88a0bbda2`, SqlServer `7aa2357ce2`) push the reac
 side tables + `SqlSecurityRuleEmitter` with native `COUNT`; scan/InMemory (Redis/Mongo/Cosmos/Nats/AzureStorage/InMemory) keep
 in-memory `Admits` reach + the interface DEFAULT bounded count. The shared reach safety net (`Listing_is_scoped_to_the_read_reach`)
 + count test pass on every backend — no leaks. `IEnvironmentStore.CountAsync` default landed. Deployment auto-covered (PrepareAsync).
-**NEXT (environments):** just the API/UI layer — `/environments/count` OpenAPI op + `HandleCountEnvironmentsAsync` (calls
-`store.CountAsync(access.Current(), CountCap)`) + regen + console footer. Then repeat the whole family for sources/credentials/
-workingCopies (same store-side recipe below; check each family's row discriminator — MySql/SqlServer likely hash like environments).
+**sources IN PROGRESS:** Sqlite push-down DONE + verified (`410dfb7484`) — SourceStore is structurally identical to
+EnvironmentStore ((Name,Tags) PK, canonical tags, in-memory Admits); ported verbatim (side table `SourceSecurityTags`, main
+`Sources`, type `RegisteredSource`, page `SourcePage.Sources`). `ISourceStore.CountAsync` default added. The sources conformance
+ALREADY had a reach safety net (`Management_reads_are_reach_filtered_and_non_disclosing`) — still green; added a count test. NEXT:
+fan sources to Postgres/MySql/SqlServer (mirror the environments commits — MySql/SqlServer likely hash the discriminator; CHECK),
+verify scan backends' reach+count, then the endpoints.
+
+**NEXT (API/UI layer, batch after the store-side families):** `/environments/count`, `/sources/count`, `/credentials/count`,
+`/workspace/workflows/count` OpenAPI ops (I reverted the earlier big-batch — re-add), ONE regen, then `HandleCount*Async` handlers
+(each calls `store.CountAsync(access.Current(), CountCap)`), + console footers. Then repeat the store-side recipe for credentials +
+workingCopies (same shape; check discriminators).
 
 **(prior fan-out notes)** MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
 `SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). **MySql wrinkle:** its `Environments` table discriminates rows
