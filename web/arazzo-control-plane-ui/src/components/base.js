@@ -111,6 +111,9 @@ export const SHARED_CSS = `
     display: flex; gap: 10px; align-items: center; justify-content: space-between;
   }
   .empty { color: var(--_muted); text-align: center; padding: 28px 12px; }
+  /* A field subheading takes its top spacing from the preceding element's bottom margin — fine after a heading or an
+     edit control, but a plain .hint paragraph has none, so a field right after a hint would touch it. Restore the gap. */
+  .hint + .field { margin-top: 10px; }
   [hidden] { display: none !important; }
 `;
 

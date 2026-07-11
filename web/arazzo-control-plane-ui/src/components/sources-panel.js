@@ -423,20 +423,14 @@ class ArazzoSources extends ArazzoElement {
           ${writable ? `
             <div class="field"><span>Display name</span><input class="d-displayName" value="${escapeHtml(s.displayName || '')}" placeholder="${escapeHtml(s.name)}"></div>
             <div class="field"><span>Description</span><textarea class="d-description" placeholder="(optional)">${escapeHtml(s.description || '')}</textarea></div>
+            <div class="field"><span>Management tags</span><arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor></div>
+            <div class="hint">Who may manage and see this source (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${s.description ? escapeHtml(s.description) : '<span class="muted">—</span>'}</div></div>
-          `}
-        </div>
-        <div class="section">
-          <h4>Management tags</h4>
-          ${writable ? `
-            <arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor>
-            <div class="hint">Who may manage and see this source (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed. Saved with the details above.</div>
-          ` : `
-            ${Array.isArray(s.managementTags) && s.managementTags.length
-              ? `<div class="mtags">${s.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</div>`
-              : '<div class="muted">None — visible to everyone within reach.</div>'}
+            <div class="field"><span>Management tags</span><div>${Array.isArray(s.managementTags) && s.managementTags.length
+              ? `<span class="mtags">${s.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</span>`
+              : '<span class="muted">None — visible to everyone within reach.</span>'}</div></div>
           `}
         </div>
         <div class="section">

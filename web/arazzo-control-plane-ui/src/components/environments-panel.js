@@ -431,23 +431,16 @@ class ArazzoEnvironments extends ArazzoElement {
             <div class="field"><span>Display name</span><input class="d-displayName" value="${escapeHtml(e.displayName || '')}" placeholder="${escapeHtml(e.name)}"></div>
             <div class="field"><span>Description</span><textarea class="d-description" placeholder="(optional)">${escapeHtml(e.description || '')}</textarea></div>
             <label class="check"><input type="checkbox" class="d-requireEvidence"${e.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion</label>
-            <div class="hint">When set, a workflow version may be made available here only if its server-attested scenario suite passed at publish (workflow-designer §4.6). Saved with the details above.</div>
+            <div class="hint">When set, a workflow version may be made available here only if its server-attested scenario suite passed at publish (workflow-designer §4.6).</div>
+            <div class="field"><span>Management tags</span><arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor></div>
+            <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</div></div>
             ${e.requireEvidence ? '<div class="field"><span>Promotion</span><div>Requires green publish evidence (§4.6).</div></div>' : ''}
-          `}
-        </div>
-        <div class="section">
-          <h4>Management tags</h4>
-          ${writable ? `
-            <arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor>
-            <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed. Saved with the details above.</div>
-          ` : `
-            ${Array.isArray(e.managementTags) && e.managementTags.length
-              ? `<div class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</div>`
-              : '<div class="muted">None — visible to everyone within reach.</div>'}
-            <div class="hint">Who may manage and see this environment (§14.2).</div>
+            <div class="field"><span>Management tags</span><div>${Array.isArray(e.managementTags) && e.managementTags.length
+              ? `<span class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</span>`
+              : '<span class="muted">None — visible to everyone within reach.</span>'}</div></div>
           `}
         </div>
         <div class="section">
