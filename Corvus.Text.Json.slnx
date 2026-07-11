@@ -178,6 +178,14 @@
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.Vault/Corvus.Text.Json.Arazzo.Durability.Vault.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Sqlite/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Sqlite.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.MySql/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.MySql.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.SqlServer/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.SqlServer.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Redis/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Redis.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Mongo/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Mongo.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Cosmos/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Cosmos.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.NatsJetStream/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.NatsJetStream.csproj" />
+    <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.AzureStorage/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.AzureStorage.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.csproj" />
     <Project Path="src/Corvus.Text.Json.Arazzo.CodeGeneration/Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
