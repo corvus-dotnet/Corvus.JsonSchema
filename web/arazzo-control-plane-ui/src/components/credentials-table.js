@@ -50,6 +50,8 @@ class ArazzoCredentialsTable extends ArazzoElement {
     /** @private */ this._history = []; // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
+    /** @private */ this._total = null;          // bounded total across all pages (null until counted)
+    /** @private */ this._totalCapped = false;   // true when the true total meets/exceeds the server cap → render "N+"
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._selectedKey = null;
@@ -115,10 +117,17 @@ class ArazzoCredentialsTable extends ArazzoElement {
     this.renderBody();
 
     try {
-      const { credentials, nextPageToken } = await client.listCredentials({ limit: this.pageSize, pageToken: this._currentToken });
+      // Fetch the page and the bounded total (for the footer) together; the count is a no-rows bounded query, and a
+      // count failure must not break the list, so it falls back to null (footer then shows the visible page count).
+      const [{ credentials, nextPageToken }, total] = await Promise.all([
+        client.listCredentials({ limit: this.pageSize, pageToken: this._currentToken }),
+        client.countCredentials().catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._bindings = credentials;
       this._nextPageToken = nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
     } catch (err) {
@@ -287,8 +296,15 @@ class ArazzoCredentialsTable extends ArazzoElement {
     if (this._loading) {
       info = 'Loading…';
     } else {
-      const total = this.visibleBindings().length;
-      const parts = [`${total} binding${total === 1 ? '' : 's'}`];
+      // The server /count is the unfiltered reach total, so show it (with "+" when capped) only when no client-side
+      // status/source filter is narrowing the view; under a filter it would be misleading, so fall back to the count of
+      // the currently-visible (filtered) page rows.
+      const filtered = !!(this.getAttribute('status') || this.getAttribute('source'));
+      const visible = this.visibleBindings().length;
+      const useTotal = this._total != null && !filtered;
+      const shown = useTotal ? `${this._total}${this._totalCapped ? '+' : ''}` : `${visible}`;
+      const n = useTotal ? this._total : visible;
+      const parts = [`${shown} binding${n === 1 ? '' : 's'}`];
       if (expiring > 0) parts.push(`<span class="pill amber">${expiring} expiring soon</span>`);
       if (expired > 0) parts.push(`<span class="pill red">${expired} expired</span>`);
       if (this._history.length) parts.push(`page ${this._history.length + 1}`);

@@ -36,6 +36,8 @@ class ArazzoSources extends ArazzoElement {
     /** @private */ this._history = [];           // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
+    /** @private */ this._total = null;            // bounded total across all pages (null until counted)
+    /** @private */ this._totalCapped = false;     // true when the true total meets/exceeds the server cap → render "N+"
     /** @private */ this._listSeq = 0;
     /** @private */ this._detailSeq = 0;
     /** @private */ this._form = null;            // the create-dialog form state
@@ -106,10 +108,17 @@ class ArazzoSources extends ArazzoElement {
     this._error = null;
     this.renderBody();
     try {
-      const page = await client.listSources({ pageToken: this._currentToken, limit: this.pageSize });
+      // Fetch the page and the bounded total (for the footer) together; the count is a no-rows bounded query, and a
+      // count failure must not break the list, so it falls back to null (footer then shows the visible page count).
+      const [page, total] = await Promise.all([
+        client.listSources({ pageToken: this._currentToken, limit: this.pageSize }),
+        client.countSources().catch(() => null),
+      ]);
       if (seq !== this._listSeq) return;
       this._sources = page.sources;
       this._nextPageToken = page.nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._sources.length, hasMore: !!this._nextPageToken });
@@ -389,9 +398,13 @@ class ArazzoSources extends ArazzoElement {
   }
 
   renderFoot() {
+    // The footer shows the bounded grand total the caller's reach admits (with "+" when the server capped it), not just
+    // the current page's length; it falls back to the visible count if the count query was unavailable.
+    const shown = this._total != null ? `${this._total}${this._totalCapped ? '+' : ''}` : `${this._sources.length}`;
+    const noun = (this._total != null ? this._total : this._sources.length) === 1 ? 'source' : 'sources';
     const info = this._loading
       ? 'Loading…'
-      : `${this._sources.length} source${this._sources.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+      : `${shown} ${noun}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
   }
 
