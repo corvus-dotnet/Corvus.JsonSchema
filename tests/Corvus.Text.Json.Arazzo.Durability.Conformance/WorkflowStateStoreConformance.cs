@@ -453,7 +453,7 @@ public abstract class WorkflowStateStoreConformance
     public async Task Query_applies_a_row_security_reach_filter_matching_the_evaluator()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        if (store is not ISupportsRowSecurityFilter)
+        if (store is not ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
         {
             Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
             return;
@@ -561,7 +561,7 @@ public abstract class WorkflowStateStoreConformance
     public async Task Deleting_a_run_removes_its_security_tags()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        if (store is not ISupportsRowSecurityFilter)
+        if (store is not ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
         {
             Assert.Inconclusive("This store does not yet push the row-security reach filter down (§14.4).");
             return;
