@@ -100,12 +100,15 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
         WorkflowEtag etag = NewEtag();
         byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
         string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
+        string tagsHash = TagsHash(draft.SourceNameValue, draft.EnvironmentValue, tags);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand insert = connection.CreateCommand();
+        insert.Transaction = transaction;
         insert.CommandText = "INSERT INTO SourceCredentials (SourceName, Environment, TagsHash, Tags, Etag, Document) VALUES (@s, @e, @h, @t, @etag, @doc);";
         insert.Parameters.AddWithValue("@s", draft.SourceNameValue);
         insert.Parameters.AddWithValue("@e", draft.EnvironmentValue);
-        insert.Parameters.AddWithValue("@h", TagsHash(draft.SourceNameValue, draft.EnvironmentValue, tags));
+        insert.Parameters.AddWithValue("@h", tagsHash);
         insert.Parameters.AddWithValue("@t", tags);
         insert.Parameters.AddWithValue("@etag", etag.Value!);
         insert.Parameters.AddWithValue("@doc", json);
@@ -117,6 +120,12 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
         {
             throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
         }
+
+        // Mirror the MANAGEMENT tags (the reach discriminator, distinct from the row's combined mgmt+usage Tags key)
+        // into the queryable side table (keyed by TagsHash, the orderable row discriminator) so the §14.2 read reach can
+        // be pushed into the list/count query. Atomic; tags are immutable so no re-sync on update.
+        await SyncSecurityTagsAsync(connection, transaction, draft.SourceNameValue, draft.EnvironmentValue, tagsHash, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
     }
@@ -151,65 +160,46 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
         try
         {
             // Keyset seek past the cursor in (SourceName, Environment, TagsHash) order — an indexed range scan over the
-            // primary key, not a table load. Tags is LONGTEXT and cannot be a key/ordered column, so the orderable PK
-            // component TagsHash (CHAR(64), a SHA-256 hex digest) is the tie-breaker; it is already a hex string, so the
-            // token carries it verbatim. Reach is a per-row predicate applied in memory as we stream; the reader is
-            // consumed only until the page fills, so we read ≈ pageSize / selectivity rows, never the whole table.
+            // primary key, not a table load (Tags is LONGTEXT and cannot be a key/ordered column, so the orderable PK
+            // component TagsHash CHAR(64) hex is the tie-breaker, carried verbatim in the token) — with the §14.2 read
+            // reach pushed into the query as a correlated EXISTS over SourceCredentialSecurityTags (the same predicate
+            // context.Admits evaluates, but applied in the database), so out-of-reach rows never leave it. LIMIT bounds it.
             await using MySqlCommand select = connection.CreateCommand();
+            var conditions = new List<string>(2);
             if (hasCursor)
             {
-                select.CommandText =
-                    "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials " +
-                    "WHERE SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND TagsHash > @t) " +
-                    "ORDER BY SourceName, Environment, TagsHash;";
+                conditions.Add("(SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND TagsHash > @t))");
                 select.Parameters.AddWithValue("@s", cursor.SourceName);
                 select.Parameters.AddWithValue("@e", cursor.Environment);
                 select.Parameters.AddWithValue("@t", cursor.TieBreaker);
             }
-            else
+
+            AppendReachPredicate(conditions, select, context);
+
+            var sql = new StringBuilder("SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials");
+            if (conditions.Count > 0)
             {
-                select.CommandText = "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials ORDER BY SourceName, Environment, TagsHash;";
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
             }
+
+            sql.Append(" ORDER BY SourceName, Environment, TagsHash LIMIT @limit;");
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+            select.CommandText = sql.ToString();
 
             await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string source = reader.GetString(0);
-                string environment = reader.GetString(1);
-                string tie = reader.GetString(2);
-                byte[] json = reader.GetFieldValue<byte[]>(3);
-                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                bool kept = false;
-                try
+                if (docs.Count == pageSize)
                 {
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastSource = source;
-                    lastEnv = environment;
-                    lastTie = tie;
+                    hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                    break;
                 }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
-                }
+
+                lastSource = reader.GetString(0);
+                lastEnv = reader.GetString(1);
+                lastTie = reader.GetString(2);
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(reader.GetFieldValue<byte[]>(3)));
             }
 
             return hasMore
@@ -266,13 +256,44 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
             SourceCredentialSerialization.EnsureEtag($"{sourceName}@{environment}", expectedEtag, SourceCredentialSerialization.EtagOf(existing));
         }
 
+        string tagsHash = TagsHash(sourceName, environment, tags!);
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM SourceCredentials WHERE SourceName = @s AND Environment = @e AND TagsHash = @h;";
+        delete.Transaction = transaction;
+        delete.CommandText =
+            "DELETE FROM SourceCredentials WHERE SourceName = @s AND Environment = @e AND TagsHash = @h; " +
+            "DELETE FROM SourceCredentialSecurityTags WHERE SourceName = @s AND Environment = @e AND TagsHash = @h;";
         delete.Parameters.AddWithValue("@s", sourceName);
         delete.Parameters.AddWithValue("@e", environment);
-        delete.Parameters.AddWithValue("@h", TagsHash(sourceName, environment, tags!));
+        delete.Parameters.AddWithValue("@h", tagsHash);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(1);
+        AppendReachPredicate(conditions, select, context);
+
+        // Bounded count: COUNT over a subquery capped at cap + 1, so the scan stops one row past the cap; the (cap+1)th
+        // row trips Capped. Same reach predicate as the list (AppendReachPredicate) — cannot drift.
+        var inner = new StringBuilder("SELECT 1 FROM SourceCredentials");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     /// <inheritdoc/>
@@ -355,6 +376,57 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
         return Convert.ToHexStringLower(hash);
     }
 
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over SourceCredentialSecurityTags mirroring the
+    // caller's reach (the same rules context.Admits evaluates), keyed on the (SourceName, Environment, TagsHash) row
+    // discriminator. A null reach (unrestricted) adds nothing. Shared by ListAsync and CountAsync so the count can never
+    // drift from the list it annotates.
+    private static void AppendReachPredicate(List<string> conditions, MySqlCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "SourceCredentialSecurityTags",
+            ["SourceName", "Environment", "TagsHash"],
+            "TagKey",
+            "TagValue",
+            "SourceCredentials",
+            value =>
+            {
+                string p = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors a binding's MANAGEMENT tags into the queryable side table (keyed by TagsHash) so the reach can be pushed
+    // into the list/count query. Reach filters on the management tags (distinct from the row's combined mgmt+usage Tags
+    // discriminator). Tags are immutable after creation, so this runs only on add.
+    private static async Task SyncSecurityTagsAsync(MySqlConnection connection, MySqlTransaction transaction, string sourceName, string environment, string tagsHash, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using MySqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO SourceCredentialSecurityTags (SourceName, Environment, TagsHash, TagKey, TagValue) VALUES (@s, @e, @h, @key, @value);";
+            insert.Parameters.AddWithValue("@s", sourceName);
+            insert.Parameters.AddWithValue("@e", environment);
+            insert.Parameters.AddWithValue("@h", tagsHash);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     // Finds the single binding for (sourceName, environment) the caller's reach for the verb admits, returning its
     // bytes and its tag discriminator (the row key value). A binding outside reach is invisible (non-disclosing).
     private static async ValueTask<(byte[]? Json, string? Tags)> FindForManagementAsync(MySqlConnection connection, string sourceName, string environment, AccessVerb verb, AccessContext context, CancellationToken cancellationToken)
@@ -392,6 +464,15 @@ public sealed class MySqlSourceCredentialStore : ISourceCredentialStore, IAsyncD
             Document LONGBLOB NOT NULL,
             PRIMARY KEY (SourceName, Environment, TagsHash),
             INDEX IX_SourceCredentials_Source (SourceName)
+        );
+        CREATE TABLE IF NOT EXISTS SourceCredentialSecurityTags (
+            SourceName VARCHAR(255) NOT NULL,
+            Environment VARCHAR(255) NOT NULL,
+            TagsHash CHAR(64) NOT NULL,
+            TagKey VARCHAR(191) NOT NULL,
+            TagValue VARCHAR(191) NOT NULL,
+            INDEX IX_SourceCredentialSecurityTags_owner (SourceName, Environment, TagsHash),
+            INDEX IX_SourceCredentialSecurityTags_kv (TagKey, TagValue)
         );
         """;
 }
