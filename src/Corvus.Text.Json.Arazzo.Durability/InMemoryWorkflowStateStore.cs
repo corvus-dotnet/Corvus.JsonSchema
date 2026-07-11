@@ -174,18 +174,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             {
                 WorkflowRunIndexEntry index = kvp.Value.Index;
 
-                // §18: draft runs never surface on an unfiltered visibility query — a caller must name the
-                // reserved $draft workflow id explicitly (the debug-run surface does; the runs listing never does).
-                if ((query.Status is { } status && index.Status != status)
-                    || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
-                    || (query.WorkflowId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
-                    || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
-                    || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
-                    || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)
-                    || (query.UpdatedBefore is { } updatedBefore && index.UpdatedAt >= updatedBefore)
-                    || (query.CorrelationId is { } correlationId && index.CorrelationId != correlationId)
-                    || !query.Tags.AllContainedIn(index.Tags)
-                    || !(query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true)
+                if (!Matches(query, index)
                     || (after is not null && string.CompareOrdinal(kvp.Key, after) <= 0))
                 {
                     continue;
@@ -206,6 +195,45 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
         return ValueTask.FromResult(WorkflowContinuationToken.Paginate(top, query.Limit));
     }
+
+    /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Bounded scan: count matches with the SAME filter the list applies (so the §14.4 reach cannot drift) and
+        // stop the moment the cap is exceeded — never materialising listings, no sort.
+        int count = 0;
+        lock (this.gate)
+        {
+            foreach (KeyValuePair<string, Entry> kvp in this.entries)
+            {
+                if (Matches(query, kvp.Value.Index) && ++count > cap)
+                {
+                    return ValueTask.FromResult((cap, true));
+                }
+            }
+        }
+
+        return ValueTask.FromResult((count, false));
+    }
+
+    // The shared visibility filter (status / workflow / draft-exclusion / timestamps / correlation / tags / §14.4
+    // security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor for paging, CountAsync scans with just
+    // this. Both share the one predicate so the reach filter cannot drift between list and count.
+    // §18: draft runs never surface on an unfiltered visibility query — a caller must name the reserved $draft
+    // workflow id explicitly (the debug-run surface does; the runs listing never does).
+    private static bool Matches(in WorkflowQuery query, in WorkflowRunIndexEntry index)
+        => !((query.Status is { } status && index.Status != status)
+            || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
+            || (query.WorkflowId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+            || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
+            || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
+            || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)
+            || (query.UpdatedBefore is { } updatedBefore && index.UpdatedAt >= updatedBefore)
+            || (query.CorrelationId is { } correlationId && index.CorrelationId != correlationId)
+            || !query.Tags.AllContainedIn(index.Tags)
+            || !(query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true));
 
     // Inserts a listing into the capped buffer at its ascending-run-id position (linear from the end — the buffer is
     // Limit+1 small and stays within its preallocated capacity, so no backing array reallocates).

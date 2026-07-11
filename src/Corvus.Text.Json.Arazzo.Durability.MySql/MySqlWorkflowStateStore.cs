@@ -405,72 +405,18 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
+        string filter = BuildVisibilityFilter(select, query);
         select.CommandText =
-            """
+            $"""
             SELECT run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, environment
             FROM workflow_runs
-            WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id)
-              AND (@created_after IS NULL OR created_at >= @created_after)
-              AND (@created_before IS NULL OR created_at < @created_before)
-              AND (@updated_after IS NULL OR updated_at >= @updated_after)
-              AND (@updated_before IS NULL OR updated_at < @updated_before)
-              AND (@correlation_id IS NULL OR correlation_id = @correlation_id)
-              {{tagPredicates}}
-              {{securityPredicate}}
+            WHERE {filter}
               AND (@after IS NULL OR run_id > @after)
             ORDER BY run_id
             LIMIT @limit;
             """;
-        select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@workflow_id", (object?)query.WorkflowId ?? DBNull.Value);
-        select.Parameters.AddWithValue("@created_after", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@created_before", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@updated_after", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@updated_before", (object?)query.UpdatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@correlation_id", (object?)query.CorrelationId ?? DBNull.Value);
         select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
         select.Parameters.AddWithValue("@limit", query.Limit + 1);
-
-        if (!query.Tags.IsEmpty)
-        {
-            List<string> tags = query.Tags.ToList();
-            var predicates = new System.Text.StringBuilder();
-            for (int i = 0; i < tags.Count; i++)
-            {
-                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                predicates.Append("AND tags LIKE ").Append(name).Append(" ESCAPE '\\\\'\n              ");
-                select.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
-            }
-
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
-        }
-
-        // Row-security reach (§14.4): correlated EXISTS over the run's security tags.
-        if (query.Security is { } security)
-        {
-            int securityParam = 0;
-            var emitter = new SqlSecurityRuleEmitter(
-                "workflow_run_security_tags",
-                ["run_id"],
-                "tag_key",
-                "tag_value",
-                "workflow_runs",
-                value =>
-                {
-                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
-                    select.Parameters.AddWithValue(name, value);
-                    return name;
-                });
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
-        }
 
         var runs = new List<WorkflowRunListing>();
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -492,6 +438,82 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        string filter = BuildVisibilityFilter(select, query);
+
+        // Bounded native count: COUNT over a cap+1-limited sub-select — reuses the list's exact filter (so the
+        // §14.4 reach cannot drift), never materialises rows, and stops the moment the cap is exceeded.
+        select.CommandText = $"SELECT COUNT(*) FROM (SELECT 1 FROM workflow_runs WHERE {filter} LIMIT @cap) AS bounded;";
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        long total = Convert.ToInt64(await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    // Builds the shared visibility WHERE body (status / workflow / draft-exclusion / timestamps / correlation / tags /
+    // §14.4 security reach) and binds its parameters onto <paramref name="command"/>, returning the predicate SQL
+    // WITHOUT the "WHERE" keyword, the keyset cursor, ORDER BY, or LIMIT. QueryAsync appends the cursor + paging;
+    // CountAsync wraps it in a bounded COUNT — both share this exact predicate so the reach filter cannot drift.
+    private static string BuildVisibilityFilter(MySqlCommand command, in WorkflowQuery query)
+    {
+        var sql = new System.Text.StringBuilder();
+        sql.Append("(@status IS NULL OR status = @status)");
+        sql.Append(" AND (@workflow_id IS NULL OR workflow_id = @workflow_id)");
+
+        // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft
+        // workflow id explicitly (the debug-run surface does; the runs listing never does).
+        sql.Append(" AND (@workflow_id IS NOT NULL OR workflow_id <> @draft_id)");
+        sql.Append(" AND (@created_after IS NULL OR created_at >= @created_after)");
+        sql.Append(" AND (@created_before IS NULL OR created_at < @created_before)");
+        sql.Append(" AND (@updated_after IS NULL OR updated_at >= @updated_after)");
+        sql.Append(" AND (@updated_before IS NULL OR updated_at < @updated_before)");
+        sql.Append(" AND (@correlation_id IS NULL OR correlation_id = @correlation_id)");
+
+        command.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@workflow_id", (object?)query.WorkflowId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@draft_id", DraftRuns.RunWorkflowId);
+        command.Parameters.AddWithValue("@created_after", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@created_before", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updated_after", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updated_before", (object?)query.UpdatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@correlation_id", (object?)query.CorrelationId ?? DBNull.Value);
+
+        if (!query.Tags.IsEmpty)
+        {
+            List<string> tags = query.Tags.ToList();
+            for (int i = 0; i < tags.Count; i++)
+            {
+                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
+                sql.Append(" AND tags LIKE ").Append(name).Append(" ESCAPE '\\\\'");
+                command.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+            }
+        }
+
+        // Row-security reach (§14.4): correlated EXISTS over the run's security tags.
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "workflow_run_security_tags",
+                ["run_id"],
+                "tag_key",
+                "tag_value",
+                "workflow_runs",
+                value =>
+                {
+                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    command.Parameters.AddWithValue(name, value);
+                    return name;
+                });
+            sql.Append(" AND (").Append(security.ToSqlPredicate(emitter)).Append(')');
+        }
+
+        return sql.ToString();
     }
 
     private static void BindRun(MySqlCommand command, WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, in WorkflowRunIndexEntry index)
