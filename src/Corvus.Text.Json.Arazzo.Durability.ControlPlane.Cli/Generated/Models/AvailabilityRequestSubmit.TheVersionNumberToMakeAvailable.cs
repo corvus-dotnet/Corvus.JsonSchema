@@ -83,10 +83,10 @@ public readonly partial struct AvailabilityRequestSubmit
         public static implicit operator int(TheVersionNumberToMakeAvailable value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(TheVersionNumberToMakeAvailable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+        public static implicit operator long(TheVersionNumberToMakeAvailable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator double(TheVersionNumberToMakeAvailable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+        public static implicit operator double(TheVersionNumberToMakeAvailable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Corvus.Numerics.BigNumber(TheVersionNumberToMakeAvailable value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();

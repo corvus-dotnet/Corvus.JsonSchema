@@ -67,10 +67,10 @@ public readonly partial struct GetGithubReposByOwnerByRepoCommitsPage
     public static implicit operator int(GetGithubReposByOwnerByRepoCommitsPage value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator long(GetGithubReposByOwnerByRepoCommitsPage value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+    public static implicit operator long(GetGithubReposByOwnerByRepoCommitsPage value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator double(GetGithubReposByOwnerByRepoCommitsPage value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+    public static implicit operator double(GetGithubReposByOwnerByRepoCommitsPage value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator Corvus.Numerics.BigNumber(GetGithubReposByOwnerByRepoCommitsPage value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();

@@ -35,9 +35,4 @@ public readonly struct UploadPetPhotoParams
     /// Gets the request body.
     /// </summary>
     public Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody Body { get; init; }
-
-    /// <summary>
-    /// Gets the binary content of the 'file' part.
-    /// </summary>
-    public ReadOnlyMemory<byte> File { get; init; }
 }

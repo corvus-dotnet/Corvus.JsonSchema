@@ -80,10 +80,10 @@ public readonly partial struct PageLimit
     public static implicit operator int(PageLimit value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator long(PageLimit value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+    public static implicit operator long(PageLimit value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator double(PageLimit value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+    public static implicit operator double(PageLimit value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator Corvus.Numerics.BigNumber(PageLimit value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();

@@ -83,10 +83,10 @@ public readonly partial struct CountResult
         public static implicit operator int(TheNumberOfMatchingItemsBoundedByTheServerSCap value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(TheNumberOfMatchingItemsBoundedByTheServerSCap value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+        public static implicit operator long(TheNumberOfMatchingItemsBoundedByTheServerSCap value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator double(TheNumberOfMatchingItemsBoundedByTheServerSCap value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+        public static implicit operator double(TheNumberOfMatchingItemsBoundedByTheServerSCap value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Corvus.Numerics.BigNumber(TheNumberOfMatchingItemsBoundedByTheServerSCap value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
