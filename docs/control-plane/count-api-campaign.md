@@ -29,16 +29,21 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
 ## Scope (everything, systematically) — worklist
 
 **Slice 1 — approval queues (the immediate badge payoff):**
-- [~] `accessRequests` (scope=queue, status) — `IAccessRequestStore`. **Piece 1 DONE + BUILDS + COMMITTED**
-  (`/accessRequests/count`, op `countAccessRequests`, filter params only): OpenAPI surface + reusable `CountResult`
-  schema; regenerated clean; `HandleCountAccessRequestsAsync` mirrors `HandleListAccessRequestsAsync`'s reach/query build
-  (`ParseCountStatus`/`IsCountQueueScope`/`CountResult(count,capped)` helpers, `CountCap = 100`); `IAccessRequestStore.CountAsync(AccessRequestQuery,
-  int cap, ct) -> (int Count, bool Capped)` with a **default impl** (`total > cap ? (cap,true) : (total,false)` over
-  `ListAsync(query)`) so all 10 backends work immediately & correctly. **NEXT (Piece 2):** native bounded `CountAsync`
-  overrides — relational four (Sqlite/Postgres/MySql/SqlServer) `SELECT COUNT(*) FROM (SELECT 1 … WHERE <same conds> LIMIT @cap+1)`,
-  reusing the list's status/bw/subject/administered predicate (extract a shared `Append*Conditions` so it can't drift; the
-  cursor stays list-only); scan-based five (Redis/Mongo/Cosmos/NatsJetStream/AzureStorage) + InMemory bounded scan stopping at
-  cap+1. Then verify vs the live Postgres container; commit. **Then (Piece 3):** conformance tests. Then availability + runner.
+- [~] `accessRequests` (scope=queue, status) — `IAccessRequestStore`. **Piece 1 DONE + BUILDS + COMMITTED** (`8c20d97ac5`):
+  `/accessRequests/count` API + handler + interface default `CountAsync` (correct on all 10 backends).
+  **Piece 2 WRITTEN (native overrides), build/verify/commit pending:** every backend now has a native bounded `CountAsync`:
+  - Relational (Postgres/Sqlite/MySql): `SELECT COUNT(*) FROM (SELECT 1 FROM AccessRequests WHERE <conds> LIMIT @cap)` with
+    `@cap = cap+1`. SqlServer (no LIMIT): `SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <conds>)`. Each extracted a
+    per-backend `AppendFilterConditions(conditions, command, in query)` now shared by full-list + paged-list + count (drift-proof;
+    cursor stays inline in the paged list).
+  - Mongo: `CountDocumentsAsync(BuildFilter(query), Limit = cap+1)` (extracted `BuildFilter`, shared by both lists + count).
+  - Redis / NatsJetStream / InMemory: bounded scan applying the same `Matches` predicate, `++count > cap ⇒ (cap,true)`.
+  - AzureStorage: server-side `BuildFilter` over a RowKey-only projection, `maxPerPage: cap+1`, stop at cap+1.
+  - Cosmos: same predicate over `SELECT c.id … ORDER BY c.createdAt, c.id OFFSET 0 LIMIT @lim` (`@lim=cap+1`), count client-side.
+  Mapping everywhere: `total > cap ? (cap, true) : (total, false)`. **NEXT:** full `dotnet build Corvus.Text.Json.slnx` (0 warnings)
+  — composition was stopped to release DLL locks (SIGTERM AppHost) — run existing access-request store tests (verify the
+  ListAsync refactor didn't drift), commit Piece 2, restart composition, live-verify `/accessRequests/count` on Postgres.
+  **Then (Piece 3):** per-backend conformance tests (count==list below cap; capped trips at cap+1; reach-filtered).
 - [ ] `availabilityRequests` (scope=queue, status) — `IAvailabilityRequestStore`
 - [ ] `runnerAuthorizations` (status) — `IEnvironmentRunnerAuthorizationStore`
 
