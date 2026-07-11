@@ -194,14 +194,16 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        :host { display: block; }
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        [part="panel"] { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
         .toolbar .grow { flex: 1; }
         .toolbar .env { min-width: 220px; flex: 1; font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
         tbody tr:last-child td { border-bottom: none; }
         .runner-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600; }
@@ -214,8 +216,9 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
         .actions button { font-size: 12px; padding: 4px 9px; }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
-        .err { margin: 10px 12px; }
+        .err { flex: none; margin: 10px 12px; }
         ${PAGER_CSS}
+        .pager { flex: none; }
         dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
         dialog::backdrop { background: rgba(0,0,0,0.4); }
         dialog .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
@@ -228,10 +231,12 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
         <div class="wrap" part="table">
           <div class="toolbar" part="toolbar"></div>
           <div class="err"></div>
-          <table>
-            <thead></thead>
-            <tbody part="rows"></tbody>
-          </table>
+          <div class="tablescroll">
+            <table>
+              <thead></thead>
+              <tbody part="rows"></tbody>
+            </table>
+          </div>
           <arazzo-pager class="pager" part="foot"></arazzo-pager>
         </div>
       </div>

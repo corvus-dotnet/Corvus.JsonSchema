@@ -86,9 +86,12 @@ class ArazzoCredentials extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        :host { display: block; }
-        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+        .layout > * { min-height: 0; }
+        .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .detail-pane:empty { display: none; }
       </style>
       <div class="layout" part="layout">
         <arazzo-credentials-table selectable part="table"></arazzo-credentials-table>
