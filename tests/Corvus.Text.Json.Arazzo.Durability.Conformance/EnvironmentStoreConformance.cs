@@ -104,6 +104,40 @@ public abstract class EnvironmentStoreConformance
         }
     }
 
+    [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach()
+    {
+        IEnvironmentStore store = await this.NewStoreAsync();
+        using (ParsedJsonDocument<Environment> a = Environment.Draft("acme-env", "Acme", null, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")])))
+        using (await store.AddAsync(a.RootElement, "alice", default))
+        {
+        }
+
+        using (ParsedJsonDocument<Environment> g = Environment.Draft("globex-env", "Globex", null, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")])))
+        using (await store.AddAsync(g.RootElement, "alice", default))
+        {
+        }
+
+        using (ParsedJsonDocument<Environment> s = Environment.Draft("shared-env", "Shared", null, SecurityTagSet.Empty))
+        using (await store.AddAsync(s.RootElement, "alice", default))
+        {
+        }
+
+        // System reach counts all three; exact below the cap, exact-not-capped at the cap, capped beyond it.
+        (await store.CountAsync(AccessContext.System, 10, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 3, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 2, default)).ShouldBe((2, true));
+
+        // The count honours the read reach identically to the list: a reach restricted to tenant=acme counts only the
+        // acme environment (globex and the untagged row denied).
+        var restricted = AccessContext.Uniform(new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], EmptyClaims));
+        (await store.CountAsync(restricted, 10, default)).ShouldBe((1, false));
+
+        // An empty store counts zero, never capped.
+        IEnvironmentStore empty = await this.NewStoreAsync();
+        (await empty.CountAsync(AccessContext.System, 5, default)).ShouldBe((0, false));
+    }
+
     // Empty claims for a reach whose rules compare against literals (no $claim substitution).
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> EmptyClaims = new Dictionary<string, IReadOnlyList<string>>();
 
