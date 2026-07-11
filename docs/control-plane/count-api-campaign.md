@@ -166,12 +166,23 @@ NOT a generator bump — no model drift) + ONE `openapi-client` Cli regen (also 
 never regenerated). Wired the 4 `HandleCount*Async` handlers (each `store.CountAsync(this.access.Current(), CountCap=100)` — the exact
 §14.2 reach as the family's list) + 4 `arazzo-client.js` count methods (`countEnvironments/countSources/countCredentials/
 countWorkingCopies`). **Server + Cli + Demo all build 0/0.** Regen commands live in each project's README (Server=`openapi-server`,
-Cli=`openapi-client`); Demo/Generated is empty (Demo references the Server project). **NEXT (UI footers + live-verify):** the demo
-console (`index.html`) does NOT list these metadata families (only Approvals badges + runs/access/catalog), so no footer there; the
-richer web UI panels DO (`environments-panel`, `credentials-table`, `workspace-table`, a sources table) — wire a total-count footer via
-the new `countX()` methods (they currently emit only a per-page `loaded` count, not a total), then restart the composition + Playwright-
-verify (mirrors the Slice-1 badge verification). Then runs/catalog native counts (already reach-pushed-down — thread `CountAsync`
-through `IWorkflowWaitIndex`/catalog).
+Cli=`openapi-client`); Demo/Generated is empty (Demo references the Server project).
+
+**UI FOOTERS DONE + LIVE-VERIFIED (2026-07-11, `98f5831a4f`).** The four metadata list panels (`environments-panel`, `sources-panel`,
+`credentials-table`, `workspace-table` — the console renders `<arazzo-environments>`/`<arazzo-sources>`/`<arazzo-credentials>` in the
+demo `index.html`) now show the reach-scoped bounded grand total (`N` / `N+`) in their pager footer, fetched via the new `countX()`
+methods in parallel with the page load (`.catch` → falls back to the visible page count; the credentials footer shows the total only
+when no client-side status/source filter is active, since `/count` is unfiltered). web-ui node tests 208/208 + component tests green for
+all four panels (the 2 catalog-detail failures are pre-existing). **LIVE end-to-end verification (real composition, real seeded
+Postgres):** the four `/count` endpoints returned EXACTLY their list length via `curl` with `X-Api-Key: demo-admin-key` — environments
+3=3, sources 4=4, credentials 8=8, workingCopies 0=0 (all `capped:false`); and a Playwright run (Keycloak login arazzo-admin/admin)
+confirmed the footers render "3 environments" / "4 sources" / "8 bindings" with zero page errors. Composition SIGTERM-stopped after.
+
+**COUNT-API CAMPAIGN — METADATA FAMILIES COMPLETE end-to-end** (store push-down + bounded count · `/count` endpoints · Server/Cli/JS
+clients · UI footers), all container/live-verified. **NEXT (remaining families):** runs / catalog native counts — already
+reach-pushed-down, so thread `CountAsync` through `IWorkflowWaitIndex`/catalog (native push-down count like the metadata relational
+stores), + their `/count` endpoints + any list footers. Then the smaller lists (runners, securityBindings/Rules, administrators, etc.)
+per the Slice-2 worklist above; `securityOrderings` excluded.
 
 **(prior fan-out notes)** MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
 `SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). **MySql wrinkle:** its `Environments` table discriminates rows
