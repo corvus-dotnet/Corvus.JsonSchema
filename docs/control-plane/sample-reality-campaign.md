@@ -64,8 +64,16 @@ seeds `development`/`staging`/`production` environments; establishes `sys:group=
 (`SecuredEnvironmentAdministration.EstablishAsync` — the key unblock); registers onboarding/ledger/kyc (OpenAPI) +
 notifications (AsyncAPI) from their real specs (`RegisteredSource.Draft`); makes `onboard-customer` v1 "Available in"
 production; seeds a pending access request (alice → run scopes) and a pending promotion request (alice → onboard-customer
-v2 to production). Live runs already pin `development` (S2). Demo host builds warning-free; the governance store APIs are
-each conformance-tested against Postgres containers, so end-to-end live verification rides on the composition relaunch.
+v2 to production). Live runs already pin `development` (S2). Demo host builds warning-free.
+
+**Composition live-verification (relaunch on real Postgres, `dotnet run --launch-profile http`,
+`ASPIRE_ENABLE_CONTAINER_TUNNEL=false`).** The whole W1–W4 + W2 stack confirmed end to end against the running
+composition: control plane `/alive`+`/health` = 200 (no exit-134 crash); **26 workflowstore tables** created by
+`PostgresControlPlaneDeployment.ProvisionAsync` (deployment library, live); **2 security bindings** (the idempotency
+fix — read-all + genesis-admin, not 4) + 3 rules; W2 governance seed present — **3 environments**, **3 environment
+administrators** (arazzo-admins per env), **4 sources**, **1 availability** entry, **1 access request**, **1
+promotion request**; two-process topology healthy — runner `/health` = 200 (Vault AppRole), 1 registration + 1
+auto-authorization; DemoData 6 runs / 6 catalog versions / 8 source credentials.
 
 ### W3 — Expand the live console (medium)
 Mount the already-built, already-wired admin panels in `wwwroot/index.html` (Runners, Environments,
