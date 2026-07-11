@@ -341,8 +341,12 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountAsync(AccessRequestQuery query, int cap, CancellationToken cancellationToken)
     {
-        // Bounded count: the same cross-partition predicate as the list, over an id-only projection capped at cap + 1
-        // (OFFSET 0 LIMIT), so the read stops one row past the cap; the (cap+1)th row trips Capped — never a full count.
+        // Bounded count, the same cross-partition predicate as the list over an id-only projection capped at cap + 1
+        // (OFFSET 0 LIMIT), counting the returned ids client-side. Cosmos has NO bounded server-side COUNT: a bare
+        // `COUNT(1)` ignores any outer LIMIT and scans (and charges RU for) the whole matching set, and wrapping COUNT
+        // around a cap-limited subquery is rejected — both `'OFFSET LIMIT' clause is not supported in subqueries` and
+        // `'TOP' is not supported in subqueries` (verified on the emulator). So the outer LIMIT + client-side count is the
+        // only way to keep the read bounded to cap + 1; the (cap+1)th row trips Capped. Do not "optimise" this to COUNT.
         var conditions = new List<string>(4);
         if (query.Status is not null)
         {

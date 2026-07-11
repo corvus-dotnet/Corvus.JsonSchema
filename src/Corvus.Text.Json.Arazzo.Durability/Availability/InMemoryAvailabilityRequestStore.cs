@@ -92,6 +92,27 @@ public sealed class InMemoryAvailabilityRequestStore : IAvailabilityRequestStore
     }
 
     /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(AvailabilityRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        lock (this.gate)
+        {
+            // Bounded scan: parse each stored row only to apply the same Matches predicate as the list, disposing it
+            // immediately (no PooledDocumentList grows); stop once a (cap+1)th match is seen and report Capped.
+            int count = 0;
+            foreach (byte[] json in this.requests.Values)
+            {
+                using ParsedJsonDocument<AvailabilityRequest> doc = PersistedJson.ToPooledDocument<AvailabilityRequest>(json);
+                if (Matches(doc.RootElement, query) && ++count > cap)
+                {
+                    return new ValueTask<(int Count, bool Capped)>((cap, true));
+                }
+            }
+
+            return new ValueTask<(int Count, bool Capped)>((count, false));
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<ParsedJsonDocument<AvailabilityRequest>?> DecideAsync(string id, AvailabilityRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);

@@ -11591,6 +11591,108 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", System.Array.Empty<string>(), "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", System.Array.Empty<string>(), "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __SubmitAvailabilityRequestEndpoint);
 
+        IEndpointConventionBuilder __CountAvailabilityRequestsEndpoint = app.MapGet("/availabilityRequests/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsCountStatus StatusValue = default;
+                if (context.Request.Query.TryGetValue("status", out var StatusQueryVal) && StatusQueryVal.Count > 0)
+                {
+                    string StatusRaw = StatusQueryVal[0]!;
+                    StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsCountStatus>(StatusRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
+                {
+                    string EnvironmentRaw = EnvironmentQueryVal[0]!;
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsCountScope ScopeValue = default;
+                if (context.Request.Query.TryGetValue("scope", out var ScopeQueryVal) && ScopeQueryVal.Count > 0)
+                {
+                    string ScopeRaw = ScopeQueryVal[0]!;
+                    ScopeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAvailabilityRequestsCountScope>(ScopeRaw, workspace);
+                }
+
+                if (!StatusValue.IsUndefined() && !StatusValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'status' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ScopeValue.IsUndefined() && !ScopeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'scope' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CountAvailabilityRequestsParams parameters = new()
+                {
+                    Status = StatusValue,
+                    Environment = EnvironmentValue,
+                    Scope = ScopeValue,
+                }
+                ;
+
+                CountAvailabilityRequestsResult result = await availabilityRequestsHandler.HandleCountAvailabilityRequestsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countAvailabilityRequests",
+                methodName: "CountAvailabilityRequests",
+                httpMethod: "GET",
+                routeTemplate: "/availabilityRequests/count",
+                tags: new[] { "availabilityRequests" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", System.Array.Empty<string>(), "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", System.Array.Empty<string>(), "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountAvailabilityRequestsEndpoint);
+
         IEndpointConventionBuilder __GetAvailabilityRequestEndpoint = app.MapGet("/availabilityRequests/{requestId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
