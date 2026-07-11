@@ -128,7 +128,11 @@ store's `PrepareAsync` → `SchemaSql`, which now creates `EnvironmentSecurityTa
 (`Listing_is_scoped_to_the_read_reach`) + count test run in the SHARED `EnvironmentStoreConformance`, so they execute on every backend.
 
 **NEXT (environments):** (1) MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
-`SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). (2) The scan backends (Redis/Mongo/Cosmos/Nats/AzureStorage)
+`SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). **MySql wrinkle:** its `Environments` table discriminates rows
+by a fixed-size `TagsHash` column (MySql can't fully index a `TEXT` column, so it hashes Name+Tags), and Add inserts `(Name, TagsHash,
+Tags, …)`. So the MySql side table is `EnvironmentSecurityTags(Name, TagsHash, TagKey, TagValue)` and the emitter owner columns are
+`["Name","TagsHash"]` (NOT `Tags` — a TEXT owner column would need a prefix length). Check SqlServer's row discriminator too before
+picking its owner columns. (2) The scan backends (Redis/Mongo/Cosmos/Nats/AzureStorage)
 + InMemory already apply reach in-memory in their ListAsync and get a correct bounded count from the interface DEFAULT — **run the env
 conformance on each to confirm the reach test passes (no leak) + count correct**; add a native bounded-scan `CountAsync` only if worth it.
 (3) Then `/environments/count` OpenAPI + handler + console footer. Then repeat the whole family cycle for sources, credentials, workingCopies.
