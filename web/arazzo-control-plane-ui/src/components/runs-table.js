@@ -19,6 +19,8 @@ class ArazzoRunsTable extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._runs = [];
+    /** @private */ this._total = null; // reach-scoped bounded total for the footer (null until first load)
+    /** @private */ this._totalCapped = false; // true when the true total meets/exceeds the server cap ("N+")
     /** @private */ this._history = []; // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextToken = null;
@@ -92,7 +94,7 @@ class ArazzoRunsTable extends ArazzoElement {
     if (!silent) this.renderBody();
 
     try {
-      const { runs, nextPageToken } = await client.listRuns({
+      const filter = {
         status: this.filters.status,
         workflowId: this.filters.workflowId,
         createdAfter: this.getAttribute('created-after') || undefined,
@@ -101,12 +103,19 @@ class ArazzoRunsTable extends ArazzoElement {
         updatedBefore: this.getAttribute('updated-before') || undefined,
         tags: (this.getAttribute('tags') || '').split(/[,\s]+/).filter(Boolean),
         correlationId: this.getAttribute('correlation-id') || undefined,
-        limit: this.pageSize,
-        pageToken: this._currentToken,
-      });
+      };
+
+      // The bounded total (for the footer) rides alongside the page: same filter, reach-scoped server-side. It is
+      // best-effort — a count failure falls back to the page length and never breaks the list.
+      const [{ runs, nextPageToken }, total] = await Promise.all([
+        client.listRuns({ ...filter, limit: this.pageSize, pageToken: this._currentToken }),
+        client.countRuns(filter).catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return; // a newer request superseded this one
       this._runs = runs;
       this._nextToken = nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: runs.length, hasMore: !!nextPageToken });
@@ -275,9 +284,11 @@ class ArazzoRunsTable extends ArazzoElement {
   }
 
   updatePager() {
+    // Prefer the reach-scoped bounded total ("N"/"N+"); fall back to the page length if the count was unavailable.
+    const shown = this._total ?? this._runs.length;
     const info = this._loading
       ? 'Loading…'
-      : `${this._runs.length} run${this._runs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+      : `${shown}${this._totalCapped ? '+' : ''} run${shown === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextToken, loading: this._loading, info });
   }
 
