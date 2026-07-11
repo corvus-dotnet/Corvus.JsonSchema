@@ -44,6 +44,16 @@ public interface ISecuredWorkflowCatalog
     /// <returns>A page of matching version metadata the caller may read.</returns>
     ValueTask<CatalogPage> SearchAsync(CatalogQuery query, AccessContext context, CancellationToken cancellationToken);
 
+    /// <summary>Counts the catalog entries matching a search, scoped to the caller's read reach (§14.2) and
+    /// <b>bounded</b> at <paramref name="cap"/> — the exact number at or below the cap, or <c>(cap, Capped: true)</c>
+    /// beyond it. Counts matching <em>versions</em>, or distinct base workflows when <see cref="CatalogQuery.DistinctWorkflows"/> is set (mirroring the search).</summary>
+    /// <param name="query">The search (its limit / page token are ignored; the count is over the whole matching set, bounded by <paramref name="cap"/>).</param>
+    /// <param name="context">The caller's access grant; the count is restricted to its read reach. Use <see cref="AccessContext.System"/> for the trusted system path.</param>
+    /// <param name="cap">The upper bound the count is capped at.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count of catalog entries the caller may read, and whether it was capped.</returns>
+    ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, AccessContext context, int cap, CancellationToken cancellationToken);
+
     /// <summary>Gets a version's metadata, if the caller's read reach admits it (§14.2).</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
     /// <param name="versionNumber">The version number.</param>

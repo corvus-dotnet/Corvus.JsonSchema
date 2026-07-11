@@ -244,6 +244,50 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_and_honours_distinct_workflows_and_reach()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        CatalogMetadata Tagged() => new(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags([new("tenant", "acme")]));
+        (await store.AddAsync("alpha", Package("alpha"), Tagged(), default)).Dispose(); // alpha-v1
+        (await store.AddAsync("alpha", Package("alpha"), Tagged(), default)).Dispose(); // alpha-v2
+        (await store.AddAsync("beta", Package("beta"), Tagged(), default)).Dispose();   // beta-v1
+        (await store.AddAsync("gamma", Package("gamma"), Tagged(), default)).Dispose(); // gamma-v1
+        (await store.AddAsync("gamma", Package("gamma"), Tagged(), default)).Dispose(); // gamma-v2
+        (await store.AddAsync("gamma", Package("gamma"), Tagged(), default)).Dispose(); // gamma-v3
+        // 6 versions across 3 distinct base workflows, all tagged tenant=acme.
+
+        // The count mirrors the search mode: every matching version by default, one row per base when distinct.
+        (await store.CountAsync(new CatalogQuery(), 100, default)).ShouldBe((6, false));
+        (await store.CountAsync(new CatalogQuery(DistinctWorkflows: true), 100, default)).ShouldBe((3, false));
+
+        // A cap below the total trips 'capped' and pins the count at the cap, in each mode.
+        (await store.CountAsync(new CatalogQuery(), 4, default)).ShouldBe((4, true));
+        (await store.CountAsync(new CatalogQuery(DistinctWorkflows: true), 2, default)).ShouldBe((2, true));
+
+        // A cap exactly at the total is not capped.
+        (await store.CountAsync(new CatalogQuery(), 6, default)).ShouldBe((6, false));
+
+        // A filter narrows both modes (only gamma's 3 versions / 1 base match).
+        (await store.CountAsync(new CatalogQuery(BaseWorkflowId: "gamma"), 100, default)).ShouldBe((3, false));
+        (await store.CountAsync(new CatalogQuery(BaseWorkflowId: "gamma", DistinctWorkflows: true), 100, default)).ShouldBe((1, false));
+
+        // The count honours the read reach exactly like the search — only where the store pushes the filter down.
+        if (store is ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
+        {
+            var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+
+            // A reach the versions satisfy (tenant=acme) admits all, in each mode.
+            var acme = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], claims);
+            (await store.CountAsync(new CatalogQuery(Security: acme), 100, default)).ShouldBe((6, false));
+            (await store.CountAsync(new CatalogQuery(DistinctWorkflows: true, Security: acme), 100, default)).ShouldBe((3, false));
+
+            // A reach they do not satisfy (tenant=globex) admits none.
+            var globex = new SecurityFilter([SecurityRule.Compile("tenant == 'globex'")], claims);
+            (await store.CountAsync(new CatalogQuery(Security: globex), 100, default)).ShouldBe((0, false));
+        }
+    }
+
+    [TestMethod]
     public async Task Query_distinct_workflows_representative_prefers_newest_active_then_newest_obsolete()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
