@@ -56,11 +56,12 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
   (op `countRunnerAuthorizations`, filters status/environment; status defaults to Pending like the inbox) + handler + interface
   default + native `CountAsync` on all 10 backends (backends already shared AppendFilters/BuildFilter/Matches/AppendConditions).
   Conformance green 2/2 on every backend (InMemory+Sqlite in-process; the other 8 incl. Cosmos via containers/emulator).
-- [ ] **NEXT: rewire the console Approvals badges** onto the three `/count` calls, restart the composition, live-verify the
-  badges render `N`/`N+`. The three approval queues (accessRequests, availabilityRequests, runnerAuthorizations) all now have
-  `/count` — Slice 1's badge payoff. The badge poll (`samples/arazzo/…/wwwroot/index.html`, ~line 200 `countQueue(...)`) currently
-  fetches `limit:100` and counts `.length`; add `countAccessRequests`/`countAvailabilityRequests`/`countRunnerAuthorizations` to
-  `web/…/src/arazzo-client.js` and switch the poll to them, rendering `${count}${capped?'+':''}`.
+- [x] **Approvals badges rewired onto `/count` — DONE + live-verified.** Added `countAccessRequests`/`countAvailabilityRequests`/
+  `countRunnerAuthorizations` to `web/…/src/arazzo-client.js` and switched the `samples/…/wwwroot/index.html` badge poll from
+  fetch-`limit:100`-and-count-`.length` to the three count calls, rendering `${count}${capped?'+':''}` (the tab total is `N+`
+  if any queue was capped). Live-verified on the restarted composition (Postgres): the three `/count` endpoints return
+  `{count,capped}` (200), and Playwright confirmed the badges render Access 1 / Availability 1 / Runners 0-hidden / tab total 2,
+  the poll hits the `/count` endpoints (not the lists), 0 JS errors. **Slice 1 (the badge payoff) COMPLETE.**
 
 > **Cosmos has NO bounded server-side COUNT** (verified on the emulator): a bare `COUNT` ignores the outer LIMIT and scans the
 > whole set, and wrapping COUNT around a cap-limited subquery is rejected — both `'OFFSET LIMIT' clause is not supported in

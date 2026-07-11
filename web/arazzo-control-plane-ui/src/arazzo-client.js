@@ -273,6 +273,22 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countRunnerAuthorizations` — a bounded count of the runner authorizations {@link listRunnerAuthorizations} would
+   * return (same `status`/`environment` filters; the inbox defaults to `Pending`), for work badges and list footers. No
+   * rows are fetched. `capped` is `true` when the true total meets or exceeds the server's cap, so `count` is the cap
+   * (render as e.g. `100+`).
+   * @param {{ status?: string, environment?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countRunnerAuthorizations(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.environment) search.set('environment', query.environment);
+    const result = await this._request('GET', `/runnerAuthorizations/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listRunnerAuthorizations`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ status?: string, environment?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ authorizations: object[], nextPageToken: (string|null) }>}
@@ -1703,6 +1719,22 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countAccessRequests` — a bounded count of the access requests {@link listAccessRequests} would return (same
+   * `status`/`baseWorkflowId`/`scope` filters), for work badges and list footers. No rows are fetched. `capped` is
+   * `true` when the true total meets or exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ status?: string, baseWorkflowId?: string, scope?: ('mine'|'queue'), signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countAccessRequests(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    if (query.scope) search.set('scope', query.scope);
+    const result = await this._request('GET', `/accessRequests/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listAccessRequests`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ status?: string, baseWorkflowId?: string, scope?: ('mine'|'queue'), limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ accessRequests: object[], nextPageToken: (string|null) }>}
@@ -1827,6 +1859,22 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/availabilityRequests${qs(search)}`, { signal: query.signal });
     return { availabilityRequests: result.availabilityRequests ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countAvailabilityRequests` — a bounded count of the availability requests {@link listAvailabilityRequests} would
+   * return (same `status`/`environment`/`scope` filters), for work badges and list footers. No rows are fetched.
+   * `capped` is `true` when the true total meets or exceeds the server's cap, so `count` is the cap (render as `100+`).
+   * @param {{ status?: string, environment?: string, scope?: ('mine'|'queue'), signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countAvailabilityRequests(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.environment) search.set('environment', query.environment);
+    if (query.scope) search.set('scope', query.scope);
+    const result = await this._request('GET', `/availabilityRequests/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
