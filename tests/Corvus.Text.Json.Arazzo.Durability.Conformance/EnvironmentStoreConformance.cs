@@ -69,6 +69,45 @@ public abstract class EnvironmentStoreConformance
     }
 
     [TestMethod]
+    public async Task Listing_is_scoped_to_the_read_reach()
+    {
+        IEnvironmentStore store = await this.NewStoreAsync();
+        using (ParsedJsonDocument<Environment> a = Environment.Draft("acme-env", "Acme", null, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")])))
+        using (await store.AddAsync(a.RootElement, "alice", default))
+        {
+        }
+
+        using (ParsedJsonDocument<Environment> g = Environment.Draft("globex-env", "Globex", null, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")])))
+        using (await store.AddAsync(g.RootElement, "alice", default))
+        {
+        }
+
+        using (ParsedJsonDocument<Environment> s = Environment.Draft("shared-env", "Shared", null, SecurityTagSet.Empty))
+        using (await store.AddAsync(s.RootElement, "alice", default))
+        {
+        }
+
+        // A reach restricted to tenant=acme admits only the acme environment; globex and the untagged row are hidden (a
+        // restricted reach denies a row it does not positively admit). This is the safety net for the §14.2 row-security
+        // push-down: the store MUST apply this filter — whether in memory or pushed into its query — so a leak here fails
+        // loud rather than silently returning rows across the authorization boundary.
+        var restricted = AccessContext.Uniform(new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], EmptyClaims));
+        using (EnvironmentPage page = await store.ListAsync(restricted, 1000, default, default))
+        {
+            page.Environments.Select(e => e.NameValue).ShouldBe(["acme-env"]);
+        }
+
+        // Unrestricted (system) reach sees all three, ascending by name.
+        using (EnvironmentPage all = await store.ListAsync(AccessContext.System, 1000, default, default))
+        {
+            all.Environments.Select(e => e.NameValue).ShouldBe(["acme-env", "globex-env", "shared-env"]);
+        }
+    }
+
+    // Empty claims for a reach whose rules compare against literals (no $claim substitution).
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> EmptyClaims = new Dictionary<string, IReadOnlyList<string>>();
+
+    [TestMethod]
     public async Task Adding_a_duplicate_name_fails()
     {
         IEnvironmentStore store = await this.NewStoreAsync();
