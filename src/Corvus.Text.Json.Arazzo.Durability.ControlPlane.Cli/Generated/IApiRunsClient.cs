@@ -158,6 +158,16 @@ public interface IApiRunsClient : IAsyncDisposable
         public static readonly string[] CancelRunOpenIdConnectScopes = ["runs:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountRuns</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountRunsOauth2Scopes = ["runs:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountRuns</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountRunsOpenIdConnectScopes = ["runs:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["runs:purge", "runs:read", "runs:write"];
@@ -239,4 +249,21 @@ public interface IApiRunsClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<CancelRunResponse> CancelRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count runs
+    /// </summary>
+    /// <remarks>
+    /// Counts the runs matching the visibility query that the caller's read reach admits (§14.2), bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRuns. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="workflowId">The workflowId parameter.</param>
+    /// <param name="createdAfter">The createdAfter parameter.</param>
+    /// <param name="createdBefore">The createdBefore parameter.</param>
+    /// <param name="updatedAfter">The updatedAfter parameter.</param>
+    /// <param name="updatedBefore">The updatedBefore parameter.</param>
+    /// <param name="tag">The tag parameter.</param>
+    /// <param name="correlationId">The correlationId parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountRunsResponse> CountRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

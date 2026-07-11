@@ -1767,6 +1767,190 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __CancelRunEndpoint);
 
+        IEndpointConventionBuilder __CountRunsEndpoint = app.MapGet("/runs/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus StatusValue = default;
+                if (context.Request.Query.TryGetValue("status", out var StatusQueryVal) && StatusQueryVal.Count > 0)
+                {
+                    string StatusRaw = StatusQueryVal[0]!;
+                    StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus>(StatusRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString WorkflowIdValue = default;
+                if (context.Request.Query.TryGetValue("workflowId", out var WorkflowIdQueryVal) && WorkflowIdQueryVal.Count > 0)
+                {
+                    string WorkflowIdRaw = WorkflowIdQueryVal[0]!;
+                    WorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(WorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime CreatedAfterValue = default;
+                if (context.Request.Query.TryGetValue("createdAfter", out var CreatedAfterQueryVal) && CreatedAfterQueryVal.Count > 0)
+                {
+                    string CreatedAfterRaw = CreatedAfterQueryVal[0]!;
+                    CreatedAfterValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(CreatedAfterRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime CreatedBeforeValue = default;
+                if (context.Request.Query.TryGetValue("createdBefore", out var CreatedBeforeQueryVal) && CreatedBeforeQueryVal.Count > 0)
+                {
+                    string CreatedBeforeRaw = CreatedBeforeQueryVal[0]!;
+                    CreatedBeforeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(CreatedBeforeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime UpdatedAfterValue = default;
+                if (context.Request.Query.TryGetValue("updatedAfter", out var UpdatedAfterQueryVal) && UpdatedAfterQueryVal.Count > 0)
+                {
+                    string UpdatedAfterRaw = UpdatedAfterQueryVal[0]!;
+                    UpdatedAfterValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(UpdatedAfterRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime UpdatedBeforeValue = default;
+                if (context.Request.Query.TryGetValue("updatedBefore", out var UpdatedBeforeQueryVal) && UpdatedBeforeQueryVal.Count > 0)
+                {
+                    string UpdatedBeforeRaw = UpdatedBeforeQueryVal[0]!;
+                    UpdatedBeforeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime>(UpdatedBeforeRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList TagValue = default;
+                if (context.Request.Query.TryGetValue("tag", out var TagQueryValues) && TagQueryValues.Count > 0)
+                {
+                    TagValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>(workspace, TagQueryValues, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList.Builder arrayBuilder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            string? item = ctx[i];
+                            if (item is null) continue;
+                            arrayBuilder.AddItem(item.AsSpan());
+                        }
+                    }).RootElement;
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CorrelationIdValue = default;
+                if (context.Request.Query.TryGetValue("correlationId", out var CorrelationIdQueryVal) && CorrelationIdQueryVal.Count > 0)
+                {
+                    string CorrelationIdRaw = CorrelationIdQueryVal[0]!;
+                    CorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(CorrelationIdRaw, workspace);
+                }
+
+                if (!StatusValue.IsUndefined() && !StatusValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'status' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!WorkflowIdValue.IsUndefined() && !WorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'workflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CreatedAfterValue.IsUndefined() && !CreatedAfterValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'createdAfter' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CreatedBeforeValue.IsUndefined() && !CreatedBeforeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'createdBefore' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!UpdatedAfterValue.IsUndefined() && !UpdatedAfterValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'updatedAfter' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!UpdatedBeforeValue.IsUndefined() && !UpdatedBeforeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'updatedBefore' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!TagValue.IsUndefined() && !TagValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'tag' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CorrelationIdValue.IsUndefined() && !CorrelationIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'correlationId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CountRunsParams parameters = new()
+                {
+                    Status = StatusValue,
+                    WorkflowId = WorkflowIdValue,
+                    CreatedAfter = CreatedAfterValue,
+                    CreatedBefore = CreatedBeforeValue,
+                    UpdatedAfter = UpdatedAfterValue,
+                    UpdatedBefore = UpdatedBeforeValue,
+                    Tag = TagValue,
+                    CorrelationId = CorrelationIdValue,
+                }
+                ;
+
+                CountRunsResult result = await runsHandler.HandleCountRunsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countRuns",
+                methodName: "CountRuns",
+                httpMethod: "GET",
+                routeTemplate: "/runs/count",
+                tags: new[] { "runs" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountRunsEndpoint);
+
         IEndpointConventionBuilder __ListRunnersEndpoint = app.MapGet("/runners", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -13723,6 +13907,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>CountWorkspaceWorkflows</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] CountWorkspaceWorkflowsOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountRuns</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountRunsOauth2Scopes = ["runs:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountRuns</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountRunsOpenIdConnectScopes = ["runs:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>SearchGrantees</c> for the <c>Oauth2</c> scheme.

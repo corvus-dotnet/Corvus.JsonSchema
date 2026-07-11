@@ -55,6 +55,16 @@ public interface ISecuredWorkflowManagement
     /// <returns>A page of matching runs the caller may read.</returns>
     ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken);
 
+    /// <summary>Counts the runs matching a visibility query, scoped to the caller's read reach (§14.2) and
+    /// <b>bounded</b> at <paramref name="cap"/> — the count-API contract: the exact number at or below the cap, or
+    /// <c>(cap, Capped: true)</c> beyond it, so a badge/footer renders "<c>N</c>"/"<c>N+</c>" without fetching rows.</summary>
+    /// <param name="query">The visibility query (its limit / page token are ignored; the count is over the whole matching set, bounded by <paramref name="cap"/>).</param>
+    /// <param name="context">The caller's access grant; the count is restricted to its read reach. Use <see cref="AccessContext.System"/> for the trusted system path.</param>
+    /// <param name="cap">The upper bound the count is capped at.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count of runs the caller may read, and whether it was capped.</returns>
+    ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, AccessContext context, int cap, CancellationToken cancellationToken);
+
     /// <summary>Gets a run's current detail (status, cursor, wait/fault, etag) from its authoritative checkpoint,
     /// if the caller's read reach admits it (§14.2).</summary>
     /// <param name="id">The run id.</param>

@@ -580,6 +580,49 @@ public abstract class WorkflowStateStoreConformance
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: filter), default)).Runs.ShouldBeEmpty();
     }
 
+    [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        var index = (IWorkflowWaitIndex)store;
+
+        // Five runs: three tenant=acme, one tenant=globex, one untagged.
+        (string Id, SecurityTag[] Tags)[] rows =
+        [
+            ("run-1", [new("tenant", "acme")]),
+            ("run-2", [new("tenant", "acme")]),
+            ("run-3", [new("tenant", "acme")]),
+            ("run-4", [new("tenant", "globex")]),
+            ("run-5", []),
+        ];
+        foreach ((string id, SecurityTag[] tags) in rows)
+        {
+            await store.SaveAsync(id, Bytes("x"), Secured(tags), WorkflowEtag.None, default);
+        }
+
+        // Unscoped: a cap above the total returns the exact count, uncapped.
+        (await index.CountAsync(new WorkflowQuery(), 100, default)).ShouldBe((5, false));
+
+        // A cap below the total trips 'capped' and pins the count at the cap.
+        (await index.CountAsync(new WorkflowQuery(), 3, default)).ShouldBe((3, true));
+
+        // A cap exactly at the total is not capped (the cap+1th row is absent).
+        (await index.CountAsync(new WorkflowQuery(), 5, default)).ShouldBe((5, false));
+
+        // The count honours the read reach exactly like the list — only where the store pushes the filter down.
+        if (store is ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
+        {
+            var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+            var acme = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], claims);
+
+            // Three of the five are tenant=acme.
+            (await index.CountAsync(new WorkflowQuery(Security: acme), 100, default)).ShouldBe((3, false));
+
+            // Reach and cap compose: a cap below the admitted count still caps.
+            (await index.CountAsync(new WorkflowQuery(Security: acme), 2, default)).ShouldBe((2, true));
+        }
+    }
+
     private static WorkflowRunIndexEntry Secured(SecurityTag[] securityTags)
         => new("wf", WorkflowRunStatus.Running, T0, T0, SecurityTags: SecurityTagSet.FromTags(securityTags));
 

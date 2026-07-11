@@ -36,4 +36,23 @@ public interface IWorkflowWaitIndex
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A page of matching runs.</returns>
     ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken);
+
+    /// <summary>Counts the runs matching a visibility query, <b>bounded</b> at <paramref name="cap"/> — the count-API
+    /// contract: return the exact number when it is at or below the cap, or <c>(cap, Capped: true)</c> once more than
+    /// <paramref name="cap"/> match, so a badge/footer can render "<c>N</c>" or "<c>N+</c>" without materialising rows
+    /// and without paying to count an unbounded set. Honours the query's <see cref="WorkflowQuery.Security"/> reach
+    /// exactly as <see cref="QueryAsync"/> does (same predicate, so it cannot drift).</summary>
+    /// <param name="query">The query; its <see cref="WorkflowQuery.Limit"/> and <see cref="WorkflowQuery.ContinuationToken"/> are ignored (the count is over the whole matching set, bounded by <paramref name="cap"/>).</param>
+    /// <param name="cap">The upper bound: counting stops once <paramref name="cap"/> is exceeded.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count and whether it was capped.</returns>
+    /// <remarks>The default counts a single bounded page (<c>Limit = cap + 1</c>); a backend that can count natively
+    /// (a relational <c>COUNT</c> over a <c>LIMIT cap+1</c> sub-select, a bounded scan) overrides it to avoid
+    /// materialising the listings. The default still honours reach because it flows the same <see cref="WorkflowQuery.Security"/> through <see cref="QueryAsync"/>.</remarks>
+    async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        using WorkflowRunPage page = await this.QueryAsync(query with { Limit = cap + 1, ContinuationToken = default }, cancellationToken).ConfigureAwait(false);
+        int count = page.Runs.Count;
+        return count > cap ? (cap, true) : (count, false);
+    }
 }
