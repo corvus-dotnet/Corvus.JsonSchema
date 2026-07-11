@@ -135,32 +135,8 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         var list = new PooledDocumentList<AccessRequest>();
         await using MySqlCommand select = connection.CreateCommand();
         var sql = new StringBuilder("SELECT Document FROM AccessRequests");
-        var conditions = new List<string>(4);
-        if (query.Status is { } status)
-        {
-            conditions.Add("Status = @status");
-            select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            conditions.Add("BaseWorkflowId = @bw");
-            select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
-        }
-
-        if (query.SubjectClaimType is { } subjectType)
-        {
-            conditions.Add("SubjectClaimType = @st");
-            select.Parameters.AddWithValue("@st", subjectType);
-        }
-
-        if (query.SubjectClaimValue is { } subjectValue)
-        {
-            conditions.Add("SubjectClaimValue = @sv");
-            select.Parameters.AddWithValue("@sv", subjectValue);
-        }
-
-        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
+        var conditions = new List<string>(5);
+        AppendFilterConditions(conditions, select, query);
 
         if (conditions.Count > 0)
         {
@@ -210,31 +186,7 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         await using MySqlCommand select = connection.CreateCommand();
         var sql = new StringBuilder("SELECT Document FROM AccessRequests");
         var conditions = new List<string>(5);
-        if (query.Status is { } status)
-        {
-            conditions.Add("Status = @status");
-            select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            conditions.Add("BaseWorkflowId = @bw");
-            select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
-        }
-
-        if (query.SubjectClaimType is { } subjectType)
-        {
-            conditions.Add("SubjectClaimType = @st");
-            select.Parameters.AddWithValue("@st", subjectType);
-        }
-
-        if (query.SubjectClaimValue is { } subjectValue)
-        {
-            conditions.Add("SubjectClaimValue = @sv");
-            select.Parameters.AddWithValue("@sv", subjectValue);
-        }
-
-        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
+        AppendFilterConditions(conditions, select, query);
 
         if (cursorCreatedAt is not null)
         {
@@ -288,6 +240,30 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             page.Dispose();
             throw;
         }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(5);
+        AppendFilterConditions(conditions, select, query);
+
+        // Bounded count: COUNT over a subquery capped at cap + 1, so the scan stops one row past the cap; the (cap+1)th
+        // row's existence trips Capped — never a full COUNT of the whole queue. Same predicate as the list.
+        var inner = new StringBuilder("SELECT 1 FROM AccessRequests");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     /// <inheritdoc/>
@@ -346,6 +322,38 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     // Appends the approver-inbox filter (design §16.5): BaseWorkflowId IN (the administered set) — server-derived strings
     // reified as @adm{i} parameters (the SQL leaf). The set is never empty here (the handler short-circuits a caller who
     // administers nothing to an empty page before the store); a null set (the non-inbox modes) adds nothing.
+    // The reach/filter predicate shared by ListAsync (full + paged) and CountAsync: the same AccessRequestQuery reifies to
+    // the same SQL + parameters, so a count can never drift from the list it annotates. Covers the query's
+    // status/base-workflow/subject/administered filter only; the keyset cursor seek stays inline in the paged list.
+    private static void AppendFilterConditions(List<string> conditions, MySqlCommand command, in AccessRequestQuery query)
+    {
+        if (query.Status is { } status)
+        {
+            conditions.Add("Status = @status");
+            command.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            conditions.Add("BaseWorkflowId = @bw");
+            command.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
+        }
+
+        if (query.SubjectClaimType is { } subjectType)
+        {
+            conditions.Add("SubjectClaimType = @st");
+            command.Parameters.AddWithValue("@st", subjectType);
+        }
+
+        if (query.SubjectClaimValue is { } subjectValue)
+        {
+            conditions.Add("SubjectClaimValue = @sv");
+            command.Parameters.AddWithValue("@sv", subjectValue);
+        }
+
+        AppendAdministeredFilter(conditions, command, query.AdministeredBaseWorkflowIds);
+    }
+
     private static void AppendAdministeredFilter(List<string> conditions, MySqlCommand command, IReadOnlyList<string>? administered)
     {
         if (administered is not { Count: > 0 } set)
