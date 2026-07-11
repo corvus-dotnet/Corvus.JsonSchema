@@ -34,6 +34,9 @@
     .subtabs { flex: none; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
     .subtabs button { font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--arazzo-border); background: var(--arazzo-surface); color: var(--arazzo-muted); padding: 5px 12px; border-radius: 6px; }
     .subtabs button[aria-selected="true"] { color: var(--arazzo-text); border-color: var(--arazzo-accent); background: color-mix(in srgb, var(--arazzo-accent) 12%, transparent); font-weight: 600; }
+    /* Outstanding-work badge on the Approvals tab + its sub-tabs (count of Pending items; auto-refreshed). */
+    .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--arazzo-accent); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; vertical-align: middle; }
+    .tab-badge[hidden] { display: none; }
     .authbar { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; }
     /* Each tab panel fills the remaining viewport and hands its component a bounded height (flex:1; min-height:0); the
        panel then fills + scrolls its own list internally — the page/pane never scrolls (the Runs/Catalog model). */
@@ -66,6 +69,7 @@
       <button role="tab" aria-selected="false" aria-controls="view-credentials">Credentials</button>
       <button role="tab" aria-selected="false" aria-controls="view-runners">Runners</button>
       <button role="tab" aria-selected="false" aria-controls="view-security">Security</button>
+      <button role="tab" aria-selected="false" aria-controls="view-approvals">Approvals <span class="tab-badge" data-badge="approvals" hidden></span></button>
       <button role="tab" aria-selected="false" aria-controls="view-requests">Requests</button>
     </div>
 
@@ -90,16 +94,7 @@
     </div>
 
     <div id="view-runners" role="tabpanel" hidden>
-      <div class="subtabs" role="tablist">
-        <button role="tab" aria-selected="true" aria-controls="sub-runners-registry">Registry</button>
-        <button role="tab" aria-selected="false" aria-controls="sub-runners-auth">Authorizations</button>
-      </div>
-      <div id="sub-runners-registry" class="subview">
-        <arazzo-runners base-url="/arazzo/v1" theme="auto" poll="8000"></arazzo-runners>
-      </div>
-      <div id="sub-runners-auth" class="subview" hidden>
-        <arazzo-runner-authorizations base-url="/arazzo/v1" theme="auto"></arazzo-runner-authorizations>
-      </div>
+      <arazzo-runners base-url="/arazzo/v1" theme="auto" poll="8000"></arazzo-runners>
     </div>
 
     <div id="view-security" role="tabpanel" hidden>
@@ -119,16 +114,36 @@
       </div>
     </div>
 
+    <!-- Approvals: the approver queues — work the signed-in user must action. Each sub-tab (and the primary tab) carries
+         an auto-refreshing badge of outstanding Pending items so the user can see at a glance if there is work to do. -->
+    <div id="view-approvals" role="tabpanel" hidden>
+      <div class="subtabs" role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="sub-approvals-access">Access <span class="tab-badge" data-badge="approvals-access" hidden></span></button>
+        <button role="tab" aria-selected="false" aria-controls="sub-approvals-availability">Availability <span class="tab-badge" data-badge="approvals-availability" hidden></span></button>
+        <button role="tab" aria-selected="false" aria-controls="sub-approvals-runners">Runners <span class="tab-badge" data-badge="approvals-runners" hidden></span></button>
+      </div>
+      <div id="sub-approvals-access" class="subview">
+        <arazzo-access-requests base-url="/arazzo/v1" theme="auto" view="queue" hide-view-tabs></arazzo-access-requests>
+      </div>
+      <div id="sub-approvals-availability" class="subview" hidden>
+        <arazzo-availability-requests base-url="/arazzo/v1" theme="auto" view="queue" hide-view-tabs></arazzo-availability-requests>
+      </div>
+      <div id="sub-approvals-runners" class="subview" hidden>
+        <arazzo-runner-authorizations base-url="/arazzo/v1" theme="auto"></arazzo-runner-authorizations>
+      </div>
+    </div>
+
+    <!-- Requests: the signed-in user's OWN outstanding requests (a different goal from approving others' work). -->
     <div id="view-requests" role="tabpanel" hidden>
       <div class="subtabs" role="tablist">
-        <button role="tab" aria-selected="true" aria-controls="sub-requests-access">Access requests</button>
-        <button role="tab" aria-selected="false" aria-controls="sub-requests-availability">Availability requests</button>
+        <button role="tab" aria-selected="true" aria-controls="sub-requests-access">Access</button>
+        <button role="tab" aria-selected="false" aria-controls="sub-requests-availability">Availability</button>
       </div>
       <div id="sub-requests-access" class="subview">
-        <arazzo-access-requests base-url="/arazzo/v1" theme="auto"></arazzo-access-requests>
+        <arazzo-access-requests base-url="/arazzo/v1" theme="auto" view="mine" hide-view-tabs></arazzo-access-requests>
       </div>
       <div id="sub-requests-availability" class="subview" hidden>
-        <arazzo-availability-requests base-url="/arazzo/v1" theme="auto"></arazzo-availability-requests>
+        <arazzo-availability-requests base-url="/arazzo/v1" theme="auto" view="mine" hide-view-tabs></arazzo-availability-requests>
       </div>
     </div>
   </div>
@@ -176,6 +191,27 @@
     FETCH_PANELS.forEach((tag) => document.querySelectorAll(tag).forEach((el) => { el.fetch = authFetch; }));
     CLIENT_PANELS.forEach((tag) => document.querySelectorAll(tag).forEach((el) => { el.client = sharedClient; }));
     const allPanels = [...FETCH_PANELS, ...CLIENT_PANELS].flatMap((tag) => [...document.querySelectorAll(tag)]);
+
+    // Approvals badges: poll the three approver queues for outstanding (Pending) work and badge the Approvals tab + its
+    // sub-tabs, so the user sees at a glance whether there is anything to action. Auto-refreshes; a 403 (the user
+    // administers nothing) just yields 0 and hides the badge. Counts are the visible Pending items (first page, ≤100).
+    const badges = {};
+    document.querySelectorAll('.tab-badge[data-badge]').forEach((b) => { badges[b.dataset.badge] = b; });
+    const setBadge = (b, n) => { if (b) { b.textContent = String(n); b.hidden = !(n > 0); } };
+    const countQueue = async (call, key) => { try { const r = await call(); return (r[key] || []).length; } catch { return 0; } };
+    const refreshApprovalBadges = async () => {
+      const [access, avail, runners] = await Promise.all([
+        countQueue(() => sharedClient.listAccessRequests({ scope: 'queue', status: 'Pending', limit: 100 }), 'accessRequests'),
+        countQueue(() => sharedClient.listAvailabilityRequests({ scope: 'queue', status: 'Pending', limit: 100 }), 'availabilityRequests'),
+        countQueue(() => sharedClient.listRunnerAuthorizations({ status: 'Pending', limit: 100 }), 'authorizations'),
+      ]);
+      setBadge(badges['approvals-access'], access);
+      setBadge(badges['approvals-availability'], avail);
+      setBadge(badges['approvals-runners'], runners);
+      setBadge(badges['approvals'], access + avail + runners);
+    };
+    refreshApprovalBadges();
+    setInterval(refreshApprovalBadges, 15000);
 
     // Sign-in / sign-out chrome is the shared <arazzo-auth-status> element in the title bar (it self-discovers
     // /me and stays invisible when authorization is off). The same element serves the designer (§16.3).

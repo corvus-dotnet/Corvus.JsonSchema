@@ -75,11 +75,28 @@ administrators** (arazzo-admins per env), **4 sources**, **1 availability** entr
 promotion request**; two-process topology healthy — runner `/health` = 200 (Vault AppRole), 1 registration + 1
 auto-authorization; DemoData 6 runs / 6 catalog versions / 8 source credentials.
 
-### W3 — Expand the live console (medium)
+### W3 — Expand the live console (medium) — **DONE**
 Mount the already-built, already-wired admin panels in `wwwroot/index.html` (Runners, Environments,
 Credentials lifecycle, Security grants/rules/access-overview, Runner-authorizations,
 Availability-requests inbox); fix the administrators-editing scope gap (console `arazzo-catalog`
 lacks `administrators:read/write`); **build the one missing** sources-registry governance component.
+
+**Done** — the console `index.html` shell was rewritten into a grouped tab layout organised by **user goal**:
+**Runs, Catalog, Environments, Sources, Credentials, Runners, Security** (Grants / Rules / Access-overview),
+**Approvals** (Access / Availability / Runner-authorizations — the approver queues, work the user must action) and
+**Requests** (the user's own Access / Availability requests). The two request panels are mounted twice, locked to
+`view="queue"`/`view="mine"` with their internal toggle hidden (`hide-view-tabs`). The **Approvals** tab and each of
+its sub-tabs carry an **auto-refreshing badge** of outstanding Pending items (polls the three approver queues every
+15s; 403 → 0), so a user sees at a glance whether there is work for them. Self-contained panels wired via
+`.fetch = authFetch`; the security-authoring panels via a shared `.client`. Admin scope gap fixed by adding
+`administrators:read/write` to `<arazzo-catalog>`'s `scopes`. Built the missing **`sources-panel`** (`<arazzo-sources>`,
+ported from `environments-panel`) + the two missing client methods (`updateSource`, `deleteSource`).
+**Every panel now uses the Runs/Catalog fill model** (`:host` fills, list scrolls internally via `.tablescroll` +
+sticky header + pinned pager; master-detail panels split the list and a closeable, independently-scrolling detail, with
+the empty detail-pane collapsing so the list fills full width). **Live-verified** (Playwright, signed in as arazzo-admin
+against the running composition): all tabs + sub-navs render the real seeded data (Runs 6, Environments 3, Sources 4,
+Grants 2), the Approvals badge shows **2** (1 access + 1 availability pending) with per-sub-tab counts, master-detail
+select/close works, no functional JS errors; 208 UI unit tests green.
 
 ### W5 — Parity + doc truth (small)
 Debug-run CLI verb (`arazzo-runs debug-runs {start·get·resume·inject-message·cancel·delete}`) —
