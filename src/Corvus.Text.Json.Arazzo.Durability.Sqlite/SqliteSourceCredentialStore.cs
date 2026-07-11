@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Data.Sqlite;
@@ -83,11 +85,14 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
             string id = $"scred-{++this.idSequence}";
             WorkflowEtag etag = NewEtag();
             byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+            string discriminator = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
+            using SqliteTransaction transaction = this.connection.BeginTransaction();
             using SqliteCommand insert = this.connection.CreateCommand();
+            insert.Transaction = transaction;
             insert.CommandText = "INSERT INTO SourceCredentials (SourceName, Environment, Tags, Etag, Document) VALUES (@s, @e, @t, @etag, @doc);";
             insert.Parameters.AddWithValue("@s", draft.SourceNameValue);
             insert.Parameters.AddWithValue("@e", draft.EnvironmentValue);
-            insert.Parameters.AddWithValue("@t", SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue));
+            insert.Parameters.AddWithValue("@t", discriminator);
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", json);
             try
@@ -98,6 +103,12 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
             {
                 throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
             }
+
+            // Mirror the MANAGEMENT tags (the reach discriminator, distinct from the row's combined mgmt+usage Tags key)
+            // into the queryable side table so the §14.2 read reach can be pushed into the list/count query as a
+            // correlated EXISTS. Atomic; tags are immutable so no re-sync on update.
+            await SyncSecurityTagsAsync(this.connection, transaction, draft.SourceNameValue, draft.EnvironmentValue, discriminator, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+            transaction.Commit();
 
             return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
         }
@@ -146,63 +157,45 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
             try
             {
                 // Keyset seek past the cursor in (SourceName, Environment, Tags) order — an indexed range scan, not a
-                // table load. Reach is a per-row predicate applied in memory as we stream; the reader is consumed only
-                // until the page fills, so we read ≈ pageSize / selectivity rows, never the whole table.
+                // table load — with the §14.2 read reach pushed into the query as a correlated EXISTS over
+                // SourceCredentialSecurityTags (the same predicate context.Admits evaluates, but applied in the database),
+                // so out-of-reach rows never leave it. LIMIT bounds the read.
                 using SqliteCommand select = this.connection.CreateCommand();
+                var conditions = new List<string>(2);
                 if (hasCursor)
                 {
-                    select.CommandText =
-                        "SELECT SourceName, Environment, Tags, Document FROM SourceCredentials " +
-                        "WHERE SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND Tags > @t) " +
-                        "ORDER BY SourceName, Environment, Tags;";
+                    conditions.Add("(SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND Tags > @t))");
                     select.Parameters.AddWithValue("@s", cursor.SourceName);
                     select.Parameters.AddWithValue("@e", cursor.Environment);
                     select.Parameters.AddWithValue("@t", cursor.TieBreaker);
                 }
-                else
+
+                AppendReachPredicate(conditions, select, context);
+
+                var sql = new StringBuilder("SELECT SourceName, Environment, Tags, Document FROM SourceCredentials");
+                if (conditions.Count > 0)
                 {
-                    select.CommandText = "SELECT SourceName, Environment, Tags, Document FROM SourceCredentials ORDER BY SourceName, Environment, Tags;";
+                    sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
                 }
+
+                sql.Append(" ORDER BY SourceName, Environment, Tags LIMIT @limit;");
+                select.Parameters.AddWithValue("@limit", pageSize + 1);
+                select.CommandText = sql.ToString();
 
                 using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
                 string lastSource = string.Empty, lastEnv = string.Empty, lastTags = string.Empty;
                 while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    string source = reader.GetString(0);
-                    string environment = reader.GetString(1);
-                    string tags = reader.GetString(2);
-                    byte[] json = reader.GetFieldValue<byte[]>(3);
-                    ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                    bool kept = false;
-                    try
+                    if (docs.Count == pageSize)
                     {
-                        SecurityTagSet tagSet = cand.RootElement.ManagementTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                            : SecurityTagSet.Empty;
-                        if (!context.Admits(AccessVerb.Read, tagSet))
-                        {
-                            continue;
-                        }
-
-                        if (docs.Count == pageSize)
-                        {
-                            hasMore = true;
-                            break;
-                        }
-
-                        docs.Add(cand);
-                        kept = true;
-                        lastSource = source;
-                        lastEnv = environment;
-                        lastTags = tags;
+                        hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                        break;
                     }
-                    finally
-                    {
-                        if (!kept)
-                        {
-                            cand.Dispose();
-                        }
-                    }
+
+                    lastSource = reader.GetString(0);
+                    lastEnv = reader.GetString(1);
+                    lastTags = reader.GetString(2);
+                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(reader.GetFieldValue<byte[]>(3)));
                 }
 
                 return hasMore
@@ -273,13 +266,50 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
                 SourceCredentialSerialization.EnsureEtag($"{sourceName}@{environment}", expectedEtag, SourceCredentialSerialization.EtagOf(existing));
             }
 
+            using SqliteTransaction transaction = this.connection.BeginTransaction();
             using SqliteCommand delete = this.connection.CreateCommand();
-            delete.CommandText = "DELETE FROM SourceCredentials WHERE SourceName = @s AND Environment = @e AND Tags = @t;";
+            delete.Transaction = transaction;
+            delete.CommandText =
+                "DELETE FROM SourceCredentials WHERE SourceName = @s AND Environment = @e AND Tags = @t; " +
+                "DELETE FROM SourceCredentialSecurityTags WHERE SourceName = @s AND Environment = @e AND Tags = @t;";
             delete.Parameters.AddWithValue("@s", sourceName);
             delete.Parameters.AddWithValue("@e", environment);
             delete.Parameters.AddWithValue("@t", tags!);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            transaction.Commit();
             return true;
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+            var conditions = new List<string>(1);
+            AppendReachPredicate(conditions, select, context);
+
+            // Bounded count: COUNT over a subquery capped at cap + 1, so the scan stops one row past the cap; the
+            // (cap+1)th row trips Capped. Same reach predicate as the list (AppendReachPredicate) — cannot drift.
+            var inner = new StringBuilder("SELECT 1 FROM SourceCredentials");
+            if (conditions.Count > 0)
+            {
+                inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+            }
+
+            inner.Append(" LIMIT @cap");
+            select.Parameters.AddWithValue("@cap", cap + 1);
+            select.CommandText = "SELECT COUNT(*) FROM (" + inner + ");";
+            object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+            long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+            return total > cap ? (cap, true) : ((int)total, false);
         }
         finally
         {
@@ -377,6 +407,57 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
         return (null, null);
     }
 
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over SourceCredentialSecurityTags mirroring the
+    // caller's reach (the same rules context.Admits evaluates), keyed on the (SourceName, Environment, Tags) row
+    // discriminator. A null reach (unrestricted) adds nothing. Shared by ListAsync and CountAsync so the count can never
+    // drift from the list it annotates.
+    private static void AppendReachPredicate(List<string> conditions, SqliteCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "SourceCredentialSecurityTags",
+            ["SourceName", "Environment", "Tags"],
+            "TagKey",
+            "TagValue",
+            "SourceCredentials",
+            value =>
+            {
+                string p = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors a binding's MANAGEMENT tags (one row per key/value) into the queryable side table, keyed by the binding's
+    // (SourceName, Environment, Tags) row key, so the reach can be pushed into the list/count query. Reach filters on the
+    // management tags (distinct from the row's combined mgmt+usage Tags discriminator). Tags are immutable → add-only.
+    private static async Task SyncSecurityTagsAsync(SqliteConnection connection, SqliteTransaction transaction, string sourceName, string environment, string discriminator, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            using SqliteCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO SourceCredentialSecurityTags (SourceName, Environment, Tags, TagKey, TagValue) VALUES (@s, @e, @t, @key, @value);";
+            insert.Parameters.AddWithValue("@s", sourceName);
+            insert.Parameters.AddWithValue("@e", environment);
+            insert.Parameters.AddWithValue("@t", discriminator);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS SourceCredentials (
@@ -388,5 +469,14 @@ public sealed class SqliteSourceCredentialStore : ISourceCredentialStore, IAsync
             PRIMARY KEY (SourceName, Environment, Tags)
         );
         CREATE INDEX IF NOT EXISTS IX_SourceCredentials_Source ON SourceCredentials (SourceName);
+        CREATE TABLE IF NOT EXISTS SourceCredentialSecurityTags (
+            SourceName TEXT NOT NULL,
+            Environment TEXT NOT NULL,
+            Tags TEXT NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS IX_SourceCredentialSecurityTags_owner ON SourceCredentialSecurityTags (SourceName, Environment, Tags);
+        CREATE INDEX IF NOT EXISTS IX_SourceCredentialSecurityTags_kv ON SourceCredentialSecurityTags (TagKey, TagValue);
         """;
 }

@@ -368,6 +368,36 @@ public abstract class SourceCredentialStoreConformance
     }
 
     [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach()
+    {
+        ISourceCredentialStore store = await this.NewStoreAsync();
+        using (await store.AddAsync(Tagged("petstore", "production", "acme"), "alice", default))
+        {
+        }
+
+        using (await store.AddAsync(Tagged("billing", "production", "globex"), "alice", default))
+        {
+        }
+
+        using (await store.AddAsync(ApiKey("shared", "production"), "alice", default))
+        {
+        }
+
+        // System reach counts all three; exact below the cap, exact-not-capped at the cap, capped beyond it.
+        (await store.CountAsync(AccessContext.System, 10, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 3, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 2, default)).ShouldBe((2, true));
+
+        // The count honours the read reach identically to the list: a reach restricted to tenant=acme counts only the
+        // acme binding (globex and the untagged row denied).
+        (await store.CountAsync(Scope("acme"), 10, default)).ShouldBe((1, false));
+
+        // An empty store counts zero, never capped.
+        ISourceCredentialStore empty = await this.NewStoreAsync();
+        (await empty.CountAsync(AccessContext.System, 5, default)).ShouldBe((0, false));
+    }
+
+    [TestMethod]
     public async Task Usage_resolves_only_the_binding_a_run_is_entitled_to()
     {
         ISourceCredentialStore store = await this.NewStoreAsync();
