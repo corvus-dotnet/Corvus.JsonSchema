@@ -51,8 +51,16 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
   backends. Availability backends already shared `AppendFilters`/`BuildFilter`/`Matches`, so count just reuses them (no
   extraction). Conformance (cap boundary + filter reach) green 2/2 on InMemory + Sqlite + Postgres/MySql/SqlServer/Mongo/Redis/
   AzureStorage/NatsJetStream/Cosmos.
-- [ ] `runnerAuthorizations` (status) — `IEnvironmentRunnerAuthorizationStore`  ← **NEXT**
-- [ ] then rewire the console Approvals badges (tab + sub-tabs) onto the three `/count` calls, restart composition, live-verify.
+- [x] `runnerAuthorizations` (status/environment; the inbox `/runnerAuthorizations`, not the per-env `/environments/{name}/runners`)
+  — `IEnvironmentRunnerAuthorizationStore`. **DONE — all backends verified, commit pending.** `/runnerAuthorizations/count`
+  (op `countRunnerAuthorizations`, filters status/environment; status defaults to Pending like the inbox) + handler + interface
+  default + native `CountAsync` on all 10 backends (backends already shared AppendFilters/BuildFilter/Matches/AppendConditions).
+  Conformance green 2/2 on every backend (InMemory+Sqlite in-process; the other 8 incl. Cosmos via containers/emulator).
+- [ ] **NEXT: rewire the console Approvals badges** onto the three `/count` calls, restart the composition, live-verify the
+  badges render `N`/`N+`. The three approval queues (accessRequests, availabilityRequests, runnerAuthorizations) all now have
+  `/count` — Slice 1's badge payoff. The badge poll (`samples/arazzo/…/wwwroot/index.html`, ~line 200 `countQueue(...)`) currently
+  fetches `limit:100` and counts `.length`; add `countAccessRequests`/`countAvailabilityRequests`/`countRunnerAuthorizations` to
+  `web/…/src/arazzo-client.js` and switch the poll to them, rendering `${count}${capped?'+':''}`.
 
 > **Cosmos has NO bounded server-side COUNT** (verified on the emulator): a bare `COUNT` ignores the outer LIMIT and scans the
 > whole set, and wrapping COUNT around a cap-limited subquery is rejected — both `'OFFSET LIMIT' clause is not supported in

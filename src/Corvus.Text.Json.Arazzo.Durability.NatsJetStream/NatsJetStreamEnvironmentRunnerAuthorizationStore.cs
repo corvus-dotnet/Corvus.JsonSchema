@@ -282,6 +282,35 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Bounded scan: read + parse each candidate only to apply the same Matches predicate as the list, disposing it
+        // immediately (no PooledDocumentList grows); stop once a (cap+1)th match is seen and report Capped.
+        int count = 0;
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } bytes })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<EnvironmentRunnerAuthorization> document = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(bytes.AsMemory());
+            if (Matches(document.RootElement, query) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);

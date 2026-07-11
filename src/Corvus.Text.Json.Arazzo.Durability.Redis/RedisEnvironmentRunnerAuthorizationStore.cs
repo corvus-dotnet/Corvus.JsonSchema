@@ -285,6 +285,37 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Bounded scan: read + parse each candidate only to apply the same Matches predicate as the list, disposing it
+        // immediately (no PooledDocumentList grows); stop once a (cap+1)th match is seen and report Capped.
+        int count = 0;
+        foreach (RedisValue member in await this.database.SortedSetRangeByValueAsync(IndexKey).ConfigureAwait(false))
+        {
+            if (!TrySplitIndexMember((string)member!, out string memberEnvironment, out string memberRunnerId))
+            {
+                continue;
+            }
+
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RecordKey(memberEnvironment, memberRunnerId)).ConfigureAwait(false);
+            if (lease is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<EnvironmentRunnerAuthorization> document = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(lease.Span);
+            if (Matches(document.RootElement, query) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);

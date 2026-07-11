@@ -3976,6 +3976,53 @@
         }
       }
     },
+    "/runnerAuthorizations/count": {
+      "get": {
+        "operationId": "countRunnerAuthorizations",
+        "security": [
+          { "oauth2": [] },
+          { "openIdConnect": [] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "runnerAuthorizations"
+        ],
+        "summary": "Count runner authorizations (the approver inbox)",
+        "description": "Counts runner authorizations visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRunnerAuthorizations: with environment, that environment's authorizations (administrator required, 403 otherwise); otherwise the inbox across every environment the caller administers; defaults to Pending when status is omitted. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Pending",
+                "Authorized",
+                "Revoked"
+              ]
+            },
+            "description": "Only authorizations in this state (defaults to Pending when omitted)."
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A single environment whose authorizations to count (requires administrator of it); absent counts the inbox across every administered environment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible runner authorizations.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
     "/identity/whoami": {
       "get": {
         "operationId": "getWhoami",

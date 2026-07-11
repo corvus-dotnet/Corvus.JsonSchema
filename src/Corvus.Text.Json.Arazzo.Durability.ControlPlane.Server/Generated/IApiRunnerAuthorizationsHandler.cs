@@ -55,4 +55,13 @@ public interface IApiRunnerAuthorizationsHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<ListRunnerAuthorizationsResult> HandleListRunnerAuthorizationsAsync(ListRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /runnerAuthorizations/count — Count runner authorizations (the approver inbox)
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountRunnerAuthorizationsResult> HandleCountRunnerAuthorizationsAsync(CountRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }
