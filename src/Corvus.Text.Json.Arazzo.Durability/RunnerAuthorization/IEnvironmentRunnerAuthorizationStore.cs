@@ -66,6 +66,23 @@ public interface IEnvironmentRunnerAuthorizationStore
         return EnvironmentRunnerAuthorizationPaging.PageInMemory(filtered, limit, pageToken);
     }
 
+    /// <summary>Counts authorizations matching a filter, bounded by <paramref name="cap"/> (design §5.5 — work badges and
+    /// list footers): the same <paramref name="query"/> reach + filter as the paged list, but returning only a bounded
+    /// total, never rows. The default implementation counts over
+    /// <see cref="ListAsync(RunnerAuthorizationQuery, CancellationToken)"/>; a backend overrides it with a native
+    /// <c>COUNT</c> capped at <paramref name="cap"/> + 1 so the read itself is bounded (allocation-free — a number, no
+    /// row materialisation).</summary>
+    /// <param name="query">The filter (all criteria optional) — the same query the list uses, carrying the reach.</param>
+    /// <param name="cap">The maximum count to report; when the true total exceeds it, <c>Capped</c> is <see langword="true"/> and <c>Count</c> is <paramref name="cap"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count, and whether the cap was hit (so the caller renders e.g. <c>100+</c>).</returns>
+    async ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        using PooledDocumentList<EnvironmentRunnerAuthorization> filtered = await this.ListAsync(query, cancellationToken).ConfigureAwait(false);
+        int total = filtered.Count;
+        return total > cap ? (cap, true) : (total, false);
+    }
+
     /// <summary>Applies a decision to an authorization under optimistic concurrency.</summary>
     /// <param name="environment">The environment.</param>
     /// <param name="runnerId">The runner id.</param>

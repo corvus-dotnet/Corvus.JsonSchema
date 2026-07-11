@@ -84,6 +84,27 @@ public sealed class InMemoryEnvironmentRunnerAuthorizationStore : IEnvironmentRu
     }
 
     /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        lock (this.gate)
+        {
+            // Bounded scan: parse each stored row only to apply the same Matches predicate as the list, disposing it
+            // immediately (no PooledDocumentList grows); stop once a (cap+1)th match is seen and report Capped.
+            int count = 0;
+            foreach (byte[] json in this.authorizations.Values)
+            {
+                using ParsedJsonDocument<EnvironmentRunnerAuthorization> doc = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(json);
+                if (Matches(doc.RootElement, query) && ++count > cap)
+                {
+                    return new ValueTask<(int Count, bool Capped)>((cap, true));
+                }
+            }
+
+            return new ValueTask<(int Count, bool Capped)>((count, false));
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);

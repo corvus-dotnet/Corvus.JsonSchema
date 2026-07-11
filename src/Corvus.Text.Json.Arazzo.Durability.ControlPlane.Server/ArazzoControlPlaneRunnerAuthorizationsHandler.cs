@@ -31,6 +31,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The count operation's bound: badges/footers need "is there work / roughly how much", not exact-beyond-99.
+    private const int CountCap = 100;
+
     private readonly IEnvironmentRunnerAuthorizationStore authorizations;
     private readonly IEnvironmentStore environments;
     private readonly SecuredEnvironmentAdministration administration;
@@ -241,6 +244,43 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         return ListRunnerAuthorizationsResult.Ok(body, workspace);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<CountRunnerAuthorizationsResult> HandleCountRunnerAuthorizationsAsync(CountRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Mirrors the inbox HandleListRunnerAuthorizationsAsync's reach exactly (so the count can't drift from the list it
+        // annotates), minus paging — the store returns only a bounded total (§5.5 badges/footers), never rows. Like the
+        // inbox, an absent status defaults to Pending — "what needs my attention".
+        RunnerAuthorizationStatus status = ParseCountStatus(parameters.Status) ?? RunnerAuthorizationStatus.Pending;
+        string? environment = parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null;
+
+        RunnerAuthorizationQuery query;
+        if (environment is not null)
+        {
+            // A single environment's queue — only a current administrator of it may count it (the list's 403).
+            if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
+            {
+                return CountRunnerAuthorizationsResult.Forbidden(NotAdministratorProblem(environment), workspace);
+            }
+
+            query = new RunnerAuthorizationQuery(status, Environment: environment);
+        }
+        else
+        {
+            // The approver inbox: every authorization across the environments the caller administers. A caller who
+            // administers nothing counts zero — the store never sees an empty administered set.
+            IReadOnlyList<string> administered = await this.administration.ListAdministeredEnvironmentsAsync(this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            if (administered.Count == 0)
+            {
+                return CountResult(0, false, workspace);
+            }
+
+            query = new RunnerAuthorizationQuery(status, AdministeredEnvironments: administered);
+        }
+
+        (int count, bool capped) = await this.authorizations.CountAsync(query, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountResult(count, capped, workspace);
+    }
+
     // The status query param is parsed string-free: the JSON value's bytes are matched against the wire literals rather
     // than realising it and running Enum.TryParse over a managed string.
     private static RunnerAuthorizationStatus? ParseStatus(Models.GetEnvironmentsByNameRunnersStatus status)
@@ -268,6 +308,24 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
             : null;
     }
+
+    // The count operation's own status parameter type (a distinct generated enum, same members as the inbox list's).
+    private static RunnerAuthorizationStatus? ParseCountStatus(Models.GetRunnerAuthorizationsCountStatus status)
+    {
+        if (!status.IsNotUndefined())
+        {
+            return null;
+        }
+
+        return status.ValueEquals("Pending"u8) ? RunnerAuthorizationStatus.Pending
+            : status.ValueEquals("Authorized"u8) ? RunnerAuthorizationStatus.Authorized
+            : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
+            : null;
+    }
+
+    // A bounded count body: the store reports at most CountCap, and Capped tells the console to render e.g. "100+".
+    private static CountRunnerAuthorizationsResult CountResult(int count, bool capped, JsonWorkspace workspace)
+        => CountRunnerAuthorizationsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
 
     private static string? NoteReason(Models.RunnerAuthorizationDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
