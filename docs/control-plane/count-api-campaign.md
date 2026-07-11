@@ -140,12 +140,25 @@ Postgres `0978d5624d`, MySql `b1a55894a9` (owner cols `["Name","TagsHash"]`, CHA
 `["Name","TagsHash"]`, BINARY(32) HASHBYTES, TOP-subquery COUNT) — each verified 2/2 (reach safety net + bounded count) on a real
 container. `ISourceStore.CountAsync` default added. Scan/InMemory (Redis/Mongo/Cosmos/Nats/AzureStorage/InMemory) keep in-memory
 `Admits` + the DEFAULT count — the shared conformance (`Management_reads_are_reach_filtered_and_non_disclosing` +
-`Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach`) runs on every backend. NEXT: confirm the scan backends' shared
-count test (InMemory in-process + a container spot-check), then the same store-side push-down for **credentials**
-(`ISourceCredentialStore`, 3-col PK `(SourceName, Environment, Tags/TagsHash)`) and **workingCopies** (`IWorkspaceWorkflowStore`),
-then the batch `/count` endpoints.
+`Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach`) runs on every backend. Scan backends confirmed: InMemory
+(in-process) + Mongo (container) count test green.
 
-**NEXT (API/UI layer, batch after the store-side families):** `/environments/count`, `/sources/count`, `/credentials/count`,
+**§14.2 METADATA-STORE ROW-SECURITY PUSH-DOWN EPIC — COMPLETE (2026-07-11).** All FOUR metadata store families now push the
+§14.2 read reach into SQL on the relational four (side table + `SqlSecurityRuleEmitter` correlated EXISTS + native bounded
+`COUNT`) and keep in-memory `Admits` + the interface DEFAULT bounded count on the scan five + InMemory; shared reach safety net +
+count test green on every backend, no leaks. Every family also gained a bounded `CountAsync` (interface default + native override).
+Deployment auto-covered (deploy libs call each store's `PrepareAsync`→`SchemaSql`, which now creates the `*SecurityTags` side table).
+- **environments** — side table `EnvironmentSecurityTags`, owner `(Name, Tags)` / `(Name, TagsHash)`. Sqlite `f41c8f37ed`, Postgres
+  `706c74eba4`, MySql `d88a0bbda2`, SqlServer `7aa2357ce2`.
+- **sources** — `SourceSecurityTags`, same 2-col owner. Sqlite `410dfb7484`, Postgres `0978d5624d`, MySql `b1a55894a9`, SqlServer `e289b81701`.
+- **credentials** — `SourceCredentialSecurityTags`, 3-col owner `(SourceName, Environment, Tags/TagsHash)`; the row `Tags` is a COMBINED
+  mgmt+usage discriminator but the side table mirrors the MANAGEMENT tags (what reach filters on). Sqlite `006e976931`, Postgres
+  `1d28310e39`, MySql `3607885343`, SqlServer `3766e7af6a`.
+- **workingCopies** — `WorkspaceWorkflowSecurityTags`, single-col owner `(Id)` (globally-unique id, no discriminator/hash). Sqlite
+  `15c890a503`, Postgres `518e186f9d`, MySql `f1f8f90fc5`, SqlServer `07b5b354cc`.
+Each relational backend verified 2/2 (reach safety net + bounded count) against a real container (Sqlite/InMemory in-process).
+
+**NEXT (API/UI layer, now the store-side (b) epic is done):** `/environments/count`, `/sources/count`, `/credentials/count`,
 `/workspace/workflows/count` OpenAPI ops (I reverted the earlier big-batch — re-add), ONE regen, then `HandleCount*Async` handlers
 (each calls `store.CountAsync(access.Current(), CountCap)`), + console footers. Then repeat the store-side recipe for credentials +
 workingCopies (same shape; check discriminators).
