@@ -76,10 +76,20 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
 Diff must be count-only (a drifting regen = generator version skew — reconcile before committing).
 
 **Slice 2+ — the rest (governance / registry / runs):**
-- [ ] `runs` — `ISecuredWorkflowManagement.ListAsync` → `IWorkflowWaitIndex.QueryAsync` (10 backends + `ProtectedWorkflowStateStore`
-  decorator). Already **pushes reach down** (`query.Security` → `ToSqlPredicate`); the count is a native push-down:
-  add `IWorkflowWaitIndex.CountAsync(WorkflowQuery, cap)` threading `query.Security`, a `SecuredWorkflowManagement.CountAsync(query,
-  ctx, cap)` mirroring ListAsync (translate `context.Reach(Read)` → `EnsureSupported` → delegate), + handler + OpenAPI + conformance.
+- [x] `runs` — **DONE + committed + live-verified.** `IWorkflowWaitIndex.CountAsync(WorkflowQuery, cap)` (default over
+  `QueryAsync(Limit=cap+1)`) + `SecuredWorkflowManagement.CountAsync` mirroring `ListAsync` (`Reach(Read)` → `EnsureSupported` →
+  delegate) + `ProtectedWorkflowStateStore` delegation + `/runs/count` (op `countRuns`, mirrors listRuns's 8 filters, `runs:read`)
+  + `HandleCountRunsAsync` + `Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach` conformance. **Native `CountAsync` on ALL 10
+  backends** (each store's inline `QueryAsync` filter+security-splice extracted into a shared `BuildVisibilityFilter`/`Matches` helper
+  reused by list + count so the reach can't drift): relational `COUNT` over `LIMIT/TOP @cap`; InMemory/Redis/Nats bounded scan; Mongo
+  `CountDocuments(Limit)`/bounded stream; Cosmos client-counted `SELECT c.id … OFFSET 0 LIMIT`; AzureStorage bounded stream. **Also fixed
+  a §18 draft-run visibility leak** discovered here: only Sqlite+InMemory excluded `$draft` from the unfiltered runs list; the other 8
+  backends leaked draft/debug runs — the shared helper now excludes `$draft` everywhere (fixing list AND count). **Plus** a decorator gap
+  fix (`ProtectedWorkflowStateStore` now forwards `ISupportsRowSecurityFilter` via a default capability property, so an encrypting wrapper
+  over a reach-capable store no longer fails `EnsureSupported`). Verified: InMemory 444/444, Sqlite 213/213 in-process; 8 container backends
+  29/29 each (incl. the draft test now green); web-ui 208/208; live on seeded Postgres (`/runs/count`=={runs list}=6, 0 draft leak, footer
+  renders "6 runs" via `/runs/count`). Commits `ac9ef6ea3c` (gap fix), `4a05315a34` (core+API), `28b68d3a77` (native fan-out + draft fix),
+  `dd039c8729` (UI footer).
 - [ ] `catalogVersions` — catalog store (also `ISupportsRowSecurityFilter` — native push-down count like runs).
 - [ ] `runners`, `securityBindings`/`securityRules`, `administrators`, `environmentAdministrators`, `versionAvailability`/
   `environmentAvailability`, `environmentRunnerAuthorizations` (per-env), observed identities — assess reach shape per store.
