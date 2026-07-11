@@ -28,24 +28,29 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
 
 ## Scope (everything, systematically) — worklist
 
+> **Verifying container backends here** (Testcontainers over rootless podman on WSL): the Aspire composition uses DCP, not
+> Testcontainers, so its socket isn't exposed. Start one: `podman system service --time=0 unix:///run/user/1000/podman/podman.sock &`
+> then `export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock TESTCONTAINERS_RYUK_DISABLED=true TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/1000/podman/podman.sock`.
+> Then `dotnet test --project <backend>.Tests.csproj --filter "FullyQualifiedName~Counting"`. All 10 pass this way.
+
 **Slice 1 — approval queues (the immediate badge payoff):**
-- [~] `accessRequests` (scope=queue, status) — `IAccessRequestStore`. **Piece 1 DONE + BUILDS + COMMITTED** (`8c20d97ac5`):
-  `/accessRequests/count` API + handler + interface default `CountAsync` (correct on all 10 backends).
-  **Piece 2 WRITTEN (native overrides), build/verify/commit pending:** every backend now has a native bounded `CountAsync`:
-  - Relational (Postgres/Sqlite/MySql): `SELECT COUNT(*) FROM (SELECT 1 FROM AccessRequests WHERE <conds> LIMIT @cap)` with
-    `@cap = cap+1`. SqlServer (no LIMIT): `SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <conds>)`. Each extracted a
-    per-backend `AppendFilterConditions(conditions, command, in query)` now shared by full-list + paged-list + count (drift-proof;
-    cursor stays inline in the paged list).
-  - Mongo: `CountDocumentsAsync(BuildFilter(query), Limit = cap+1)` (extracted `BuildFilter`, shared by both lists + count).
-  - Redis / NatsJetStream / InMemory: bounded scan applying the same `Matches` predicate, `++count > cap ⇒ (cap,true)`.
-  - AzureStorage: server-side `BuildFilter` over a RowKey-only projection, `maxPerPage: cap+1`, stop at cap+1.
-  - Cosmos: same predicate over `SELECT c.id … ORDER BY c.createdAt, c.id OFFSET 0 LIMIT @lim` (`@lim=cap+1`), count client-side.
-  Mapping everywhere: `total > cap ? (cap, true) : (total, false)`. **NEXT:** full `dotnet build Corvus.Text.Json.slnx` (0 warnings)
-  — composition was stopped to release DLL locks (SIGTERM AppHost) — run existing access-request store tests (verify the
-  ListAsync refactor didn't drift), commit Piece 2, restart composition, live-verify `/accessRequests/count` on Postgres.
-  **Then (Piece 3):** per-backend conformance tests (count==list below cap; capped trips at cap+1; reach-filtered).
-- [ ] `availabilityRequests` (scope=queue, status) — `IAvailabilityRequestStore`
+- [x] `accessRequests` (scope=queue, status) — `IAccessRequestStore`. **DONE — all 3 slices committed + all 10 backends verified.**
+  - 1a `8c20d97ac5`: `/accessRequests/count` API + handler (`HandleCountAccessRequestsAsync`, mirrors the list's reach; `CountCap=100`)
+    + interface `CountAsync(AccessRequestQuery, int cap, ct) -> (int Count, bool Capped)` default.
+  - 1b `7878fa3cc0`: native bounded `CountAsync` on every backend. Relational: COUNT over a `LIMIT @cap`/`TOP (@cap)` subquery
+    (`@cap = cap+1`), each extracting a per-backend `AppendFilterConditions`/`BuildFilter` shared by full-list + paged-list + count
+    (drift-proof; cursor stays list-only). Scan (Redis/Nats/InMemory): bounded `Matches` scan `++count > cap ⇒ (cap,true)`.
+    AzureStorage: `BuildFilter` + RowKey-only projection, `maxPerPage: cap+1`. Cosmos: `SELECT c.id … OFFSET 0 LIMIT @lim`.
+    Uniform map `total > cap ? (cap, true) : (total, false)`.
+  - 1c `8c31e750ae`: two shared conformance tests (cap boundary + filter reach) in `AccessRequestStoreConformance`. Verified
+    green 2/2 on InMemory + Sqlite (in-process) and Postgres/MySql/SqlServer/Mongo/Redis/AzureStorage/NatsJetStream/Cosmos
+    (real containers/emulator). Full `slnx` build was 0-warning (composition stopped to release DLL locks).
+- [ ] `availabilityRequests` (scope=queue, status) — `IAvailabilityRequestStore`  ← **NEXT (the exemplar to port from accessRequests)**
 - [ ] `runnerAuthorizations` (status) — `IEnvironmentRunnerAuthorizationStore`
+- [ ] then rewire the console Approvals badges (tab + sub-tabs) onto the three `/count` calls, restart composition, live-verify.
+
+> **Composition is currently STOPPED** (SIGTERM'd to release DLL locks for the build). Leave it down through the availability +
+> runner verticals + badge rewire, then restart ONCE at Slice 1 completion and live-verify all three badges rendering `N+`.
 
 **Regen command** (from `…ControlPlane.Server/README.md`):
 `dotnet run --project src/Corvus.Json.Cli -f net10.0 -- openapi-server docs/control-plane/arazzo-control-plane.openapi.json --rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Generated`
