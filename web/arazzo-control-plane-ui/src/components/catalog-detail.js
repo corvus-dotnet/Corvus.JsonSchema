@@ -216,6 +216,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .pad { padding: 14px; }
         .security { padding: 0 14px 14px; }
         .security h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+        .sectag-actions { margin-top: 10px; display: flex; gap: 8px; }
       </style>
       <div class="panel" part="panel">
         <header part="header">
@@ -304,8 +305,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
         <dt>Content hash</dt><dd class="mono" part="hash">${escapeHtml(v.hash || '—')}<button class="copy ghost copy-hash" type="button" title="Copy content hash" aria-label="Copy content hash">⧉</button></dd>
         ${this.renderEvidence(v)}
         ${Array.isArray(v.tags) && v.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${v.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
-        ${this.renderSecurityTags(v)}
       </dl>
+      ${this.renderManagementTags(v)}
       ${this.renderOwner(v)}
       ${this.renderGovernance(v)}
       ${this.renderAvailability(v)}
@@ -320,9 +321,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         setTimeout(() => { button.textContent = '⧉'; }, 1200);
       }
     });
-    this.$('.sectag-edit')?.addEventListener('click', () => this.editSecurityTags());
     this.$('.sectag-save')?.addEventListener('click', () => this.saveSecurityTags(v));
-    this.$('.sectag-cancel')?.addEventListener('click', () => this.cancelSecurityTags());
     // Seed the tag editor once it is in the DOM (its .tags setter re-renders the rows).
     const sectagEditor = this.$('#sectag-editor');
     if (sectagEditor) sectagEditor.tags = Array.isArray(v.securityTags) ? v.securityTags : [];
@@ -632,53 +631,42 @@ class ArazzoCatalogDetail extends ArazzoElement {
   }
 
   /**
-   * The version's security tags (§14.2 reach labels) as a `<dt>/<dd>` block: chips in display mode (with an Edit
-   * affordance when the caller has `catalog:write`), or a full add/edit/delete tag editor with Save/Cancel in edit mode
-   * (the editor is seeded in renderBody once it is in the DOM). The server preserves the deployment-internal tags and
-   * strips them from the response, so only the user labels appear.
+   * The version's management tags (§14.2 reach labels) as a prominent `.block` section, matching the Sources /
+   * Environments panels. With `catalog:write` it is an always-visible add/edit/delete tag editor plus a Save button
+   * (no Edit… toggle); otherwise it is a read-only chip list. The editor is seeded in renderBody once it is in the DOM.
+   * The server preserves the deployment-internal tags and strips them from the response, so only the user labels appear.
    */
-  renderSecurityTags(v) {
+  renderManagementTags(v) {
     const tags = Array.isArray(v.securityTags) ? v.securityTags : [];
-    if (this._editingSecurityTags) {
-      return `<dt>Security tags</dt><dd part="security-tags">
+    if (this.hasScope('catalog:write')) {
+      return `<div class="block" part="security-tags"><h4>Management tags</h4>
         <arazzo-tag-editor id="sectag-editor"></arazzo-tag-editor>
-        <div class="sectag-edit-actions">
-          <button class="sectag-save primary" type="button">Save</button>
-          <button class="sectag-cancel ghost" type="button">Cancel</button>
-        </div>
-        <div class="hint">Reach labels rules match on (§14.2). Add, edit, or remove rows. The reserved <code>sys:</code> prefix is deployment-owned.</div>
-      </dd>`;
+        <div class="hint">Who may manage and see this version (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
+        <div class="sectag-actions"><button class="sectag-save primary" type="button">Save</button></div>
+      </div>`;
     }
 
-    const chips = tags.length
+    const body = tags.length
       ? `<div class="tags">${tags.map((t) => `<span class="tag">${escapeHtml(t.key)}=${escapeHtml(t.value)}</span>`).join('')}</div>`
-      : '<span class="muted">none</span>';
-    const edit = this.hasScope('catalog:write') ? '<button class="sectag-edit ghost" type="button">Edit…</button>' : '';
-    return `<dt>Security tags</dt><dd part="security-tags"><div class="sectag-row">${chips}${edit}</div></dd>`;
-  }
-
-  editSecurityTags() {
-    this._editingSecurityTags = true;
-    this.renderBody();
-  }
-
-  cancelSecurityTags() {
-    this._editingSecurityTags = false;
-    this.renderBody();
+      : '<span class="muted">None — visible to everyone within reach.</span>';
+    return `<div class="block" part="security-tags"><h4>Management tags</h4>${body}</div>`;
   }
 
   async saveSecurityTags(v) {
     const editor = this.$('#sectag-editor');
     const securityTags = editor ? editor.tags : [];
+    const saveBtn = this.$('.sectag-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
     try {
       const updated = await this.client.updateCatalogVersion(v.baseWorkflowId, v.versionNumber, { securityTags });
+      // Re-render from the server's authoritative entity so the saved (normalised) tags show; if the response omits
+      // them, fall back to the just-saved value so the editor still reflects the save.
       this._version = updated;
-      this._editingSecurityTags = false;
+      if (!Array.isArray(updated.securityTags)) this._version.securityTags = securityTags;
       this.renderBody();
       this.emit('version-changed', { version: updated });
     } catch (err) {
       this._error = err.problem || { title: err.message, status: err.status };
-      this._editingSecurityTags = false;
       this.renderBody();
       this.emit('error', { problem: this._error, error: err });
     }
