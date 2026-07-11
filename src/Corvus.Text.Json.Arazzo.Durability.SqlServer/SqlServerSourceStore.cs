@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -70,7 +71,9 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
         byte[] json = SourceSerialization.SerializeNew(draft, actor, this.timeProvider.GetUtcNow(), etag);
         string tags = SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand insert = connection.CreateCommand();
+        insert.Transaction = transaction;
         insert.CommandText = "INSERT INTO Sources (Name, TagsHash, Tags, Etag, Document) VALUES (@n, HASHBYTES('SHA2_256', @t), @t, @etag, @doc);";
         insert.Parameters.AddWithValue("@n", draft.NameValue);
         insert.Parameters.AddWithValue("@t", tags);
@@ -84,6 +87,11 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
         {
             throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
         }
+
+        // Mirror the management tags into the queryable side table (keyed by the same in-SQL HASHBYTES discriminator) so
+        // the §14.2 read reach can be pushed into the list/count query. Atomic; tags are immutable so no update re-sync.
+        await SyncSecurityTagsAsync(connection, transaction, draft.NameValue, tags, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);
     }
@@ -116,61 +124,44 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
         bool hasMore = false;
         try
         {
-            // Keyset seek past the cursor in (Name, TagsHash) order — an indexed PK range scan. Tags is nvarchar(max) and
-            // cannot be ordered, so the orderable PK component TagsHash (binary(32)) is the tie-breaker; the token carries
-            // it as a hex string. Reach is a per-row predicate applied in memory until the page fills.
+            // Keyset seek past the cursor in (Name, TagsHash) order — an indexed PK range scan (Tags is nvarchar(max) and
+            // cannot be ordered, so TagsHash binary(32) is the orderable tie-breaker, carried in the token as hex) — with
+            // the §14.2 read reach pushed into the query as a correlated EXISTS over SourceSecurityTags (the same
+            // predicate context.Admits evaluates, but applied in the database), so out-of-reach rows never leave it.
             await using SqlCommand select = connection.CreateCommand();
+            var conditions = new List<string>(2);
             if (hasCursor)
             {
-                select.CommandText =
-                    "SELECT Name, TagsHash, Document FROM Sources " +
-                    "WHERE Name > @n OR (Name = @n AND TagsHash > @t) " +
-                    "ORDER BY Name, TagsHash;";
+                conditions.Add("(Name > @n OR (Name = @n AND TagsHash > @t))");
                 select.Parameters.AddWithValue("@n", cursor.Name);
                 select.Parameters.AddWithValue("@t", Convert.FromHexString(cursor.TieBreaker));
             }
-            else
+
+            AppendReachPredicate(conditions, select, context);
+
+            var sql = new StringBuilder("SELECT TOP (@limit) Name, TagsHash, Document FROM Sources");
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+            if (conditions.Count > 0)
             {
-                select.CommandText = "SELECT Name, TagsHash, Document FROM Sources ORDER BY Name, TagsHash;";
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
             }
+
+            sql.Append(" ORDER BY Name, TagsHash;");
+            select.CommandText = sql.ToString();
 
             await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             string lastName = string.Empty, lastTie = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string name = reader.GetString(0);
-                string tie = Convert.ToHexString(reader.GetFieldValue<byte[]>(1));
-                byte[] json = reader.GetFieldValue<byte[]>(2);
-                ParsedJsonDocument<RegisteredSource> cand = PersistedJson.ToPooledDocument<RegisteredSource>(json);
-                bool kept = false;
-                try
+                if (docs.Count == pageSize)
                 {
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastName = name;
-                    lastTie = tie;
+                    hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                    break;
                 }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
-                }
+
+                lastName = reader.GetString(0);
+                lastTie = Convert.ToHexString(reader.GetFieldValue<byte[]>(1));
+                docs.Add(PersistedJson.ToPooledDocument<RegisteredSource>(reader.GetFieldValue<byte[]>(2)));
             }
 
             return hasMore
@@ -225,18 +216,95 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
             SourceSerialization.EnsureEtag(name, expectedEtag, SourceSerialization.EtagOf(existing));
         }
 
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM Sources WHERE Name = @n AND TagsHash = HASHBYTES('SHA2_256', @t);";
+        delete.Transaction = transaction;
+        delete.CommandText =
+            "DELETE FROM Sources WHERE Name = @n AND TagsHash = HASHBYTES('SHA2_256', @t); " +
+            "DELETE FROM SourceSecurityTags WHERE Name = @n AND TagsHash = HASHBYTES('SHA2_256', @t);";
         delete.Parameters.AddWithValue("@n", name);
         delete.Parameters.AddWithValue("@t", tags!);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(1);
+        AppendReachPredicate(conditions, select, context);
+
+        // Bounded count: COUNT over a TOP (@cap) subquery, so the scan stops one row past the cap; the (cap+1)th row
+        // trips Capped. Same reach predicate as the list (AppendReachPredicate) — cannot drift. (SQL Server has no LIMIT.)
+        var inner = new StringBuilder("SELECT TOP (@cap) 1 AS x FROM Sources");
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        int total = result is int i ? i : Convert.ToInt32(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : (total, false);
     }
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over SourceSecurityTags mirroring the caller's reach
+    // (the same rules context.Admits evaluates), keyed on the (Name, TagsHash) row discriminator. A null reach
+    // (unrestricted) adds nothing. Shared by ListAsync and CountAsync so the count can never drift from the list.
+    private static void AppendReachPredicate(List<string> conditions, SqlCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "SourceSecurityTags",
+            ["Name", "TagsHash"],
+            "TagKey",
+            "TagValue",
+            "Sources",
+            value =>
+            {
+                string p = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors a source's management tags into the queryable side table (keyed by the same in-SQL HASHBYTES discriminator)
+    // so the reach can be pushed into the list/count query. Tags are immutable, so this runs only on add.
+    private static async Task SyncSecurityTagsAsync(SqlConnection connection, SqlTransaction transaction, string name, string canonicalTags, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using SqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO SourceSecurityTags (Name, TagsHash, TagKey, TagValue) VALUES (@n, HASHBYTES('SHA2_256', @t), @key, @value);";
+            insert.Parameters.AddWithValue("@n", name);
+            insert.Parameters.AddWithValue("@t", canonicalTags);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     // Finds the single source named `name` the caller's reach for the verb admits, returning its bytes and its tag
     // discriminator (the raw Tags value, re-hashed in-SQL for row addressing). A source outside reach is invisible.
@@ -288,6 +356,17 @@ public sealed class SqlServerSourceStore : ISourceStore, IAsyncDisposable
                 CONSTRAINT PK_Sources PRIMARY KEY (Name, TagsHash)
             );
             CREATE INDEX IX_Sources_Name ON Sources (Name);
+        END;
+        IF OBJECT_ID(N'SourceSecurityTags', N'U') IS NULL
+        BEGIN
+            CREATE TABLE SourceSecurityTags (
+                Name NVARCHAR(450) NOT NULL,
+                TagsHash BINARY(32) NOT NULL,
+                TagKey NVARCHAR(200) NOT NULL,
+                TagValue NVARCHAR(200) NOT NULL
+            );
+            CREATE INDEX IX_SourceSecurityTags_owner ON SourceSecurityTags (Name, TagsHash);
+            CREATE INDEX IX_SourceSecurityTags_kv ON SourceSecurityTags (TagKey, TagValue);
         END;
         """;
 }
