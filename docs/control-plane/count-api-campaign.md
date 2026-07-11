@@ -158,10 +158,20 @@ Deployment auto-covered (deploy libs call each store's `PrepareAsync`→`SchemaS
   `15c890a503`, Postgres `518e186f9d`, MySql `f1f8f90fc5`, SqlServer `07b5b354cc`.
 Each relational backend verified 2/2 (reach safety net + bounded count) against a real container (Sqlite/InMemory in-process).
 
-**NEXT (API/UI layer, now the store-side (b) epic is done):** `/environments/count`, `/sources/count`, `/credentials/count`,
-`/workspace/workflows/count` OpenAPI ops (I reverted the earlier big-batch — re-add), ONE regen, then `HandleCount*Async` handlers
-(each calls `store.CountAsync(access.Current(), CountCap)`), + console footers. Then repeat the store-side recipe for credentials +
-workingCopies (same shape; check discriminators).
+**METADATA COUNT-API LAYER DONE + built end-to-end (2026-07-11, `43d393c777`).** Four parameterless, reach-scoped `/count`
+endpoints added to the OpenAPI spec (`/environments/count`, `/sources/count`, `/credentials/count`, `/workspace/workflows/count`;
+each mirrors its family's list read scope; shared `CountResult` schema). ONE `openapi-server` regen (count-only: 4 `Count*Params`/
+`Result` model pairs + 4 handler interfaces + endpoint registration; the manifest `generatorVersion` is `1.0.0+<git-sha>` provenance,
+NOT a generator bump — no model drift) + ONE `openapi-client` Cli regen (also picked up the 3 Slice-1 approval `/count` ops the Cli had
+never regenerated). Wired the 4 `HandleCount*Async` handlers (each `store.CountAsync(this.access.Current(), CountCap=100)` — the exact
+§14.2 reach as the family's list) + 4 `arazzo-client.js` count methods (`countEnvironments/countSources/countCredentials/
+countWorkingCopies`). **Server + Cli + Demo all build 0/0.** Regen commands live in each project's README (Server=`openapi-server`,
+Cli=`openapi-client`); Demo/Generated is empty (Demo references the Server project). **NEXT (UI footers + live-verify):** the demo
+console (`index.html`) does NOT list these metadata families (only Approvals badges + runs/access/catalog), so no footer there; the
+richer web UI panels DO (`environments-panel`, `credentials-table`, `workspace-table`, a sources table) — wire a total-count footer via
+the new `countX()` methods (they currently emit only a per-page `loaded` count, not a total), then restart the composition + Playwright-
+verify (mirrors the Slice-1 badge verification). Then runs/catalog native counts (already reach-pushed-down — thread `CountAsync`
+through `IWorkflowWaitIndex`/catalog).
 
 **(prior fan-out notes)** MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
 `SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). **MySql wrinkle:** its `Environments` table discriminates rows
