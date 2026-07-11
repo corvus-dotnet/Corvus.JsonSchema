@@ -830,6 +830,33 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `updateSource` — replace a registered source's mutable content (§7.6): its OpenAPI/AsyncAPI `document`, and — for
+   * an administrator re-tag — the management-tags reach scope (§14.2; a present `managementTags` replaces the caller's
+   * non-internal labels, the reserved `sys:` prefix is rejected 400), plus `displayName`/`description`. The `name` and
+   * `type` are immutable. The caller must be within the source's management reach (`403` otherwise).
+   * @param {string} name
+   * @param {{ document?: object, displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}> }} patch
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link Source}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   */
+  updateSource(name, patch, opts = {}) {
+    if (!name) throw new TypeError('updateSource requires a name.');
+    return this._request('PUT', `/sources/${encodeURIComponent(name)}`, { body: patch ?? {}, signal: opts.signal });
+  }
+
+  /**
+   * `deleteSource` — remove a registered source by name (§7.6). The caller must be within its management reach
+   * (`403` otherwise).
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `403`/`404`.
+   */
+  async deleteSource(name, opts = {}) {
+    if (!name) throw new TypeError('deleteSource requires a name.');
+    await this._request('DELETE', `/sources/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  /**
    * `listWorkingCopies` — one page of designer working copies (workflow-designer design §4.1; the list omits each
    * working copy's `document` and `designerState`, returned only on a single read). Ordered by id. Page with `limit`
    * and the opaque `pageToken`.

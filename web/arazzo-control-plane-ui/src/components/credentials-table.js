@@ -150,14 +150,16 @@ class ArazzoCredentialsTable extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         ${GRANTEE_CHIP_CSS}
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         .toolbar .grow { flex: 1; }
         .toolbar label { font-size: 12px; color: var(--_muted); }
         select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         input.src { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); width: 140px; }
         table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr.selectable { cursor: pointer; }
@@ -171,6 +173,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         ${PAGER_CSS}
+        .pager { flex: none; }
       </style>
       <div class="wrap" part="table">
         <div class="toolbar" part="toolbar">
@@ -186,12 +189,14 @@ class ArazzoCredentialsTable extends ArazzoElement {
           <span class="grow"></span>
           <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
-        <table>
-          <thead>
-            <tr><th>Source</th><th>Environment</th><th>Auth</th><th>Status</th><th>Expires</th><th>Grants</th></tr>
-          </thead>
-          <tbody part="rows"></tbody>
-        </table>
+        <div class="tablescroll">
+          <table>
+            <thead>
+              <tr><th>Source</th><th>Environment</th><th>Auth</th><th>Status</th><th>Expires</th><th>Grants</th></tr>
+            </thead>
+            <tbody part="rows"></tbody>
+          </table>
+        </div>
         <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;

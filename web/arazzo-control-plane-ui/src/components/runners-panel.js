@@ -153,14 +153,14 @@ class ArazzoRunners extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        :host { display: block; }
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+        .head { flex: none; padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
         .head .title { font-weight: 700; }
         .head .grow { flex: 1; }
         .head .count { color: var(--_muted); font-size: 12px; }
-        .err { margin: 10px 12px; }
-        .list { display: grid; }
+        .err { flex: none; margin: 10px 12px; }
+        .list { display: grid; flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         .runner { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
         .runner:last-child { border-bottom: none; }
         .rhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
@@ -183,6 +183,7 @@ class ArazzoRunners extends ArazzoElement {
         .hv .lstate { font-size: 11px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); }
         .hv .lstate.loading { color: #b45309; border-color: currentColor; }
         ${PAGER_CSS}
+        .pager { flex: none; }
         .skl { height: 16px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 11px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
       </style>

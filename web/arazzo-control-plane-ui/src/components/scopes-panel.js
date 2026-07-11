@@ -246,18 +246,20 @@ class ArazzoScopesPanel extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         ${PAGER_CSS}
-        :host { display: block; }
-        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+        .layout > * { min-height: 0; }
         @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
         .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
         .toolbar .grow { flex: 1; }
         .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 160px; }
-        .err { margin: 10px 12px; }
+        .err { flex: none; margin: 10px 12px; }
         .err:empty { display: none; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr.selectable { cursor: pointer; }
@@ -268,8 +270,11 @@ class ArazzoScopesPanel extends ArazzoElement {
         .sdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
+        .pager { flex: none; }
 
         /* detail pane */
+        .detail-pane { min-height: 0; overflow: auto; }
+        .detail-pane:empty { display: none; }
         .detail { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
         .dhead { padding: 12px 14px; border-bottom: 1px solid var(--_border); background: var(--_surface); font-weight: 700; display: flex; align-items: center; gap: 8px; }
         .dhead .grow { flex: 1; }
@@ -298,10 +303,12 @@ class ArazzoScopesPanel extends ArazzoElement {
             <button class="new primary" type="button" hidden>New rule</button>
           </div>
           <div class="err"></div>
-          <table>
-            <thead><tr><th>Rule</th><th>Expression</th></tr></thead>
-            <tbody class="list" part="rows"></tbody>
-          </table>
+          <div class="tablescroll">
+            <table>
+              <thead><tr><th>Rule</th><th>Expression</th></tr></thead>
+              <tbody class="list" part="rows"></tbody>
+            </table>
+          </div>
           <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
         <div class="detail-pane"></div>
