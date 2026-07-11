@@ -230,6 +230,8 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
         :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
         [part="panel"] { flex: 1; min-height: 0; display: flex; flex-direction: column; }
         .tabs { flex: none; display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--_border); }
+        /* When a host locks the view (e.g. the console's Approvals/Requests tabs pick mine|queue), hide the internal toggle. */
+        :host([hide-view-tabs]) .tabs { display: none; }
         .tabs button { font: inherit; font-size: 14px; border: none; background: none; color: var(--_muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 0; }
         .tabs button[aria-selected="true"] { color: var(--_text); border-bottom-color: var(--_accent); font-weight: 600; }
         .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
