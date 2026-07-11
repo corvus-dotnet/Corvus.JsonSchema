@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>Azure Cosmos DB deployment provisioning for an Arazzo durability control plane: creates every control-plane store's schema and runs the deployment-agnostic security bootstrap in one call, driven by a JSON-Schema-generated DeploymentBootstrapOptions. Coupled to Azure Cosmos DB but identity-provider agnostic — the IdP (Keycloak, Entra ID, Auth0, …) is wired separately by the host. A configurable deployment (e.g. ZeroFailed) binds the options from config and calls ProvisionAsync.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.Cosmos\Corvus.Text.Json.Arazzo.Durability.Cosmos.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
