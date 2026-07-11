@@ -115,6 +115,29 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * Bounded count of runs matching the visibility query, scoped to the caller's read reach. Same filters as
+   * `listRuns` (limit / pageToken are irrelevant to a count); returns `{ count, capped }` where `capped` means the
+   * true total meets or exceeds the server's cap, so the UI renders `count+`.
+   * @param {object} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countRuns(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.workflowId) search.set('workflowId', query.workflowId);
+    if (query.createdAfter) search.set('createdAfter', toInstant(query.createdAfter));
+    if (query.createdBefore) search.set('createdBefore', toInstant(query.createdBefore));
+    if (query.updatedAfter) search.set('updatedAfter', toInstant(query.updatedAfter));
+    if (query.updatedBefore) search.set('updatedBefore', toInstant(query.updatedBefore));
+    for (const tag of query.tags ?? []) {
+      if (tag) search.append('tag', tag);
+    }
+    if (query.correlationId) search.set('correlationId', query.correlationId);
+    const result = await this._request('GET', `/runs/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listRuns`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ status?: string, workflowId?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ runs: object[], nextPageToken: (string|null) }>}
