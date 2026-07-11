@@ -72,10 +72,10 @@ public readonly partial struct VersionNumber
     public static implicit operator int(VersionNumber value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator long(VersionNumber value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+    public static implicit operator long(VersionNumber value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static explicit operator double(VersionNumber value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+    public static implicit operator double(VersionNumber value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator Corvus.Numerics.BigNumber(VersionNumber value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
