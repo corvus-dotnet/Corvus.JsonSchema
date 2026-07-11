@@ -192,23 +192,25 @@
     CLIENT_PANELS.forEach((tag) => document.querySelectorAll(tag).forEach((el) => { el.client = sharedClient; }));
     const allPanels = [...FETCH_PANELS, ...CLIENT_PANELS].flatMap((tag) => [...document.querySelectorAll(tag)]);
 
-    // Approvals badges: poll the three approver queues for outstanding (Pending) work and badge the Approvals tab + its
-    // sub-tabs, so the user sees at a glance whether there is anything to action. Auto-refreshes; a 403 (the user
-    // administers nothing) just yields 0 and hides the badge. Counts are the visible Pending items (first page, ≤100).
+    // Approvals badges: poll the three approver queues' bounded /count endpoints for outstanding (Pending) work and badge
+    // the Approvals tab + its sub-tabs, so the user sees at a glance whether there is anything to action. Auto-refreshes;
+    // a 403 (the user administers nothing) just yields 0 and hides the badge. The count is bounded by the server's cap —
+    // when it is hit the response's `capped` flag renders "N+" (rather than fetching rows just to count them).
     const badges = {};
     document.querySelectorAll('.tab-badge[data-badge]').forEach((b) => { badges[b.dataset.badge] = b; });
-    const setBadge = (b, n) => { if (b) { b.textContent = String(n); b.hidden = !(n > 0); } };
-    const countQueue = async (call, key) => { try { const r = await call(); return (r[key] || []).length; } catch { return 0; } };
+    const setBadge = (b, count, capped) => { if (b) { b.textContent = capped ? `${count}+` : String(count); b.hidden = !(count > 0); } };
+    const countQueue = async (call) => { try { return await call(); } catch { return { count: 0, capped: false }; } };
     const refreshApprovalBadges = async () => {
       const [access, avail, runners] = await Promise.all([
-        countQueue(() => sharedClient.listAccessRequests({ scope: 'queue', status: 'Pending', limit: 100 }), 'accessRequests'),
-        countQueue(() => sharedClient.listAvailabilityRequests({ scope: 'queue', status: 'Pending', limit: 100 }), 'availabilityRequests'),
-        countQueue(() => sharedClient.listRunnerAuthorizations({ status: 'Pending', limit: 100 }), 'authorizations'),
+        countQueue(() => sharedClient.countAccessRequests({ scope: 'queue', status: 'Pending' })),
+        countQueue(() => sharedClient.countAvailabilityRequests({ scope: 'queue', status: 'Pending' })),
+        countQueue(() => sharedClient.countRunnerAuthorizations({ status: 'Pending' })),
       ]);
-      setBadge(badges['approvals-access'], access);
-      setBadge(badges['approvals-availability'], avail);
-      setBadge(badges['approvals-runners'], runners);
-      setBadge(badges['approvals'], access + avail + runners);
+      setBadge(badges['approvals-access'], access.count, access.capped);
+      setBadge(badges['approvals-availability'], avail.count, avail.capped);
+      setBadge(badges['approvals-runners'], runners.count, runners.capped);
+      // The tab total sums the three; it is "N+" if the sum overflows or any queue was itself capped.
+      setBadge(badges['approvals'], access.count + avail.count + runners.count, access.capped || avail.capped || runners.capped);
     };
     refreshApprovalBadges();
     setInterval(refreshApprovalBadges, 15000);
