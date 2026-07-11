@@ -4,8 +4,10 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability.Sources;
 
 using CpEnvironment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
@@ -18,12 +20,22 @@ namespace Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 /// </summary>
 /// <param name="Catalog">The secured workflow catalog the demo's catalogued versions are added to.</param>
 /// <param name="SourceCredentials">The §13 source-credential store the demo's credential references are added to.</param>
-/// <param name="EnvironmentStore">The governed environment store the demo's developer sandbox is added to.</param>
+/// <param name="EnvironmentStore">The governed environment store the demo's environments are added to.</param>
+/// <param name="EnvironmentAdministrators">The per-environment administrator store (§7.7) the demo grants admin on.</param>
+/// <param name="Sources">The source registry (§7.8) the demo's referenced source specs are registered in.</param>
+/// <param name="Availability">The availability store (§7.6) the demo marks catalogued versions "Available in".</param>
+/// <param name="AccessRequests">The access-request store (§16.5) the demo seeds a pending request into.</param>
+/// <param name="AvailabilityRequests">The availability (promotion) request store (§7.6) the demo seeds a pending request into.</param>
 /// <param name="SpecsDir">The directory holding the demo's Arazzo + OpenAPI specification packages.</param>
 public sealed record ExampleSeedContext(
     SecuredWorkflowCatalog Catalog,
     ISourceCredentialStore SourceCredentials,
     IEnvironmentStore EnvironmentStore,
+    IEnvironmentAdministratorStore EnvironmentAdministrators,
+    ISourceStore Sources,
+    IAvailabilityStore Availability,
+    IAccessRequestStore AccessRequests,
+    IAvailabilityRequestStore AvailabilityRequests,
     string SpecsDir);
 
 /// <summary>
@@ -38,8 +50,9 @@ public interface IExampleSeed
 {
     /// <summary>
     /// Seeds the demo's example content into the connected stores: catalogued workflow versions, source-credential
-    /// references (references only — never secret material), and the developer sandbox environment the debug-run
-    /// readiness gate needs.
+    /// references (references only — never secret material), the governed environments (development / staging /
+    /// production) with the arazzo-admins group as their administrator, the registered source specs, an availability
+    /// entry, and a pending access + promotion request — so every governance surface has content out of the box.
     /// </summary>
     /// <param name="context">The connected stores + specification directory to seed into.</param>
     /// <param name="cancellationToken">Cancels the seed.</param>
@@ -98,13 +111,68 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             }
         }
 
-        // §18: seed a development-class environment that ALLOWS working-copy drafts to run as debug runs (default off
-        // everywhere else — crossing that line is an explicit per-environment decision by its administrators). Its two
-        // sources are credentialed above, so the run dialog's readiness gate passes and a debug run executes against the
-        // real external source services. The environment store is the governed, reach-scoped one the debug-run seam reads.
-        using ParsedJsonDocument<CpEnvironment> developmentEnvironment = ParsedJsonDocument<CpEnvironment>.Parse(
-            """{"name":"development","displayName":"Development","description":"Developer sandbox — working-copy drafts may run here as debug runs (§18).","allowsDraftRuns":true}"""u8.ToArray());
-        (await context.EnvironmentStore.AddAsync(developmentEnvironment.RootElement, "demo", cancellationToken)).Dispose();
+        // Governed environments (§7.7): the developer sandbox (working-copy drafts may run here as §18 debug runs — a
+        // deliberate per-environment decision, off everywhere else) plus the two promoted environments a real
+        // deployment ships with. development's two sources are credentialed above, so the run dialog's readiness gate
+        // passes and a debug run executes against the real external source services.
+        foreach ((string name, string displayName, string description, bool allowsDraftRuns) in new[]
+        {
+            ("development", "Development", "Developer sandbox — working-copy drafts may run here as debug runs (§18).", true),
+            ("staging", "Staging", "Pre-production verification environment.", false),
+            ("production", "Production", "Live production environment.", false),
+        })
+        {
+            using ParsedJsonDocument<CpEnvironment> environment = ParsedJsonDocument<CpEnvironment>.Parse(
+                System.Text.Encoding.UTF8.GetBytes(
+                    $$"""{"name":"{{name}}","displayName":"{{displayName}}","description":"{{description}}","allowsDraftRuns":{{(allowsDraftRuns ? "true" : "false")}}}"""));
+            (await context.EnvironmentStore.AddAsync(environment.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
+        // Environment administrators (§7.7): the arazzo-admins group administers every environment — the key unblock so
+        // an administrator can manage grants, promotions, and availability per environment (without this, no interactive
+        // administrator exists for the governance surfaces). The identity is the resolved sys:group=arazzo-admins tag.
+        SecurityTagSet adminGroup = SecurityTagSet.FromTags(
+            [new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins")]);
+        var administration = new SecuredEnvironmentAdministration(context.EnvironmentAdministrators, "demo");
+        foreach (string environmentName in new[] { "development", "staging", "production" })
+        {
+            await administration.EstablishAsync(environmentName, adminGroup, default, false, default, false, cancellationToken);
+        }
+
+        // Source registry (§7.8): register the four referenced sources from their real specs, so the sources panel and
+        // the workflow authoring surface resolve them. onboarding/ledger/kyc are OpenAPI; notifications is the AsyncAPI
+        // (NATS) channel. Management tags are empty (a real deployment would tag by reach).
+        foreach ((string name, string file, string type, string displayName, string description) in new[]
+        {
+            ("onboarding", "onboarding.openapi.json", "openapi", "Onboarding API", "Customer onboarding service."),
+            ("ledger", "ledger.openapi.json", "openapi", "Ledger API", "Reconciliation and ledger service."),
+            ("kyc", "kyc.openapi.json", "openapi", "KYC API", "Identity-verification service."),
+            ("notifications", "notifications.asyncapi.json", "asyncapi", "Notifications", "KYC review request/verdict channel (NATS)."),
+        })
+        {
+            ReadOnlyMemory<byte> documentUtf8 = File.ReadAllBytes(Path.Combine(context.SpecsDir, file));
+            using ParsedJsonDocument<RegisteredSource> source = RegisteredSource.Draft(
+                name, type, documentUtf8, displayName, description, SecurityTagSet.Empty);
+            (await context.Sources.AddAsync(source.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
+        // Availability (§7.6): the first catalogued onboarding version is "Available in" production, so the runs surface
+        // can start it there and the availability panel is not empty out of the box.
+        (await context.Availability.MakeAvailableAsync("onboard-customer", 1, "production", "demo", cancellationToken)).Entry.Dispose();
+
+        // Inbox content for the admin governance surfaces: a pending access request (§16.5, a user asking for run scopes)
+        // and a pending promotion request (§7.6, asking to make a catalogued version available in production).
+        using (ParsedJsonDocument<AccessRequest> access = AccessRequest.Draft(
+            "onboard-customer", ["runs:write", "runs:read"], "sub", "alice", "Alice (Payments)", "On-call incident response.", 3600))
+        {
+            (await context.AccessRequests.CreateAsync(access.RootElement, "alice", cancellationToken)).Dispose();
+        }
+
+        using (ParsedJsonDocument<AvailabilityRequest> promotion = AvailabilityRequest.Draft(
+            "onboard-customer", 2, "production", "Please promote v2 to production."))
+        {
+            (await context.AvailabilityRequests.CreateAsync(promotion.RootElement, "alice", cancellationToken)).Dispose();
+        }
     }
 
     /// <inheritdoc/>
