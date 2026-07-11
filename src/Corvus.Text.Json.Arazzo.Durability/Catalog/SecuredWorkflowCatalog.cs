@@ -148,6 +148,18 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Same read-reach scoping and pushdown guard as SearchAsync — the count reuses the store's search predicate, so
+        // it counts exactly the catalog entries the caller could see (§14.2), never more.
+        SecurityFilter? reach = context.Reach(AccessVerb.Read);
+        RowSecurityPushdown.EnsureSupported(reach, this.catalog);
+        return this.catalog.CountAsync(query with { Security = reach }, cap, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
