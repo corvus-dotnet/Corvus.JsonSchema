@@ -274,6 +274,28 @@ public abstract class WorkspaceWorkflowStoreConformance
     }
 
     [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach()
+    {
+        IWorkspaceWorkflowStore store = await this.NewStoreAsync();
+        await this.SeedAsync(store, "acme wc", "alice", Tenant("acme"));
+        await this.SeedAsync(store, "globex wc", "alice", Tenant("globex"));
+        await this.SeedAsync(store, "shared wc");
+
+        // System reach counts all three; exact below the cap, exact-not-capped at the cap, capped beyond it.
+        (await store.CountAsync(AccessContext.System, 10, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 3, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 2, default)).ShouldBe((2, true));
+
+        // The count honours the read reach identically to the list: a reach restricted to tenant=acme counts only the
+        // acme working copy (globex and the untagged row denied).
+        (await store.CountAsync(Scope("acme"), 10, default)).ShouldBe((1, false));
+
+        // An empty store counts zero, never capped.
+        IWorkspaceWorkflowStore empty = await this.NewStoreAsync();
+        (await empty.CountAsync(AccessContext.System, 5, default)).ShouldBe((0, false));
+    }
+
+    [TestMethod]
     public async Task Attached_sources_replace_when_a_draft_supplies_them_and_carry_forward_when_omitted()
     {
         IWorkspaceWorkflowStore store = await this.NewStoreAsync();
