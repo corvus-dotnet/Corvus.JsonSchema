@@ -492,6 +492,23 @@ public sealed class ApiWorkspaceClient : IApiWorkspaceClient
         return SendAsyncCore<ListWorkingCopySourceOperationsRequest, ListWorkingCopySourceOperationsResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Count designer working copies
+    /// </summary>
+    /// <remarks>
+    /// Counts the designer working copies the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountWorkspaceWorkflowsResponse> CountWorkspaceWorkflowsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountWorkspaceWorkflowsRequest request = new();
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountWorkspaceWorkflowsRequest, CountWorkspaceWorkflowsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
