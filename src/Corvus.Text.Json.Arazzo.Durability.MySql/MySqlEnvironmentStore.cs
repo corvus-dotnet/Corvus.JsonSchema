@@ -97,11 +97,14 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         WorkflowEtag etag = NewEtag();
         byte[] json = EnvironmentSerialization.SerializeNew(draft, actor, this.timeProvider.GetUtcNow(), etag);
         string tags = SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue);
+        string tagsHash = TagsHash(draft.NameValue, tags);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand insert = connection.CreateCommand();
+        insert.Transaction = transaction;
         insert.CommandText = "INSERT INTO Environments (Name, TagsHash, Tags, Etag, Document) VALUES (@n, @h, @t, @etag, @doc);";
         insert.Parameters.AddWithValue("@n", draft.NameValue);
-        insert.Parameters.AddWithValue("@h", TagsHash(draft.NameValue, tags));
+        insert.Parameters.AddWithValue("@h", tagsHash);
         insert.Parameters.AddWithValue("@t", tags);
         insert.Parameters.AddWithValue("@etag", etag.Value!);
         insert.Parameters.AddWithValue("@doc", json);
@@ -113,6 +116,11 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         {
             throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
         }
+
+        // Mirror the management tags into the queryable side table (keyed by TagsHash, the orderable row discriminator)
+        // so the §14.2 read reach can be pushed into the list/count query. Atomic; tags are immutable so no update re-sync.
+        await SyncSecurityTagsAsync(connection, transaction, draft.NameValue, tagsHash, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return PersistedJson.ToPooledDocument<Environment>(json);
     }
@@ -145,61 +153,44 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         bool hasMore = false;
         try
         {
-            // Keyset seek past the cursor in (Name, TagsHash) order — an indexed PK range scan. Tags is LONGTEXT and
-            // cannot be ordered, so the orderable PK component TagsHash (CHAR(64) hex) is the tie-breaker; the token
-            // carries it verbatim. Reach is a per-row predicate applied in memory until the page fills.
+            // Keyset seek past the cursor in (Name, TagsHash) order — an indexed PK range scan (Tags is LONGTEXT and
+            // cannot be ordered, so TagsHash CHAR(64) hex is the orderable tie-breaker) — with the §14.2 read reach
+            // pushed into the query as a correlated EXISTS over EnvironmentSecurityTags (the same predicate
+            // context.Admits evaluates, but applied in the database), so out-of-reach rows never leave it. LIMIT bounds it.
             await using MySqlCommand select = connection.CreateCommand();
+            var conditions = new List<string>(2);
             if (hasCursor)
             {
-                select.CommandText =
-                    "SELECT Name, TagsHash, Document FROM Environments " +
-                    "WHERE Name > @n OR (Name = @n AND TagsHash > @t) " +
-                    "ORDER BY Name, TagsHash;";
+                conditions.Add("(Name > @n OR (Name = @n AND TagsHash > @t))");
                 select.Parameters.AddWithValue("@n", cursor.Name);
                 select.Parameters.AddWithValue("@t", cursor.TieBreaker);
             }
-            else
+
+            AppendReachPredicate(conditions, select, context);
+
+            var sql = new StringBuilder("SELECT Name, TagsHash, Document FROM Environments");
+            if (conditions.Count > 0)
             {
-                select.CommandText = "SELECT Name, TagsHash, Document FROM Environments ORDER BY Name, TagsHash;";
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
             }
+
+            sql.Append(" ORDER BY Name, TagsHash LIMIT @limit;");
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+            select.CommandText = sql.ToString();
 
             await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             string lastName = string.Empty, lastTie = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string name = reader.GetString(0);
-                string tie = reader.GetString(1);
-                byte[] json = reader.GetFieldValue<byte[]>(2);
-                ParsedJsonDocument<Environment> cand = PersistedJson.ToPooledDocument<Environment>(json);
-                bool kept = false;
-                try
+                if (docs.Count == pageSize)
                 {
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastName = name;
-                    lastTie = tie;
+                    hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                    break;
                 }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
-                }
+
+                lastName = reader.GetString(0);
+                lastTie = reader.GetString(1);
+                docs.Add(PersistedJson.ToPooledDocument<Environment>(reader.GetFieldValue<byte[]>(2)));
             }
 
             return hasMore
@@ -254,12 +245,43 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
             EnvironmentSerialization.EnsureEtag(name, expectedEtag, EnvironmentSerialization.EtagOf(existing));
         }
 
+        string tagsHash = TagsHash(name, tags!);
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM Environments WHERE Name = @n AND TagsHash = @h;";
+        delete.Transaction = transaction;
+        delete.CommandText =
+            "DELETE FROM Environments WHERE Name = @n AND TagsHash = @h; " +
+            "DELETE FROM EnvironmentSecurityTags WHERE Name = @n AND TagsHash = @h;";
         delete.Parameters.AddWithValue("@n", name);
-        delete.Parameters.AddWithValue("@h", TagsHash(name, tags!));
+        delete.Parameters.AddWithValue("@h", tagsHash);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(1);
+        AppendReachPredicate(conditions, select, context);
+
+        // Bounded count: COUNT over a subquery capped at cap + 1, so the scan stops one row past the cap; the (cap+1)th
+        // row trips Capped. Same reach predicate as the list (AppendReachPredicate) — cannot drift.
+        var inner = new StringBuilder("SELECT 1 FROM Environments");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     /// <inheritdoc/>
@@ -268,6 +290,54 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over EnvironmentSecurityTags mirroring the caller's
+    // reach (the same rules context.Admits evaluates), keyed on the (Name, TagsHash) row discriminator. A null reach
+    // (unrestricted) adds nothing. Shared by ListAsync and CountAsync so the count can never drift from the list.
+    private static void AppendReachPredicate(List<string> conditions, MySqlCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "EnvironmentSecurityTags",
+            ["Name", "TagsHash"],
+            "TagKey",
+            "TagValue",
+            "Environments",
+            value =>
+            {
+                string p = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors an environment's management tags into the queryable side table (keyed by TagsHash) so the reach can be
+    // pushed into the list/count query. Management tags are immutable after creation, so this runs only on add.
+    private static async Task SyncSecurityTagsAsync(MySqlConnection connection, MySqlTransaction transaction, string name, string tagsHash, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using MySqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO EnvironmentSecurityTags (Name, TagsHash, TagKey, TagValue) VALUES (@n, @h, @key, @value);";
+            insert.Parameters.AddWithValue("@n", name);
+            insert.Parameters.AddWithValue("@h", tagsHash);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -328,6 +398,14 @@ public sealed class MySqlEnvironmentStore : IEnvironmentStore, IAsyncDisposable
             Document LONGBLOB NOT NULL,
             PRIMARY KEY (Name, TagsHash),
             INDEX IX_Environments_Name (Name)
+        );
+        CREATE TABLE IF NOT EXISTS EnvironmentSecurityTags (
+            Name VARCHAR(255) NOT NULL,
+            TagsHash CHAR(64) NOT NULL,
+            TagKey VARCHAR(191) NOT NULL,
+            TagValue VARCHAR(191) NOT NULL,
+            INDEX IX_EnvironmentSecurityTags_owner (Name, TagsHash),
+            INDEX IX_EnvironmentSecurityTags_kv (TagKey, TagValue)
         );
         """;
 }
