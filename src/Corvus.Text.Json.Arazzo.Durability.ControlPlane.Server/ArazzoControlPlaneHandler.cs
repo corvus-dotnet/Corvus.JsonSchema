@@ -18,6 +18,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // Bounds the runs count so a busy list renders "100+" rather than paying to count an unbounded set (count-API §16.5).
+    private const int CountCap = 100;
+
     private readonly ISecuredWorkflowManagement management;
     private readonly ControlPlaneAccess access;
 
@@ -64,6 +67,30 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             this.access.Current(),
             cancellationToken).ConfigureAwait(false);
         return ListRunsResult.Ok(BuildPage(page), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountRunsResult> HandleCountRunsAsync(CountRunsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Same visibility filters and §14.2 read reach as HandleListRunsAsync, but the store returns only a bounded
+        // total, never rows (work badges + list footers). CountCap bounds it so a busy list renders "100+".
+        WorkflowRunStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<WorkflowRunStatus>((string)parameters.Status) : null;
+        string? workflowId = parameters.WorkflowId.IsNotUndefined() ? (string)parameters.WorkflowId : null;
+        DateTimeOffset? createdAfter = ParseInstant(parameters.CreatedAfter);
+        DateTimeOffset? createdBefore = ParseInstant(parameters.CreatedBefore);
+        DateTimeOffset? updatedAfter = ParseInstant(parameters.UpdatedAfter);
+        DateTimeOffset? updatedBefore = ParseInstant(parameters.UpdatedBefore);
+        string? correlationId = parameters.CorrelationId.IsNotUndefined() ? (string)parameters.CorrelationId : null;
+        TagSet tags = ParseTags(parameters.Tag);
+
+        // The query's limit / page token are irrelevant to a count; CountAsync counts the whole matching set bounded
+        // by CountCap. Reach is applied inside CountAsync (context.Reach(Read)), reusing the list's predicate.
+        (int count, bool capped) = await this.management.CountAsync(
+            new WorkflowQuery(status, workflowId, CountCap, default, createdAfter, createdBefore, updatedAfter, updatedBefore, correlationId, tags),
+            this.access.Current(),
+            CountCap,
+            cancellationToken).ConfigureAwait(false);
+        return CountRunsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     private static DateTimeOffset? ParseInstant(Models.JsonDateTime value)

@@ -132,6 +132,19 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Same read-reach scoping and pushdown guard as ListAsync — the count reuses the store's list predicate, so
+        // it counts exactly the runs the caller could see (§14.2), never more.
+        SecurityFilter? reach = context.Reach(AccessVerb.Read);
+        IWorkflowWaitIndex index = this.RequireIndex();
+        RowSecurityPushdown.EnsureSupported(reach, index);
+        return index.CountAsync(query with { Security = reach }, cap, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);

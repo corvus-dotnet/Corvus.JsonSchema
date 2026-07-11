@@ -100,6 +100,10 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         => this.RequireIndex().QueryAsync(query, cancellationToken);
 
     /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+        => this.RequireIndex().CountAsync(query, cap, cancellationToken);
+
+    /// <inheritdoc/>
     // The decorator passes query.Security straight through to the inner index (the projected security tags are stored
     // in the clear), so it honours row-security reach exactly when the wrapped store does. Forward the inner's
     // capability so wrapping a store that does NOT push the reach down stays fail-closed (EnsureSupported still throws

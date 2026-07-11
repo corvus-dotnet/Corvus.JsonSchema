@@ -3683,6 +3683,40 @@
         }
       }
     },
+    "/runs/count": {
+      "get": {
+        "operationId": "countRuns",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runs"],
+        "summary": "Count runs",
+        "description": "Counts the runs matching the visibility query that the caller's read reach admits (§14.2), bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRuns. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/StatusQuery" },
+          { "$ref": "#/components/parameters/WorkflowIdQuery" },
+          { "$ref": "#/components/parameters/CreatedAfterQuery" },
+          { "$ref": "#/components/parameters/CreatedBeforeQuery" },
+          { "$ref": "#/components/parameters/UpdatedAfterQuery" },
+          { "$ref": "#/components/parameters/UpdatedBeforeQuery" },
+          { "$ref": "#/components/parameters/TagQuery" },
+          { "$ref": "#/components/parameters/CorrelationIdQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible matching runs.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CountResult" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
     "/accessRequests/count": {
       "get": {
         "operationId": "countAccessRequests",
