@@ -60,6 +60,21 @@ public interface IEnvironmentStore
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
     ValueTask<EnvironmentPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken);
 
+    /// <summary>Counts the environments the caller's read reach admits, bounded by <paramref name="cap"/> (for list
+    /// footers): the same reach as <see cref="ListAsync"/>, but returning only a bounded total, never rows. The default
+    /// reads one bounded page of at most <paramref name="cap"/> + 1 visible rows and counts them; a backend that can push
+    /// the reach into its query overrides it with a native bounded <c>COUNT</c>.</summary>
+    /// <param name="context">The caller's row-access grant (use <see cref="AccessContext.System"/> for full reach).</param>
+    /// <param name="cap">The maximum count to report; when the true total exceeds it, <c>Capped</c> is <see langword="true"/> and <c>Count</c> is <paramref name="cap"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count, and whether the cap was hit (so the caller renders e.g. <c>100+</c>).</returns>
+    async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        using EnvironmentPage page = await this.ListAsync(context, cap + 1, default, cancellationToken).ConfigureAwait(false);
+        int count = page.Environments.Count;
+        return count > cap ? (cap, true) : (count, false);
+    }
+
     /// <summary>Updates the environment named <paramref name="name"/> the caller's write reach admits, under optimistic
     /// concurrency. The <c>name</c>, the management tags, and the created-* audit fields are immutable; only the display
     /// name and description are replaced (carried bytes-to-bytes from the draft).</summary>
