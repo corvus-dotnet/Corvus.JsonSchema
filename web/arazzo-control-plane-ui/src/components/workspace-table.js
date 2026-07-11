@@ -33,6 +33,8 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     /** @private */ this._history = []; // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextToken = null;
+    /** @private */ this._total = null;         // bounded total across all pages (null until counted)
+    /** @private */ this._totalCapped = false;  // true when the true total meets/exceeds the server cap → render "N+"
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._selectedId = null;
@@ -81,13 +83,17 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     if (!silent) this.renderBody();
 
     try {
-      const { workingCopies, nextPageToken } = await client.listWorkingCopies({
-        limit: this.pageSize,
-        pageToken: this._currentToken,
-      });
+      // Fetch the page and the bounded total (for the footer) together; the count is a no-rows bounded query, and a
+      // count failure must not break the list, so it falls back to null (footer then shows the visible page count).
+      const [{ workingCopies, nextPageToken }, total] = await Promise.all([
+        client.listWorkingCopies({ limit: this.pageSize, pageToken: this._currentToken }),
+        client.countWorkingCopies().catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._rows = workingCopies;
       this._nextToken = nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: workingCopies.length, hasMore: !!nextPageToken });
@@ -359,9 +365,13 @@ class ArazzoWorkspaceTable extends ArazzoElement {
   }
 
   updatePager() {
+    // The footer shows the bounded grand total the caller's reach admits (with "+" when the server capped it), not just
+    // the current page's length; it falls back to the visible count if the count query was unavailable.
+    const n = this._total != null ? this._total : this._rows.length;
+    const shown = this._total != null ? `${this._total}${this._totalCapped ? '+' : ''}` : `${this._rows.length}`;
     const info = this._loading
       ? 'Loading…'
-      : `${this._rows.length} working ${this._rows.length === 1 ? 'copy' : 'copies'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+      : `${shown} working ${n === 1 ? 'copy' : 'copies'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextToken, loading: this._loading, info });
   }
 
