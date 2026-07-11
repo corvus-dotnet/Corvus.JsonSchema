@@ -291,6 +291,28 @@ public abstract class SourceStoreConformance
         (await store.GetAsync("petstore", Scope("globex"), default)).ShouldNotBeNull();
     }
 
+    [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_and_scoped_to_the_read_reach()
+    {
+        ISourceStore store = await this.NewStoreAsync();
+        await this.SeedAsync(store, "petstore", "alice", Tenant("acme"));
+        await this.SeedAsync(store, "billing", "alice", Tenant("globex"));
+        await this.SeedAsync(store, "shared", "alice");
+
+        // System reach counts all three; exact below the cap, exact-not-capped at the cap, capped beyond it.
+        (await store.CountAsync(AccessContext.System, 10, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 3, default)).ShouldBe((3, false));
+        (await store.CountAsync(AccessContext.System, 2, default)).ShouldBe((2, true));
+
+        // The count honours the read reach identically to the list: a reach restricted to tenant=acme counts only the
+        // acme source (globex and the untagged row denied).
+        (await store.CountAsync(Scope("acme"), 10, default)).ShouldBe((1, false));
+
+        // An empty store counts zero, never capped.
+        ISourceStore empty = await this.NewStoreAsync();
+        (await empty.CountAsync(AccessContext.System, 5, default)).ShouldBe((0, false));
+    }
+
     // A minimal, marker-bearing source document for round-trip / rotation assertions.
     private static ReadOnlyMemory<byte> DocUtf8(string marker)
         => Encoding.UTF8.GetBytes($$"""{"openapi":"3.1.0","x-marker":"{{marker}}"}""");
