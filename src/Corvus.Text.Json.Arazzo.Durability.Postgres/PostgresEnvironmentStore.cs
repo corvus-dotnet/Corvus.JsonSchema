@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -90,11 +91,14 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         ArgumentNullException.ThrowIfNull(actor);
         WorkflowEtag etag = NewEtag();
         byte[] json = EnvironmentSerialization.SerializeNew(draft, actor, this.timeProvider.GetUtcNow(), etag);
+        string canonicalTags = SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
+        insert.Transaction = transaction;
         insert.CommandText = "INSERT INTO Environments (Name, Tags, Etag, Document) VALUES (@n, @t, @etag, @doc);";
         insert.Parameters.AddWithValue("n", draft.NameValue);
-        insert.Parameters.AddWithValue("t", SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue));
+        insert.Parameters.AddWithValue("t", canonicalTags);
         insert.Parameters.AddWithValue("etag", etag.Value!);
         insert.Parameters.AddWithValue("doc", json);
         try
@@ -105,6 +109,12 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         {
             throw new InvalidOperationException($"An environment named '{draft.NameValue}' with those security tags already exists.");
         }
+
+        // Mirror the management tags into the queryable side table so the §14.2 read reach can be pushed into the
+        // list/count query (a correlated EXISTS) rather than evaluated per row in memory. Atomic with the row insert;
+        // the tags are immutable, so no re-sync is needed on update.
+        await SyncSecurityTagsAsync(connection, transaction, draft.NameValue, canonicalTags, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return PersistedJson.ToPooledDocument<Environment>(json);
     }
@@ -137,60 +147,44 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         bool hasMore = false;
         try
         {
-            // Keyset seek past the cursor in (Name, Tags) order — an indexed range scan, not a table load. Reach is a
-            // per-row predicate applied in memory as we stream; the reader is consumed only until the page fills.
+            // Keyset seek past the cursor in (Name, Tags) order — an indexed range scan — with the §14.2 read reach
+            // pushed into the query as a correlated EXISTS over EnvironmentSecurityTags (the same predicate
+            // context.Admits evaluates, but applied in the database), so out-of-reach rows never leave it. The
+            // ORDER BY drives the page and LIMIT bounds the read to one page + 1 (lookahead).
             await using NpgsqlCommand select = connection.CreateCommand();
+            var conditions = new List<string>(2);
             if (hasCursor)
             {
-                select.CommandText =
-                    "SELECT Name, Tags, Document FROM Environments " +
-                    "WHERE Name > @n OR (Name = @n AND Tags > @t) " +
-                    "ORDER BY Name, Tags;";
+                conditions.Add("(Name > @n OR (Name = @n AND Tags > @t))");
                 select.Parameters.AddWithValue("n", cursor.Name);
                 select.Parameters.AddWithValue("t", cursor.TieBreaker);
             }
-            else
+
+            AppendReachPredicate(conditions, select, context);
+
+            var sql = new StringBuilder("SELECT Name, Tags, Document FROM Environments");
+            if (conditions.Count > 0)
             {
-                select.CommandText = "SELECT Name, Tags, Document FROM Environments ORDER BY Name, Tags;";
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
             }
+
+            sql.Append(" ORDER BY Name, Tags LIMIT @limit;");
+            select.Parameters.AddWithValue("limit", pageSize + 1);
+            select.CommandText = sql.ToString();
 
             await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             string lastName = string.Empty, lastTags = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string name = reader.GetString(0);
-                string tags = reader.GetString(1);
-                byte[] json = reader.GetFieldValue<byte[]>(2);
-                ParsedJsonDocument<Environment> cand = PersistedJson.ToPooledDocument<Environment>(json);
-                bool kept = false;
-                try
+                if (docs.Count == pageSize)
                 {
-                    SecurityTagSet candTags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, candTags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastName = name;
-                    lastTags = tags;
+                    hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                    break;
                 }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
-                }
+
+                lastName = reader.GetString(0);
+                lastTags = reader.GetString(1);
+                docs.Add(PersistedJson.ToPooledDocument<Environment>(reader.GetFieldValue<byte[]>(2)));
             }
 
             return hasMore
@@ -245,12 +239,42 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
             EnvironmentSerialization.EnsureEtag(name, expectedEtag, EnvironmentSerialization.EtagOf(existing));
         }
 
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM Environments WHERE Name = @n AND Tags = @t;";
+        delete.Transaction = transaction;
+        delete.CommandText =
+            "DELETE FROM Environments WHERE Name = @n AND Tags = @t; " +
+            "DELETE FROM EnvironmentSecurityTags WHERE Name = @n AND Tags = @t;";
         delete.Parameters.AddWithValue("n", name);
         delete.Parameters.AddWithValue("t", tags!);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(1);
+        AppendReachPredicate(conditions, select, context);
+
+        // Bounded count: COUNT over a subquery capped at cap + 1, so the scan stops one row past the cap; the (cap+1)th
+        // row trips Capped. Same reach predicate as the list (AppendReachPredicate) — cannot drift.
+        var inner = new StringBuilder("SELECT 1 FROM Environments");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        select.Parameters.AddWithValue("cap", cap + 1);
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     /// <inheritdoc/>
@@ -259,6 +283,54 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over EnvironmentSecurityTags mirroring the caller's
+    // reach (the same rules context.Admits evaluates). A null reach (unrestricted) adds nothing. Shared by ListAsync and
+    // CountAsync so the count can never drift from the list it annotates.
+    private static void AppendReachPredicate(List<string> conditions, NpgsqlCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "EnvironmentSecurityTags",
+            ["Name", "Tags"],
+            "TagKey",
+            "TagValue",
+            "Environments",
+            value =>
+            {
+                string p = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return "@" + p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors an environment's management tags into the queryable side table (one row per key/value) so the reach can be
+    // pushed into the list/count query. Management tags are immutable after creation, so this runs only on add.
+    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string name, string canonicalTags, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using NpgsqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO EnvironmentSecurityTags (Name, Tags, TagKey, TagValue) VALUES (@n, @t, @key, @value);";
+            insert.Parameters.AddWithValue("n", name);
+            insert.Parameters.AddWithValue("t", canonicalTags);
+            insert.Parameters.AddWithValue("key", tag.Key);
+            insert.Parameters.AddWithValue("value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -306,5 +378,13 @@ public sealed class PostgresEnvironmentStore : IEnvironmentStore, IAsyncDisposab
             PRIMARY KEY (Name, Tags)
         );
         CREATE INDEX IF NOT EXISTS ix_environments_name ON Environments (Name);
+        CREATE TABLE IF NOT EXISTS EnvironmentSecurityTags (
+            Name TEXT NOT NULL,
+            Tags TEXT NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_environmentsecuritytags_owner ON EnvironmentSecurityTags (Name, Tags);
+        CREATE INDEX IF NOT EXISTS ix_environmentsecuritytags_kv ON EnvironmentSecurityTags (TagKey, TagValue);
         """;
 }
