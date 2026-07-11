@@ -219,6 +219,16 @@ public sealed class MongoEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Native bounded count: the same BuildFilter as the list, with CountOptions.Limit = cap + 1 so the server stops
+        // counting one past the cap; the (cap+1)th match trips Capped — never a full count of the whole set.
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
+        long total = await this.authorizations.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);

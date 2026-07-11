@@ -222,6 +222,30 @@ public sealed class SqlServerEnvironmentRunnerAuthorizationStore : IEnvironmentR
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(3);
+        AppendFilters(conditions, select, query);
+
+        // Bounded count: COUNT over a TOP (@cap) subquery, so the scan stops one row past the cap; the (cap+1)th row's
+        // existence trips Capped — never a full COUNT of the whole set. Same predicate as the list. (SQL Server has no
+        // LIMIT; TOP (@cap) with @cap = cap + 1 is the bound, and COUNT(*) returns int for counts this small.)
+        var inner = new StringBuilder("SELECT TOP (@cap) 1 AS x FROM EnvironmentRunnerAuthorizations");
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        int total = result is int i ? i : Convert.ToInt32(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);

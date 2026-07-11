@@ -257,6 +257,53 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
         });
     }
 
+    [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_reporting_capped_only_beyond_it()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
+        await store.EnsurePendingAsync("production", "runner-2", "runner-2", default);
+        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", default);
+
+        // Below the true total: the exact count, not capped (matches the list length).
+        (await store.CountAsync(default, 10, default)).ShouldBe((3, false));
+
+        // Exactly at the cap: the (cap+1)th row does not exist, so the count is exact and NOT capped.
+        (await store.CountAsync(default, 3, default)).ShouldBe((3, false));
+
+        // The true total exceeds the cap: the count is the cap and Capped is set (the console renders "N+").
+        (await store.CountAsync(default, 2, default)).ShouldBe((2, true));
+        (await store.CountAsync(default, 1, default)).ShouldBe((1, true));
+
+        // An empty store counts zero, never capped.
+        IEnvironmentRunnerAuthorizationStore empty = await this.NewStoreAsync();
+        (await empty.CountAsync(default, 5, default)).ShouldBe((0, false));
+    }
+
+    [TestMethod]
+    public async Task Counting_honours_the_same_filters_as_the_list()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
+        await store.EnsurePendingAsync("production", "runner-2", "runner-2", default);
+        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", default);
+        await store.EnsurePendingAsync("qa", "runner-4", "runner-4", default);
+
+        // By environment.
+        (await store.CountAsync(new RunnerAuthorizationQuery(Environment: "production"), 10, default)).ShouldBe((2, false));
+
+        // The approver inbox: every authorization across the administered environment set; staging is outside it.
+        (await store.CountAsync(new RunnerAuthorizationQuery(AdministeredEnvironments: ["production", "qa"]), 10, default)).ShouldBe((3, false));
+
+        // By status (authorize one, then count each state).
+        await store.DecideAsync("production", "runner-2", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Authorized), WorkflowEtag.None, "admin", default);
+        (await store.CountAsync(new RunnerAuthorizationQuery(Status: RunnerAuthorizationStatus.Pending), 10, default)).ShouldBe((3, false));
+        (await store.CountAsync(new RunnerAuthorizationQuery(Status: RunnerAuthorizationStatus.Authorized), 10, default)).ShouldBe((1, false));
+
+        // Filter + cap compose: two Pending in the administered set, capped at 1.
+        (await store.CountAsync(new RunnerAuthorizationQuery(Status: RunnerAuthorizationStatus.Pending, AdministeredEnvironments: ["production", "qa"]), 1, default)).ShouldBe((1, true));
+    }
+
     // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as (mirroring HTTP).
     private static ParsedJsonDocument<JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
     {

@@ -276,6 +276,38 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Bounded count over an id-only projection capped at cap + 1 (OFFSET 0 LIMIT), counting the returned ids
+        // client-side. Cosmos has NO bounded server-side COUNT: a bare COUNT ignores any outer LIMIT and scans the whole
+        // matching set, and wrapping COUNT around a cap-limited subquery is rejected (both 'OFFSET LIMIT' and 'TOP' are
+        // unsupported in subqueries). So the outer LIMIT + client-side count is the only bounded option; do not use COUNT.
+        var conditions = new List<string>(3);
+        string[]? adminNames = AppendConditions(conditions, query);
+
+        string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
+        var definition = new QueryDefinition("SELECT c.id FROM c" + where + " ORDER BY c.env, c.runnerId OFFSET 0 LIMIT @lim");
+        definition = definition.WithParameter("@lim", cap + 1);
+        definition = WithParameters(definition, query, adminNames);
+
+        int total = 0;
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(definition);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
+            {
+                _ = element; // id-only projection — only its presence counts toward the bounded total
+                total++;
+            }
+        }
+
+        return total > cap ? (cap, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);
