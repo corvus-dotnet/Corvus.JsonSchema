@@ -57,10 +57,11 @@ class ArazzoAccessOverview extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         ${GRANTEE_CHIP_CSS}
-        :host { display: block; }
-        .find { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .find { flex: none; display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
         .find label { font-weight: 600; white-space: nowrap; }
         .find arazzo-grantee-picker { flex: 1; min-width: 0; }
+        .body { flex: 1; min-height: 0; overflow: auto; }
         .empty { color: var(--_muted); padding: 12px 0; }
         .who { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
         h4 { margin: 20px 0 8px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--_muted); }
