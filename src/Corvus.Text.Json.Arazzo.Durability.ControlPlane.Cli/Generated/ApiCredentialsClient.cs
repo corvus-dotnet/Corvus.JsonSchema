@@ -158,6 +158,23 @@ public sealed class ApiCredentialsClient : IApiCredentialsClient
         return SendAsyncCore<DeleteCredentialRequest, DeleteCredentialResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Count source credential bindings
+    /// </summary>
+    /// <remarks>
+    /// Counts the source credential bindings the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountCredentialsResponse> CountCredentialsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountCredentialsRequest request = new();
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountCredentialsRequest, CountCredentialsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

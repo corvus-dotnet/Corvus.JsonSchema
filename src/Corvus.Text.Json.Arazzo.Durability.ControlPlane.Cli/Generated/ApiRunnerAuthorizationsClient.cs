@@ -176,6 +176,30 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
         return SendAsyncCore<ListRunnerAuthorizationsRequest, ListRunnerAuthorizationsResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Count runner authorizations (the approver inbox)
+    /// </summary>
+    /// <remarks>
+    /// Counts runner authorizations visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRunnerAuthorizations: with environment, that environment's authorizations (administrator required, 403 otherwise); otherwise the inbox across every environment the caller administers; defaults to Pending when status is omitted. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountRunnerAuthorizationsResponse> CountRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetRunnerAuthorizationsCountStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountRunnerAuthorizationsRequest request = new()
+        {
+            Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetRunnerAuthorizationsCountStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetRunnerAuthorizationsCountStatus.CreateBuilder(workspace, status, 30).RootElement,
+            Environment = environment.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, environment, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountRunnerAuthorizationsRequest, CountRunnerAuthorizationsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

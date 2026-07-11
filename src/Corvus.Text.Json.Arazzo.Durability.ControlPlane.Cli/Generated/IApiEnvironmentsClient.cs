@@ -188,6 +188,16 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
         public static readonly string[] RemoveEnvironmentAdministratorOpenIdConnectScopes = ["environments:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountEnvironments</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentsOauth2Scopes = ["environments:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountEnvironments</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentsOpenIdConnectScopes = ["environments:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["environments:read", "environments:write"];
@@ -289,4 +299,13 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="digest">The digest parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<RemoveEnvironmentAdministratorResponse> RemoveEnvironmentAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source digest, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count deployment environments
+    /// </summary>
+    /// <remarks>
+    /// Counts the deployment environments the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountEnvironmentsResponse> CountEnvironmentsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

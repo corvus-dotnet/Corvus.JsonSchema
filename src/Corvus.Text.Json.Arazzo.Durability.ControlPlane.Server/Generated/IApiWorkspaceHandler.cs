@@ -190,4 +190,13 @@ public interface IApiWorkspaceHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<ListWorkingCopySourceOperationsResult> HandleListWorkingCopySourceOperationsAsync(ListWorkingCopySourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /workspace/workflows/count — Count designer working copies
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountWorkspaceWorkflowsResult> HandleCountWorkspaceWorkflowsAsync(CountWorkspaceWorkflowsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

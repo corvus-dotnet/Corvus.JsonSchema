@@ -209,6 +209,23 @@ public sealed class ApiSourcesClient : IApiSourcesClient
         return SendAsyncCore<DeleteSourceRequest, DeleteSourceResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Count registered sources
+    /// </summary>
+    /// <remarks>
+    /// Counts the registered sources the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountSourcesResponse> CountSourcesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountSourcesRequest request = new();
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountSourcesRequest, CountSourcesResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

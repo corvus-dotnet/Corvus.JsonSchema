@@ -117,6 +117,18 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     ValueTask<SubmitAccessRequestResponse> SubmitAccessRequestAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AccessRequestSubmit.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Count access requests
+    /// </summary>
+    /// <remarks>
+    /// Counts access requests visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listAccessRequests: with baseWorkflowId, that workflow's request queue (administrator required, 403 otherwise); otherwise scope selects 'mine' (default) or 'queue' (the approver inbox); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="scope">The scope parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountAccessRequestsResponse> CountAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountScope.Source scope = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
     /// Get an access request
     /// </summary>
     /// <remarks>

@@ -41,6 +41,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, IApiDebugRunsHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
+
+    // The server-side bound on /count: the store stops one row past this, so a busy list renders "100+" (design §16.5).
+    private const int CountCap = 100;
     private const int MaxValidationErrors = 200;
 
     private readonly IWorkspaceWorkflowStore store;
@@ -214,6 +217,15 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             workingCopies: Models.WorkingCopyList.WorkingCopySummaryArray.Build(in workingCopies, BuildSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListWorkspaceWorkflowsResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountWorkspaceWorkflowsResult> HandleCountWorkspaceWorkflowsAsync(CountWorkspaceWorkflowsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The same §14.2 read reach as HandleListWorkspaceWorkflowsAsync (this.access.Current()), but the store returns
+        // only a bounded total, never rows (design §16.5: list footers). CountCap bounds it so a busy list renders "100+".
+        (int count, bool capped) = await this.store.CountAsync(this.access.Current(), CountCap, cancellationToken).ConfigureAwait(false);
+        return CountWorkspaceWorkflowsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>
