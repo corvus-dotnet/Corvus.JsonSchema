@@ -29,9 +29,22 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
 ## Scope (everything, systematically) — worklist
 
 **Slice 1 — approval queues (the immediate badge payoff):**
-- [ ] `accessRequests` (scope=queue, status) — `IAccessRequestStore`
+- [~] `accessRequests` (scope=queue, status) — `IAccessRequestStore`. **Piece 1 DONE + BUILDS + COMMITTED**
+  (`/accessRequests/count`, op `countAccessRequests`, filter params only): OpenAPI surface + reusable `CountResult`
+  schema; regenerated clean; `HandleCountAccessRequestsAsync` mirrors `HandleListAccessRequestsAsync`'s reach/query build
+  (`ParseCountStatus`/`IsCountQueueScope`/`CountResult(count,capped)` helpers, `CountCap = 100`); `IAccessRequestStore.CountAsync(AccessRequestQuery,
+  int cap, ct) -> (int Count, bool Capped)` with a **default impl** (`total > cap ? (cap,true) : (total,false)` over
+  `ListAsync(query)`) so all 10 backends work immediately & correctly. **NEXT (Piece 2):** native bounded `CountAsync`
+  overrides — relational four (Sqlite/Postgres/MySql/SqlServer) `SELECT COUNT(*) FROM (SELECT 1 … WHERE <same conds> LIMIT @cap+1)`,
+  reusing the list's status/bw/subject/administered predicate (extract a shared `Append*Conditions` so it can't drift; the
+  cursor stays list-only); scan-based five (Redis/Mongo/Cosmos/NatsJetStream/AzureStorage) + InMemory bounded scan stopping at
+  cap+1. Then verify vs the live Postgres container; commit. **Then (Piece 3):** conformance tests. Then availability + runner.
 - [ ] `availabilityRequests` (scope=queue, status) — `IAvailabilityRequestStore`
 - [ ] `runnerAuthorizations` (status) — `IEnvironmentRunnerAuthorizationStore`
+
+**Regen command** (from `…ControlPlane.Server/README.md`):
+`dotnet run --project src/Corvus.Json.Cli -f net10.0 -- openapi-server docs/control-plane/arazzo-control-plane.openapi.json --rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Generated`
+Diff must be count-only (a drifting regen = generator version skew — reconcile before committing).
 
 **Slice 2+ — the rest (governance / registry / runs):**
 - [ ] `runs` — `IWorkflowStateStore` (list/index)

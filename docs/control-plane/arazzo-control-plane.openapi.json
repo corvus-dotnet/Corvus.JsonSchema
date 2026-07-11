@@ -3575,6 +3575,68 @@
         }
       }
     },
+    "/accessRequests/count": {
+      "get": {
+        "operationId": "countAccessRequests",
+        "security": [
+          { "oauth2": [] },
+          { "openIdConnect": [] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "accessRequests"
+        ],
+        "summary": "Count access requests",
+        "description": "Counts access requests visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listAccessRequests: with baseWorkflowId, that workflow's request queue (administrator required, 403 otherwise); otherwise scope selects 'mine' (default) or 'queue' (the approver inbox); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Pending",
+                "Approved",
+                "Denied",
+                "Withdrawn",
+                "Revoked"
+              ]
+            },
+            "description": "Only requests in this state."
+          },
+          {
+            "name": "baseWorkflowId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The target workflow whose request queue to count (requires administrator of it); absent counts per scope."
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mine",
+                "queue"
+              ]
+            },
+            "description": "When baseWorkflowId is absent, which requests to count: 'mine' (default) the caller's own; 'queue' the approver inbox. Ignored when baseWorkflowId is present."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible access requests.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
     "/accessRequests/{requestId}": {
       "parameters": [
         { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
@@ -4364,6 +4426,26 @@
       }
     },
     "schemas": {
+      "CountResult": {
+        "type": "object",
+        "description": "A bounded count of matching items for a list, returned by the '/count' endpoints — no rows are materialised (for work badges and list footers). When 'capped' is true, 'count' is the server's cap rather than the true total, so it should be rendered as e.g. '100+'.",
+        "required": [
+          "count",
+          "capped"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "description": "The number of matching items, bounded by the server's cap."
+          },
+          "capped": {
+            "type": "boolean",
+            "description": "True when the true total meets or exceeds the cap, so 'count' is the cap, not the true total."
+          }
+        }
+      },
       "AccessGrantsOverview": {
         "type": "object",
         "description": "The who-can-do-what aggregation for one grantee (design §6.1): the security bindings that grant it reach, the workflows it administers, and the credentials its runs may use.",

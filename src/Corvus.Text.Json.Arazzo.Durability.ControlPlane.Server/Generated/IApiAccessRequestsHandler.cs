@@ -39,6 +39,15 @@ public interface IApiAccessRequestsHandler
     ValueTask<SubmitAccessRequestResult> HandleSubmitAccessRequestAsync(SubmitAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /accessRequests/count — Count access requests
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountAccessRequestsResult> HandleCountAccessRequestsAsync(CountAccessRequestsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /accessRequests/{requestId} — Get an access request
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
