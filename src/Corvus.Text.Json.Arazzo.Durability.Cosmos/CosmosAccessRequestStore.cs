@@ -339,6 +339,76 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Bounded count: the same cross-partition predicate as the list, over an id-only projection capped at cap + 1
+        // (OFFSET 0 LIMIT), so the read stops one row past the cap; the (cap+1)th row trips Capped — never a full count.
+        var conditions = new List<string>(4);
+        if (query.Status is not null)
+        {
+            conditions.Add("c.status = @status");
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            conditions.Add("c.bw = @bw");
+        }
+
+        if (query.SubjectClaimType is not null)
+        {
+            conditions.Add("c.st = @st");
+        }
+
+        if (query.SubjectClaimValue is not null)
+        {
+            conditions.Add("c.sv = @sv");
+        }
+
+        string[]? adminNames = AppendAdministeredCondition(conditions, query.AdministeredBaseWorkflowIds);
+
+        string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
+        var definition = new QueryDefinition("SELECT c.id FROM c" + where + " ORDER BY c.createdAt, c.id OFFSET 0 LIMIT @lim");
+        definition = definition.WithParameter("@lim", cap + 1);
+        if (query.Status is { } statusFilter)
+        {
+            definition = definition.WithParameter("@status", AccessRequestStatusNames.ToWire(statusFilter));
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            definition = definition.WithParameter("@bw", (string)query.BaseWorkflowId);
+        }
+
+        if (query.SubjectClaimType is { } subjectType)
+        {
+            definition = definition.WithParameter("@st", subjectType);
+        }
+
+        if (query.SubjectClaimValue is { } subjectValue)
+        {
+            definition = definition.WithParameter("@sv", subjectValue);
+        }
+
+        definition = WithAdministeredParameters(definition, query.AdministeredBaseWorkflowIds, adminNames);
+
+        int total = 0;
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(definition);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
+            {
+                _ = element; // id-only projection — only its presence counts toward the bounded total
+                total++;
+            }
+        }
+
+        return total > cap ? (cap, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideAsync(string id, AccessRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);

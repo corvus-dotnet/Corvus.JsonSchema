@@ -100,32 +100,7 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     /// <inheritdoc/>
     public async ValueTask<PooledDocumentList<AccessRequest>> ListAsync(AccessRequestQuery query, CancellationToken cancellationToken)
     {
-        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Empty;
-        if (query.Status is { } status)
-        {
-            filter &= Builders<BsonDocument>.Filter.Eq("status", AccessRequestStatusNames.ToWire(status));
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            filter &= Builders<BsonDocument>.Filter.Eq("baseWorkflowId", (string)query.BaseWorkflowId);
-        }
-
-        if (query.SubjectClaimType is { } subjectType)
-        {
-            filter &= Builders<BsonDocument>.Filter.Eq("subjectClaimType", subjectType);
-        }
-
-        if (query.SubjectClaimValue is { } subjectValue)
-        {
-            filter &= Builders<BsonDocument>.Filter.Eq("subjectClaimValue", subjectValue);
-        }
-
-        if (query.AdministeredBaseWorkflowIds is { } administered)
-        {
-            // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived strings).
-            filter &= Builders<BsonDocument>.Filter.In("baseWorkflowId", administered);
-        }
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
 
         var list = new PooledDocumentList<AccessRequest>();
         List<BsonDocument> documents = await this.requests.Find(filter).Sort(OldestFirst).ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -165,32 +140,7 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         }
 
         var b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.Empty;
-        if (query.Status is { } status)
-        {
-            filter &= b.Eq("status", AccessRequestStatusNames.ToWire(status));
-        }
-
-        if (query.BaseWorkflowId.IsNotUndefined())
-        {
-            filter &= b.Eq("baseWorkflowId", (string)query.BaseWorkflowId);
-        }
-
-        if (query.SubjectClaimType is { } subjectType)
-        {
-            filter &= b.Eq("subjectClaimType", subjectType);
-        }
-
-        if (query.SubjectClaimValue is { } subjectValue)
-        {
-            filter &= b.Eq("subjectClaimValue", subjectValue);
-        }
-
-        if (query.AdministeredBaseWorkflowIds is { } administered)
-        {
-            // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived strings).
-            filter &= b.In("baseWorkflowId", administered);
-        }
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
 
         if (cursorCreatedAt is not null)
         {
@@ -236,6 +186,16 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Native bounded count: the same BuildFilter as the list, with CountOptions.Limit = cap + 1 so the server stops
+        // counting one past the cap; the (cap+1)th match trips Capped — never a full count of the whole queue.
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
+        long total = await this.requests.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideAsync(string id, AccessRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -268,6 +228,42 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // The reach/filter predicate shared by ListAsync (full + paged) and CountAsync: the same AccessRequestQuery reifies to
+    // the same Mongo filter, so a count can never drift from the list it annotates. Covers the query's
+    // status/base-workflow/subject/administered filter only; the keyset cursor seek stays inline in the paged list.
+    private static FilterDefinition<BsonDocument> BuildFilter(in AccessRequestQuery query)
+    {
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (query.Status is { } status)
+        {
+            filter &= b.Eq("status", AccessRequestStatusNames.ToWire(status));
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            filter &= b.Eq("baseWorkflowId", (string)query.BaseWorkflowId);
+        }
+
+        if (query.SubjectClaimType is { } subjectType)
+        {
+            filter &= b.Eq("subjectClaimType", subjectType);
+        }
+
+        if (query.SubjectClaimValue is { } subjectValue)
+        {
+            filter &= b.Eq("subjectClaimValue", subjectValue);
+        }
+
+        if (query.AdministeredBaseWorkflowIds is { } administered)
+        {
+            // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived strings).
+            filter &= b.In("baseWorkflowId", administered);
+        }
+
+        return filter;
+    }
 
     private async ValueTask<byte[]?> DocumentAsync(string id, CancellationToken cancellationToken)
     {

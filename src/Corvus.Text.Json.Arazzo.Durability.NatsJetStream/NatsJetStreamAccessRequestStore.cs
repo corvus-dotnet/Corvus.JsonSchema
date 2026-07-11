@@ -286,6 +286,35 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Bounded scan: read + parse each candidate only to apply the same Matches predicate as the list, disposing it
+        // immediately (no PooledDocumentList grows); stop once a (cap+1)th match is seen and report Capped.
+        int count = 0;
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(RequestPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } bytes })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<AccessRequest> document = ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory());
+            if (Matches(document.RootElement, query) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideAsync(string id, AccessRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
