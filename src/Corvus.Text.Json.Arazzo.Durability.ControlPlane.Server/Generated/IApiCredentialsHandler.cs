@@ -64,4 +64,13 @@ public interface IApiCredentialsHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<DeleteCredentialResult> HandleDeleteCredentialAsync(DeleteCredentialParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /credentials/count — Count source credential bindings
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountCredentialsResult> HandleCountCredentialsAsync(CountCredentialsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

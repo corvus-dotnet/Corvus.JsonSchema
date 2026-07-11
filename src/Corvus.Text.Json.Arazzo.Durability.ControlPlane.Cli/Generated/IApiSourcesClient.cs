@@ -168,6 +168,16 @@ public interface IApiSourcesClient : IAsyncDisposable
         public static readonly string[] DeleteSourceOpenIdConnectScopes = ["sources:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountSources</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSourcesOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountSources</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSourcesOpenIdConnectScopes = ["sources:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["sources:read", "sources:write"];
@@ -249,4 +259,13 @@ public interface IApiSourcesClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<DeleteSourceResponse> DeleteSourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count registered sources
+    /// </summary>
+    /// <remarks>
+    /// Counts the registered sources the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountSourcesResponse> CountSourcesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

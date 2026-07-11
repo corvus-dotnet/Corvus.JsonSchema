@@ -4733,6 +4733,59 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "credentials:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "credentials:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __DeleteCredentialEndpoint);
 
+        IEndpointConventionBuilder __CountCredentialsEndpoint = app.MapGet("/credentials/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                CountCredentialsParams parameters = new();
+
+                CountCredentialsResult result = await credentialsHandler.HandleCountCredentialsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countCredentials",
+                methodName: "CountCredentials",
+                httpMethod: "GET",
+                routeTemplate: "/credentials/count",
+                tags: new[] { "credentials" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "credentials:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "credentials:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountCredentialsEndpoint);
+
         IEndpointConventionBuilder __ListWorkspaceWorkflowsEndpoint = app.MapGet("/workspace/workflows", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -6515,6 +6568,59 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ListWorkingCopySourceOperationsEndpoint);
+
+        IEndpointConventionBuilder __CountWorkspaceWorkflowsEndpoint = app.MapGet("/workspace/workflows/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                CountWorkspaceWorkflowsParams parameters = new();
+
+                CountWorkspaceWorkflowsResult result = await workspaceHandler.HandleCountWorkspaceWorkflowsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countWorkspaceWorkflows",
+                methodName: "CountWorkspaceWorkflows",
+                httpMethod: "GET",
+                routeTemplate: "/workspace/workflows/count",
+                tags: new[] { "workspace" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "workspace:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "workspace:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountWorkspaceWorkflowsEndpoint);
 
         IEndpointConventionBuilder __PullWorkingCopyEndpoint = app.MapPost("/workspace/workflows/{id}/git/pull", async (HttpContext context) =>
         {
@@ -8748,6 +8854,59 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __DeleteSourceEndpoint);
 
+        IEndpointConventionBuilder __CountSourcesEndpoint = app.MapGet("/sources/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                CountSourcesParams parameters = new();
+
+                CountSourcesResult result = await sourcesHandler.HandleCountSourcesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countSources",
+                methodName: "CountSources",
+                httpMethod: "GET",
+                routeTemplate: "/sources/count",
+                tags: new[] { "sources" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountSourcesEndpoint);
+
         IEndpointConventionBuilder __ListEnvironmentsEndpoint = app.MapGet("/environments", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -9560,6 +9719,59 @@ public static class ApiEndpointRegistration
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "environments:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "environments:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __RemoveEnvironmentAdministratorEndpoint);
+
+        IEndpointConventionBuilder __CountEnvironmentsEndpoint = app.MapGet("/environments/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+
+                CountEnvironmentsParams parameters = new();
+
+                CountEnvironmentsResult result = await environmentsHandler.HandleCountEnvironmentsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countEnvironments",
+                methodName: "CountEnvironments",
+                httpMethod: "GET",
+                routeTemplate: "/environments/count",
+                tags: new[] { "environments" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "environments:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "environments:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountEnvironmentsEndpoint);
 
         IEndpointConventionBuilder __ListEnvironmentRunnerAuthorizationsEndpoint = app.MapGet("/environments/{name}/runners", async (HttpContext context) =>
         {
@@ -13471,6 +13683,46 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>ListRepoCommits</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] ListRepoCommitsOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountEnvironments</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentsOauth2Scopes = ["environments:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountEnvironments</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentsOpenIdConnectScopes = ["environments:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountSources</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSourcesOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountSources</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSourcesOpenIdConnectScopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountCredentials</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCredentialsOauth2Scopes = ["credentials:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountCredentials</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCredentialsOpenIdConnectScopes = ["credentials:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountWorkspaceWorkflows</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountWorkspaceWorkflowsOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountWorkspaceWorkflows</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountWorkspaceWorkflowsOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>SearchGrantees</c> for the <c>Oauth2</c> scheme.

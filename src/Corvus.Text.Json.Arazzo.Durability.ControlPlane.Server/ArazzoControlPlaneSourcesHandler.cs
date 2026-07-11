@@ -34,6 +34,9 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The server-side bound on /count: the store stops one row past this, so a busy list renders "100+" (design §16.5).
+    private const int CountCap = 100;
+
     private readonly ISourceStore store;
     private readonly ControlPlaneAccess access;
     private readonly SourceDocumentFetcher? fetcher;
@@ -89,6 +92,15 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
             sources: Models.SourceList.SourceSummaryArray.Build(in sources, BuildSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListSourcesResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountSourcesResult> HandleCountSourcesAsync(CountSourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The same §14.2 read reach as HandleListSourcesAsync (this.access.Current()), but the store returns only a
+        // bounded total, never rows (design §16.5: list footers). CountCap bounds it so a busy list renders "100+".
+        (int count, bool capped) = await this.store.CountAsync(this.access.Current(), CountCap, cancellationToken).ConfigureAwait(false);
+        return CountSourcesResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>

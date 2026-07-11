@@ -608,6 +608,18 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countCredentials` — a bounded count of the source credential bindings {@link listCredentials} would return (the
+   * caller's reach, §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or
+   * exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countCredentials(query = {}) {
+    const result = await this._request('GET', '/credentials/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listCredentials`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ credentials: object[], nextPageToken: (string|null) }>}
@@ -633,6 +645,18 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/environments${qs(search)}`, { signal: query.signal });
     return { environments: result.environments ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countEnvironments` — a bounded count of the deployment environments {@link listEnvironments} would return (the
+   * caller's reach, §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or
+   * exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countEnvironments(query = {}) {
+    const result = await this._request('GET', '/environments/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
@@ -805,6 +829,18 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countSources` — a bounded count of the registered sources {@link listSources} would return (the caller's reach,
+   * §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or exceeds the server's
+   * cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countSources(query = {}) {
+    const result = await this._request('GET', '/sources/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listSources`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ sources: object[], nextPageToken: (string|null) }>}
@@ -885,6 +921,18 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/workspace/workflows${qs(search)}`, { signal: query.signal });
     return { workingCopies: result.workingCopies ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countWorkingCopies` — a bounded count of the designer working copies {@link listWorkingCopies} would return (the
+   * caller's reach, §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or
+   * exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countWorkingCopies(query = {}) {
+    const result = await this._request('GET', '/workspace/workflows/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**

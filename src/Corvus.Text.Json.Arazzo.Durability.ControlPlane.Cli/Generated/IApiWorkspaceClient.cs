@@ -283,6 +283,16 @@ public interface IApiWorkspaceClient : IAsyncDisposable
         public static readonly string[] ListWorkingCopySourceOperationsOpenIdConnectScopes = ["workspace:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountWorkspaceWorkflows</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountWorkspaceWorkflowsOauth2Scopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountWorkspaceWorkflows</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountWorkspaceWorkflowsOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["catalog:write", "workspace:read", "workspace:write"];
@@ -494,4 +504,13 @@ public interface IApiWorkspaceClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListWorkingCopySourceOperationsResponse> ListWorkingCopySourceOperationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source id, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count designer working copies
+    /// </summary>
+    /// <remarks>
+    /// Counts the designer working copies the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountWorkspaceWorkflowsResponse> CountWorkspaceWorkflowsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

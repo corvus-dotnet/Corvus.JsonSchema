@@ -3575,6 +3575,114 @@
         }
       }
     },
+    "/environments/count": {
+      "get": {
+        "operationId": "countEnvironments",
+        "security": [
+          { "oauth2": [ "environments:read" ] },
+          { "openIdConnect": [ "environments:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "environments"
+        ],
+        "summary": "Count deployment environments",
+        "description": "Counts the deployment environments the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible deployment environments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources/count": {
+      "get": {
+        "operationId": "countSources",
+        "security": [
+          { "oauth2": [ "sources:read" ] },
+          { "openIdConnect": [ "sources:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "sources"
+        ],
+        "summary": "Count registered sources",
+        "description": "Counts the registered sources the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible registered sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/credentials/count": {
+      "get": {
+        "operationId": "countCredentials",
+        "security": [
+          { "oauth2": [ "credentials:read" ] },
+          { "openIdConnect": [ "credentials:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "credentials"
+        ],
+        "summary": "Count source credential bindings",
+        "description": "Counts the source credential bindings the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible source credential bindings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspace/workflows/count": {
+      "get": {
+        "operationId": "countWorkspaceWorkflows",
+        "security": [
+          { "oauth2": [ "workspace:read" ] },
+          { "openIdConnect": [ "workspace:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Count designer working copies",
+        "description": "Counts the designer working copies the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible designer working copies.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/accessRequests/count": {
       "get": {
         "operationId": "countAccessRequests",

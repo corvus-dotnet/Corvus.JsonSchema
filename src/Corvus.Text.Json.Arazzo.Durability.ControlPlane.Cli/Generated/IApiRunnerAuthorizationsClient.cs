@@ -187,4 +187,15 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListRunnerAuthorizationsResponse> ListRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetRunnerAuthorizationsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count runner authorizations (the approver inbox)
+    /// </summary>
+    /// <remarks>
+    /// Counts runner authorizations visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRunnerAuthorizations: with environment, that environment's authorizations (administrator required, 403 otherwise); otherwise the inbox across every environment the caller administers; defaults to Pending when status is omitted. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountRunnerAuthorizationsResponse> CountRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetRunnerAuthorizationsCountStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

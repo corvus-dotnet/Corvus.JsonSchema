@@ -82,4 +82,13 @@ public interface IApiSourcesHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<DeleteSourceResult> HandleDeleteSourceAsync(DeleteSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /sources/count — Count registered sources
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountSourcesResult> HandleCountSourcesAsync(CountSourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

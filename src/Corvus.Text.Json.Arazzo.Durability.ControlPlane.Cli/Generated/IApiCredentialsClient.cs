@@ -148,6 +148,16 @@ public interface IApiCredentialsClient : IAsyncDisposable
         public static readonly string[] DeleteCredentialOpenIdConnectScopes = ["credentials:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountCredentials</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCredentialsOauth2Scopes = ["credentials:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountCredentials</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCredentialsOpenIdConnectScopes = ["credentials:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["credentials:read", "credentials:write"];
@@ -206,4 +216,13 @@ public interface IApiCredentialsClient : IAsyncDisposable
     /// <param name="environment">The environment parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<DeleteCredentialResponse> DeleteCredentialAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count source credential bindings
+    /// </summary>
+    /// <remarks>
+    /// Counts the source credential bindings the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountCredentialsResponse> CountCredentialsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }
