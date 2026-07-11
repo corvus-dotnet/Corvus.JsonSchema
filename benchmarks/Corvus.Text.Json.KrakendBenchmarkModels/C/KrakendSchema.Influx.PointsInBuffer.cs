@@ -142,10 +142,10 @@ public readonly partial struct KrakendSchema
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static explicit operator long(PointsInBuffer value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+            public static implicit operator long(PointsInBuffer value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static explicit operator double(PointsInBuffer value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+            public static implicit operator double(PointsInBuffer value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator Corvus.Numerics.BigNumber(PointsInBuffer value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();

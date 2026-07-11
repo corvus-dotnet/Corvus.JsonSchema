@@ -1,5 +1,14 @@
 # Version History
 
+## V5.2.5
+
+V5.2.5 restores implicit numeric conversion operators on generated types whose values are always numeric — a constrained integer, or a nullable integer/number — in both the V4 and V5 engines.
+
+### Bug fixes
+
+- **Numeric conversions on constrained and nullable numeric types are implicit again (V4 engine)** — 5.1 made conversions between a *multi-core union* type and .NET numeric types `explicit`, fixing implicit conversions that could throw when the instance held a non-numeric branch. The union test counted `ImpliedCoreTypes()` flags, but that set unions keyword implications: `Number` and `Integer` are distinct flags and a numeric constraint keyword (`minimum`, `maximum`, …) implies `Number` alongside the `Integer` implied by `"type": "integer"`, so an ordinary constrained integer — `{ "type": "integer", "format": "int32", "minimum": 0 }` — counted two flags and was treated as a union; `["integer", "null"]` counted `Integer|Null` the same way. Both regressed from the 4.x output, where the conversion to and from the preferred .NET numeric type (`int` for `format: int32`; `long` for an unformatted integer) is `implicit` — breaking consumers with `CS0029` on upgrade. The generator now classifies a type as a union for conversion purposes only when it can hold a **non-numeric** value kind: `Number`/`Integer` are one numeric domain, and `null` does not demote the conversions (matching 4.x). A genuine mixed union such as `["integer", "string"]` keeps the explicit conversions introduced in 5.1. Regenerate affected models to pick this up; output for such models is then identical to 4.3.x. See [#834](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/834).
+- **The V5 engine aligns to the same rule** — the identical flag-counting sent a constrained integer or nullable numeric type down the multi-type-union path, so the `long` and `double` conversions that a bare `"type": "integer"` emits implicitly were demoted to `explicit` (a format-driven conversion such as `int` for `format: int32` was unaffected). Types whose implied kinds are all within the numeric domain (`number`/`integer`/`null`) now emit the same conversions as a single-core numeric type: `implicit` `long` and `double`, `explicit` for the allocating `BigNumber`/`BigInteger` and `decimal` conversions. Mixed-kind unions are unchanged. This widens the conversions available on affected V5 models (an explicit cast that compiled before still compiles), so no consuming-code changes are needed; regenerate models to pick it up. The benchmark `C/` model directories are resynced to the current generator output in the same change.
+
 ## V5.2.4
 
 V5.2.4 fixes the V4 engine so that a schema typed as a nullable boolean — `"type": ["boolean", "null"]` — again generates code that compiles on .NET 8 and later.

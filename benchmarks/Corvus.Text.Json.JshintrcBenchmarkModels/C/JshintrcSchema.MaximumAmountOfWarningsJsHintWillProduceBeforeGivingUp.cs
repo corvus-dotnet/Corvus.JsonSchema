@@ -134,10 +134,10 @@ public readonly partial struct JshintrcSchema
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+        public static implicit operator long(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator double(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+        public static implicit operator double(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Corvus.Numerics.BigNumber(MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();

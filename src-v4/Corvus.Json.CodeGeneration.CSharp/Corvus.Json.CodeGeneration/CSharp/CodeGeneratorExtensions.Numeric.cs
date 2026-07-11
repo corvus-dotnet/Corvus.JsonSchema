@@ -522,7 +522,9 @@ internal static partial class CodeGeneratorExtensions
                 return;
             }
 
-            bool isMultiCore = typeDeclaration.ImpliedCoreTypes().CountTypes() > 1;
+            // A conversion is only unsafe-by-branch when the union can hold a non-numeric value kind;
+            // Number/Integer are one numeric domain, and Null matches the 4.x implicit contract.
+            bool isMultiCore = (typeDeclaration.ImpliedCoreTypes() & ~(CoreTypes.Number | CoreTypes.Integer | CoreTypes.Null)) != 0;
             string operatorKind = !isMultiCore && (typeDeclaration.PreferredDotnetNumericTypeName() == numericType || allImplicit) ? "implicit" : "explicit";
 
             if (!fromOnly)

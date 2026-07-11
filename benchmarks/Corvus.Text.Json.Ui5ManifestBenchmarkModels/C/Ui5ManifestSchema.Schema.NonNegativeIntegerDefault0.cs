@@ -172,10 +172,10 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static explicit operator long(NonNegativeIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+            public static implicit operator long(NonNegativeIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static explicit operator double(NonNegativeIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+            public static implicit operator double(NonNegativeIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator Corvus.Numerics.BigNumber(NonNegativeIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
