@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -89,11 +90,14 @@ public sealed class PostgresSourceStore : ISourceStore, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(actor);
         WorkflowEtag etag = NewEtag();
         byte[] json = SourceSerialization.SerializeNew(draft, actor, this.timeProvider.GetUtcNow(), etag);
+        string canonicalTags = SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue);
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand insert = connection.CreateCommand();
+        insert.Transaction = transaction;
         insert.CommandText = "INSERT INTO Sources (Name, Tags, Etag, Document) VALUES (@n, @t, @etag, @doc);";
         insert.Parameters.AddWithValue("n", draft.NameValue);
-        insert.Parameters.AddWithValue("t", SourceCredentialKey.CanonicalTags(draft.ManagementTagsValue));
+        insert.Parameters.AddWithValue("t", canonicalTags);
         insert.Parameters.AddWithValue("etag", etag.Value!);
         insert.Parameters.AddWithValue("doc", json);
         try
@@ -104,6 +108,11 @@ public sealed class PostgresSourceStore : ISourceStore, IAsyncDisposable
         {
             throw new InvalidOperationException($"A source named '{draft.NameValue}' with those security tags already exists.");
         }
+
+        // Mirror the management tags into the queryable side table so the §14.2 read reach can be pushed into the
+        // list/count query (a correlated EXISTS). Atomic; tags are immutable so no re-sync on update.
+        await SyncSecurityTagsAsync(connection, transaction, draft.NameValue, canonicalTags, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return PersistedJson.ToPooledDocument<RegisteredSource>(json);
     }
@@ -136,60 +145,43 @@ public sealed class PostgresSourceStore : ISourceStore, IAsyncDisposable
         bool hasMore = false;
         try
         {
-            // Keyset seek past the cursor in (Name, Tags) order — an indexed range scan, not a table load. Reach is a
-            // per-row predicate applied in memory as we stream; the reader is consumed only until the page fills.
+            // Keyset seek past the cursor in (Name, Tags) order — an indexed range scan — with the §14.2 read reach
+            // pushed into the query as a correlated EXISTS over SourceSecurityTags (the same predicate context.Admits
+            // evaluates, but applied in the database), so out-of-reach rows never leave it. LIMIT bounds the read.
             await using NpgsqlCommand select = connection.CreateCommand();
+            var conditions = new List<string>(2);
             if (hasCursor)
             {
-                select.CommandText =
-                    "SELECT Name, Tags, Document FROM Sources " +
-                    "WHERE Name > @n OR (Name = @n AND Tags > @t) " +
-                    "ORDER BY Name, Tags;";
+                conditions.Add("(Name > @n OR (Name = @n AND Tags > @t))");
                 select.Parameters.AddWithValue("n", cursor.Name);
                 select.Parameters.AddWithValue("t", cursor.TieBreaker);
             }
-            else
+
+            AppendReachPredicate(conditions, select, context);
+
+            var sql = new StringBuilder("SELECT Name, Tags, Document FROM Sources");
+            if (conditions.Count > 0)
             {
-                select.CommandText = "SELECT Name, Tags, Document FROM Sources ORDER BY Name, Tags;";
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
             }
+
+            sql.Append(" ORDER BY Name, Tags LIMIT @limit;");
+            select.Parameters.AddWithValue("limit", pageSize + 1);
+            select.CommandText = sql.ToString();
 
             await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             string lastName = string.Empty, lastTags = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string name = reader.GetString(0);
-                string tags = reader.GetString(1);
-                byte[] json = reader.GetFieldValue<byte[]>(2);
-                ParsedJsonDocument<RegisteredSource> cand = PersistedJson.ToPooledDocument<RegisteredSource>(json);
-                bool kept = false;
-                try
+                if (docs.Count == pageSize)
                 {
-                    SecurityTagSet candTags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, candTags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastName = name;
-                    lastTags = tags;
+                    hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                    break;
                 }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
-                }
+
+                lastName = reader.GetString(0);
+                lastTags = reader.GetString(1);
+                docs.Add(PersistedJson.ToPooledDocument<RegisteredSource>(reader.GetFieldValue<byte[]>(2)));
             }
 
             return hasMore
@@ -244,12 +236,40 @@ public sealed class PostgresSourceStore : ISourceStore, IAsyncDisposable
             SourceSerialization.EnsureEtag(name, expectedEtag, SourceSerialization.EtagOf(existing));
         }
 
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM Sources WHERE Name = @n AND Tags = @t;";
+        delete.Transaction = transaction;
+        delete.CommandText =
+            "DELETE FROM Sources WHERE Name = @n AND Tags = @t; " +
+            "DELETE FROM SourceSecurityTags WHERE Name = @n AND Tags = @t;";
         delete.Parameters.AddWithValue("n", name);
         delete.Parameters.AddWithValue("t", tags!);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(1);
+        AppendReachPredicate(conditions, select, context);
+
+        var inner = new StringBuilder("SELECT 1 FROM Sources");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        select.Parameters.AddWithValue("cap", cap + 1);
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
     }
 
     /// <inheritdoc/>
@@ -258,6 +278,54 @@ public sealed class PostgresSourceStore : ISourceStore, IAsyncDisposable
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over SourceSecurityTags mirroring the caller's reach
+    // (the same rules context.Admits evaluates). A null reach (unrestricted) adds nothing. Shared by ListAsync and
+    // CountAsync so the count can never drift from the list it annotates.
+    private static void AppendReachPredicate(List<string> conditions, NpgsqlCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "SourceSecurityTags",
+            ["Name", "Tags"],
+            "TagKey",
+            "TagValue",
+            "Sources",
+            value =>
+            {
+                string p = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return "@" + p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors a source's management tags into the queryable side table (one row per key/value) so the reach can be pushed
+    // into the list/count query. Management tags are immutable after creation, so this runs only on add.
+    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string name, string canonicalTags, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using NpgsqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO SourceSecurityTags (Name, Tags, TagKey, TagValue) VALUES (@n, @t, @key, @value);";
+            insert.Parameters.AddWithValue("n", name);
+            insert.Parameters.AddWithValue("t", canonicalTags);
+            insert.Parameters.AddWithValue("key", tag.Key);
+            insert.Parameters.AddWithValue("value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -305,5 +373,13 @@ public sealed class PostgresSourceStore : ISourceStore, IAsyncDisposable
             PRIMARY KEY (Name, Tags)
         );
         CREATE INDEX IF NOT EXISTS ix_sources_name ON Sources (Name);
+        CREATE TABLE IF NOT EXISTS SourceSecurityTags (
+            Name TEXT NOT NULL,
+            Tags TEXT NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_sourcesecuritytags_owner ON SourceSecurityTags (Name, Tags);
+        CREATE INDEX IF NOT EXISTS ix_sourcesecuritytags_kv ON SourceSecurityTags (TagKey, TagValue);
         """;
 }
