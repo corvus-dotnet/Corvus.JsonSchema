@@ -58,6 +58,22 @@ public interface IAccessRequestStore
         return AccessRequestPaging.PageInMemory(filtered, limit, pageToken);
     }
 
+    /// <summary>Counts requests matching a filter, bounded by <paramref name="cap"/> (design §16.5 — work badges and list
+    /// footers): the same <paramref name="query"/> reach + filter as the paged list, but returning only a bounded total,
+    /// never rows. The default implementation counts over <see cref="ListAsync(AccessRequestQuery, CancellationToken)"/>;
+    /// a backend overrides it with a native <c>COUNT</c> capped at <paramref name="cap"/> + 1 so the read itself is
+    /// bounded (allocation-free — a number, no row materialisation).</summary>
+    /// <param name="query">The filter (all criteria optional) — the same query the list uses, carrying the §14.2 reach.</param>
+    /// <param name="cap">The maximum count to report; when the true total exceeds it, <c>Capped</c> is <see langword="true"/> and <c>Count</c> is <paramref name="cap"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count, and whether the cap was hit (so the caller renders e.g. <c>100+</c>).</returns>
+    async ValueTask<(int Count, bool Capped)> CountAsync(AccessRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        using PooledDocumentList<AccessRequest> filtered = await this.ListAsync(query, cancellationToken).ConfigureAwait(false);
+        int total = filtered.Count;
+        return total > cap ? (cap, true) : (total, false);
+    }
+
     /// <summary>Applies a terminal decision to a request under optimistic concurrency.</summary>
     /// <param name="id">The request id.</param>
     /// <param name="decision">The decision to apply.</param>
