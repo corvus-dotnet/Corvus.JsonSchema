@@ -312,80 +312,18 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         try
         {
             using SqliteCommand select = this.connection.CreateCommand();
+            string filter = BuildVisibilityFilter(select, query);
             select.CommandText =
-                """
+                $"""
                 SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags, Environment
                 FROM WorkflowRuns
-                WHERE (@status IS NULL OR Status = @status) AND (@workflowId IS NULL OR WorkflowId = @workflowId)
-                  AND (@workflowId IS NOT NULL OR WorkflowId <> @draftId)
-                  AND (@createdAfter IS NULL OR CreatedAt >= @createdAfter)
-                  AND (@createdBefore IS NULL OR CreatedAt < @createdBefore)
-                  AND (@updatedAfter IS NULL OR UpdatedAt >= @updatedAfter)
-                  AND (@updatedBefore IS NULL OR UpdatedAt < @updatedBefore)
-                  AND (@correlationId IS NULL OR CorrelationId = @correlationId)
-                  {{tagPredicates}}
-                  {{securityPredicate}}
+                WHERE {filter}
                   AND (@after IS NULL OR RunId > @after)
                 ORDER BY RunId
                 LIMIT @limit;
                 """;
-            select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
-            select.Parameters.AddWithValue("@workflowId", (object?)query.WorkflowId ?? DBNull.Value);
-
-            // §18: draft runs never surface on an unfiltered visibility query — a caller must name the
-            // reserved $draft workflow id explicitly (the debug-run surface does; the runs listing never does).
-            select.Parameters.AddWithValue("@draftId", DraftRuns.RunWorkflowId);
-            select.Parameters.AddWithValue("@createdAfter", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-            select.Parameters.AddWithValue("@createdBefore", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-            select.Parameters.AddWithValue("@updatedAfter", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-            select.Parameters.AddWithValue("@updatedBefore", (object?)query.UpdatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
-            select.Parameters.AddWithValue("@correlationId", (object?)query.CorrelationId ?? DBNull.Value);
             select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
             select.Parameters.AddWithValue("@limit", query.Limit + 1);
-
-            if (!query.Tags.IsEmpty)
-            {
-                // The needle (per query, not per row) is materialized to strings only here, at the ADO LIKE-parameter
-                // boundary the driver forces; the row tags themselves are never materialized — the LIKE matches the bytes.
-                List<string> tags = query.Tags.ToList();
-                var predicates = new System.Text.StringBuilder();
-                for (int i = 0; i < tags.Count; i++)
-                {
-                    string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                    predicates.Append("AND Tags LIKE ").Append(name).Append(" ESCAPE '\\'\n                  ");
-                    select.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
-                }
-
-                select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
-            }
-            else
-            {
-                select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
-            }
-
-            // Row-security reach (§14.4): translate the filter to a correlated EXISTS predicate over the run's
-            // security tags. The client only reaches here for a store that declares ISupportsRowSecurityFilter.
-            if (query.Security is { } security)
-            {
-                int securityParam = 0;
-                var emitter = new SqlSecurityRuleEmitter(
-                    "WorkflowRunSecurityTags",
-                    ["RunId"],
-                    "TagKey",
-                    "TagValue",
-                    "WorkflowRuns",
-                    value =>
-                    {
-                        string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
-                        select.Parameters.AddWithValue(name, value);
-                        return name;
-                    });
-                select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
-            }
-            else
-            {
-                select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
-            }
 
             var runs = new List<WorkflowRunListing>();
             using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -412,6 +350,92 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         {
             this.gate.Release();
         }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+            string filter = BuildVisibilityFilter(select, query);
+
+            // Bounded native count: COUNT over a cap+1-limited sub-select — reuses the list's exact filter (so the
+            // §14.4 reach can never drift), never materialises rows, and stops the moment the cap is exceeded.
+            select.CommandText = $"SELECT COUNT(*) FROM (SELECT 1 FROM WorkflowRuns WHERE {filter} LIMIT @cap);";
+            select.Parameters.AddWithValue("@cap", cap + 1);
+            long total = (long)(await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+            return total > cap ? (cap, true) : ((int)total, false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    // Builds the shared visibility WHERE body (status / workflow / draft-exclusion / timestamps / correlation / tags /
+    // §14.4 security reach) and binds its parameters onto <paramref name="command"/>, returning the predicate SQL
+    // WITHOUT the "WHERE" keyword, the keyset cursor, ORDER BY, or LIMIT. QueryAsync appends the cursor + paging;
+    // CountAsync wraps it in a bounded COUNT — both share this exact predicate so the reach filter cannot drift.
+    private static string BuildVisibilityFilter(SqliteCommand command, in WorkflowQuery query)
+    {
+        var sql = new System.Text.StringBuilder();
+        sql.Append("(@status IS NULL OR Status = @status)");
+        sql.Append(" AND (@workflowId IS NULL OR WorkflowId = @workflowId)");
+        sql.Append(" AND (@workflowId IS NOT NULL OR WorkflowId <> @draftId)");
+        sql.Append(" AND (@createdAfter IS NULL OR CreatedAt >= @createdAfter)");
+        sql.Append(" AND (@createdBefore IS NULL OR CreatedAt < @createdBefore)");
+        sql.Append(" AND (@updatedAfter IS NULL OR UpdatedAt >= @updatedAfter)");
+        sql.Append(" AND (@updatedBefore IS NULL OR UpdatedAt < @updatedBefore)");
+        sql.Append(" AND (@correlationId IS NULL OR CorrelationId = @correlationId)");
+
+        command.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@workflowId", (object?)query.WorkflowId ?? DBNull.Value);
+
+        // §18: draft runs never surface on an unfiltered visibility query — a caller must name the reserved
+        // $draft workflow id explicitly (the debug-run surface does; the runs listing never does).
+        command.Parameters.AddWithValue("@draftId", DraftRuns.RunWorkflowId);
+        command.Parameters.AddWithValue("@createdAfter", (object?)query.CreatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@createdBefore", (object?)query.CreatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedAfter", (object?)query.UpdatedAfter?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedBefore", (object?)query.UpdatedBefore?.ToUnixTimeMilliseconds() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@correlationId", (object?)query.CorrelationId ?? DBNull.Value);
+
+        if (!query.Tags.IsEmpty)
+        {
+            // The needle (per query, not per row) is materialized to strings only here, at the ADO LIKE-parameter
+            // boundary the driver forces; the row tags themselves are never materialized — the LIKE matches the bytes.
+            List<string> tags = query.Tags.ToList();
+            for (int i = 0; i < tags.Count; i++)
+            {
+                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
+                sql.Append(" AND Tags LIKE ").Append(name).Append(" ESCAPE '\\'");
+                command.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+            }
+        }
+
+        // Row-security reach (§14.4): translate the filter to a correlated EXISTS predicate over the run's security
+        // tags. The client only reaches here for a store that declares ISupportsRowSecurityFilter.
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "WorkflowRunSecurityTags",
+                ["RunId"],
+                "TagKey",
+                "TagValue",
+                "WorkflowRuns",
+                value =>
+                {
+                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    command.Parameters.AddWithValue(name, value);
+                    return name;
+                });
+            sql.Append(" AND (").Append(security.ToSqlPredicate(emitter)).Append(')');
+        }
+
+        return sql.ToString();
     }
 
     /// <inheritdoc/>

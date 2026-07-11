@@ -365,73 +365,23 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
 
             var fields = entries.ToDictionary(e => (string)e.Name!, e => e.Value);
-            var status = Enum.Parse<WorkflowRunStatus>((string)fields["status"]!);
-            if (query.Status is { } wantStatus && status != wantStatus)
-            {
-                continue;
-            }
-
-            string workflowId = (string)fields["workflow_id"]!;
-            if (query.WorkflowId is { } wantWorkflow && workflowId != wantWorkflow)
-            {
-                continue;
-            }
-
-            long createdAt = (long)fields["created_at"];
-            if (query.CreatedAfter is { } createdAfter && createdAt < createdAfter.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            if (query.CreatedBefore is { } createdBefore && createdAt >= createdBefore.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            long updatedAt = (long)fields["updated_at"];
-            if (query.UpdatedAfter is { } updatedAfter && updatedAt < updatedAfter.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            if (query.UpdatedBefore is { } updatedBefore && updatedAt >= updatedBefore.ToUnixTimeMilliseconds())
-            {
-                continue;
-            }
-
-            string? correlationId = fields.TryGetValue("correlation_id", out RedisValue cidV) && !cidV.IsNull ? (string)cidV! : null;
-            if (query.CorrelationId is { } wantCid && correlationId != wantCid)
-            {
-                continue;
-            }
-
-            TagSet tags = fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull ? TagSet.FromJsonStringOrEmpty((string?)tagsV) : default;
-            if (!query.Tags.AllContainedIn(tags))
-            {
-                continue;
-            }
-
-            SecurityTagSet securityTags = fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default;
-
-            // Row-security reach (§14.2): Redis has no server-side filtering over the run set, so apply the reach
-            // filter in process over the persisted security tags — the only correct option for a key/value backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(securityTags))
+            if (!Matches(query, fields))
             {
                 continue;
             }
 
             var entry = new WorkflowRunIndexEntry(
-                workflowId,
-                status,
-                DateTimeOffset.FromUnixTimeMilliseconds(createdAt),
-                DateTimeOffset.FromUnixTimeMilliseconds(updatedAt),
+                (string)fields["workflow_id"]!,
+                Enum.Parse<WorkflowRunStatus>((string)fields["status"]!),
+                DateTimeOffset.FromUnixTimeMilliseconds((long)fields["created_at"]),
+                DateTimeOffset.FromUnixTimeMilliseconds((long)fields["updated_at"]),
                 fields.TryGetValue("due_at", out RedisValue dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds((long)dueAt) : null,
                 fields.TryGetValue("awaiting_channel", out RedisValue ch) ? (string)ch! : null,
                 fields.TryGetValue("awaiting_correlation_id", out RedisValue corr) ? (string)corr! : null,
                 fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null,
-                CorrelationId: correlationId,
-                Tags: tags,
-                SecurityTags: securityTags,
+                CorrelationId: fields.TryGetValue("correlation_id", out RedisValue cidV) && !cidV.IsNull ? (string)cidV! : null,
+                Tags: fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull ? TagSet.FromJsonStringOrEmpty((string?)tagsV) : default,
+                SecurityTags: fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default,
                 Environment: fields.TryGetValue("environment", out RedisValue env) && !env.IsNull ? (string)env! : null);
             runs.Add(new WorkflowRunListing(new WorkflowRunId(id), entry));
             if (runs.Count > query.Limit)
@@ -441,6 +391,96 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
+
+        // Bounded scan: count matches with the SAME filter the list applies (so the §14.2 reach cannot drift), stopping
+        // one past the cap. No client-side sort needed — a count is order-independent.
+        int count = 0;
+        foreach (RedisValue member in members)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey((string)member!)).ConfigureAwait(false);
+            if (entries.Length == 0)
+            {
+                continue;
+            }
+
+            var fields = entries.ToDictionary(e => (string)e.Name!, e => e.Value);
+            if (Matches(query, fields) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    // The shared visibility filter (status / workflow / draft-exclusion / timestamps / correlation / tags / §14.2
+    // security reach) over a run's hash fields, WITHOUT the keyset cursor: QueryAsync adds the cursor + builds the
+    // listing, CountAsync scans with just this. Both share the one predicate so the reach filter cannot drift.
+    private static bool Matches(WorkflowQuery query, Dictionary<string, RedisValue> fields)
+    {
+        var status = Enum.Parse<WorkflowRunStatus>((string)fields["status"]!);
+        if (query.Status is { } wantStatus && status != wantStatus)
+        {
+            return false;
+        }
+
+        string workflowId = (string)fields["workflow_id"]!;
+        if (query.WorkflowId is { } wantWorkflow && workflowId != wantWorkflow)
+        {
+            return false;
+        }
+
+        // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+        if (query.WorkflowId is null && string.Equals(workflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        long createdAt = (long)fields["created_at"];
+        if (query.CreatedAfter is { } createdAfter && createdAt < createdAfter.ToUnixTimeMilliseconds())
+        {
+            return false;
+        }
+
+        if (query.CreatedBefore is { } createdBefore && createdAt >= createdBefore.ToUnixTimeMilliseconds())
+        {
+            return false;
+        }
+
+        long updatedAt = (long)fields["updated_at"];
+        if (query.UpdatedAfter is { } updatedAfter && updatedAt < updatedAfter.ToUnixTimeMilliseconds())
+        {
+            return false;
+        }
+
+        if (query.UpdatedBefore is { } updatedBefore && updatedAt >= updatedBefore.ToUnixTimeMilliseconds())
+        {
+            return false;
+        }
+
+        string? correlationId = fields.TryGetValue("correlation_id", out RedisValue cidV) && !cidV.IsNull ? (string)cidV! : null;
+        if (query.CorrelationId is { } wantCid && correlationId != wantCid)
+        {
+            return false;
+        }
+
+        TagSet tags = fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull ? TagSet.FromJsonStringOrEmpty((string?)tagsV) : default;
+        if (!query.Tags.AllContainedIn(tags))
+        {
+            return false;
+        }
+
+        // Row-security reach (§14.2): Redis has no server-side filtering over the run set, so apply the reach filter
+        // in process over the persisted security tags — the only correct option for a key/value backend.
+        SecurityTagSet securityTags = fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default;
+        return query.Security is not { } security || security.IsSatisfiedBy(securityTags);
     }
 
     /// <inheritdoc/>

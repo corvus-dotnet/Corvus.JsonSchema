@@ -357,49 +357,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.Empty;
-        if (query.Status is { } status)
-        {
-            filter = b.And(filter, b.Eq("status", status.ToString()));
-        }
-
-        if (query.WorkflowId is { } workflowId)
-        {
-            filter = b.And(filter, b.Eq("workflowId", workflowId));
-        }
-
-        if (query.CreatedAfter is { } createdAfter)
-        {
-            filter = b.And(filter, b.Gte("createdAt", createdAfter.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.CreatedBefore is { } createdBefore)
-        {
-            filter = b.And(filter, b.Lt("createdAt", createdBefore.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.UpdatedAfter is { } updatedAfter)
-        {
-            filter = b.And(filter, b.Gte("updatedAt", updatedAfter.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.UpdatedBefore is { } updatedBefore)
-        {
-            filter = b.And(filter, b.Lt("updatedAt", updatedBefore.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.CorrelationId is { } cid)
-        {
-            filter = b.And(filter, b.Eq("correlationId", cid));
-        }
-
-        if (!query.Tags.IsEmpty)
-        {
-            // $all = contains every queried tag; the needle is materialized to strings only here, at the BSON
-            // filter-builder leaf the driver requires — the stored row tags are never materialized.
-            filter = b.And(filter, b.All("tags", query.Tags.ToList()));
-        }
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
 
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
         if (query.ContinuationToken.IsNotUndefined())
@@ -407,7 +365,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
             if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
             {
-                filter = b.And(filter, b.Gt("_id", after));
+                filter = Builders<BsonDocument>.Filter.And(filter, Builders<BsonDocument>.Filter.Gt("_id", after));
             }
         }
 
@@ -456,6 +414,101 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         return WorkflowContinuationToken.Paginate(listings, query.Limit);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
+
+        // No reach filter → a native bounded count: CountDocuments with a Limit stops the server one past the cap.
+        if (query.Security is null)
+        {
+            long total = await this.runs.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
+            return total > cap ? (cap, true) : ((int)total, false);
+        }
+
+        // Reach is applied in process over the embedded securityTags array (see the class remarks), so stream the
+        // server-filtered set (projecting only the security tags) and bounded-count the rows the reach admits.
+        int count = 0;
+        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter)
+            .Project(Builders<BsonDocument>.Projection.Include("securityTags"))
+            .ToCursorAsync(cancellationToken).ConfigureAwait(false);
+        while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            foreach (BsonDocument document in cursor.Current)
+            {
+                if (query.Security is { } security && !security.IsSatisfiedBy(ReadSecurityTags(document)))
+                {
+                    continue;
+                }
+
+                if (++count > cap)
+                {
+                    return (cap, true);
+                }
+            }
+        }
+
+        return (count, false);
+    }
+
+    // Builds the shared server-side visibility filter (status / workflow / draft-exclusion / timestamps / correlation /
+    // tags), WITHOUT the keyset cursor and WITHOUT the §14.2 reach (which Mongo applies in process over the embedded
+    // securityTags array). QueryAsync adds the cursor + client-side reach; CountAsync reuses this. Both share it so the
+    // server-side predicate cannot drift.
+    private static FilterDefinition<BsonDocument> BuildFilter(in WorkflowQuery query)
+    {
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (query.Status is { } status)
+        {
+            filter = b.And(filter, b.Eq("status", status.ToString()));
+        }
+
+        if (query.WorkflowId is { } workflowId)
+        {
+            filter = b.And(filter, b.Eq("workflowId", workflowId));
+        }
+        else
+        {
+            // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            filter = b.And(filter, b.Ne("workflowId", DraftRuns.RunWorkflowId));
+        }
+
+        if (query.CreatedAfter is { } createdAfter)
+        {
+            filter = b.And(filter, b.Gte("createdAt", createdAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CreatedBefore is { } createdBefore)
+        {
+            filter = b.And(filter, b.Lt("createdAt", createdBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedAfter is { } updatedAfter)
+        {
+            filter = b.And(filter, b.Gte("updatedAt", updatedAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedBefore is { } updatedBefore)
+        {
+            filter = b.And(filter, b.Lt("updatedAt", updatedBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CorrelationId is { } cid)
+        {
+            filter = b.And(filter, b.Eq("correlationId", cid));
+        }
+
+        if (!query.Tags.IsEmpty)
+        {
+            // $all = contains every queried tag; the needle is materialized to strings only here, at the BSON
+            // filter-builder leaf the driver requires — the stored row tags are never materialized.
+            filter = b.And(filter, b.All("tags", query.Tags.ToList()));
+        }
+
+        return filter;
     }
 
     /// <inheritdoc/>
