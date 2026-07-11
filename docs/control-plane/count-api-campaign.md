@@ -76,21 +76,51 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
 Diff must be count-only (a drifting regen = generator version skew — reconcile before committing).
 
 **Slice 2+ — the rest (governance / registry / runs):**
-- [ ] `runs` — `IWorkflowStateStore` (list/index)
-- [ ] `catalogVersions` — catalog store
-- [ ] `environments` — `IEnvironmentStore`
-- [ ] `sources` — `ISourceStore`
-- [ ] `credentials` — `ISourceCredentialStore`
-- [ ] `runners` — `PostgresRunnerRegistry` etc.
-- [ ] `securityBindings` (grants) + `securityRules` — `ISecurityPolicyStore`
-- [ ] `administrators` (workflow §15) — `IWorkflowAdministratorStore`
-- [ ] `environmentAdministrators` — `IEnvironmentAdministratorStore`
-- [ ] `versionAvailability` / `environmentAvailability` — `IAvailabilityStore`
-- [ ] `environmentRunnerAuthorizations` (per-env) — `IEnvironmentRunnerAuthorizationStore`
-- [ ] `workingCopies` — `IWorkspaceWorkflowStore`
-- [ ] observed identities (typeahead) — `IObservedIdentityStore` (count optional)
+- [ ] `runs` — `ISecuredWorkflowManagement.ListAsync` → `IWorkflowWaitIndex.QueryAsync` (10 backends + `ProtectedWorkflowStateStore`
+  decorator). Already **pushes reach down** (`query.Security` → `ToSqlPredicate`); the count is a native push-down:
+  add `IWorkflowWaitIndex.CountAsync(WorkflowQuery, cap)` threading `query.Security`, a `SecuredWorkflowManagement.CountAsync(query,
+  ctx, cap)` mirroring ListAsync (translate `context.Reach(Read)` → `EnsureSupported` → delegate), + handler + OpenAPI + conformance.
+- [ ] `catalogVersions` — catalog store (also `ISupportsRowSecurityFilter` — native push-down count like runs).
+- [ ] `runners`, `securityBindings`/`securityRules`, `administrators`, `environmentAdministrators`, `versionAvailability`/
+  `environmentAvailability`, `environmentRunnerAuthorizations` (per-env), observed identities — assess reach shape per store.
 
 **Excluded:** `securityOrderings` (fixed, tiny config — no count value).
 
-Sequence: finish Slice 1 end-to-end first (badges show `x+`), then work the rest one list at a time, each following
-the four-step per-slice sequence above, per-piece commits, all-backends-first-class.
+### RATIFIED (2026-07-11): path (b) — fold the metadata stores onto row-security push-down FIRST, then count
+
+The metadata stores — **`environments` (`IEnvironmentStore`), `sources` (`ISourceStore`), `credentials`
+(`ISourceCredentialStore`), `workingCopies` (`IWorkspaceWorkflowStore`)** — currently apply the §14.2 reach as an **in-memory
+per-row predicate** (`context.Admits(Read, candTags)` after parsing each row's ManagementTags). Runs/catalog instead **push the
+reach to SQL** (a `*_security_tags(id, tag_key, tag_value)` side table + `SecurityFilter.ToSqlPredicate`). The user chose (b): give
+the metadata stores the same push-down so their reach is indexed AND their counts are native/uniform (not a materialising default).
+This is a **security-critical epic** (a mistake = auth-boundary leak) of ~40 store changes across 4 families — do it **test-first**,
+per-family, per-backend, per-piece commits, re-running reach conformance at each step.
+
+**Exemplar (Postgres runs — replicate it):** side table `workflow_run_security_tags(run_id, tag_key, tag_value)` + indexes;
+`SyncSecurityTagsAsync` delete+reinsert on every save; delete cascades in DeleteAsync; the query has a `{{securityPredicate}}`
+placeholder replaced by `security.ToSqlPredicate(new SqlSecurityRuleEmitter("workflow_run_security_tags", ["run_id"], "tag_key",
+"tag_value", "workflow_runs", paramBinder))`. Store marked `ISupportsRowSecurityFilter`. See `PostgresWorkflowStateStore` L185-205,
+L429-451, schema L526-533; `RowSecurityFilter.cs`; `SqlSecurityRuleEmitter`.
+
+**Approach (i) — chosen:** the metadata stores keep their `ListAsync(AccessContext, …)` signature (no query-object/marker/facade
+churn); each store INTERNALLY extracts `SecurityFilter? reach = context.Reach(AccessVerb.Read)` and, if non-null, splices
+`reach.ToSqlPredicate(emitter over the family's side table)` into its SQL — replacing the in-memory `Admits` scan. Relational
+(Sqlite/Postgres/MySql/SqlServer): side table + sync + provisioning + push-down + native `COUNT(*)` over the predicate `LIMIT cap+1`.
+Scan/InMemory (Redis/Mongo/Cosmos/Nats/AzureStorage/InMemory): keep the in-memory reach in their scan (correct); add a bounded-scan
+`CountAsync`. Provisioning: the family's side table must be created in the store's schema AND the deployment libraries.
+
+**Test-first safety net:** the conformance suites only used `AccessContext.System` (full reach) — a reach leak would pass unnoticed.
+Add a restricted-reach test to EACH family suite BEFORE converting. **DONE for environments:**
+`EnvironmentStoreConformance.Listing_is_scoped_to_the_read_reach` (committed) — construct with
+`AccessContext.Uniform(new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], EmptyClaims))`; tag rows via
+`Environment.Draft(name, dn, desc, SecurityTagSet.FromTags([new SecurityTag("tenant","acme")]))`; assert restricted list returns only
+the admitted row. Add the analogous test to Source/SourceCredential/WorkspaceWorkflow conformance next.
+
+**Per-family sequence:** (1) restricted-reach conformance test → verify green on current in-memory impl. (2) convert relational
+backends to side-table push-down + verify the reach test still passes on each (real containers). (3) add native `CountAsync` (all
+backends) + the count conformance. (4) API-first `…/count` (reverted the earlier big-batch `/environments/count` etc. — re-add
+per-family) → regen → handler. (5) wire the console footer (`web/…/src/arazzo-client.js` count method + the list panel footer).
+
+**Status:** environments reach safety-net test committed + green (InMemory + Sqlite). NEXT = convert environments' relational backends
+(start Sqlite, then Postgres) to side-table push-down, verify the reach test holds, then the count. Composition is STOPPED. The
+podman socket for container conformance: see the note at the top of this file.
