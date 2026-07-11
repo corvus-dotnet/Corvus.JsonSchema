@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// also implements <see cref="IWorkflowWaitIndex"/>, so does this wrapper (delegating); otherwise the wait-index
 /// members throw <see cref="NotSupportedException"/>.
 /// </remarks>
-public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IAsyncDisposable
+public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private readonly IWorkflowStateStore inner;
     private readonly IWorkflowWaitIndex? innerIndex;
@@ -98,6 +98,13 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAsync(query, cancellationToken);
+
+    /// <inheritdoc/>
+    // The decorator passes query.Security straight through to the inner index (the projected security tags are stored
+    // in the clear), so it honours row-security reach exactly when the wrapped store does. Forward the inner's
+    // capability so wrapping a store that does NOT push the reach down stays fail-closed (EnsureSupported still throws
+    // rather than the filter being silently dropped and leaking rows).
+    public bool SupportsRowSecurityFilter => this.inner is ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true };
 
     /// <inheritdoc/>
     public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)

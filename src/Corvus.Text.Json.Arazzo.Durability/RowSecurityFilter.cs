@@ -16,7 +16,17 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// indexed reach-filtering it adds this marker; until then it fails loud. The in-memory reference stores already
 /// filter and carry the marker.
 /// </remarks>
-public interface ISupportsRowSecurityFilter;
+public interface ISupportsRowSecurityFilter
+{
+    /// <summary>
+    /// Gets a value indicating whether this store actually pushes the reach filter down. A concrete store that
+    /// carries the marker returns <see langword="true"/>; a delegating decorator (for example an encrypting wrapper)
+    /// overrides it to forward the <em>wrapped</em> store's capability, so wrapping a non-pushdown store stays
+    /// fail-closed — a reach filter against it still throws in <see cref="RowSecurityPushdown.EnsureSupported"/>
+    /// rather than being silently dropped and leaking rows.
+    /// </summary>
+    bool SupportsRowSecurityFilter => true;
+}
 
 /// <summary>Guards against a row-security reach filter being silently ignored by a store that does not push it down.</summary>
 internal static class RowSecurityPushdown
@@ -30,7 +40,7 @@ internal static class RowSecurityPushdown
     /// <exception cref="NotSupportedException">The filter is set but the store does not push row-security down.</exception>
     public static void EnsureSupported(SecurityFilter? security, object store)
     {
-        if (security is not null && store is not ISupportsRowSecurityFilter)
+        if (security is not null && store is not ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true })
         {
             throw new NotSupportedException(
                 $"The store '{store.GetType().Name}' does not yet implement row-security (reach) filtering in its query (§14.2/§14.4); " +
