@@ -643,6 +643,36 @@ Console.WriteLine(createdDoc.RootElement);
 </tbody>
 </table>
 <p><code>Create()</code> exists on generated types only (it is emitted by the code generator); dynamic documents built through <code>JsonElement</code> continue to use the workspace patterns above. See the <a href="/Corvus.JsonSchema/pr-preview/pr-837/examples/data-object.html">Data Object recipe</a> for a worked example, and note the result is <code>IDisposable</code> — it owns pooled memory, exactly like a parsed document.</p>
+<h3 id="benchmarks-vs-serialize-and-reparse">Benchmarks vs serialize-and-reparse</h3>
+<p>The following benchmark compares <strong><code>Create()</code></strong> against the builder round trip — <code>CreateBuilder</code> → <code>RentWriterAndBuffer</code> → <code>WriteTo</code> → <code>Parse</code>, with the workspace, writer, and buffers all rented — building the identical document (four properties, a nested object, and two arrays) from the identical build delegate.</p>
+<blockquote>
+<p>Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. Full source in <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Benchmarks"><code>benchmarks/Corvus.Text.Json.Benchmarks/</code></a> (<code>BenchmarkCreateParsedDocument</code>).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Builder + serialize + parse</th>
+<th><code>Create()</code></th>
+<th>Speedup</th>
+<th>Round-trip Alloc</th>
+<th><code>Create()</code> Alloc</th>
+<th>Alloc Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Person document</td>
+<td>1,227 ns</td>
+<td>669 ns</td>
+<td><strong>1.8×</strong></td>
+<td>288 B</td>
+<td>152 B</td>
+<td><strong>1.9×</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Summary:</strong> <code>Create()</code> is <strong>1.8× faster</strong> and allocates <strong>1.9× less</strong>. The round trip pays three passes over the content — build the mutable document's value store, serialize it, then parse the bytes back into a second metadata table — where <code>Create()</code> pays one: the document text and its metadata are written together as the values are added. The allocation difference is exactly the two objects involved: <code>Create()</code>'s 152 B is the returned <code>ParsedJsonDocument&lt;T&gt;</code> instance itself (the product), while the round trip also allocates a <code>JsonDocumentBuilder</code> per call, which the pooled builder behind <code>Create()</code> eliminates.</p>
 <h2 id="working-with-existing-json">Working with Existing JSON</h2>
 <p>In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.</p>
 <h3 id="direct-parse-to-builder-recommended">Direct Parse to Builder (Recommended)</h3>
