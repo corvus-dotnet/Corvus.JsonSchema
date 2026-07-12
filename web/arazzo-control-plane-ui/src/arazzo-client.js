@@ -388,6 +388,28 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * Bounded count of catalog entries matching a search, scoped to the caller's read reach. Same filters as
+   * `searchCatalog` (limit / pageToken are irrelevant to a count); counts matching versions, or distinct base
+   * workflows when `distinctWorkflows` is set (mirroring the search). Returns `{ count, capped }`.
+   * @param {object} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countCatalog(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    if (query.workflowIdPrefix) search.set('workflowIdPrefix', query.workflowIdPrefix);
+    for (const tag of query.tags ?? []) {
+      if (tag) search.append('tag', tag);
+    }
+    if (query.status) search.set('status', query.status);
+    if (query.owner) search.set('owner', query.owner);
+    if (query.distinctWorkflows) search.set('distinctWorkflows', 'true');
+    const result = await this._request('GET', `/catalog/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `searchCatalog`, as an async iterator walking every page via the keyset `nextPageToken`.
    * @param {{ q?: string, baseWorkflowId?: string, tags?: string[], status?: string, owner?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ versions: object[], nextPageToken: (string|null) }>}

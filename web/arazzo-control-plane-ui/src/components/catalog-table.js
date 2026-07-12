@@ -29,6 +29,8 @@ class ArazzoCatalogTable extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._rows = [];
+    /** @private */ this._total = null; // reach-scoped bounded total (distinct workflows) for the footer
+    /** @private */ this._totalCapped = false; // true when the true total meets/exceeds the server cap ("N+")
     /** @private */ this._history = []; // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextToken = null;
@@ -101,19 +103,26 @@ class ArazzoCatalogTable extends ArazzoElement {
 
     try {
       const f = this.filters;
-      const { versions, nextPageToken } = await client.searchCatalog({
+      const filter = {
         q: f.q,
         baseWorkflowId: f.baseWorkflowId,
         status: f.status,
         owner: f.owner,
         tags: f.tags,
         distinctWorkflows: true,
-        limit: this.pageSize,
-        pageToken: this._currentToken,
-      });
+      };
+
+      // The bounded total (for the footer) rides alongside the page: same filters + distinct mode, reach-scoped
+      // server-side. Best-effort — a count failure falls back to the page length and never breaks the list.
+      const [{ versions, nextPageToken }, total] = await Promise.all([
+        client.searchCatalog({ ...filter, limit: this.pageSize, pageToken: this._currentToken }),
+        client.countCatalog(filter).catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._rows = versions;
       this._nextToken = nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: versions.length, hasMore: !!nextPageToken });
@@ -255,9 +264,11 @@ class ArazzoCatalogTable extends ArazzoElement {
   }
 
   updatePager() {
+    // Prefer the reach-scoped bounded total ("N"/"N+" distinct workflows); fall back to the page length if unavailable.
+    const shown = this._total ?? this._rows.length;
     const info = this._loading
       ? 'Loading…'
-      : `${this._rows.length} workflow${this._rows.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+      : `${shown}${this._totalCapped ? '+' : ''} workflow${shown === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextToken, loading: this._loading, info });
   }
 
