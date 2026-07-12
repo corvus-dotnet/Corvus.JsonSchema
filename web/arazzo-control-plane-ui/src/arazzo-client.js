@@ -289,6 +289,23 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countEnvironmentRunnerAuthorizations` — the bounded total of one environment's runner roster (design §5.5), for a
+   * list footer; no rows are fetched. Same admin gate as {@link listEnvironmentRunnerAuthorizations} (`403`/`404`) and
+   * the same optional `status` filter (an omitted status counts every state). `capped: true` once the true total meets
+   * or exceeds the server cap.
+   * @param {string} name The environment.
+   * @param {{ status?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countEnvironmentRunnerAuthorizations(name, query = {}) {
+    if (!name) throw new TypeError('countEnvironmentRunnerAuthorizations requires a name.');
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    const result = await this._request('GET', `${this._environmentPath(name)}/runners/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listRunnerAuthorizations` — the approver inbox: runner authorizations across the environments the caller
    * administers, defaulting to `Pending` (the actionable to-do) when no `status` is given. With `environment`, that one
    * environment's queue (the caller must administer it, `403` otherwise). `limit`/`pageToken` page (keyset, status

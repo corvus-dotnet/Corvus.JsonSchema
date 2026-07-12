@@ -59,6 +59,30 @@ public sealed class ApiRunnerAuthorizationsClient : IApiRunnerAuthorizationsClie
     }
 
     /// <summary>
+    /// Count the runners that serve an environment
+    /// </summary>
+    /// <remarks>
+    /// Counts this environment's runner authorizations (design §5.5), bounded by the server's cap — no rows are returned (for the list footer). Same filters as listEnvironmentRunnerAuthorizations: the caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountEnvironmentRunnerAuthorizationsResponse> CountEnvironmentRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetEnvironmentsByNameRunnersCountStatus.Source status = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        CountEnvironmentRunnerAuthorizationsRequest request = new(NameValue)
+        {
+            Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetEnvironmentsByNameRunnersCountStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetEnvironmentsByNameRunnersCountStatus.CreateBuilder(workspace, status, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountEnvironmentRunnerAuthorizationsRequest, CountEnvironmentRunnerAuthorizationsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Authorize a runner to serve an environment
     /// </summary>
     /// <remarks>

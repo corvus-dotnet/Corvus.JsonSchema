@@ -3100,6 +3100,28 @@
         }
       }
     },
+    "/environments/{name}/runners/count": {
+      "get": {
+        "operationId": "countEnvironmentRunnerAuthorizations",
+        "security": [
+          { "oauth2": ["environments:read"] },
+          { "openIdConnect": ["environments:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runnerAuthorizations"],
+        "summary": "Count the runners that serve an environment",
+        "description": "Counts this environment's runner authorizations (design §5.5), bounded by the server's cap — no rows are returned (for the list footer). Same filters as listEnvironmentRunnerAuthorizations: the caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Revoked"] }, "description": "Only authorizations in this state." }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of the environment's runner authorizations.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/environments/{name}/runners/{runnerId}/authorization": {
       "post": {
         "operationId": "authorizeRunner",
