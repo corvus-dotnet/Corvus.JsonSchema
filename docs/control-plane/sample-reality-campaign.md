@@ -152,8 +152,21 @@ Debug-run CLI verb (`arazzo-runs debug-runs {start·get·resume·inject-message�
     personas arazzo-admin/alice), using Keycloak's native directory-import `{realm}-realm.json` + `{realm}-users-0.json`
     convention. Verified against a standalone Keycloak 26.6 container (the version Aspire.Hosting.Keycloak 13.4.6
     pulls): both users import into the `arazzo` realm with correct group membership; base groups + clients intact.
-  - Next (W4c follow-up): unify the AppHost `SeedExampleData` flag with the runtime one (propagate via env) and gate
-    the realm-personas import too, so one switch drives all example seeding end to end.
+  - **W4d follow-up DONE** — the AppHost `SeedExampleData` flag now drives the control-plane example seed and the
+    Keycloak persona import too, so **one switch governs all example seeding end to end**. The AppHost injects
+    `ControlPlane__SeedExampleData` onto the control plane (which reads it in place of the previously-hardcoded
+    `seedExampleData: true` in its bootstrap-options JSON). The realm import was moved off the whole-`realms/`-directory
+    import onto per-file imports, split along the real/example seam: `arazzo-realm.json` + `arazzo-users-0.json` (the
+    **grantee-directory service account** — real infra the §16.5.4 resolver needs) import **always**; the demo personas
+    (`arazzo-admin`, `alice`) moved to a new **`arazzo-users-1.json`** that imports **only when the flag is on** (the
+    identity-lookups fix had put the real service account into the personas file, so gating the whole file would have
+    broken the directory — hence the split). **Live-verified both states** (two full composes): with the flag **true**,
+    Keycloak imports all users (kcadm shows `arazzo-admin` + `alice`; `directorySearch:true`), auth enforces, and the
+    governance seed lands (3 environments, 6 catalog versions); with the flag **false**, Keycloak imports the realm +
+    service account only (kcadm users `[]`, `directorySearch:true` still), the example seed is off (`environments` +
+    `catalog` empty), yet the **real** deployment bootstrap still ran (anon → 401, `demo-admin-key` → 200 via the genesis
+    grant). Multi-file `WithRealmImport` composition confirmed to work (Keycloak healthy, no import crash) on the
+    pinned `Aspire.Hosting.Keycloak 13.4.6`.
 
 Two seams. A production deployment runs **only** `IDeploymentBootstrap`, driven entirely by config;
 the sample additionally runs `IExampleSeed`.

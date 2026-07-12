@@ -50,6 +50,10 @@ NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 // JSON (validated against the generated schema) so the demo is self-contained. Postgres adapters do not self-create
 // schema on ConnectAsync (unlike SQLite), and the runner never runs DDL — it waits for this host's health, by which
 // point the tables exist. The AppHost's Postgres is ephemeral (no volume): every run starts empty — reset, no file to wipe.
+// The single runtime switch for demo fiction (§W4 seeding split). The AppHost injects ControlPlane__SeedExampleData
+// from its own SeedExampleData flag, so one switch drives all example seeding end to end; default true so the
+// standalone single-process demo still seeds. A production host sets it false and gets only the real store + policy.
+bool seedExampleData = builder.Configuration.GetValue("ControlPlane:SeedExampleData", true);
 string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => $"\"{s}\""));
 using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
     ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions>.Parse(
@@ -61,16 +65,16 @@ using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstr
           "internalTagPrefix": "sys:",
           "selfElevationGroups": ["arazzo-admins"],
           "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] },
-          "seedExampleData": true
+          "seedExampleData": {{(seedExampleData ? "true" : "false")}}
         }
         """));
 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions bootstrapOptions = bootstrapOptionsDoc.RootElement;
 await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.PostgresControlPlaneDeployment.ProvisionAsync(dataSource, bootstrapOptions);
 
-// The demo opts into the example seed (seedExampleData: true above); a production deployment leaves it false (schema
-// default) and provisions only the real store + policy. This one flag gates every piece of demo fiction below — the
-// example catalog + credential references + developer sandbox, the stand-in runner authorizer, and the live sample run.
-bool seedExampleData = bootstrapOptions.SeedExampleData.IsNotUndefined() && (bool)bootstrapOptions.SeedExampleData;
+// The seedExampleData flag (read above, and carried into the bootstrap options so the generated schema records it)
+// gates every piece of demo fiction below — the example catalog + credential references + developer sandbox, the
+// stand-in runner authorizer, and the live sample run. A production deployment leaves it false and provisions only
+// the real store + policy + IdP shell.
 
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();

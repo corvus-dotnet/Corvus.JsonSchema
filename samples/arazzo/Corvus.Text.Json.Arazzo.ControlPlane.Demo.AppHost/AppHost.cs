@@ -168,13 +168,20 @@ var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
     // "failed to start" and retries it (harmless because the script is idempotent, but noisy and misleading).
     .WithHiddenOnCompletion(0);
 
-// Keycloak — the identity provider (design §16). It is bootstrapped declaratively: the realm import seeds the
-// `arazzo` realm with an `arazzo-admins` group (→ the first system admin, §16.2), demo domain groups, a seed
-// admin + demo user, and the UI (auth-code+PKCE) and CLI (device-flow) OIDC clients with a `groups` claim mapper.
-// Ephemeral (no data volume): the realm is re-imported fresh on each run, matching the demo's reset-each-run
-// theme (the Postgres containers are ephemeral, Vault dev is in-memory) — predictable state, no volume drift.
+// Keycloak — the identity provider (design §16). Bootstrapped declaratively along the real/example seam (§W4). The base
+// realm import (`arazzo-realm.json` + `arazzo-users-0.json`) ALWAYS seeds the `arazzo` realm, its `arazzo-admins` group
+// (→ the first system admin, §16.2), the UI (auth-code+PKCE) / CLI (device-flow) OIDC clients with a `groups` mapper, and
+// the grantee-directory service account (real infra the §16.5.4 resolver needs). The demo personas (arazzo-admin, alice)
+// live in `arazzo-users-1.json` and import only when SeedExampleData is on — so one switch governs all example fiction.
+// Ephemeral (no data volume): the realm is re-imported fresh on each run, matching the demo's reset-each-run theme (the
+// Postgres containers are ephemeral, Vault dev is in-memory) — predictable state, no volume drift.
 var keycloak = builder.AddKeycloak("keycloak")
-    .WithRealmImport("realms");
+    .WithRealmImport("realms/arazzo-realm.json")
+    .WithRealmImport("realms/arazzo-users-0.json");
+if (seedExampleData)
+{
+    keycloak = keycloak.WithRealmImport("realms/arazzo-users-1.json");
+}
 
 // The onboarding domain service — a real external source: its own process + its own database (above). It replaces the
 // former inline /svc/onboarding mock; the control plane's startup live runs and the runner's executed runs both call
@@ -224,6 +231,9 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     // §18 multi-process: a SEPARATE runner process hosts $draft debug runs, so the control plane must NOT run its own
     // in-process draft pump (else both would claim the same runs). The control plane only MARKS runs claimable.
     .WithEnvironment("ControlPlane__HostDraftRunnerInProcess", "false")
+    // W4 seeding split: the AppHost's single SeedExampleData switch drives the control plane's example seed too, so one
+    // flag governs all demo fiction end to end (this control-plane seed + the Vault demo secrets + the Keycloak personas).
+    .WithEnvironment("ControlPlane__SeedExampleData", seedExampleData ? "true" : "false")
     // §14.1/§16: ENFORCE authentication + row security. This activates the whole (already-built) auth stack — Keycloak
     // JWT-bearer + BFF cookie/OIDC + dev-API-key, ControlPlaneSecurityMode.Scoped, and the per-row reach policy — so the
     // API is no longer anonymous. The first administrator is bootstrapped declaratively (§16.2): the Keycloak realm
