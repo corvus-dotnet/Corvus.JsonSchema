@@ -3892,34 +3892,6 @@
     "Body": "Parses one JSON value (including objects or arrays) from the provided reader."
   },
   {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-parsedjsondocumentbuilder.html",
-    "Title": "ParsedJsonDocumentBuilder",
-    "Description": "A single-use, poolable [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) that supports document construction via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html), and materializes the result as a self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html) without a serialize-and-reparse round trip.",
-    "Keywords": "ParsedJsonDocumentBuilder class Corvus.Text.Json",
-    "Body": "A single-use, poolable [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) that supports document construction via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html), and materializes the result as a self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html) without a serialize-and-reparse round trip.\nThis type backs the generated `Create()` factory methods, which are the [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)-producing analogue of the generated `CreateBuilder()` methods. Values are accumulated in the standard dynamic value store, exactly as they would be for a [`JsonDocumentBuilder`](/api/v5/corvus-text-json-jsondocumentbuilder-t.html); [`ToParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocumentbuilder.toparsedjsondocument.html) then makes a single linear pass over the metadata table, writing the UTF-8 JSON text and the parsed-format metadata rows together, and hands both off to a new [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html). External document values are blitted into the backing during that pass, so the resulting document is fully self-contained. Instances are rented from a thread-local cache via [`Rent`](/api/v5/corvus-text-json-parsedjsondocumentbuilder.rent.html) to avoid hot-path allocation. [`Dispose`](/api/v5/corvus-text-json-parsedjsondocumentbuilder.dispose.html) is idempotent and returns the instance to the cache; it is safe to call it after [`ToParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocumentbuilder.toparsedjsondocument.html) (which disposes the builder as part of the handoff), for example from a `finally` block in a fault-handling path. The builder supports document construction only. Element access, mutation of an existing document, and the other [`IJsonDocument`](/api/v5/corvus-text-json-internal-ijsondocument.html) read operations are not supported and throw [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception).\nRent: Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html).\nToParsedJsonDocument: Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool).\nDispose: Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent."
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-parsedjsondocumentbuilder.rent.html",
-    "Title": "ParsedJsonDocumentBuilder.Rent",
-    "Description": "Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html).",
-    "Keywords": "ParsedJsonDocumentBuilder Rent method Corvus.Text.Json",
-    "Body": "Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html)."
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-parsedjsondocumentbuilder.toparsedjsondocument.html",
-    "Title": "ParsedJsonDocumentBuilder.ToParsedJsonDocument",
-    "Description": "Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool).",
-    "Keywords": "ParsedJsonDocumentBuilder ToParsedJsonDocument method Corvus.Text.Json",
-    "Body": "Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool)."
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-parsedjsondocumentbuilder.dispose.html",
-    "Title": "ParsedJsonDocumentBuilder.Dispose",
-    "Description": "Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent.",
-    "Keywords": "ParsedJsonDocumentBuilder Dispose method Corvus.Text.Json",
-    "Body": "Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent."
-  },
-  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-period.html",
     "Title": "Period",
     "Description": "Represents a period of time expressed in human chronological terms: hours, days, weeks, months and so on.",
@@ -11863,6 +11835,34 @@
     "Description": "Sets the enumerator to its initial position, which is before the first element.",
     "Keywords": "ObjectEnumerator Reset method Corvus.Text.Json.Internal",
     "Body": "Sets the enumerator to its initial position, which is before the first element."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.html",
+    "Title": "ParsedJsonDocumentBuilder",
+    "Description": "A single-use, poolable [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) that supports document construction via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html), and materializes the result as a self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html) without a serialize-and-reparse round trip.",
+    "Keywords": "ParsedJsonDocumentBuilder class Corvus.Text.Json.Internal",
+    "Body": "A single-use, poolable [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) that supports document construction via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html), and materializes the result as a self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html) without a serialize-and-reparse round trip.\nThis type backs the generated `Create()` factory methods, which are the [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)-producing analogue of the generated `CreateBuilder()` methods. Values are accumulated in the standard dynamic value store, exactly as they would be for a [`JsonDocumentBuilder`](/api/v5/corvus-text-json-jsondocumentbuilder-t.html); [`ToParsedJsonDocument`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.toparsedjsondocument.html) then makes a single linear pass over the metadata table, writing the UTF-8 JSON text and the parsed-format metadata rows together, and hands both off to a new [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html). External document values are blitted into the backing during that pass, so the resulting document is fully self-contained. Instances are rented from a thread-local cache via [`Rent`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.rent.html) to avoid hot-path allocation. [`Dispose`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.dispose.html) is idempotent and returns the instance to the cache; it is safe to call it after [`ToParsedJsonDocument`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.toparsedjsondocument.html) (which disposes the builder as part of the handoff), for example from a `finally` block in a fault-handling path. The builder supports document construction only. Element access, mutation of an existing document, and the other [`IJsonDocument`](/api/v5/corvus-text-json-internal-ijsondocument.html) read operations are not supported and throw [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception).\nRent: Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html).\nToParsedJsonDocument: Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool).\nDispose: Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.rent.html",
+    "Title": "ParsedJsonDocumentBuilder.Rent",
+    "Description": "Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html).",
+    "Keywords": "ParsedJsonDocumentBuilder Rent method Corvus.Text.Json.Internal",
+    "Body": "Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.toparsedjsondocument.html",
+    "Title": "ParsedJsonDocumentBuilder.ToParsedJsonDocument",
+    "Description": "Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool).",
+    "Keywords": "ParsedJsonDocumentBuilder ToParsedJsonDocument method Corvus.Text.Json.Internal",
+    "Body": "Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.dispose.html",
+    "Title": "ParsedJsonDocumentBuilder.Dispose",
+    "Description": "Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent.",
+    "Keywords": "ParsedJsonDocumentBuilder Dispose method Corvus.Text.Json.Internal",
+    "Body": "Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-internal-propertyschemamatchers-t.html",
