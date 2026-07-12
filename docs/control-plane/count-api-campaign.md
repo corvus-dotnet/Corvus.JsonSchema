@@ -90,7 +90,14 @@ Diff must be count-only (a drifting regen = generator version skew — reconcile
   29/29 each (incl. the draft test now green); web-ui 208/208; live on seeded Postgres (`/runs/count`=={runs list}=6, 0 draft leak, footer
   renders "6 runs" via `/runs/count`). Commits `ac9ef6ea3c` (gap fix), `4a05315a34` (core+API), `28b68d3a77` (native fan-out + draft fix),
   `dd039c8729` (UI footer).
-- [ ] `catalogVersions` — catalog store (also `ISupportsRowSecurityFilter` — native push-down count like runs).
+- [~] `catalogVersions` — catalog store (also `ISupportsRowSecurityFilter`). **Core + API DONE + committed; works end-to-end via the
+  interface default on all 10 backends. Native fan-out pending.** `IWorkflowCatalogStore.CountAsync` default over
+  `QueryAsync(Limit=cap+1)` (honours `CatalogQuery.DistinctWorkflows` for free — QueryAsync collapses) + `SecuredWorkflowCatalog.CountAsync`
+  mirroring `SearchAsync` + conformance (`e7f367f439`); `GET /catalog/count` op `countCatalog` (mirrors searchCatalog's filters incl.
+  `distinctWorkflows`) + regen + `HandleCountCatalogAsync` (`fe013f6e1a`). **PENDING native per-backend `CountAsync`:** non-distinct
+  `COUNT(*)` over `LIMIT/TOP cap+1`; distinct-mode `COUNT(DISTINCT BaseWorkflowId)` (relational) / distinct-base bounded scan (scan/Cosmos)
+  / `$group…$count` fork (Mongo). Extract each store's `QueryAsync` filter into a shared helper first (runs pattern). Then a catalog-table
+  footer + live-verify.
 - [ ] `runners`, `securityBindings`/`securityRules`, `administrators`, `environmentAdministrators`, `versionAvailability`/
   `environmentAvailability`, `environmentRunnerAuthorizations` (per-env), observed identities — assess reach shape per store.
 
