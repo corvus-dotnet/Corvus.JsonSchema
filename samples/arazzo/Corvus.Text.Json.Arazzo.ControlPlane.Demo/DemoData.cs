@@ -41,9 +41,9 @@ public static class DemoData
         => SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", group), IssuerTag]);
 
     /// <summary>Builds the live <see cref="WorkflowResumer"/> that re-enters a run's compiled executor (§5/§8): it
-    /// resolves the run's catalogued executor through the loader and runs it against transports that call this host's
-    /// own /svc backends. <paramref name="baseUrlProvider"/> yields the host's base URL once it has started listening
-    /// (the resumer is built before the server binds, but invoked only after).</summary>
+    /// resolves the run's catalogued executor through the loader and runs it against transports rooted at the sample's
+    /// real services (onboarding, ledger, kyc) and its NATS message bus. <paramref name="baseUrlProvider"/> yields the
+    /// host's base URL once it has started listening (the resumer is built before the server binds, but invoked only after).</summary>
     /// <param name="catalog">The catalog store the baked executor is loaded from.</param>
     /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
     /// <param name="onboardingBaseUrl">The onboarding service's base URL (its own external host).</param>
@@ -53,7 +53,7 @@ public static class DemoData
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
 
-        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateSvcBinder(baseUrlProvider, onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport));
+        var resumer = new HostedWorkflowResumer(catalog, new WorkflowExecutorLoader(), CreateLiveBinder(baseUrlProvider, onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport));
         return resumer.AsResumer();
     }
 
@@ -71,7 +71,7 @@ public static class DemoData
     /// async workflow's requestKycReview) publishes through it; the durable verdict receive suspends and is resumed by a
     /// separate consumer, so this is used only for sends here.</param>
     /// <returns>The transport binder.</returns>
-    public static WorkflowTransportBinder CreateSvcBinder(Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl, IMessageTransport messageTransport)
+    public static WorkflowTransportBinder CreateLiveBinder(Func<string> baseUrlProvider, string onboardingBaseUrl, string ledgerBaseUrl, string kycBaseUrl, IMessageTransport messageTransport)
     {
         ArgumentNullException.ThrowIfNull(baseUrlProvider);
         ArgumentException.ThrowIfNullOrEmpty(onboardingBaseUrl);
@@ -218,7 +218,7 @@ public static class DemoData
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(inputsJson));
             using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, workflowId, inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
-            log?.Invoke($"Live onboarding run '{runId}' executed against /svc: {result}.");
+            log?.Invoke($"Live onboarding run '{runId}' executed against its real sources: {result}.");
         }
         catch (Exception ex)
         {

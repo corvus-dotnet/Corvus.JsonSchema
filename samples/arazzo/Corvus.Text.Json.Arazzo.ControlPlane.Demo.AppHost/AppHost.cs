@@ -172,7 +172,7 @@ var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
 // `arazzo` realm with an `arazzo-admins` group (→ the first system admin, §16.2), demo domain groups, a seed
 // admin + demo user, and the UI (auth-code+PKCE) and CLI (device-flow) OIDC clients with a `groups` claim mapper.
 // Ephemeral (no data volume): the realm is re-imported fresh on each run, matching the demo's reset-each-run
-// theme (the control plane wipes SQLite, Vault dev is in-memory) — predictable state, no volume drift.
+// theme (the Postgres containers are ephemeral, Vault dev is in-memory) — predictable state, no volume drift.
 var keycloak = builder.AddKeycloak("keycloak")
     .WithRealmImport("realms");
 
@@ -215,7 +215,7 @@ var kyc = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Kyc_Host>(
     .WithHttpHealthCheck("/health");
 
 // The ASP.NET control-plane host: the real server surface (catalog, runs, credentials, administrators, security)
-// plus the build-free web UI and the demo /svc backends. It stores credential *references* only (never binds to
+// plus the build-free web UI. It stores credential *references* only (never binds to
 // Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
 // validation (§16.3) and waits for the realm import. Externally reachable; OTel flows to the dashboard.
 var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo>("controlplane")
@@ -273,7 +273,7 @@ if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(git
 // The runner ("execution-host") — the second process in the topology. It shares the store, registers in the
 // runner registry, and claims/resumes runs (design §5/§7). It is the §13 secret *consumer*: it holds ONLY the
 // read-only Vault token (least privilege), waits for provisioning to finish, and resolves credentials at bind
-// time. It waits for the control plane to seed the store + holds a reference for the future /svc executor calls.
+// time. It waits for the control plane to seed the store, then claims and executes runs against the real source services (below).
 builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithReference(workflowstore)
     .WaitFor(workflowstore)
@@ -285,7 +285,7 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)
     .WithEnvironment("Runner__Vault__WrapTokenFile", vaultWrapTokenPath)
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
-    // executing each against the control plane's own /svc source backends (the demo stand-in for real endpoints).
+    // executing each against the real source services (below).
     .WithEnvironment("Runner__Environment", "development")
     // All source backends are real external services (their own processes + databases); the runner routes each at its
     // endpoint and waits for them (its executed runs call them). There is no /svc mock backend to point at any more.

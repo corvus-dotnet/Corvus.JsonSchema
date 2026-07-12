@@ -165,7 +165,7 @@ var draftRunner = new InProcessDraftRunner(
     draftRunStore,
     draftRunTraceStore,
     new WorkflowExecutorProvider(),
-    DemoData.CreateSvcBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport),
+    DemoData.CreateLiveBinder(() => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."), onboardingBaseUrl, ledgerBaseUrl, kycBaseUrl, messageTransport),
     // Do NOT host timer waits here: the worker's ResumeDueTimersAsync resumes EVERY due-timer run in the shared store,
     // including seeded CATALOG runs this draft-only resumer cannot host. A draft run that suspends on a retry timer is
     // out of scope for the minimum stand-up (the base onboard-customer workflow has none).
@@ -206,7 +206,7 @@ var entitlements = new PersistentRowSecurityPolicy(
     orderings: labelOrderings);
 await entitlements.RefreshAsync();
 
-// The access-request store (§16.5). In-memory like the security policy; the demo reseeds on every start.
+// The access-request store (§16.5) — Postgres, shared with the runner like every other control-plane store.
 var accessRequests = await PostgresAccessRequestStore.ConnectAsync(dataSource);
 
 // arazzo-admins members are eligible to self-elevate (JIT activation, no human approver, §16.5.3); everyone else
