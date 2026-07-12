@@ -360,7 +360,7 @@
 <li><code>Height</code> — of type <code>Person.HeightEntity</code> (a number type)</li>
 </ul>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/681ffbb74b55fe58f5012c08c907f016a7f0dc58/docs/ExampleRecipes/001-DataObject/Program.cs">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/43d84f4dbbb7f9bc4be6dd871b547277470512b1/docs/ExampleRecipes/001-DataObject/Program.cs">Example code</a></p>
 <h3 id="creating-a-person-from.net-values">Creating a Person from .NET values</h3>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 using var personDoc = Person.CreateBuilder(
@@ -370,6 +370,16 @@ using var personDoc = Person.CreateBuilder(
     givenName: &quot;Anne&quot;,
     height: 1.52);
 </code></pre>
+<h3 id="creating-an-immutable-parsedjsondocumentperson-directly">Creating an immutable <code>ParsedJsonDocument&lt;Person&gt;</code> directly</h3>
+<p><code>CreateBuilder</code> gives you a mutable, workspace-scoped document — the right tool when you are assembling a document you will keep modifying. When the goal is to build a document and hand it to a caller as an immutable <code>ParsedJsonDocument&lt;T&gt;</code> — a response you return, a value you cache, a document you store — use the generated <code>Create()</code> factory instead. It takes the same arguments as <code>CreateBuilder</code> minus the workspace, and writes the final document text and its parsed metadata directly in a single pass: no <code>JsonWorkspace</code> to manage, no serialize-and-reparse round trip, and the pooled builder behind it is rented from a thread-local cache so steady-state construction does not allocate. The caller owns the result and must dispose it.</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; createdDoc = Person.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52);
+Console.WriteLine(createdDoc.RootElement);
+</code></pre>
+<p>Every <code>CreateBuilder</code> overload has a <code>Create()</code> counterpart: from per-property values (shown here), from a <code>Source</code>, from a <code>Builder.Build</code> delegate (with or without a flowed context), from positional tuple items or a numeric span, and parameterless <code>Create()</code>/<code>CreateArray()</code>/<code>CreateObject()</code> for an empty document.</p>
 <h3 id="serialization">Serialization</h3>
 <pre><code class="language-csharp">// Convert to JSON string (allocates)
 string jsonString = personDoc.RootElement.ToString();

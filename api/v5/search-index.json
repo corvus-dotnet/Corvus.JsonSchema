@@ -7126,6 +7126,13 @@
     "Body": " Creates and initializes a mutable document from this instance."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.create.html",
+    "Title": "JsonBoolean.Create",
+    "Description": "",
+    "Keywords": "JsonBoolean Create method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.op-implicit.html",
     "Title": "JsonBoolean Implicit Operator",
     "Description": "",
@@ -7432,6 +7439,13 @@
     "Description": "",
     "Keywords": "JsonString CreateBuilder method Corvus.Text.Json.AsyncApi.Internal",
     "Body": " Creates and initializes a mutable document from this instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.create.html",
+    "Title": "JsonString.Create",
+    "Description": "",
+    "Keywords": "JsonString Create method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-explicit.html",
@@ -11823,6 +11837,41 @@
     "Body": "Sets the enumerator to its initial position, which is before the first element."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.html",
+    "Title": "ParsedJsonDocumentBuilder",
+    "Description": "A single-use, poolable [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) that supports document construction via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html), and materializes the result as a self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html) without a serialize-and-reparse round trip.",
+    "Keywords": "ParsedJsonDocumentBuilder class Corvus.Text.Json.Internal",
+    "Body": "A single-use, poolable [`IMutableJsonDocument`](/api/v5/corvus-text-json-internal-imutablejsondocument.html) that supports document construction via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html), and materializes the result as a self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html) without a serialize-and-reparse round trip.\nThis type backs the generated `Create()` factory methods, which are the [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)-producing analogue of the generated `CreateBuilder()` methods. Unlike a [`JsonDocumentBuilder`](/api/v5/corvus-text-json-jsondocumentbuilder-t.html), this builder writes the final UTF-8 document text directly during construction: the store operations format each value straight into the text backing, the `IComplexValueConstructionCallbacks` hooks supply the container boundaries, and values embedded from other documents are captured into the backing at the point they are added. Property names are distinguished from string values by JSON's strict name/value alternation within an object, so the ordinary store operations need no extra signalling. The metadata rows are those built by the [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) in the usual way; a side list records the text location and content length for each row as it is written, and [`ToParsedJsonDocument`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.toparsedjsondocument.html) applies them in a single in-place patch pass — no second metadata table is built and no content is copied. If a property is removed during construction (for example via [`TryApply`](/api/v5/corvus-text-json-internal-complexvaluebuilder.tryapply.html)), the removed value's text is stranded in the backing and the document is marked dirty; a dirty document pays one compaction pass at handoff, rebuilding the text from the surviving rows. Instances are rented from a thread-local cache via [`Rent`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.rent.html) to avoid hot-path allocation. [`Dispose`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.dispose.html) is idempotent and returns the instance to the cache; it is safe to call it after [`ToParsedJsonDocument`](/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.toparsedjsondocument.html) (which disposes the builder as part of the handoff), for example from a `finally` block in a fault-handling path. The builder supports document construction only. Element access, mutation of an existing document, and the other [`IJsonDocument`](/api/v5/corvus-text-json-internal-ijsondocument.html) read operations are not supported and throw [`InvalidOperationException`](https://learn.microsoft.com/dotnet/api/system.invalidoperationexception).\nRent: Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html).\nToParsedJsonDocument: Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool).\nDispose: Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.rent.html",
+    "Title": "ParsedJsonDocumentBuilder.Rent",
+    "Description": "Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html).",
+    "Keywords": "ParsedJsonDocumentBuilder Rent method Corvus.Text.Json.Internal",
+    "Body": "Rents a builder from the thread-local cache, ready to receive a value via [`ComplexValueBuilder`](/api/v5/corvus-text-json-internal-complexvaluebuilder.html) and [`SetAndDispose`](/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.toparsedjsondocument.html",
+    "Title": "ParsedJsonDocumentBuilder.ToParsedJsonDocument",
+    "Description": "Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool).",
+    "Keywords": "ParsedJsonDocumentBuilder ToParsedJsonDocument method Corvus.Text.Json.Internal",
+    "Body": "Hands off the built value as a new, self-contained [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html), and disposes this builder (returning it to the pool)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.dispose.html",
+    "Title": "ParsedJsonDocumentBuilder.Dispose",
+    "Description": "Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent.",
+    "Keywords": "ParsedJsonDocumentBuilder Dispose method Corvus.Text.Json.Internal",
+    "Body": "Disposes the builder, returning its pooled resources and the instance itself to their pools. Disposal is idempotent."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-parsedjsondocumentbuilder.storeprebakedvalue.html",
+    "Title": "ParsedJsonDocumentBuilder.StorePrebakedValue",
+    "Description": "",
+    "Keywords": "ParsedJsonDocumentBuilder StorePrebakedValue method Corvus.Text.Json.Internal",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-propertyschemamatchers-t.html",
     "Title": "PropertySchemaMatchers<T>",
     "Description": "A dictionary lookup of matchers for properties in a JSON object, optimized for low allocations and high performance.",
@@ -15145,7 +15194,7 @@
     "Title": "JsonPatchDocument",
     "Description": "An RFC 6902 JSON Patch document.",
     "Keywords": "JsonPatchDocument struct Corvus.Text.Json.Patch",
-    "Body": "An RFC 6902 JSON Patch document.\nDefaultInstance: Gets the default instance.\nRank: Gets the rank of the array.\nthis[int]: Gets the item at the given index.\nGetArrayLength: Gets the array length.\nEnumerateArray: Enumerates the array.\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates an empty mutable document builder.\nCreateBuilder: Creates and initializes a mutable document from this instance."
+    "Body": "An RFC 6902 JSON Patch document.\nDefaultInstance: Gets the default instance.\nRank: Gets the rank of the array.\nthis[int]: Gets the item at the given index.\nGetArrayLength: Gets the array length.\nEnumerateArray: Enumerates the array.\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates an empty mutable document builder.\nCreateBuilder: Creates and initializes a mutable document from this instance.\nCreate: Creates an empty [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.defaultinstance.html",
@@ -15279,6 +15328,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument CreateBuilder method Corvus.Text.Json.Patch",
     "Body": " Creates an empty mutable document builder.   Creates and initializes a mutable document from this instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.create.html",
+    "Title": "JsonPatchDocument.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument Create method Corvus.Text.Json.Patch",
+    "Body": " Creates an empty [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html).  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.op-equality.html",
@@ -15482,6 +15538,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.AddOperation CreateBuilder method Corvus.Text.Json.Patch",
     "Body": "      "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation.create.html",
+    "Title": "JsonPatchDocument.AddOperation.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.AddOperation Create method Corvus.Text.Json.Patch",
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation.op-implicit.html",
@@ -16009,6 +16072,13 @@
     "Body": " "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-opentity.create.html",
+    "Title": "JsonPatchDocument.AddOperation.OpEntity.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.AddOperation.OpEntity Create method Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-opentity.op-explicit.html",
     "Title": "JsonPatchDocument.AddOperation.OpEntity Explicit Operator",
     "Description": "",
@@ -16525,6 +16595,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.CopyOperation CreateBuilder method Corvus.Text.Json.Patch",
     "Body": "     "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation.create.html",
+    "Title": "JsonPatchDocument.CopyOperation.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.CopyOperation Create method Corvus.Text.Json.Patch",
+    "Body": "    "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation.op-implicit.html",
@@ -17052,6 +17129,13 @@
     "Body": " "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-opentity.create.html",
+    "Title": "JsonPatchDocument.CopyOperation.OpEntity.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.CopyOperation.OpEntity Create method Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-opentity.op-explicit.html",
     "Title": "JsonPatchDocument.CopyOperation.OpEntity Explicit Operator",
     "Description": "",
@@ -17498,6 +17582,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.MoveOperation CreateBuilder method Corvus.Text.Json.Patch",
     "Body": "     "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation.create.html",
+    "Title": "JsonPatchDocument.MoveOperation.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.MoveOperation Create method Corvus.Text.Json.Patch",
+    "Body": "    "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation.op-implicit.html",
@@ -18023,6 +18114,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.MoveOperation.OpEntity CreateBuilder method Corvus.Text.Json.Patch",
     "Body": " "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation-opentity.create.html",
+    "Title": "JsonPatchDocument.MoveOperation.OpEntity.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.MoveOperation.OpEntity Create method Corvus.Text.Json.Patch",
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation-opentity.op-explicit.html",
@@ -18697,6 +18795,13 @@
     "Body": "                 "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation.create.html",
+    "Title": "JsonPatchDocument.PatchOperation.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation Create method Corvus.Text.Json.Patch",
+    "Body": "                "
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation.op-implicit.html",
     "Title": "JsonPatchDocument.PatchOperation Implicit Operator",
     "Description": "",
@@ -19327,6 +19432,13 @@
     "Body": "    "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperationcommon.create.html",
+    "Title": "JsonPatchDocument.PatchOperationCommon.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperationCommon Create method Corvus.Text.Json.Patch",
+    "Body": "   "
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperationcommon.op-equality.html",
     "Title": "JsonPatchDocument.PatchOperationCommon Equality Operator",
     "Description": "",
@@ -19880,6 +19992,13 @@
     "Body": "     "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation.create.html",
+    "Title": "JsonPatchDocument.RemoveOperation.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.RemoveOperation Create method Corvus.Text.Json.Patch",
+    "Body": "    "
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation.op-implicit.html",
     "Title": "JsonPatchDocument.RemoveOperation Implicit Operator",
     "Description": "",
@@ -20384,6 +20503,13 @@
     "Body": " "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-opentity.create.html",
+    "Title": "JsonPatchDocument.RemoveOperation.OpEntity.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.RemoveOperation.OpEntity Create method Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-opentity.op-explicit.html",
     "Title": "JsonPatchDocument.RemoveOperation.OpEntity Explicit Operator",
     "Description": "",
@@ -20816,6 +20942,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.ReplaceOperation CreateBuilder method Corvus.Text.Json.Patch",
     "Body": "      "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation.create.html",
+    "Title": "JsonPatchDocument.ReplaceOperation.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.ReplaceOperation Create method Corvus.Text.Json.Patch",
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation.op-implicit.html",
@@ -21343,6 +21476,13 @@
     "Body": " "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-opentity.create.html",
+    "Title": "JsonPatchDocument.ReplaceOperation.OpEntity.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.ReplaceOperation.OpEntity Create method Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-opentity.op-explicit.html",
     "Title": "JsonPatchDocument.ReplaceOperation.OpEntity Explicit Operator",
     "Description": "",
@@ -21817,6 +21957,13 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.TestOperation CreateBuilder method Corvus.Text.Json.Patch",
     "Body": "      "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation.create.html",
+    "Title": "JsonPatchDocument.TestOperation.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.TestOperation Create method Corvus.Text.Json.Patch",
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation.op-implicit.html",
@@ -22344,6 +22491,13 @@
     "Body": " "
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-opentity.create.html",
+    "Title": "JsonPatchDocument.TestOperation.OpEntity.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.TestOperation.OpEntity Create method Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-opentity.op-explicit.html",
     "Title": "JsonPatchDocument.TestOperation.OpEntity Explicit Operator",
     "Description": "",
@@ -22806,6 +22960,13 @@
     "Body": " Creates and initializes a mutable document from this instance."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.create.html",
+    "Title": "JsonPointer.Create",
+    "Description": "",
+    "Keywords": "JsonPointer Create method Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.op-explicit.html",
     "Title": "JsonPointer Explicit Operator",
     "Description": "",
@@ -23154,6 +23315,13 @@
     "Description": "",
     "Keywords": "JsonString CreateBuilder method Corvus.Text.Json.Patch",
     "Body": " Creates and initializes a mutable document from this instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.create.html",
+    "Title": "JsonString.Create",
+    "Description": "",
+    "Keywords": "JsonString Create method Corvus.Text.Json.Patch",
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.op-explicit.html",

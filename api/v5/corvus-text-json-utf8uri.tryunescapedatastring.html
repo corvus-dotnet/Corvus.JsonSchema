@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/681ffbb74b55fe58f5012c08c907f016a7f0dc58/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.EscapeDataString.cs#L48">Utf8Uri.EscapeDataString.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/43d84f4dbbb7f9bc4be6dd871b547277470512b1/src/Corvus.Text.Json/Corvus/Text/Json/Uri/Utf8Uri.EscapeDataString.cs#L48">Utf8Uri.EscapeDataString.cs</a></p>
 <h2 id="tryunescapedatastring-readonlyspan-byte-span-byte-int">TryUnescapeDataString(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int)</h2>
 <p>Unescapes a percent-encoded UTF-8 string, matching <code>Uri.UnescapeDataString</code> semantics. Valid <code>%XX</code> sequences are decoded. Non-ASCII decoded bytes are only emitted when consecutive <code>%XX</code> sequences form a valid UTF-8 multi-byte sequence; invalid multi-byte sequences remain in their encoded form. Malformed sequences (invalid hex digits, truncated <code>%</code> at end of input) are copied through literally.</p>
 <pre><code class="language-csharp">public static bool TryUnescapeDataString(ReadOnlySpan&lt;byte&gt; utf8String, Span&lt;byte&gt; destination, out int bytesWritten)

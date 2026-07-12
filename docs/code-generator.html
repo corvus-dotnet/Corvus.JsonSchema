@@ -785,6 +785,7 @@ corvusjson jsonschema Schemas/config.json \
 <li><strong>Validation</strong>: <code>person.EvaluateSchema()</code> validates against the full schema</li>
 <li><strong>Implicit conversions</strong>: <code>(string)person.Name</code> extracts the .NET value</li>
 <li><strong>Mutable builder</strong>: <code>person.CreateBuilder(workspace)</code> creates a mutable copy</li>
+<li><strong>Immutable document factory</strong>: <code>Person.Create(...)</code> builds a self-contained <code>ParsedJsonDocument&lt;Person&gt;</code> in a single pass, with no workspace and no serialization round trip</li>
 <li><strong>Pattern matching</strong>: <code>Match()</code> methods for <code>oneOf</code>/<code>anyOf</code> discriminated unions</li>
 <li><strong>Serialization</strong>: <code>WriteTo(Utf8JsonWriter)</code> for zero-allocation output</li>
 </ul>
