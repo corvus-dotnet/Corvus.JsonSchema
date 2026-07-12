@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/7b9d1a7e557a5b54b59ef0548d4a7e8195429d1a/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/ParsedJsonDocumentBuilder.cs#L101">ParsedJsonDocumentBuilder.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/b5551780d19b80af1f4224d73c2a5030481f6967/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/ParsedJsonDocumentBuilder.cs#L140">ParsedJsonDocumentBuilder.cs</a></p>
 <h2 id="rent-int">Rent(int)</h2>
 <p>Rents a builder from the thread-local cache, ready to receive a value via <a href="/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a> and <a href="/Corvus.JsonSchema/pr-preview/pr-837/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html"><code>SetAndDispose</code></a>.</p>
 <pre><code class="language-csharp">public static ParsedJsonDocumentBuilder Rent(int initialValueBufferSize)
@@ -117,7 +117,7 @@
 <tr>
 <td><code>initialValueBufferSize</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
-<td>The initial size in bytes of the value buffer. <em>(optional)</em></td>
+<td>The initial size in bytes of the document text buffer. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>

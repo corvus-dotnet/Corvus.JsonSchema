@@ -119,7 +119,7 @@
 </tbody>
 </table>
 <h2 id="matchrangeregularexpression-readonlyspan-byte-int-int-string-readonlyspan-byte-jsonschemacontext">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int, string, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/7b9d1a7e557a5b54b59ef0548d4a7e8195429d1a/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L327">JsonSchemaEvaluation.String.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/b5551780d19b80af1f4224d73c2a5030481f6967/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L327">JsonSchemaEvaluation.String.cs</a></p>
 <p>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>.</p>
 <pre><code class="language-csharp">public static bool MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt; value, int min, int max, string originalExpressionString, ReadOnlySpan&lt;byte&gt; keyword, ref JsonSchemaContext context)
 </code></pre>
@@ -189,7 +189,7 @@
 </table>
 <hr />
 <h2 id="matchrangeregularexpression-readonlyspan-byte-int-int">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/7b9d1a7e557a5b54b59ef0548d4a7e8195429d1a/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L349">JsonSchemaEvaluation.String.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/b5551780d19b80af1f4224d73c2a5030481f6967/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L349">JsonSchemaEvaluation.String.cs</a></p>
 <p>Validates that a UTF-8 byte span's Unicode codepoint length is within a range. Used for <code>patternProperties</code> matching where no context reporting is needed.</p>
 <pre><code class="language-csharp">public static bool MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt; value, int min, int max)
 </code></pre>
