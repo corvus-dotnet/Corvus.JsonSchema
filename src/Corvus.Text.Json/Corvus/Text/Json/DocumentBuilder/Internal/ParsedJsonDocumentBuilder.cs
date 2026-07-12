@@ -12,10 +12,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Corvus.Numerics;
-using Corvus.Text.Json.Internal;
 using NodaTime;
 
-namespace Corvus.Text.Json;
+namespace Corvus.Text.Json.Internal;
 
 /// <summary>
 /// A single-use, poolable <see cref="IMutableJsonDocument"/> that supports document construction
