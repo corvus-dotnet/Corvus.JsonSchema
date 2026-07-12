@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-12T06:49:18.6011216\u002B00:00",
+  "generatedAt": "2026-07-12T07:18:47.4464479\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -64,6 +64,8 @@
     "DeleteVersionAvailabilityResponse.cs",
     "ListSecurityOrderingsRequest.cs",
     "ListSecurityOrderingsResponse.cs",
+    "CountSecurityRulesRequest.cs",
+    "CountSecurityRulesResponse.cs",
     "SearchSecurityRulesRequest.cs",
     "SearchSecurityRulesResponse.cs",
     "CreateSecurityRuleRequest.cs",
@@ -74,6 +76,8 @@
     "UpdateSecurityRuleResponse.cs",
     "DeleteSecurityRuleRequest.cs",
     "DeleteSecurityRuleResponse.cs",
+    "CountSecurityBindingsRequest.cs",
+    "CountSecurityBindingsResponse.cs",
     "SearchSecurityBindingsRequest.cs",
     "SearchSecurityBindingsResponse.cs",
     "CreateSecurityBindingRequest.cs",
@@ -1321,9 +1325,9 @@
     "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B05644f43c7c1e66535f5761fea556b4b4ab32588",
+  "generatorVersion": "1.0.0\u002B275faa873cdd6668596aeb0eeb5d9072e17c648f",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "effdcc024acde5740d9c48b556be86ac1f39c7a959524222edd976e3e4b5dd10",
+  "specFileHash": "eed273d2349ee3ba4e64a5025df3d76fe4f03ab858e1f4317f733d64a11a8b16",
   "specVersion": "3.2"
 }

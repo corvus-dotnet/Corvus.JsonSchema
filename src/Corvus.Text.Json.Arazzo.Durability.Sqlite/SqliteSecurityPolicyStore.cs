@@ -366,6 +366,64 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Bounded native COUNT over the same q-predicate as ListRulesAsync (minus the keyset cursor) — the inner LIMIT
+            // caps the scan at cap+1. No Document blob is read.
+            using SqliteCommand count = this.connection.CreateCommand();
+            count.CommandText =
+                """
+                SELECT COUNT(*) FROM (
+                    SELECT 1 FROM SecurityRules
+                    WHERE (@q IS NULL OR Name LIKE @q ESCAPE '\' OR Expression LIKE @q ESCAPE '\')
+                    LIMIT @cap);
+                """;
+            count.Parameters.AddWithValue("@q", (object?)like ?? DBNull.Value);
+            count.Parameters.AddWithValue("@cap", bound + 1);
+            long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+            return total > bound ? (bound, true) : ((int)total, false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand count = this.connection.CreateCommand();
+            count.CommandText =
+                """
+                SELECT COUNT(*) FROM (
+                    SELECT 1 FROM SecurityBindings
+                    WHERE (@q IS NULL OR ClaimType LIKE @q ESCAPE '\' OR ClaimValue LIKE @q ESCAPE '\' OR Description LIKE @q ESCAPE '\')
+                    LIMIT @cap);
+                """;
+            count.Parameters.AddWithValue("@q", (object?)like ?? DBNull.Value);
+            count.Parameters.AddWithValue("@cap", bound + 1);
+            long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+            return total > bound ? (bound, true) : ((int)total, false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);

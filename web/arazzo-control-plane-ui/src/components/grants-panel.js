@@ -47,6 +47,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._grants = [];
+    /** @private */ this._total = null;          // q-scoped bounded total for the footer (null until first load)
+    /** @private */ this._totalCapped = false;   // true when the true total meets/exceeds the server cap ("N+")
     // The scopes currently offered in the authoring typeahead — the latest server result, not the whole vocabulary.
     /** @private */ this._scopes = [];
     /** @private */ this._loading = false;
@@ -108,10 +110,16 @@ class ArazzoGrantsPanel extends ArazzoElement {
       // One keyset page of grants, filtered server-side by q. Replaces the list (Prev/Next paging), not appended. The
       // scope vocabulary for the authoring typeahead is fetched on demand when the editor opens / as the user types
       // (loadScopeOptions), not loaded in full here.
-      const page = await client.searchSecurityBindings({ q: this._query.trim() || undefined, pageToken: this._currentToken, limit: this.pageSize });
+      const q = this._query.trim() || undefined;
+      const [page, total] = await Promise.all([
+        client.searchSecurityBindings({ q, pageToken: this._currentToken, limit: this.pageSize }),
+        client.countSecurityBindings({ q }).catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._grants = page.bindings;
       this._nextPageToken = page.nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._grants.length, hasMore: !!this._nextPageToken });
@@ -448,7 +456,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
       hasPrev: this._history.length > 0,
       hasNext: !!this._nextPageToken,
       loading: this._loading,
-      info: this._loading ? 'Loading…' : `${this._grants.length} grant${this._grants.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
+      info: this._loading ? 'Loading…' : `${this._total ?? this._grants.length}${this._totalCapped ? '+' : ''} grant${(this._total ?? this._grants.length) === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
     });
   }
 

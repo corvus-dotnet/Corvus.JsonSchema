@@ -61,6 +61,8 @@ class ArazzoScopesPanel extends ArazzoElement {
     /** @private */ this._history = [];          // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
+    /** @private */ this._total = null;          // q-scoped bounded total for the footer (null until first load)
+    /** @private */ this._totalCapped = false;   // true when the true total meets/exceeds the server cap ("N+")
     /** @private */ this._reqSeq = 0;
     /** @private */ this._query = '';
     /** @private */ this._form = null;           // the detail-pane form state (null = nothing selected)
@@ -117,10 +119,16 @@ class ArazzoScopesPanel extends ArazzoElement {
       // than on every reload/page turn.
       const tasks = [client.searchSecurityRules({ q: q || undefined, pageToken: this._currentToken, limit: this.pageSize })];
       if (!this._orderingsLoaded) tasks.push(client.listSecurityOrderings().catch(() => ({ orderings: [] })));
-      const [page, orderingsResult] = await Promise.all(tasks);
+      // The page (+ orderings) and the q-scoped bounded total load together; a failed count degrades to the page length.
+      const [[page, orderingsResult], total] = await Promise.all([
+        Promise.all(tasks),
+        client.countSecurityRules({ q: q || undefined }).catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._scopes = page.rules;
       this._nextPageToken = page.nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       if (orderingsResult) { this._orderings = orderingsResult.orderings ?? []; this._orderingsLoaded = true; }
       this._loading = false;
       this.renderBody();
@@ -354,7 +362,7 @@ class ArazzoScopesPanel extends ArazzoElement {
       hasPrev: this._history.length > 0,
       hasNext: !!this._nextPageToken,
       loading: this._loading,
-      info: this._loading ? 'Loading…' : `${this._scopes.length} rule${this._scopes.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
+      info: this._loading ? 'Loading…' : `${this._total ?? this._scopes.length}${this._totalCapped ? '+' : ''} rule${(this._total ?? this._scopes.length) === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
     });
   }
 

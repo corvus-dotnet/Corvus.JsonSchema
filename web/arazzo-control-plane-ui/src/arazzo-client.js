@@ -1615,6 +1615,20 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countSecurityRules` — the bounded total of rules matching `q` (`GET /security/rules/count`), for the list footer; no
+   * rows are fetched. Same `q` filter as {@link searchSecurityRules}. `capped: true` once the true total meets or exceeds
+   * the server cap. Requires `security:read`.
+   * @param {{ q?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countSecurityRules(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    const result = await this._request('GET', `/security/rules/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `searchSecurityRules`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ q?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ rules: object[], nextPageToken: (string|null) }>}
@@ -1657,6 +1671,20 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/security/bindings${qs(search)}`, { signal: query.signal });
     return { bindings: result.bindings ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countSecurityBindings` — the bounded total of bindings matching `q` (`GET /security/bindings/count`), for the list
+   * footer; no rows are fetched. Same `q` filter as {@link searchSecurityBindings}. `capped: true` once the true total
+   * meets or exceeds the server cap. Requires `security:read`.
+   * @param {{ q?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countSecurityBindings(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    const result = await this._request('GET', `/security/bindings/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
