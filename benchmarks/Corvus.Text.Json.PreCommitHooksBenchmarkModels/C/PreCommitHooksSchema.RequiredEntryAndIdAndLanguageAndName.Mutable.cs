@@ -2913,5 +2913,185 @@ public readonly partial struct PreCommitHooksSchema
         {
             return workspace.CreateBuilder<RequiredEntryAndIdAndLanguageAndName, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="entry">The value of the property.</param>
+        /// <param name="id">The value of the property.</param>
+        /// <param name="language">The value of the property.</param>
+        /// <param name="name">The value of the property.</param>
+        /// <param name="additionalDependencies">The value of the property.</param>
+        /// <param name="alias">The value of the property.</param>
+        /// <param name="alwaysRun">The value of the property.</param>
+        /// <param name="args">The value of the property.</param>
+        /// <param name="description">The value of the property.</param>
+        /// <param name="exclude">The value of the property.</param>
+        /// <param name="excludeTypes">The value of the property.</param>
+        /// <param name="failFast">The value of the property.</param>
+        /// <param name="files">The value of the property.</param>
+        /// <param name="languageVersion">The value of the property.</param>
+        /// <param name="logFile">The value of the property.</param>
+        /// <param name="minimumPreCommitVersion">The value of the property.</param>
+        /// <param name="passFilenames">The value of the property.</param>
+        /// <param name="requireSerial">The value of the property.</param>
+        /// <param name="stages">The value of the property.</param>
+        /// <param name="types">The value of the property.</param>
+        /// <param name="typesOr">The value of the property.</param>
+        /// <param name="verbose">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName> Create(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source entry, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source id, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source language, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source name, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source additionalDependencies = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source alias = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source alwaysRun = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source args = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source description = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source exclude = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source excludeTypes = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source failFast = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source files = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source languageVersion = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source logFile = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source minimumPreCommitVersion = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source passFilenames = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source requireSerial = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source stages = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source types = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source typesOr = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source verbose = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(entry, id, language, name, additionalDependencies, alias, alwaysRun, args, description, exclude, excludeTypes, failFast, files, languageVersion, logFile, minimumPreCommitVersion, passFilenames, requireSerial, stages, types, typesOr, verbose);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="entry">The value of the property.</param>
+        /// <param name="id">The value of the property.</param>
+        /// <param name="language">The value of the property.</param>
+        /// <param name="name">The value of the property.</param>
+        /// <param name="additionalDependencies">The value of the property.</param>
+        /// <param name="alias">The value of the property.</param>
+        /// <param name="alwaysRun">The value of the property.</param>
+        /// <param name="args">The value of the property.</param>
+        /// <param name="description">The value of the property.</param>
+        /// <param name="exclude">The value of the property.</param>
+        /// <param name="excludeTypes">The value of the property.</param>
+        /// <param name="failFast">The value of the property.</param>
+        /// <param name="files">The value of the property.</param>
+        /// <param name="languageVersion">The value of the property.</param>
+        /// <param name="logFile">The value of the property.</param>
+        /// <param name="minimumPreCommitVersion">The value of the property.</param>
+        /// <param name="passFilenames">The value of the property.</param>
+        /// <param name="requireSerial">The value of the property.</param>
+        /// <param name="stages">The value of the property.</param>
+        /// <param name="types">The value of the property.</param>
+        /// <param name="typesOr">The value of the property.</param>
+        /// <param name="verbose">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName> Create<TContext>(in TContext context, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source entry, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source id, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source language, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source name, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source<TContext> additionalDependencies = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source alias = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source alwaysRun = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source<TContext> args = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source description = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source exclude = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> excludeTypes = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source failFast = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source files = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source languageVersion = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source logFile = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source minimumPreCommitVersion = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source passFilenames = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source requireSerial = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source<TContext> stages = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> types = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> typesOr = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source verbose = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, entry, id, language, name, additionalDependencies, alias, alwaysRun, args, description, exclude, excludeTypes, failFast, files, languageVersion, logFile, minimumPreCommitVersion, passFilenames, requireSerial, stages, types, typesOr, verbose);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<RequiredEntryAndIdAndLanguageAndName>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

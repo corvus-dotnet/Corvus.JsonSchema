@@ -1878,5 +1878,161 @@ public readonly partial struct NestCliSchema
         {
             return workspace.CreateBuilder<CompilerOptions, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<CompilerOptions> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<CompilerOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<CompilerOptions> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<CompilerOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<CompilerOptions> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<CompilerOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="assets">The value of the property.</param>
+        /// <param name="builder1">The value of the property.</param>
+        /// <param name="deleteOutDir">The value of the property.</param>
+        /// <param name="manualRestart">The value of the property.</param>
+        /// <param name="plugins">The value of the property.</param>
+        /// <param name="tsConfigPath">The value of the property.</param>
+        /// <param name="typeCheck">The value of the property.</param>
+        /// <param name="watchAssets">The value of the property.</param>
+        /// <param name="webpack">The value of the property.</param>
+        /// <param name="webpackConfigPath">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<CompilerOptions> Create(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source assets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source builder1 = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source deleteOutDir = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source manualRestart = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source plugins = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source tsConfigPath = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source typeCheck = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source watchAssets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source webpack = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source webpackConfigPath = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(assets, builder1, deleteOutDir, manualRestart, plugins, tsConfigPath, typeCheck, watchAssets, webpack, webpackConfigPath);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<CompilerOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="assets">The value of the property.</param>
+        /// <param name="builder1">The value of the property.</param>
+        /// <param name="deleteOutDir">The value of the property.</param>
+        /// <param name="manualRestart">The value of the property.</param>
+        /// <param name="plugins">The value of the property.</param>
+        /// <param name="tsConfigPath">The value of the property.</param>
+        /// <param name="typeCheck">The value of the property.</param>
+        /// <param name="watchAssets">The value of the property.</param>
+        /// <param name="webpack">The value of the property.</param>
+        /// <param name="webpackConfigPath">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<CompilerOptions> Create<TContext>(in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source<TContext> assets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source<TContext> builder1 = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source deleteOutDir = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source manualRestart = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source<TContext> plugins = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source tsConfigPath = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source typeCheck = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source watchAssets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source webpack = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source webpackConfigPath = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, assets, builder1, deleteOutDir, manualRestart, plugins, tsConfigPath, typeCheck, watchAssets, webpack, webpackConfigPath);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<CompilerOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

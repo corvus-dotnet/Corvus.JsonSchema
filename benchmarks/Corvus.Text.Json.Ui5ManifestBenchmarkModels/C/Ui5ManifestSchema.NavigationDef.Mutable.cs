@@ -180,11 +180,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents an action triggered by the user on UI: the navigation to create an object
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Mutable Create
+            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Mutable CreateValue
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateValueUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Mutable value))
                     {
                         return value;
                     }
@@ -268,19 +268,19 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>create</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCreate(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source value)
+            public void SetCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CreateUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CreateValueUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -289,7 +289,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Create, ref cvb);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CreateValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -301,7 +301,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>create</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCreate<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source<TContext> value)
+            public void SetCreateValue<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -310,13 +310,13 @@ public readonly partial struct Ui5ManifestSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CreateUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CreateValueUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -325,7 +325,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Create, ref cvb);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CreateValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -337,10 +337,10 @@ public readonly partial struct Ui5ManifestSchema
             /// Remove the <c>create</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveCreate()
+            public bool RemoveCreateValue()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CreateUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CreateValueUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -1008,7 +1008,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source display = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source edit = default)
             {
-                create.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Create, ref builder);
+                create.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CreateValue, ref builder);
                 display.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Display, ref builder);
                 edit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Edit, ref builder);
             }
@@ -1037,7 +1037,7 @@ public readonly partial struct Ui5ManifestSchema
             where TContext : allows ref struct
             #endif
             {
-                create.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Create, ref builder);
+                create.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CreateValue, ref builder);
                 display.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Display, ref builder);
                 edit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Edit, ref builder);
             }
@@ -1295,6 +1295,148 @@ public readonly partial struct Ui5ManifestSchema
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
             return workspace.CreateBuilder<NavigationDef, Mutable>(this);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<NavigationDef> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<NavigationDef>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<NavigationDef> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<NavigationDef>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<NavigationDef> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<NavigationDef>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="create">The value of the property.</param>
+        /// <param name="display">The value of the property.</param>
+        /// <param name="edit">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<NavigationDef> Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source create = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source display = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source edit = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(create, display, edit);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<NavigationDef>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="create">The value of the property.</param>
+        /// <param name="display">The value of the property.</param>
+        /// <param name="edit">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<NavigationDef> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source<TContext> create = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source<TContext> display = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.Source<TContext> edit = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, create, display, edit);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<NavigationDef>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
         }
     }
 }

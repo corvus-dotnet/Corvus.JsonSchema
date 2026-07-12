@@ -3175,5 +3175,197 @@ public readonly partial struct LazygitSchema
         {
             return workspace.CreateBuilder<Gui, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Gui> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Gui>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Gui> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Gui>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Gui> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Gui>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="animateExplosion">The value of the property.</param>
+        /// <param name="authorColors">The value of the property.</param>
+        /// <param name="border">The value of the property.</param>
+        /// <param name="branchColors">The value of the property.</param>
+        /// <param name="commandLogSize">The value of the property.</param>
+        /// <param name="commitLength">The value of the property.</param>
+        /// <param name="expandFocusedSidePanel">The value of the property.</param>
+        /// <param name="language">The value of the property.</param>
+        /// <param name="mainPanelSplitMode">The value of the property.</param>
+        /// <param name="mouseEvents">The value of the property.</param>
+        /// <param name="nerdFontsVersion">The value of the property.</param>
+        /// <param name="scrollHeight">The value of the property.</param>
+        /// <param name="scrollPastBottom">The value of the property.</param>
+        /// <param name="shortTimeFormat">The value of the property.</param>
+        /// <param name="showBottomLine">The value of the property.</param>
+        /// <param name="showBranchCommitHash">The value of the property.</param>
+        /// <param name="showCommandLog">The value of the property.</param>
+        /// <param name="showFileTree">The value of the property.</param>
+        /// <param name="showListFooter">The value of the property.</param>
+        /// <param name="showRandomTip">The value of the property.</param>
+        /// <param name="sidePanelWidth">The value of the property.</param>
+        /// <param name="skipDiscardChangeWarning">The value of the property.</param>
+        /// <param name="skipRewordInEditorWarning">The value of the property.</param>
+        /// <param name="skipStashWarning">The value of the property.</param>
+        /// <param name="splitDiff">The value of the property.</param>
+        /// <param name="theme">The value of the property.</param>
+        /// <param name="timeFormat">The value of the property.</param>
+        /// <param name="windowSize">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Gui> Create(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AnimateExplosion.Source animateExplosion = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AuthorColors.Source authorColors = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Border.Source border = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.BranchColors.Source branchColors = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommandLogSize.Source commandLogSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommitLength.Source commitLength = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ExpandFocusedSidePanel.Source expandFocusedSidePanel = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Language.Source language = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MainPanelSplitMode.Source mainPanelSplitMode = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MouseEvents.Source mouseEvents = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.NerdFontsVersion.Source nerdFontsVersion = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollHeight.Source scrollHeight = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollPastBottom.Source scrollPastBottom = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShortTimeFormat.Source shortTimeFormat = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBottomLine.Source showBottomLine = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBranchCommitHash.Source showBranchCommitHash = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowCommandLog.Source showCommandLog = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowFileTree.Source showFileTree = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowListFooter.Source showListFooter = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowRandomTip.Source showRandomTip = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SidePanelWidth.Source sidePanelWidth = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipDiscardChangeWarning.Source skipDiscardChangeWarning = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipRewordInEditorWarning.Source skipRewordInEditorWarning = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipStashWarning.Source skipStashWarning = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SplitDiff.Source splitDiff = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.Source theme = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.TimeFormat.Source timeFormat = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.WindowSize.Source windowSize = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(animateExplosion, authorColors, border, branchColors, commandLogSize, commitLength, expandFocusedSidePanel, language, mainPanelSplitMode, mouseEvents, nerdFontsVersion, scrollHeight, scrollPastBottom, shortTimeFormat, showBottomLine, showBranchCommitHash, showCommandLog, showFileTree, showListFooter, showRandomTip, sidePanelWidth, skipDiscardChangeWarning, skipRewordInEditorWarning, skipStashWarning, splitDiff, theme, timeFormat, windowSize);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Gui>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="animateExplosion">The value of the property.</param>
+        /// <param name="authorColors">The value of the property.</param>
+        /// <param name="border">The value of the property.</param>
+        /// <param name="branchColors">The value of the property.</param>
+        /// <param name="commandLogSize">The value of the property.</param>
+        /// <param name="commitLength">The value of the property.</param>
+        /// <param name="expandFocusedSidePanel">The value of the property.</param>
+        /// <param name="language">The value of the property.</param>
+        /// <param name="mainPanelSplitMode">The value of the property.</param>
+        /// <param name="mouseEvents">The value of the property.</param>
+        /// <param name="nerdFontsVersion">The value of the property.</param>
+        /// <param name="scrollHeight">The value of the property.</param>
+        /// <param name="scrollPastBottom">The value of the property.</param>
+        /// <param name="shortTimeFormat">The value of the property.</param>
+        /// <param name="showBottomLine">The value of the property.</param>
+        /// <param name="showBranchCommitHash">The value of the property.</param>
+        /// <param name="showCommandLog">The value of the property.</param>
+        /// <param name="showFileTree">The value of the property.</param>
+        /// <param name="showListFooter">The value of the property.</param>
+        /// <param name="showRandomTip">The value of the property.</param>
+        /// <param name="sidePanelWidth">The value of the property.</param>
+        /// <param name="skipDiscardChangeWarning">The value of the property.</param>
+        /// <param name="skipRewordInEditorWarning">The value of the property.</param>
+        /// <param name="skipStashWarning">The value of the property.</param>
+        /// <param name="splitDiff">The value of the property.</param>
+        /// <param name="theme">The value of the property.</param>
+        /// <param name="timeFormat">The value of the property.</param>
+        /// <param name="windowSize">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Gui> Create<TContext>(in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AnimateExplosion.Source animateExplosion = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AuthorColors.Source<TContext> authorColors = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Border.Source border = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.BranchColors.Source<TContext> branchColors = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommandLogSize.Source commandLogSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommitLength.Source<TContext> commitLength = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ExpandFocusedSidePanel.Source expandFocusedSidePanel = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Language.Source language = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MainPanelSplitMode.Source mainPanelSplitMode = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MouseEvents.Source mouseEvents = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.NerdFontsVersion.Source nerdFontsVersion = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollHeight.Source scrollHeight = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollPastBottom.Source scrollPastBottom = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShortTimeFormat.Source shortTimeFormat = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBottomLine.Source showBottomLine = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBranchCommitHash.Source showBranchCommitHash = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowCommandLog.Source showCommandLog = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowFileTree.Source showFileTree = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowListFooter.Source showListFooter = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowRandomTip.Source showRandomTip = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SidePanelWidth.Source sidePanelWidth = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipDiscardChangeWarning.Source skipDiscardChangeWarning = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipRewordInEditorWarning.Source skipRewordInEditorWarning = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipStashWarning.Source skipStashWarning = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SplitDiff.Source splitDiff = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.Source<TContext> theme = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.TimeFormat.Source timeFormat = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.WindowSize.Source windowSize = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, animateExplosion, authorColors, border, branchColors, commandLogSize, commitLength, expandFocusedSidePanel, language, mainPanelSplitMode, mouseEvents, nerdFontsVersion, scrollHeight, scrollPastBottom, shortTimeFormat, showBottomLine, showBranchCommitHash, showCommandLog, showFileTree, showListFooter, showRandomTip, sidePanelWidth, skipDiscardChangeWarning, skipRewordInEditorWarning, skipStashWarning, splitDiff, theme, timeFormat, windowSize);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Gui>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

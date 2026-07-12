@@ -2768,5 +2768,305 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<Signer, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+        /// </summary>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create(
+            int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create(
+            scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndDisableJwkSecurityAndJwkLocalPath.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndDisableJwkSecurityAndJwkLocalPath.Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create<TContext>(
+            scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndDisableJwkSecurityAndJwkLocalPath.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndDisableJwkSecurityAndJwkLocalPath.Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create(
+            scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl.Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create<TContext>(
+            scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl.Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="alg">The value of the property.</param>
+        /// <param name="keysToSign">The value of the property.</param>
+        /// <param name="kid">The value of the property.</param>
+        /// <param name="cipherSuites">The value of the property.</param>
+        /// <param name="cypherKey">The value of the property.</param>
+        /// <param name="disableJwkSecurity">The value of the property.</param>
+        /// <param name="full">The value of the property.</param>
+        /// <param name="jwkFingerprints">The value of the property.</param>
+        /// <param name="jwkLocalCa">The value of the property.</param>
+        /// <param name="jwkLocalPath">The value of the property.</param>
+        /// <param name="jwkUrl">The value of the property.</param>
+        /// <param name="leeway">The value of the property.</param>
+        /// <param name="secretUrl">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create(in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.Algorithm.Source alg, in Corvus.KrakendBenchmark.Current.JsonArray.Source keysToSign, in Corvus.KrakendBenchmark.Current.JsonString.Source kid, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.ObjectInArrayArray.Source cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.FullFormat.Source full = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.SecretSUrl.Source secretUrl = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(alg, keysToSign, kid, cipherSuites, cypherKey, disableJwkSecurity, full, jwkFingerprints, jwkLocalCa, jwkLocalPath, jwkUrl, leeway, secretUrl);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="alg">The value of the property.</param>
+        /// <param name="keysToSign">The value of the property.</param>
+        /// <param name="kid">The value of the property.</param>
+        /// <param name="cipherSuites">The value of the property.</param>
+        /// <param name="cypherKey">The value of the property.</param>
+        /// <param name="disableJwkSecurity">The value of the property.</param>
+        /// <param name="full">The value of the property.</param>
+        /// <param name="jwkFingerprints">The value of the property.</param>
+        /// <param name="jwkLocalCa">The value of the property.</param>
+        /// <param name="jwkLocalPath">The value of the property.</param>
+        /// <param name="jwkUrl">The value of the property.</param>
+        /// <param name="leeway">The value of the property.</param>
+        /// <param name="secretUrl">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Signer> Create<TContext>(in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.Algorithm.Source alg, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> keysToSign, in Corvus.KrakendBenchmark.Current.JsonString.Source kid, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.ObjectInArrayArray.Source<TContext> cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.FullFormat.Source full = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.SecretSUrl.Source secretUrl = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, alg, keysToSign, kid, cipherSuites, cypherKey, disableJwkSecurity, full, jwkFingerprints, jwkLocalCa, jwkLocalPath, jwkUrl, leeway, secretUrl);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Signer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

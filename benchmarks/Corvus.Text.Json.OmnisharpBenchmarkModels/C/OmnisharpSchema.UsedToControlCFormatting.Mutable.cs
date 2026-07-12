@@ -4519,5 +4519,163 @@ public readonly partial struct OmnisharpSchema
         {
             return workspace.CreateBuilder<UsedToControlCFormatting, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToControlCFormatting> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToControlCFormatting>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToControlCFormatting> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToControlCFormatting>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToControlCFormatting> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToControlCFormatting>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="enableEditorConfigSupport">The value of the property.</param>
+        /// <param name="indentationSize">The value of the property.</param>
+        /// <param name="indentBlock">The value of the property.</param>
+        /// <param name="indentBraces">The value of the property.</param>
+        /// <param name="indentSwitchCaseSection">The value of the property.</param>
+        /// <param name="indentSwitchCaseSectionWhenBlock">The value of the property.</param>
+        /// <param name="indentSwitchSection">The value of the property.</param>
+        /// <param name="labelPositioning">The value of the property.</param>
+        /// <param name="newLine">The value of the property.</param>
+        /// <param name="newLineForCatch">The value of the property.</param>
+        /// <param name="newLineForClausesInQuery">The value of the property.</param>
+        /// <param name="newLineForElse">The value of the property.</param>
+        /// <param name="newLineForFinally">The value of the property.</param>
+        /// <param name="newLineForMembersInAnonymousTypes">The value of the property.</param>
+        /// <param name="newLineForMembersInObjectInit">The value of the property.</param>
+        /// <param name="newLinesForBracesInAccessors">The value of the property.</param>
+        /// <param name="newLinesForBracesInAnonymousMethods">The value of the property.</param>
+        /// <param name="newLinesForBracesInAnonymousTypes">The value of the property.</param>
+        /// <param name="newLinesForBracesInControlBlocks">The value of the property.</param>
+        /// <param name="newLinesForBracesInLambdaExpressionBody">The value of the property.</param>
+        /// <param name="newLinesForBracesInMethods">The value of the property.</param>
+        /// <param name="newLinesForBracesInObjectCollectionArrayInitializers">The value of the property.</param>
+        /// <param name="newLinesForBracesInProperties">The value of the property.</param>
+        /// <param name="newLinesForBracesInTypes">The value of the property.</param>
+        /// <param name="spaceAfterCast">The value of the property.</param>
+        /// <param name="spaceAfterColonInBaseTypeDeclaration">The value of the property.</param>
+        /// <param name="spaceAfterComma">The value of the property.</param>
+        /// <param name="spaceAfterControlFlowStatementKeyword">The value of the property.</param>
+        /// <param name="spaceAfterDot">The value of the property.</param>
+        /// <param name="spaceAfterMethodCallName">The value of the property.</param>
+        /// <param name="spaceAfterSemicolonsInForStatement">The value of the property.</param>
+        /// <param name="spaceBeforeColonInBaseTypeDeclaration">The value of the property.</param>
+        /// <param name="spaceBeforeComma">The value of the property.</param>
+        /// <param name="spaceBeforeDot">The value of the property.</param>
+        /// <param name="spaceBeforeOpenSquareBracket">The value of the property.</param>
+        /// <param name="spaceBeforeSemicolonsInForStatement">The value of the property.</param>
+        /// <param name="spaceBetweenEmptyMethodCallParentheses">The value of the property.</param>
+        /// <param name="spaceBetweenEmptyMethodDeclarationParentheses">The value of the property.</param>
+        /// <param name="spaceBetweenEmptySquareBrackets">The value of the property.</param>
+        /// <param name="spacesIgnoreAroundVariableDeclaration">The value of the property.</param>
+        /// <param name="spaceWithinCastParentheses">The value of the property.</param>
+        /// <param name="spaceWithinExpressionParentheses">The value of the property.</param>
+        /// <param name="spaceWithinMethodCallParentheses">The value of the property.</param>
+        /// <param name="spaceWithinMethodDeclarationParenthesis">The value of the property.</param>
+        /// <param name="spaceWithinOtherParentheses">The value of the property.</param>
+        /// <param name="spaceWithinSquareBrackets">The value of the property.</param>
+        /// <param name="spacingAfterMethodDeclarationName">The value of the property.</param>
+        /// <param name="spacingAroundBinaryOperator">The value of the property.</param>
+        /// <param name="tabSize">The value of the property.</param>
+        /// <param name="useTabs">The value of the property.</param>
+        /// <param name="wrappingKeepStatementsOnSingleLine">The value of the property.</param>
+        /// <param name="wrappingPreserveSingleLine">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToControlCFormatting> Create(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.EnableEditorConfigSupportEntity.Source enableEditorConfigSupport = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentationSizeEntity.Source indentationSize = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBlockEntity.Source indentBlock = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBracesEntity.Source indentBraces = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionEntity.Source indentSwitchCaseSection = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionWhenBlockEntity.Source indentSwitchCaseSectionWhenBlock = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchSectionEntity.Source indentSwitchSection = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.LabelPositioningEntity.Source labelPositioning = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineEntity.Source newLine = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForCatchEntity.Source newLineForCatch = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForClausesInQueryEntity.Source newLineForClausesInQuery = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForElseEntity.Source newLineForElse = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForFinallyEntity.Source newLineForFinally = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInAnonymousTypesEntity.Source newLineForMembersInAnonymousTypes = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInObjectInitEntity.Source newLineForMembersInObjectInit = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAccessorsEntity.Source newLinesForBracesInAccessors = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousMethodsEntity.Source newLinesForBracesInAnonymousMethods = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousTypesEntity.Source newLinesForBracesInAnonymousTypes = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInControlBlocksEntity.Source newLinesForBracesInControlBlocks = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInLambdaExpressionBodyEntity.Source newLinesForBracesInLambdaExpressionBody = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInMethodsEntity.Source newLinesForBracesInMethods = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInObjectCollectionArrayInitializersEntity.Source newLinesForBracesInObjectCollectionArrayInitializers = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInPropertiesEntity.Source newLinesForBracesInProperties = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInTypesEntity.Source newLinesForBracesInTypes = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCastEntity.Source spaceAfterCast = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterColonInBaseTypeDeclarationEntity.Source spaceAfterColonInBaseTypeDeclaration = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCommaEntity.Source spaceAfterComma = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterControlFlowStatementKeywordEntity.Source spaceAfterControlFlowStatementKeyword = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterDotEntity.Source spaceAfterDot = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterMethodCallNameEntity.Source spaceAfterMethodCallName = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterSemicolonsInForStatementEntity.Source spaceAfterSemicolonsInForStatement = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeColonInBaseTypeDeclarationEntity.Source spaceBeforeColonInBaseTypeDeclaration = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeCommaEntity.Source spaceBeforeComma = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeDotEntity.Source spaceBeforeDot = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeOpenSquareBracketEntity.Source spaceBeforeOpenSquareBracket = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeSemicolonsInForStatementEntity.Source spaceBeforeSemicolonsInForStatement = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodCallParenthesesEntity.Source spaceBetweenEmptyMethodCallParentheses = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodDeclarationParenthesesEntity.Source spaceBetweenEmptyMethodDeclarationParentheses = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptySquareBracketsEntity.Source spaceBetweenEmptySquareBrackets = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacesIgnoreAroundVariableDeclarationEntity.Source spacesIgnoreAroundVariableDeclaration = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinCastParenthesesEntity.Source spaceWithinCastParentheses = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinExpressionParenthesesEntity.Source spaceWithinExpressionParentheses = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodCallParenthesesEntity.Source spaceWithinMethodCallParentheses = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodDeclarationParenthesisEntity.Source spaceWithinMethodDeclarationParenthesis = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinOtherParenthesesEntity.Source spaceWithinOtherParentheses = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinSquareBracketsEntity.Source spaceWithinSquareBrackets = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAfterMethodDeclarationNameEntity.Source spacingAfterMethodDeclarationName = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAroundBinaryOperatorEntity.Source spacingAroundBinaryOperator = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.TabSizeEntity.Source tabSize = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.UseTabsEntity.Source useTabs = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingKeepStatementsOnSingleLineEntity.Source wrappingKeepStatementsOnSingleLine = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingPreserveSingleLineEntity.Source wrappingPreserveSingleLine = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(enableEditorConfigSupport, indentationSize, indentBlock, indentBraces, indentSwitchCaseSection, indentSwitchCaseSectionWhenBlock, indentSwitchSection, labelPositioning, newLine, newLineForCatch, newLineForClausesInQuery, newLineForElse, newLineForFinally, newLineForMembersInAnonymousTypes, newLineForMembersInObjectInit, newLinesForBracesInAccessors, newLinesForBracesInAnonymousMethods, newLinesForBracesInAnonymousTypes, newLinesForBracesInControlBlocks, newLinesForBracesInLambdaExpressionBody, newLinesForBracesInMethods, newLinesForBracesInObjectCollectionArrayInitializers, newLinesForBracesInProperties, newLinesForBracesInTypes, spaceAfterCast, spaceAfterColonInBaseTypeDeclaration, spaceAfterComma, spaceAfterControlFlowStatementKeyword, spaceAfterDot, spaceAfterMethodCallName, spaceAfterSemicolonsInForStatement, spaceBeforeColonInBaseTypeDeclaration, spaceBeforeComma, spaceBeforeDot, spaceBeforeOpenSquareBracket, spaceBeforeSemicolonsInForStatement, spaceBetweenEmptyMethodCallParentheses, spaceBetweenEmptyMethodDeclarationParentheses, spaceBetweenEmptySquareBrackets, spacesIgnoreAroundVariableDeclaration, spaceWithinCastParentheses, spaceWithinExpressionParentheses, spaceWithinMethodCallParentheses, spaceWithinMethodDeclarationParenthesis, spaceWithinOtherParentheses, spaceWithinSquareBrackets, spacingAfterMethodDeclarationName, spacingAroundBinaryOperator, tabSize, useTabs, wrappingKeepStatementsOnSingleLine, wrappingPreserveSingleLine);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToControlCFormatting>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

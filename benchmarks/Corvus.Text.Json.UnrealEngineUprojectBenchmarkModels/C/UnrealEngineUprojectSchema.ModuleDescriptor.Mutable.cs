@@ -2691,5 +2691,167 @@ public readonly partial struct UnrealEngineUprojectSchema
         {
             return workspace.CreateBuilder<ModuleDescriptor, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ModuleDescriptor> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ModuleDescriptor>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ModuleDescriptor> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ModuleDescriptor>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ModuleDescriptor> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ModuleDescriptor>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="additionalDependencies">The value of the property.</param>
+        /// <param name="hasExplicitPlatforms">The value of the property.</param>
+        /// <param name="loadingPhase">The value of the property.</param>
+        /// <param name="name">The value of the property.</param>
+        /// <param name="platformAllowList">The value of the property.</param>
+        /// <param name="platformDenyList">The value of the property.</param>
+        /// <param name="programAllowList">The value of the property.</param>
+        /// <param name="programDenyList">The value of the property.</param>
+        /// <param name="targetAllowList">The value of the property.</param>
+        /// <param name="targetConfigurationAllowList">The value of the property.</param>
+        /// <param name="targetConfigurationDenyList">The value of the property.</param>
+        /// <param name="targetDenyList">The value of the property.</param>
+        /// <param name="type">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ModuleDescriptor> Create(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source additionalDependencies = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source loadingPhase = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source platformAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source platformDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source programAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source programDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source targetAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source targetConfigurationAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source targetConfigurationDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source targetDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source type = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(additionalDependencies, hasExplicitPlatforms, loadingPhase, name, platformAllowList, platformDenyList, programAllowList, programDenyList, targetAllowList, targetConfigurationAllowList, targetConfigurationDenyList, targetDenyList, type);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ModuleDescriptor>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="additionalDependencies">The value of the property.</param>
+        /// <param name="hasExplicitPlatforms">The value of the property.</param>
+        /// <param name="loadingPhase">The value of the property.</param>
+        /// <param name="name">The value of the property.</param>
+        /// <param name="platformAllowList">The value of the property.</param>
+        /// <param name="platformDenyList">The value of the property.</param>
+        /// <param name="programAllowList">The value of the property.</param>
+        /// <param name="programDenyList">The value of the property.</param>
+        /// <param name="targetAllowList">The value of the property.</param>
+        /// <param name="targetConfigurationAllowList">The value of the property.</param>
+        /// <param name="targetConfigurationDenyList">The value of the property.</param>
+        /// <param name="targetDenyList">The value of the property.</param>
+        /// <param name="type">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ModuleDescriptor> Create<TContext>(in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source<TContext> additionalDependencies = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source loadingPhase = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> platformAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> platformDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> programAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> programDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source<TContext> targetAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source<TContext> targetConfigurationAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source<TContext> targetConfigurationDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source<TContext> targetDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source type = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, additionalDependencies, hasExplicitPlatforms, loadingPhase, name, platformAllowList, platformDenyList, programAllowList, programDenyList, targetAllowList, targetConfigurationAllowList, targetConfigurationDenyList, targetDenyList, type);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ModuleDescriptor>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

@@ -2545,5 +2545,173 @@ public readonly partial struct LazygitSchema
         {
             return workspace.CreateBuilder<Git, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Git> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Git>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Git> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Git>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Git> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Git>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="allBranchesLogCmd">The value of the property.</param>
+        /// <param name="autoFetch">The value of the property.</param>
+        /// <param name="autoRefresh">The value of the property.</param>
+        /// <param name="branchLogCmd">The value of the property.</param>
+        /// <param name="commit">The value of the property.</param>
+        /// <param name="commitPrefixes">The value of the property.</param>
+        /// <param name="diffContextSize">The value of the property.</param>
+        /// <param name="disableForcePushing">The value of the property.</param>
+        /// <param name="fetchAll">The value of the property.</param>
+        /// <param name="log">The value of the property.</param>
+        /// <param name="mainBranches">The value of the property.</param>
+        /// <param name="merging">The value of the property.</param>
+        /// <param name="overrideGpg">The value of the property.</param>
+        /// <param name="paging">The value of the property.</param>
+        /// <param name="parseEmoji">The value of the property.</param>
+        /// <param name="skipHookPrefix">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Git> Create(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source commit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source commitPrefixes = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source log = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source mainBranches = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source merging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source paging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(allBranchesLogCmd, autoFetch, autoRefresh, branchLogCmd, commit, commitPrefixes, diffContextSize, disableForcePushing, fetchAll, log, mainBranches, merging, overrideGpg, paging, parseEmoji, skipHookPrefix);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Git>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="allBranchesLogCmd">The value of the property.</param>
+        /// <param name="autoFetch">The value of the property.</param>
+        /// <param name="autoRefresh">The value of the property.</param>
+        /// <param name="branchLogCmd">The value of the property.</param>
+        /// <param name="commit">The value of the property.</param>
+        /// <param name="commitPrefixes">The value of the property.</param>
+        /// <param name="diffContextSize">The value of the property.</param>
+        /// <param name="disableForcePushing">The value of the property.</param>
+        /// <param name="fetchAll">The value of the property.</param>
+        /// <param name="log">The value of the property.</param>
+        /// <param name="mainBranches">The value of the property.</param>
+        /// <param name="merging">The value of the property.</param>
+        /// <param name="overrideGpg">The value of the property.</param>
+        /// <param name="paging">The value of the property.</param>
+        /// <param name="parseEmoji">The value of the property.</param>
+        /// <param name="skipHookPrefix">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Git> Create<TContext>(in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> commit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> commitPrefixes = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> log = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> mainBranches = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> merging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> paging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, allBranchesLogCmd, autoFetch, autoRefresh, branchLogCmd, commit, commitPrefixes, diffContextSize, disableForcePushing, fetchAll, log, mainBranches, merging, overrideGpg, paging, parseEmoji, skipHookPrefix);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Git>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

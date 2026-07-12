@@ -2555,6 +2555,178 @@ public readonly partial struct VercelSchema
                 {
                     return workspace.CreateBuilder<RequiredSrc, Mutable>(this);
                 }
+
+                /// <summary>
+                /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                /// </summary>
+                /// <param name="value">The value with which to initialize the document.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<RequiredSrc> Create(
+                    scoped in Source value, int initialCapacity = 30)
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        value.AddAsItem(ref cvb);
+                        Debug.Assert(cvb.MemberCount == 1);
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<RequiredSrc>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
+                }
+
+                /// <summary>
+                /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                /// </summary>
+                /// <param name="value">The value with which to initialize the document.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<RequiredSrc> Create(
+                    scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        var source = new Source(value);
+                        source.AddAsItem(ref cvb);
+                        Debug.Assert(cvb.MemberCount == 1);
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<RequiredSrc>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
+                }
+
+                /// <summary>
+                /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                /// <param name="context">The context to pass to the builder.</param>
+                /// <param name="value">The value with which to initialize the document.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<RequiredSrc> Create<TContext>(
+                    scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                    #if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+                    #endif
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        var source = new Source<TContext>(context, value);
+                        source.AddAsItem(ref cvb);
+                        Debug.Assert(cvb.MemberCount == 1);
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<RequiredSrc>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
+                }
+
+                /// <summary>
+                /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+                /// </summary>
+                /// <param name="src">The value of the property.</param>
+                /// <param name="caseSensitive">The value of the property.</param>
+                /// <param name="check">The value of the property.</param>
+                /// <param name="continueValue">The value of the property.</param>
+                /// <param name="dest">The value of the property.</param>
+                /// <param name="has">The value of the property.</param>
+                /// <param name="headers">The value of the property.</param>
+                /// <param name="important">The value of the property.</param>
+                /// <param name="isInternal">The value of the property.</param>
+                /// <param name="locale">The value of the property.</param>
+                /// <param name="methods">The value of the property.</param>
+                /// <param name="middleware">The value of the property.</param>
+                /// <param name="middlewarePath">The value of the property.</param>
+                /// <param name="middlewareRawSrc">The value of the property.</param>
+                /// <param name="missing">The value of the property.</param>
+                /// <param name="overrideValue">The value of the property.</param>
+                /// <param name="status">The value of the property.</param>
+                /// <param name="user">The value of the property.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<RequiredSrc> Create(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source src, in Corvus.VercelBenchmark.Current.JsonBoolean.Source caseSensitive = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source check = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source continueValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source dest = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source headers = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source important = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source isInternal = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source locale = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source methods = default, in Corvus.VercelBenchmark.Current.JsonNumber.Source middleware = default, in Corvus.VercelBenchmark.Current.JsonString.Source middlewarePath = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source middlewareRawSrc = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source missing = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source overrideValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source status = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source user = default, int initialCapacity = 30)
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        cvb.StartObject();
+                        Builder ovb = new(cvb);
+                        ovb.Create(src, caseSensitive, check, continueValue, dest, has, headers, important, isInternal, locale, methods, middleware, middlewarePath, middlewareRawSrc, missing, overrideValue, status, user);
+                        cvb = ovb._builder;
+                        cvb.EndObject();
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<RequiredSrc>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
+                }
+
+                /// <summary>
+                /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                /// <param name="context">The value of the property.</param>
+                /// <param name="src">The value of the property.</param>
+                /// <param name="caseSensitive">The value of the property.</param>
+                /// <param name="check">The value of the property.</param>
+                /// <param name="continueValue">The value of the property.</param>
+                /// <param name="dest">The value of the property.</param>
+                /// <param name="has">The value of the property.</param>
+                /// <param name="headers">The value of the property.</param>
+                /// <param name="important">The value of the property.</param>
+                /// <param name="isInternal">The value of the property.</param>
+                /// <param name="locale">The value of the property.</param>
+                /// <param name="methods">The value of the property.</param>
+                /// <param name="middleware">The value of the property.</param>
+                /// <param name="middlewarePath">The value of the property.</param>
+                /// <param name="middlewareRawSrc">The value of the property.</param>
+                /// <param name="missing">The value of the property.</param>
+                /// <param name="overrideValue">The value of the property.</param>
+                /// <param name="status">The value of the property.</param>
+                /// <param name="user">The value of the property.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<RequiredSrc> Create<TContext>(in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source src, in Corvus.VercelBenchmark.Current.JsonBoolean.Source caseSensitive = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source check = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source continueValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source dest = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source<TContext> has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source<TContext> headers = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source important = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source isInternal = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source<TContext> locale = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source<TContext> methods = default, in Corvus.VercelBenchmark.Current.JsonNumber.Source middleware = default, in Corvus.VercelBenchmark.Current.JsonString.Source middlewarePath = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source<TContext> middlewareRawSrc = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source<TContext> missing = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source overrideValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source status = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source user = default, int initialCapacity = 30)
+                    #if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+                    #endif
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        cvb.StartObject();
+                        Builder ovb = new(cvb);
+                        ovb.Create(context, src, caseSensitive, check, continueValue, dest, has, headers, important, isInternal, locale, methods, middleware, middlewarePath, middlewareRawSrc, missing, overrideValue, status, user);
+                        cvb = ovb._builder;
+                        cvb.EndObject();
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<RequiredSrc>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
+                }
             }
         }
     }

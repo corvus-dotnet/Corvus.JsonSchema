@@ -2412,5 +2412,128 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<Producer, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Producer> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Producer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Producer> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Producer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Producer> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Producer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="exchange">The value of the property.</param>
+        /// <param name="name">The value of the property.</param>
+        /// <param name="routingKey">The value of the property.</param>
+        /// <param name="backoffStrategy">The value of the property.</param>
+        /// <param name="delete">The value of the property.</param>
+        /// <param name="durable">The value of the property.</param>
+        /// <param name="exclusive">The value of the property.</param>
+        /// <param name="expKey">The value of the property.</param>
+        /// <param name="immediate">The value of the property.</param>
+        /// <param name="mandatory">The value of the property.</param>
+        /// <param name="maxRetries">The value of the property.</param>
+        /// <param name="msgIdKey">The value of the property.</param>
+        /// <param name="noLocal">The value of the property.</param>
+        /// <param name="noWait">The value of the property.</param>
+        /// <param name="priorityKey">The value of the property.</param>
+        /// <param name="replyToKey">The value of the property.</param>
+        /// <param name="staticRoutingKey">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Producer> Create(in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source expKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source immediate = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source mandatory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source msgIdKey = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source priorityKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source replyToKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source staticRoutingKey = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(exchange, name, routingKey, backoffStrategy, delete, durable, exclusive, expKey, immediate, mandatory, maxRetries, msgIdKey, noLocal, noWait, priorityKey, replyToKey, staticRoutingKey);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Producer>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

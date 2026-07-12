@@ -1835,5 +1835,157 @@ public readonly partial struct CspellSchema
         {
             return workspace.CreateBuilder<DictionaryInformation, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<DictionaryInformation> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<DictionaryInformation>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<DictionaryInformation> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<DictionaryInformation>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<DictionaryInformation> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<DictionaryInformation>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="accents">The value of the property.</param>
+        /// <param name="adjustments">The value of the property.</param>
+        /// <param name="alphabet">The value of the property.</param>
+        /// <param name="costs">The value of the property.</param>
+        /// <param name="hunspellInformation">The value of the property.</param>
+        /// <param name="ignore">The value of the property.</param>
+        /// <param name="locale">The value of the property.</param>
+        /// <param name="suggestionEditCosts">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<DictionaryInformation> Create(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source accents = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source adjustments = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source alphabet = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source costs = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source hunspellInformation = default, in Corvus.CspellBenchmark.Current.JsonString.Source ignore = default, in Corvus.CspellBenchmark.Current.JsonString.Source locale = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source suggestionEditCosts = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(accents, adjustments, alphabet, costs, hunspellInformation, ignore, locale, suggestionEditCosts);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<DictionaryInformation>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="accents">The value of the property.</param>
+        /// <param name="adjustments">The value of the property.</param>
+        /// <param name="alphabet">The value of the property.</param>
+        /// <param name="costs">The value of the property.</param>
+        /// <param name="hunspellInformation">The value of the property.</param>
+        /// <param name="ignore">The value of the property.</param>
+        /// <param name="locale">The value of the property.</param>
+        /// <param name="suggestionEditCosts">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<DictionaryInformation> Create<TContext>(in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source<TContext> accents = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source<TContext> adjustments = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source<TContext> alphabet = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source<TContext> costs = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source<TContext> hunspellInformation = default, in Corvus.CspellBenchmark.Current.JsonString.Source ignore = default, in Corvus.CspellBenchmark.Current.JsonString.Source locale = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source<TContext> suggestionEditCosts = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, accents, adjustments, alphabet, costs, hunspellInformation, ignore, locale, suggestionEditCosts);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<DictionaryInformation>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

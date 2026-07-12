@@ -88,6 +88,20 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         _isImmutable = true;
     }
 
+    /// <summary>
+    /// Creates a document over UTF-8 text and parsed-format metadata built together by a
+    /// <see cref="ParsedJsonDocumentBuilder"/>, taking ownership of both.
+    /// </summary>
+    /// <param name="utf8Json">The UTF-8 JSON text.</param>
+    /// <param name="parsedData">The metadata database describing <paramref name="utf8Json"/>.</param>
+    /// <param name="extraRentedArrayPoolBytes">The rented array backing <paramref name="utf8Json"/>,
+    /// returned to the pool when the document is disposed.</param>
+    /// <returns>A disposable <see cref="ParsedJsonDocument{T}"/> owning the provided pooled memory.</returns>
+    internal static ParsedJsonDocument<T> CreateFromBuilder(ReadOnlyMemory<byte> utf8Json, MetadataDb parsedData, byte[] extraRentedArrayPoolBytes)
+    {
+        return new(utf8Json, parsedData, extraRentedArrayPoolBytes);
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
