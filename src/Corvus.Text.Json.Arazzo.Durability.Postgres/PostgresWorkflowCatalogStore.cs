@@ -183,23 +183,11 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
 
-        // The shared filter body (base/status/text/owner/prefix/tags/security); both query modes embed it verbatim,
-        // and the {{tagPredicates}}/{{securityPredicate}} placeholders are filled below.
-        const string filterWhere = """
-            (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
-              AND (@status IS NULL OR Status = @status)
-              AND (@text IS NULL OR Title ILIKE @textLike ESCAPE '\' OR (Description IS NOT NULL AND Description ILIKE @textLike ESCAPE '\'))
-              AND (@owner IS NULL OR OwnerName ILIKE @ownerLike ESCAPE '\' OR OwnerEmail ILIKE @ownerLike ESCAPE '\')
-              AND (@workflowIdPrefix IS NULL OR lower(WorkflowId) LIKE @workflowIdPrefixLike ESCAPE '\')
-              {{tagPredicates}}
-              {{securityPredicate}}
-            """;
+        string filterWhere = BuildFilterWhere(select, query);
 
         // distinctWorkflows: among the filtered versions of each base, rank by (Active < Obsolete < other, then newest)
-        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone. The base compare/order are
-        // forced COLLATE "C" so they are byte-ordinal (matching the in-memory pager's StringComparer.Ordinal) — the
-        // BaseWorkflowId column is not C-collated in this schema, so its default-collation order would not match.
-        // Otherwise page every matching version by (base, version).
+        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone (base compare/order forced
+        // COLLATE "C" for byte-ordinal paging). Otherwise page every matching version by (base, version).
         select.CommandText = query.DistinctWorkflows
             ? "WITH ranked AS (\n  SELECT " + ColumnList +
               ",\n    ROW_NUMBER() OVER (PARTITION BY BaseWorkflowId ORDER BY CASE Status WHEN 'Active' THEN 0 WHEN 'Obsolete' THEN 1 ELSE 2 END, VersionNumber DESC) AS RepRank\n" +
@@ -207,57 +195,8 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
               "SELECT " + ColumnList + " FROM ranked\nWHERE RepRank = 1 AND (@after IS NULL OR BaseWorkflowId COLLATE \"C\" > @after COLLATE \"C\")\nORDER BY BaseWorkflowId COLLATE \"C\"\nLIMIT @limit;"
             : "SELECT " + ColumnList + "\nFROM CatalogVersions\nWHERE " + filterWhere +
               "\n  AND (@after IS NULL OR (BaseWorkflowId || lpad(VersionNumber::text, 10, '0')) > @after)\nORDER BY BaseWorkflowId, VersionNumber\nLIMIT @limit;";
-        select.Parameters.Add(NullableText("baseWorkflowId", query.BaseWorkflowId));
-        select.Parameters.Add(NullableText("status", query.Status?.ToString()));
-        select.Parameters.Add(NullableText("text", query.Text));
-        select.Parameters.Add(NullableText("textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : null));
-        select.Parameters.Add(NullableText("owner", query.Owner));
-        select.Parameters.Add(NullableText("ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : null));
-        select.Parameters.Add(NullableText("workflowIdPrefix", query.WorkflowIdPrefix));
-        select.Parameters.Add(NullableText("workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p.ToLowerInvariant()) + "%" : null));
         select.Parameters.Add(NullableText("after", after));
         select.Parameters.AddWithValue("limit", limit + 1);
-
-        if (!query.Tags.IsEmpty)
-        {
-            List<string> tags = query.Tags.ToList();
-            var predicates = new StringBuilder();
-            for (int i = 0; i < tags.Count; i++)
-            {
-                string name = "tag" + i.ToString(CultureInfo.InvariantCulture);
-                predicates.Append("AND Tags LIKE @").Append(name).Append(" ESCAPE '\\'\n              ");
-                select.Parameters.Add(NullableText(name, "%\u001F" + EscapeLike(tags[i]) + "\u001F%"));
-            }
-
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
-        }
-
-        // Row-security reach (§14.4): correlated EXISTS over the version's security tags.
-        if (query.Security is { } security)
-        {
-            int securityParam = 0;
-            var emitter = new SqlSecurityRuleEmitter(
-                "CatalogVersionSecurityTags",
-                ["BaseWorkflowId", "VersionNumber"],
-                "TagKey",
-                "TagValue",
-                "CatalogVersions",
-                value =>
-                {
-                    string name = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
-                    select.Parameters.AddWithValue(name, value);
-                    return "@" + name;
-                });
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
-        }
 
         // The page is a pooled batch of disposable version documents (the caller disposes the page). One extra row
         // is fetched as a look-ahead to detect a further page; it is not added to the batch.
@@ -484,6 +423,78 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
 
     private static string EscapeLike(string value)
         => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        string filterWhere = BuildFilterWhere(select, query);
+
+        // Bounded native count reusing the search's exact filter (so the reach cannot drift). Distinct mode counts
+        // distinct base workflows; otherwise matching versions. A cap+1 sub-select stops the scan one past the cap.
+        string inner = query.DistinctWorkflows
+            ? "SELECT DISTINCT BaseWorkflowId FROM CatalogVersions WHERE " + filterWhere + " LIMIT @cap"
+            : "SELECT 1 FROM CatalogVersions WHERE " + filterWhere + " LIMIT @cap";
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        select.Parameters.AddWithValue("cap", cap + 1);
+        long total = (long)(await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    // Builds the shared search filter body (base / status / text / owner / prefix / tags / §14.4 security reach) and
+    // binds its parameters onto <paramref name="command"/>, returning the predicate SQL WITHOUT the keyset cursor,
+    // ORDER BY, or LIMIT. QueryAsync embeds it (plus cursor/paging); CountAsync wraps it in a bounded COUNT — both
+    // share this exact predicate so the reach filter cannot drift between search and count.
+    private static string BuildFilterWhere(NpgsqlCommand command, in CatalogQuery query)
+    {
+        var sql = new StringBuilder(
+            "(@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)" +
+            "\n              AND (@status IS NULL OR Status = @status)" +
+            "\n              AND (@text IS NULL OR Title ILIKE @textLike ESCAPE '\\' OR (Description IS NOT NULL AND Description ILIKE @textLike ESCAPE '\\'))" +
+            "\n              AND (@owner IS NULL OR OwnerName ILIKE @ownerLike ESCAPE '\\' OR OwnerEmail ILIKE @ownerLike ESCAPE '\\')" +
+            "\n              AND (@workflowIdPrefix IS NULL OR lower(WorkflowId) LIKE @workflowIdPrefixLike ESCAPE '\\')");
+
+        command.Parameters.Add(NullableText("baseWorkflowId", query.BaseWorkflowId));
+        command.Parameters.Add(NullableText("status", query.Status?.ToString()));
+        command.Parameters.Add(NullableText("text", query.Text));
+        command.Parameters.Add(NullableText("textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : null));
+        command.Parameters.Add(NullableText("owner", query.Owner));
+        command.Parameters.Add(NullableText("ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : null));
+        command.Parameters.Add(NullableText("workflowIdPrefix", query.WorkflowIdPrefix));
+        command.Parameters.Add(NullableText("workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p.ToLowerInvariant()) + "%" : null));
+
+        if (!query.Tags.IsEmpty)
+        {
+            List<string> tags = query.Tags.ToList();
+            for (int i = 0; i < tags.Count; i++)
+            {
+                string name = "tag" + i.ToString(CultureInfo.InvariantCulture);
+                sql.Append("\n              AND Tags LIKE @").Append(name).Append(" ESCAPE '\\'");
+                command.Parameters.Add(NullableText(name, "%" + EscapeLike(tags[i]) + "%"));
+            }
+        }
+
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "CatalogVersionSecurityTags",
+                ["BaseWorkflowId", "VersionNumber"],
+                "TagKey",
+                "TagValue",
+                "CatalogVersions",
+                value =>
+                {
+                    string name = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    command.Parameters.AddWithValue(name, value);
+                    return "@" + name;
+                });
+            sql.Append("\n              AND (").Append(security.ToSqlPredicate(emitter)).Append(')');
+        }
+
+        return sql.ToString();
+    }
 
     private static NpgsqlParameter NullableText(string name, string? value)
         => new(name, NpgsqlDbType.Text) { Value = (object?)value ?? DBNull.Value };

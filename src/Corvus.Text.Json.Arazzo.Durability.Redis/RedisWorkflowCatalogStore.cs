@@ -230,6 +230,55 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        RedisValue[] sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
+
+        // Bounded scan reusing the same Matches predicate as the search (so the §14.2 reach cannot drift). Distinct
+        // mode counts distinct base workflows; otherwise matching versions. Stop one past the cap; order-independent.
+        if (query.DistinctWorkflows)
+        {
+            var bases = new HashSet<string>(StringComparer.Ordinal);
+            foreach (RedisValue member in sortKeys)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                RedisValue value = await this.database.HashGetAsync(VersionKey((string)member!), DocField).ConfigureAwait(false);
+                if (value.IsNull)
+                {
+                    continue;
+                }
+
+                using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse((byte[])value!);
+                if (Matches(candidate.RootElement, query) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
+                {
+                    return (cap, true);
+                }
+            }
+
+            return (bases.Count, false);
+        }
+
+        int count = 0;
+        foreach (RedisValue member in sortKeys)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            RedisValue value = await this.database.HashGetAsync(VersionKey((string)member!), DocField).ConfigureAwait(false);
+            if (value.IsNull)
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse((byte[])value!);
+            if (Matches(candidate.RootElement, query) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
     // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base id.
     // A base is included if any of its versions matches the filter (base/status/text/owner/prefix + tags + row-security reach);
     // the representative is the best-matching version — the newest Active, else the newest Obsolete, else the newest. Redis has

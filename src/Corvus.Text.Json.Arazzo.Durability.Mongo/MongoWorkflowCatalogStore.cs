@@ -243,6 +243,71 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = this.BuildFilter(query);
+
+        if (query.DistinctWorkflows)
+        {
+            if (query.Security is { } distinctReach)
+            {
+                // Reach is applied in process (over each version's persisted security tags), so a base is counted when
+                // ANY of its versions matches the filter AND passes reach. Stream the field-filtered versions and count
+                // distinct base ids, bounded one past the cap.
+                var bases = new HashSet<string>(StringComparer.Ordinal);
+                using IAsyncCursor<BsonDocument> cursor = await this.versions.Find(filter).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+                while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    foreach (BsonDocument document in cursor.Current)
+                    {
+                        using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
+                        if (SatisfiesReach(candidate.RootElement, distinctReach) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
+                        {
+                            return (cap, true);
+                        }
+                    }
+                }
+
+                return (bases.Count, false);
+            }
+
+            // No reach: count distinct base workflows server-side (group by base, limit to cap+1 groups, count them).
+            AggregateCountResult? distinct = await this.versions.Aggregate()
+                .Match(filter)
+                .Group(new BsonDocument("_id", "$baseWorkflowId"))
+                .Limit(cap + 1)
+                .Count()
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            long distinctTotal = distinct?.Count ?? 0;
+            return distinctTotal > cap ? (cap, true) : ((int)distinctTotal, false);
+        }
+
+        if (query.Security is { } reach)
+        {
+            // Reach applied in process: stream the field-filtered versions and count the reach-passers, bounded.
+            int matched = 0;
+            using IAsyncCursor<BsonDocument> cursor = await this.versions.Find(filter).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument document in cursor.Current)
+                {
+                    using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
+                    if (SatisfiesReach(candidate.RootElement, reach) && ++matched > cap)
+                    {
+                        return (cap, true);
+                    }
+                }
+            }
+
+            return (matched, false);
+        }
+
+        // No reach: native bounded count of matching versions.
+        long total = await this.versions.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
     // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by
     // base id alone. A base is included if ANY of its versions matches the filter; the representative is the
     // best-MATCHING version — the newest Active, else the newest Obsolete, else the newest (status rank Active=0,
