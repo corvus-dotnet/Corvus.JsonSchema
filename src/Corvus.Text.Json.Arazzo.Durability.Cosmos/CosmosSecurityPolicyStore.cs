@@ -245,6 +245,67 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Cosmos has NO bounded server-side COUNT (a bare COUNT ignores the outer LIMIT; COUNT over a LIMIT/TOP subquery is
+        // rejected), so project only c.id under the same WHERE + CONTAINS as ListRulesAsync with OFFSET 0 LIMIT cap+1 and
+        // count the ids client-side.
+        var sql = new StringBuilder("SELECT c.id FROM c WHERE c.pk = @pk");
+        if (qText is not null)
+        {
+            sql.Append(" AND (CONTAINS(c.id, @q, true) OR CONTAINS(c.doc.expression, @q, true))");
+        }
+
+        sql.Append(" OFFSET 0 LIMIT @lim");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", RulePartition).WithParameter("@lim", bound + 1);
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        int total = 0;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryDocumentsAsync(definition, RulePartition, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element; // id-only projection — only its presence counts toward the bounded total
+            total++;
+        }
+
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        var sql = new StringBuilder("SELECT c.id FROM c WHERE c.pk = @pk");
+        if (qText is not null)
+        {
+            sql.Append(" AND (CONTAINS(c.doc.claimType, @q, true) OR CONTAINS(c.doc.claimValue, @q, true) OR CONTAINS(c.doc.description, @q, true))");
+        }
+
+        sql.Append(" OFFSET 0 LIMIT @lim");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", BindingPartition).WithParameter("@lim", bound + 1);
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        int total = 0;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryDocumentsAsync(definition, BindingPartition, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element; // id-only projection — only its presence counts toward the bounded total
+            total++;
+        }
+
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);

@@ -957,6 +957,25 @@
         }
       }
     },
+    "/security/rules/count": {
+      "get": {
+        "operationId": "countSecurityRules",
+        "security": [
+          { "oauth2": ["security:read"] },
+          { "openIdConnect": ["security:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["security"],
+        "summary": "Count security rules",
+        "description": "Counts the rules matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityRules (a case-insensitive substring of the name or expression). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "name": "q", "in": "query", "required": false, "description": "Free-text filter matched against each rule's name and expression (case-insensitive contains).", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of matching rules.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } }
+        }
+      }
+    },
     "/security/rules": {
       "get": {
         "operationId": "searchSecurityRules",
@@ -1212,6 +1231,25 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
+        }
+      }
+    },
+    "/security/bindings/count": {
+      "get": {
+        "operationId": "countSecurityBindings",
+        "security": [
+          { "oauth2": ["security:read"] },
+          { "openIdConnect": ["security:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["security"],
+        "summary": "Count security bindings",
+        "description": "Counts the bindings matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityBindings (a case-insensitive substring of the claim type, claim value, or description). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "name": "q", "in": "query", "required": false, "description": "Free-text filter matched against each binding's claim type, claim value, and description (case-insensitive contains).", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of matching bindings.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } }
         }
       }
     },

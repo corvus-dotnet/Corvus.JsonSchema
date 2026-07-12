@@ -67,6 +67,28 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     }
 
     /// <summary>
+    /// Count security rules
+    /// </summary>
+    /// <remarks>
+    /// Counts the rules matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityRules (a case-insensitive substring of the name or expression). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="q">The q parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountSecurityRulesResponse> CountSecurityRulesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountSecurityRulesRequest request = new()
+        {
+            Q = q.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, q, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountSecurityRulesRequest, CountSecurityRulesResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List security rules
     /// </summary>
     /// <remarks>
@@ -188,6 +210,28 @@ public sealed class ApiSecurityClient : IApiSecurityClient
         request.Validate(validationMode);
 
         return SendAsyncCore<DeleteSecurityRuleRequest, DeleteSecurityRuleResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Count security bindings
+    /// </summary>
+    /// <remarks>
+    /// Counts the bindings matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityBindings (a case-insensitive substring of the claim type, claim value, or description). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="q">The q parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountSecurityBindingsResponse> CountSecurityBindingsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountSecurityBindingsRequest request = new()
+        {
+            Q = q.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, q, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountSecurityBindingsRequest, CountSecurityBindingsResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>

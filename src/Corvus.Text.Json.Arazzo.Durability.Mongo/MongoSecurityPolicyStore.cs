@@ -290,6 +290,42 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+
+        // Bounded native count over the same q-regex filter as ListRulesAsync (minus the keyset cursor) — CountOptions.Limit
+        // caps the server-side count at cap+1. No rule document is read.
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (q.IsNotUndefined())
+        {
+            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
+            filter = b.Or(b.Regex("_id", rx), b.Regex("expression", rx));
+        }
+
+        long total = await this.rules.CountDocumentsAsync(filter, new CountOptions { Limit = bound + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (q.IsNotUndefined())
+        {
+            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
+            filter = b.Or(b.Regex("claimType", rx), b.Regex("claimValue", rx), b.Regex("description", rx));
+        }
+
+        long total = await this.bindings.CountDocumentsAsync(filter, new CountOptions { Limit = bound + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);

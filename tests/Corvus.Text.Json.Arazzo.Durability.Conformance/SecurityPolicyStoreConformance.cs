@@ -171,6 +171,55 @@ public abstract class SecurityPolicyStoreConformance
     }
 
     [TestMethod]
+    public async Task Counting_rules_and_bindings_is_bounded_and_q_filtered()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+        using (await AddRuleDraftAsync(store, "tenant-scoped", "tenant == $claim.tenant", null, "system"))
+        {
+        }
+
+        using (await AddRuleDraftAsync(store, "team-scoped", "team == $claim.team", null, "system"))
+        {
+        }
+
+        using (await AddRuleDraftAsync(store, "public", "true", "Everyone may read.", "system"))
+        {
+        }
+
+        // Rules: unfiltered counts all three; q counts the matching subset (over name or expression); the cap saturates.
+        (await store.CountRulesAsync(100, default, default)).ShouldBe((3, false));
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("SCOPED"u8))
+        {
+            (await store.CountRulesAsync(100, q.RootElement, default)).ShouldBe((2, false));
+        }
+
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("team =="u8))
+        {
+            (await store.CountRulesAsync(100, q.RootElement, default)).ShouldBe((1, false));
+        }
+
+        (await store.CountRulesAsync(2, default, default)).ShouldBe((2, true));
+        (await store.CountRulesAsync(3, default, default)).ShouldBe((3, false));
+
+        // Bindings: two distinct claim values; the count is bounded and q filters over claim type/value/description.
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.Rules("tenant-scoped"), VerbGrant.None, order: 10), "system", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, order: 5), "system", default))
+        {
+        }
+
+        (await store.CountBindingsAsync(100, default, default)).ShouldBe((2, false));
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("OPERATOR"u8))
+        {
+            (await store.CountBindingsAsync(100, q.RootElement, default)).ShouldBe((1, false));
+        }
+
+        (await store.CountBindingsAsync(1, default, default)).ShouldBe((1, true));
+    }
+
+    [TestMethod]
     public async Task Adding_a_duplicate_rule_name_fails()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();

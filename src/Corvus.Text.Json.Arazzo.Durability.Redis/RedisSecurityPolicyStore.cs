@@ -472,6 +472,76 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     private static string BindingMember(int order, string id)
         => string.Concat(((uint)(order ^ int.MinValue)).ToString("x8", CultureInfo.InvariantCulture), MemberSeparator.ToString(), id);
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        RedisValue[] members = await this.database.SetMembersAsync(RuleIndexKey).ConfigureAwait(false);
+        if (qText is null)
+        {
+            // No filter: the index members ARE the rules, so count them directly (no document fetch), bounded.
+            return members.Length > bound ? (bound, true) : (members.Length, false);
+        }
+
+        // Filtered: fetch each rule's document and apply q (name or expression) client-side, bounded at cap+1.
+        int n = 0;
+        foreach (RedisValue m in members)
+        {
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RulePrefix + (string)m!).ConfigureAwait(false);
+            if (lease is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityRuleDocument> document = PersistedJson.ToPooledDocument<SecurityRuleDocument>(lease.Span);
+            if (RuleMatches(document.RootElement, qText) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        RedisValue[] entries = await this.database.SortedSetRangeByValueAsync(BindingOrderIndexKey).ConfigureAwait(false);
+        if (qText is null)
+        {
+            // No filter: the order-index entries ARE the bindings, so count them directly (no document fetch), bounded.
+            return entries.Length > bound ? (bound, true) : (entries.Length, false);
+        }
+
+        int n = 0;
+        foreach (RedisValue value in entries)
+        {
+            string member = (string)value!;
+            int sep = member.IndexOf(MemberSeparator);
+            string id = sep < 0 ? member : member[(sep + 1)..];
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(BindingPrefix + id).ConfigureAwait(false);
+            if (lease is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityBindingDocument> document = PersistedJson.ToPooledDocument<SecurityBindingDocument>(lease.Span);
+            if (BindingMatches(document.RootElement, qText) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
     // q matchers — Redis has no server-side substring, so q is applied client-side over the parsed page document; the
     // compared fields realise to managed strings only for this comparison (the documents themselves stay pooled/bytes-native).
     private static bool RuleMatches(in SecurityRuleDocument rule, string q)

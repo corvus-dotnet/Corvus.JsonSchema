@@ -62,6 +62,23 @@ public interface ISecurityPolicyStore
         return SecurityRulePaging.PageInMemory(all, limit, pageToken, q);
     }
 
+    /// <summary>Counts the rules matching <paramref name="q"/> (design §14.2), bounded by <paramref name="cap"/>: the total
+    /// behind the rules list's footer, without returning any rule rows.</summary>
+    /// <param name="cap">The inclusive upper bound on the reported count; once <paramref name="cap"/> matching rules have been seen the count saturates and <c>Capped</c> is <see langword="true"/> (a non-positive value uses the store's default page size as the cap).</param>
+    /// <param name="q">An optional case-insensitive substring filter (its JSON value) over the rule name and expression; undefined counts every rule.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count and whether it was capped (the true total meets or exceeds <paramref name="cap"/>).</returns>
+    /// <remarks>The default counts a single bounded page of <paramref name="cap"/> + 1 over
+    /// <see cref="ListRulesAsync(int, JsonString, JsonString, CancellationToken)"/> (which already applies <paramref name="q"/>);
+    /// a backend overrides it with a native bounded <c>COUNT</c> so no rule documents are parsed.</remarks>
+    async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        using SecurityRulePage page = await this.ListRulesAsync(bound + 1, default, q, cancellationToken).ConfigureAwait(false);
+        int n = page.Rules.Count;
+        return n > bound ? (bound, true) : (n, false);
+    }
+
     /// <summary>Updates a rule's content under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>
     /// <param name="draft">The draft rule carrying the new operator-supplied content as JSON values; the store carries the name/created metadata forward and stamps the updated etag/last-updated metadata.</param>
@@ -115,6 +132,23 @@ public interface ISecurityPolicyStore
     {
         using PooledDocumentList<SecurityBindingDocument> all = await this.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
         return SecurityBindingPaging.PageInMemory(all, limit, pageToken, q);
+    }
+
+    /// <summary>Counts the bindings matching <paramref name="q"/> (design §14.2), bounded by <paramref name="cap"/>: the total
+    /// behind the bindings list's footer, without returning any binding rows.</summary>
+    /// <param name="cap">The inclusive upper bound on the reported count; once <paramref name="cap"/> matching bindings have been seen the count saturates and <c>Capped</c> is <see langword="true"/> (a non-positive value uses the store's default page size as the cap).</param>
+    /// <param name="q">An optional case-insensitive substring filter (its JSON value) over the binding claim type/value/description; undefined counts every binding.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count and whether it was capped (the true total meets or exceeds <paramref name="cap"/>).</returns>
+    /// <remarks>The default counts a single bounded page of <paramref name="cap"/> + 1 over
+    /// <see cref="ListBindingsAsync(int, JsonString, JsonString, CancellationToken)"/> (which already applies <paramref name="q"/>);
+    /// a backend overrides it with a native bounded <c>COUNT</c> so no binding documents are parsed.</remarks>
+    async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        using SecurityBindingPage page = await this.ListBindingsAsync(bound + 1, default, q, cancellationToken).ConfigureAwait(false);
+        int n = page.Bindings.Count;
+        return n > bound ? (bound, true) : (n, false);
     }
 
     /// <summary>Updates a binding's content under optimistic concurrency.</summary>

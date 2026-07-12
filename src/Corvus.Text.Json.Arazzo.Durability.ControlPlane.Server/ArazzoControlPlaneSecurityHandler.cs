@@ -29,6 +29,9 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     // passed to avoid a page-per-row scan.
     private const int CredentialScanPageSize = 50;
 
+    // The inclusive upper bound the /count endpoints report; a busier list renders "100+".
+    private const int CountCap = 100;
+
     private readonly ISecurityPolicyStore store;
     private readonly PersistentRowSecurityPolicy? policy;
     private readonly ControlPlaneAccess? access;
@@ -88,6 +91,25 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             rules: Models.SecurityRuleList.SecurityRuleSummaryArray.Build(in ruleList, BuildRuleSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return SearchSecurityRulesResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountSecurityRulesResult> HandleCountSecurityRulesAsync(CountSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Same q filter as HandleSearchSecurityRulesAsync, minus paging — the store returns only a bounded total (§14.2
+        // footer), never rows. Access is gated by the security:read capability scope, not row reach, so no AccessContext.
+        JsonString q = JsonString.From(parameters.Q);
+        (int count, bool capped) = await this.store.CountRulesAsync(CountCap, q, cancellationToken).ConfigureAwait(false);
+        return CountSecurityRulesResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountSecurityBindingsResult> HandleCountSecurityBindingsAsync(CountSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Same q filter as HandleSearchSecurityBindingsAsync, minus paging; capability-scoped, no row reach.
+        JsonString q = JsonString.From(parameters.Q);
+        (int count, bool capped) = await this.store.CountBindingsAsync(CountCap, q, cancellationToken).ConfigureAwait(false);
+        return CountSecurityBindingsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>
