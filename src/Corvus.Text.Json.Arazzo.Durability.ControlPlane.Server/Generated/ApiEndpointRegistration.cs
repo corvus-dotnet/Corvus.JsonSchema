@@ -3938,6 +3938,175 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetCatalogSourceEndpoint);
 
+        IEndpointConventionBuilder __CountCatalogEndpoint = app.MapGet("/catalog/count", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString QValue = default;
+                if (context.Request.Query.TryGetValue("q", out var QQueryVal) && QQueryVal.Count > 0)
+                {
+                    string QRaw = QQueryVal[0]!;
+                    QValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(QRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
+                if (context.Request.Query.TryGetValue("baseWorkflowId", out var BaseWorkflowIdQueryVal) && BaseWorkflowIdQueryVal.Count > 0)
+                {
+                    string BaseWorkflowIdRaw = BaseWorkflowIdQueryVal[0]!;
+                    BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString WorkflowIdPrefixValue = default;
+                if (context.Request.Query.TryGetValue("workflowIdPrefix", out var WorkflowIdPrefixQueryVal) && WorkflowIdPrefixQueryVal.Count > 0)
+                {
+                    string WorkflowIdPrefixRaw = WorkflowIdPrefixQueryVal[0]!;
+                    WorkflowIdPrefixValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(WorkflowIdPrefixRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList TagValue = default;
+                if (context.Request.Query.TryGetValue("tag", out var TagQueryValues) && TagQueryValues.Count > 0)
+                {
+                    TagValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>(workspace, TagQueryValues, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.TagList.Builder arrayBuilder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            string? item = ctx[i];
+                            if (item is null) continue;
+                            arrayBuilder.AddItem(item.AsSpan());
+                        }
+                    }).RootElement;
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus StatusValue = default;
+                if (context.Request.Query.TryGetValue("status", out var StatusQueryVal) && StatusQueryVal.Count > 0)
+                {
+                    string StatusRaw = StatusQueryVal[0]!;
+                    StatusValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus>(StatusRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString OwnerValue = default;
+                if (context.Request.Query.TryGetValue("owner", out var OwnerQueryVal) && OwnerQueryVal.Count > 0)
+                {
+                    string OwnerRaw = OwnerQueryVal[0]!;
+                    OwnerValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(OwnerRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean DistinctWorkflowsValue = default;
+                if (context.Request.Query.TryGetValue("distinctWorkflows", out var DistinctWorkflowsQueryVal) && DistinctWorkflowsQueryVal.Count > 0)
+                {
+                    string DistinctWorkflowsRaw = DistinctWorkflowsQueryVal[0]!;
+                    DistinctWorkflowsValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean>(DistinctWorkflowsRaw, workspace);
+                }
+
+                if (!QValue.IsUndefined() && !QValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'q' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'baseWorkflowId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!WorkflowIdPrefixValue.IsUndefined() && !WorkflowIdPrefixValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'workflowIdPrefix' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!TagValue.IsUndefined() && !TagValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'tag' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!StatusValue.IsUndefined() && !StatusValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'status' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!OwnerValue.IsUndefined() && !OwnerValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'owner' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!DistinctWorkflowsValue.IsUndefined() && !DistinctWorkflowsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'distinctWorkflows' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                CountCatalogParams parameters = new()
+                {
+                    Q = QValue,
+                    BaseWorkflowId = BaseWorkflowIdValue,
+                    WorkflowIdPrefix = WorkflowIdPrefixValue,
+                    Tag = TagValue,
+                    Status = StatusValue,
+                    Owner = OwnerValue,
+                    DistinctWorkflows = DistinctWorkflowsValue,
+                }
+                ;
+
+                CountCatalogResult result = await catalogHandler.HandleCountCatalogAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "countCatalog",
+                methodName: "CountCatalog",
+                httpMethod: "GET",
+                routeTemplate: "/catalog/count",
+                tags: new[] { "catalog" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __CountCatalogEndpoint);
+
         IEndpointConventionBuilder __ListVersionAvailabilityEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/availability", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -13907,6 +14076,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>CountWorkspaceWorkflows</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] CountWorkspaceWorkflowsOpenIdConnectScopes = ["workspace:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountCatalog</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCatalogOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountCatalog</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCatalogOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>CountRuns</c> for the <c>Oauth2</c> scheme.

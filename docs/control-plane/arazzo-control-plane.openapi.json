@@ -3683,6 +3683,34 @@
         }
       }
     },
+    "/catalog/count": {
+      "get": {
+        "operationId": "countCatalog",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Count catalog entries",
+        "description": "Counts the catalog entries matching the search that the caller's read reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). Same filters as searchCatalog: counts matching versions, or distinct base workflows when distinctWorkflows is set. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/CatalogSearchQuery" },
+          { "$ref": "#/components/parameters/CatalogBaseWorkflowIdQuery" },
+          { "$ref": "#/components/parameters/CatalogWorkflowIdPrefixQuery" },
+          { "$ref": "#/components/parameters/CatalogTagQuery" },
+          { "$ref": "#/components/parameters/CatalogStatusQuery" },
+          { "$ref": "#/components/parameters/CatalogOwnerQuery" },
+          { "$ref": "#/components/parameters/CatalogDistinctWorkflowsQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible matching catalog entries.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          }
+        }
+      }
+    },
     "/runs/count": {
       "get": {
         "operationId": "countRuns",

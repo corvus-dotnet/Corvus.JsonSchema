@@ -268,6 +268,16 @@ public interface IApiCatalogClient : IAsyncDisposable
         public static readonly string[] GetCatalogSourceOpenIdConnectScopes = ["catalog:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountCatalog</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCatalogOauth2Scopes = ["catalog:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountCatalog</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountCatalogOpenIdConnectScopes = ["catalog:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["catalog:purge", "catalog:read", "catalog:write", "runs:write"];
@@ -473,4 +483,20 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="sourceName">The sourceName parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<GetCatalogSourceResponse> GetCatalogSourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source sourceName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count catalog entries
+    /// </summary>
+    /// <remarks>
+    /// Counts the catalog entries matching the search that the caller's read reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). Same filters as searchCatalog: counts matching versions, or distinct base workflows when distinctWorkflows is set. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="q">The q parameter.</param>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="workflowIdPrefix">The workflowIdPrefix parameter.</param>
+    /// <param name="tag">The tag parameter.</param>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="owner">The owner parameter.</param>
+    /// <param name="distinctWorkflows">The distinctWorkflows parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountCatalogResponse> CountCatalogAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowIdPrefix = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source owner = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source distinctWorkflows = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }
