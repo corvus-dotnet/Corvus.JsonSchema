@@ -608,6 +608,41 @@ on the base schema (<code>title</code>, <code>description</code>, <code>$comment
 <p>Note: a branch can always be read back out of the union with the generated <code>TryGetAs…</code> / <code>Match</code>
 methods — see <a href="/Corvus.JsonSchema/pr-preview/pr-837/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminators</a>.</p>
 </blockquote>
+<h2 id="creating-an-immutable-document-directly-create">Creating an Immutable Document Directly: <code>Create()</code></h2>
+<p>Everything above builds a <em>mutable</em>, workspace-scoped document. Often, though, the reason you are building a document is to hand the finished result to a caller — an API response, a value to cache, a document to store — as an immutable <code>ParsedJsonDocument&lt;T&gt;</code>. Reaching that from a builder means a serialization round trip: build, write the bytes out, parse them back.</p>
+<p>Generated types have a better route. Every generated type emits <code>Create()</code> factory overloads that mirror its <code>CreateBuilder()</code> overloads, minus the <code>JsonWorkspace</code> parameter, returning a self-contained <code>ParsedJsonDocument&lt;T&gt;</code> directly:</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; createdDoc = Person.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.52);
+Console.WriteLine(createdDoc.RootElement);
+</code></pre>
+<p>Under the covers the document text and its parsed metadata are written <strong>once, directly, as the values are added</strong> — there is no mutable intermediate to serialize and no parse step — and the pooled builder behind the factory is rented from a thread-local cache, so steady-state construction allocates only the returned document's pooled buffers. Values embedded from other documents are copied into the backing at the point they are added, so the result never depends on the lifetime of its sources.</p>
+<p><strong>Choosing between them:</strong></p>
+<table>
+<thead>
+<tr>
+<th>You are…</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Building a document to return, cache, or store — no further changes</td>
+<td><code>Create()</code></td>
+</tr>
+<tr>
+<td>Assembling a document you will keep modifying</td>
+<td><code>CreateBuilder()</code></td>
+</tr>
+<tr>
+<td>Modifying JSON you received</td>
+<td><code>Parse</code> to a builder (see below)</td>
+</tr>
+</tbody>
+</table>
+<p><code>Create()</code> exists on generated types only (it is emitted by the code generator); dynamic documents built through <code>JsonElement</code> continue to use the workspace patterns above. See the <a href="/Corvus.JsonSchema/pr-preview/pr-837/examples/data-object.html">Data Object recipe</a> for a worked example, and note the result is <code>IDisposable</code> — it owns pooled memory, exactly like a parsed document.</p>
 <h2 id="working-with-existing-json">Working with Existing JSON</h2>
 <p>In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.</p>
 <h3 id="direct-parse-to-builder-recommended">Direct Parse to Builder (Recommended)</h3>

@@ -487,6 +487,7 @@ public readonly partial struct PhoneNumber;
 <li><strong>Serialization</strong> via <code>WriteTo(Utf8JsonWriter)</code> and <code>ToString()</code></li>
 <li><strong>Implicit conversions</strong> to and from .NET primitive types</li>
 <li><strong>Mutable builder</strong> via <code>CreateBuilder(JsonWorkspace)</code> for in-place modification</li>
+<li><strong>Immutable document factory</strong> via <code>Create(...)</code>, returning a self-contained <code>ParsedJsonDocument&lt;T&gt;</code> built in a single pass — the create-but-don't-modify counterpart to <code>CreateBuilder</code></li>
 <li><strong>Pattern matching</strong> via <code>Match()</code> for <code>oneOf</code>/<code>anyOf</code> discriminated unions</li>
 <li><strong>Equality</strong> operators and <code>GetHashCode()</code></li>
 </ul>
