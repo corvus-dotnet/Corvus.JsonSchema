@@ -1,20 +1,21 @@
 # Live workflow execution — current state
 
-The demo **executes workflows live** against the backend services this sample hosts (`/svc/onboarding`,
-`/svc/ledger`, plus in-process AsyncAPI messaging). It runs both catalogued workflows and §18 working-copy
-debug runs, checkpointing, suspending, faulting, and resuming against the SQLite store. These notes describe
-how it is wired (an earlier version of this file was a plan for a paused spike; that work is done).
+The demo **executes workflows live** against the real external services this sample composes (the onboarding,
+ledger, and KYC services — each its own process + database — plus a real NATS JetStream message bus). It runs
+both catalogued workflows and §18 working-copy debug runs, checkpointing, suspending, faulting, and resuming
+against the shared Postgres store. These notes describe how it is wired (an earlier version of this file was a
+plan for a paused spike; that work is done).
 
 ## Catalogued runs
 
 A resumed run re-enters the executor baked into its catalogued version at add time.
 
-- `SqliteWorkflowCatalogStore.ConnectAsync(..., executorProvider: new WorkflowExecutorProvider())` compiles a
+- `PostgresWorkflowCatalogStore.ConnectAsync(..., executorProvider: new WorkflowExecutorProvider())` compiles a
   runnable executor into each version when it is added (alongside the typed metadata). No CLI verb, no
   hand-built binder. The code generator does the emit through the provider.
 - `DemoData.CreateLiveResumer` builds a `HostedWorkflowResumer` over the catalog and a `WorkflowExecutorLoader`,
-  bound to transports rooted at this host's own `/svc/<source>` backends (`DemoData.CreateSvcBinder`). It
-  returns a `WorkflowResumer` the run machinery drives.
+  bound to transports rooted at the sample's real services (`DemoData.CreateLiveBinder`). It returns a
+  `WorkflowResumer` the run machinery drives.
 - `DemoData.RunLiveOnboardingAsync` executes fresh runs at startup so the browsable demo shows genuinely-executed
   runs, not hand-seeded states: a completing run, an intentionally-faulting run (a success criterion evaluated
   against the real backend response), the resilient v2 that handles the same failure, an async run that suspends
@@ -39,12 +40,14 @@ claimable, and a runner advances it. See the R1–R5 commits and the debug-run U
   (`ControlPlane:HostDraftRunnerInProcess`, default on). The runner is architecturally a runner, just co-located.
 - **Multi-process** (the AppHost composition): a separate `Runner.Demo` process hosts `$draft`
   (`Runner:HostDraftRuns`) and the control plane's in-process pump is off, so the two planes are physically
-  split. Both share the SQLite draft/state/trace stores.
+  split. Both share the Postgres draft/state/trace stores.
 
 ## Transports and credentials
 
-- The demo routes each source's generated client at this host's own `/svc/<source>` backends, the stand-in for
-  real environment endpoints (`DemoData.CreateSvcBinder` / `DraftRunHost.CreateSvcBinder`).
+- The demo routes each source's generated client directly at its real service (onboarding, ledger, kyc — each
+  its own host); there is no control-plane `/svc` mock left (`DemoData.CreateLiveBinder` on the control-plane
+  path, `DraftRunHost.CreateBinder` on the runner path). In production these are the environment's real endpoints
+  and the credentialed `SourceCredentialTransports.CreateBinder` applies each source's Vault-resolved secret.
 - **§13.5 credentials.** When Vault is configured (`VAULT_ADDR`/`VAULT_TOKEN`, which the AppHost injects as the
   runner's read-only token), the runner resolves each source's secret **as its own read-only Vault identity** at
   bind time and applies it to the request (`SourceCredentialTransports.CreateBinder` over a
@@ -59,6 +62,6 @@ claimable, and a runner advances it. See the R1–R5 commits and the debug-run U
 | Catalog resumer | `HostedWorkflowResumer` + `WorkflowExecutorLoader` (`DemoData.CreateLiveResumer`) |
 | §18 draft runner | `Corvus.Text.Json.Arazzo.Durability.InProcessDraftRunner` |
 | HTTP transport | `Corvus.Text.Json.OpenApi.IApiTransport` + `HttpClientApiTransportFactory` |
-| Message transport | `Corvus.Text.Json.AsyncApi.Testing.InMemoryMessageTransport` |
+| Message transport | `Corvus.Text.Json.AsyncApi.Nats.NatsMessageTransport` (JetStream) |
 | Credentialed binder | `Corvus.Text.Json.Arazzo.SourceCredentials.Http.SourceCredentialTransports.CreateBinder` |
 | Resumer seam | `Corvus.Text.Json.Arazzo.Durability.WorkflowResumer` / `WorkflowWorker` |
