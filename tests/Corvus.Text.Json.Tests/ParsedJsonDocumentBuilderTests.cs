@@ -389,6 +389,94 @@ public class ParsedJsonDocumentBuilderTests
     }
 
     [TestMethod]
+    public void Build_PrebakedPropertyNames_ProduceExpectedJson()
+    {
+        // Pre-baked property-name blobs are what the generated code emits for known property
+        // names: [4-byte header][quote][escaped name][quote].
+        byte[] alpha = Prebake("alpha");
+        byte[] beta = Prebake("beta");
+        byte[] gamma = Prebake("gamma");
+
+        using ParsedJsonDocument<JsonElement> doc = BuildDocument((ref cvb) =>
+        {
+            cvb.StartObject();
+            cvb.AddPrebakedProperty(alpha, 42);
+            cvb.AddPrebakedPropertyFormattedNumber(beta, "1.5"u8);
+            cvb.AddPrebakedProperty(gamma, static (ref ComplexValueBuilder b) =>
+            {
+                b.StartArray();
+                b.AddItem(true);
+                b.EndArray();
+            });
+            cvb.EndObject();
+        });
+
+        Assert.AreEqual("""{"alpha":42,"beta":1.5,"gamma":[true]}""", doc.RootElement.ToString());
+    }
+
+    [TestMethod]
+    public void Build_RemovalOfComplexProperty_CompactsCorrectly()
+    {
+        // Replacing a property whose value is complex removes multiple rows mid-build; the
+        // stranded text (including content captured from an external document) must be dropped
+        // by the compaction pass at handoff.
+        using var overlay = ParsedJsonDocument<JsonElement>.Parse("""{"complex":{"replaced":"yes\n"}}""");
+        JsonElement overlayRoot = overlay.RootElement;
+
+        using var external = ParsedJsonDocument<JsonElement>.Parse("""[1,{"e":"é"},3]""");
+        JsonElement externalRoot = external.RootElement;
+
+        using ParsedJsonDocument<JsonElement> doc = BuildDocument((ref cvb) =>
+        {
+            cvb.StartObject();
+            cvb.AddProperty("keep"u8, in externalRoot);
+            cvb.AddProperty("complex"u8, static (ref ComplexValueBuilder b) =>
+            {
+                b.StartObject();
+                b.AddProperty("inner"u8, static (ref ComplexValueBuilder c) =>
+                {
+                    c.StartArray();
+                    c.AddItem("stranded"u8);
+                    c.EndArray();
+                });
+                b.EndObject();
+            });
+            cvb.TryApply(overlayRoot);
+            cvb.AddProperty("after"u8, false);
+            cvb.EndObject();
+        });
+
+        Assert.AreEqual(
+            """
+            {"keep":[1,{"e":"é"},3],"complex":{"replaced":"yes\n"},"after":false}
+            """,
+            doc.RootElement.ToString());
+
+        string json = doc.RootElement.ToString();
+        using ParsedJsonDocument<JsonElement> reparsed = ParsedJsonDocument<JsonElement>.Parse(json);
+        Assert.AreEqual(json, reparsed.RootElement.ToString());
+        Assert.IsTrue(reparsed.RootElement.GetProperty("complex"u8).GetProperty("replaced"u8).ValueEquals("yes\n"u8));
+    }
+
+    [TestMethod]
+    public void Build_EmbeddingElementWithEscapedPropertyName_PreservesEscaping()
+    {
+        using var external = ParsedJsonDocument<JsonElement>.Parse("""{"needs\nescaping":"value","plain":1}""");
+        JsonElement externalRoot = external.RootElement;
+
+        using ParsedJsonDocument<JsonElement> doc = BuildDocument((ref cvb) =>
+        {
+            cvb.StartArray();
+            cvb.AddItem(in externalRoot);
+            cvb.EndArray();
+        });
+
+        Assert.AreEqual("""[{"needs\nescaping":"value","plain":1}]""", doc.RootElement.ToString());
+        Assert.IsTrue(doc.RootElement[0].TryGetProperty("needs\nescaping"u8, out JsonElement value));
+        Assert.IsTrue(value.ValueEquals("value"u8));
+    }
+
+    [TestMethod]
     public void Build_AddItemFromJson_ParsesAndEmbedsContent()
     {
         using ParsedJsonDocument<JsonElement> doc = BuildDocument(static (ref cvb) =>
@@ -578,6 +666,20 @@ public class ParsedJsonDocumentBuilderTests
     }
 
     #endregion
+
+    private static byte[] Prebake(string name)
+    {
+        // Mirrors the generator's pre-baked property-name blob layout:
+        // [4-byte header: (payloadLength << 4) | NormalizedQuotedUtf8String][quote][name][quote].
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(name);
+        byte[] blob = new byte[4 + utf8.Length + 2];
+        uint header = (uint)((utf8.Length + 2) << 4) | 5u;
+        BitConverter.GetBytes(header).CopyTo(blob, 0);
+        blob[4] = (byte)'"';
+        utf8.CopyTo(blob, 5);
+        blob[blob.Length - 1] = (byte)'"';
+        return blob;
+    }
 
     private static ParsedJsonDocument<JsonElement> BuildDocument(ComplexValueBuilder.ValueBuilderAction populate, int initialCapacity = 30)
     {
