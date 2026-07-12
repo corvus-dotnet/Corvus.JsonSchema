@@ -182,6 +182,45 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         return ValueTask.FromResult(nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches));
     }
 
+    /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Bounded scan reusing the same Matches predicate as the search (so the §14.2 reach cannot drift). Distinct
+        // mode counts distinct base workflows (a base is included when any of its versions matches); otherwise matching
+        // versions. Either way, stop one past the cap.
+        lock (this.gate)
+        {
+            if (query.DistinctWorkflows)
+            {
+                var bases = new HashSet<string>(StringComparer.Ordinal);
+                foreach (Stored stored in this.versions.Values)
+                {
+                    using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc);
+                    if (Matches(candidate.RootElement, query) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
+                    {
+                        return ValueTask.FromResult((cap, true));
+                    }
+                }
+
+                return ValueTask.FromResult((bases.Count, false));
+            }
+
+            int count = 0;
+            foreach (Stored stored in this.versions.Values)
+            {
+                using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc);
+                if (Matches(candidate.RootElement, query) && ++count > cap)
+                {
+                    return ValueTask.FromResult((cap, true));
+                }
+            }
+
+            return ValueTask.FromResult((count, false));
+        }
+    }
+
     // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base id.
     // A base is included if any of its versions matches the filter; the representative is the best-matching version — the
     // newest Active, else the newest Obsolete, else the newest (matching the UI's client-side collapse it replaces). The scan

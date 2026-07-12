@@ -239,6 +239,39 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Bounded scan reusing the same Matches predicate as the search (so the §14.2 reach cannot drift). Distinct
+        // mode counts distinct base workflows; otherwise matching versions. Stop one past the cap; order-independent.
+        if (query.DistinctWorkflows)
+        {
+            var bases = new HashSet<string>(StringComparer.Ordinal);
+            await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+            {
+                using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
+                if (Matches(candidate.RootElement, query) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
+                {
+                    return (cap, true);
+                }
+            }
+
+            return (bases.Count, false);
+        }
+
+        int count = 0;
+        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        {
+            using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
+            if (Matches(candidate.RootElement, query) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
     // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base id.
     // A base is included if any of its versions matches the filter; the representative is the best-matching version — the
     // newest Active, else the newest Obsolete, else the newest (mirroring InMemoryWorkflowCatalogStore.QueryDistinctWorkflows,

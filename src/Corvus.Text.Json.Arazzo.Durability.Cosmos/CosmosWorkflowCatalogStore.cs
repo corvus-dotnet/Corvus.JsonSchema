@@ -196,111 +196,24 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
 
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
-        var conditions = new List<string>();
-        if (query.BaseWorkflowId is not null)
-        {
-            conditions.Add("c.baseWorkflowId = @baseWorkflowId");
-        }
-
-        if (query.Status is not null)
-        {
-            conditions.Add("c.status = @status");
-        }
-
-        if (query.Text is { Length: > 0 })
-        {
-            conditions.Add("(CONTAINS(LOWER(c.title), @text) OR (IS_DEFINED(c.description) AND CONTAINS(LOWER(c.description), @text)))");
-        }
-
-        if (query.Owner is { Length: > 0 })
-        {
-            conditions.Add("(CONTAINS(LOWER(c.owner.name), @owner) OR CONTAINS(LOWER(c.owner.email), @owner))");
-        }
-
-        if (query.WorkflowIdPrefix is { Length: > 0 })
-        {
-            conditions.Add("STARTSWITH(c.workflowIdLower, @workflowIdPrefix)");
-        }
-
-        var tagParameters = new List<(string Name, string Value)>();
-        if (!query.Tags.IsEmpty)
-        {
-            List<string> queryTags = query.Tags.ToList();
-            for (int i = 0; i < queryTags.Count; i++)
-            {
-                string name = $"@tag{i.ToString(CultureInfo.InvariantCulture)}";
-                conditions.Add($"ARRAY_CONTAINS(c.tags, {name})");
-                tagParameters.Add((name, queryTags[i]));
-            }
-        }
-
-        // Row-security reach (§14.2): translate the filter to a native EXISTS over the embedded securityTags
-        // array; every value is bound as a query parameter (no concatenation).
-        var securityParameters = new List<(string Name, string Value)>();
-        if (query.Security is { } security)
-        {
-            int securityParam = 0;
-            var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
-            {
-                string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
-                securityParameters.Add((name, value));
-                return name;
-            });
-            conditions.Add(security.ToSqlPredicate(emitter));
-        }
+        (List<string> conditions, List<(string Name, object Value)> parameters) = BuildConditions(query);
 
         if (after is not null)
         {
-            // In distinct mode the cursor is the base workflow id alone (one row per base); in version mode it is the
-            // full sort key (one row per version).
+            // In distinct mode the cursor is the base workflow id alone (one row per base); in version mode the full sort key.
             conditions.Add(query.DistinctWorkflows ? "c.baseWorkflowId > @after" : "c.sortKey > @after");
+            parameters.Add(("@after", after));
         }
 
         string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
 
         // Distinct mode collapses in-process (Cosmos SQL has no window functions), so the results must stream in base
-        // order — baseWorkflowId, then versionNumber — for the representative-per-base grouping to finalize a base when
-        // the base id changes. Version mode pages every matching version by its sort key.
+        // order — baseWorkflowId, then versionNumber. Version mode pages every matching version by its sort key.
         var definition = new QueryDefinition(
             "SELECT * FROM c" + where + (query.DistinctWorkflows ? " ORDER BY c.baseWorkflowId, c.versionNumber" : " ORDER BY c.sortKey"));
-        if (query.BaseWorkflowId is { } baseId)
-        {
-            definition = definition.WithParameter("@baseWorkflowId", baseId);
-        }
-
-        if (query.Status is { } status)
-        {
-            definition = definition.WithParameter("@status", status.ToString());
-        }
-
-        if (query.Text is { Length: > 0 } text)
-        {
-            definition = definition.WithParameter("@text", text.ToLowerInvariant());
-        }
-
-        if (query.Owner is { Length: > 0 } owner)
-        {
-            definition = definition.WithParameter("@owner", owner.ToLowerInvariant());
-        }
-
-        if (query.WorkflowIdPrefix is { Length: > 0 } workflowIdPrefix)
-        {
-            definition = definition.WithParameter("@workflowIdPrefix", workflowIdPrefix.ToLowerInvariant());
-        }
-
-        foreach ((string name, string value) in tagParameters)
+        foreach ((string name, object value) in parameters)
         {
             definition = definition.WithParameter(name, value);
-        }
-
-        foreach ((string name, string value) in securityParameters)
-        {
-            definition = definition.WithParameter(name, value);
-        }
-
-        if (after is not null)
-        {
-            definition = definition.WithParameter("@after", after);
         }
 
         if (query.DistinctWorkflows)
@@ -334,6 +247,124 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         }
 
         return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        (List<string> conditions, List<(string Name, object Value)> parameters) = BuildConditions(query);
+        string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
+
+        // Cosmos has no bounded server-side COUNT (a bare COUNT ignores the outer LIMIT; TOP/OFFSET-LIMIT are rejected in
+        // a COUNT subquery — emulator-verified), so project + count client-side. The reach is pushed to the WHERE, so the
+        // count is reach-scoped without a client fork.
+        if (query.DistinctWorkflows)
+        {
+            // Distinct base workflows: SELECT DISTINCT VALUE yields one row per base; count them client-side, bounded.
+            var distinctDefinition = new QueryDefinition("SELECT DISTINCT VALUE c.baseWorkflowId FROM c" + where);
+            foreach ((string name, object value) in parameters)
+            {
+                distinctDefinition = distinctDefinition.WithParameter(name, value);
+            }
+
+            int distinct = 0;
+            await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.catalog, distinctDefinition, cancellationToken).ConfigureAwait(false))
+            {
+                _ = element;
+                if (++distinct > cap)
+                {
+                    return (cap, true);
+                }
+            }
+
+            return (distinct, false);
+        }
+
+        // Matching versions: project just the id with an outer LIMIT (cap+1) and count the tiny rows client-side.
+        var countDefinition = new QueryDefinition("SELECT c.id FROM c" + where + " ORDER BY c.sortKey OFFSET 0 LIMIT @lim");
+        foreach ((string name, object value) in parameters)
+        {
+            countDefinition = countDefinition.WithParameter(name, value);
+        }
+
+        countDefinition = countDefinition.WithParameter("@lim", cap + 1);
+
+        int count = 0;
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.catalog, countDefinition, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element;
+            if (++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    // Builds the shared search conditions (base / status / text / owner / prefix / tags / §14.2 security reach) and their
+    // parameter bindings, WITHOUT the keyset cursor. QueryAsync appends the cursor + paging; CountAsync wraps it in a
+    // bounded projection — both share this predicate so the reach filter cannot drift. The reach is pushed to a native
+    // EXISTS over the embedded securityTags array.
+    private static (List<string> Conditions, List<(string Name, object Value)> Parameters) BuildConditions(in CatalogQuery query)
+    {
+        var conditions = new List<string>();
+        var parameters = new List<(string Name, object Value)>();
+
+        if (query.BaseWorkflowId is { } baseId)
+        {
+            conditions.Add("c.baseWorkflowId = @baseWorkflowId");
+            parameters.Add(("@baseWorkflowId", baseId));
+        }
+
+        if (query.Status is { } status)
+        {
+            conditions.Add("c.status = @status");
+            parameters.Add(("@status", status.ToString()));
+        }
+
+        if (query.Text is { Length: > 0 } text)
+        {
+            conditions.Add("(CONTAINS(LOWER(c.title), @text) OR (IS_DEFINED(c.description) AND CONTAINS(LOWER(c.description), @text)))");
+            parameters.Add(("@text", text.ToLowerInvariant()));
+        }
+
+        if (query.Owner is { Length: > 0 } owner)
+        {
+            conditions.Add("(CONTAINS(LOWER(c.owner.name), @owner) OR CONTAINS(LOWER(c.owner.email), @owner))");
+            parameters.Add(("@owner", owner.ToLowerInvariant()));
+        }
+
+        if (query.WorkflowIdPrefix is { Length: > 0 } workflowIdPrefix)
+        {
+            conditions.Add("STARTSWITH(c.workflowIdLower, @workflowIdPrefix)");
+            parameters.Add(("@workflowIdPrefix", workflowIdPrefix.ToLowerInvariant()));
+        }
+
+        if (!query.Tags.IsEmpty)
+        {
+            List<string> queryTags = query.Tags.ToList();
+            for (int i = 0; i < queryTags.Count; i++)
+            {
+                string name = $"@tag{i.ToString(CultureInfo.InvariantCulture)}";
+                conditions.Add($"ARRAY_CONTAINS(c.tags, {name})");
+                parameters.Add((name, queryTags[i]));
+            }
+        }
+
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
+            {
+                string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                parameters.Add((name, value));
+                return name;
+            });
+            conditions.Add(security.ToSqlPredicate(emitter));
+        }
+
+        return (conditions, parameters);
     }
 
     // The distinct-workflow (collapse-by-base) page: one representative version per base workflow, keyset-paged by base

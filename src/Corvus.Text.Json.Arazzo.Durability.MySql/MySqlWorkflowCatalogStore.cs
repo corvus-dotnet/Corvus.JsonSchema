@@ -187,25 +187,11 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
 
-        // The shared filter body (base/status/text/owner/prefix/tags/security); both query modes embed it verbatim,
-        // and the {{tagPredicates}}/{{securityPredicate}} placeholders are filled below.
-        const string filterWhere = """
-            (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
-              AND (@status IS NULL OR Status = @status)
-              AND (@text IS NULL OR Title LIKE @textLike ESCAPE '\\' OR (Description IS NOT NULL AND Description LIKE @textLike ESCAPE '\\'))
-              AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\\' OR OwnerEmail LIKE @ownerLike ESCAPE '\\')
-              AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\\')
-              {{tagPredicates}}
-              {{securityPredicate}}
-            """;
+        string filterWhere = BuildFilterWhere(select, query);
 
         // distinctWorkflows: among the filtered versions of each base, rank by (Active < Obsolete < other, then newest)
-        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone. Otherwise page every matching
-        // version by (base, version). MySQL 8 supports both the ROW_NUMBER() window function and the CTE.
-        //
-        // The base-id keyset compare (> @after) and ORDER BY are pinned COLLATE utf8mb4_bin so the distinct paging order
-        // is byte-ordinal — equal to the in-memory reference's StringComparer.Ordinal — regardless of the CatalogVersions
-        // column/table default collation (which the version-mode query, kept as-is, inherits for its own keyset).
+        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone (base compare/order pinned
+        // COLLATE utf8mb4_bin for byte-ordinal paging). Otherwise page every matching version by (base, version).
         select.CommandText = query.DistinctWorkflows
             ? "WITH ranked AS (\n  SELECT " + ColumnList +
               ",\n    ROW_NUMBER() OVER (PARTITION BY BaseWorkflowId ORDER BY CASE Status WHEN 'Active' THEN 0 WHEN 'Obsolete' THEN 1 ELSE 2 END, VersionNumber DESC) AS RepRank\n" +
@@ -213,57 +199,8 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
               "SELECT " + ColumnList + " FROM ranked\nWHERE RepRank = 1 AND (@after IS NULL OR BaseWorkflowId COLLATE utf8mb4_bin > @after)\nORDER BY BaseWorkflowId COLLATE utf8mb4_bin\nLIMIT @limit;"
             : "SELECT " + ColumnList + "\nFROM CatalogVersions\nWHERE " + filterWhere +
               "\n  AND (@after IS NULL OR CONCAT(BaseWorkflowId, LPAD(VersionNumber, 10, '0')) > @after)\nORDER BY BaseWorkflowId, VersionNumber\nLIMIT @limit;";
-        select.Parameters.AddWithValue("@baseWorkflowId", (object?)query.BaseWorkflowId ?? DBNull.Value);
-        select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
-        select.Parameters.AddWithValue("@text", (object?)query.Text ?? DBNull.Value);
-        select.Parameters.AddWithValue("@textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : (object)DBNull.Value);
-        select.Parameters.AddWithValue("@owner", (object?)query.Owner ?? DBNull.Value);
-        select.Parameters.AddWithValue("@ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : (object)DBNull.Value);
-        select.Parameters.AddWithValue("@workflowIdPrefix", (object?)query.WorkflowIdPrefix ?? DBNull.Value);
-        select.Parameters.AddWithValue("@workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p) + "%" : (object)DBNull.Value);
         select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
         select.Parameters.AddWithValue("@limit", limit + 1);
-
-        if (!query.Tags.IsEmpty)
-        {
-            List<string> tags = query.Tags.ToList();
-            var predicates = new StringBuilder();
-            for (int i = 0; i < tags.Count; i++)
-            {
-                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                predicates.Append("AND Tags LIKE ").Append(name).Append(" ESCAPE '\\\\'\n              ");
-                select.Parameters.AddWithValue(name, "%\u001F" + EscapeLike(tags[i]) + "\u001F%");
-            }
-
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", predicates.ToString().TrimEnd());
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{tagPredicates}}", string.Empty);
-        }
-
-        // Row-security reach (§14.4): correlated EXISTS over the version's security tags.
-        if (query.Security is { } security)
-        {
-            int securityParam = 0;
-            var emitter = new SqlSecurityRuleEmitter(
-                "CatalogVersionSecurityTags",
-                ["BaseWorkflowId", "VersionNumber"],
-                "TagKey",
-                "TagValue",
-                "CatalogVersions",
-                value =>
-                {
-                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
-                    select.Parameters.AddWithValue(name, value);
-                    return name;
-                });
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", "AND (" + security.ToSqlPredicate(emitter) + ")");
-        }
-        else
-        {
-            select.CommandText = select.CommandText.Replace("{{securityPredicate}}", string.Empty);
-        }
 
         // The page is a pooled batch of disposable version documents (the caller disposes the page). One extra row
         // is fetched as a look-ahead to detect a further page; it is not added to the batch.
@@ -581,6 +518,78 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        string filterWhere = BuildFilterWhere(select, query);
+
+        // Bounded native count reusing the search's exact filter (so the reach cannot drift). Distinct mode counts
+        // distinct base workflows; otherwise matching versions. A cap+1 sub-select stops the scan one past the cap.
+        string inner = query.DistinctWorkflows
+            ? "SELECT DISTINCT BaseWorkflowId FROM CatalogVersions WHERE " + filterWhere + " LIMIT @cap"
+            : "SELECT 1 FROM CatalogVersions WHERE " + filterWhere + " LIMIT @cap";
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        long total = Convert.ToInt64(await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    // Builds the shared search filter body (base / status / text / owner / prefix / tags / §14.4 security reach) and
+    // binds its parameters onto <paramref name="command"/>, returning the predicate SQL WITHOUT the keyset cursor,
+    // ORDER BY, or LIMIT. QueryAsync embeds it (plus cursor/paging); CountAsync wraps it in a bounded COUNT — both
+    // share this exact predicate so the reach filter cannot drift between search and count.
+    private static string BuildFilterWhere(MySqlCommand command, in CatalogQuery query)
+    {
+        var sql = new StringBuilder(
+            "(@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)" +
+            "\n              AND (@status IS NULL OR Status = @status)" +
+            "\n              AND (@text IS NULL OR Title LIKE @textLike ESCAPE '\\\\' OR (Description IS NOT NULL AND Description LIKE @textLike ESCAPE '\\\\'))" +
+            "\n              AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\\\\' OR OwnerEmail LIKE @ownerLike ESCAPE '\\\\')" +
+            "\n              AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\\\\')");
+
+        command.Parameters.AddWithValue("@baseWorkflowId", (object?)query.BaseWorkflowId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
+        command.Parameters.AddWithValue("@text", (object?)query.Text ?? DBNull.Value);
+        command.Parameters.AddWithValue("@textLike", query.Text is { Length: > 0 } t ? "%" + EscapeLike(t) + "%" : (object)DBNull.Value);
+        command.Parameters.AddWithValue("@owner", (object?)query.Owner ?? DBNull.Value);
+        command.Parameters.AddWithValue("@ownerLike", query.Owner is { Length: > 0 } o ? "%" + EscapeLike(o) + "%" : (object)DBNull.Value);
+        command.Parameters.AddWithValue("@workflowIdPrefix", (object?)query.WorkflowIdPrefix ?? DBNull.Value);
+        command.Parameters.AddWithValue("@workflowIdPrefixLike", query.WorkflowIdPrefix is { Length: > 0 } p ? EscapeLike(p) + "%" : (object)DBNull.Value);
+
+        if (!query.Tags.IsEmpty)
+        {
+            List<string> tags = query.Tags.ToList();
+            for (int i = 0; i < tags.Count; i++)
+            {
+                string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
+                sql.Append("\n              AND Tags LIKE ").Append(name).Append(" ESCAPE '\\\\'");
+                command.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+            }
+        }
+
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new SqlSecurityRuleEmitter(
+                "CatalogVersionSecurityTags",
+                ["BaseWorkflowId", "VersionNumber"],
+                "TagKey",
+                "TagValue",
+                "CatalogVersions",
+                value =>
+                {
+                    string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                    command.Parameters.AddWithValue(name, value);
+                    return name;
+                });
+            sql.Append("\n              AND (").Append(security.ToSqlPredicate(emitter)).Append(')');
+        }
+
+        return sql.ToString();
+    }
 
     private static string EscapeLike(string value)
         => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");

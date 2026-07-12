@@ -255,6 +255,53 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Same server-side OData filter as QueryAsync: base-id, plus status EXCEPT in distinct mode (a base is included
+        // when any of its versions matches, so the full partition span is scanned and Status is re-applied in Matches).
+        string? filter = null;
+        if (query.BaseWorkflowId is { } baseId)
+        {
+            filter = TableClient.CreateQueryFilter($"PartitionKey eq {baseId}");
+        }
+
+        if (query.Status is { } status && !query.DistinctWorkflows)
+        {
+            string clause = TableClient.CreateQueryFilter($"Status eq {status.ToString()}");
+            filter = filter is null ? clause : filter + " and " + clause;
+        }
+
+        // Bounded scan reusing the same Matches predicate as the search (so the §14.2 reach cannot drift). Distinct
+        // mode counts distinct base workflows; otherwise matching versions. Stop one past the cap.
+        if (query.DistinctWorkflows)
+        {
+            var bases = new HashSet<string>(StringComparer.Ordinal);
+            await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(entity);
+                if (Matches(candidate.RootElement, query) && bases.Add(candidate.RootElement.Ref.BaseWorkflowId) && bases.Count > cap)
+                {
+                    return (cap, true);
+                }
+            }
+
+            return (bases.Count, false);
+        }
+
+        int count = 0;
+        await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(entity);
+            if (Matches(candidate.RootElement, query) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
     // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base
     // id. A base is included if any of its versions matches the filter; the representative is the best-matching version —
     // the newest Active, else the newest Obsolete, else the newest (matching the UI's client-side collapse it replaces).
