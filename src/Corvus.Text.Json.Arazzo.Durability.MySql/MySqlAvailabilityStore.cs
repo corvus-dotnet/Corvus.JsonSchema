@@ -232,6 +232,38 @@ public sealed class MySqlAvailabilityStore : IAvailabilityStore, IAsyncDisposabl
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        // Bounded native COUNT over the same WHERE as ListByVersionAsync — the inner LIMIT caps the scan at cap+1. No blob read.
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand count = connection.CreateCommand();
+        count.CommandText = "SELECT COUNT(*) FROM (SELECT 1 FROM Availability WHERE BaseWorkflowId = @b AND VersionNumber = @v LIMIT @cap) AS bounded;";
+        count.Parameters.AddWithValue("@b", baseWorkflowId);
+        count.Parameters.AddWithValue("@v", versionNumber);
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand count = connection.CreateCommand();
+        count.CommandText = "SELECT COUNT(*) FROM (SELECT 1 FROM Availability WHERE Environment = @e LIMIT @cap) AS bounded;";
+        count.Parameters.AddWithValue("@e", environment);
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.ownsDataSource)

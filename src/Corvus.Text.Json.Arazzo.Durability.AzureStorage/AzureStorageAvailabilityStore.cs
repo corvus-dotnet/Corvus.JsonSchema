@@ -184,6 +184,46 @@ public sealed class AzureStorageAvailabilityStore : IAvailabilityStore
         return BuildPage(rows, pageSize, hasCursor, static (row, cursor) => CompareWorkflowVersion(row.BaseWorkflowId, row.VersionNumber, cursor.BaseWorkflowId, cursor.VersionNumber), cursor);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        // Bounded server-filtered scan: the same OData filter as ListByVersionAsync, but only the key column is selected
+        // and the scan stops at cap+1 — no Document blob is read.
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {Partition} and BaseWorkflowId eq {baseWorkflowId} and VersionNumber eq {versionNumber}");
+        int count = 0;
+        await foreach (TableEntity entity in this.availability.QueryAsync<TableEntity>(filter, maxPerPage: bound + 1, select: ["RowKey"], cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (++count > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {Partition} and Environment eq {environment}");
+        int count = 0;
+        await foreach (TableEntity entity in this.availability.QueryAsync<TableEntity>(filter, maxPerPage: bound + 1, select: ["RowKey"], cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (++count > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (count, false);
+    }
+
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     // The by-environment total order: base workflow id (ordinal), then version number (numeric). Mirrors

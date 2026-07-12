@@ -209,6 +209,39 @@ public sealed class SqlServerAvailabilityStore : IAvailabilityStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        // Bounded native COUNT over the same WHERE as ListByVersionAsync. SQL Server has no LIMIT, so TOP (@cap) inside the
+        // subquery caps the scan at cap+1. No Document blob is read.
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand count = connection.CreateCommand();
+        count.CommandText = "SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 AS x FROM Availability WHERE BaseWorkflowId = @b AND VersionNumber = @v) AS bounded;";
+        count.Parameters.AddWithValue("@b", baseWorkflowId);
+        count.Parameters.AddWithValue("@v", versionNumber);
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        int total = (int)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand count = connection.CreateCommand();
+        count.CommandText = "SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 AS x FROM Availability WHERE Environment = @e) AS bounded;";
+        count.Parameters.AddWithValue("@e", environment);
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        int total = (int)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));

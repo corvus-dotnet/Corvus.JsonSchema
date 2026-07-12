@@ -262,6 +262,31 @@ public sealed class MongoAvailabilityStore : IAvailabilityStore, IAsyncDisposabl
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        // Bounded native count over the same filter as ListByVersionAsync (minus the keyset cursor) — CountOptions.Limit
+        // caps the server-side count at cap+1 so a busy version reports the cap. No entry document is read.
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.And(b.Eq("baseWorkflowId", baseWorkflowId), b.Eq("versionNumber", versionNumber));
+        long total = await this.availability.CountDocumentsAsync(filter, new CountOptions { Limit = bound + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("environment", environment);
+        long total = await this.availability.CountDocumentsAsync(filter, new CountOptions { Limit = bound + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient && this.client is IDisposable disposable)

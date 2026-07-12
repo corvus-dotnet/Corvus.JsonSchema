@@ -253,6 +253,54 @@ public sealed class SqliteAvailabilityStore : IAvailabilityStore, IAsyncDisposab
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Bounded native COUNT over the same WHERE as ListByVersionAsync — the inner LIMIT stops the scan at cap+1 so a
+            // busy version reports the cap, never a full count. No Document blob is read.
+            using SqliteCommand count = this.connection.CreateCommand();
+            count.CommandText = "SELECT COUNT(*) FROM (SELECT 1 FROM Availability WHERE BaseWorkflowId = @b AND VersionNumber = @v LIMIT @cap);";
+            count.Parameters.AddWithValue("@b", baseWorkflowId);
+            count.Parameters.AddWithValue("@v", versionNumber);
+            count.Parameters.AddWithValue("@cap", bound + 1);
+            long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+            return total > bound ? (bound, true) : ((int)total, false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Bounded native COUNT over the same WHERE as ListByEnvironmentAsync (IX_Availability_Environment drives it).
+            using SqliteCommand count = this.connection.CreateCommand();
+            count.CommandText = "SELECT COUNT(*) FROM (SELECT 1 FROM Availability WHERE Environment = @e LIMIT @cap);";
+            count.Parameters.AddWithValue("@e", environment);
+            count.Parameters.AddWithValue("@cap", bound + 1);
+            long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+            return total > bound ? (bound, true) : ((int)total, false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync() => await this.connection.DisposeAsync().ConfigureAwait(false);
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n"));
