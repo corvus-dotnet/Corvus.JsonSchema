@@ -54,6 +54,23 @@ public sealed class ApiRunnersClient : IApiRunnersClient
         return SendAsyncCore<ListRunnersRequest, ListRunnersResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Count runners
+    /// </summary>
+    /// <remarks>
+    /// Counts the registered runners the caller's read reach admits (§5.5/§14.2), bounded by the server's cap — no runner rows are returned (for the list footer). Reach here is a per-row predicate over each runner's reach tags, so the count matches the reach-filtered listRunners exactly. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountRunnersResponse> CountRunnersAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountRunnersRequest request = new();
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountRunnersRequest, CountRunnersResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

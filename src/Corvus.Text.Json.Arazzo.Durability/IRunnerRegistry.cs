@@ -83,6 +83,32 @@ public interface IRunnerRegistry
     }
 
     /// <summary>
+    /// Counts the runners visible to <paramref name="context"/> (design §5.5/§14.2), bounded by <paramref name="cap"/>:
+    /// the reach-scoped total behind the console's <c>/runners</c> list footer, without returning any runner rows.
+    /// </summary>
+    /// <param name="context">The caller's resolved row-access grant (<see cref="AccessContext.System"/> for the trusted, full-reach path); a runner outside its read reach is not counted.</param>
+    /// <param name="cap">The inclusive upper bound on the reported count; once <paramref name="cap"/> reach-visible runners have been seen the count saturates and <c>Capped</c> is <see langword="true"/> (a non-positive value uses the store's default page size as the cap).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The bounded count and whether it was capped (the true total meets or exceeds <paramref name="cap"/>).</returns>
+    /// <remarks>
+    /// Reach here is a per-row ABAC predicate over each runner's <c>reachTags</c>, <b>not</b> a SQL-expressible filter
+    /// (unlike the run/catalog reach side-tables), so a native <c>COUNT</c> is impossible: the reach-scoped
+    /// <see cref="ListAsync(AccessContext, int, JsonString, CancellationToken)"/> already <i>is</i> the bounded native read —
+    /// it streams the ordered registry and reach-filters in flight, stopping once the page fills. This default asks it for a
+    /// single page of <paramref name="cap"/> + 1 and reports the bounded count, so every backend counts through its own
+    /// native reach query with no separate count path to keep in sync with the list's predicate.
+    /// </remarks>
+    async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        int bound = cap > 0 ? cap : RunnerRegistryPage.DefaultPageSize;
+        using RunnerRegistryPage page = await this.ListAsync(context, bound + 1, default, cancellationToken).ConfigureAwait(false);
+        int visible = page.Runners.Count;
+        return visible > bound ? (bound, true) : (visible, false);
+    }
+
+    /// <summary>
     /// Determines whether any registered runner currently hosts (with the version loaded) the given catalog version.
     /// </summary>
     /// <param name="baseWorkflowId">The base workflow id of the version.</param>

@@ -108,6 +108,16 @@ public interface IApiRunnersClient : IAsyncDisposable
         public static readonly string[] ListRunnersOpenIdConnectScopes = ["runs:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountRunners</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountRunnersOauth2Scopes = ["runs:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountRunners</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountRunnersOpenIdConnectScopes = ["runs:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["runs:read"];
@@ -128,4 +138,13 @@ public interface IApiRunnersClient : IAsyncDisposable
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListRunnersResponse> ListRunnersAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count runners
+    /// </summary>
+    /// <remarks>
+    /// Counts the registered runners the caller's read reach admits (§5.5/§14.2), bounded by the server's cap — no runner rows are returned (for the list footer). Reach here is a per-row predicate over each runner's reach tags, so the count matches the reach-filtered listRunners exactly. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountRunnersResponse> CountRunnersAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

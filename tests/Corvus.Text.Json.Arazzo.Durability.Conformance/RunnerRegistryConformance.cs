@@ -292,6 +292,28 @@ public abstract class RunnerRegistryConformance
         }
     }
 
+    [TestMethod]
+    public async Task Counting_is_reach_scoped_and_bounded_by_the_cap()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-acme-1", T0, T0, reachTags: [("tenant", "acme")]), default);
+        await registry.RegisterAsync(Reg("runner-acme-2", T0, T0, reachTags: [("tenant", "acme")]), default);
+        await registry.RegisterAsync(Reg("runner-globex", T0, T0, reachTags: [("tenant", "globex")]), default);
+        await registry.RegisterAsync(Reg("runner-unscoped", T0, T0), default); // serves an unscoped environment
+
+        // Reach-scoped (§5.5/§14.2): the acme caller counts only its two runners; globex counts its one; the unscoped
+        // runner is fail-closed out of a scoped reach, exactly as the reach-filtered list it annotates.
+        (await registry.CountAsync(Scope("acme"), 100, default)).ShouldBe((2, false));
+        (await registry.CountAsync(Scope("globex"), 100, default)).ShouldBe((1, false));
+
+        // The trusted system path is unrestricted, so it counts every registered runner.
+        (await registry.CountAsync(AccessContext.System, 100, default)).ShouldBe((4, false));
+
+        // The count saturates at the cap and reports Capped once the true total meets or exceeds it (the "N+" footer).
+        (await registry.CountAsync(AccessContext.System, 2, default)).ShouldBe((2, true));
+        (await registry.CountAsync(AccessContext.System, 4, default)).ShouldBe((4, false));
+    }
+
     private static AccessContext Scope(string tenant) => AccessContext.Uniform(
         new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], new Dictionary<string, IReadOnlyList<string>> { ["tenant"] = [tenant] }));
 
