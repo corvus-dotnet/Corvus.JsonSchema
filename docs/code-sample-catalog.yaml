@@ -601,10 +601,10 @@ main-docs:
   - path: "docs/ArazzoWorkflowEnginePlan.md"
     blocks:
       - {index: 0, language: csharp, lines: [255, 287], category: compilable, verified: false}
-      - {index: 1, language: , lines: [555, 567]}
-      - {index: 2, language: csharp, lines: [687, 699], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [747, 768], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [900, 913], category: compilable, verified: false}
+      - {index: 1, language: , lines: [569, 581]}
+      - {index: 2, language: csharp, lines: [701, 713], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [761, 782], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [914, 927], category: compilable, verified: false}
   - path: "docs/AsyncApi.md"
     blocks:
       - {index: 0, language: bash, lines: [15, 21]}
