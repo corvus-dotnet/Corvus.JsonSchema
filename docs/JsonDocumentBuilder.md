@@ -370,16 +370,17 @@ Under the covers the document text and its parsed metadata are written **once, d
 
 `Create()` exists on generated types only (it is emitted by the code generator); dynamic documents built through `JsonElement` continue to use the workspace patterns above. See the [Data Object recipe](../ExampleRecipes/001-DataObject/) for a worked example, and note the result is `IDisposable` — it owns pooled memory, exactly like a parsed document.
 
-### The cost compared with serialize-and-reparse
+### Benchmarks vs serialize-and-reparse
 
-The `BenchmarkCreateParsedDocument` benchmark measures both routes to the same `ParsedJsonDocument<T>` — a small four-property document with a nested object and two arrays. The baseline is the builder round trip with everything rented (`CreateBuilder` → `RentWriterAndBuffer` → `WriteTo` → `Parse`); `Create()` builds the identical document from the identical build delegate. On a quiet 13th-gen i7 laptop running .NET 10:
+The following benchmark compares **`Create()`** against the builder round trip — `CreateBuilder` → `RentWriterAndBuffer` → `WriteTo` → `Parse`, with the workspace, writer, and buffers all rented — building the identical document (four properties, a nested object, and two arrays) from the identical build delegate.
 
-| Method                        | Mean       | Ratio | Allocated | Alloc Ratio |
-|------------------------------ |-----------:|------:|----------:|------------:|
-| `ViaBuilderSerializeAndParse` | 1,227.1 ns |  1.00 |     288 B |        1.00 |
-| `ViaCreate`                   |   669.4 ns |  0.55 |     152 B |        0.53 |
+> Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. Full source in [`benchmarks/Corvus.Text.Json.Benchmarks/`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Benchmarks) (`BenchmarkCreateParsedDocument`).
 
-The round trip pays three passes over the content — build the mutable document's value store, serialize it, then parse the bytes back into a second metadata table — where `Create()` pays one: the document text and its metadata are written together as the values are added. The allocation difference is exactly the two objects involved: `Create()`'s 152 B is the returned `ParsedJsonDocument<T>` instance itself (the product), while the round trip also allocates a `JsonDocumentBuilder` per call, which the pooled builder behind `Create()` eliminates. Run it yourself from `benchmarks/Corvus.Text.Json.Benchmarks` with `dotnet run -c Release -f net10.0 -- --filter '*BenchmarkCreateParsedDocument*'`.
+| Scenario | Builder + serialize + parse | `Create()` | Speedup | Round-trip Alloc | `Create()` Alloc | Alloc Ratio |
+|---|---|---|---|---|---|---|
+| Person document | 1,227 ns | 669 ns | **1.8×** | 288 B | 152 B | **1.9×** |
+
+**Summary:** `Create()` is **1.8× faster** and allocates **1.9× less**. The round trip pays three passes over the content — build the mutable document's value store, serialize it, then parse the bytes back into a second metadata table — where `Create()` pays one: the document text and its metadata are written together as the values are added. The allocation difference is exactly the two objects involved: `Create()`'s 152 B is the returned `ParsedJsonDocument<T>` instance itself (the product), while the round trip also allocates a `JsonDocumentBuilder` per call, which the pooled builder behind `Create()` eliminates.
 
 ## Working with Existing JSON
 
