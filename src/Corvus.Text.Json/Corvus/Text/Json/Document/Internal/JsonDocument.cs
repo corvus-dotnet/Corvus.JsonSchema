@@ -2117,6 +2117,23 @@ public abstract partial class JsonDocument
     }
 
     /// <summary>
+    /// Resets the core storage state so a pooled document instance can be reused after
+    /// <see cref="DisposeCore"/> has returned its buffers. Clears the buffer offsets, the interned
+    /// literal indices, and the metadata database reference.
+    /// </summary>
+    private protected void ResetCoreForReuse()
+    {
+        _parsedData = default;
+        _valueOffset = 0;
+        _propertyMapOffset = 0;
+        _bucketOffset = 0;
+        _entryOffset = 0;
+        _nullIndex = -1;
+        _trueIndex = -1;
+        _falseIndex = -1;
+    }
+
+    /// <summary>
     /// Gets the hash code for the JSON element at the specified index using an unsafe method that doesn't validate input.
     /// </summary>
     /// <param name="index">The index of the element to get the hash code for.</param>

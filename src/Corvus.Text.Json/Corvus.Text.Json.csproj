@@ -175,6 +175,8 @@
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonElement.Mutable.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonPredicate.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\JsonWorkspace.cs" />
+    <Compile Include="Corvus\Text\Json\DocumentBuilder\ParsedJsonDocumentBuilder.cs" />
+    <Compile Include="Corvus\Text\Json\DocumentBuilder\Internal\ParsedJsonDocumentBuilderCache.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\ArrayReverseEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\EnumeratorCreator.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\DynamicValueType.cs" />

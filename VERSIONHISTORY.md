@@ -1,5 +1,17 @@
 # Version History
 
+## V5.3.0
+
+V5.3.0 adds `Create()` factory methods to generated types: the `ParsedJsonDocument<T>`-producing analogue of `CreateBuilder()`, for the create-but-don't-modify pattern.
+
+### Breaking changes
+
+- **`Create`, `CreateArray`, and `CreateObject` are now reserved member names in generated types (V5 engine)** — A schema property whose formatted name lands on one of these (for example a JSON property named `"create"`) previously generated a member of that name; it now receives the standard reserved-name suffix, generating `CreateValue` instead — exactly as a property named `"createBuilder"` or `"build"` always has. This only affects models with such property names (none of the shipped models or benchmarks except the UI5 manifest schema's `create` navigation property); regenerating such a model renames the accessor, and consuming code updates from `.Create` to `.CreateValue`. The JSON on the wire is unchanged.
+
+### New features
+
+- **Generated types now emit `Create()` factory methods that return a `ParsedJsonDocument<T>` directly** — Sometimes you need to build a new document and return it to your caller as a `ParsedJsonDocument<T>`. Previously that took a `JsonDocumentBuilder<T>` plus a serialization round trip, or hand-crafting into a buffer with `Utf8JsonWriter` and parsing it back — either way, a "create" effort followed by a "parse" effort. Every generated type now also emits `Create()` overloads mirroring its `CreateBuilder()` overloads — from a `Source`, from a `Builder.Build` delegate (with and without a flowed `TContext`), from per-property values, from positional tuple item sources, from a numeric span for tensor types, and parameterless `Create()`/`CreateArray()`/`CreateObject()` for an empty document — minus the `JsonWorkspace` parameter: no workspace is needed. Construction runs through the same `ComplexValueBuilder` machinery as `CreateBuilder()`, into a new pooled `ParsedJsonDocumentBuilder` document; a single linear pass then writes the UTF-8 JSON text and the parsed-format metadata rows together — blitting values embedded from other documents into the backing so the result is fully self-contained — and hands both off to the new `ParsedJsonDocument<T>` without ever parsing. The builder and its workspace are rented from thread-local caches, so steady-state construction allocates only the returned document and its pooled buffers. There is no instance-method form (an instance `Create()` would collide with the static parameterless overload); the mirrored surface is otherwise identical in form to `CreateBuilder()`, which also eases upgrading a V4 codebase that used the create-only pattern. The feature lives in the shared V5 code-generation core, so it applies to models emitted by the source generator and the `corvusjson` CLI alike; regenerate your models to pick it up. See [#836](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/836).
+
 ## V5.2.5
 
 V5.2.5 restores implicit numeric conversion operators on generated types whose values are always numeric — a constrained integer, or a nullable integer/number — in both the V4 and V5 engines.

@@ -40,7 +40,8 @@ internal static partial class CodeGeneratorExtensions
             .AppendBuilderRefStruct(typeDeclaration, builders, forArray: true)
             .AppendBuilderRefStruct(typeDeclaration, builders, forArray: false)
             .AppendCommonBuild(typeDeclaration, builders)
-            .AppendCommonCreateBuilder(typeDeclaration, builders);
+            .AppendCommonCreateBuilder(typeDeclaration, builders)
+            .AppendCommonCreate(typeDeclaration, builders);
     }
 
     private static CodeGenerator AppendAddAsItem(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<ComposedBuilder> builders, bool forContext = false)
@@ -2606,6 +2607,622 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends the <c>Create()</c> factory methods for the specified type declaration. These mirror the
+    /// <c>CreateBuilder()</c> overloads emitted by <see cref="AppendCommonCreateBuilder"/>, but build a
+    /// self-contained <c>ParsedJsonDocument&lt;T&gt;</c> via a rented <c>ParsedJsonDocumentBuilder</c>
+    /// instead of a workspace-scoped <c>JsonDocumentBuilder&lt;T&gt;</c>.
+    /// </summary>
+    /// <param name="generator">The code generator to which to append the methods.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the creation methods.</param>
+    /// <param name="builders">The composed builders discovered while emitting the builder types.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    private static CodeGenerator AppendCommonCreate(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<ComposedBuilder> builders)
+    {
+        // We only expect 1 row for a simple type.
+        int initialCapacity = 1;
+
+        if ((typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Object | CoreTypes.Array)) != 0)
+        {
+            // But we allow a default initial capacity of 30 for objects or arrays
+            if (typeDeclaration.IsFixedSizeNumericArray())
+            {
+                // If this is a fixed size array, we use the value buffer size as the initial capacity
+                initialCapacity = typeDeclaration.ArrayValueBufferSize() + (2 * typeDeclaration.ArrayRank()) ?? 30;
+            }
+            else
+            {
+                initialCapacity = 30;
+            }
+        }
+
+        string typeName = typeDeclaration.DotnetTypeName();
+
+        generator
+            .ReserveNameIfNotReserved("Create")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            $$"""
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<{{typeName}}> Create(
+                scoped in {{generator.SourceClassName()}} value, int initialCapacity = {{initialCapacity}})
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<{{typeName}}>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+            """);
+
+        CoreTypes core = typeDeclaration.ImpliedCoreTypesOrAny();
+
+        bool isArray = (core & CoreTypes.Array) != 0;
+        bool isObject = (core & CoreTypes.Object) != 0;
+
+        // Emit parameterless Create / CreateArray / CreateObject producing an empty array or object
+        // document, gated exactly as the empty CreateBuilder / CreateArrayBuilder / CreateObjectBuilder
+        // overloads are (see AppendCommonCreateBuilder for the rationale).
+        bool isTuple = typeDeclaration.IsTuple();
+        bool hasRequiredProperties = typeDeclaration.PropertyDeclarations
+            .Any(p => p.RequiredOrOptional != RequiredOrOptional.Optional);
+        bool hasCompositionTypes =
+            typeDeclaration.AllOfCompositionTypes().Values.SelectMany(t => t).Any(t => t.ReducedTypeDeclaration().ReducedType is not null) ||
+            typeDeclaration.AnyOfCompositionTypes().Values.SelectMany(t => t).Any(t => t.ReducedTypeDeclaration().ReducedType is not null) ||
+            typeDeclaration.OneOfCompositionTypes().Values.SelectMany(t => t).Any(t => t.ReducedTypeDeclaration().ReducedType is not null);
+        int nonFilteredOptionalPropertyCount = typeDeclaration.PropertyDeclarations
+            .Count(p => p.RequiredOrOptional == RequiredOrOptional.Optional &&
+                        !p.ReducedPropertyType.IsBuiltInJsonNotAnyType());
+        bool convenienceOverloadSubsumesEmpty =
+            typeDeclaration.HasPropertyDeclarations && !hasRequiredProperties &&
+            nonFilteredOptionalPropertyCount > 1;
+
+        if (isArray && isObject)
+        {
+            if (!isTuple)
+            {
+                AppendEmptyCreate(generator, initialCapacity, typeName, "CreateArray", "StartArray", "EndArray");
+            }
+
+            if (!hasRequiredProperties || hasCompositionTypes)
+            {
+                AppendEmptyCreate(generator, initialCapacity, typeName, "CreateObject", "StartObject", "EndObject");
+            }
+        }
+        else if (isArray && !isTuple)
+        {
+            AppendEmptyCreate(generator, initialCapacity, typeName, "Create", "StartArray", "EndArray");
+        }
+        else if (isObject && (!hasRequiredProperties || hasCompositionTypes) && !convenienceOverloadSubsumesEmpty)
+        {
+            AppendEmptyCreate(generator, initialCapacity, typeName, "Create", "StartObject", "EndObject");
+        }
+
+        bool hasFallbackArrayType =
+            typeDeclaration.ArrayItemsType() is not null;
+
+        bool hasFallbackObjectType =
+            typeDeclaration.LocalEvaluatedPropertyType() is not null ||
+            typeDeclaration.HasPropertyDeclarations;
+
+        string sourceClassName = generator.SourceClassName();
+
+        if (isArray && isObject)
+        {
+            if (hasFallbackArrayType && generator.ArrayBuilderClassName() is string arrayBuilderClassName)
+            {
+                AppendCreateForBuilder(generator, initialCapacity, typeName, sourceClassName, arrayBuilderClassName, forContextOnly: true);
+            }
+
+            if (hasFallbackObjectType && generator.ObjectBuilderClassName() is string objectBuilderClassName)
+            {
+                AppendCreateForBuilder(generator, initialCapacity, typeName, sourceClassName, objectBuilderClassName, forContextOnly: true);
+            }
+        }
+        else
+        {
+            if (((isObject && hasFallbackObjectType) || (isArray && hasFallbackArrayType)) &&
+                generator.BuilderClassName() is string builderClassName)
+            {
+                AppendCreateForBuilder(generator, initialCapacity, typeName, sourceClassName, builderClassName);
+            }
+        }
+
+        foreach (ComposedBuilder builder in builders)
+        {
+            // Don't add them for built-in JsonNotAny types
+            if (builder.TypeDeclaration.IsBuiltInJsonNotAnyType())
+            {
+                continue;
+            }
+
+            if (builder.IsArray && builder.ArrayBuilderName is string arrayBuilderClassName1)
+            {
+                AppendCreateForBuilder(generator, initialCapacity, typeName, $"{builder.TypeDeclaration.FullyQualifiedDotnetTypeName()}.{generator.SourceClassName(builder.TypeDeclaration.FullyQualifiedDotnetTypeName())}", $"{builder.TypeDeclaration.FullyQualifiedDotnetTypeName()}.{arrayBuilderClassName1}");
+            }
+
+            if (builder.IsObject && builder.ObjectBuilderName is string objectBuilderClassName1)
+            {
+                AppendCreateForBuilder(generator, initialCapacity, typeName, $"{builder.TypeDeclaration.FullyQualifiedDotnetTypeName()}.{generator.SourceClassName(builder.TypeDeclaration.FullyQualifiedDotnetTypeName())}", $"{builder.TypeDeclaration.FullyQualifiedDotnetTypeName()}.{objectBuilderClassName1}");
+            }
+        }
+
+        // Add Create(ReadOnlySpan<T>) overload for numeric arrays (non-tuple)
+        if (typeDeclaration.IsNumericArray() && !typeDeclaration.IsTuple())
+        {
+            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
+            bool isFixedSize = typeDeclaration.IsFixedSizeNumericArray();
+
+            if (numericTypeName.IsNetOnly)
+            {
+                generator
+                    .AppendLine("#if NET");
+            }
+
+            if (isFixedSize)
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendBlockIndent(
+                        $$"""
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a flat numeric span.
+                        /// </summary>
+                        /// <param name="tensor">The data from which to create the tensor. It must contain exactly <see cref="ValueBufferSize"/> elements.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given tensor values. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<{{typeName}}> Create(
+                            ReadOnlySpan<{{numericTypeName.Name}}> tensor, int initialCapacity = {{initialCapacity}})
+                        {
+                            return Create(Build(tensor), initialCapacity);
+                        }
+                        """);
+            }
+            else
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendBlockIndent(
+                        $$"""
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a numeric span.
+                        /// </summary>
+                        /// <param name="values">The numeric values from which to create the array.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given values. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<{{typeName}}> Create(
+                            ReadOnlySpan<{{numericTypeName.Name}}> values, int initialCapacity = {{initialCapacity}})
+                        {
+                            return Create(Build(values), initialCapacity);
+                        }
+                        """);
+            }
+
+            if (numericTypeName.IsNetOnly)
+            {
+                generator
+                    .AppendLine("#endif");
+            }
+        }
+
+        // Add Create(in Source...) overload for pure tuple types
+        if (typeDeclaration.IsTuple() && GetTupleType(typeDeclaration) is TupleTypeDeclaration tupleTypeForCreate && !HasNotAnyTupleItem(tupleTypeForCreate))
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Creates a new <see cref=\"ParsedJsonDocument{T}\"/> from positional tuple item sources.")
+                .AppendLineIndent("/// </summary>");
+
+            int cDocIndex = 0;
+            foreach (ReducedTypeDeclaration item in tupleTypeForCreate.ItemsTypes)
+            {
+                cDocIndex++;
+                generator
+                    .AppendLineIndent("/// <param name=\"item", cDocIndex.ToString(), "\">The source for tuple item ", cDocIndex.ToString(), ".</param>");
+            }
+
+            generator
+                .AppendLineIndent("/// <param name=\"initialCapacity\">The (optional) estimate of the capacity to reserve for the document.</param>")
+                .AppendLineIndent("/// <returns>A <see cref=\"ParsedJsonDocument{T}\"/> containing the given tuple values. The caller must dispose it.</returns>")
+                .AppendIndent("public static ParsedJsonDocument<", typeName, "> Create(");
+
+            int cParamIndex = 0;
+            foreach (ReducedTypeDeclaration item in tupleTypeForCreate.ItemsTypes)
+            {
+                if (cParamIndex > 0)
+                {
+                    generator.Append(", ");
+                }
+
+                cParamIndex++;
+                string fqdtn = item.ReducedType.FullyQualifiedDotnetTypeName();
+                generator
+                    .Append("in ").Append(fqdtn).Append(".").Append(generator.SourceClassName(fqdtn)).Append(" item").Append(cParamIndex);
+            }
+
+            generator
+                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent("return Create(Build(");
+
+            for (int i = 1; i <= tupleTypeForCreate.ItemsTypes.Length; i++)
+            {
+                if (i > 1)
+                {
+                    generator.Append(", ");
+                }
+
+                generator.Append("item").Append(i);
+            }
+
+            generator
+                    .AppendLine("), initialCapacity);")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        // Add Create(sourceParams...) overload for object types with property declarations
+        AppendCreateFromProperties(generator, typeDeclaration, initialCapacity, typeName);
+
+        return generator;
+
+        static void AppendCreateForBuilder(CodeGenerator generator, int initialCapacity, string typeName, string sourceClassName, string builderClassName, bool forContextOnly = false)
+        {
+            if (!forContextOnly)
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendBlockIndent(
+                        $$"""
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<{{typeName}}> Create(
+                            scoped in {{builderClassName}}.Build value, int initialCapacity = {{initialCapacity}}, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new {{sourceClassName}}(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<{{typeName}}>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+                        """);
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                    $$"""
+                    /// <summary>
+                    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                    /// </summary>
+                    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                    /// <param name="context">The context to pass to the builder.</param>
+                    /// <param name="value">The value with which to initialize the document.</param>
+                    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                    public static ParsedJsonDocument<{{typeName}}> Create<TContext>(
+                        scoped in TContext context, scoped in {{builderClassName}}.Build<TContext> value, int initialCapacity = {{initialCapacity}}, int initialValueBufferSize = 8192)
+                        #if NET9_0_OR_GREATER
+                        where TContext : allows ref struct
+                        #endif
+                    {
+                        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                        try
+                        {
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            var source = new {{sourceClassName}}<TContext>(context, value);
+                            source.AddAsItem(ref cvb);
+                            Debug.Assert(cvb.MemberCount == 1);
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder.ToParsedJsonDocument<{{typeName}}>();
+                        }
+                        finally
+                        {
+                            documentBuilder.Dispose();
+                        }
+                    }
+                    """);
+        }
+
+        static void AppendEmptyCreate(CodeGenerator generator, int initialCapacity, string typeName, string methodName, string startMethod, string endMethod)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                    $$"""
+                    /// <summary>
+                    /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+                    /// </summary>
+                    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                    /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+                    public static ParsedJsonDocument<{{typeName}}> {{methodName}}(
+                        int initialCapacity = {{initialCapacity}}, int initialValueBufferSize = 8192)
+                    {
+                        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                        try
+                        {
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            cvb.{{startMethod}}();
+                            cvb.{{endMethod}}();
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder.ToParsedJsonDocument<{{typeName}}>();
+                        }
+                        finally
+                        {
+                            documentBuilder.Dispose();
+                        }
+                    }
+                    """);
+        }
+
+        static void AppendCreateFromProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, int initialCapacity, string typeName)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
+
+            if (!typeDeclaration.HasPropertyDeclarations)
+            {
+                return;
+            }
+
+            CoreTypes core = typeDeclaration.ImpliedCoreTypesOrAny();
+            bool isArray = (core & CoreTypes.Array) != 0;
+            bool isObject = (core & CoreTypes.Object) != 0;
+
+            if (!isObject)
+            {
+                return;
+            }
+
+            // Determine the builder class name that contains the static Create method.
+            // Builder is a peer of Mutable at the entity type level, not nested inside Mutable.
+            string? builderClassName;
+            if (isArray)
+            {
+                builderClassName = generator.ObjectBuilderClassName();
+            }
+            else
+            {
+                builderClassName = generator.BuilderClassName();
+            }
+
+            if (builderClassName is null)
+            {
+                return;
+            }
+
+            // Build the same method parameters as the Builder.Create method
+            MethodParameter[] staticMethodParameters = BuildMethodParameters(generator, typeDeclaration, childScope: "CreateParsedDocument");
+
+            if (generator.IsCancellationRequested || staticMethodParameters.Length == 0)
+            {
+                return;
+            }
+
+            // Skip the first parameter (ref ComplexValueBuilder) to get the Source parameters
+            MethodParameter[] sourceParameters = [.. staticMethodParameters.Skip(1)];
+
+            if (sourceParameters.Length == 0)
+            {
+                return;
+            }
+
+            // If there's exactly one source parameter whose type is the containing type's own Source,
+            // the convenience overload would collide with the existing Create(in Source, int).
+            if (sourceParameters.Length == 1)
+            {
+                string containingTypeSource = typeDeclaration.FullyQualifiedDotnetTypeName() + "." + generator.SourceClassName();
+                if (sourceParameters[0].Type == containingTypeSource)
+                {
+                    return;
+                }
+            }
+
+            // Non-generic variant
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Creates a new <see cref=\"ParsedJsonDocument{T}\"/> from the given property values.")
+                .AppendLineIndent("/// </summary>");
+
+            foreach (MethodParameter p in sourceParameters)
+            {
+                generator.AppendLineIndent("/// <param name=\"", p.GetName(generator), "\">The value of the property.</param>");
+            }
+
+            generator
+                .AppendLineIndent("/// <param name=\"initialCapacity\">The (optional) estimate of the capacity to reserve for the document.</param>")
+                .AppendLineIndent("/// <returns>A <see cref=\"ParsedJsonDocument{T}\"/> containing the given property values. The caller must dispose it.</returns>")
+                .AppendIndent("public static ParsedJsonDocument<", typeName, "> Create(");
+
+            for (int i = 0; i < sourceParameters.Length; i++)
+            {
+                if (i > 0)
+                {
+                    generator.Append(", ");
+                }
+
+                AppendParameterDeclaration(generator, sourceParameters[i]);
+            }
+
+            generator
+                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();")
+                    .AppendLineIndent("try")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);")
+                        .AppendLineIndent("cvb.StartObject();")
+                        .AppendLineIndent(builderClassName, " ovb = new(cvb);")
+                        .AppendIndent("ovb.Create(");
+
+            for (int i = 0; i < sourceParameters.Length; i++)
+            {
+                if (i > 0)
+                {
+                    generator.Append(", ");
+                }
+
+                generator.Append(sourceParameters[i].GetName(generator));
+            }
+
+            generator
+                        .AppendLine(");")
+                        .AppendLineIndent("cvb = ovb._builder;")
+                        .AppendLineIndent("cvb.EndObject();")
+                        .AppendLineIndent("((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);")
+                        .AppendLineIndent("return documentBuilder.ToParsedJsonDocument<", typeName, ">();")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendLineIndent("finally")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("documentBuilder.Dispose();")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}");
+
+            // TContext variant — only emit when there are object/array property types
+            bool hasObjectOrArrayProperty = typeDeclaration.PropertyDeclarations.Any(p =>
+                p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined &&
+                !p.ReducedPropertyType.IsBuiltInJsonNotAnyType() &&
+                (p.ReducedPropertyType.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0);
+
+            if (hasObjectOrArrayProperty)
+            {
+                MethodParameter[] staticMethodParametersWithContext = BuildMethodParametersWithContext(generator, typeDeclaration, childScope: "CreateParsedDocument<TContext>");
+
+                // Skip the ComplexValueBuilder parameter (index 1) — keep context (index 0) and Source params (index 2+)
+                MethodParameter[] sourceParametersWithContext = [staticMethodParametersWithContext[0], .. staticMethodParametersWithContext.Skip(2)];
+
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("/// <summary>")
+                    .AppendLineIndent("/// Creates a new <see cref=\"ParsedJsonDocument{T}\"/> from the given property values.")
+                    .AppendLineIndent("/// </summary>")
+                    .AppendLineIndent("/// <typeparam name=\"TContext\">The type of the context to pass to the builder.</typeparam>");
+
+                foreach (MethodParameter p in sourceParametersWithContext)
+                {
+                    generator.AppendLineIndent("/// <param name=\"", p.GetName(generator), "\">The value of the property.</param>");
+                }
+
+                generator
+                    .AppendLineIndent("/// <param name=\"initialCapacity\">The (optional) estimate of the capacity to reserve for the document.</param>")
+                    .AppendLineIndent("/// <returns>A <see cref=\"ParsedJsonDocument{T}\"/> containing the given property values. The caller must dispose it.</returns>")
+                    .AppendIndent("public static ParsedJsonDocument<", typeName, "> Create<TContext>(");
+
+                for (int i = 0; i < sourceParametersWithContext.Length; i++)
+                {
+                    if (i > 0)
+                    {
+                        generator.Append(", ");
+                    }
+
+                    AppendParameterDeclaration(generator, sourceParametersWithContext[i]);
+                }
+
+                generator
+                    .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                    .PushIndent()
+                        .AppendLineIndent("#if NET9_0_OR_GREATER")
+                        .AppendLineIndent("where TContext : allows ref struct")
+                        .AppendLineIndent("#endif")
+                    .PopIndent()
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();")
+                        .AppendLineIndent("try")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);")
+                            .AppendLineIndent("cvb.StartObject();")
+                            .AppendLineIndent(builderClassName, " ovb = new(cvb);")
+                            .AppendIndent("ovb.Create(", sourceParametersWithContext[0].GetName(generator));
+
+                for (int i = 1; i < sourceParametersWithContext.Length; i++)
+                {
+                    generator.Append(", ").Append(sourceParametersWithContext[i].GetName(generator));
+                }
+
+                generator
+                            .AppendLine(");")
+                            .AppendLineIndent("cvb = ovb._builder;")
+                            .AppendLineIndent("cvb.EndObject();")
+                            .AppendLineIndent("((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);")
+                            .AppendLineIndent("return documentBuilder.ToParsedJsonDocument<", typeName, ">();")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendLineIndent("finally")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("documentBuilder.Dispose();")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
+        }
+
+        static void AppendParameterDeclaration(CodeGenerator generator, MethodParameter parameter)
+        {
+            if (!string.IsNullOrEmpty(parameter.Modifiers))
+            {
+                generator.Append(parameter.Modifiers).Append(" ");
+            }
+
+            generator.Append(parameter.Type);
+
+            if (parameter.TypeIsNullable)
+            {
+                generator.Append("?");
+            }
+
+            generator.Append(" ").Append(parameter.GetName(generator));
+
+            if (parameter.DefaultValue is string defaultValue)
+            {
+                generator.Append(" = ").Append(defaultValue);
+            }
+        }
+    }
+
+    /// <summary>
     /// Appends methods to create <c>Source</c> and <c>Source&lt;TContext&gt;</c> instances for the specified type declaration.
     /// </summary>
     /// <param name="generator">The code generator to which to append the methods.</param>
@@ -4361,7 +4978,7 @@ internal static partial class CodeGeneratorExtensions
         return generator;
     }
 
-    private static MethodParameter[] BuildMethodParameters(CodeGenerator generator, TypeDeclaration typeDeclaration)
+    private static MethodParameter[] BuildMethodParameters(CodeGenerator generator, TypeDeclaration typeDeclaration, string childScope = "Create")
     {
         if (generator.IsCancellationRequested)
         {
@@ -4370,12 +4987,12 @@ internal static partial class CodeGeneratorExtensions
 
         return
         [
-                new MethodParameter("ref", "ComplexValueBuilder", generator.GetUniqueParameterNameInScope("builder", childScope: "Create")),
+                new MethodParameter("ref", "ComplexValueBuilder", generator.GetUniqueParameterNameInScope("builder", childScope: childScope)),
                 .. typeDeclaration.PropertyDeclarations
                         .Where(p => p.RequiredOrOptional != RequiredOrOptional.Optional &&
                                p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined &&
                                !p.ReducedPropertyType.IsBuiltInJsonNotAnyType())
-                        .Select(p => new MethodParameter("in", GetSource(generator, p.ReducedPropertyType.FullyQualifiedDotnetTypeName()), generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: "Create"))),
+                        .Select(p => new MethodParameter("in", GetSource(generator, p.ReducedPropertyType.FullyQualifiedDotnetTypeName()), generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: childScope))),
                 .. typeDeclaration.PropertyDeclarations
                         .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional &&
                                !p.ReducedPropertyType.IsBuiltInJsonNotAnyType())
@@ -4383,7 +5000,7 @@ internal static partial class CodeGeneratorExtensions
                             new MethodParameter(
                                 "in",
                                 GetSource(generator, p.ReducedPropertyType.FullyQualifiedDotnetTypeName()),
-                                generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: "Create"),
+                                generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: childScope),
                                 typeIsNullable: false,
                                 defaultValue: "default")),
             ];
@@ -4394,7 +5011,7 @@ internal static partial class CodeGeneratorExtensions
         }
     }
 
-    private static MethodParameter[] BuildMethodParametersWithContext(CodeGenerator generator, TypeDeclaration typeDeclaration)
+    private static MethodParameter[] BuildMethodParametersWithContext(CodeGenerator generator, TypeDeclaration typeDeclaration, string childScope = "Create<TContext>")
     {
         if (generator.IsCancellationRequested)
         {
@@ -4403,17 +5020,17 @@ internal static partial class CodeGeneratorExtensions
 
         return
         [
-                new MethodParameter("in", "TContext", generator.GetUniqueParameterNameInScope("context", childScope: "Create<TContext>")),
-                new MethodParameter("ref", "ComplexValueBuilder", generator.GetUniqueParameterNameInScope("builder", childScope: "Create<TContext>")),
+                new MethodParameter("in", "TContext", generator.GetUniqueParameterNameInScope("context", childScope: childScope)),
+                new MethodParameter("ref", "ComplexValueBuilder", generator.GetUniqueParameterNameInScope("builder", childScope: childScope)),
                 .. typeDeclaration.PropertyDeclarations
                         .Where(p => p.RequiredOrOptional != RequiredOrOptional.Optional &&
                                p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined &&
                                !p.ReducedPropertyType.IsBuiltInJsonNotAnyType())
-                        .Select(p => new MethodParameter("in", $"{GetSource(generator, p.ReducedPropertyType.FullyQualifiedDotnetTypeName())}{((p.ReducedPropertyType.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0 ? "<TContext>" : "")}", generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: "Create<TContext>"))),
+                        .Select(p => new MethodParameter("in", $"{GetSource(generator, p.ReducedPropertyType.FullyQualifiedDotnetTypeName())}{((p.ReducedPropertyType.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0 ? "<TContext>" : "")}", generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: childScope))),
                 .. typeDeclaration.PropertyDeclarations
                         .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional &&
                                !p.ReducedPropertyType.IsBuiltInJsonNotAnyType())
-                        .Select(p => new MethodParameter("in", $"{GetSource(generator, p.ReducedPropertyType.FullyQualifiedDotnetTypeName())}{((p.ReducedPropertyType.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0 ? "<TContext>" : "")}", generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: "Create<TContext>"), defaultValue: "default")),
+                        .Select(p => new MethodParameter("in", $"{GetSource(generator, p.ReducedPropertyType.FullyQualifiedDotnetTypeName())}{((p.ReducedPropertyType.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0 ? "<TContext>" : "")}", generator.GetUniqueParameterNameInScope(p.JsonPropertyName, childScope: childScope), defaultValue: "default")),
             ];
 
         static string GetSource(CodeGenerator generator, string fqdtn)
