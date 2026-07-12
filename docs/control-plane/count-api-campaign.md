@@ -100,10 +100,17 @@ Diff must be count-only (a drifting regen = generator version skew — reconcile
   VALUE c.baseWorkflowId`; AzureStorage base-id-only server filter + Status in `Matches`. Catalog-table footer (`db449b9736`). Verified:
   InMemory+Sqlite 23/23 in-process; 8 container backends 23/23 each; web-ui 208/208; live on seeded Postgres (`/catalog/count` == list == 6
   versions / 4 distinct; footer renders "4 workflows" via `/catalog/count?distinctWorkflows=true`, 0 page errors).
-- [ ] `runners`, `securityBindings`/`securityRules`, `administrators`, `environmentAdministrators`, `versionAvailability`/
-  `environmentAvailability`, `environmentRunnerAuthorizations` (per-env), observed identities — assess reach shape per store.
+- [x] **Slice 2 (full native fan-out) — DONE + pushed + container/live-verified (2026-07-12).** `runners` (2A `dbe31f259f`: reach is
+  per-row ABAC, not SQL — interface-default count over the native reach `ListAsync`; no per-backend override); `versionAvailability`/
+  `environmentAvailability` (2B `275faa873c`: `IAvailabilityStore.CountByVersionAsync`/`CountByEnvironmentAsync`, native COUNT on all 10,
+  path-scoped no reach); `environmentRunnerAuthorizations` per-env (2C `05644f43c7`: handler-only, reuses the Slice-1 store `CountAsync`);
+  `securityRules`/`securityBindings` (2D `8e791d6d48`: `ISecurityPolicyStore.CountRulesAsync`/`CountBindingsAsync`, capability-scoped q-filter,
+  interface-default for InMemory/AzureStorage + native on the other 8; grants+scopes console footers). Cosmos count fix `7ff1de477e`
+  (`SELECT c.id AS doc` + `ORDER BY`, container-caught). All 8 container backends 37/37; live 6/6 `/count`==list on seeded Postgres.
 
-**Excluded:** `securityOrderings` (fixed, tiny config — no count value).
+**Excluded (no count value):** `securityOrderings` (fixed tiny config); `administrators`/`environmentAdministrators` (not paged);
+observed identities (a prefix TYPEAHEAD for grantee resolution, `SearchAsync(kind, prefix, …)` — top-N autocomplete, not a browsable
+paged list with a total). **CAMPAIGN COMPLETE: every count-worthy paged control-plane list now has a bounded `/count`.**
 
 ### RATIFIED (2026-07-11): path (b) — fold the metadata stores onto row-security push-down FIRST, then count
 
