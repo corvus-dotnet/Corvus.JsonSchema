@@ -5461,4 +5461,242 @@ public readonly partial struct CypressSchema
     {
         return workspace.CreateBuilder<CypressSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CypressSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CypressSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CypressSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CypressSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CypressSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CypressSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="animationDistanceThreshold">The value of the property.</param>
+    /// <param name="baseUrl">The value of the property.</param>
+    /// <param name="blockHosts">The value of the property.</param>
+    /// <param name="chromeWebSecurity">The value of the property.</param>
+    /// <param name="clientCertificates">The value of the property.</param>
+    /// <param name="component">The value of the property.</param>
+    /// <param name="componentFolder">The value of the property.</param>
+    /// <param name="defaultCommandTimeout">The value of the property.</param>
+    /// <param name="downloadsFolder">The value of the property.</param>
+    /// <param name="e2e">The value of the property.</param>
+    /// <param name="env">The value of the property.</param>
+    /// <param name="execTimeout">The value of the property.</param>
+    /// <param name="experimentalFetchPolyfill">The value of the property.</param>
+    /// <param name="experimentalInteractiveRunEvents">The value of the property.</param>
+    /// <param name="experimentalSessionSupport">The value of the property.</param>
+    /// <param name="experimentalSourceRewriting">The value of the property.</param>
+    /// <param name="experimentalStudio">The value of the property.</param>
+    /// <param name="fileServerFolder">The value of the property.</param>
+    /// <param name="fixturesFolder">The value of the property.</param>
+    /// <param name="ignoreTestFiles">The value of the property.</param>
+    /// <param name="includeShadowDom">The value of the property.</param>
+    /// <param name="integrationFolder">The value of the property.</param>
+    /// <param name="modifyObstructiveCode">The value of the property.</param>
+    /// <param name="nodeVersion">The value of the property.</param>
+    /// <param name="numTestsKeptInMemory">The value of the property.</param>
+    /// <param name="pageLoadTimeout">The value of the property.</param>
+    /// <param name="pluginsFile">The value of the property.</param>
+    /// <param name="port">The value of the property.</param>
+    /// <param name="projectId">The value of the property.</param>
+    /// <param name="reporter">The value of the property.</param>
+    /// <param name="reporterOptions">The value of the property.</param>
+    /// <param name="requestTimeout">The value of the property.</param>
+    /// <param name="responseTimeout">The value of the property.</param>
+    /// <param name="retries">The value of the property.</param>
+    /// <param name="screenshotOnRunFailure">The value of the property.</param>
+    /// <param name="screenshotsFolder">The value of the property.</param>
+    /// <param name="scrollBehavior">The value of the property.</param>
+    /// <param name="slowTestThreshold">The value of the property.</param>
+    /// <param name="supportFile">The value of the property.</param>
+    /// <param name="taskTimeout">The value of the property.</param>
+    /// <param name="testFiles">The value of the property.</param>
+    /// <param name="trashAssetsBeforeRuns">The value of the property.</param>
+    /// <param name="userAgent">The value of the property.</param>
+    /// <param name="video">The value of the property.</param>
+    /// <param name="videoCompression">The value of the property.</param>
+    /// <param name="videosFolder">The value of the property.</param>
+    /// <param name="videoUploadOnPasses">The value of the property.</param>
+    /// <param name="viewportHeight">The value of the property.</param>
+    /// <param name="viewportWidth">The value of the property.</param>
+    /// <param name="waitForAnimations">The value of the property.</param>
+    /// <param name="watchForFileChanges">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CypressSchema> Create(in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(animationDistanceThreshold, baseUrl, blockHosts, chromeWebSecurity, clientCertificates, component, componentFolder, defaultCommandTimeout, downloadsFolder, e2e, env, execTimeout, experimentalFetchPolyfill, experimentalInteractiveRunEvents, experimentalSessionSupport, experimentalSourceRewriting, experimentalStudio, fileServerFolder, fixturesFolder, ignoreTestFiles, includeShadowDom, integrationFolder, modifyObstructiveCode, nodeVersion, numTestsKeptInMemory, pageLoadTimeout, pluginsFile, port, projectId, reporter, reporterOptions, requestTimeout, responseTimeout, retries, screenshotOnRunFailure, screenshotsFolder, scrollBehavior, slowTestThreshold, supportFile, taskTimeout, testFiles, trashAssetsBeforeRuns, userAgent, video, videoCompression, videosFolder, videoUploadOnPasses, viewportHeight, viewportWidth, waitForAnimations, watchForFileChanges);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CypressSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="animationDistanceThreshold">The value of the property.</param>
+    /// <param name="baseUrl">The value of the property.</param>
+    /// <param name="blockHosts">The value of the property.</param>
+    /// <param name="chromeWebSecurity">The value of the property.</param>
+    /// <param name="clientCertificates">The value of the property.</param>
+    /// <param name="component">The value of the property.</param>
+    /// <param name="componentFolder">The value of the property.</param>
+    /// <param name="defaultCommandTimeout">The value of the property.</param>
+    /// <param name="downloadsFolder">The value of the property.</param>
+    /// <param name="e2e">The value of the property.</param>
+    /// <param name="env">The value of the property.</param>
+    /// <param name="execTimeout">The value of the property.</param>
+    /// <param name="experimentalFetchPolyfill">The value of the property.</param>
+    /// <param name="experimentalInteractiveRunEvents">The value of the property.</param>
+    /// <param name="experimentalSessionSupport">The value of the property.</param>
+    /// <param name="experimentalSourceRewriting">The value of the property.</param>
+    /// <param name="experimentalStudio">The value of the property.</param>
+    /// <param name="fileServerFolder">The value of the property.</param>
+    /// <param name="fixturesFolder">The value of the property.</param>
+    /// <param name="ignoreTestFiles">The value of the property.</param>
+    /// <param name="includeShadowDom">The value of the property.</param>
+    /// <param name="integrationFolder">The value of the property.</param>
+    /// <param name="modifyObstructiveCode">The value of the property.</param>
+    /// <param name="nodeVersion">The value of the property.</param>
+    /// <param name="numTestsKeptInMemory">The value of the property.</param>
+    /// <param name="pageLoadTimeout">The value of the property.</param>
+    /// <param name="pluginsFile">The value of the property.</param>
+    /// <param name="port">The value of the property.</param>
+    /// <param name="projectId">The value of the property.</param>
+    /// <param name="reporter">The value of the property.</param>
+    /// <param name="reporterOptions">The value of the property.</param>
+    /// <param name="requestTimeout">The value of the property.</param>
+    /// <param name="responseTimeout">The value of the property.</param>
+    /// <param name="retries">The value of the property.</param>
+    /// <param name="screenshotOnRunFailure">The value of the property.</param>
+    /// <param name="screenshotsFolder">The value of the property.</param>
+    /// <param name="scrollBehavior">The value of the property.</param>
+    /// <param name="slowTestThreshold">The value of the property.</param>
+    /// <param name="supportFile">The value of the property.</param>
+    /// <param name="taskTimeout">The value of the property.</param>
+    /// <param name="testFiles">The value of the property.</param>
+    /// <param name="trashAssetsBeforeRuns">The value of the property.</param>
+    /// <param name="userAgent">The value of the property.</param>
+    /// <param name="video">The value of the property.</param>
+    /// <param name="videoCompression">The value of the property.</param>
+    /// <param name="videosFolder">The value of the property.</param>
+    /// <param name="videoUploadOnPasses">The value of the property.</param>
+    /// <param name="viewportHeight">The value of the property.</param>
+    /// <param name="viewportWidth">The value of the property.</param>
+    /// <param name="waitForAnimations">The value of the property.</param>
+    /// <param name="watchForFileChanges">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CypressSchema> Create<TContext>(in TContext context, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source<TContext> blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source<TContext> clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source<TContext> env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source<TContext> ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source<TContext> reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source<TContext> retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source<TContext> testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, animationDistanceThreshold, baseUrl, blockHosts, chromeWebSecurity, clientCertificates, component, componentFolder, defaultCommandTimeout, downloadsFolder, e2e, env, execTimeout, experimentalFetchPolyfill, experimentalInteractiveRunEvents, experimentalSessionSupport, experimentalSourceRewriting, experimentalStudio, fileServerFolder, fixturesFolder, ignoreTestFiles, includeShadowDom, integrationFolder, modifyObstructiveCode, nodeVersion, numTestsKeptInMemory, pageLoadTimeout, pluginsFile, port, projectId, reporter, reporterOptions, requestTimeout, responseTimeout, retries, screenshotOnRunFailure, screenshotsFolder, scrollBehavior, slowTestThreshold, supportFile, taskTimeout, testFiles, trashAssetsBeforeRuns, userAgent, video, videoCompression, videosFolder, videoUploadOnPasses, viewportHeight, viewportWidth, waitForAnimations, watchForFileChanges);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CypressSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

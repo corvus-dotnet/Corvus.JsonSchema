@@ -2540,5 +2540,171 @@ public readonly partial struct Ui5ManifestSchema
         {
             return workspace.CreateBuilder<ContentTypeAnalytical, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeAnalytical> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeAnalytical>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeAnalytical> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeAnalytical>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeAnalytical> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeAnalytical>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="actionableArea">The value of the property.</param>
+        /// <param name="actions">The value of the property.</param>
+        /// <param name="chartProperties">The value of the property.</param>
+        /// <param name="chartType">The value of the property.</param>
+        /// <param name="data">The value of the property.</param>
+        /// <param name="dimensionAxis">The value of the property.</param>
+        /// <param name="dimensions">The value of the property.</param>
+        /// <param name="feeds">The value of the property.</param>
+        /// <param name="legend">The value of the property.</param>
+        /// <param name="measureAxis">The value of the property.</param>
+        /// <param name="measures">The value of the property.</param>
+        /// <param name="minHeight">The value of the property.</param>
+        /// <param name="plotArea">The value of the property.</param>
+        /// <param name="popover">The value of the property.</param>
+        /// <param name="title">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeAnalytical> Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source dimensions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source feeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source legend = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source measures = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source popover = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source title = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(actionableArea, actions, chartProperties, chartType, data, dimensionAxis, dimensions, feeds, legend, measureAxis, measures, minHeight, plotArea, popover, title);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeAnalytical>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="actionableArea">The value of the property.</param>
+        /// <param name="actions">The value of the property.</param>
+        /// <param name="chartProperties">The value of the property.</param>
+        /// <param name="chartType">The value of the property.</param>
+        /// <param name="data">The value of the property.</param>
+        /// <param name="dimensionAxis">The value of the property.</param>
+        /// <param name="dimensions">The value of the property.</param>
+        /// <param name="feeds">The value of the property.</param>
+        /// <param name="legend">The value of the property.</param>
+        /// <param name="measureAxis">The value of the property.</param>
+        /// <param name="measures">The value of the property.</param>
+        /// <param name="minHeight">The value of the property.</param>
+        /// <param name="plotArea">The value of the property.</param>
+        /// <param name="popover">The value of the property.</param>
+        /// <param name="title">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeAnalytical> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> dimensions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> feeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> legend = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> measures = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> popover = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> title = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, actionableArea, actions, chartProperties, chartType, data, dimensionAxis, dimensions, feeds, legend, measureAxis, measures, minHeight, plotArea, popover, title);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeAnalytical>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

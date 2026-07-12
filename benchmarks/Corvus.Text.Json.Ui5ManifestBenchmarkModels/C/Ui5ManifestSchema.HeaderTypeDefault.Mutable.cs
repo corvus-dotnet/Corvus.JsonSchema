@@ -1935,5 +1935,161 @@ public readonly partial struct Ui5ManifestSchema
         {
             return workspace.CreateBuilder<HeaderTypeDefault, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<HeaderTypeDefault> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<HeaderTypeDefault>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<HeaderTypeDefault> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<HeaderTypeDefault>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<HeaderTypeDefault> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<HeaderTypeDefault>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="actions">The value of the property.</param>
+        /// <param name="data">The value of the property.</param>
+        /// <param name="icon">The value of the property.</param>
+        /// <param name="status">The value of the property.</param>
+        /// <param name="subTitle">The value of the property.</param>
+        /// <param name="subTitleMaxLines">The value of the property.</param>
+        /// <param name="title">The value of the property.</param>
+        /// <param name="titleMaxLines">The value of the property.</param>
+        /// <param name="type">The value of the property.</param>
+        /// <param name="visible">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<HeaderTypeDefault> Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source visible = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(actions, data, icon, status, subTitle, subTitleMaxLines, title, titleMaxLines, type, visible);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<HeaderTypeDefault>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="actions">The value of the property.</param>
+        /// <param name="data">The value of the property.</param>
+        /// <param name="icon">The value of the property.</param>
+        /// <param name="status">The value of the property.</param>
+        /// <param name="subTitle">The value of the property.</param>
+        /// <param name="subTitleMaxLines">The value of the property.</param>
+        /// <param name="title">The value of the property.</param>
+        /// <param name="titleMaxLines">The value of the property.</param>
+        /// <param name="type">The value of the property.</param>
+        /// <param name="visible">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<HeaderTypeDefault> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source<TContext> icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source visible = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, actions, data, icon, status, subTitle, subTitleMaxLines, title, titleMaxLines, type, visible);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<HeaderTypeDefault>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

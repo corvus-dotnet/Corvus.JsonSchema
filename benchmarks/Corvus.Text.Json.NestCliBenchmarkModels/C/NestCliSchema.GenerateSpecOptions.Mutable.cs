@@ -3761,5 +3761,147 @@ public readonly partial struct NestCliSchema
         {
             return workspace.CreateBuilder<GenerateSpecOptions, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<GenerateSpecOptions> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<GenerateSpecOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<GenerateSpecOptions> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<GenerateSpecOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<GenerateSpecOptions> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<GenerateSpecOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="app">The value of the property.</param>
+        /// <param name="application">The value of the property.</param>
+        /// <param name="cl">The value of the property.</param>
+        /// <param name="classValue">The value of the property.</param>
+        /// <param name="co">The value of the property.</param>
+        /// <param name="config">The value of the property.</param>
+        /// <param name="configuration">The value of the property.</param>
+        /// <param name="controller">The value of the property.</param>
+        /// <param name="d">The value of the property.</param>
+        /// <param name="decorator">The value of the property.</param>
+        /// <param name="f">The value of the property.</param>
+        /// <param name="filter">The value of the property.</param>
+        /// <param name="ga">The value of the property.</param>
+        /// <param name="gateway">The value of the property.</param>
+        /// <param name="gu">The value of the property.</param>
+        /// <param name="guard">The value of the property.</param>
+        /// <param name="inValue">The value of the property.</param>
+        /// <param name="interceptor">The value of the property.</param>
+        /// <param name="interfaceValue">The value of the property.</param>
+        /// <param name="lib">The value of the property.</param>
+        /// <param name="library">The value of the property.</param>
+        /// <param name="mi">The value of the property.</param>
+        /// <param name="middleware">The value of the property.</param>
+        /// <param name="mo">The value of the property.</param>
+        /// <param name="module">The value of the property.</param>
+        /// <param name="pi">The value of the property.</param>
+        /// <param name="pipe">The value of the property.</param>
+        /// <param name="pr">The value of the property.</param>
+        /// <param name="provider">The value of the property.</param>
+        /// <param name="r">The value of the property.</param>
+        /// <param name="res">The value of the property.</param>
+        /// <param name="resolver">The value of the property.</param>
+        /// <param name="resource">The value of the property.</param>
+        /// <param name="s">The value of the property.</param>
+        /// <param name="service">The value of the property.</param>
+        /// <param name="subApp">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<GenerateSpecOptions> Create(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source app = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source application = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source cl = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source classValue = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source co = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source config = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source configuration = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source controller = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source d = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source decorator = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source f = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source filter = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source ga = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source gateway = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source gu = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source guard = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source inValue = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source interceptor = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source interfaceValue = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source lib = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source library = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source mi = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source middleware = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source mo = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source module = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source pi = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source pipe = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source pr = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source provider = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source r = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source res = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source resolver = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source resource = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source s = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source service = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source subApp = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(app, application, cl, classValue, co, config, configuration, controller, d, decorator, f, filter, ga, gateway, gu, guard, inValue, interceptor, interfaceValue, lib, library, mi, middleware, mo, module, pi, pipe, pr, provider, r, res, resolver, resource, s, service, subApp);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<GenerateSpecOptions>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

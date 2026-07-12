@@ -2182,4 +2182,170 @@ public readonly partial struct AdaptiveCard
     {
         return workspace.CreateBuilder<AdaptiveCard, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdaptiveCard> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdaptiveCard>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdaptiveCard> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdaptiveCard>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdaptiveCard> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdaptiveCard>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="actions">The value of the property.</param>
+    /// <param name="authentication">The value of the property.</param>
+    /// <param name="backgroundImage">The value of the property.</param>
+    /// <param name="body">The value of the property.</param>
+    /// <param name="fallbackText">The value of the property.</param>
+    /// <param name="lang">The value of the property.</param>
+    /// <param name="minHeight">The value of the property.</param>
+    /// <param name="refresh">The value of the property.</param>
+    /// <param name="rtl">The value of the property.</param>
+    /// <param name="selectAction">The value of the property.</param>
+    /// <param name="speak">The value of the property.</param>
+    /// <param name="type">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="verticalContentAlignment">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdaptiveCard> Create(in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Authentication.Source authentication = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.SpecifiesTheBackgroundImageOfTheCard.Source backgroundImage = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfElementArray.Source body = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source fallbackText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source lang = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Refresh.Source refresh = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.RtlEntity.Source rtl = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source speak = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.MustBeAdaptiveCard.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.Source verticalContentAlignment = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(schema, actions, authentication, backgroundImage, body, fallbackText, lang, minHeight, refresh, rtl, selectAction, speak, type, version, verticalContentAlignment);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdaptiveCard>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="actions">The value of the property.</param>
+    /// <param name="authentication">The value of the property.</param>
+    /// <param name="backgroundImage">The value of the property.</param>
+    /// <param name="body">The value of the property.</param>
+    /// <param name="fallbackText">The value of the property.</param>
+    /// <param name="lang">The value of the property.</param>
+    /// <param name="minHeight">The value of the property.</param>
+    /// <param name="refresh">The value of the property.</param>
+    /// <param name="rtl">The value of the property.</param>
+    /// <param name="selectAction">The value of the property.</param>
+    /// <param name="speak">The value of the property.</param>
+    /// <param name="type">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="verticalContentAlignment">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdaptiveCard> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Authentication.Source<TContext> authentication = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.SpecifiesTheBackgroundImageOfTheCard.Source<TContext> backgroundImage = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfElementArray.Source<TContext> body = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source fallbackText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source lang = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Refresh.Source<TContext> refresh = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.RtlEntity.Source rtl = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source speak = default, in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.MustBeAdaptiveCard.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.Source verticalContentAlignment = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, schema, actions, authentication, backgroundImage, body, fallbackText, lang, minHeight, refresh, rtl, selectAction, speak, type, version, verticalContentAlignment);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdaptiveCard>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

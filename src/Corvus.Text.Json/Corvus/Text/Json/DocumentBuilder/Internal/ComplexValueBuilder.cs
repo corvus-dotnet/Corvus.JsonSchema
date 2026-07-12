@@ -63,6 +63,8 @@ public ref struct ComplexValueBuilder
 
     private IMutableJsonDocument _parentDocument;
 
+    private readonly IComplexValueConstructionCallbacks? _constructionCallbacks;
+
     private MetadataDb _parsedData;
 
     private int _memberCount;
@@ -72,9 +74,28 @@ public ref struct ComplexValueBuilder
     private ComplexValueBuilder(IMutableJsonDocument parentDocument, MetadataDb parsedData)
     {
         _parentDocument = parentDocument;
+        _constructionCallbacks = parentDocument as IComplexValueConstructionCallbacks;
         _parsedData = parsedData;
         _memberCount = 0;
         _rowCount = 0;
+    }
+
+    /// <summary>
+    /// Appends the rows for an element from another document, routing through the construction
+    /// callbacks when the target document captures content directly.
+    /// </summary>
+    /// <param name="sourceDocument">The document containing the element.</param>
+    /// <param name="sourceIndex">The index of the element in the source document.</param>
+    private void AppendElementRows(IJsonDocument sourceDocument, int sourceIndex)
+    {
+        if (_constructionCallbacks is { } callbacks)
+        {
+            callbacks.AppendExternalElement(sourceDocument, sourceIndex, ref _parsedData);
+        }
+        else
+        {
+            sourceDocument.AppendElementToMetadataDb(sourceIndex, _parentDocument.Workspace, ref _parsedData);
+        }
     }
 
     internal readonly int Length => _parsedData.Length;
@@ -501,7 +522,7 @@ public ref struct ComplexValueBuilder
 
         int currentLength = Length;
         AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        value.ParentDocument.AppendElementToMetadataDb(value.ParentDocumentIndex, _parentDocument.Workspace, ref _parsedData);
+        AppendElementRows(value.ParentDocument, value.ParentDocumentIndex);
         _memberCount++;
         _rowCount += (Length - currentLength) / DbRow.Size;
     }
@@ -520,7 +541,7 @@ public ref struct ComplexValueBuilder
 
         int currentLength = Length;
         AddStringValue(JsonTokenType.PropertyName, propertyName);
-        value.ParentDocument.AppendElementToMetadataDb(value.ParentDocumentIndex, _parentDocument.Workspace, ref _parsedData);
+        AppendElementRows(value.ParentDocument, value.ParentDocumentIndex);
         _memberCount++;
         _rowCount += (Length - currentLength) / DbRow.Size;
     }
@@ -2544,7 +2565,7 @@ public ref struct ComplexValueBuilder
         Debug.Assert(value.TokenType != JsonTokenType.None);
 
         int currentLength = Length;
-        value.ParentDocument.AppendElementToMetadataDb(value.ParentDocumentIndex, _parentDocument.Workspace, ref _parsedData);
+        AppendElementRows(value.ParentDocument, value.ParentDocumentIndex);
         _memberCount++;
         _rowCount += (Length - currentLength) / DbRow.Size;
     }
@@ -3266,6 +3287,7 @@ public ref struct ComplexValueBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartObject()
     {
+        _constructionCallbacks?.OnStartComplex(JsonTokenType.StartObject);
         _parsedData.Append(JsonTokenType.StartObject, 0, -1);
         _rowCount++;
     }
@@ -3277,6 +3299,7 @@ public ref struct ComplexValueBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartArray()
     {
+        _constructionCallbacks?.OnStartComplex(JsonTokenType.StartArray);
         _parsedData.Append(JsonTokenType.StartArray, 0, -1);
         _rowCount++;
     }
@@ -3287,6 +3310,7 @@ public ref struct ComplexValueBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EndObject()
     {
+        _constructionCallbacks?.OnEndComplex(JsonTokenType.EndObject);
         int startRowIndex = Length - (_rowCount * DbRow.Size);
         _parsedData.Append(JsonTokenType.EndObject, 0, 1);
         _parsedData.SetLength(startRowIndex, _memberCount);
@@ -3456,6 +3480,7 @@ public ref struct ComplexValueBuilder
 
         // Directly remove the given range of rows, copying up additional rows
         _parsedData.RemoveRows(valueIndex - DbRow.Size, rowCountToRemove);
+        _constructionCallbacks?.OnRowsRemoved(valueIndex - DbRow.Size, rowCountToRemove);
 
         // Then update our local member count and row count.
         _memberCount--;
@@ -3468,6 +3493,7 @@ public ref struct ComplexValueBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EndArray()
     {
+        _constructionCallbacks?.OnEndComplex(JsonTokenType.EndArray);
         int startRowIndex = Length - (_rowCount * DbRow.Size);
         _parsedData.Append(JsonTokenType.EndArray, 0, 1);
         _parsedData.SetLength(startRowIndex, _memberCount);
@@ -3691,7 +3717,7 @@ public ref struct ComplexValueBuilder
         int currentLength = Length;
         int location = _parentDocument.StorePrebakedValue(prebakedPropertyName);
         _parsedData.AppendDynamicSimpleValue(JsonTokenType.PropertyName, location, requiresUnescapingOrHasExponent: false);
-        value.ParentDocument.AppendElementToMetadataDb(value.ParentDocumentIndex, _parentDocument.Workspace, ref _parsedData);
+        AppendElementRows(value.ParentDocument, value.ParentDocumentIndex);
         _memberCount++;
         _rowCount += (Length - currentLength) / DbRow.Size;
     }

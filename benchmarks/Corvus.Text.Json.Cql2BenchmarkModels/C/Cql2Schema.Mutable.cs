@@ -3116,4 +3116,679 @@ public readonly partial struct Cql2Schema
     {
         return workspace.CreateBuilder<Cql2Schema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+    /// </summary>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create(
+        scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Cql2Schema> Create<TContext>(
+        scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Cql2Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

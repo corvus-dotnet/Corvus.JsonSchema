@@ -1550,6 +1550,152 @@ public readonly partial struct Ui5Schema
                         {
                             return workspace.CreateBuilder<BuilderSpecVersion24Entity, Mutable>(this);
                         }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<BuilderSpecVersion24Entity> Create(
+                            scoped in Source value, int initialCapacity = 30)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                value.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<BuilderSpecVersion24Entity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<BuilderSpecVersion24Entity> Create(
+                            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<BuilderSpecVersion24Entity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<BuilderSpecVersion24Entity> Create<TContext>(
+                            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<BuilderSpecVersion24Entity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+                        /// </summary>
+                        /// <param name="bundles">The value of the property.</param>
+                        /// <param name="cachebuster">The value of the property.</param>
+                        /// <param name="componentPreload">The value of the property.</param>
+                        /// <param name="customTasks">The value of the property.</param>
+                        /// <param name="resources">The value of the property.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<BuilderSpecVersion24Entity> Create(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundles24Array.Source bundles = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderSpecVersion24Entity.CachebusterEntity.Source cachebuster = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.Source componentPreload = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source customTasks = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source resources = default, int initialCapacity = 30)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                cvb.StartObject();
+                                Builder ovb = new(cvb);
+                                ovb.Create(bundles, cachebuster, componentPreload, customTasks, resources);
+                                cvb = ovb._builder;
+                                cvb.EndObject();
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<BuilderSpecVersion24Entity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The value of the property.</param>
+                        /// <param name="bundles">The value of the property.</param>
+                        /// <param name="cachebuster">The value of the property.</param>
+                        /// <param name="componentPreload">The value of the property.</param>
+                        /// <param name="customTasks">The value of the property.</param>
+                        /// <param name="resources">The value of the property.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<BuilderSpecVersion24Entity> Create<TContext>(in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundles24Array.Source<TContext> bundles = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderSpecVersion24Entity.CachebusterEntity.Source<TContext> cachebuster = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.Source<TContext> componentPreload = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source<TContext> customTasks = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source<TContext> resources = default, int initialCapacity = 30)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                cvb.StartObject();
+                                Builder ovb = new(cvb);
+                                ovb.Create(context, bundles, cachebuster, componentPreload, customTasks, resources);
+                                cvb = ovb._builder;
+                                cvb.EndObject();
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<BuilderSpecVersion24Entity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
                     }
                 }
             }

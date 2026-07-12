@@ -4360,4 +4360,206 @@ public readonly partial struct Ui5ManifestSchema
     {
         return workspace.CreateBuilder<Ui5ManifestSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Ui5ManifestSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Ui5ManifestSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Ui5ManifestSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Ui5ManifestSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Ui5ManifestSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Ui5ManifestSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="sapApp">The value of the property.</param>
+    /// <param name="sapUi">The value of the property.</param>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="sapApf">The value of the property.</param>
+    /// <param name="sapArtifact">The value of the property.</param>
+    /// <param name="sapBpaTask">The value of the property.</param>
+    /// <param name="sapCard">The value of the property.</param>
+    /// <param name="sapCloud">The value of the property.</param>
+    /// <param name="sapCloudPortal">The value of the property.</param>
+    /// <param name="sapCopilot">The value of the property.</param>
+    /// <param name="sapFe">The value of the property.</param>
+    /// <param name="sapFiori">The value of the property.</param>
+    /// <param name="sapFlp">The value of the property.</param>
+    /// <param name="sapGui">The value of the property.</param>
+    /// <param name="sapInsights">The value of the property.</param>
+    /// <param name="sapIntegration">The value of the property.</param>
+    /// <param name="sapMap">The value of the property.</param>
+    /// <param name="sapMobile">The value of the property.</param>
+    /// <param name="sapOvp">The value of the property.</param>
+    /// <param name="sapPackage">The value of the property.</param>
+    /// <param name="sapPlatformAbap">The value of the property.</param>
+    /// <param name="sapPlatformCf">The value of the property.</param>
+    /// <param name="sapPlatformHcp">The value of the property.</param>
+    /// <param name="sapPlatformMobilecards">The value of the property.</param>
+    /// <param name="sapPlatformSfsf">The value of the property.</param>
+    /// <param name="sapUiGenericApp">The value of the property.</param>
+    /// <param name="sapUiSmartbusinessApp">The value of the property.</param>
+    /// <param name="sapUi5">The value of the property.</param>
+    /// <param name="sapUrl">The value of the property.</param>
+    /// <param name="sapWcf">The value of the property.</param>
+    /// <param name="sapWda">The value of the property.</param>
+    /// <param name="startUrl">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Ui5ManifestSchema> Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source sapApp, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source sapUi, in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source sapApf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source sapArtifact = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source sapBpaTask = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source sapCard = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source sapCloud = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapCloudPortal = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source sapCopilot = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapFe = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source sapFiori = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source sapFlp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source sapGui = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source sapInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source sapIntegration = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapMap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source sapMobile = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source sapOvp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source sapPackage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source sapPlatformAbap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source sapPlatformCf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source sapPlatformHcp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source sapPlatformMobilecards = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source sapPlatformSfsf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source sapUiGenericApp = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapUiSmartbusinessApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source sapUi5 = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source sapUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source sapWcf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source sapWda = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source startUrl = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(version, sapApp, sapUi, schema, sapApf, sapArtifact, sapBpaTask, sapCard, sapCloud, sapCloudPortal, sapCopilot, sapFe, sapFiori, sapFlp, sapGui, sapInsights, sapIntegration, sapMap, sapMobile, sapOvp, sapPackage, sapPlatformAbap, sapPlatformCf, sapPlatformHcp, sapPlatformMobilecards, sapPlatformSfsf, sapUiGenericApp, sapUiSmartbusinessApp, sapUi5, sapUrl, sapWcf, sapWda, startUrl);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Ui5ManifestSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="sapApp">The value of the property.</param>
+    /// <param name="sapUi">The value of the property.</param>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="sapApf">The value of the property.</param>
+    /// <param name="sapArtifact">The value of the property.</param>
+    /// <param name="sapBpaTask">The value of the property.</param>
+    /// <param name="sapCard">The value of the property.</param>
+    /// <param name="sapCloud">The value of the property.</param>
+    /// <param name="sapCloudPortal">The value of the property.</param>
+    /// <param name="sapCopilot">The value of the property.</param>
+    /// <param name="sapFe">The value of the property.</param>
+    /// <param name="sapFiori">The value of the property.</param>
+    /// <param name="sapFlp">The value of the property.</param>
+    /// <param name="sapGui">The value of the property.</param>
+    /// <param name="sapInsights">The value of the property.</param>
+    /// <param name="sapIntegration">The value of the property.</param>
+    /// <param name="sapMap">The value of the property.</param>
+    /// <param name="sapMobile">The value of the property.</param>
+    /// <param name="sapOvp">The value of the property.</param>
+    /// <param name="sapPackage">The value of the property.</param>
+    /// <param name="sapPlatformAbap">The value of the property.</param>
+    /// <param name="sapPlatformCf">The value of the property.</param>
+    /// <param name="sapPlatformHcp">The value of the property.</param>
+    /// <param name="sapPlatformMobilecards">The value of the property.</param>
+    /// <param name="sapPlatformSfsf">The value of the property.</param>
+    /// <param name="sapUiGenericApp">The value of the property.</param>
+    /// <param name="sapUiSmartbusinessApp">The value of the property.</param>
+    /// <param name="sapUi5">The value of the property.</param>
+    /// <param name="sapUrl">The value of the property.</param>
+    /// <param name="sapWcf">The value of the property.</param>
+    /// <param name="sapWda">The value of the property.</param>
+    /// <param name="startUrl">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Ui5ManifestSchema> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source<TContext> sapApp, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source<TContext> sapUi, in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source<TContext> sapApf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source<TContext> sapArtifact = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source<TContext> sapBpaTask = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source<TContext> sapCard = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source<TContext> sapCloud = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapCloudPortal = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source<TContext> sapCopilot = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapFe = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source<TContext> sapFiori = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source<TContext> sapFlp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source<TContext> sapGui = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source<TContext> sapInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source<TContext> sapIntegration = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapMap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source<TContext> sapMobile = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source<TContext> sapOvp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source<TContext> sapPackage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source<TContext> sapPlatformAbap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source<TContext> sapPlatformCf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source<TContext> sapPlatformHcp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source<TContext> sapPlatformMobilecards = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source<TContext> sapPlatformSfsf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source<TContext> sapUiGenericApp = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapUiSmartbusinessApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source<TContext> sapUi5 = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source<TContext> sapUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source<TContext> sapWcf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source<TContext> sapWda = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source startUrl = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, version, sapApp, sapUi, schema, sapApf, sapArtifact, sapBpaTask, sapCard, sapCloud, sapCloudPortal, sapCopilot, sapFe, sapFiori, sapFlp, sapGui, sapInsights, sapIntegration, sapMap, sapMobile, sapOvp, sapPackage, sapPlatformAbap, sapPlatformCf, sapPlatformHcp, sapPlatformMobilecards, sapPlatformSfsf, sapUiGenericApp, sapUiSmartbusinessApp, sapUi5, sapUrl, sapWcf, sapWda, startUrl);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Ui5ManifestSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

@@ -3889,5 +3889,207 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<SchemaRouter, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<SchemaRouter> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<SchemaRouter>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+        /// </summary>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<SchemaRouter> CreateArray(
+            int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartArray();
+                cvb.EndArray();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<SchemaRouter>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+        /// </summary>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<SchemaRouter> CreateObject(
+            int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<SchemaRouter>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<SchemaRouter> Create<TContext>(
+            scoped in TContext context, scoped in ObjectBuilder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<SchemaRouter>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="appEngine">The value of the property.</param>
+        /// <param name="autoOptions">The value of the property.</param>
+        /// <param name="decompressGzip">The value of the property.</param>
+        /// <param name="disableAccessLog">The value of the property.</param>
+        /// <param name="disableGzip">The value of the property.</param>
+        /// <param name="disableHandleMethodNotAllowed">The value of the property.</param>
+        /// <param name="disableHealth">The value of the property.</param>
+        /// <param name="disablePathDecoding">The value of the property.</param>
+        /// <param name="disableRedirectFixedPath">The value of the property.</param>
+        /// <param name="disableRedirectTrailingSlash">The value of the property.</param>
+        /// <param name="errorBody">The value of the property.</param>
+        /// <param name="forwardedByClientIp">The value of the property.</param>
+        /// <param name="healthPath">The value of the property.</param>
+        /// <param name="hideVersionHeader">The value of the property.</param>
+        /// <param name="loggerSkipPaths">The value of the property.</param>
+        /// <param name="maxMultipartMemory">The value of the property.</param>
+        /// <param name="maxPayload">The value of the property.</param>
+        /// <param name="remoteIpHeaders">The value of the property.</param>
+        /// <param name="removeExtraSlash">The value of the property.</param>
+        /// <param name="returnErrorMsg">The value of the property.</param>
+        /// <param name="trustedProxies">The value of the property.</param>
+        /// <param name="useH2c">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<SchemaRouter> Create(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                ObjectBuilder ovb = new(cvb);
+                ovb.Create(appEngine, autoOptions, decompressGzip, disableAccessLog, disableGzip, disableHandleMethodNotAllowed, disableHealth, disablePathDecoding, disableRedirectFixedPath, disableRedirectTrailingSlash, errorBody, forwardedByClientIp, healthPath, hideVersionHeader, loggerSkipPaths, maxMultipartMemory, maxPayload, remoteIpHeaders, removeExtraSlash, returnErrorMsg, trustedProxies, useH2c);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<SchemaRouter>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="appEngine">The value of the property.</param>
+        /// <param name="autoOptions">The value of the property.</param>
+        /// <param name="decompressGzip">The value of the property.</param>
+        /// <param name="disableAccessLog">The value of the property.</param>
+        /// <param name="disableGzip">The value of the property.</param>
+        /// <param name="disableHandleMethodNotAllowed">The value of the property.</param>
+        /// <param name="disableHealth">The value of the property.</param>
+        /// <param name="disablePathDecoding">The value of the property.</param>
+        /// <param name="disableRedirectFixedPath">The value of the property.</param>
+        /// <param name="disableRedirectTrailingSlash">The value of the property.</param>
+        /// <param name="errorBody">The value of the property.</param>
+        /// <param name="forwardedByClientIp">The value of the property.</param>
+        /// <param name="healthPath">The value of the property.</param>
+        /// <param name="hideVersionHeader">The value of the property.</param>
+        /// <param name="loggerSkipPaths">The value of the property.</param>
+        /// <param name="maxMultipartMemory">The value of the property.</param>
+        /// <param name="maxPayload">The value of the property.</param>
+        /// <param name="remoteIpHeaders">The value of the property.</param>
+        /// <param name="removeExtraSlash">The value of the property.</param>
+        /// <param name="returnErrorMsg">The value of the property.</param>
+        /// <param name="trustedProxies">The value of the property.</param>
+        /// <param name="useH2c">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<SchemaRouter> Create<TContext>(in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                ObjectBuilder ovb = new(cvb);
+                ovb.Create(context, appEngine, autoOptions, decompressGzip, disableAccessLog, disableGzip, disableHandleMethodNotAllowed, disableHealth, disablePathDecoding, disableRedirectFixedPath, disableRedirectTrailingSlash, errorBody, forwardedByClientIp, healthPath, hideVersionHeader, loggerSkipPaths, maxMultipartMemory, maxPayload, remoteIpHeaders, removeExtraSlash, returnErrorMsg, trustedProxies, useH2c);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<SchemaRouter>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

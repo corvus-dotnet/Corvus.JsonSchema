@@ -2155,4 +2155,166 @@ public readonly partial struct LazygitSchema
     {
         return workspace.CreateBuilder<LazygitSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<LazygitSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<LazygitSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<LazygitSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<LazygitSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<LazygitSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<LazygitSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="confirmOnQuit">The value of the property.</param>
+    /// <param name="customCommands">The value of the property.</param>
+    /// <param name="disableStartupPopups">The value of the property.</param>
+    /// <param name="git">The value of the property.</param>
+    /// <param name="gui">The value of the property.</param>
+    /// <param name="keybinding">The value of the property.</param>
+    /// <param name="notARepository">The value of the property.</param>
+    /// <param name="os">The value of the property.</param>
+    /// <param name="promptToReturnFromSubprocess">The value of the property.</param>
+    /// <param name="quitOnTopLevelReturn">The value of the property.</param>
+    /// <param name="refresher">The value of the property.</param>
+    /// <param name="services">The value of the property.</param>
+    /// <param name="update">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<LazygitSchema> Create(in Corvus.LazygitBenchmark.Current.LazygitSchema.ConfirmOnQuit.Source confirmOnQuit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.Source customCommands = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.DisableStartupPopups.Source disableStartupPopups = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Source git = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Source gui = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Source keybinding = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.NotARepository.Source notARepository = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Source os = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.PromptToReturnFromSubprocess.Source promptToReturnFromSubprocess = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.QuitOnTopLevelReturn.Source quitOnTopLevelReturn = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Refresher.Source refresher = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Services.Source services = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Update.Source update = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(confirmOnQuit, customCommands, disableStartupPopups, git, gui, keybinding, notARepository, os, promptToReturnFromSubprocess, quitOnTopLevelReturn, refresher, services, update);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<LazygitSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="confirmOnQuit">The value of the property.</param>
+    /// <param name="customCommands">The value of the property.</param>
+    /// <param name="disableStartupPopups">The value of the property.</param>
+    /// <param name="git">The value of the property.</param>
+    /// <param name="gui">The value of the property.</param>
+    /// <param name="keybinding">The value of the property.</param>
+    /// <param name="notARepository">The value of the property.</param>
+    /// <param name="os">The value of the property.</param>
+    /// <param name="promptToReturnFromSubprocess">The value of the property.</param>
+    /// <param name="quitOnTopLevelReturn">The value of the property.</param>
+    /// <param name="refresher">The value of the property.</param>
+    /// <param name="services">The value of the property.</param>
+    /// <param name="update">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<LazygitSchema> Create<TContext>(in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.ConfirmOnQuit.Source confirmOnQuit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.Source<TContext> customCommands = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.DisableStartupPopups.Source disableStartupPopups = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Source<TContext> git = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Source<TContext> gui = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Source<TContext> keybinding = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.NotARepository.Source notARepository = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Source<TContext> os = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.PromptToReturnFromSubprocess.Source promptToReturnFromSubprocess = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.QuitOnTopLevelReturn.Source quitOnTopLevelReturn = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Refresher.Source<TContext> refresher = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Services.Source<TContext> services = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Update.Source<TContext> update = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, confirmOnQuit, customCommands, disableStartupPopups, git, gui, keybinding, notARepository, os, promptToReturnFromSubprocess, quitOnTopLevelReturn, refresher, services, update);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<LazygitSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

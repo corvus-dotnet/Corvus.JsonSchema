@@ -3111,6 +3111,180 @@ public readonly partial struct CmakePresetsSchema
             {
                 return workspace.CreateBuilder<RequiredName, Mutable>(this);
             }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredName> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredName>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredName> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredName>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredName> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredName>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="name">The value of the property.</param>
+            /// <param name="architecture">The value of the property.</param>
+            /// <param name="binaryDir">The value of the property.</param>
+            /// <param name="cacheVariables">The value of the property.</param>
+            /// <param name="cmakeExecutable">The value of the property.</param>
+            /// <param name="condition">The value of the property.</param>
+            /// <param name="debug">The value of the property.</param>
+            /// <param name="description">The value of the property.</param>
+            /// <param name="displayName">The value of the property.</param>
+            /// <param name="environment">The value of the property.</param>
+            /// <param name="errors">The value of the property.</param>
+            /// <param name="generator">The value of the property.</param>
+            /// <param name="hidden">The value of the property.</param>
+            /// <param name="inherits">The value of the property.</param>
+            /// <param name="installDir">The value of the property.</param>
+            /// <param name="toolchainFile">The value of the property.</param>
+            /// <param name="toolset">The value of the property.</param>
+            /// <param name="vendor">The value of the property.</param>
+            /// <param name="warnings">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredName> Create(in Corvus.Text.Json.JsonElement.Source name, in Corvus.Text.Json.JsonElement.Source architecture = default, in Corvus.Text.Json.JsonElement.Source binaryDir = default, in Corvus.Text.Json.JsonElement.Source cacheVariables = default, in Corvus.Text.Json.JsonElement.Source cmakeExecutable = default, in Corvus.Text.Json.JsonElement.Source condition = default, in Corvus.Text.Json.JsonElement.Source debug = default, in Corvus.Text.Json.JsonElement.Source description = default, in Corvus.Text.Json.JsonElement.Source displayName = default, in Corvus.Text.Json.JsonElement.Source environment = default, in Corvus.Text.Json.JsonElement.Source errors = default, in Corvus.Text.Json.JsonElement.Source generator = default, in Corvus.Text.Json.JsonElement.Source hidden = default, in Corvus.Text.Json.JsonElement.Source inherits = default, in Corvus.Text.Json.JsonElement.Source installDir = default, in Corvus.Text.Json.JsonElement.Source toolchainFile = default, in Corvus.Text.Json.JsonElement.Source toolset = default, in Corvus.Text.Json.JsonElement.Source vendor = default, in Corvus.Text.Json.JsonElement.Source warnings = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(name, architecture, binaryDir, cacheVariables, cmakeExecutable, condition, debug, description, displayName, environment, errors, generator, hidden, inherits, installDir, toolchainFile, toolset, vendor, warnings);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredName>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="name">The value of the property.</param>
+            /// <param name="architecture">The value of the property.</param>
+            /// <param name="binaryDir">The value of the property.</param>
+            /// <param name="cacheVariables">The value of the property.</param>
+            /// <param name="cmakeExecutable">The value of the property.</param>
+            /// <param name="condition">The value of the property.</param>
+            /// <param name="debug">The value of the property.</param>
+            /// <param name="description">The value of the property.</param>
+            /// <param name="displayName">The value of the property.</param>
+            /// <param name="environment">The value of the property.</param>
+            /// <param name="errors">The value of the property.</param>
+            /// <param name="generator">The value of the property.</param>
+            /// <param name="hidden">The value of the property.</param>
+            /// <param name="inherits">The value of the property.</param>
+            /// <param name="installDir">The value of the property.</param>
+            /// <param name="toolchainFile">The value of the property.</param>
+            /// <param name="toolset">The value of the property.</param>
+            /// <param name="vendor">The value of the property.</param>
+            /// <param name="warnings">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredName> Create<TContext>(in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> name, in Corvus.Text.Json.JsonElement.Source<TContext> architecture = default, in Corvus.Text.Json.JsonElement.Source<TContext> binaryDir = default, in Corvus.Text.Json.JsonElement.Source<TContext> cacheVariables = default, in Corvus.Text.Json.JsonElement.Source<TContext> cmakeExecutable = default, in Corvus.Text.Json.JsonElement.Source<TContext> condition = default, in Corvus.Text.Json.JsonElement.Source<TContext> debug = default, in Corvus.Text.Json.JsonElement.Source<TContext> description = default, in Corvus.Text.Json.JsonElement.Source<TContext> displayName = default, in Corvus.Text.Json.JsonElement.Source<TContext> environment = default, in Corvus.Text.Json.JsonElement.Source<TContext> errors = default, in Corvus.Text.Json.JsonElement.Source<TContext> generator = default, in Corvus.Text.Json.JsonElement.Source<TContext> hidden = default, in Corvus.Text.Json.JsonElement.Source<TContext> inherits = default, in Corvus.Text.Json.JsonElement.Source<TContext> installDir = default, in Corvus.Text.Json.JsonElement.Source<TContext> toolchainFile = default, in Corvus.Text.Json.JsonElement.Source<TContext> toolset = default, in Corvus.Text.Json.JsonElement.Source<TContext> vendor = default, in Corvus.Text.Json.JsonElement.Source<TContext> warnings = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, name, architecture, binaryDir, cacheVariables, cmakeExecutable, condition, debug, description, displayName, environment, errors, generator, hidden, inherits, installDir, toolchainFile, toolset, vendor, warnings);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredName>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
         }
     }
 }

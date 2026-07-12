@@ -2141,5 +2141,124 @@ public readonly partial struct OmnisharpSchema
         {
             return workspace.CreateBuilder<UsedToConfigureMsBuildSolutionsAndProjects, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="configuration">The value of the property.</param>
+        /// <param name="cscToolExe">The value of the property.</param>
+        /// <param name="cscToolPath">The value of the property.</param>
+        /// <param name="enabled">The value of the property.</param>
+        /// <param name="enablePackageAutoRestore">The value of the property.</param>
+        /// <param name="loadProjectsOnDemand">The value of the property.</param>
+        /// <param name="mSBuildExtensionsPath">The value of the property.</param>
+        /// <param name="mSBuildSdKsPath">The value of the property.</param>
+        /// <param name="platform">The value of the property.</param>
+        /// <param name="roslynTargetsPath">The value of the property.</param>
+        /// <param name="targetFrameworkRootPath">The value of the property.</param>
+        /// <param name="toolsVersion">The value of the property.</param>
+        /// <param name="visualStudioVersion">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects> Create(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source configuration = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source cscToolExe = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source cscToolPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source enabled = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source enablePackageAutoRestore = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source loadProjectsOnDemand = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source mSBuildExtensionsPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source mSBuildSdKsPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source platform = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source roslynTargetsPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source targetFrameworkRootPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source toolsVersion = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source visualStudioVersion = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(configuration, cscToolExe, cscToolPath, enabled, enablePackageAutoRestore, loadProjectsOnDemand, mSBuildExtensionsPath, mSBuildSdKsPath, platform, roslynTargetsPath, targetFrameworkRootPath, toolsVersion, visualStudioVersion);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<UsedToConfigureMsBuildSolutionsAndProjects>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

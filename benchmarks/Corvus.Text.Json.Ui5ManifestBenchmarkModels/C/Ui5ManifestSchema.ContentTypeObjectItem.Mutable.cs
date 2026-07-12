@@ -3629,5 +3629,207 @@ public readonly partial struct Ui5ManifestSchema
         {
             return workspace.CreateBuilder<ContentTypeObjectItem, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeObjectItem> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeObjectItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeObjectItem> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeObjectItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeObjectItem> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeObjectItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="actions">The value of the property.</param>
+        /// <param name="alt">The value of the property.</param>
+        /// <param name="customStateIcon">The value of the property.</param>
+        /// <param name="details">The value of the property.</param>
+        /// <param name="emailSubject">The value of the property.</param>
+        /// <param name="fullWidth">The value of the property.</param>
+        /// <param name="icon">The value of the property.</param>
+        /// <param name="id">The value of the property.</param>
+        /// <param name="itemValue">The value of the property.</param>
+        /// <param name="label">The value of the property.</param>
+        /// <param name="mainIndicator">The value of the property.</param>
+        /// <param name="maxLines">The value of the property.</param>
+        /// <param name="maxValue">The value of the property.</param>
+        /// <param name="path">The value of the property.</param>
+        /// <param name="placeholder">The value of the property.</param>
+        /// <param name="rows">The value of the property.</param>
+        /// <param name="selectedKey">The value of the property.</param>
+        /// <param name="showColon">The value of the property.</param>
+        /// <param name="showStateIcon">The value of the property.</param>
+        /// <param name="sideIndicators">The value of the property.</param>
+        /// <param name="sideIndicatorsAlignment">The value of the property.</param>
+        /// <param name="size">The value of the property.</param>
+        /// <param name="src">The value of the property.</param>
+        /// <param name="state">The value of the property.</param>
+        /// <param name="target">The value of the property.</param>
+        /// <param name="template">The value of the property.</param>
+        /// <param name="tooltip">The value of the property.</param>
+        /// <param name="type">The value of the property.</param>
+        /// <param name="url">The value of the property.</param>
+        /// <param name="validations">The value of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="visible">The value of the property.</param>
+        /// <param name="visualMode">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeObjectItem> Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source alt = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source customStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source emailSubject = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.FullWidthEntity.Source fullWidth = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.BindingInfoForComboBoxItems.Source itemValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemMainIndicator.Source mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.MaximumNumberOfLines.Source maxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TheNumberOfDisplayedSymbolsForRatingIndicator.Source maxValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source rows = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source selectedKey = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesWhetherTheColonNextToTheLabelIsShown.Source showColon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesIfADefaultStateIconIsShown.Source showStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.HeaderTypeNumericSideIndicatorArray.Source sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheSizeOfTheIconsInAnIconGroup.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source src = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.State.Source state = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TargetEntity.Source target = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemIconGroupTemplate.Source template = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TypeEntity.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ContentTypeObjectItemValidationArray.Source validations = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.Source value = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.VisualModeEntity.Source visualMode = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(actions, alt, customStateIcon, details, emailSubject, fullWidth, icon, id, itemValue, label, mainIndicator, maxLines, maxValue, path, placeholder, rows, selectedKey, showColon, showStateIcon, sideIndicators, sideIndicatorsAlignment, size, src, state, target, template, tooltip, type, url, validations, value, visible, visualMode);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeObjectItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="actions">The value of the property.</param>
+        /// <param name="alt">The value of the property.</param>
+        /// <param name="customStateIcon">The value of the property.</param>
+        /// <param name="details">The value of the property.</param>
+        /// <param name="emailSubject">The value of the property.</param>
+        /// <param name="fullWidth">The value of the property.</param>
+        /// <param name="icon">The value of the property.</param>
+        /// <param name="id">The value of the property.</param>
+        /// <param name="itemValue">The value of the property.</param>
+        /// <param name="label">The value of the property.</param>
+        /// <param name="mainIndicator">The value of the property.</param>
+        /// <param name="maxLines">The value of the property.</param>
+        /// <param name="maxValue">The value of the property.</param>
+        /// <param name="path">The value of the property.</param>
+        /// <param name="placeholder">The value of the property.</param>
+        /// <param name="rows">The value of the property.</param>
+        /// <param name="selectedKey">The value of the property.</param>
+        /// <param name="showColon">The value of the property.</param>
+        /// <param name="showStateIcon">The value of the property.</param>
+        /// <param name="sideIndicators">The value of the property.</param>
+        /// <param name="sideIndicatorsAlignment">The value of the property.</param>
+        /// <param name="size">The value of the property.</param>
+        /// <param name="src">The value of the property.</param>
+        /// <param name="state">The value of the property.</param>
+        /// <param name="target">The value of the property.</param>
+        /// <param name="template">The value of the property.</param>
+        /// <param name="tooltip">The value of the property.</param>
+        /// <param name="type">The value of the property.</param>
+        /// <param name="url">The value of the property.</param>
+        /// <param name="validations">The value of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="visible">The value of the property.</param>
+        /// <param name="visualMode">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ContentTypeObjectItem> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source alt = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source customStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source details = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source emailSubject = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.FullWidthEntity.Source fullWidth = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> icon = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.BindingInfoForComboBoxItems.Source<TContext> itemValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemMainIndicator.Source<TContext> mainIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.MaximumNumberOfLines.Source maxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TheNumberOfDisplayedSymbolsForRatingIndicator.Source maxValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source rows = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source selectedKey = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesWhetherTheColonNextToTheLabelIsShown.Source showColon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesIfADefaultStateIconIsShown.Source showStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.HeaderTypeNumericSideIndicatorArray.Source<TContext> sideIndicators = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheAlignmentOfTheSideIndicators.Source sideIndicatorsAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheSizeOfTheIconsInAnIconGroup.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source src = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.State.Source state = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TargetEntity.Source<TContext> target = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemIconGroupTemplate.Source<TContext> template = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TypeEntity.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ContentTypeObjectItemValidationArray.Source<TContext> validations = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.Source<TContext> value = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.VisualModeEntity.Source visualMode = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, actions, alt, customStateIcon, details, emailSubject, fullWidth, icon, id, itemValue, label, mainIndicator, maxLines, maxValue, path, placeholder, rows, selectedKey, showColon, showStateIcon, sideIndicators, sideIndicatorsAlignment, size, src, state, target, template, tooltip, type, url, validations, value, visible, visualMode);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ContentTypeObjectItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

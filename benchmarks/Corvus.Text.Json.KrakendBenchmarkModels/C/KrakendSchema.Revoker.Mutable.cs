@@ -2176,5 +2176,163 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<Revoker, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Revoker> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Revoker>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Revoker> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Revoker>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Revoker> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Revoker>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="hashName">The value of the property.</param>
+        /// <param name="n">The value of the property.</param>
+        /// <param name="p">The value of the property.</param>
+        /// <param name="port">The value of the property.</param>
+        /// <param name="tokenKeys">The value of the property.</param>
+        /// <param name="tTl">The value of the property.</param>
+        /// <param name="revokeServerApiKey">The value of the property.</param>
+        /// <param name="revokeServerMaxRetries">The value of the property.</param>
+        /// <param name="revokeServerMaxWorkers">The value of the property.</param>
+        /// <param name="revokeServerPingInterval">The value of the property.</param>
+        /// <param name="revokeServerPingUrl">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Revoker> Create(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.JsonArray.Source tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(hashName, n, p, port, tokenKeys, tTl, revokeServerApiKey, revokeServerMaxRetries, revokeServerMaxWorkers, revokeServerPingInterval, revokeServerPingUrl);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Revoker>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="hashName">The value of the property.</param>
+        /// <param name="n">The value of the property.</param>
+        /// <param name="p">The value of the property.</param>
+        /// <param name="port">The value of the property.</param>
+        /// <param name="tokenKeys">The value of the property.</param>
+        /// <param name="tTl">The value of the property.</param>
+        /// <param name="revokeServerApiKey">The value of the property.</param>
+        /// <param name="revokeServerMaxRetries">The value of the property.</param>
+        /// <param name="revokeServerMaxWorkers">The value of the property.</param>
+        /// <param name="revokeServerPingInterval">The value of the property.</param>
+        /// <param name="revokeServerPingUrl">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Revoker> Create<TContext>(in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, hashName, n, p, port, tokenKeys, tTl, revokeServerApiKey, revokeServerMaxRetries, revokeServerMaxWorkers, revokeServerPingInterval, revokeServerPingUrl);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Revoker>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

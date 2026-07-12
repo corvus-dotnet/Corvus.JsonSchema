@@ -2600,5 +2600,171 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<Websocket, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Websocket> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Websocket>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Websocket> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Websocket>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Websocket> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Websocket>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="backoffStrategy">The value of the property.</param>
+        /// <param name="connectEvent">The value of the property.</param>
+        /// <param name="disconnectEvent">The value of the property.</param>
+        /// <param name="enableDirectCommunication">The value of the property.</param>
+        /// <param name="inputHeaders">The value of the property.</param>
+        /// <param name="maxMessageSize">The value of the property.</param>
+        /// <param name="maxRetries">The value of the property.</param>
+        /// <param name="messageBufferSize">The value of the property.</param>
+        /// <param name="pingPeriod">The value of the property.</param>
+        /// <param name="pongWait">The value of the property.</param>
+        /// <param name="readBufferSize">The value of the property.</param>
+        /// <param name="returnErrorDetails">The value of the property.</param>
+        /// <param name="timeout">The value of the property.</param>
+        /// <param name="writeBufferSize">The value of the property.</param>
+        /// <param name="writeWait">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Websocket> Create(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source connectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source disconnectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source enableDirectCommunication = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source maxMessageSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source messageBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pongWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source readBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source returnErrorDetails = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source writeBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeWait = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(backoffStrategy, connectEvent, disconnectEvent, enableDirectCommunication, inputHeaders, maxMessageSize, maxRetries, messageBufferSize, pingPeriod, pongWait, readBufferSize, returnErrorDetails, timeout, writeBufferSize, writeWait);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Websocket>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="backoffStrategy">The value of the property.</param>
+        /// <param name="connectEvent">The value of the property.</param>
+        /// <param name="disconnectEvent">The value of the property.</param>
+        /// <param name="enableDirectCommunication">The value of the property.</param>
+        /// <param name="inputHeaders">The value of the property.</param>
+        /// <param name="maxMessageSize">The value of the property.</param>
+        /// <param name="maxRetries">The value of the property.</param>
+        /// <param name="messageBufferSize">The value of the property.</param>
+        /// <param name="pingPeriod">The value of the property.</param>
+        /// <param name="pongWait">The value of the property.</param>
+        /// <param name="readBufferSize">The value of the property.</param>
+        /// <param name="returnErrorDetails">The value of the property.</param>
+        /// <param name="timeout">The value of the property.</param>
+        /// <param name="writeBufferSize">The value of the property.</param>
+        /// <param name="writeWait">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Websocket> Create<TContext>(in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source connectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source disconnectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source enableDirectCommunication = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source<TContext> inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source maxMessageSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source messageBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pongWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source readBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source returnErrorDetails = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source writeBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeWait = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, backoffStrategy, connectEvent, disconnectEvent, enableDirectCommunication, inputHeaders, maxMessageSize, maxRetries, messageBufferSize, pingPeriod, pongWait, readBufferSize, returnErrorDetails, timeout, writeBufferSize, writeWait);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Websocket>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

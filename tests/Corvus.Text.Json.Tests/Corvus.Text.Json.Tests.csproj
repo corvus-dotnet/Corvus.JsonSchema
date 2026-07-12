@@ -155,6 +155,8 @@
     <Compile Include="FormatAwareUriFormatTests.cs" />
     <Compile Include="GeneratedObjectMutationTests.cs" />
     <Compile Include="GeneratedCreateBuilderFromPropertiesTests.cs" />
+    <Compile Include="GeneratedCreateTests.cs" />
+    <Compile Include="ParsedJsonDocumentBuilderTests.cs" />
     <Compile Include="GeneratedSelfReferencingObjectTests.cs" />
     <Compile Include="GeneratedNestedObjectMutationTests.cs" />
     <Compile Include="GeneratedParamsBuildTests.cs" />

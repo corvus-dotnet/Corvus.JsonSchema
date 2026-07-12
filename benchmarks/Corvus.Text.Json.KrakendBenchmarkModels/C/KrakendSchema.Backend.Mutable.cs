@@ -2867,5 +2867,173 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<Backend, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Backend> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Backend>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Backend> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Backend>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Backend> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Backend>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="urlPattern">The value of the property.</param>
+        /// <param name="allow">The value of the property.</param>
+        /// <param name="deny">The value of the property.</param>
+        /// <param name="disableHostSanitize">The value of the property.</param>
+        /// <param name="encoding">The value of the property.</param>
+        /// <param name="extraConfig">The value of the property.</param>
+        /// <param name="group">The value of the property.</param>
+        /// <param name="host">The value of the property.</param>
+        /// <param name="inputHeaders">The value of the property.</param>
+        /// <param name="inputQueryStrings">The value of the property.</param>
+        /// <param name="isCollection">The value of the property.</param>
+        /// <param name="mapping">The value of the property.</param>
+        /// <param name="method">The value of the property.</param>
+        /// <param name="sd">The value of the property.</param>
+        /// <param name="sdScheme">The value of the property.</param>
+        /// <param name="target">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Backend> Create(in Corvus.KrakendBenchmark.Current.JsonString.Source urlPattern, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source allow = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source deny = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source disableHostSanitize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source encoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source group = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source inputQueryStrings = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source isCollection = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source mapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source method = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source sd = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source sdScheme = default, in Corvus.KrakendBenchmark.Current.JsonString.Source target = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(urlPattern, allow, deny, disableHostSanitize, encoding, extraConfig, group, host, inputHeaders, inputQueryStrings, isCollection, mapping, method, sd, sdScheme, target);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Backend>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="urlPattern">The value of the property.</param>
+        /// <param name="allow">The value of the property.</param>
+        /// <param name="deny">The value of the property.</param>
+        /// <param name="disableHostSanitize">The value of the property.</param>
+        /// <param name="encoding">The value of the property.</param>
+        /// <param name="extraConfig">The value of the property.</param>
+        /// <param name="group">The value of the property.</param>
+        /// <param name="host">The value of the property.</param>
+        /// <param name="inputHeaders">The value of the property.</param>
+        /// <param name="inputQueryStrings">The value of the property.</param>
+        /// <param name="isCollection">The value of the property.</param>
+        /// <param name="mapping">The value of the property.</param>
+        /// <param name="method">The value of the property.</param>
+        /// <param name="sd">The value of the property.</param>
+        /// <param name="sdScheme">The value of the property.</param>
+        /// <param name="target">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Backend> Create<TContext>(in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source urlPattern, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source<TContext> allow = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source<TContext> deny = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source disableHostSanitize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source encoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source<TContext> extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source group = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source<TContext> inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source<TContext> inputQueryStrings = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source isCollection = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> mapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source method = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source sd = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source sdScheme = default, in Corvus.KrakendBenchmark.Current.JsonString.Source target = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, urlPattern, allow, deny, disableHostSanitize, encoding, extraConfig, group, host, inputHeaders, inputQueryStrings, isCollection, mapping, method, sd, sdScheme, target);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Backend>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

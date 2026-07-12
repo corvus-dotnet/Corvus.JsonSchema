@@ -2630,5 +2630,220 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<Tls, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Tls> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Tls>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Tls> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Tls>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Tls> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Tls>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Tls> Create(
+            scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.RequiredKeys.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.RequiredKeys.Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Tls>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Tls> Create<TContext>(
+            scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.RequiredKeys.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.RequiredKeys.Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Tls>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="caCerts">The value of the property.</param>
+        /// <param name="cipherSuites">The value of the property.</param>
+        /// <param name="curvePreferences">The value of the property.</param>
+        /// <param name="disableSystemCaPool">The value of the property.</param>
+        /// <param name="disabled">The value of the property.</param>
+        /// <param name="enableMtls">The value of the property.</param>
+        /// <param name="keys">The value of the property.</param>
+        /// <param name="maxVersion">The value of the property.</param>
+        /// <param name="minVersion">The value of the property.</param>
+        /// <param name="privateKey">The value of the property.</param>
+        /// <param name="publicKey">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Tls> Create(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source caCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source cipherSuites = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source curvePreferences = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source disableSystemCaPool = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source disabled = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source enableMtls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source keys = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source maxVersion = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source minVersion = default, in Corvus.KrakendBenchmark.Current.JsonString.Source privateKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source publicKey = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(caCerts, cipherSuites, curvePreferences, disableSystemCaPool, disabled, enableMtls, keys, maxVersion, minVersion, privateKey, publicKey);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Tls>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="caCerts">The value of the property.</param>
+        /// <param name="cipherSuites">The value of the property.</param>
+        /// <param name="curvePreferences">The value of the property.</param>
+        /// <param name="disableSystemCaPool">The value of the property.</param>
+        /// <param name="disabled">The value of the property.</param>
+        /// <param name="enableMtls">The value of the property.</param>
+        /// <param name="keys">The value of the property.</param>
+        /// <param name="maxVersion">The value of the property.</param>
+        /// <param name="minVersion">The value of the property.</param>
+        /// <param name="privateKey">The value of the property.</param>
+        /// <param name="publicKey">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Tls> Create<TContext>(in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source<TContext> caCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source<TContext> cipherSuites = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source<TContext> curvePreferences = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source disableSystemCaPool = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source disabled = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source enableMtls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source<TContext> keys = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source maxVersion = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source minVersion = default, in Corvus.KrakendBenchmark.Current.JsonString.Source privateKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source publicKey = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, caCerts, cipherSuites, curvePreferences, disableSystemCaPool, disabled, enableMtls, keys, maxVersion, minVersion, privateKey, publicKey);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Tls>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

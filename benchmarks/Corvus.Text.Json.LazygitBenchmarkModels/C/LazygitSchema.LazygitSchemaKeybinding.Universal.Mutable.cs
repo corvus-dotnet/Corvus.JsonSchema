@@ -5518,6 +5518,260 @@ public readonly partial struct LazygitSchema
             {
                 return workspace.CreateBuilder<Universal, Mutable>(this);
             }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Universal> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Universal>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Universal> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Universal>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Universal> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Universal>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="confirm">The value of the property.</param>
+            /// <param name="copyToClipboard">The value of the property.</param>
+            /// <param name="createPatchOptionsMenu">The value of the property.</param>
+            /// <param name="createRebaseOptionsMenu">The value of the property.</param>
+            /// <param name="decreaseContextInDiffView">The value of the property.</param>
+            /// <param name="diffingMenu">The value of the property.</param>
+            /// <param name="diffingMenuAlt">The value of the property.</param>
+            /// <param name="edit">The value of the property.</param>
+            /// <param name="executeCustomCommand">The value of the property.</param>
+            /// <param name="extrasMenu">The value of the property.</param>
+            /// <param name="filteringMenu">The value of the property.</param>
+            /// <param name="goInto">The value of the property.</param>
+            /// <param name="gotoBottom">The value of the property.</param>
+            /// <param name="gotoTop">The value of the property.</param>
+            /// <param name="increaseContextInDiffView">The value of the property.</param>
+            /// <param name="jumpToBlock">The value of the property.</param>
+            /// <param name="newValue">The value of the property.</param>
+            /// <param name="nextBlock">The value of the property.</param>
+            /// <param name="nextBlockAlt">The value of the property.</param>
+            /// <param name="nextItem">The value of the property.</param>
+            /// <param name="nextItemAlt">The value of the property.</param>
+            /// <param name="nextMatch">The value of the property.</param>
+            /// <param name="nextPage">The value of the property.</param>
+            /// <param name="nextScreenMode">The value of the property.</param>
+            /// <param name="nextTab">The value of the property.</param>
+            /// <param name="openFile">The value of the property.</param>
+            /// <param name="openRecentRepos">The value of the property.</param>
+            /// <param name="optionMenu">The value of the property.</param>
+            /// <param name="optionMenuAlt1">The value of the property.</param>
+            /// <param name="prevBlock">The value of the property.</param>
+            /// <param name="prevBlockAlt">The value of the property.</param>
+            /// <param name="prevItem">The value of the property.</param>
+            /// <param name="prevItemAlt">The value of the property.</param>
+            /// <param name="prevMatch">The value of the property.</param>
+            /// <param name="prevPage">The value of the property.</param>
+            /// <param name="prevScreenMode">The value of the property.</param>
+            /// <param name="prevTab">The value of the property.</param>
+            /// <param name="pullFiles">The value of the property.</param>
+            /// <param name="pushFiles">The value of the property.</param>
+            /// <param name="quit">The value of the property.</param>
+            /// <param name="quitAlt1">The value of the property.</param>
+            /// <param name="quitWithoutChangingDirectory">The value of the property.</param>
+            /// <param name="redo">The value of the property.</param>
+            /// <param name="refresh">The value of the property.</param>
+            /// <param name="remove">The value of the property.</param>
+            /// <param name="returnValue">The value of the property.</param>
+            /// <param name="scrollDownMain">The value of the property.</param>
+            /// <param name="scrollDownMainAlt1">The value of the property.</param>
+            /// <param name="scrollDownMainAlt2">The value of the property.</param>
+            /// <param name="scrollLeft">The value of the property.</param>
+            /// <param name="scrollRight">The value of the property.</param>
+            /// <param name="scrollUpMain">The value of the property.</param>
+            /// <param name="scrollUpMainAlt1">The value of the property.</param>
+            /// <param name="scrollUpMainAlt2">The value of the property.</param>
+            /// <param name="select">The value of the property.</param>
+            /// <param name="submitEditorText">The value of the property.</param>
+            /// <param name="togglePanel">The value of the property.</param>
+            /// <param name="toggleWhitespaceInDiffView">The value of the property.</param>
+            /// <param name="undo">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Universal> Create(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source confirm = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source copyToClipboard = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createPatchOptionsMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createRebaseOptionsMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source decreaseContextInDiffView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source diffingMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source diffingMenuAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source edit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source executeCustomCommand = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source extrasMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source filteringMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source goInto = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source gotoBottom = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source gotoTop = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source increaseContextInDiffView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.JumpToBlock.Source jumpToBlock = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source newValue = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextBlock = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextBlockAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextItem = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextItemAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextMatch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextPage = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextScreenMode = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextTab = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openFile = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openRecentRepos = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.OptionMenu.Source optionMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source optionMenuAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevBlock = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevBlockAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevItem = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevItemAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevMatch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevPage = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevScreenMode = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevTab = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pullFiles = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pushFiles = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source quit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source quitAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source quitWithoutChangingDirectory = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source redo = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source refresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source remove = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source returnValue = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollDownMain = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollDownMainAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollDownMainAlt2 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollLeft = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollRight = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollUpMain = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollUpMainAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollUpMainAlt2 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source select = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source submitEditorText = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source togglePanel = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleWhitespaceInDiffView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source undo = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(confirm, copyToClipboard, createPatchOptionsMenu, createRebaseOptionsMenu, decreaseContextInDiffView, diffingMenu, diffingMenuAlt, edit, executeCustomCommand, extrasMenu, filteringMenu, goInto, gotoBottom, gotoTop, increaseContextInDiffView, jumpToBlock, newValue, nextBlock, nextBlockAlt, nextItem, nextItemAlt, nextMatch, nextPage, nextScreenMode, nextTab, openFile, openRecentRepos, optionMenu, optionMenuAlt1, prevBlock, prevBlockAlt, prevItem, prevItemAlt, prevMatch, prevPage, prevScreenMode, prevTab, pullFiles, pushFiles, quit, quitAlt1, quitWithoutChangingDirectory, redo, refresh, remove, returnValue, scrollDownMain, scrollDownMainAlt1, scrollDownMainAlt2, scrollLeft, scrollRight, scrollUpMain, scrollUpMainAlt1, scrollUpMainAlt2, select, submitEditorText, togglePanel, toggleWhitespaceInDiffView, undo);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Universal>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="confirm">The value of the property.</param>
+            /// <param name="copyToClipboard">The value of the property.</param>
+            /// <param name="createPatchOptionsMenu">The value of the property.</param>
+            /// <param name="createRebaseOptionsMenu">The value of the property.</param>
+            /// <param name="decreaseContextInDiffView">The value of the property.</param>
+            /// <param name="diffingMenu">The value of the property.</param>
+            /// <param name="diffingMenuAlt">The value of the property.</param>
+            /// <param name="edit">The value of the property.</param>
+            /// <param name="executeCustomCommand">The value of the property.</param>
+            /// <param name="extrasMenu">The value of the property.</param>
+            /// <param name="filteringMenu">The value of the property.</param>
+            /// <param name="goInto">The value of the property.</param>
+            /// <param name="gotoBottom">The value of the property.</param>
+            /// <param name="gotoTop">The value of the property.</param>
+            /// <param name="increaseContextInDiffView">The value of the property.</param>
+            /// <param name="jumpToBlock">The value of the property.</param>
+            /// <param name="newValue">The value of the property.</param>
+            /// <param name="nextBlock">The value of the property.</param>
+            /// <param name="nextBlockAlt">The value of the property.</param>
+            /// <param name="nextItem">The value of the property.</param>
+            /// <param name="nextItemAlt">The value of the property.</param>
+            /// <param name="nextMatch">The value of the property.</param>
+            /// <param name="nextPage">The value of the property.</param>
+            /// <param name="nextScreenMode">The value of the property.</param>
+            /// <param name="nextTab">The value of the property.</param>
+            /// <param name="openFile">The value of the property.</param>
+            /// <param name="openRecentRepos">The value of the property.</param>
+            /// <param name="optionMenu">The value of the property.</param>
+            /// <param name="optionMenuAlt1">The value of the property.</param>
+            /// <param name="prevBlock">The value of the property.</param>
+            /// <param name="prevBlockAlt">The value of the property.</param>
+            /// <param name="prevItem">The value of the property.</param>
+            /// <param name="prevItemAlt">The value of the property.</param>
+            /// <param name="prevMatch">The value of the property.</param>
+            /// <param name="prevPage">The value of the property.</param>
+            /// <param name="prevScreenMode">The value of the property.</param>
+            /// <param name="prevTab">The value of the property.</param>
+            /// <param name="pullFiles">The value of the property.</param>
+            /// <param name="pushFiles">The value of the property.</param>
+            /// <param name="quit">The value of the property.</param>
+            /// <param name="quitAlt1">The value of the property.</param>
+            /// <param name="quitWithoutChangingDirectory">The value of the property.</param>
+            /// <param name="redo">The value of the property.</param>
+            /// <param name="refresh">The value of the property.</param>
+            /// <param name="remove">The value of the property.</param>
+            /// <param name="returnValue">The value of the property.</param>
+            /// <param name="scrollDownMain">The value of the property.</param>
+            /// <param name="scrollDownMainAlt1">The value of the property.</param>
+            /// <param name="scrollDownMainAlt2">The value of the property.</param>
+            /// <param name="scrollLeft">The value of the property.</param>
+            /// <param name="scrollRight">The value of the property.</param>
+            /// <param name="scrollUpMain">The value of the property.</param>
+            /// <param name="scrollUpMainAlt1">The value of the property.</param>
+            /// <param name="scrollUpMainAlt2">The value of the property.</param>
+            /// <param name="select">The value of the property.</param>
+            /// <param name="submitEditorText">The value of the property.</param>
+            /// <param name="togglePanel">The value of the property.</param>
+            /// <param name="toggleWhitespaceInDiffView">The value of the property.</param>
+            /// <param name="undo">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Universal> Create<TContext>(in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source confirm = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source copyToClipboard = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createPatchOptionsMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createRebaseOptionsMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source decreaseContextInDiffView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source diffingMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source diffingMenuAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source edit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source executeCustomCommand = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source extrasMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source filteringMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source goInto = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source gotoBottom = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source gotoTop = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source increaseContextInDiffView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.JumpToBlock.Source<TContext> jumpToBlock = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source newValue = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextBlock = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextBlockAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextItem = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextItemAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextMatch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextPage = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextScreenMode = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source nextTab = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openFile = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openRecentRepos = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.OptionMenu.Source optionMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source optionMenuAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevBlock = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevBlockAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevItem = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevItemAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevMatch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevPage = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevScreenMode = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source prevTab = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pullFiles = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pushFiles = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source quit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source quitAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source quitWithoutChangingDirectory = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source redo = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source refresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source remove = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source returnValue = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollDownMain = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollDownMainAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollDownMainAlt2 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollLeft = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollRight = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollUpMain = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollUpMainAlt1 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source scrollUpMainAlt2 = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source select = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source submitEditorText = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source togglePanel = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleWhitespaceInDiffView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source undo = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, confirm, copyToClipboard, createPatchOptionsMenu, createRebaseOptionsMenu, decreaseContextInDiffView, diffingMenu, diffingMenuAlt, edit, executeCustomCommand, extrasMenu, filteringMenu, goInto, gotoBottom, gotoTop, increaseContextInDiffView, jumpToBlock, newValue, nextBlock, nextBlockAlt, nextItem, nextItemAlt, nextMatch, nextPage, nextScreenMode, nextTab, openFile, openRecentRepos, optionMenu, optionMenuAlt1, prevBlock, prevBlockAlt, prevItem, prevItemAlt, prevMatch, prevPage, prevScreenMode, prevTab, pullFiles, pushFiles, quit, quitAlt1, quitWithoutChangingDirectory, redo, refresh, remove, returnValue, scrollDownMain, scrollDownMainAlt1, scrollDownMainAlt2, scrollLeft, scrollRight, scrollUpMain, scrollUpMainAlt1, scrollUpMainAlt2, select, submitEditorText, togglePanel, toggleWhitespaceInDiffView, undo);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Universal>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
         }
     }
 }
