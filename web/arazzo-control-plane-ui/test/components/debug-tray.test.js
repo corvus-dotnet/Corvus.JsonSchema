@@ -2,6 +2,12 @@
 // time-travel, and frameAt projects the design surface's debugState shape.
 import '../../src/components/debug-tray.js';
 import { ok, equal, nextEvent, mount } from './helpers.js';
+import { projectWorkflow } from '../../src/workflow-graph.js';
+import { designerFixture } from '../../demo/designer-fixture.js';
+
+// The lit-edge ids frameAt mints MUST be a subset of the ids the projection mints, or the taken
+// edge never lights on the surface (design §10 — the pre-existing id-drift bugs slice 0 fixes).
+const projectedEdgeIds = (doc, workflowId) => new Set(projectWorkflow(doc, workflowId).edges.map((e) => e.id));
 
 const TRACE = {
   outcome: 'completed',
@@ -85,6 +91,57 @@ describe('<arazzo-debug-tray>', () => {
     const frame = el.frameAt(1);
     equal(frame.steps.a, 'done-failure');
     ok(frame.edges.includes('goto:a:recover:failure'));
+  });
+
+  // ── slice 0 regressions: frameAt ids must be a subset of the projected edge ids (design §10) ──
+
+  it('an UNNAMED goto lights its projected edge (id-drift bug 1)', () => {
+    const doc = structuredClone(designerFixture);
+    doc.workflows[0].steps[0].onSuccess = [{ type: 'goto', stepId: 'authorize-payment' }]; // no name
+    const projected = projectedEdgeIds(doc, 'place-order');
+    make({
+      outcome: 'completed', stepsExecuted: 1, steps: [{
+        stepId: 'validate-order', status: 'completed', attempt: 0,
+        successCriteria: [{ condition: '$statusCode == 200', satisfied: true }],
+        actionTaken: { type: 'goto', target: 'authorize-payment' }, // no name — projection falls back to the target id
+      }],
+    });
+    const frame = el.frameAt(1);
+    for (const id of frame.edges) ok(projected.has(id), `frame edge ${id} is not in the projected graph`);
+    ok(frame.edges.includes('goto:validate-order:authorize-payment:success'), 'the unnamed goto lights the projected edge');
+  });
+
+  it('a cross-workflow (exit-chip) goto lights its projected edge (id-drift bug 2)', () => {
+    const doc = structuredClone(designerFixture);
+    doc.workflows[0].steps[0].onSuccess = [{ name: 'handoff', type: 'goto', workflowId: 'order-with-compensation' }];
+    const projected = projectedEdgeIds(doc, 'place-order');
+    make({
+      outcome: 'completed', stepsExecuted: 1, steps: [{
+        stepId: 'validate-order', status: 'completed', attempt: 0,
+        successCriteria: [{ condition: '$statusCode == 200', satisfied: true }],
+        actionTaken: { type: 'goto', name: 'handoff', target: 'order-with-compensation' },
+      }],
+    });
+    const frame = el.frameAt(1);
+    for (const id of frame.edges) ok(projected.has(id), `frame edge ${id} is not in the projected graph`);
+    ok(frame.edges.includes('goto:validate-order:handoff:success'), 'the exit-chip goto lights the projected edge');
+  });
+
+  it('a faulted step with no failed criterion lights its onFailure edge (id-drift bug 3)', () => {
+    const doc = structuredClone(designerFixture);
+    doc.workflows[0].steps[0].onFailure = [{ name: 'bail', type: 'end' }];
+    const projected = projectedEdgeIds(doc, 'place-order');
+    make({
+      outcome: 'faulted', stepsExecuted: 1, steps: [{
+        stepId: 'validate-order', status: 'faulted', attempt: 0,
+        // no successCriteria → failedCriteria is false, yet the step FAULTED: the taken action is on the failure path
+        actionTaken: { type: 'end', name: 'bail' },
+      }],
+    });
+    const frame = el.frameAt(1);
+    equal(frame.steps['validate-order'], 'done-failure', 'the faulted step is marked failed');
+    for (const id of frame.edges) ok(projected.has(id), `frame edge ${id} is not in the projected graph`);
+    ok(frame.edges.includes('end:validate-order:bail:failure'), 'the onFailure end lights the failure edge');
   });
 
   it('step-requested fires only past the end of the trace', async () => {

@@ -21,6 +21,7 @@
 //              provided outputs in a typed editor and replays with them forced)
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { actionEdgeId } from '../workflow-graph.js';
 import './value-editor.js';
 
 const OUTCOME_LABEL = {
@@ -79,14 +80,19 @@ class ArazzoDebugTray extends ArazzoElement {
     for (let i = 0; i < k; i++) {
       const record = trace.steps[i];
       const failedCriteria = (record.successCriteria ?? []).some((c) => !c.satisfied);
-      steps[record.stepId] = record.status === 'faulted' || failedCriteria ? 'done-failure' : 'done-success';
+      // A step is on the FAILURE path when it faulted OR a success criterion was unsatisfied — the
+      // single source for both the node status and the taken action's edge kind (design §10 bug 3);
+      // the edge id itself is minted by the shared grammar so it matches the projection exactly.
+      const onFailurePath = record.status === 'faulted' || failedCriteria;
+      steps[record.stepId] = onFailurePath ? 'done-failure' : 'done-success';
+      const kind = onFailurePath ? 'failure' : 'success';
       const action = record.actionTaken;
       if (!action || action.type === 'fallThrough') {
         edges.push(`seq:${record.stepId}`);
       } else if (action.type === 'goto' && action.target) {
-        edges.push(`goto:${record.stepId}:${action.name ?? 'goto'}:${failedCriteria ? 'failure' : 'success'}`);
+        edges.push(actionEdgeId(record.stepId, kind, { type: 'goto', name: action.name, target: action.target }));
       } else if (action.type === 'end') {
-        edges.push(`end:${record.stepId}:${action.name ?? 'end'}:${failedCriteria ? 'failure' : 'success'}`);
+        edges.push(actionEdgeId(record.stepId, kind, { type: 'end', name: action.name }));
       }
     }
 
