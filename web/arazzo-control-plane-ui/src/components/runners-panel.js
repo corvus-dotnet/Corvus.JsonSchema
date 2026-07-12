@@ -27,6 +27,8 @@ class ArazzoRunners extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._runners = [];
+    /** @private */ this._total = null;          // reach-scoped bounded total for the footer (null until first load)
+    /** @private */ this._totalCapped = false;   // true when the true total meets/exceeds the server cap ("N+")
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._history = [];          // pageTokens of pages before the current one
@@ -112,10 +114,17 @@ class ArazzoRunners extends ArazzoElement {
     this._error = null;
     this.renderBody();
     try {
-      const page = await client.listRunners({ pageToken: this._currentToken, limit: this.pageSize });
+      // The page and the reach-scoped bounded total load together; a failed count degrades to the page length (below)
+      // rather than failing the panel — the registry list still renders.
+      const [page, total] = await Promise.all([
+        client.listRunners({ pageToken: this._currentToken, limit: this.pageSize }),
+        client.countRunners().catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._runners = page.runners;
       this._nextPageToken = page.nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._runners.length, hasMore: !!this._nextPageToken });
@@ -227,7 +236,11 @@ class ArazzoRunners extends ArazzoElement {
     const stale = this._runners.filter((r) => this.isStale(r, now)).length;
     list.innerHTML = this._runners.map((r) => this.runnerHtml(r, now)).join('');
 
-    const parts = [stale > 0 ? `${this._runners.length} registered · ${stale} stale` : `${this._runners.length} registered`];
+    // "registered" is the reach-scoped bounded total (falls back to the page length if the count call failed); "stale"
+    // is observed on the current page. A capped total renders "N+".
+    const shown = this._total ?? this._runners.length;
+    const registered = `${shown}${this._totalCapped ? '+' : ''} registered`;
+    const parts = [stale > 0 ? `${registered} · ${stale} stale` : registered];
     if (this._history.length) parts.push(`page ${this._history.length + 1}`);
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info: parts.join(' · ') });
   }

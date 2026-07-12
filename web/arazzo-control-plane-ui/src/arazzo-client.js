@@ -242,6 +242,17 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countRunners` — the reach-scoped bounded total of registered runners (§5.5/§14.2), for the list footer. No rows
+   * are fetched; the server caps the count and reports `capped: true` once the true total meets or exceeds the cap.
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countRunners(query = {}) {
+    const result = await this._request('GET', '/runners/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listRunners`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ runners: object[], nextPageToken: (string|null) }>}

@@ -352,6 +352,25 @@
         }
       }
     },
+    "/runners/count": {
+      "get": {
+        "operationId": "countRunners",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runners"],
+        "summary": "Count runners",
+        "description": "Counts the registered runners the caller's read reach admits (§5.5/§14.2), bounded by the server's cap — no runner rows are returned (for the list footer). Reach here is a per-row predicate over each runner's reach tags, so the count matches the reach-filtered listRunners exactly. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible runners.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          }
+        }
+      }
+    },
     "/catalog": {
       "post": {
         "operationId": "addCatalogVersion",

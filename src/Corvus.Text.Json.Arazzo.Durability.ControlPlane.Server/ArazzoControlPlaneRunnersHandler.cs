@@ -13,6 +13,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 public sealed class ArazzoControlPlaneRunnersHandler : IApiRunnersHandler
 {
+    private const int CountCap = 100;
+
     private readonly IRunnerRegistry runners;
     private readonly ControlPlaneAccess access;
 
@@ -60,6 +62,17 @@ public sealed class ArazzoControlPlaneRunnersHandler : IApiRunnersHandler
             runners: Models.RunnerPage.RunnerArray.Build(in registered, BuildRunners),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListRunnersResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountRunnersResult> HandleCountRunnersAsync(CountRunnersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The reach-scoped bounded total behind the /runners list footer: the same read reach as HandleListRunnersAsync
+        // (§5.5/§14.2), but the registry returns only a count (at most CountCap), never runner rows. Reach here is a
+        // per-row predicate over each runner's reachTags, so the count matches the reach-filtered list exactly.
+        AccessContext context = this.access.Current();
+        (int count, bool capped) = await this.runners.CountAsync(context, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountRunnersResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     private static void BuildRunners(in IReadOnlyList<RunnerRegistration> registered, ref Models.RunnerPage.RunnerArray.Builder array)
