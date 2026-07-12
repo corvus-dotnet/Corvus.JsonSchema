@@ -269,6 +269,24 @@ public class GeneratedCreateTests
         Assert.AreEqual("{}", doc.RootElement.ToString());
     }
 
+    [TestMethod]
+    public void CreateArray_OnDualKindType_ProducesEmptyArrayDocument()
+    {
+        using ParsedJsonDocument<CompositionWithAny> doc = CompositionWithAny.CreateArray();
+
+        Assert.AreEqual("[]", doc.RootElement.ToString());
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.ValueKind);
+    }
+
+    [TestMethod]
+    public void CreateObject_OnDualKindType_ProducesEmptyObjectDocument()
+    {
+        using ParsedJsonDocument<CompositionWithAny> doc = CompositionWithAny.CreateObject();
+
+        Assert.AreEqual("{}", doc.RootElement.ToString());
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
+    }
+
     #endregion
 
     #region Self-referencing recursion

@@ -342,6 +342,53 @@ public class ParsedJsonDocumentBuilderTests
     }
 
     [TestMethod]
+    public void Build_TryApplyReplacingProperties_UsesPropertyLookupDuringConstruction()
+    {
+        // TryApply removes each incoming property before re-adding it, which drives the
+        // builder's property-name lookup (TryGetNamedPropertyValueIndex over the in-progress
+        // metadata) and the raw-string name store, mid-construction.
+        using var overlay = ParsedJsonDocument<JsonElement>.Parse("""{"replace":"new","added":true}""");
+        JsonElement overlayRoot = overlay.RootElement;
+
+        using ParsedJsonDocument<JsonElement> doc = BuildDocument((ref cvb) =>
+        {
+            cvb.StartObject();
+            cvb.AddProperty("keep"u8, 1);
+            cvb.AddProperty("replace"u8, "old"u8);
+            cvb.TryApply(overlayRoot);
+            cvb.EndObject();
+        });
+
+        Assert.AreEqual("""{"keep":1,"replace":"new","added":true}""", doc.RootElement.ToString());
+
+        string json = doc.RootElement.ToString();
+        using ParsedJsonDocument<JsonElement> reparsed = ParsedJsonDocument<JsonElement>.Parse(json);
+        Assert.AreEqual(json, reparsed.RootElement.ToString());
+    }
+
+    [TestMethod]
+    public void Build_LargeExternalContent_GrowsTextBuffer()
+    {
+        // External content is not in the dynamic value store, so it is not accounted for by
+        // the initial text-buffer estimate; a large embedded element forces the buffer to grow
+        // mid-materialization.
+        string bigValue = new string('x', 200_000);
+        using var external = ParsedJsonDocument<JsonElement>.Parse($$"""{"big":"{{bigValue}}"}""");
+        JsonElement externalRoot = external.RootElement;
+
+        using ParsedJsonDocument<JsonElement> doc = BuildDocument((ref cvb) =>
+        {
+            cvb.StartArray();
+            cvb.AddItem("small"u8);
+            cvb.AddItem(in externalRoot);
+            cvb.EndArray();
+        });
+
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
+        Assert.IsTrue(doc.RootElement[1].GetProperty("big"u8).ValueEquals(bigValue));
+    }
+
+    [TestMethod]
     public void Build_AddItemFromJson_ParsesAndEmbedsContent()
     {
         using ParsedJsonDocument<JsonElement> doc = BuildDocument(static (ref cvb) =>
