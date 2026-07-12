@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-12T05:51:42.2840802\u002B00:00",
+  "generatedAt": "2026-07-12T06:25:32.3313223\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -172,6 +172,8 @@
     "ListEnvironmentAvailabilityResponse.cs",
     "ListEnvironmentRunnerAuthorizationsRequest.cs",
     "ListEnvironmentRunnerAuthorizationsResponse.cs",
+    "CountEnvironmentRunnerAuthorizationsRequest.cs",
+    "CountEnvironmentRunnerAuthorizationsResponse.cs",
     "AuthorizeRunnerRequest.cs",
     "AuthorizeRunnerResponse.cs",
     "RevokeRunnerRequest.cs",
@@ -1253,6 +1255,9 @@
     "Models/GetEnvironmentsByNameRunnersStatus.cs",
     "Models/GetEnvironmentsByNameRunnersStatus.Mutable.cs",
     "Models/GetEnvironmentsByNameRunnersStatus.JsonSchema.cs",
+    "Models/GetEnvironmentsByNameRunnersCountStatus.cs",
+    "Models/GetEnvironmentsByNameRunnersCountStatus.Mutable.cs",
+    "Models/GetEnvironmentsByNameRunnersCountStatus.JsonSchema.cs",
     "Models/GetGithubReposByOwnerByRepoCommitsPage.cs",
     "Models/GetGithubReposByOwnerByRepoCommitsPage.Mutable.cs",
     "Models/GetGithubReposByOwnerByRepoCommitsPage.JsonSchema.cs",
@@ -1312,9 +1317,9 @@
     "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Ba9dba704b2d33df718c6c6416896237bde9d0c7e",
+  "generatorVersion": "1.0.0\u002Bdbe31f259ff1052a9db2b01d0538f16ca3463b9a",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "8a4ca308d49055683a3b9b676109ed7b13c9216b679c1211915855688a2834a0",
+  "specFileHash": "533f1aaa9f2a4b87c5f8d5d79a4ed862e0c2846724bd7c064866ffa495a65253",
   "specVersion": "3.2"
 }
