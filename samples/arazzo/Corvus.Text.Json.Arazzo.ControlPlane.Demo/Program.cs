@@ -183,8 +183,24 @@ var securityPolicy = await PostgresSecurityPolicyStore.ConnectAsync(dataSource);
 var labelOrderings = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap.BuildLabelOrderings(bootstrapOptions);
 var entitlements = new PersistentRowSecurityPolicy(
     securityPolicy,
-    internalTagResolver: static principal => principal?.FindAll("groups")
-        .Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", c.Value)).ToArray() ?? [],
+    // A Keycloak principal's row identity is its group tags PLUS the deployment issuer (sys:iss, §16.5.5) — the same
+    // DemoData.KeycloakIssuer the seeded admin grants and the grantee-directory adapter stamp, so a directory-resolved or
+    // seeded grant set-equals the live caller (WorkflowIdentity.SameAdministrator). A principal with no groups (e.g. a
+    // DevApiKey) carries no identity here and resolves through the unscoped/System path.
+    internalTagResolver: static principal =>
+    {
+        SecurityTag[] groups = principal?.FindAll("groups")
+            .Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", c.Value)).ToArray() ?? [];
+        if (groups.Length == 0)
+        {
+            return groups;
+        }
+
+        var tags = new SecurityTag[groups.Length + 1];
+        Array.Copy(groups, tags, groups.Length);
+        tags[groups.Length] = DemoData.IssuerTag;
+        return tags;
+    },
     orderings: labelOrderings);
 await entitlements.RefreshAsync();
 
