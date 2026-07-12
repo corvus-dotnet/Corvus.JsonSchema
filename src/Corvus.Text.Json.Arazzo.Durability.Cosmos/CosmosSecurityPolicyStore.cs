@@ -253,13 +253,14 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         // Cosmos has NO bounded server-side COUNT (a bare COUNT ignores the outer LIMIT; COUNT over a LIMIT/TOP subquery is
         // rejected), so project only c.id under the same WHERE + CONTAINS as ListRulesAsync with OFFSET 0 LIMIT cap+1 and
         // count the ids client-side.
-        var sql = new StringBuilder("SELECT c.id FROM c WHERE c.pk = @pk");
+        var sql = new StringBuilder("SELECT c.id AS doc FROM c WHERE c.pk = @pk");
         if (qText is not null)
         {
             sql.Append(" AND (CONTAINS(c.id, @q, true) OR CONTAINS(c.doc.expression, @q, true))");
         }
 
-        sql.Append(" OFFSET 0 LIMIT @lim");
+        // Cosmos returns no rows for OFFSET LIMIT without an ORDER BY, so keep the list's key order (c.id).
+        sql.Append(" ORDER BY c.id OFFSET 0 LIMIT @lim");
         var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", RulePartition).WithParameter("@lim", bound + 1);
         if (qText is not null)
         {
@@ -282,13 +283,15 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
         string? qText = q.IsNotUndefined() ? (string)q : null;
 
-        var sql = new StringBuilder("SELECT c.id FROM c WHERE c.pk = @pk");
+        var sql = new StringBuilder("SELECT c.id AS doc FROM c WHERE c.pk = @pk");
         if (qText is not null)
         {
             sql.Append(" AND (CONTAINS(c.doc.claimType, @q, true) OR CONTAINS(c.doc.claimValue, @q, true) OR CONTAINS(c.doc.description, @q, true))");
         }
 
-        sql.Append(" OFFSET 0 LIMIT @lim");
+        // Cosmos returns no rows for OFFSET LIMIT without an ORDER BY, so keep the list's key order (order is a reserved
+        // word → c["order"]).
+        sql.Append(" ORDER BY c[\"order\"], c.id OFFSET 0 LIMIT @lim");
         var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", BindingPartition).WithParameter("@lim", bound + 1);
         if (qText is not null)
         {
