@@ -47,6 +47,23 @@
 export const START_ID = '#start';
 export const END_ID = '#end';
 
+/**
+ * Mints the id for an action edge (a local `goto` or `end`), single-sourced so the projection and
+ * the debug tray's `frameAt` re-minting agree — a mismatch means the taken edge never lights
+ * (design §10). Grammar: `end:<stepId>:<name||'end'>:<kind>` and `goto:<stepId>:<name||target>:<kind>`,
+ * where `target` is the goto's step id (local) or workflow id (cross-workflow exit), `kind` is
+ * `success`/`failure` (the onSuccess/onFailure list the action came from), and the fallback uses `||`
+ * (an empty name falls back, matching the projection). Cross-workflow gotos carry `:kind` like every
+ * sibling.
+ * @param {string} stepId the source step's id
+ * @param {'success'|'failure'} kind the action's list
+ * @param {{type: 'goto'|'end', name?: string, target?: string}} action
+ */
+export function actionEdgeId(stepId, kind, action) {
+  if (action.type === 'end') return `end:${stepId}:${action.name || 'end'}:${kind}`;
+  return `goto:${stepId}:${action.name || action.target}:${kind}`;
+}
+
 /** List the workflows in a document as `{workflowId, summary}` (for the designer's switcher). */
 export function listWorkflows(doc) {
   return (doc?.workflows || []).map((w) => ({ workflowId: w.workflowId, summary: w.summary || '' }));
@@ -161,7 +178,7 @@ export function projectWorkflow(doc, workflowId) {
         if (unreachable) orderInfo.unreachable = true;
         if (action.type === 'end') {
           edges.push({
-            id: `end:${step.stepId}:${action.name || 'end'}:${kind}`,
+            id: actionEdgeId(step.stepId, kind, { type: 'end', name: action.name }),
             from: step.stepId,
             to: END_ID,
             kind,
@@ -177,7 +194,7 @@ export function projectWorkflow(doc, workflowId) {
           // A goto to another workflow: no in-graph target; surfaced as a problem-free badge case
           // later — for now record an edge to a synthetic id the renderer shows as an exit chip.
           edges.push({
-            id: `goto:${step.stepId}:${action.name || action.workflowId}`,
+            id: actionEdgeId(step.stepId, kind, { type: 'goto', name: action.name, target: action.workflowId }),
             from: step.stepId,
             to: `workflow:${action.workflowId}`,
             kind,
@@ -193,7 +210,7 @@ export function projectWorkflow(doc, workflowId) {
           continue;
         }
         edges.push({
-          id: `goto:${step.stepId}:${action.name || action.stepId}:${kind}`,
+          id: actionEdgeId(step.stepId, kind, { type: 'goto', name: action.name, target: action.stepId }),
           from: step.stepId,
           to: action.stepId,
           kind,

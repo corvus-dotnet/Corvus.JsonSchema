@@ -27,6 +27,31 @@ describe('<arazzo-design-surface>', () => {
     return { clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 };
   };
 
+  it('a parallel edge keeps its label stacking offset after a node move (label-offset bug 4)', () => {
+    const doc = structuredClone(designerFixture);
+    doc.workflows[0].steps[0].onSuccess = [
+      { name: 'jump', type: 'goto', stepId: 'authorize-payment', criteria: [{ condition: '$statusCode == 200' }] },
+      { name: 'jump', type: 'goto', stepId: 'authorize-payment', criteria: [{ condition: '$statusCode == 202' }] },
+    ];
+    el = document.createElement('arazzo-design-surface');
+    el.style.cssText = 'display:block;width:900px;height:600px;';
+    mount(el);
+    el.graph = projectWorkflow(doc, 'place-order');
+
+    // The second of two parallel edges carries order 2 → _buildEdge stacks its label +12 below the
+    // edge midpoint so the labels do not overlap. _moveNode must preserve that offset when it re-paths.
+    const order2 = el.graph.edges.find((e) => e.from === 'validate-order' && e.to === 'authorize-payment' && (e.order ?? 1) === 2);
+    ok(order2, 'the second parallel goto exists with order 2');
+    const offsetFromMid = () =>
+      Number(el.shadowRoot.querySelector(`.edge[data-id="${order2.id}"] .elabel`).getAttribute('y')) - el._edgeMid(order2).y;
+    ok(Math.abs(offsetFromMid() - 12) < 0.5, 'the order-2 label starts +12 below its edge midpoint (_buildEdge)');
+
+    // Dragging validate-order re-paths the touching edges through _moveNode.
+    el._positions['validate-order'] = { ...el._positions['validate-order'], x: el._positions['validate-order'].x + 40, y: el._positions['validate-order'].y + 40 };
+    el._moveNode('validate-order');
+    ok(Math.abs(offsetFromMid() - 12) < 0.5, 'the order-2 label keeps its +12 stacking offset after the move — not collapsed onto the midpoint');
+  });
+
   it('renders one node per step plus start/end pseudo-nodes, kind classes, chips, defaults card', () => {
     make();
     equal(el.shadowRoot.querySelectorAll('.node').length, 7, 'five steps + start + end');

@@ -823,7 +823,9 @@ class ArazzoDesignSurface extends ArazzoElement {
         if (label) {
           const mid = this._edgeMid(edge);
           label.setAttribute('x', mid.x + 8);
-          label.setAttribute('y', mid.y);
+          // Keep the parallel-edge label stacking offset _buildEdge applies (line ~394), else
+          // labels on parallel edges collapse onto one line after a drag.
+          label.setAttribute('y', mid.y + ((edge.order ?? 1) - 1) * 12);
         }
       }
     }
