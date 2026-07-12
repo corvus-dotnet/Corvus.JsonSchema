@@ -27,6 +27,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private const int MaxValidationErrors = 200;
     private const int MaxCachedSchemas = 512;
 
+    // Bounds the catalog count so a busy list renders "100+" rather than paying to count an unbounded set (count-API §16.5).
+    private const int CountCap = 100;
+
     // Compiling a JSON Schema is an expensive one-time job, so cache the compiled validator. The key is
     // (base/version/target), which is content-stable because catalog versions are immutable — so the cache is
     // bounded by distinct catalogued schemas, never by request volume. The coarse cap sheds reuse (not
@@ -159,6 +162,28 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // to the workspace (it disposes them at request end); `using page` then only returns the batch's backing array.
         page.Versions.TransferOwnershipTo(workspace);
         return SearchCatalogResult.Ok(this.BuildPage(page, workspace), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountCatalogResult> HandleCountCatalogAsync(CountCatalogParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Same search filters and §14.2 read reach as HandleSearchCatalogAsync, but the store returns only a bounded
+        // total, never rows (list footers). Mirrors the search's mode: counts matching versions, or distinct base
+        // workflows when distinctWorkflows is set. CountCap bounds it so a busy catalog renders "100+".
+        string? text = parameters.Q.IsNotUndefined() ? (string)parameters.Q : null;
+        string? baseWorkflowId = parameters.BaseWorkflowId.IsNotUndefined() ? (string)parameters.BaseWorkflowId : null;
+        string? workflowIdPrefix = parameters.WorkflowIdPrefix.IsNotUndefined() ? (string)parameters.WorkflowIdPrefix : null;
+        TagSet tags = ToTags(parameters.Tag);
+        CatalogStatus? status = parameters.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)parameters.Status) : null;
+        string? owner = parameters.Owner.IsNotUndefined() ? (string)parameters.Owner : null;
+        bool distinctWorkflows = parameters.DistinctWorkflows.IsNotUndefined() && (bool)parameters.DistinctWorkflows;
+
+        (int count, bool capped) = await this.catalog.CountAsync(
+            new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, CountCap, default, DistinctWorkflows: distinctWorkflows),
+            this.access.Current(),
+            CountCap,
+            cancellationToken).ConfigureAwait(false);
+        return CountCatalogResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>
