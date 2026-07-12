@@ -366,4 +366,16 @@ describe('<arazzo-design-surface>', () => {
     await Promise.resolve();
     ok(!fired, 'a programmatic set emits nothing (slice E adds only the gesture event)');
   });
+
+  it('centerOn pans (at the current zoom) so the node lands at the viewport centre', () => {
+    make();
+    const box = el.shadowRoot.querySelector('svg').getBoundingClientRect();
+    el.centerOn('validate-order');
+    const v = el.view;
+    const pos = el.positions['validate-order'];
+    const cx = v.tx + (pos.x + 105) * v.k; // NODE_WIDTH/2
+    const cy = v.ty + (pos.y + 37) * v.k;  // NODE_HEIGHT/2
+    ok(Math.abs(cx - box.width / 2) < 1, 'node centre lands at viewport centre x');
+    ok(Math.abs(cy - box.height / 2) < 1, 'node centre lands at viewport centre y');
+  });
 });
