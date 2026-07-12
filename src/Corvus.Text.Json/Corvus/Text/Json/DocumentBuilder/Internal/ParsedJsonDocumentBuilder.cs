@@ -7,8 +7,10 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
+using System.Buffers.Text;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Corvus.Numerics;
@@ -25,11 +27,22 @@ namespace Corvus.Text.Json.Internal;
 /// <para>
 /// This type backs the generated <c>Create()</c> factory methods, which are the
 /// <see cref="ParsedJsonDocument{T}"/>-producing analogue of the generated <c>CreateBuilder()</c>
-/// methods. Values are accumulated in the standard dynamic value store, exactly as they would be for a
-/// <see cref="JsonDocumentBuilder{T}"/>; <see cref="ToParsedJsonDocument{TElement}"/> then makes a single
-/// linear pass over the metadata table, writing the UTF-8 JSON text and the parsed-format metadata rows
-/// together, and hands both off to a new <see cref="ParsedJsonDocument{T}"/>. External document values
-/// are blitted into the backing during that pass, so the resulting document is fully self-contained.
+/// methods. Unlike a <see cref="JsonDocumentBuilder{T}"/>, this builder writes the final UTF-8
+/// document text directly during construction: the store operations format each value straight
+/// into the text backing, the <see cref="IComplexValueConstructionCallbacks"/> hooks supply the
+/// container boundaries, and values embedded from other documents are captured into the backing
+/// at the point they are added. Property names are distinguished from string values by JSON's
+/// strict name/value alternation within an object, so the ordinary store operations need no
+/// extra signalling.
+/// </para>
+/// <para>
+/// The metadata rows are those built by the <see cref="ComplexValueBuilder"/> in the usual way;
+/// a side list records the text location and content length for each row as it is written, and
+/// <see cref="ToParsedJsonDocument{TElement}"/> applies them in a single in-place patch pass —
+/// no second metadata table is built and no content is copied. If a property is removed during
+/// construction (for example via <see cref="ComplexValueBuilder.TryApply{T}"/>), the removed
+/// value's text is stranded in the backing and the document is marked dirty; a dirty document
+/// pays one compaction pass at handoff, rebuilding the text from the surviving rows.
 /// </para>
 /// <para>
 /// Instances are rented from a thread-local cache via <see cref="Rent"/> to avoid hot-path allocation.
@@ -44,9 +57,31 @@ namespace Corvus.Text.Json.Internal;
 /// </para>
 /// </remarks>
 [CLSCompliant(false)]
-public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocument
+public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocument, IComplexValueConstructionCallbacks
 {
-    private const int FrameInts = 4;
+    // Frame flags for the container state machine.
+    private const int IsObjectFlag = 1;
+    private const int HasChildrenFlag = 2;
+    private const int ExpectNameFlag = 4;
+
+    // Side-list sizeOrLength sentinel: the row's sizeOrLength is owned by the
+    // ComplexValueBuilder (container member counts and end-token lengths) — patch the location only.
+    private const int PairKeepSize = int.MinValue;
+
+    private byte[]? _text;
+
+    private int _textPos;
+
+    // Two ints per metadata row, in row order: text location, content length (or PairKeepSize).
+    private int[]? _pairs;
+
+    private int _pairCount;
+
+    private int[]? _frames;
+
+    private int _frameDepth;
+
+    private bool _dirty;
 
     private JsonWorkspace? _workspace;
 
@@ -88,11 +123,15 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
         }
     }
 
+    private bool NextIsPropertyName =>
+        _frameDepth > 0 &&
+        (_frames![_frameDepth - 1] & (IsObjectFlag | ExpectNameFlag)) == (IsObjectFlag | ExpectNameFlag);
+
     /// <summary>
     /// Rents a builder from the thread-local cache, ready to receive a value via
     /// <see cref="ComplexValueBuilder"/> and <see cref="IMutableJsonDocument.SetAndDispose"/>.
     /// </summary>
-    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the document text buffer.</param>
     /// <returns>A rented <see cref="ParsedJsonDocumentBuilder"/>. Always dispose the builder; disposal
     /// is idempotent, so this is safe whether or not <see cref="ToParsedJsonDocument{TElement}"/>
     /// completed the handoff.</returns>
@@ -100,7 +139,9 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
     {
         ParsedJsonDocumentBuilder builder = ParsedJsonDocumentBuilderCache.RentBuilder();
         builder._workspace = JsonWorkspace.Create();
-        builder._valueBacking = ArrayPool<byte>.Shared.Rent(initialValueBufferSize);
+        builder._text = ArrayPool<byte>.Shared.Rent(Math.Max(JsonConstants.StackallocByteThreshold, initialValueBufferSize));
+        builder._pairs = ArrayPool<int>.Shared.Rent(128);
+        builder._frames = ArrayPool<int>.Shared.Rent(16);
         builder._isRented = true;
         return builder;
     }
@@ -123,42 +164,26 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
             ThrowHelper.ThrowInvalidOperationException(SR.ParsedJsonDocumentBuilderHasNoValue);
         }
 
-        int metadataLength = _parsedData.Length;
+        Debug.Assert(_pairCount * DbRow.Size == _parsedData.Length, "side list out of step with metadata rows");
+        Debug.Assert(_frameDepth == 0, "unbalanced container rows in construction metadata");
 
-        // The output table has exactly one row per input row, so the exact size is known up front.
-        MetadataDb db = MetadataDb.CreateRented(metadataLength, convertToAlloc: false);
-        byte[]? text = null;
-        int pos = 0;
-
-        try
+        if (_dirty)
         {
-            // The dynamic value store holds every local payload plus a 4-byte header per value; the
-            // headers approximately cover the structural bytes (quotes, separators, braces) the text
-            // needs. External content grows the buffer on demand.
-            text = ArrayPool<byte>.Shared.Rent(Math.Max(JsonConstants.StackallocByteThreshold, _valueOffset + (metadataLength / DbRow.Size * 2)));
-            pos = Flatten(ref db, ref text);
-            db.CompleteAllocations();
-
-            ParsedJsonDocument<TElement> result = ParsedJsonDocument<TElement>.CreateFromBuilder(text.AsMemory(0, pos), db, text);
-
-            // Ownership of the text buffer and the metadata database has transferred to the document.
-            text = null;
-            Dispose();
-            return result;
+            Compact();
         }
-        catch
-        {
-            db.Dispose();
 
-            if (text is byte[] t)
-            {
-                // The buffer holds document content, so clear what was written before returning it.
-                t.AsSpan(0, pos).Clear();
-                ArrayPool<byte>.Shared.Return(t);
-            }
+        PatchRows();
 
-            throw;
-        }
+        _parsedData.CompleteAllocations();
+
+        byte[] text = _text!;
+        ParsedJsonDocument<TElement> result = ParsedJsonDocument<TElement>.CreateFromBuilder(text.AsMemory(0, _textPos), _parsedData, text);
+
+        // Ownership of the text buffer and the metadata database has transferred to the document.
+        _text = null;
+        _parsedData = default;
+        Dispose();
+        return result;
     }
 
     /// <summary>
@@ -173,6 +198,32 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
         }
 
         _isRented = false;
+
+        if (_text is byte[] text)
+        {
+            _text = null;
+
+            // The buffer holds document content, so clear what was written before returning it.
+            text.AsSpan(0, _textPos).Clear();
+            ArrayPool<byte>.Shared.Return(text);
+        }
+
+        if (_pairs is int[] pairs)
+        {
+            _pairs = null;
+            ArrayPool<int>.Shared.Return(pairs);
+        }
+
+        if (_frames is int[] frames)
+        {
+            _frames = null;
+            ArrayPool<int>.Shared.Return(frames);
+        }
+
+        _textPos = 0;
+        _pairCount = 0;
+        _frameDepth = 0;
+        _dirty = false;
 
         DisposeCore();
         ResetCoreForReuse();
@@ -204,99 +255,505 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
         return TryGetNamedPropertyValueIndexUnsafe(ref parsedData, startIndex, endIndex, propertyName, out valueIndex);
     }
 
-    /// <inheritdoc />
-    int IMutableJsonDocument.StoreBooleanValue(bool value) => StoreBooleanValue(value);
+    // ──────────────────────────────────────────────────────────────────────────
+    // Construction callbacks: the ComplexValueBuilder surfaces container boundaries,
+    // embedded elements, and row removal through these.
+    // ──────────────────────────────────────────────────────────────────────────
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreNullValue() => StoreNullValue();
+    void IComplexValueConstructionCallbacks.OnStartComplex(JsonTokenType tokenType)
+    {
+        CheckNotDisposed();
+        WriteStartComplexCore(tokenType);
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreRawNumberValue(ReadOnlySpan<byte> value) => StoreRawNumberValue(value);
+    void IComplexValueConstructionCallbacks.OnEndComplex(JsonTokenType tokenType)
+    {
+        CheckNotDisposed();
+        WriteEndComplexCore(tokenType);
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.EscapeAndStoreRawStringValue(ReadOnlySpan<byte> value, out bool requiredEscaping) => EscapeAndStoreRawStringValue(value, out requiredEscaping, _workspace?.Options.Encoder);
+    void IComplexValueConstructionCallbacks.AppendExternalElement(IJsonDocument sourceDocument, int sourceIndex, ref MetadataDb db)
+    {
+        CheckNotDisposed();
+
+        // Expand the element to external reference rows (the standard mechanism), then resolve
+        // them immediately: content into the text backing, fully-local rows into the metadata.
+        var scratch = MetadataDb.CreateRented(16 * DbRow.Size, convertToAlloc: false);
+        try
+        {
+            sourceDocument.AppendElementToMetadataDb(sourceIndex, _workspace!, ref scratch);
+            WriteResolvedExternalRows(ref scratch, ref db);
+        }
+        finally
+        {
+            scratch.Dispose();
+        }
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.EscapeAndStoreRawStringValue(ReadOnlySpan<char> value, out bool requiredEscaping) => EscapeAndStoreRawStringValue(value, out requiredEscaping, _workspace?.Options.Encoder);
+    void IComplexValueConstructionCallbacks.OnRowsRemoved(int rowByteIndex, int rowCount)
+    {
+        CheckNotDisposed();
+
+        int pairIndex = rowByteIndex / DbRow.Size;
+        Debug.Assert(pairIndex + rowCount <= _pairCount);
+
+        Array.Copy(_pairs!, (pairIndex + rowCount) * 2, _pairs!, pairIndex * 2, (_pairCount - pairIndex - rowCount) * 2);
+        _pairCount -= rowCount;
+
+        // The removed rows' text is stranded in the backing; compact at handoff.
+        _dirty = true;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Store operations: format directly into the document text.
+    // ──────────────────────────────────────────────────────────────────────────
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreRawStringValue(ReadOnlySpan<byte> value) => StoreRawStringValue(value);
+    int IMutableJsonDocument.StoreBooleanValue(bool value) => StoreLiteralText(value ? JsonConstants.TrueValue : JsonConstants.FalseValue);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(Guid value) => StoreValue(value);
+    int IMutableJsonDocument.StoreNullValue() => StoreLiteralText(JsonConstants.NullValue);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in DateTime value) => StoreValue(value);
+    int IMutableJsonDocument.StoreRawNumberValue(ReadOnlySpan<byte> value)
+    {
+        CheckNotDisposed();
+        JsonWriterHelper.ValidateNumber(value);
+        BeginValueToken(value.Length);
+        int start = _textPos;
+        value.CopyTo(_text.AsSpan(_textPos));
+        _textPos += value.Length;
+        PushPair(start, value.Length);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in DateTimeOffset value) => StoreValue(value);
+    int IMutableJsonDocument.EscapeAndStoreRawStringValue(ReadOnlySpan<byte> value, out bool requiredEscaping)
+    {
+        CheckNotDisposed();
+
+        System.Text.Encodings.Web.JavaScriptEncoder? encoder = _workspace!.Options.Encoder;
+        int valueIdx = JsonWriterHelper.NeedsEscaping(value, encoder);
+
+        Debug.Assert(valueIdx >= -1 && valueIdx < value.Length);
+
+        int maxContent = valueIdx == -1 ? value.Length : JsonWriterHelper.GetMaxEscapedLength(value.Length, valueIdx);
+        bool isName = BeginStringToken(maxContent);
+
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+
+        if (valueIdx != -1)
+        {
+            requiredEscaping = true;
+            JsonWriterHelper.EscapeString(value, _text.AsSpan(_textPos), valueIdx, encoder, out int written);
+            _textPos += written;
+        }
+        else
+        {
+            requiredEscaping = false;
+            value.CopyTo(_text.AsSpan(_textPos));
+            _textPos += value.Length;
+        }
+
+        CompleteStringToken(start, isName);
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in OffsetDateTime value) => StoreValue(value);
+    int IMutableJsonDocument.EscapeAndStoreRawStringValue(ReadOnlySpan<char> value, out bool requiredEscaping)
+    {
+        CheckNotDisposed();
+
+        System.Text.Encodings.Web.JavaScriptEncoder? encoder = _workspace!.Options.Encoder;
+        int valueIdx = JsonWriterHelper.NeedsEscaping(value, encoder);
+
+        int valueLength = value.Length;
+        Debug.Assert(valueIdx >= -1 && valueIdx < valueLength);
+
+        // Escaped output is ASCII, so the UTF-8 length of the escaped form equals its char length;
+        // an unescaped char transcodes to at most three UTF-8 bytes.
+        int maxContent = valueIdx == -1 ? valueLength * 3 : JsonWriterHelper.GetMaxEscapedLength(valueLength, valueIdx) * 3;
+        bool isName = BeginStringToken(maxContent);
+
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+
+        int written;
+        if (valueIdx != -1)
+        {
+            requiredEscaping = true;
+
+            char[]? buffer = null;
+            int maxEscapedLength = JsonWriterHelper.GetMaxEscapedLength(valueLength, valueIdx);
+            Span<char> escapedBuffer = maxEscapedLength <= JsonConstants.StackallocCharThreshold
+                ? stackalloc char[JsonConstants.StackallocCharThreshold]
+                : (buffer = ArrayPool<char>.Shared.Rent(maxEscapedLength)).AsSpan();
+
+            try
+            {
+                JsonWriterHelper.EscapeString(value, escapedBuffer, valueIdx, encoder, out written);
+                JsonWriterHelper.ToUtf8(escapedBuffer.Slice(0, written), _text.AsSpan(_textPos), out written);
+                _textPos += written;
+            }
+            finally
+            {
+                if (buffer is char[] b)
+                {
+                    ArrayPool<char>.Shared.Return(b);
+                }
+            }
+        }
+        else
+        {
+            requiredEscaping = false;
+            JsonWriterHelper.ToUtf8(value, _text.AsSpan(_textPos), out written);
+            _textPos += written;
+        }
+
+        CompleteStringToken(start, isName);
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in OffsetDate value) => StoreValue(value);
+    int IMutableJsonDocument.StoreRawStringValue(ReadOnlySpan<byte> value)
+    {
+        CheckNotDisposed();
+
+        bool isName = BeginStringToken(value.Length);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        value.CopyTo(_text.AsSpan(_textPos));
+        _textPos += value.Length;
+        CompleteStringToken(start, isName);
+        return start;
+    }
+
+    /// <inheritdoc cref="IMutableJsonDocument.StorePrebakedValue"/>
+    public new int StorePrebakedValue(ReadOnlySpan<byte> prebakedValue)
+    {
+        CheckNotDisposed();
+
+        // A pre-baked blob is a property name: [4-byte header][quote][escaped name][quote].
+        Debug.Assert(NextIsPropertyName, "pre-baked values are property names");
+        ReadOnlySpan<byte> quotedName = prebakedValue.Slice(4);
+
+        BeginNameToken(quotedName.Length);
+        int start = _textPos + 1;
+        quotedName.CopyTo(_text.AsSpan(_textPos));
+        _textPos += quotedName.Length;
+        _text![_textPos++] = JsonConstants.KeyValueSeparator;
+        PushPair(start, quotedName.Length - 2);
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in OffsetTime value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(Guid value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatGuidLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in LocalDate value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(in DateTime value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatGuidLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        JsonWriterHelper.WriteDateTimeTrimmed(_text.AsSpan(_textPos), value, out int written);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in Period value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(in DateTimeOffset value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatGuidLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        JsonWriterHelper.WriteDateTimeOffsetTrimmed(_text.AsSpan(_textPos), value, out int written);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(sbyte value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(in OffsetDateTime value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatDateTimeOffsetLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        bool success = JsonElementHelpers.TryFormatOffsetDateTime(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(byte value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(in OffsetDate value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatOffsetDateLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        bool success = JsonElementHelpers.TryFormatOffsetDate(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(int value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(in OffsetTime value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatOffsetTimeLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        bool success = JsonElementHelpers.TryFormatOffsetTime(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(uint value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(in LocalDate value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatOffsetTimeLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        bool success = JsonElementHelpers.TryFormatLocalDate(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(long value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(in Period value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatOffsetTimeLength + 2);
+        _text![_textPos++] = JsonConstants.Quote;
+        int start = _textPos;
+        bool success = JsonElementHelpers.TryFormatPeriod(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        _text[_textPos++] = JsonConstants.Quote;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(ulong value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(sbyte value) => StoreInt64Text(value);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(short value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(byte value) => StoreUInt64Text(value);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(ushort value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(int value) => StoreInt64Text(value);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(float value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(uint value) => StoreUInt64Text(value);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(double value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(long value) => StoreInt64Text(value);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(decimal value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(ulong value) => StoreUInt64Text(value);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in BigInteger value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(short value) => StoreInt64Text(value);
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(in BigNumber value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(ushort value) => StoreUInt64Text(value);
+
+    /// <inheritdoc />
+    int IMutableJsonDocument.StoreValue(float value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatSingleLength);
+        int start = _textPos;
+        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
+
+    /// <inheritdoc />
+    int IMutableJsonDocument.StoreValue(double value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatDoubleLength);
+        int start = _textPos;
+        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
+
+    /// <inheritdoc />
+    int IMutableJsonDocument.StoreValue(decimal value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatDecimalLength);
+        int start = _textPos;
+        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
+
+    /// <inheritdoc />
+    int IMutableJsonDocument.StoreValue(in BigInteger value)
+    {
+        CheckNotDisposed();
+
+#if NET
+        if (!value.TryGetMinimumFormatBufferLength(out int required))
+        {
+            ThrowHelper.ThrowOutOfMemoryException((uint)required);
+        }
+
+        BeginValueToken(required);
+        int start = _textPos;
+        bool formatted = value.TryFormat(_text.AsSpan(_textPos), out int written);
+        Debug.Assert(formatted);
+#else
+        BeginValueToken(JsonConstants.InitialFormatBigIntegerLength);
+        int start = _textPos;
+        int written;
+        while (!value.TryFormat(_text.AsSpan(_textPos), out written))
+        {
+            EnsureText(_text!.Length + JsonConstants.InitialFormatBigIntegerLength);
+        }
+#endif
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
+
+    /// <inheritdoc />
+    int IMutableJsonDocument.StoreValue(in BigNumber value)
+    {
+        CheckNotDisposed();
+
+#if NET
+        if (!value.TryGetMinimumFormatBufferLength(out int required))
+        {
+            ThrowHelper.ThrowOutOfMemoryException((uint)required);
+        }
+
+        BeginValueToken(required);
+        int start = _textPos;
+        bool formatted = value.TryFormat(_text.AsSpan(_textPos), out int written);
+        Debug.Assert(formatted);
+#else
+        BeginValueToken(JsonConstants.InitialFormatBigNumberLength);
+        int start = _textPos;
+        int written;
+        while (!value.Normalize().TryFormat(_text.AsSpan(_textPos), out written))
+        {
+            EnsureText(_text!.Length + JsonConstants.InitialFormatBigIntegerLength);
+        }
+#endif
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
 #if NET
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(Int128 value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(Int128 value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatInt128Length);
+        int start = _textPos;
+        bool success = value.TryFormat(_text.AsSpan(_textPos), out int written, provider: CultureInfo.InvariantCulture);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(UInt128 value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(UInt128 value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatUInt128Length);
+        int start = _textPos;
+        bool success = value.TryFormat(_text.AsSpan(_textPos), out int written, provider: CultureInfo.InvariantCulture);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
     /// <inheritdoc />
-    int IMutableJsonDocument.StoreValue(Half value) => StoreValue(value);
+    int IMutableJsonDocument.StoreValue(Half value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatHalfLength);
+        int start = _textPos;
+        bool success = value.TryFormat(_text.AsSpan(_textPos), out int written, provider: CultureInfo.InvariantCulture);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
 #endif
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Raw value reads over the in-progress metadata, used by the property-name lookup
+    // during construction (e.g. ComplexValueBuilder.RemoveProperty).
+    // ──────────────────────────────────────────────────────────────────────────
 
     /// <inheritdoc />
     protected override ReadOnlyMemory<byte> GetRawSimpleValueUnsafe(int index, bool includeQuotes) => GetRawSimpleValueUnsafe(ref _parsedData, index, includeQuotes);
@@ -310,15 +767,16 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
         DbRow row = parsedData.Get(index);
 
         Debug.Assert(row.IsSimpleValue);
+        Debug.Assert(!row.FromExternalDocument, "external rows are resolved at add time");
 
-        if (row.FromExternalDocument)
+        (int location, int length) = GetPair(index / DbRow.Size);
+
+        if (includeQuotes && (row.TokenType == JsonTokenType.String || row.TokenType == JsonTokenType.PropertyName))
         {
-            IJsonDocument document = _workspace!.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes);
+            return _text.AsMemory(location - 1, length + 2);
         }
 
-        // There is never a raw-JSON backing region in this builder; every local value is dynamic.
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex, includeQuotes);
+        return _text.AsMemory(location, length);
     }
 
     /// <inheritdoc />
@@ -327,141 +785,247 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
         DbRow row = parsedData.Get(index);
 
         Debug.Assert(row.IsSimpleValue);
+        Debug.Assert(!row.FromExternalDocument, "external rows are resolved at add time");
 
-        if (row.FromExternalDocument)
-        {
-            IJsonDocument document = _workspace!.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false);
-        }
-
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex);
+        (int location, int length) = GetPair(index / DbRow.Size);
+        return _text.AsMemory(location, length);
     }
 
     /// <inheritdoc />
-    private protected override ReadOnlyMemory<byte> GetRawSimpleValueFromRowUnsafe(in DbRow row)
+    private protected override ReadOnlyMemory<byte> GetRawSimpleValueFromRowUnsafe(in DbRow row) => throw ConstructionOnly();
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Text emission core.
+    // ──────────────────────────────────────────────────────────────────────────
+    private int StoreLiteralText(ReadOnlySpan<byte> literal)
     {
-        Debug.Assert(row.IsSimpleValue);
+        CheckNotDisposed();
+        BeginValueToken(literal.Length);
+        int start = _textPos;
+        literal.CopyTo(_text.AsSpan(_textPos));
+        _textPos += literal.Length;
+        PushPair(start, literal.Length);
+        CompleteValueToken();
+        return start;
+    }
 
-        if (row.FromExternalDocument)
-        {
-            IJsonDocument document = _workspace!.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false);
-        }
+    private int StoreInt64Text(long value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatInt64Length);
+        int start = _textPos;
+        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
+    }
 
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex);
+    private int StoreUInt64Text(ulong value)
+    {
+        CheckNotDisposed();
+        BeginValueToken(JsonConstants.MaximumFormatUInt64Length);
+        int start = _textPos;
+        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        Debug.Assert(success);
+        _textPos += written;
+        PushPair(start, written);
+        CompleteValueToken();
+        return start;
     }
 
     /// <summary>
-    /// Makes a single linear pass over the construction metadata, writing the UTF-8 JSON text and the
-    /// parsed-format metadata rows together. This mirrors the row-emission conventions of the parse
-    /// loop (see <c>JsonDocumentBuilder.ParseTokens</c>), driven by the built rows instead of a reader.
+    /// Prepares to write a value token: ensures capacity for the content plus any separator, and
+    /// writes the list separator when this is a subsequent array item.
     /// </summary>
-    /// <param name="db">The output metadata database receiving parsed-format rows.</param>
-    /// <param name="text">The output UTF-8 text buffer; grown on demand.</param>
-    /// <returns>The number of bytes written to <paramref name="text"/>.</returns>
-    private int Flatten(ref MetadataDb db, ref byte[] text)
+    /// <param name="maxContentLength">The maximum content length about to be written.</param>
+    private void BeginValueToken(int maxContentLength)
     {
-        int metadataLength = _parsedData.Length;
-        int pos = 0;
+        EnsureText(_textPos + maxContentLength + 3);
 
-        bool inArray = false;
-        int arrayItemsOrPropertyCount = 0;
-        int numberOfRowsForMembers = 0;
-        int numberOfRowsForValues = 0;
+        if (_frameDepth > 0)
+        {
+            int frame = _frames![_frameDepth - 1];
+            if ((frame & IsObjectFlag) != 0)
+            {
+                Debug.Assert((frame & ExpectNameFlag) == 0, "value written in a property-name slot");
+            }
+            else if ((frame & HasChildrenFlag) != 0)
+            {
+                _text![_textPos++] = JsonConstants.ListSeparator;
+            }
+        }
+    }
 
-        // Frames of FrameInts ints: saved item/property count, saved row count (already including the
-        // parser's +1), the output db index of the matching Start row, and whether the enclosing
-        // container was an array.
-        int[] frames = ArrayPool<int>.Shared.Rent(FrameInts * 16);
-        int frameTop = 0;
+    /// <summary>
+    /// Marks the current value complete: the enclosing container has a child, and an enclosing
+    /// object next expects a property name.
+    /// </summary>
+    private void CompleteValueToken()
+    {
+        if (_frameDepth > 0)
+        {
+            ref int frame = ref _frames![_frameDepth - 1];
+            frame |= HasChildrenFlag;
+            if ((frame & IsObjectFlag) != 0)
+            {
+                frame |= ExpectNameFlag;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Prepares to write a property name token: ensures capacity, writes the list separator when
+    /// this is a subsequent member, and moves the frame into the value slot.
+    /// </summary>
+    /// <param name="maxContentLength">The maximum content length about to be written (including quotes).</param>
+    private void BeginNameToken(int maxContentLength)
+    {
+        EnsureText(_textPos + maxContentLength + 4);
+
+        ref int frame = ref _frames![_frameDepth - 1];
+        Debug.Assert((frame & (IsObjectFlag | ExpectNameFlag)) == (IsObjectFlag | ExpectNameFlag));
+
+        if ((frame & HasChildrenFlag) != 0)
+        {
+            _text![_textPos++] = JsonConstants.ListSeparator;
+        }
+
+        frame &= ~ExpectNameFlag;
+    }
+
+    /// <summary>
+    /// Prepares to write a string token, classifying it as a property name or a value from the
+    /// name/value alternation of the enclosing object frame.
+    /// </summary>
+    /// <param name="maxContentLength">The maximum content length about to be written.</param>
+    /// <returns><see langword="true"/> if the token is a property name.</returns>
+    private bool BeginStringToken(int maxContentLength)
+    {
+        if (NextIsPropertyName)
+        {
+            BeginNameToken(maxContentLength + 2);
+            return true;
+        }
+
+        BeginValueToken(maxContentLength + 2);
+        return false;
+    }
+
+    /// <summary>
+    /// Completes a string token: writes the closing quote, then the key/value separator for a
+    /// property name or the value-completion state transition for a value.
+    /// </summary>
+    /// <param name="contentStart">The text position of the first content byte.</param>
+    /// <param name="isName">Whether the token is a property name.</param>
+    private void CompleteStringToken(int contentStart, bool isName)
+    {
+        int length = _textPos - contentStart;
+        _text![_textPos++] = JsonConstants.Quote;
+
+        if (isName)
+        {
+            _text[_textPos++] = JsonConstants.KeyValueSeparator;
+        }
+        else
+        {
+            CompleteValueToken();
+        }
+
+        PushPair(contentStart, length);
+    }
+
+    private void WriteStartComplexCore(JsonTokenType tokenType)
+    {
+        BeginValueToken(1);
+        PushPair(_textPos, PairKeepSize);
+        _text![_textPos++] = tokenType == JsonTokenType.StartObject ? JsonConstants.OpenBrace : JsonConstants.OpenBracket;
+        PushFrame(tokenType == JsonTokenType.StartObject ? IsObjectFlag | ExpectNameFlag : 0);
+    }
+
+    private void WriteEndComplexCore(JsonTokenType tokenType)
+    {
+        EnsureText(_textPos + 1);
+        Debug.Assert(_frameDepth > 0);
+        _frameDepth--;
+        PushPair(_textPos, PairKeepSize);
+        _text![_textPos++] = tokenType == JsonTokenType.EndObject ? JsonConstants.CloseBrace : JsonConstants.CloseBracket;
+        CompleteValueToken();
+    }
+
+    /// <summary>
+    /// Resolves the external reference rows in <paramref name="scratch"/>: writes their content
+    /// into the text backing and appends fully-local, final rows to <paramref name="db"/>.
+    /// </summary>
+    /// <param name="scratch">The external reference rows produced by the source document.</param>
+    /// <param name="db">The metadata database under construction.</param>
+    private void WriteResolvedExternalRows(ref MetadataDb scratch, ref MetadataDb db)
+    {
+        JsonWorkspace workspace = _workspace!;
+
+        // Tracks the output db byte index of each open container so the end row can fix up
+        // NumberOfRows on both; reuses the frame machinery for separators and name slots.
+        int[]? startStack = ArrayPool<int>.Shared.Rent(JsonDocumentOptions.DefaultMaxDepth);
+        int stackDepth = 0;
 
         try
         {
-            for (int i = 0; i < metadataLength; i += DbRow.Size)
+            for (int i = 0; i < scratch.Length; i += DbRow.Size)
             {
-                DbRow row = _parsedData.Get(i);
-                JsonTokenType tokenType = row.TokenType;
+                DbRow row = scratch.Get(i);
 
-                switch (tokenType)
+                switch (row.TokenType)
                 {
                     case JsonTokenType.PropertyName:
-                    {
-                        Debug.Assert(!inArray);
-                        numberOfRowsForValues++;
-                        numberOfRowsForMembers++;
-
-                        ReadOnlySpan<byte> name = GetSimpleContent(in row);
-                        EnsureCapacity(pos + name.Length + 4, pos, ref text);
-
-                        if (arrayItemsOrPropertyCount > 0)
-                        {
-                            text[pos++] = JsonConstants.ListSeparator;
-                        }
-
-                        arrayItemsOrPropertyCount++;
-
-                        text[pos++] = JsonConstants.Quote;
-                        int location = pos;
-                        name.CopyTo(text.AsSpan(pos));
-                        pos += name.Length;
-                        text[pos++] = JsonConstants.Quote;
-                        text[pos++] = JsonConstants.KeyValueSeparator;
-
-                        db.AppendStringOrPropertyName(tokenType, location, name.Length, row.HasComplexChildren);
-                        break;
-                    }
-
                     case JsonTokenType.String:
                     {
-                        numberOfRowsForValues++;
-                        numberOfRowsForMembers++;
+                        IJsonDocument source = workspace.GetDocument(row.WorkspaceDocumentId);
+                        ReadOnlySpan<byte> content = source.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false).Span;
 
-                        ReadOnlySpan<byte> content = GetSimpleContent(in row);
-                        EnsureCapacity(pos + content.Length + 3, pos, ref text);
-
-                        if (inArray)
+                        bool isName = row.TokenType == JsonTokenType.PropertyName;
+                        if (isName)
                         {
-                            if (arrayItemsOrPropertyCount > 0)
-                            {
-                                text[pos++] = JsonConstants.ListSeparator;
-                            }
-
-                            arrayItemsOrPropertyCount++;
+                            BeginNameToken(content.Length + 2);
+                        }
+                        else
+                        {
+                            BeginValueToken(content.Length + 2);
                         }
 
-                        text[pos++] = JsonConstants.Quote;
-                        int location = pos;
-                        content.CopyTo(text.AsSpan(pos));
-                        pos += content.Length;
-                        text[pos++] = JsonConstants.Quote;
+                        _text![_textPos++] = JsonConstants.Quote;
+                        int start = _textPos;
+                        content.CopyTo(_text.AsSpan(_textPos));
+                        _textPos += content.Length;
+                        _text[_textPos++] = JsonConstants.Quote;
 
-                        db.AppendStringOrPropertyName(tokenType, location, content.Length, row.HasComplexChildren);
+                        if (isName)
+                        {
+                            _text[_textPos++] = JsonConstants.KeyValueSeparator;
+                        }
+                        else
+                        {
+                            CompleteValueToken();
+                        }
+
+                        db.AppendStringOrPropertyName(row.TokenType, start, content.Length, row.HasComplexChildren);
+                        PushPair(start, content.Length);
                         break;
                     }
 
                     case JsonTokenType.Number:
                     {
-                        numberOfRowsForValues++;
-                        numberOfRowsForMembers++;
+                        IJsonDocument source = workspace.GetDocument(row.WorkspaceDocumentId);
+                        ReadOnlySpan<byte> content = source.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false).Span;
 
-                        ReadOnlySpan<byte> content = GetSimpleContent(in row);
-                        EnsureCapacity(pos + content.Length + 1, pos, ref text);
+                        BeginValueToken(content.Length);
+                        int start = _textPos;
+                        content.CopyTo(_text.AsSpan(_textPos));
+                        _textPos += content.Length;
+                        CompleteValueToken();
 
-                        if (inArray)
-                        {
-                            if (arrayItemsOrPropertyCount > 0)
-                            {
-                                text[pos++] = JsonConstants.ListSeparator;
-                            }
-
-                            arrayItemsOrPropertyCount++;
-                        }
-
-                        int location = pos;
-                        content.CopyTo(text.AsSpan(pos));
-                        pos += content.Length;
-
-                        db.Append(tokenType, location, content.Length);
+                        db.Append(JsonTokenType.Number, start, content.Length);
+                        PushPair(start, content.Length);
                         break;
                     }
 
@@ -469,201 +1033,276 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
                     case JsonTokenType.False:
                     case JsonTokenType.Null:
                     {
-                        numberOfRowsForValues++;
-                        numberOfRowsForMembers++;
-
-                        ReadOnlySpan<byte> content = tokenType switch
+                        ReadOnlySpan<byte> literal = row.TokenType switch
                         {
                             JsonTokenType.True => JsonConstants.TrueValue,
                             JsonTokenType.False => JsonConstants.FalseValue,
                             _ => JsonConstants.NullValue,
                         };
 
-                        EnsureCapacity(pos + content.Length + 1, pos, ref text);
+                        BeginValueToken(literal.Length);
+                        int start = _textPos;
+                        literal.CopyTo(_text.AsSpan(_textPos));
+                        _textPos += literal.Length;
+                        CompleteValueToken();
 
-                        if (inArray)
-                        {
-                            if (arrayItemsOrPropertyCount > 0)
-                            {
-                                text[pos++] = JsonConstants.ListSeparator;
-                            }
-
-                            arrayItemsOrPropertyCount++;
-                        }
-
-                        int location = pos;
-                        content.CopyTo(text.AsSpan(pos));
-                        pos += content.Length;
-
-                        db.Append(tokenType, location, content.Length);
+                        db.Append(row.TokenType, start, literal.Length);
+                        PushPair(start, literal.Length);
                         break;
                     }
 
                     case JsonTokenType.StartObject:
                     case JsonTokenType.StartArray:
                     {
-                        bool isObject = tokenType == JsonTokenType.StartObject;
-
-                        EnsureCapacity(pos + 2, pos, ref text);
-
-                        if (inArray)
+                        if (stackDepth == startStack!.Length)
                         {
-                            if (arrayItemsOrPropertyCount > 0)
-                            {
-                                text[pos++] = JsonConstants.ListSeparator;
-                            }
-
-                            arrayItemsOrPropertyCount++;
+                            GrowIntArray(ref startStack, stackDepth);
                         }
 
-                        int savedRowCount;
-                        if (isObject)
-                        {
-                            numberOfRowsForValues++;
-                            savedRowCount = numberOfRowsForMembers + 1;
-                        }
-                        else
-                        {
-                            numberOfRowsForMembers++;
-                            savedRowCount = numberOfRowsForValues + 1;
-                        }
+                        BeginValueToken(1);
+                        int startRowIndex = db.Length;
+                        startStack![stackDepth++] = startRowIndex;
 
-                        int startIndex = db.Length;
-                        db.Append(tokenType, pos, DbRow.UnknownSize);
-                        text[pos++] = isObject ? JsonConstants.OpenBrace : JsonConstants.OpenBracket;
+                        PushPair(_textPos, PairKeepSize);
+                        db.Append(row.TokenType, _textPos, DbRow.UnknownSize);
+                        _text![_textPos++] = row.TokenType == JsonTokenType.StartObject ? JsonConstants.OpenBrace : JsonConstants.OpenBracket;
+                        PushFrame(row.TokenType == JsonTokenType.StartObject ? IsObjectFlag | ExpectNameFlag : 0);
 
-                        if (frameTop == frames.Length)
+                        db.SetLength(startRowIndex, row.SizeOrLengthOrPropertyMapIndex);
+                        if (row.HasComplexChildren)
                         {
-                            Enlarge(frameTop, ref frames);
+                            db.SetHasComplexChildren(startRowIndex);
                         }
 
-                        frames[frameTop] = arrayItemsOrPropertyCount;
-                        frames[frameTop + 1] = savedRowCount;
-                        frames[frameTop + 2] = startIndex;
-                        frames[frameTop + 3] = inArray ? 1 : 0;
-                        frameTop += FrameInts;
-
-                        arrayItemsOrPropertyCount = 0;
-                        if (isObject)
-                        {
-                            numberOfRowsForMembers = 0;
-                        }
-                        else
-                        {
-                            numberOfRowsForValues = 0;
-                        }
-
-                        inArray = !isObject;
                         break;
                     }
 
                     case JsonTokenType.EndObject:
                     case JsonTokenType.EndArray:
                     {
-                        bool isObject = tokenType == JsonTokenType.EndObject;
+                        Debug.Assert(stackDepth > 0);
+                        int startRowIndex = startStack![--stackDepth];
+                        int endRowIndex = db.Length;
 
-                        Debug.Assert(frameTop >= FrameInts);
-                        frameTop -= FrameInts;
-                        int savedCount = frames[frameTop];
-                        int savedRowCount = frames[frameTop + 1];
-                        int startRowIndex = frames[frameTop + 2];
-                        bool wasInArray = frames[frameTop + 3] != 0;
+                        EnsureText(_textPos + 1);
+                        Debug.Assert(_frameDepth > 0);
+                        _frameDepth--;
+                        PushPair(_textPos, PairKeepSize);
+                        db.Append(row.TokenType, _textPos, 1);
+                        _text![_textPos++] = row.TokenType == JsonTokenType.EndObject ? JsonConstants.CloseBrace : JsonConstants.CloseBracket;
+                        CompleteValueToken();
 
-                        numberOfRowsForValues++;
-                        numberOfRowsForMembers++;
-                        db.SetLength(startRowIndex, arrayItemsOrPropertyCount);
-
-                        EnsureCapacity(pos + 1, pos, ref text);
-
-                        if (isObject)
-                        {
-                            int newRowIndex = db.Length;
-                            db.Append(tokenType, pos, 1);
-                            text[pos++] = JsonConstants.CloseBrace;
-                            db.SetNumberOfRows(startRowIndex, numberOfRowsForMembers);
-                            db.SetNumberOfRows(newRowIndex, numberOfRowsForMembers);
-
-                            arrayItemsOrPropertyCount = savedCount;
-                            numberOfRowsForMembers += savedRowCount;
-                        }
-                        else
-                        {
-                            db.SetNumberOfRows(startRowIndex, numberOfRowsForValues);
-
-                            if ((uint)(arrayItemsOrPropertyCount + 1) != (uint)numberOfRowsForValues)
-                            {
-                                db.SetHasComplexChildren(startRowIndex);
-                            }
-
-                            int newRowIndex = db.Length;
-                            db.Append(tokenType, pos, 1);
-                            text[pos++] = JsonConstants.CloseBracket;
-                            db.SetNumberOfRows(newRowIndex, numberOfRowsForValues);
-
-                            arrayItemsOrPropertyCount = savedCount;
-                            numberOfRowsForValues += savedRowCount;
-                        }
-
-                        inArray = wasInArray;
+                        int numberOfRows = (endRowIndex - startRowIndex) / DbRow.Size;
+                        db.SetNumberOfRows(startRowIndex, numberOfRows);
+                        db.SetNumberOfRows(endRowIndex, numberOfRows);
                         break;
                     }
 
                     default:
                     {
-                        Debug.Fail($"Unexpected JsonTokenType {tokenType} in construction metadata");
+                        Debug.Fail($"Unexpected JsonTokenType {row.TokenType} in external element rows");
                         break;
                     }
                 }
             }
-
-            Debug.Assert(frameTop == 0, "Unbalanced container rows in construction metadata");
         }
         finally
         {
-            ArrayPool<int>.Shared.Return(frames);
+            ArrayPool<int>.Shared.Return(startStack!);
         }
-
-        return pos;
     }
 
     /// <summary>
-    /// Gets the content bytes for a simple value row. For strings and property names the content
-    /// excludes the surrounding quotes but retains its escaping, which is normalized for
-    /// <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/> by the store operations.
+    /// Rebuilds the text backing from the surviving rows after one or more removals, dropping the
+    /// stranded content and rewriting the structural bytes.
     /// </summary>
-    /// <param name="row">The row to read.</param>
-    /// <returns>The content bytes.</returns>
-    private ReadOnlySpan<byte> GetSimpleContent(in DbRow row)
+    private void Compact()
     {
-        if (row.FromExternalDocument)
+        byte[] oldText = _text!;
+        int oldPos = _textPos;
+
+        _text = ArrayPool<byte>.Shared.Rent(oldPos);
+        _textPos = 0;
+
+        Debug.Assert(_frameDepth == 0);
+
+        int metadataLength = _parsedData.Length;
+        for (int rowIndex = 0, pairIndex = 0; rowIndex < metadataLength; rowIndex += DbRow.Size, pairIndex++)
         {
-            IJsonDocument document = _workspace!.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false).Span;
+            JsonTokenType tokenType = _parsedData.GetJsonTokenType(rowIndex);
+            (int oldLocation, int length) = GetPair(pairIndex);
+
+            switch (tokenType)
+            {
+                case JsonTokenType.PropertyName:
+                {
+                    BeginNameToken(length + 2);
+                    _text![_textPos++] = JsonConstants.Quote;
+                    int start = _textPos;
+                    oldText.AsSpan(oldLocation, length).CopyTo(_text.AsSpan(_textPos));
+                    _textPos += length;
+                    _text[_textPos++] = JsonConstants.Quote;
+                    _text[_textPos++] = JsonConstants.KeyValueSeparator;
+                    SetPair(pairIndex, start, length);
+                    break;
+                }
+
+                case JsonTokenType.String:
+                {
+                    BeginValueToken(length + 2);
+                    _text![_textPos++] = JsonConstants.Quote;
+                    int start = _textPos;
+                    oldText.AsSpan(oldLocation, length).CopyTo(_text.AsSpan(_textPos));
+                    _textPos += length;
+                    _text[_textPos++] = JsonConstants.Quote;
+                    CompleteValueToken();
+                    SetPair(pairIndex, start, length);
+                    break;
+                }
+
+                case JsonTokenType.Number:
+                case JsonTokenType.True:
+                case JsonTokenType.False:
+                case JsonTokenType.Null:
+                {
+                    BeginValueToken(length);
+                    int start = _textPos;
+                    oldText.AsSpan(oldLocation, length).CopyTo(_text.AsSpan(_textPos));
+                    _textPos += length;
+                    CompleteValueToken();
+                    SetPair(pairIndex, start, length);
+                    break;
+                }
+
+                case JsonTokenType.StartObject:
+                case JsonTokenType.StartArray:
+                {
+                    BeginValueToken(1);
+                    SetPair(pairIndex, _textPos, PairKeepSize);
+                    _text![_textPos++] = tokenType == JsonTokenType.StartObject ? JsonConstants.OpenBrace : JsonConstants.OpenBracket;
+                    PushFrame(tokenType == JsonTokenType.StartObject ? IsObjectFlag | ExpectNameFlag : 0);
+                    break;
+                }
+
+                case JsonTokenType.EndObject:
+                case JsonTokenType.EndArray:
+                {
+                    EnsureText(_textPos + 1);
+                    Debug.Assert(_frameDepth > 0);
+                    _frameDepth--;
+                    SetPair(pairIndex, _textPos, PairKeepSize);
+                    _text![_textPos++] = tokenType == JsonTokenType.EndObject ? JsonConstants.CloseBrace : JsonConstants.CloseBracket;
+                    CompleteValueToken();
+                    break;
+                }
+
+                default:
+                {
+                    Debug.Fail($"Unexpected JsonTokenType {tokenType} in construction metadata");
+                    break;
+                }
+            }
         }
 
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex).Span;
+        Debug.Assert(_frameDepth == 0, "unbalanced container rows in construction metadata");
+
+        // The old buffer holds document content, so clear what was written before returning it.
+        oldText.AsSpan(0, oldPos).Clear();
+        ArrayPool<byte>.Shared.Return(oldText);
+        _dirty = false;
+    }
+
+    /// <summary>
+    /// Applies the side list to the metadata rows in place: every row receives its text location,
+    /// and simple-value rows receive their content length (string and property-name rows keep
+    /// their requires-unescaping flag; number rows are normalized to the parsed convention with
+    /// no flag). Container rows keep the counts the <see cref="ComplexValueBuilder"/> maintained.
+    /// </summary>
+    private void PatchRows()
+    {
+        int metadataLength = _parsedData.Length;
+        for (int rowIndex = 0, pairIndex = 0; rowIndex < metadataLength; rowIndex += DbRow.Size, pairIndex++)
+        {
+            (int location, int size) = GetPair(pairIndex);
+
+            _parsedData.SetRowLocation(rowIndex, location);
+
+            if (size != PairKeepSize)
+            {
+                DbRow row = _parsedData.Get(rowIndex);
+                _parsedData.SetLength(rowIndex, size);
+
+                if (row.HasComplexChildren &&
+                    (row.TokenType == JsonTokenType.String || row.TokenType == JsonTokenType.PropertyName))
+                {
+                    _parsedData.SetHasComplexChildren(rowIndex);
+                }
+            }
+        }
+    }
+
+    private void PushFrame(int frame)
+    {
+        if (_frameDepth == _frames!.Length)
+        {
+            GrowIntArray(ref _frames, _frameDepth);
+        }
+
+        _frames![_frameDepth++] = frame;
+    }
+
+    private void PushPair(int location, int size)
+    {
+        if ((_pairCount * 2) + 2 > _pairs!.Length)
+        {
+            GrowIntArray(ref _pairs, _pairCount * 2);
+        }
+
+        _pairs![_pairCount * 2] = location;
+        _pairs[(_pairCount * 2) + 1] = size;
+        _pairCount++;
+    }
+
+    private static void GrowIntArray(ref int[]? array, int copyCount)
+    {
+        int[] toReturn = array!;
+        array = ArrayPool<int>.Shared.Rent(toReturn.Length * 2);
+        toReturn.AsSpan(0, copyCount).CopyTo(array);
+        ArrayPool<int>.Shared.Return(toReturn);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private (int Location, int Size) GetPair(int pairIndex)
+    {
+        Debug.Assert(pairIndex < _pairCount);
+        return (_pairs![pairIndex * 2], _pairs[(pairIndex * 2) + 1]);
+    }
+
+    private void SetPair(int pairIndex, int location, int size)
+    {
+        Debug.Assert(pairIndex < _pairCount);
+        _pairs![pairIndex * 2] = location;
+        _pairs[(pairIndex * 2) + 1] = size;
     }
 
     /// <summary>
     /// Ensures the text buffer can hold at least <paramref name="required"/> bytes, growing it in a
-    /// single step and preserving the <paramref name="written"/> bytes already produced.
+    /// single step and preserving the bytes already produced.
     /// </summary>
     /// <param name="required">The required capacity in bytes.</param>
-    /// <param name="written">The number of bytes already written to the buffer.</param>
-    /// <param name="text">The buffer to grow.</param>
-    private static void EnsureCapacity(int required, int written, ref byte[] text)
+    private void EnsureText(int required)
     {
-        if ((uint)text.Length >= (uint)required)
+        if ((uint)_text!.Length >= (uint)required)
         {
             return;
         }
 
-        byte[] toReturn = text;
-        text = ArrayPool<byte>.Shared.Rent(Math.Max(toReturn.Length * 2, required));
-        toReturn.AsSpan(0, written).CopyTo(text);
+        byte[] toReturn = _text;
+        _text = ArrayPool<byte>.Shared.Rent(Math.Max(toReturn.Length * 2, required));
+        toReturn.AsSpan(0, _textPos).CopyTo(_text);
 
         // The buffer holds document content, so clear it before returning it to the pool.
-        toReturn.AsSpan(0, written).Clear();
+        toReturn.AsSpan(0, _textPos).Clear();
         ArrayPool<byte>.Shared.Return(toReturn);
     }
 
