@@ -24,6 +24,22 @@ public static class DemoData
     private static readonly CatalogOwner OnboardingOwner = new("Onboarding Team", "onboarding@example.com", "Identity", "https://runbooks.example.com/onboard");
     private static readonly CatalogOwner ReconcileOwner = new("Reconciliation Team", "reconcile@example.com", "Platform", "https://runbooks.example.com/nightly-reconcile");
 
+    /// <summary>The reserved issuer id (<c>sys:iss</c>, §16.5.5) stamped on every Keycloak identity in this deployment, so
+    /// its identities are disjoint from any other provider's AND set-equal the grantee-directory adapter's resolved grants
+    /// (the adapter always stamps <c>sys:iss</c>). The runtime internal-tag resolver (Program.cs), the seeded admin
+    /// identities (here + ExampleSeed), the observed-store seed, and the directory options all read THIS constant — one
+    /// source of truth, so an administrator match holds across the live caller, the seed, and a directory pick.</summary>
+    public const string KeycloakIssuer = "arazzo-keycloak";
+
+    /// <summary>The reserved <c>sys:iss</c> issuer tag for this deployment (<see cref="KeycloakIssuer"/>).</summary>
+    public static SecurityTag IssuerTag => new(SecurityShell.DefaultInternalPrefix + "iss", KeycloakIssuer);
+
+    /// <summary>A Keycloak group identity aligned with the runtime stamper: <c>{sys:group=&lt;group&gt;, sys:iss}</c> — the
+    /// shape the live <c>internalTagResolver</c> resolves a single-group caller to, so a seeded or directory-resolved grant
+    /// on it set-equals that caller (<see cref="WorkflowIdentity.SameAdministrator"/>).</summary>
+    public static SecurityTagSet GroupIdentity(string group)
+        => SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", group), IssuerTag]);
+
     /// <summary>Builds the live <see cref="WorkflowResumer"/> that re-enters a run's compiled executor (§5/§8): it
     /// resolves the run's catalogued executor through the loader and runs it against transports that call this host's
     /// own /svc backends. <paramref name="baseUrlProvider"/> yields the host's base URL once it has started listening
@@ -243,7 +259,7 @@ public static class DemoData
         // Version 1's submitter identity establishes the workflow's §15 administrator set (design §15) — here the
         // arazzo-admins group, so any arazzo-admins member may approve access requests for these workflows (and the
         // grant's reach matches because the catalog stamps each version with its sys:workflow tag).
-        SecurityTagSet adminFounder = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins")]);
+        SecurityTagSet adminFounder = GroupIdentity("arazzo-admins");
         await catalog.AddAsync(onboarding, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
 
         // onboard-customer v2: the resilient revision that routes a failed identity check to applicant notification

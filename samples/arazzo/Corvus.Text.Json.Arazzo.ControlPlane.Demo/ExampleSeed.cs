@@ -131,8 +131,7 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // Environment administrators (§7.7): the arazzo-admins group administers every environment — the key unblock so
         // an administrator can manage grants, promotions, and availability per environment (without this, no interactive
         // administrator exists for the governance surfaces). The identity is the resolved sys:group=arazzo-admins tag.
-        SecurityTagSet adminGroup = SecurityTagSet.FromTags(
-            [new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins")]);
+        SecurityTagSet adminGroup = DemoData.GroupIdentity("arazzo-admins");
         var administration = new SecuredEnvironmentAdministration(context.EnvironmentAdministrators, "demo");
         foreach (string environmentName in new[] { "development", "staging", "production" })
         {
