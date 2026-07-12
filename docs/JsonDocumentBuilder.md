@@ -370,6 +370,17 @@ Under the covers the document text and its parsed metadata are written **once, d
 
 `Create()` exists on generated types only (it is emitted by the code generator); dynamic documents built through `JsonElement` continue to use the workspace patterns above. See the [Data Object recipe](../ExampleRecipes/001-DataObject/) for a worked example, and note the result is `IDisposable` — it owns pooled memory, exactly like a parsed document.
 
+### The cost compared with serialize-and-reparse
+
+The `BenchmarkCreateParsedDocument` benchmark measures both routes to the same `ParsedJsonDocument<T>` — a small four-property document with a nested object and two arrays. The baseline is the builder round trip with everything rented (`CreateBuilder` → `RentWriterAndBuffer` → `WriteTo` → `Parse`); `Create()` builds the identical document from the identical build delegate. On a quiet 13th-gen i7 laptop running .NET 10:
+
+| Method                        | Mean       | Ratio | Allocated | Alloc Ratio |
+|------------------------------ |-----------:|------:|----------:|------------:|
+| `ViaBuilderSerializeAndParse` | 1,227.1 ns |  1.00 |     288 B |        1.00 |
+| `ViaCreate`                   |   669.4 ns |  0.55 |     152 B |        0.53 |
+
+The round trip pays three passes over the content — build the mutable document's value store, serialize it, then parse the bytes back into a second metadata table — where `Create()` pays one: the document text and its metadata are written together as the values are added. The allocation difference is exactly the two objects involved: `Create()`'s 152 B is the returned `ParsedJsonDocument<T>` instance itself (the product), while the round trip also allocates a `JsonDocumentBuilder` per call, which the pooled builder behind `Create()` eliminates. Run it yourself from `benchmarks/Corvus.Text.Json.Benchmarks` with `dotnet run -c Release -f net10.0 -- --filter '*BenchmarkCreateParsedDocument*'`.
+
 ## Working with Existing JSON
 
 In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.
