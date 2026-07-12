@@ -1523,8 +1523,12 @@
 
     async function advanceDebugRun(command) {
       if (!shell.debugRun) return;
-      // A finished run cannot be resumed — do not fire the request just to surface "The debug run is completed".
-      if (['completed', 'faulted', 'cancelled'].includes(shell.debugRun.status)) {
+      // completed/cancelled are terminal. A FAULTED run IS resumable — but only through a remediation action
+      // (Retry/Skip/Rewind/StatePatch, e.g. the ↻ Retry button); a plain step/continue on a fault would just re-fault,
+      // so guard against that but let the remediation through (the server allows resuming a faulted run).
+      const terminal = ['completed', 'cancelled'].includes(shell.debugRun.status);
+      const faultedWithoutRemediation = shell.debugRun.status === 'faulted' && !command.action;
+      if (terminal || faultedWithoutRemediation) {
         showToast(`The debug run has ${shell.debugRun.status}. Press ■ Stop to start a new one.`, 'info');
         return;
       }

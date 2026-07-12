@@ -5,7 +5,9 @@ import { test, expect } from '@playwright/test';
 
 test('demo loads cleanly, lists runs, and opens the resume dialog for a faulted run', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -66,7 +68,9 @@ test('the time-window filter narrows the list', async ({ page }) => {
 
 test('the Catalog tab lists versions and opens a version detail with downloads', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -90,7 +94,9 @@ test('the Catalog tab lists versions and opens a version detail with downloads',
 
 test('the Runners tab shows the registered execution hosts and their health', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -111,7 +117,9 @@ test('the Runners tab shows the registered execution hosts and their health', as
 
 test('the Catalog detail shows the promotion matrix and makes a version available', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -135,7 +143,9 @@ test('the Catalog detail shows the promotion matrix and makes a version availabl
 
 test('the persona toggle gates promotion: Operator must request, Administrator makes directly', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -172,7 +182,9 @@ test('the persona toggle gates promotion: Operator must request, Administrator m
 
 test('the Catalog Add wizard reuses a registered source and versions the workflow', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -218,7 +230,9 @@ test('the Catalog Add wizard reuses a registered source and versions the workflo
 
 test('the Environments tab lists environments and opens one to administer it', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -264,7 +278,9 @@ test('Grants and Rules live on the Permissions tab; Access holds the request inb
 
 test('the Promotions tab shows the requester’s own promotion requests and the approver inbox', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -289,7 +305,9 @@ test('the Promotions tab shows the requester’s own promotion requests and the 
 
 test('the Runner auth tab opens the approver inbox of runners awaiting authorization (§5.5)', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -331,7 +349,9 @@ test('an operation dropped onto the designer starts templated from its documente
 
 test('§18 debug run: starting against a dev environment pumps get-debug-run to a paused state (R5 async)', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/designer.html');
@@ -348,17 +368,21 @@ test('§18 debug run: starting against a dev environment pumps get-debug-run to 
   await dlg.locator('.ri-run').click();
 
   // §18 R5: the control plane MARKS the run and returns un-advanced; the dock must PUMP get-debug-run until a runner
-  // advances it. So the dock first shows "waiting for runner…", then settles at paused-after-step-1 — proving the
-  // browser poll loop drives progress rather than trusting the (now un-advanced) enqueue response.
+  // advances it. So the dock first shows "waiting for runner…", then settles at the run's natural stop — proving the
+  // browser poll loop drives progress rather than trusting the (now un-advanced) enqueue response. ▶ Run (no
+  // breakpoints) runs to the end or the first durable wait; this workflow's await-confirmation is an AsyncAPI receive,
+  // so with no message injected the run settles at SUSPENDED (a debug run that single-steps is ⏭ Step, not ▶ Run).
   await expect(page.locator('#debug-dock')).toBeVisible();
-  await expect(page.locator('#save-status')).toHaveText(/debug run paused in development/i, { timeout: 5000 });
+  await expect(page.locator('#save-status')).toHaveText(/debug run suspended in development/i, { timeout: 5000 });
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
 test('§18 debug run: a transient fault surfaces ↻ Retry, which recovers the run (R-UI-3b)', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/designer.html');
@@ -387,7 +411,9 @@ test('§18 debug run: a transient fault surfaces ↻ Retry, which recovers the r
 
 test('§18 debug run: the ⚕ Remediate menu resolves working-copy steps and clears the fault (R-UI-3b2)', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/designer.html');
