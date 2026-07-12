@@ -285,7 +285,7 @@ public sealed class CosmosAvailabilityStore : IAvailabilityStore, IAsyncDisposab
 
         // Cosmos has NO bounded server-side COUNT (a bare COUNT ignores the outer LIMIT; COUNT over a LIMIT/TOP subquery is
         // rejected), so project only c.id under the same WHERE with OFFSET 0 LIMIT cap+1 and count the ids client-side.
-        var query = new QueryDefinition("SELECT c.id FROM c WHERE c.baseWorkflowId = @b AND c.versionNumber = @v OFFSET 0 LIMIT @lim")
+        var query = new QueryDefinition("SELECT c.id AS doc FROM c WHERE c.baseWorkflowId = @b AND c.versionNumber = @v ORDER BY c.environment OFFSET 0 LIMIT @lim")
             .WithParameter("@b", baseWorkflowId)
             .WithParameter("@v", versionNumber)
             .WithParameter("@lim", bound + 1);
@@ -305,7 +305,7 @@ public sealed class CosmosAvailabilityStore : IAvailabilityStore, IAsyncDisposab
         ArgumentException.ThrowIfNullOrEmpty(environment);
         int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
 
-        var query = new QueryDefinition("SELECT c.id FROM c WHERE c.environment = @e OFFSET 0 LIMIT @lim")
+        var query = new QueryDefinition("SELECT c.id AS doc FROM c WHERE c.environment = @e ORDER BY c.sortKey OFFSET 0 LIMIT @lim")
             .WithParameter("@e", environment)
             .WithParameter("@lim", bound + 1);
         int total = 0;
