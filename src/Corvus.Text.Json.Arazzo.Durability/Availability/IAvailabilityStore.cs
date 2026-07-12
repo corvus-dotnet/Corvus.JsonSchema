@@ -70,4 +70,39 @@ public interface IAvailabilityStore
     /// <returns>The page (entries + an optional next-page token), as a disposable batch the caller must dispose.</returns>
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
     ValueTask<AvailabilityPage> ListByEnvironmentAsync(string environment, int limit, JsonString pageToken, CancellationToken cancellationToken);
+
+    /// <summary>Counts the environments a version is available in (the by-version axis), bounded by <paramref name="cap"/>:
+    /// the total behind that list's footer, without returning any entry rows.</summary>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The 1-based version number.</param>
+    /// <param name="cap">The inclusive upper bound on the reported count; once <paramref name="cap"/> matching entries have been seen the count saturates and <c>Capped</c> is <see langword="true"/> (a non-positive value uses the store's default page size as the cap).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count and whether it was capped (the true total meets or exceeds <paramref name="cap"/>).</returns>
+    /// <remarks>The default counts a single bounded page of <paramref name="cap"/> + 1 over
+    /// <see cref="ListByVersionAsync"/>; a backend overrides it with a native bounded <c>COUNT</c> so no entry rows are parsed.</remarks>
+    async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+        using AvailabilityPage page = await this.ListByVersionAsync(baseWorkflowId, versionNumber, bound + 1, default, cancellationToken).ConfigureAwait(false);
+        int n = page.Entries.Count;
+        return n > bound ? (bound, true) : (n, false);
+    }
+
+    /// <summary>Counts the (workflow, version) pairs available in an environment (the by-environment axis), bounded by
+    /// <paramref name="cap"/>: the total behind that list's footer, without returning any entry rows.</summary>
+    /// <param name="environment">The deployment environment.</param>
+    /// <param name="cap">The inclusive upper bound on the reported count; once <paramref name="cap"/> matching entries have been seen the count saturates and <c>Capped</c> is <see langword="true"/> (a non-positive value uses the store's default page size as the cap).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count and whether it was capped (the true total meets or exceeds <paramref name="cap"/>).</returns>
+    /// <remarks>The default counts a single bounded page of <paramref name="cap"/> + 1 over
+    /// <see cref="ListByEnvironmentAsync"/>; a backend overrides it with a native bounded <c>COUNT</c> so no entry rows are parsed.</remarks>
+    async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+        using AvailabilityPage page = await this.ListByEnvironmentAsync(environment, bound + 1, default, cancellationToken).ConfigureAwait(false);
+        int n = page.Entries.Count;
+        return n > bound ? (bound, true) : (n, false);
+    }
 }

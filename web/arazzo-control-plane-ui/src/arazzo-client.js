@@ -493,6 +493,20 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countVersionAvailability` — the bounded count of environments this version is available in (§7.8), for a footer or
+   * badge; no rows are fetched. Visible to a caller who can read the version (`404` otherwise). `capped: true` once the
+   * true total meets or exceeds the server cap.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countVersionAvailability(baseWorkflowId, versionNumber, query = {}) {
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/availability/count`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `makeVersionAvailable` — make this workflow version available in an environment (§7.8 promotion, idempotent). The
    * caller must administer the environment (`403`); readiness-gated — every source the version references must have a
    * usable credential in the environment (`409`). Returns the {@link AvailabilityEntry} (`201` created, `200` if it
@@ -875,6 +889,20 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `${this._environmentPath(name)}/availability${qs(search)}`, { signal: query.signal });
     return { availability: result.availability ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countEnvironmentAvailability` — the bounded count of workflow versions available in this environment (§7.8), for a
+   * footer or badge; no rows are fetched. Visible to a caller whose reach admits the environment (`404` otherwise).
+   * `capped: true` once the true total meets or exceeds the server cap.
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countEnvironmentAvailability(name, query = {}) {
+    if (!name) throw new TypeError('countEnvironmentAvailability requires a name.');
+    const result = await this._request('GET', `${this._environmentPath(name)}/availability/count`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /** @private */

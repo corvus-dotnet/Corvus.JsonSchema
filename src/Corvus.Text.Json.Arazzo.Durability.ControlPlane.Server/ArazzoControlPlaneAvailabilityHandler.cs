@@ -30,6 +30,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
+    private const int CountCap = 100;
 
     private readonly IAvailabilityStore availability;
     private readonly IEnvironmentStore environments;
@@ -135,6 +136,45 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
             availability: Models.AvailabilityList.AvailabilityEntryArray.Build(in envEntries, BuildEntries),
             nextPageToken: envNextToken.IsEmpty ? default : (Models.JsonString.Source)envNextToken.Span);
         return ListEnvironmentAvailabilityResult.Ok(envBody, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountVersionAvailabilityResult> HandleCountVersionAvailabilityAsync(CountVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+
+        // Same visibility gate as HandleListVersionAvailabilityAsync (readable by anyone who can read the version, 404
+        // otherwise), minus paging — the store returns only a bounded total (§7.8 footer), never entry rows.
+        using (ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false))
+        {
+            if (version is null)
+            {
+                return CountVersionAvailabilityResult.NotFound(VersionNotFoundProblem(baseWorkflowId, versionNumber), workspace);
+            }
+        }
+
+        (int count, bool capped) = await this.availability.CountByVersionAsync(baseWorkflowId, versionNumber, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountVersionAvailabilityResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountEnvironmentAvailabilityResult> HandleCountEnvironmentAvailabilityAsync(CountEnvironmentAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string environment = (string)parameters.Name;
+
+        // Same visibility gate as HandleListEnvironmentAvailabilityAsync (readable by anyone whose reach admits the
+        // environment, 404 otherwise), minus paging — the store returns only a bounded total, never entry rows.
+        using (ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false))
+        {
+            if (environmentDoc is null)
+            {
+                return CountEnvironmentAvailabilityResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+            }
+        }
+
+        (int count, bool capped) = await this.availability.CountByEnvironmentAsync(environment, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountEnvironmentAvailabilityResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>

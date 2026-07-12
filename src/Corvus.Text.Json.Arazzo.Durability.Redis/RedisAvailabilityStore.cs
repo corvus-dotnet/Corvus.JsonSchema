@@ -173,6 +173,32 @@ public sealed class RedisAvailabilityStore : IAvailabilityStore, IAsyncDisposabl
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        cancellationToken.ThrowIfCancellationRequested();
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        // The index holds key tuples only (no entry bodies), so counting reuses the exact list predicate over the index —
+        // no Document is read. Bounded: the reported count saturates at cap.
+        List<(string BaseWorkflowId, int VersionNumber, string Environment)> rows = await this.LoadIndexAsync(
+            key => string.Equals(key.BaseWorkflowId, baseWorkflowId, StringComparison.Ordinal) && key.VersionNumber == versionNumber).ConfigureAwait(false);
+        return rows.Count > bound ? (bound, true) : (rows.Count, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        cancellationToken.ThrowIfCancellationRequested();
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        List<(string BaseWorkflowId, int VersionNumber, string Environment)> rows = await this.LoadIndexAsync(
+            key => string.Equals(key.Environment, environment, StringComparison.Ordinal)).ConfigureAwait(false);
+        return rows.Count > bound ? (bound, true) : (rows.Count, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.ownsConnection)

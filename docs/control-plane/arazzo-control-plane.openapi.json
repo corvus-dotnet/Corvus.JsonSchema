@@ -853,6 +853,27 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/count": {
+      "get": {
+        "operationId": "countVersionAvailability",
+        "security": [
+          { "oauth2": ["availability:read"] },
+          { "openIdConnect": ["availability:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "Count the environments a workflow version is available in",
+        "description": "Counts the environments this version has been made available in (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller who can read the workflow version (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of environments the version is available in.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/{environment}": {
       "put": {
         "operationId": "makeVersionAvailable",
@@ -3072,6 +3093,26 @@
         ],
         "responses": {
           "200": { "description": "The availability entries.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityList" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/environments/{name}/availability/count": {
+      "get": {
+        "operationId": "countEnvironmentAvailability",
+        "security": [
+          { "oauth2": ["availability:read"] },
+          { "openIdConnect": ["availability:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "Count the workflow versions available in an environment",
+        "description": "Counts the (workflow, version) pairs made available in this environment (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller whose reach admits the environment (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of versions available in the environment.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
