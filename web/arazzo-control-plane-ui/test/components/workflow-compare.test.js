@@ -103,4 +103,56 @@ describe('<arazzo-workflow-compare>', () => {
     ok(el.shadowRoot.querySelector('.hl').hidden, 'no Highlight toggle without diff');
     ok(!surface('left').shadowRoot.querySelector('svg').classList.contains('diffing'), 'no overlay');
   });
+
+  it('the change list groups entries; clicking a changed step selects it on both sides', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    open(l, r);
+    ok(el.shadowRoot.querySelector('.cl-title').textContent.startsWith('Changes ('));
+    ok([...el.shadowRoot.querySelectorAll('.cl-group')].some((g) => g.textContent === 'Steps'), 'a Steps group');
+    const item = [...el.shadowRoot.querySelectorAll('.cl-item')].find((b) => b.textContent.trim().startsWith('Δ a'));
+    ok(item, 'the changed step is listed');
+    item.click();
+    equal(surface('left').selection?.id, 'a', 'selected on the left');
+    equal(surface('right').selection?.id, 'a', 'selected on the right');
+    ok(item.classList.contains('current'), 'the clicked entry is marked current');
+  });
+
+  it('an added step selects on the right only; a removed step on the left only', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps.push({ stepId: 'd', operationId: 'op.d' });
+    open(l, r);
+    const added = [...el.shadowRoot.querySelectorAll('.cl-item')].find((b) => b.textContent.trim() === '+ d');
+    ok(added, 'the added step is listed');
+    added.click();
+    equal(surface('right').selection?.id, 'd');
+    equal(surface('left').selection, null, 'the left has no added node to select');
+  });
+
+  it('Prev / Next cycle through the entries and wrap deterministically', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    r.workflows[0].steps[2].successCriteria = [{ condition: '$statusCode == 200' }];
+    open(l, r);
+    const n = el.shadowRoot.querySelectorAll('.cl-item').length;
+    ok(n >= 2, 'several entries');
+    const next = el.shadowRoot.querySelector('.cl-next');
+    next.click();
+    const first = el.shadowRoot.querySelector('.cl-item.current');
+    ok(first, 'Next selects the first entry');
+    for (let i = 0; i < n; i++) next.click(); // a full cycle returns to the same entry
+    ok(el.shadowRoot.querySelector('.cl-item.current') === first, 'wraps around to the same entry');
+  });
+
+  it('the change list collapses', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    open(l, r);
+    el.shadowRoot.querySelector('.cl-collapse').click();
+    ok(el.shadowRoot.querySelector('.grid').classList.contains('cl-collapsed'));
+  });
 });

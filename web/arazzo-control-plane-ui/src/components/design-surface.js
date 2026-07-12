@@ -29,7 +29,8 @@
 //              delete-requested {selection},
 //              edge-retargeted {id, actionName, from, kind, to} (the selected action edge's
 //              arrowhead dragged onto another node/the end terminal — the host rewrites the action)
-// Methods    : fit() — zoom/centre the whole graph into view.
+// Methods    : fit() — zoom/centre the whole graph into view; centerOn(id) — pan (at the current
+//              zoom) so a node/edge sits at the viewport centre.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { layoutGraph, NODE_WIDTH, NODE_HEIGHT } from '../workflow-layout.js';
@@ -146,6 +147,33 @@ class ArazzoDesignSurface extends ArazzoElement {
     const k = Math.min(box.width / (maxX - minX), box.height / (maxY - minY), 1.5);
     this._view = { k, tx: -minX * k + (box.width - (maxX - minX) * k) / 2, ty: -minY * k + (box.height - (maxY - minY) * k) / 2 };
     this._applyView();
+  }
+
+  /** Pan (at the CURRENT zoom) so a node's card centre — or an edge's midpoint — sits at the viewport
+   *  centre. Generic and diff-agnostic (the compare change-list uses it; the debugger could too). Silent,
+   *  like fit() (no view-changed event). No-op for an id with no rendered geometry. */
+  centerOn(id) {
+    const svg = this.$('svg');
+    if (!svg) return;
+    const box = svg.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const p = this._worldPointOf(id);
+    if (!p) return;
+    const k = this._view.k;
+    this._view = { k, tx: box.width / 2 - p.x * k, ty: box.height / 2 - p.y * k };
+    this._applyView();
+  }
+
+  /** @private — the world point to centre for an id: a node's card centre, an edge's midpoint, or an
+   *  exit-chip. null for ids with no canvas geometry (the defaults card / non-canvas workflow surfaces). */
+  _worldPointOf(id) {
+    const pos = this._positions[id];
+    if (pos) return { x: pos.x + NODE_WIDTH / 2, y: pos.y + NODE_HEIGHT / 2 };
+    const edge = this._graph?.edges.find((e) => e.id === id);
+    if (edge) return this._edgeMid(edge);
+    const exit = this._exitPositions?.[id];
+    if (exit) return { x: exit.x, y: exit.y };
+    return null;
   }
 
   // ── Layout ────────────────────────────────────────────────────────────────────────────────────
