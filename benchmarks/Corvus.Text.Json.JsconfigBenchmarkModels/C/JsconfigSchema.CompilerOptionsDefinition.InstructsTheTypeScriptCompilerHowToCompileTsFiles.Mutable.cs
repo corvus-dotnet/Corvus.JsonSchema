@@ -9510,6 +9510,360 @@ public readonly partial struct JsconfigSchema
             {
                 return workspace.CreateBuilder<InstructsTheTypeScriptCompilerHowToCompileTsFiles, Mutable>(this);
             }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="allowArbitraryExtensions">The value of the property.</param>
+            /// <param name="allowImportingTsExtensions">The value of the property.</param>
+            /// <param name="allowJs">The value of the property.</param>
+            /// <param name="allowSyntheticDefaultImports">The value of the property.</param>
+            /// <param name="allowUmdGlobalAccess">The value of the property.</param>
+            /// <param name="allowUnreachableCode">The value of the property.</param>
+            /// <param name="allowUnusedLabels">The value of the property.</param>
+            /// <param name="alwaysStrict">The value of the property.</param>
+            /// <param name="assumeChangesOnlyAffectDirectDependencies">The value of the property.</param>
+            /// <param name="baseUrl">The value of the property.</param>
+            /// <param name="charset">The value of the property.</param>
+            /// <param name="checkJs">The value of the property.</param>
+            /// <param name="composite">The value of the property.</param>
+            /// <param name="customConditions">The value of the property.</param>
+            /// <param name="declaration">The value of the property.</param>
+            /// <param name="declarationDir">The value of the property.</param>
+            /// <param name="declarationMap">The value of the property.</param>
+            /// <param name="diagnostics">The value of the property.</param>
+            /// <param name="disableReferencedProjectLoad">The value of the property.</param>
+            /// <param name="disableSizeLimit">The value of the property.</param>
+            /// <param name="disableSolutionSearching">The value of the property.</param>
+            /// <param name="disableSourceOfProjectReferenceRedirect">The value of the property.</param>
+            /// <param name="downlevelIteration">The value of the property.</param>
+            /// <param name="emitBom">The value of the property.</param>
+            /// <param name="emitDeclarationOnly">The value of the property.</param>
+            /// <param name="emitDecoratorMetadata">The value of the property.</param>
+            /// <param name="esModuleInterop">The value of the property.</param>
+            /// <param name="exactOptionalPropertyTypes">The value of the property.</param>
+            /// <param name="experimentalDecorators">The value of the property.</param>
+            /// <param name="extendedDiagnostics">The value of the property.</param>
+            /// <param name="fallbackPolling">The value of the property.</param>
+            /// <param name="forceConsistentCasingInFileNames">The value of the property.</param>
+            /// <param name="generateCpuProfile">The value of the property.</param>
+            /// <param name="importHelpers">The value of the property.</param>
+            /// <param name="importsNotUsedAsValues">The value of the property.</param>
+            /// <param name="incremental">The value of the property.</param>
+            /// <param name="inlineSourceMap">The value of the property.</param>
+            /// <param name="inlineSources">The value of the property.</param>
+            /// <param name="isolatedModules">The value of the property.</param>
+            /// <param name="jsx">The value of the property.</param>
+            /// <param name="jsxFactory">The value of the property.</param>
+            /// <param name="jsxFragmentFactory">The value of the property.</param>
+            /// <param name="jsxImportSource">The value of the property.</param>
+            /// <param name="keyofStringsOnly">The value of the property.</param>
+            /// <param name="lib">The value of the property.</param>
+            /// <param name="listEmittedFiles">The value of the property.</param>
+            /// <param name="listFiles">The value of the property.</param>
+            /// <param name="listFilesOnly">The value of the property.</param>
+            /// <param name="mapRoot">The value of the property.</param>
+            /// <param name="maxNodeModuleJsDepth">The value of the property.</param>
+            /// <param name="module">The value of the property.</param>
+            /// <param name="moduleResolution">The value of the property.</param>
+            /// <param name="newLine">The value of the property.</param>
+            /// <param name="noEmit">The value of the property.</param>
+            /// <param name="noEmitHelpers">The value of the property.</param>
+            /// <param name="noEmitOnError">The value of the property.</param>
+            /// <param name="noErrorTruncation">The value of the property.</param>
+            /// <param name="noFallthroughCasesInSwitch">The value of the property.</param>
+            /// <param name="noImplicitAny">The value of the property.</param>
+            /// <param name="noImplicitOverride">The value of the property.</param>
+            /// <param name="noImplicitReturns">The value of the property.</param>
+            /// <param name="noImplicitThis">The value of the property.</param>
+            /// <param name="noImplicitUseStrict">The value of the property.</param>
+            /// <param name="noLib">The value of the property.</param>
+            /// <param name="noPropertyAccessFromIndexSignature">The value of the property.</param>
+            /// <param name="noResolve">The value of the property.</param>
+            /// <param name="noStrictGenericChecks">The value of the property.</param>
+            /// <param name="noUncheckedIndexedAccess">The value of the property.</param>
+            /// <param name="noUnusedLocals">The value of the property.</param>
+            /// <param name="noUnusedParameters">The value of the property.</param>
+            /// <param name="outDir">The value of the property.</param>
+            /// <param name="outFile">The value of the property.</param>
+            /// <param name="paths">The value of the property.</param>
+            /// <param name="plugins">The value of the property.</param>
+            /// <param name="preserveConstEnums">The value of the property.</param>
+            /// <param name="preserveSymlinks">The value of the property.</param>
+            /// <param name="preserveValueImports">The value of the property.</param>
+            /// <param name="preserveWatchOutput">The value of the property.</param>
+            /// <param name="pretty">The value of the property.</param>
+            /// <param name="reactNamespace">The value of the property.</param>
+            /// <param name="removeComments">The value of the property.</param>
+            /// <param name="resolveJsonModule">The value of the property.</param>
+            /// <param name="resolvePackageJsonExports">The value of the property.</param>
+            /// <param name="resolvePackageJsonImports">The value of the property.</param>
+            /// <param name="rootDir">The value of the property.</param>
+            /// <param name="rootDirs">The value of the property.</param>
+            /// <param name="skipDefaultLibCheck">The value of the property.</param>
+            /// <param name="skipLibCheck">The value of the property.</param>
+            /// <param name="sourceMap">The value of the property.</param>
+            /// <param name="sourceRoot">The value of the property.</param>
+            /// <param name="strict">The value of the property.</param>
+            /// <param name="strictBindCallApply">The value of the property.</param>
+            /// <param name="strictFunctionTypes">The value of the property.</param>
+            /// <param name="strictNullChecks">The value of the property.</param>
+            /// <param name="strictPropertyInitialization">The value of the property.</param>
+            /// <param name="stripInternal">The value of the property.</param>
+            /// <param name="suppressExcessPropertyErrors">The value of the property.</param>
+            /// <param name="suppressImplicitAnyIndexErrors">The value of the property.</param>
+            /// <param name="target">The value of the property.</param>
+            /// <param name="traceResolution">The value of the property.</param>
+            /// <param name="tsBuildInfoFile">The value of the property.</param>
+            /// <param name="typeRoots">The value of the property.</param>
+            /// <param name="types">The value of the property.</param>
+            /// <param name="useDefineForClassFields">The value of the property.</param>
+            /// <param name="useUnknownInCatchVariables">The value of the property.</param>
+            /// <param name="verbatimModuleSyntax">The value of the property.</param>
+            /// <param name="watch">The value of the property.</param>
+            /// <param name="watchDirectory">The value of the property.</param>
+            /// <param name="watchFile">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles> Create(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowArbitraryExtensions = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowImportingTsExtensions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowSyntheticDefaultImports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source allowUmdGlobalAccess = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnreachableCode = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnusedLabels = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source alwaysStrict = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source assumeChangesOnlyAffectDirectDependencies = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source baseUrl = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source charset = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source composite = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source customConditions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source declaration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source declarationDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source declarationMap = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source diagnostics = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableReferencedProjectLoad = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source disableSizeLimit = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSolutionSearching = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSourceOfProjectReferenceRedirect = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source downlevelIteration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source emitBom = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source emitDeclarationOnly = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source emitDecoratorMetadata = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source esModuleInterop = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source experimentalDecorators = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source extendedDiagnostics = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source fallbackPolling = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source forceConsistentCasingInFileNames = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source generateCpuProfile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source importHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source importsNotUsedAsValues = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source incremental = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source inlineSourceMap = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source inlineSources = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source isolatedModules = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source lib = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source listEmittedFiles = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source listFiles = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source listFilesOnly = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source mapRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source maxNodeModuleJsDepth = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source module = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source moduleResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source newLine = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source noEmit = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source noEmitHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source noEmitOnError = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source noErrorTruncation = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitAny = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitThis = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source noLib = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noPropertyAccessFromIndexSignature = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source noResolve = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noUncheckedIndexedAccess = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outDir = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source paths = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source plugins = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source preserveConstEnums = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source preserveSymlinks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source preserveValueImports = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source preserveWatchOutput = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source pretty = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source reactNamespace = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source removeComments = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source resolveJsonModule = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source resolvePackageJsonExports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source resolvePackageJsonImports = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source rootDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source rootDirs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source skipDefaultLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source skipLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source sourceMap = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source stripInternal = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source typeRoots = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source types = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source verbatimModuleSyntax = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source watch = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source watchDirectory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source watchFile = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(allowArbitraryExtensions, allowImportingTsExtensions, allowJs, allowSyntheticDefaultImports, allowUmdGlobalAccess, allowUnreachableCode, allowUnusedLabels, alwaysStrict, assumeChangesOnlyAffectDirectDependencies, baseUrl, charset, checkJs, composite, customConditions, declaration, declarationDir, declarationMap, diagnostics, disableReferencedProjectLoad, disableSizeLimit, disableSolutionSearching, disableSourceOfProjectReferenceRedirect, downlevelIteration, emitBom, emitDeclarationOnly, emitDecoratorMetadata, esModuleInterop, exactOptionalPropertyTypes, experimentalDecorators, extendedDiagnostics, fallbackPolling, forceConsistentCasingInFileNames, generateCpuProfile, importHelpers, importsNotUsedAsValues, incremental, inlineSourceMap, inlineSources, isolatedModules, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource, keyofStringsOnly, lib, listEmittedFiles, listFiles, listFilesOnly, mapRoot, maxNodeModuleJsDepth, module, moduleResolution, newLine, noEmit, noEmitHelpers, noEmitOnError, noErrorTruncation, noFallthroughCasesInSwitch, noImplicitAny, noImplicitOverride, noImplicitReturns, noImplicitThis, noImplicitUseStrict, noLib, noPropertyAccessFromIndexSignature, noResolve, noStrictGenericChecks, noUncheckedIndexedAccess, noUnusedLocals, noUnusedParameters, outDir, outFile, paths, plugins, preserveConstEnums, preserveSymlinks, preserveValueImports, preserveWatchOutput, pretty, reactNamespace, removeComments, resolveJsonModule, resolvePackageJsonExports, resolvePackageJsonImports, rootDir, rootDirs, skipDefaultLibCheck, skipLibCheck, sourceMap, sourceRoot, strict, strictBindCallApply, strictFunctionTypes, strictNullChecks, strictPropertyInitialization, stripInternal, suppressExcessPropertyErrors, suppressImplicitAnyIndexErrors, target, traceResolution, tsBuildInfoFile, typeRoots, types, useDefineForClassFields, useUnknownInCatchVariables, verbatimModuleSyntax, watch, watchDirectory, watchFile);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="allowArbitraryExtensions">The value of the property.</param>
+            /// <param name="allowImportingTsExtensions">The value of the property.</param>
+            /// <param name="allowJs">The value of the property.</param>
+            /// <param name="allowSyntheticDefaultImports">The value of the property.</param>
+            /// <param name="allowUmdGlobalAccess">The value of the property.</param>
+            /// <param name="allowUnreachableCode">The value of the property.</param>
+            /// <param name="allowUnusedLabels">The value of the property.</param>
+            /// <param name="alwaysStrict">The value of the property.</param>
+            /// <param name="assumeChangesOnlyAffectDirectDependencies">The value of the property.</param>
+            /// <param name="baseUrl">The value of the property.</param>
+            /// <param name="charset">The value of the property.</param>
+            /// <param name="checkJs">The value of the property.</param>
+            /// <param name="composite">The value of the property.</param>
+            /// <param name="customConditions">The value of the property.</param>
+            /// <param name="declaration">The value of the property.</param>
+            /// <param name="declarationDir">The value of the property.</param>
+            /// <param name="declarationMap">The value of the property.</param>
+            /// <param name="diagnostics">The value of the property.</param>
+            /// <param name="disableReferencedProjectLoad">The value of the property.</param>
+            /// <param name="disableSizeLimit">The value of the property.</param>
+            /// <param name="disableSolutionSearching">The value of the property.</param>
+            /// <param name="disableSourceOfProjectReferenceRedirect">The value of the property.</param>
+            /// <param name="downlevelIteration">The value of the property.</param>
+            /// <param name="emitBom">The value of the property.</param>
+            /// <param name="emitDeclarationOnly">The value of the property.</param>
+            /// <param name="emitDecoratorMetadata">The value of the property.</param>
+            /// <param name="esModuleInterop">The value of the property.</param>
+            /// <param name="exactOptionalPropertyTypes">The value of the property.</param>
+            /// <param name="experimentalDecorators">The value of the property.</param>
+            /// <param name="extendedDiagnostics">The value of the property.</param>
+            /// <param name="fallbackPolling">The value of the property.</param>
+            /// <param name="forceConsistentCasingInFileNames">The value of the property.</param>
+            /// <param name="generateCpuProfile">The value of the property.</param>
+            /// <param name="importHelpers">The value of the property.</param>
+            /// <param name="importsNotUsedAsValues">The value of the property.</param>
+            /// <param name="incremental">The value of the property.</param>
+            /// <param name="inlineSourceMap">The value of the property.</param>
+            /// <param name="inlineSources">The value of the property.</param>
+            /// <param name="isolatedModules">The value of the property.</param>
+            /// <param name="jsx">The value of the property.</param>
+            /// <param name="jsxFactory">The value of the property.</param>
+            /// <param name="jsxFragmentFactory">The value of the property.</param>
+            /// <param name="jsxImportSource">The value of the property.</param>
+            /// <param name="keyofStringsOnly">The value of the property.</param>
+            /// <param name="lib">The value of the property.</param>
+            /// <param name="listEmittedFiles">The value of the property.</param>
+            /// <param name="listFiles">The value of the property.</param>
+            /// <param name="listFilesOnly">The value of the property.</param>
+            /// <param name="mapRoot">The value of the property.</param>
+            /// <param name="maxNodeModuleJsDepth">The value of the property.</param>
+            /// <param name="module">The value of the property.</param>
+            /// <param name="moduleResolution">The value of the property.</param>
+            /// <param name="newLine">The value of the property.</param>
+            /// <param name="noEmit">The value of the property.</param>
+            /// <param name="noEmitHelpers">The value of the property.</param>
+            /// <param name="noEmitOnError">The value of the property.</param>
+            /// <param name="noErrorTruncation">The value of the property.</param>
+            /// <param name="noFallthroughCasesInSwitch">The value of the property.</param>
+            /// <param name="noImplicitAny">The value of the property.</param>
+            /// <param name="noImplicitOverride">The value of the property.</param>
+            /// <param name="noImplicitReturns">The value of the property.</param>
+            /// <param name="noImplicitThis">The value of the property.</param>
+            /// <param name="noImplicitUseStrict">The value of the property.</param>
+            /// <param name="noLib">The value of the property.</param>
+            /// <param name="noPropertyAccessFromIndexSignature">The value of the property.</param>
+            /// <param name="noResolve">The value of the property.</param>
+            /// <param name="noStrictGenericChecks">The value of the property.</param>
+            /// <param name="noUncheckedIndexedAccess">The value of the property.</param>
+            /// <param name="noUnusedLocals">The value of the property.</param>
+            /// <param name="noUnusedParameters">The value of the property.</param>
+            /// <param name="outDir">The value of the property.</param>
+            /// <param name="outFile">The value of the property.</param>
+            /// <param name="paths">The value of the property.</param>
+            /// <param name="plugins">The value of the property.</param>
+            /// <param name="preserveConstEnums">The value of the property.</param>
+            /// <param name="preserveSymlinks">The value of the property.</param>
+            /// <param name="preserveValueImports">The value of the property.</param>
+            /// <param name="preserveWatchOutput">The value of the property.</param>
+            /// <param name="pretty">The value of the property.</param>
+            /// <param name="reactNamespace">The value of the property.</param>
+            /// <param name="removeComments">The value of the property.</param>
+            /// <param name="resolveJsonModule">The value of the property.</param>
+            /// <param name="resolvePackageJsonExports">The value of the property.</param>
+            /// <param name="resolvePackageJsonImports">The value of the property.</param>
+            /// <param name="rootDir">The value of the property.</param>
+            /// <param name="rootDirs">The value of the property.</param>
+            /// <param name="skipDefaultLibCheck">The value of the property.</param>
+            /// <param name="skipLibCheck">The value of the property.</param>
+            /// <param name="sourceMap">The value of the property.</param>
+            /// <param name="sourceRoot">The value of the property.</param>
+            /// <param name="strict">The value of the property.</param>
+            /// <param name="strictBindCallApply">The value of the property.</param>
+            /// <param name="strictFunctionTypes">The value of the property.</param>
+            /// <param name="strictNullChecks">The value of the property.</param>
+            /// <param name="strictPropertyInitialization">The value of the property.</param>
+            /// <param name="stripInternal">The value of the property.</param>
+            /// <param name="suppressExcessPropertyErrors">The value of the property.</param>
+            /// <param name="suppressImplicitAnyIndexErrors">The value of the property.</param>
+            /// <param name="target">The value of the property.</param>
+            /// <param name="traceResolution">The value of the property.</param>
+            /// <param name="tsBuildInfoFile">The value of the property.</param>
+            /// <param name="typeRoots">The value of the property.</param>
+            /// <param name="types">The value of the property.</param>
+            /// <param name="useDefineForClassFields">The value of the property.</param>
+            /// <param name="useUnknownInCatchVariables">The value of the property.</param>
+            /// <param name="verbatimModuleSyntax">The value of the property.</param>
+            /// <param name="watch">The value of the property.</param>
+            /// <param name="watchDirectory">The value of the property.</param>
+            /// <param name="watchFile">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles> Create<TContext>(in TContext context, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowArbitraryExtensions = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowImportingTsExtensions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source allowJs = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowSyntheticDefaultImports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source allowUmdGlobalAccess = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnreachableCode = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source allowUnusedLabels = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source alwaysStrict = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source assumeChangesOnlyAffectDirectDependencies = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source baseUrl = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source charset = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source checkJs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source composite = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source<TContext> customConditions = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source declaration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source declarationDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source declarationMap = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source diagnostics = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableReferencedProjectLoad = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source disableSizeLimit = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSolutionSearching = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source disableSourceOfProjectReferenceRedirect = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source downlevelIteration = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source emitBom = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source emitDeclarationOnly = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source emitDecoratorMetadata = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source esModuleInterop = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source exactOptionalPropertyTypes = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source experimentalDecorators = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source extendedDiagnostics = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source fallbackPolling = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source forceConsistentCasingInFileNames = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source generateCpuProfile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source importHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source importsNotUsedAsValues = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source incremental = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source inlineSourceMap = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source inlineSources = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source isolatedModules = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source jsx = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source jsxFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source jsxFragmentFactory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source jsxImportSource = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source keyofStringsOnly = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source<TContext> lib = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source listEmittedFiles = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source listFiles = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source listFilesOnly = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source mapRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source maxNodeModuleJsDepth = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source module = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source moduleResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source newLine = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source noEmit = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source noEmitHelpers = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source noEmitOnError = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source noErrorTruncation = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source noFallthroughCasesInSwitch = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitAny = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source noImplicitOverride = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source noImplicitReturns = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noImplicitThis = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source noImplicitUseStrict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source noLib = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noPropertyAccessFromIndexSignature = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source noResolve = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source noStrictGenericChecks = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source noUncheckedIndexedAccess = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source noUnusedLocals = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source noUnusedParameters = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outDir = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source outFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source<TContext> paths = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source<TContext> plugins = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source preserveConstEnums = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source preserveSymlinks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source preserveValueImports = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source preserveWatchOutput = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source pretty = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source reactNamespace = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source removeComments = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source resolveJsonModule = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source resolvePackageJsonExports = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source resolvePackageJsonImports = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source rootDir = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source<TContext> rootDirs = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source skipDefaultLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source skipLibCheck = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source sourceMap = default, in Corvus.JsconfigBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source strict = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source strictBindCallApply = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source strictFunctionTypes = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source strictNullChecks = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source strictPropertyInitialization = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source stripInternal = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source target = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source traceResolution = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source tsBuildInfoFile = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source<TContext> typeRoots = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source<TContext> types = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source useDefineForClassFields = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source useUnknownInCatchVariables = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source verbatimModuleSyntax = default, in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source watch = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source watchDirectory = default, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source watchFile = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, allowArbitraryExtensions, allowImportingTsExtensions, allowJs, allowSyntheticDefaultImports, allowUmdGlobalAccess, allowUnreachableCode, allowUnusedLabels, alwaysStrict, assumeChangesOnlyAffectDirectDependencies, baseUrl, charset, checkJs, composite, customConditions, declaration, declarationDir, declarationMap, diagnostics, disableReferencedProjectLoad, disableSizeLimit, disableSolutionSearching, disableSourceOfProjectReferenceRedirect, downlevelIteration, emitBom, emitDeclarationOnly, emitDecoratorMetadata, esModuleInterop, exactOptionalPropertyTypes, experimentalDecorators, extendedDiagnostics, fallbackPolling, forceConsistentCasingInFileNames, generateCpuProfile, importHelpers, importsNotUsedAsValues, incremental, inlineSourceMap, inlineSources, isolatedModules, jsx, jsxFactory, jsxFragmentFactory, jsxImportSource, keyofStringsOnly, lib, listEmittedFiles, listFiles, listFilesOnly, mapRoot, maxNodeModuleJsDepth, module, moduleResolution, newLine, noEmit, noEmitHelpers, noEmitOnError, noErrorTruncation, noFallthroughCasesInSwitch, noImplicitAny, noImplicitOverride, noImplicitReturns, noImplicitThis, noImplicitUseStrict, noLib, noPropertyAccessFromIndexSignature, noResolve, noStrictGenericChecks, noUncheckedIndexedAccess, noUnusedLocals, noUnusedParameters, outDir, outFile, paths, plugins, preserveConstEnums, preserveSymlinks, preserveValueImports, preserveWatchOutput, pretty, reactNamespace, removeComments, resolveJsonModule, resolvePackageJsonExports, resolvePackageJsonImports, rootDir, rootDirs, skipDefaultLibCheck, skipLibCheck, sourceMap, sourceRoot, strict, strictBindCallApply, strictFunctionTypes, strictNullChecks, strictPropertyInitialization, stripInternal, suppressExcessPropertyErrors, suppressImplicitAnyIndexErrors, target, traceResolution, tsBuildInfoFile, typeRoots, types, useDefineForClassFields, useUnknownInCatchVariables, verbatimModuleSyntax, watch, watchDirectory, watchFile);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<InstructsTheTypeScriptCompilerHowToCompileTsFiles>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
         }
     }
 }

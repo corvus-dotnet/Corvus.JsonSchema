@@ -4275,5 +4275,197 @@ public readonly partial struct KrakendSchema
         {
             return workspace.CreateBuilder<ServiceExtraConfig, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ServiceExtraConfig> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ServiceExtraConfig>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ServiceExtraConfig> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ServiceExtraConfig>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ServiceExtraConfig> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ServiceExtraConfig>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="authApiKeys">The value of the property.</param>
+        /// <param name="authBasic">The value of the property.</param>
+        /// <param name="authRevoker">The value of the property.</param>
+        /// <param name="authValidator">The value of the property.</param>
+        /// <param name="documentationOpenapi">The value of the property.</param>
+        /// <param name="githubComLetgoappKrakendInflux">The value of the property.</param>
+        /// <param name="grpc">The value of the property.</param>
+        /// <param name="modifierLuaEndpoint">The value of the property.</param>
+        /// <param name="modifierResponseHeaders">The value of the property.</param>
+        /// <param name="pluginHttpServer">The value of the property.</param>
+        /// <param name="qosRatelimitService">The value of the property.</param>
+        /// <param name="qosRatelimitTiered">The value of the property.</param>
+        /// <param name="router">The value of the property.</param>
+        /// <param name="securityBotDetector">The value of the property.</param>
+        /// <param name="securityCors">The value of the property.</param>
+        /// <param name="securityHttp">The value of the property.</param>
+        /// <param name="serverStaticFilesystem">The value of the property.</param>
+        /// <param name="serverVirtualhost">The value of the property.</param>
+        /// <param name="telemetryGelf">The value of the property.</param>
+        /// <param name="telemetryInflux">The value of the property.</param>
+        /// <param name="telemetryLogging">The value of the property.</param>
+        /// <param name="telemetryLogstash">The value of the property.</param>
+        /// <param name="telemetryMetrics">The value of the property.</param>
+        /// <param name="telemetryMoesif">The value of the property.</param>
+        /// <param name="telemetryNewrelic">The value of the property.</param>
+        /// <param name="telemetryOpencensus">The value of the property.</param>
+        /// <param name="telemetryOpentelemetry">The value of the property.</param>
+        /// <param name="telemetryOpentelemetrySecurity">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ServiceExtraConfig> Create(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Source authApiKeys = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Basic.Source authBasic = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.Source authRevoker = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Jose.Source authValidator = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Source documentationOpenapi = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source githubComLetgoappKrakendInflux = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.Source grpc = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.Source modifierLuaEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ResponseHeaders.Source modifierResponseHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.Source pluginHttpServer = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source qosRatelimitService = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.Source qosRatelimitTiered = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.Source router = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.Source securityBotDetector = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.Source securityCors = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Source securityHttp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerStaticFilesystem.Source serverStaticFilesystem = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.Source serverVirtualhost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Gelf.Source telemetryGelf = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source telemetryInflux = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.Source telemetryLogging = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Logstash.Source telemetryLogstash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.Source telemetryMetrics = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.Source telemetryMoesif = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Newrelic.Source telemetryNewrelic = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Source telemetryOpencensus = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Source telemetryOpentelemetry = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetrySecurity.Source telemetryOpentelemetrySecurity = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(authApiKeys, authBasic, authRevoker, authValidator, documentationOpenapi, githubComLetgoappKrakendInflux, grpc, modifierLuaEndpoint, modifierResponseHeaders, pluginHttpServer, qosRatelimitService, qosRatelimitTiered, router, securityBotDetector, securityCors, securityHttp, serverStaticFilesystem, serverVirtualhost, telemetryGelf, telemetryInflux, telemetryLogging, telemetryLogstash, telemetryMetrics, telemetryMoesif, telemetryNewrelic, telemetryOpencensus, telemetryOpentelemetry, telemetryOpentelemetrySecurity);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ServiceExtraConfig>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="authApiKeys">The value of the property.</param>
+        /// <param name="authBasic">The value of the property.</param>
+        /// <param name="authRevoker">The value of the property.</param>
+        /// <param name="authValidator">The value of the property.</param>
+        /// <param name="documentationOpenapi">The value of the property.</param>
+        /// <param name="githubComLetgoappKrakendInflux">The value of the property.</param>
+        /// <param name="grpc">The value of the property.</param>
+        /// <param name="modifierLuaEndpoint">The value of the property.</param>
+        /// <param name="modifierResponseHeaders">The value of the property.</param>
+        /// <param name="pluginHttpServer">The value of the property.</param>
+        /// <param name="qosRatelimitService">The value of the property.</param>
+        /// <param name="qosRatelimitTiered">The value of the property.</param>
+        /// <param name="router">The value of the property.</param>
+        /// <param name="securityBotDetector">The value of the property.</param>
+        /// <param name="securityCors">The value of the property.</param>
+        /// <param name="securityHttp">The value of the property.</param>
+        /// <param name="serverStaticFilesystem">The value of the property.</param>
+        /// <param name="serverVirtualhost">The value of the property.</param>
+        /// <param name="telemetryGelf">The value of the property.</param>
+        /// <param name="telemetryInflux">The value of the property.</param>
+        /// <param name="telemetryLogging">The value of the property.</param>
+        /// <param name="telemetryLogstash">The value of the property.</param>
+        /// <param name="telemetryMetrics">The value of the property.</param>
+        /// <param name="telemetryMoesif">The value of the property.</param>
+        /// <param name="telemetryNewrelic">The value of the property.</param>
+        /// <param name="telemetryOpencensus">The value of the property.</param>
+        /// <param name="telemetryOpentelemetry">The value of the property.</param>
+        /// <param name="telemetryOpentelemetrySecurity">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ServiceExtraConfig> Create<TContext>(in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Source<TContext> authApiKeys = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Basic.Source<TContext> authBasic = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.Source<TContext> authRevoker = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Jose.Source<TContext> authValidator = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Source<TContext> documentationOpenapi = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source<TContext> githubComLetgoappKrakendInflux = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.Source<TContext> grpc = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.Source<TContext> modifierLuaEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ResponseHeaders.Source<TContext> modifierResponseHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.Source<TContext> pluginHttpServer = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source<TContext> qosRatelimitService = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.Source<TContext> qosRatelimitTiered = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.Source<TContext> router = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.Source<TContext> securityBotDetector = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.Source<TContext> securityCors = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Source<TContext> securityHttp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerStaticFilesystem.Source<TContext> serverStaticFilesystem = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.Source<TContext> serverVirtualhost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Gelf.Source<TContext> telemetryGelf = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source<TContext> telemetryInflux = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.Source<TContext> telemetryLogging = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Logstash.Source<TContext> telemetryLogstash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.Source<TContext> telemetryMetrics = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.Source<TContext> telemetryMoesif = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Newrelic.Source<TContext> telemetryNewrelic = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Source<TContext> telemetryOpencensus = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Source<TContext> telemetryOpentelemetry = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetrySecurity.Source<TContext> telemetryOpentelemetrySecurity = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, authApiKeys, authBasic, authRevoker, authValidator, documentationOpenapi, githubComLetgoappKrakendInflux, grpc, modifierLuaEndpoint, modifierResponseHeaders, pluginHttpServer, qosRatelimitService, qosRatelimitTiered, router, securityBotDetector, securityCors, securityHttp, serverStaticFilesystem, serverVirtualhost, telemetryGelf, telemetryInflux, telemetryLogging, telemetryLogstash, telemetryMetrics, telemetryMoesif, telemetryNewrelic, telemetryOpencensus, telemetryOpentelemetry, telemetryOpentelemetrySecurity);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ServiceExtraConfig>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

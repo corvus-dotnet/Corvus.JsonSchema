@@ -2095,6 +2095,168 @@ public readonly partial struct StylecopSchema
             {
                 return workspace.CreateBuilder<ConfigurationForDocumentationRulesSa1600, Mutable>(this);
             }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<ConfigurationForDocumentationRulesSa1600> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<ConfigurationForDocumentationRulesSa1600>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<ConfigurationForDocumentationRulesSa1600> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<ConfigurationForDocumentationRulesSa1600>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<ConfigurationForDocumentationRulesSa1600> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<ConfigurationForDocumentationRulesSa1600>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="companyName">The value of the property.</param>
+            /// <param name="copyrightText">The value of the property.</param>
+            /// <param name="documentationCulture">The value of the property.</param>
+            /// <param name="documentExposedElements">The value of the property.</param>
+            /// <param name="documentInterfaces">The value of the property.</param>
+            /// <param name="documentInternalElements">The value of the property.</param>
+            /// <param name="documentPrivateElements">The value of the property.</param>
+            /// <param name="documentPrivateFields">The value of the property.</param>
+            /// <param name="excludeFromPunctuationCheck">The value of the property.</param>
+            /// <param name="fileNamingConvention">The value of the property.</param>
+            /// <param name="headerDecoration">The value of the property.</param>
+            /// <param name="variables">The value of the property.</param>
+            /// <param name="xmlHeader">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<ConfigurationForDocumentationRulesSa1600> Create(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheNameOfTheCompanyWhichAppearsInFileHeaders.Source companyName = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCopyrightTextWhichShouldAppearInFileHeaders.Source copyrightText = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCultureThatShouldBeUsedForDocumentationComments.Source documentationCulture = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentExposedElementsEntity.Source documentExposedElements = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInterfacesEntity.Source documentInterfaces = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInternalElementsEntity.Source documentInternalElements = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateElementsEntity.Source documentPrivateElements = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateFieldsEntity.Source documentPrivateFields = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.ExcludeFromPunctuationCheckArray.Source excludeFromPunctuationCheck = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.FileNamingConventionEntity.Source fileNamingConvention = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheTextUsedAsDecorationForTheCopyrightHeaderComment.Source headerDecoration = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.VariablesEntity.Source variables = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.XmlHeaderEntity.Source xmlHeader = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(companyName, copyrightText, documentationCulture, documentExposedElements, documentInterfaces, documentInternalElements, documentPrivateElements, documentPrivateFields, excludeFromPunctuationCheck, fileNamingConvention, headerDecoration, variables, xmlHeader);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<ConfigurationForDocumentationRulesSa1600>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="companyName">The value of the property.</param>
+            /// <param name="copyrightText">The value of the property.</param>
+            /// <param name="documentationCulture">The value of the property.</param>
+            /// <param name="documentExposedElements">The value of the property.</param>
+            /// <param name="documentInterfaces">The value of the property.</param>
+            /// <param name="documentInternalElements">The value of the property.</param>
+            /// <param name="documentPrivateElements">The value of the property.</param>
+            /// <param name="documentPrivateFields">The value of the property.</param>
+            /// <param name="excludeFromPunctuationCheck">The value of the property.</param>
+            /// <param name="fileNamingConvention">The value of the property.</param>
+            /// <param name="headerDecoration">The value of the property.</param>
+            /// <param name="variables">The value of the property.</param>
+            /// <param name="xmlHeader">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<ConfigurationForDocumentationRulesSa1600> Create<TContext>(in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheNameOfTheCompanyWhichAppearsInFileHeaders.Source companyName = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCopyrightTextWhichShouldAppearInFileHeaders.Source copyrightText = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCultureThatShouldBeUsedForDocumentationComments.Source documentationCulture = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentExposedElementsEntity.Source documentExposedElements = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInterfacesEntity.Source documentInterfaces = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInternalElementsEntity.Source documentInternalElements = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateElementsEntity.Source documentPrivateElements = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateFieldsEntity.Source documentPrivateFields = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.ExcludeFromPunctuationCheckArray.Source<TContext> excludeFromPunctuationCheck = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.FileNamingConventionEntity.Source fileNamingConvention = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheTextUsedAsDecorationForTheCopyrightHeaderComment.Source headerDecoration = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.VariablesEntity.Source<TContext> variables = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.XmlHeaderEntity.Source xmlHeader = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, companyName, copyrightText, documentationCulture, documentExposedElements, documentInterfaces, documentInternalElements, documentPrivateElements, documentPrivateFields, excludeFromPunctuationCheck, fileNamingConvention, headerDecoration, variables, xmlHeader);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<ConfigurationForDocumentationRulesSa1600>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
         }
     }
 }

@@ -6428,4 +6428,280 @@ public readonly partial struct JshintrcSchema
     {
         return workspace.CreateBuilder<JshintrcSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<JshintrcSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<JshintrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<JshintrcSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<JshintrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<JshintrcSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<JshintrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="asi">The value of the property.</param>
+    /// <param name="bitwise">The value of the property.</param>
+    /// <param name="boss">The value of the property.</param>
+    /// <param name="browser">The value of the property.</param>
+    /// <param name="browserify">The value of the property.</param>
+    /// <param name="couch">The value of the property.</param>
+    /// <param name="curly">The value of the property.</param>
+    /// <param name="debug">The value of the property.</param>
+    /// <param name="devel">The value of the property.</param>
+    /// <param name="dojo">The value of the property.</param>
+    /// <param name="elision">The value of the property.</param>
+    /// <param name="eqeqeq">The value of the property.</param>
+    /// <param name="eqnull">The value of the property.</param>
+    /// <param name="esversion">The value of the property.</param>
+    /// <param name="evil">The value of the property.</param>
+    /// <param name="expr">The value of the property.</param>
+    /// <param name="extends">The value of the property.</param>
+    /// <param name="forin">The value of the property.</param>
+    /// <param name="freeze">The value of the property.</param>
+    /// <param name="funcscope">The value of the property.</param>
+    /// <param name="futurehostile">The value of the property.</param>
+    /// <param name="globals">The value of the property.</param>
+    /// <param name="iterator">The value of the property.</param>
+    /// <param name="jasmine">The value of the property.</param>
+    /// <param name="jquery">The value of the property.</param>
+    /// <param name="lastsemic">The value of the property.</param>
+    /// <param name="latedef">The value of the property.</param>
+    /// <param name="leanswitch">The value of the property.</param>
+    /// <param name="loopfunc">The value of the property.</param>
+    /// <param name="maxcomplexity">The value of the property.</param>
+    /// <param name="maxdepth">The value of the property.</param>
+    /// <param name="maxerr">The value of the property.</param>
+    /// <param name="maxparams">The value of the property.</param>
+    /// <param name="maxstatements">The value of the property.</param>
+    /// <param name="mocha">The value of the property.</param>
+    /// <param name="module">The value of the property.</param>
+    /// <param name="mootools">The value of the property.</param>
+    /// <param name="moz">The value of the property.</param>
+    /// <param name="noarg">The value of the property.</param>
+    /// <param name="nocomma">The value of the property.</param>
+    /// <param name="node">The value of the property.</param>
+    /// <param name="nonbsp">The value of the property.</param>
+    /// <param name="nonew">The value of the property.</param>
+    /// <param name="nonstandard">The value of the property.</param>
+    /// <param name="noreturnawait">The value of the property.</param>
+    /// <param name="notypeof">The value of the property.</param>
+    /// <param name="noyield">The value of the property.</param>
+    /// <param name="overrides">The value of the property.</param>
+    /// <param name="phantom">The value of the property.</param>
+    /// <param name="plusplus">The value of the property.</param>
+    /// <param name="proto">The value of the property.</param>
+    /// <param name="prototypejs">The value of the property.</param>
+    /// <param name="regexpu">The value of the property.</param>
+    /// <param name="rhino">The value of the property.</param>
+    /// <param name="scripturl">The value of the property.</param>
+    /// <param name="shadow">The value of the property.</param>
+    /// <param name="shelljs">The value of the property.</param>
+    /// <param name="singleGroups">The value of the property.</param>
+    /// <param name="strict">The value of the property.</param>
+    /// <param name="supernew">The value of the property.</param>
+    /// <param name="trailingcomma">The value of the property.</param>
+    /// <param name="typed">The value of the property.</param>
+    /// <param name="undef">The value of the property.</param>
+    /// <param name="unused">The value of the property.</param>
+    /// <param name="validthis">The value of the property.</param>
+    /// <param name="varstmt">The value of the property.</param>
+    /// <param name="withstmt">The value of the property.</param>
+    /// <param name="worker">The value of the property.</param>
+    /// <param name="wsh">The value of the property.</param>
+    /// <param name="yui">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<JshintrcSchema> Create(in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.Source asi = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.Source bitwise = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.Source boss = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.Source browser = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.Source browserify = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.Source couch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.Source curly = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.Source debug = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.Source devel = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.Source dojo = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.Source elision = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.Source eqeqeq = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.Source eqnull = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.Source esversion = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.Source evil = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.Source expr = default, in Corvus.JshintrcBenchmark.Current.JsonString.Source extends = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.Source forin = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.Source freeze = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.Source funcscope = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.Source futurehostile = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.GlobalsEntity.Source globals = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.Source iterator = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.Source jasmine = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.Source jquery = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.Source lastsemic = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.Source latedef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.Source leanswitch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.Source module = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.Source mootools = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.Source moz = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.Source noarg = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.Source nocomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.Source node = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.Source nonbsp = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.Source nonew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.Source nonstandard = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.Source noreturnawait = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.Source notypeof = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.Source noyield = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.Source overrides = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.Source phantom = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.Source plusplus = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.Source proto = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.Source prototypejs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.Source regexpu = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.Source rhino = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.Source scripturl = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.Source shadow = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.Source shelljs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.Source singleGroups = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.Source strict = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.Source supernew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.Source trailingcomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.Source typed = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.Source undef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.Source unused = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.Source validthis = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.Source varstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.Source withstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.Source worker = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Source wsh = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Source yui = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(asi, bitwise, boss, browser, browserify, couch, curly, debug, devel, dojo, elision, eqeqeq, eqnull, esversion, evil, expr, extends, forin, freeze, funcscope, futurehostile, globals, iterator, jasmine, jquery, lastsemic, latedef, leanswitch, loopfunc, maxcomplexity, maxdepth, maxerr, maxparams, maxstatements, mocha, module, mootools, moz, noarg, nocomma, node, nonbsp, nonew, nonstandard, noreturnawait, notypeof, noyield, overrides, phantom, plusplus, proto, prototypejs, regexpu, rhino, scripturl, shadow, shelljs, singleGroups, strict, supernew, trailingcomma, typed, undef, unused, validthis, varstmt, withstmt, worker, wsh, yui);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<JshintrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="asi">The value of the property.</param>
+    /// <param name="bitwise">The value of the property.</param>
+    /// <param name="boss">The value of the property.</param>
+    /// <param name="browser">The value of the property.</param>
+    /// <param name="browserify">The value of the property.</param>
+    /// <param name="couch">The value of the property.</param>
+    /// <param name="curly">The value of the property.</param>
+    /// <param name="debug">The value of the property.</param>
+    /// <param name="devel">The value of the property.</param>
+    /// <param name="dojo">The value of the property.</param>
+    /// <param name="elision">The value of the property.</param>
+    /// <param name="eqeqeq">The value of the property.</param>
+    /// <param name="eqnull">The value of the property.</param>
+    /// <param name="esversion">The value of the property.</param>
+    /// <param name="evil">The value of the property.</param>
+    /// <param name="expr">The value of the property.</param>
+    /// <param name="extends">The value of the property.</param>
+    /// <param name="forin">The value of the property.</param>
+    /// <param name="freeze">The value of the property.</param>
+    /// <param name="funcscope">The value of the property.</param>
+    /// <param name="futurehostile">The value of the property.</param>
+    /// <param name="globals">The value of the property.</param>
+    /// <param name="iterator">The value of the property.</param>
+    /// <param name="jasmine">The value of the property.</param>
+    /// <param name="jquery">The value of the property.</param>
+    /// <param name="lastsemic">The value of the property.</param>
+    /// <param name="latedef">The value of the property.</param>
+    /// <param name="leanswitch">The value of the property.</param>
+    /// <param name="loopfunc">The value of the property.</param>
+    /// <param name="maxcomplexity">The value of the property.</param>
+    /// <param name="maxdepth">The value of the property.</param>
+    /// <param name="maxerr">The value of the property.</param>
+    /// <param name="maxparams">The value of the property.</param>
+    /// <param name="maxstatements">The value of the property.</param>
+    /// <param name="mocha">The value of the property.</param>
+    /// <param name="module">The value of the property.</param>
+    /// <param name="mootools">The value of the property.</param>
+    /// <param name="moz">The value of the property.</param>
+    /// <param name="noarg">The value of the property.</param>
+    /// <param name="nocomma">The value of the property.</param>
+    /// <param name="node">The value of the property.</param>
+    /// <param name="nonbsp">The value of the property.</param>
+    /// <param name="nonew">The value of the property.</param>
+    /// <param name="nonstandard">The value of the property.</param>
+    /// <param name="noreturnawait">The value of the property.</param>
+    /// <param name="notypeof">The value of the property.</param>
+    /// <param name="noyield">The value of the property.</param>
+    /// <param name="overrides">The value of the property.</param>
+    /// <param name="phantom">The value of the property.</param>
+    /// <param name="plusplus">The value of the property.</param>
+    /// <param name="proto">The value of the property.</param>
+    /// <param name="prototypejs">The value of the property.</param>
+    /// <param name="regexpu">The value of the property.</param>
+    /// <param name="rhino">The value of the property.</param>
+    /// <param name="scripturl">The value of the property.</param>
+    /// <param name="shadow">The value of the property.</param>
+    /// <param name="shelljs">The value of the property.</param>
+    /// <param name="singleGroups">The value of the property.</param>
+    /// <param name="strict">The value of the property.</param>
+    /// <param name="supernew">The value of the property.</param>
+    /// <param name="trailingcomma">The value of the property.</param>
+    /// <param name="typed">The value of the property.</param>
+    /// <param name="undef">The value of the property.</param>
+    /// <param name="unused">The value of the property.</param>
+    /// <param name="validthis">The value of the property.</param>
+    /// <param name="varstmt">The value of the property.</param>
+    /// <param name="withstmt">The value of the property.</param>
+    /// <param name="worker">The value of the property.</param>
+    /// <param name="wsh">The value of the property.</param>
+    /// <param name="yui">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<JshintrcSchema> Create<TContext>(in TContext context, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.Source asi = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.Source bitwise = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.Source boss = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.Source browser = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.Source browserify = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.Source couch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.Source curly = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.Source debug = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.Source devel = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.Source dojo = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.Source elision = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.Source eqeqeq = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.Source eqnull = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.Source esversion = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.Source evil = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.Source expr = default, in Corvus.JshintrcBenchmark.Current.JsonString.Source extends = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.Source forin = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.Source freeze = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.Source funcscope = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.Source futurehostile = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.GlobalsEntity.Source<TContext> globals = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.Source iterator = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.Source jasmine = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.Source jquery = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.Source lastsemic = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.Source latedef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.Source leanswitch = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.Source loopfunc = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.Source maxcomplexity = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.Source maxdepth = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.Source maxerr = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberOfFormalParametersAllowedPerFunction.Source maxparams = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.Source maxstatements = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.Source mocha = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.Source module = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.Source mootools = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.Source moz = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.Source noarg = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.Source nocomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.Source node = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.Source nonbsp = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.Source nonew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.Source nonstandard = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.Source noreturnawait = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.Source notypeof = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.Source noyield = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.Source<TContext> overrides = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.Source phantom = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.Source plusplus = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.Source proto = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.Source prototypejs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.Source regexpu = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.Source rhino = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.Source scripturl = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.Source shadow = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.Source shelljs = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.Source singleGroups = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.Source strict = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.Source supernew = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.Source trailingcomma = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.Source typed = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.Source undef = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.Source unused = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.Source validthis = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.Source varstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.Source withstmt = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.Source worker = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Source wsh = default, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Source yui = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, asi, bitwise, boss, browser, browserify, couch, curly, debug, devel, dojo, elision, eqeqeq, eqnull, esversion, evil, expr, extends, forin, freeze, funcscope, futurehostile, globals, iterator, jasmine, jquery, lastsemic, latedef, leanswitch, loopfunc, maxcomplexity, maxdepth, maxerr, maxparams, maxstatements, mocha, module, mootools, moz, noarg, nocomma, node, nonbsp, nonew, nonstandard, noreturnawait, notypeof, noyield, overrides, phantom, plusplus, proto, prototypejs, regexpu, rhino, scripturl, shadow, shelljs, singleGroups, strict, supernew, trailingcomma, typed, undef, unused, validthis, varstmt, withstmt, worker, wsh, yui);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<JshintrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

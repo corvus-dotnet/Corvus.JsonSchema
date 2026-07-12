@@ -38,11 +38,11 @@ public readonly partial struct Ui5ManifestSchema
     {
         public static partial class JsonSchema
         {
-            private static readonly JsonSchemaPathProvider CreateSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/create/$ref"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider CreateValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/create/$ref"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider DisplaySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/display/$ref"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider EditSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/edit/$ref"u8, buffer, out written);
 
-            private static void MatchCreate(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
+            private static void MatchCreateValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -50,8 +50,8 @@ public readonly partial struct Ui5ManifestSchema
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.CreateUtf8,
-                        evaluationPath: CreateSchemaEvaluationPath);
+                        JsonPropertyNames.CreateValueUtf8,
+                        evaluationPath: CreateValueSchemaEvaluationPath);
 
                 Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
@@ -90,7 +90,7 @@ public readonly partial struct Ui5ManifestSchema
             private static PropertySchemaMatchers<Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
             {
                 return new PropertySchemaMatchers<Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1>([
-                    (static () => JsonPropertyNames.CreateUtf8, MatchCreate),
+                    (static () => JsonPropertyNames.CreateValueUtf8, MatchCreateValue),
                     (static () => JsonPropertyNames.DisplayUtf8, MatchDisplay),
                     (static () => JsonPropertyNames.EditUtf8, MatchEdit),
                 ]);

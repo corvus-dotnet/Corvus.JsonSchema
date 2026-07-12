@@ -4019,4 +4019,206 @@ public readonly partial struct Draft04Schema
     {
         return workspace.CreateBuilder<Draft04Schema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Draft04Schema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Draft04Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Draft04Schema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Draft04Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Draft04Schema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Draft04Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="additionalItems">The value of the property.</param>
+    /// <param name="additionalProperties">The value of the property.</param>
+    /// <param name="allOf">The value of the property.</param>
+    /// <param name="anyOf">The value of the property.</param>
+    /// <param name="defaultValue">The value of the property.</param>
+    /// <param name="definitions">The value of the property.</param>
+    /// <param name="dependencies">The value of the property.</param>
+    /// <param name="description">The value of the property.</param>
+    /// <param name="enumValue">The value of the property.</param>
+    /// <param name="exclusiveMaximum">The value of the property.</param>
+    /// <param name="exclusiveMinimum">The value of the property.</param>
+    /// <param name="format">The value of the property.</param>
+    /// <param name="id">The value of the property.</param>
+    /// <param name="items">The value of the property.</param>
+    /// <param name="maximum">The value of the property.</param>
+    /// <param name="maxItems">The value of the property.</param>
+    /// <param name="maxLength">The value of the property.</param>
+    /// <param name="maxProperties">The value of the property.</param>
+    /// <param name="minimum">The value of the property.</param>
+    /// <param name="minItems">The value of the property.</param>
+    /// <param name="minLength">The value of the property.</param>
+    /// <param name="minProperties">The value of the property.</param>
+    /// <param name="multipleOf">The value of the property.</param>
+    /// <param name="not">The value of the property.</param>
+    /// <param name="oneOf">The value of the property.</param>
+    /// <param name="pattern">The value of the property.</param>
+    /// <param name="patternProperties">The value of the property.</param>
+    /// <param name="properties">The value of the property.</param>
+    /// <param name="required">The value of the property.</param>
+    /// <param name="title">The value of the property.</param>
+    /// <param name="type">The value of the property.</param>
+    /// <param name="uniqueItems">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Draft04Schema> Create(in Corvus.Draft04Benchmark.Current.JsonString.Source schema = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalItemsEntity.Source additionalItems = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalPropertiesEntity.Source additionalProperties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source allOf = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source anyOf = default, in Corvus.Text.Json.JsonElement.Source defaultValue = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.DefinitionsEntity.Source definitions = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.DependenciesEntity.Source dependencies = default, in Corvus.Draft04Benchmark.Current.JsonString.Source description = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.EnumArray.Source enumValue = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMaximumEntity.Source exclusiveMaximum = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMinimumEntity.Source exclusiveMinimum = default, in Corvus.Draft04Benchmark.Current.JsonString.Source format = default, in Corvus.Draft04Benchmark.Current.JsonString.Source id = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.ItemsEntity.Source items = default, in Corvus.Draft04Benchmark.Current.JsonNumber.Source maximum = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source maxItems = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source maxLength = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source maxProperties = default, in Corvus.Draft04Benchmark.Current.JsonNumber.Source minimum = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source minItems = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source minLength = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source minProperties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.MultipleOfEntity.Source multipleOf = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.Source not = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source oneOf = default, in Corvus.Draft04Benchmark.Current.JsonRegex.Source pattern = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PatternPropertiesEntity.Source patternProperties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PropertiesEntity.Source properties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.StringArray.Source required = default, in Corvus.Draft04Benchmark.Current.JsonString.Source title = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.Source type = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.UniqueItemsEntity.Source uniqueItems = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(schema, additionalItems, additionalProperties, allOf, anyOf, defaultValue, definitions, dependencies, description, enumValue, exclusiveMaximum, exclusiveMinimum, format, id, items, maximum, maxItems, maxLength, maxProperties, minimum, minItems, minLength, minProperties, multipleOf, not, oneOf, pattern, patternProperties, properties, required, title, type, uniqueItems);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Draft04Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="additionalItems">The value of the property.</param>
+    /// <param name="additionalProperties">The value of the property.</param>
+    /// <param name="allOf">The value of the property.</param>
+    /// <param name="anyOf">The value of the property.</param>
+    /// <param name="defaultValue">The value of the property.</param>
+    /// <param name="definitions">The value of the property.</param>
+    /// <param name="dependencies">The value of the property.</param>
+    /// <param name="description">The value of the property.</param>
+    /// <param name="enumValue">The value of the property.</param>
+    /// <param name="exclusiveMaximum">The value of the property.</param>
+    /// <param name="exclusiveMinimum">The value of the property.</param>
+    /// <param name="format">The value of the property.</param>
+    /// <param name="id">The value of the property.</param>
+    /// <param name="items">The value of the property.</param>
+    /// <param name="maximum">The value of the property.</param>
+    /// <param name="maxItems">The value of the property.</param>
+    /// <param name="maxLength">The value of the property.</param>
+    /// <param name="maxProperties">The value of the property.</param>
+    /// <param name="minimum">The value of the property.</param>
+    /// <param name="minItems">The value of the property.</param>
+    /// <param name="minLength">The value of the property.</param>
+    /// <param name="minProperties">The value of the property.</param>
+    /// <param name="multipleOf">The value of the property.</param>
+    /// <param name="not">The value of the property.</param>
+    /// <param name="oneOf">The value of the property.</param>
+    /// <param name="pattern">The value of the property.</param>
+    /// <param name="patternProperties">The value of the property.</param>
+    /// <param name="properties">The value of the property.</param>
+    /// <param name="required">The value of the property.</param>
+    /// <param name="title">The value of the property.</param>
+    /// <param name="type">The value of the property.</param>
+    /// <param name="uniqueItems">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<Draft04Schema> Create<TContext>(in TContext context, in Corvus.Draft04Benchmark.Current.JsonString.Source schema = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalItemsEntity.Source<TContext> additionalItems = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalPropertiesEntity.Source<TContext> additionalProperties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source<TContext> allOf = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source<TContext> anyOf = default, in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.DefinitionsEntity.Source<TContext> definitions = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.DependenciesEntity.Source<TContext> dependencies = default, in Corvus.Draft04Benchmark.Current.JsonString.Source description = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.EnumArray.Source<TContext> enumValue = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMaximumEntity.Source exclusiveMaximum = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMinimumEntity.Source exclusiveMinimum = default, in Corvus.Draft04Benchmark.Current.JsonString.Source format = default, in Corvus.Draft04Benchmark.Current.JsonString.Source id = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.ItemsEntity.Source<TContext> items = default, in Corvus.Draft04Benchmark.Current.JsonNumber.Source maximum = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source maxItems = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source maxLength = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source maxProperties = default, in Corvus.Draft04Benchmark.Current.JsonNumber.Source minimum = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source minItems = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source minLength = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source minProperties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.MultipleOfEntity.Source multipleOf = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.Source<TContext> not = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source<TContext> oneOf = default, in Corvus.Draft04Benchmark.Current.JsonRegex.Source pattern = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PatternPropertiesEntity.Source<TContext> patternProperties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.PropertiesEntity.Source<TContext> properties = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.StringArray.Source<TContext> required = default, in Corvus.Draft04Benchmark.Current.JsonString.Source title = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.Source<TContext> type = default, in Corvus.Draft04Benchmark.Current.Draft04Schema.UniqueItemsEntity.Source uniqueItems = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, schema, additionalItems, additionalProperties, allOf, anyOf, defaultValue, definitions, dependencies, description, enumValue, exclusiveMaximum, exclusiveMinimum, format, id, items, maximum, maxItems, maxLength, maxProperties, minimum, minItems, minLength, minProperties, multipleOf, not, oneOf, pattern, patternProperties, properties, required, title, type, uniqueItems);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<Draft04Schema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

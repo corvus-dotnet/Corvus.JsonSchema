@@ -13162,4 +13162,444 @@ public readonly partial struct ClangFormatSchema
     {
         return workspace.CreateBuilder<ClangFormatSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<ClangFormatSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<ClangFormatSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<ClangFormatSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<ClangFormatSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<ClangFormatSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<ClangFormatSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="accessModifierOffset">The value of the property.</param>
+    /// <param name="alignAfterOpenBracket">The value of the property.</param>
+    /// <param name="alignArrayOfStructures">The value of the property.</param>
+    /// <param name="alignConsecutiveAssignments">The value of the property.</param>
+    /// <param name="alignConsecutiveBitFields">The value of the property.</param>
+    /// <param name="alignConsecutiveDeclarations">The value of the property.</param>
+    /// <param name="alignConsecutiveMacros">The value of the property.</param>
+    /// <param name="alignEscapedNewlines">The value of the property.</param>
+    /// <param name="alignOperands">The value of the property.</param>
+    /// <param name="alignTrailingComments">The value of the property.</param>
+    /// <param name="allowAllArgumentsOnNextLine">The value of the property.</param>
+    /// <param name="allowAllConstructorInitializersOnNextLine">The value of the property.</param>
+    /// <param name="allowAllParametersOfDeclarationOnNextLine">The value of the property.</param>
+    /// <param name="allowShortBlocksOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortCaseLabelsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortEnumsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortFunctionsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortIfStatementsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortLambdasOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortLoopsOnASingleLine">The value of the property.</param>
+    /// <param name="alwaysBreakAfterDefinitionReturnType">The value of the property.</param>
+    /// <param name="alwaysBreakAfterReturnType">The value of the property.</param>
+    /// <param name="alwaysBreakBeforeMultilineStrings">The value of the property.</param>
+    /// <param name="alwaysBreakTemplateDeclarations">The value of the property.</param>
+    /// <param name="attributeMacros">The value of the property.</param>
+    /// <param name="basedOnStyle">The value of the property.</param>
+    /// <param name="binPackArguments">The value of the property.</param>
+    /// <param name="binPackParameters">The value of the property.</param>
+    /// <param name="bitFieldColonSpacing">The value of the property.</param>
+    /// <param name="braceWrapping">The value of the property.</param>
+    /// <param name="breakAfterAttributes">The value of the property.</param>
+    /// <param name="breakAfterJavaFieldAnnotations">The value of the property.</param>
+    /// <param name="breakArrays">The value of the property.</param>
+    /// <param name="breakBeforeBinaryOperators">The value of the property.</param>
+    /// <param name="breakBeforeBraces">The value of the property.</param>
+    /// <param name="breakBeforeConceptDeclarations">The value of the property.</param>
+    /// <param name="breakBeforeInheritanceComma">The value of the property.</param>
+    /// <param name="breakBeforeInlineAsmColon">The value of the property.</param>
+    /// <param name="breakBeforeTernaryOperators">The value of the property.</param>
+    /// <param name="breakConstructorInitializers">The value of the property.</param>
+    /// <param name="breakConstructorInitializersBeforeComma">The value of the property.</param>
+    /// <param name="breakInheritanceList">The value of the property.</param>
+    /// <param name="breakStringLiterals">The value of the property.</param>
+    /// <param name="columnLimit">The value of the property.</param>
+    /// <param name="commentPragmas">The value of the property.</param>
+    /// <param name="compactNamespaces">The value of the property.</param>
+    /// <param name="constructorInitializerAllOnOneLineOrOnePerLine">The value of the property.</param>
+    /// <param name="constructorInitializerIndentWidth">The value of the property.</param>
+    /// <param name="continuationIndentWidth">The value of the property.</param>
+    /// <param name="cpp11BracedListStyle">The value of the property.</param>
+    /// <param name="deriveLineEnding">The value of the property.</param>
+    /// <param name="derivePointerAlignment">The value of the property.</param>
+    /// <param name="disableFormat">The value of the property.</param>
+    /// <param name="emptyLineAfterAccessModifier">The value of the property.</param>
+    /// <param name="emptyLineBeforeAccessModifier">The value of the property.</param>
+    /// <param name="experimentalAutoDetectBinPacking">The value of the property.</param>
+    /// <param name="fixNamespaceComments">The value of the property.</param>
+    /// <param name="forEachMacros">The value of the property.</param>
+    /// <param name="ifMacros">The value of the property.</param>
+    /// <param name="includeBlocks">The value of the property.</param>
+    /// <param name="includeCategories">The value of the property.</param>
+    /// <param name="includeIsMainRegex">The value of the property.</param>
+    /// <param name="includeIsMainSourceRegex">The value of the property.</param>
+    /// <param name="indentAccessModifiers">The value of the property.</param>
+    /// <param name="indentCaseBlocks">The value of the property.</param>
+    /// <param name="indentCaseLabels">The value of the property.</param>
+    /// <param name="indentExternBlock">The value of the property.</param>
+    /// <param name="indentGotoLabels">The value of the property.</param>
+    /// <param name="indentPpDirectives">The value of the property.</param>
+    /// <param name="indentRequires">The value of the property.</param>
+    /// <param name="indentRequiresClause">The value of the property.</param>
+    /// <param name="indentWidth">The value of the property.</param>
+    /// <param name="indentWrappedFunctionNames">The value of the property.</param>
+    /// <param name="insertBraces">The value of the property.</param>
+    /// <param name="insertNewlineAtEof">The value of the property.</param>
+    /// <param name="insertTrailingCommas">The value of the property.</param>
+    /// <param name="integerLiteralSeparator">The value of the property.</param>
+    /// <param name="javaImportGroup">The value of the property.</param>
+    /// <param name="javaScriptQuotes">The value of the property.</param>
+    /// <param name="javaScriptWrapImports">The value of the property.</param>
+    /// <param name="keepEmptyLinesAtTheStartOfBlocks">The value of the property.</param>
+    /// <param name="lambdaBodyIndentation">The value of the property.</param>
+    /// <param name="language">The value of the property.</param>
+    /// <param name="lineEnding">The value of the property.</param>
+    /// <param name="macroBlockBegin">The value of the property.</param>
+    /// <param name="macroBlockEnd">The value of the property.</param>
+    /// <param name="maxEmptyLinesToKeep">The value of the property.</param>
+    /// <param name="namespaceIndentation">The value of the property.</param>
+    /// <param name="namespaceMacros">The value of the property.</param>
+    /// <param name="objCBinPackProtocolList">The value of the property.</param>
+    /// <param name="objCBlockIndentWidth">The value of the property.</param>
+    /// <param name="objCBreakBeforeNestedBlockParam">The value of the property.</param>
+    /// <param name="objCSpaceAfterProperty">The value of the property.</param>
+    /// <param name="objCSpaceBeforeProtocolList">The value of the property.</param>
+    /// <param name="packConstructorInitializers">The value of the property.</param>
+    /// <param name="penaltyBreakAssignment">The value of the property.</param>
+    /// <param name="penaltyBreakBeforeFirstCallParameter">The value of the property.</param>
+    /// <param name="penaltyBreakComment">The value of the property.</param>
+    /// <param name="penaltyBreakFirstLessLess">The value of the property.</param>
+    /// <param name="penaltyBreakOpenParenthesis">The value of the property.</param>
+    /// <param name="penaltyBreakString">The value of the property.</param>
+    /// <param name="penaltyBreakTemplateDeclaration">The value of the property.</param>
+    /// <param name="penaltyExcessCharacter">The value of the property.</param>
+    /// <param name="penaltyIndentedWhitespace">The value of the property.</param>
+    /// <param name="penaltyReturnTypeOnItsOwnLine">The value of the property.</param>
+    /// <param name="pointerAlignment">The value of the property.</param>
+    /// <param name="pPIndentWidth">The value of the property.</param>
+    /// <param name="qualifierAlignment">The value of the property.</param>
+    /// <param name="qualifierOrder">The value of the property.</param>
+    /// <param name="rawStringFormats">The value of the property.</param>
+    /// <param name="referenceAlignment">The value of the property.</param>
+    /// <param name="reflowComments">The value of the property.</param>
+    /// <param name="removeBracesLlvm">The value of the property.</param>
+    /// <param name="removeSemicolon">The value of the property.</param>
+    /// <param name="requiresClausePosition">The value of the property.</param>
+    /// <param name="requiresExpressionIndentation">The value of the property.</param>
+    /// <param name="separateDefinitionBlocks">The value of the property.</param>
+    /// <param name="shortNamespaceLines">The value of the property.</param>
+    /// <param name="sortIncludes">The value of the property.</param>
+    /// <param name="sortJavaStaticImport">The value of the property.</param>
+    /// <param name="sortUsingDeclarations">The value of the property.</param>
+    /// <param name="spaceAfterCStyleCast">The value of the property.</param>
+    /// <param name="spaceAfterLogicalNot">The value of the property.</param>
+    /// <param name="spaceAfterTemplateKeyword">The value of the property.</param>
+    /// <param name="spaceAroundPointerQualifiers">The value of the property.</param>
+    /// <param name="spaceBeforeAssignmentOperators">The value of the property.</param>
+    /// <param name="spaceBeforeCaseColon">The value of the property.</param>
+    /// <param name="spaceBeforeCpp11BracedList">The value of the property.</param>
+    /// <param name="spaceBeforeCtorInitializerColon">The value of the property.</param>
+    /// <param name="spaceBeforeInheritanceColon">The value of the property.</param>
+    /// <param name="spaceBeforeParens">The value of the property.</param>
+    /// <param name="spaceBeforeParensOptions">The value of the property.</param>
+    /// <param name="spaceBeforeRangeBasedForLoopColon">The value of the property.</param>
+    /// <param name="spaceBeforeSquareBrackets">The value of the property.</param>
+    /// <param name="spaceInEmptyBlock">The value of the property.</param>
+    /// <param name="spaceInEmptyParentheses">The value of the property.</param>
+    /// <param name="spacesBeforeTrailingComments">The value of the property.</param>
+    /// <param name="spacesInAngles">The value of the property.</param>
+    /// <param name="spacesInConditionalStatement">The value of the property.</param>
+    /// <param name="spacesInContainerLiterals">The value of the property.</param>
+    /// <param name="spacesInCStyleCastParentheses">The value of the property.</param>
+    /// <param name="spacesInLineCommentPrefix">The value of the property.</param>
+    /// <param name="spacesInParentheses">The value of the property.</param>
+    /// <param name="spacesInSquareBrackets">The value of the property.</param>
+    /// <param name="standard">The value of the property.</param>
+    /// <param name="statementAttributeLikeMacros">The value of the property.</param>
+    /// <param name="statementMacros">The value of the property.</param>
+    /// <param name="tabWidth">The value of the property.</param>
+    /// <param name="typenameMacros">The value of the property.</param>
+    /// <param name="useCrlf">The value of the property.</param>
+    /// <param name="useTab">The value of the property.</param>
+    /// <param name="whitespaceSensitiveMacros">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<ClangFormatSchema> Create(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source accessModifierOffset = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source alignAfterOpenBracket = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source alignArrayOfStructures = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source alignConsecutiveAssignments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source alignConsecutiveBitFields = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source alignConsecutiveDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source alignConsecutiveMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source alignEscapedNewlines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source alignOperands = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source alignTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllArgumentsOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllConstructorInitializersOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllParametersOfDeclarationOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source allowShortBlocksOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortCaseLabelsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortEnumsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source allowShortFunctionsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source allowShortIfStatementsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source allowShortLambdasOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortLoopsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source alwaysBreakAfterDefinitionReturnType = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source alwaysBreakAfterReturnType = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source alwaysBreakBeforeMultilineStrings = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source alwaysBreakTemplateDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source attributeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackArguments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackParameters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source bitFieldColonSpacing = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source braceWrapping = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source breakAfterAttributes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakAfterJavaFieldAnnotations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakArrays = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source breakBeforeBinaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source breakBeforeBraces = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source breakBeforeConceptDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeInheritanceComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source breakBeforeInlineAsmColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeTernaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source breakConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakConstructorInitializersBeforeComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source breakInheritanceList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakStringLiterals = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source columnLimit = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source commentPragmas = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source compactNamespaces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source constructorInitializerAllOnOneLineOrOnePerLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source constructorInitializerIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source continuationIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source cpp11BracedListStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source deriveLineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source derivePointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source disableFormat = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source emptyLineAfterAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source emptyLineBeforeAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source experimentalAutoDetectBinPacking = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source fixNamespaceComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source forEachMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source ifMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source includeBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source includeCategories = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainSourceRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentAccessModifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseBlocks = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source indentExternBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentGotoLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source indentPpDirectives = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequires = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequiresClause = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source indentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentWrappedFunctionNames = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertBraces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source integerLiteralSeparator = default, in Corvus.ClangFormatBenchmark.Current.JsonArray.Source javaImportGroup = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source lambdaBodyIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source language = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source lineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockBegin = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockEnd = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source maxEmptyLinesToKeep = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source namespaceIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source namespaceMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source objCBinPackProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source objCBlockIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCBreakBeforeNestedBlockParam = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceAfterProperty = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceBeforeProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source packConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source penaltyBreakAssignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source penaltyBreakBeforeFirstCallParameter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source penaltyBreakComment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source penaltyBreakFirstLessLess = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source penaltyBreakOpenParenthesis = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source penaltyBreakString = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source penaltyBreakTemplateDeclaration = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source penaltyExcessCharacter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source penaltyIndentedWhitespace = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source penaltyReturnTypeOnItsOwnLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source pointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source pPIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source qualifierAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source qualifierOrder = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source rawStringFormats = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source referenceAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source reflowComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeBracesLlvm = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeSemicolon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source requiresClausePosition = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source requiresExpressionIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source separateDefinitionBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source shortNamespaceLines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source sortIncludes = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source sortJavaStaticImport = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source sortUsingDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterCStyleCast = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterLogicalNot = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterTemplateKeyword = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source spaceAroundPointerQualifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeAssignmentOperators = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCaseColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCpp11BracedList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCtorInitializerColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeInheritanceColon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source spaceBeforeParens = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source spaceBeforeParensOptions = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeRangeBasedForLoopColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source spacesBeforeTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source spacesInAngles = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInConditionalStatement = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInContainerLiterals = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInCStyleCastParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source spacesInLineCommentPrefix = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInParentheses = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source standard = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source statementAttributeLikeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source statementMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source tabWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source typenameMacros = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source useCrlf = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source useTab = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source whitespaceSensitiveMacros = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(accessModifierOffset, alignAfterOpenBracket, alignArrayOfStructures, alignConsecutiveAssignments, alignConsecutiveBitFields, alignConsecutiveDeclarations, alignConsecutiveMacros, alignEscapedNewlines, alignOperands, alignTrailingComments, allowAllArgumentsOnNextLine, allowAllConstructorInitializersOnNextLine, allowAllParametersOfDeclarationOnNextLine, allowShortBlocksOnASingleLine, allowShortCaseLabelsOnASingleLine, allowShortEnumsOnASingleLine, allowShortFunctionsOnASingleLine, allowShortIfStatementsOnASingleLine, allowShortLambdasOnASingleLine, allowShortLoopsOnASingleLine, alwaysBreakAfterDefinitionReturnType, alwaysBreakAfterReturnType, alwaysBreakBeforeMultilineStrings, alwaysBreakTemplateDeclarations, attributeMacros, basedOnStyle, binPackArguments, binPackParameters, bitFieldColonSpacing, braceWrapping, breakAfterAttributes, breakAfterJavaFieldAnnotations, breakArrays, breakBeforeBinaryOperators, breakBeforeBraces, breakBeforeConceptDeclarations, breakBeforeInheritanceComma, breakBeforeInlineAsmColon, breakBeforeTernaryOperators, breakConstructorInitializers, breakConstructorInitializersBeforeComma, breakInheritanceList, breakStringLiterals, columnLimit, commentPragmas, compactNamespaces, constructorInitializerAllOnOneLineOrOnePerLine, constructorInitializerIndentWidth, continuationIndentWidth, cpp11BracedListStyle, deriveLineEnding, derivePointerAlignment, disableFormat, emptyLineAfterAccessModifier, emptyLineBeforeAccessModifier, experimentalAutoDetectBinPacking, fixNamespaceComments, forEachMacros, ifMacros, includeBlocks, includeCategories, includeIsMainRegex, includeIsMainSourceRegex, indentAccessModifiers, indentCaseBlocks, indentCaseLabels, indentExternBlock, indentGotoLabels, indentPpDirectives, indentRequires, indentRequiresClause, indentWidth, indentWrappedFunctionNames, insertBraces, insertNewlineAtEof, insertTrailingCommas, integerLiteralSeparator, javaImportGroup, javaScriptQuotes, javaScriptWrapImports, keepEmptyLinesAtTheStartOfBlocks, lambdaBodyIndentation, language, lineEnding, macroBlockBegin, macroBlockEnd, maxEmptyLinesToKeep, namespaceIndentation, namespaceMacros, objCBinPackProtocolList, objCBlockIndentWidth, objCBreakBeforeNestedBlockParam, objCSpaceAfterProperty, objCSpaceBeforeProtocolList, packConstructorInitializers, penaltyBreakAssignment, penaltyBreakBeforeFirstCallParameter, penaltyBreakComment, penaltyBreakFirstLessLess, penaltyBreakOpenParenthesis, penaltyBreakString, penaltyBreakTemplateDeclaration, penaltyExcessCharacter, penaltyIndentedWhitespace, penaltyReturnTypeOnItsOwnLine, pointerAlignment, pPIndentWidth, qualifierAlignment, qualifierOrder, rawStringFormats, referenceAlignment, reflowComments, removeBracesLlvm, removeSemicolon, requiresClausePosition, requiresExpressionIndentation, separateDefinitionBlocks, shortNamespaceLines, sortIncludes, sortJavaStaticImport, sortUsingDeclarations, spaceAfterCStyleCast, spaceAfterLogicalNot, spaceAfterTemplateKeyword, spaceAroundPointerQualifiers, spaceBeforeAssignmentOperators, spaceBeforeCaseColon, spaceBeforeCpp11BracedList, spaceBeforeCtorInitializerColon, spaceBeforeInheritanceColon, spaceBeforeParens, spaceBeforeParensOptions, spaceBeforeRangeBasedForLoopColon, spaceBeforeSquareBrackets, spaceInEmptyBlock, spaceInEmptyParentheses, spacesBeforeTrailingComments, spacesInAngles, spacesInConditionalStatement, spacesInContainerLiterals, spacesInCStyleCastParentheses, spacesInLineCommentPrefix, spacesInParentheses, spacesInSquareBrackets, standard, statementAttributeLikeMacros, statementMacros, tabWidth, typenameMacros, useCrlf, useTab, whitespaceSensitiveMacros);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<ClangFormatSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="accessModifierOffset">The value of the property.</param>
+    /// <param name="alignAfterOpenBracket">The value of the property.</param>
+    /// <param name="alignArrayOfStructures">The value of the property.</param>
+    /// <param name="alignConsecutiveAssignments">The value of the property.</param>
+    /// <param name="alignConsecutiveBitFields">The value of the property.</param>
+    /// <param name="alignConsecutiveDeclarations">The value of the property.</param>
+    /// <param name="alignConsecutiveMacros">The value of the property.</param>
+    /// <param name="alignEscapedNewlines">The value of the property.</param>
+    /// <param name="alignOperands">The value of the property.</param>
+    /// <param name="alignTrailingComments">The value of the property.</param>
+    /// <param name="allowAllArgumentsOnNextLine">The value of the property.</param>
+    /// <param name="allowAllConstructorInitializersOnNextLine">The value of the property.</param>
+    /// <param name="allowAllParametersOfDeclarationOnNextLine">The value of the property.</param>
+    /// <param name="allowShortBlocksOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortCaseLabelsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortEnumsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortFunctionsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortIfStatementsOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortLambdasOnASingleLine">The value of the property.</param>
+    /// <param name="allowShortLoopsOnASingleLine">The value of the property.</param>
+    /// <param name="alwaysBreakAfterDefinitionReturnType">The value of the property.</param>
+    /// <param name="alwaysBreakAfterReturnType">The value of the property.</param>
+    /// <param name="alwaysBreakBeforeMultilineStrings">The value of the property.</param>
+    /// <param name="alwaysBreakTemplateDeclarations">The value of the property.</param>
+    /// <param name="attributeMacros">The value of the property.</param>
+    /// <param name="basedOnStyle">The value of the property.</param>
+    /// <param name="binPackArguments">The value of the property.</param>
+    /// <param name="binPackParameters">The value of the property.</param>
+    /// <param name="bitFieldColonSpacing">The value of the property.</param>
+    /// <param name="braceWrapping">The value of the property.</param>
+    /// <param name="breakAfterAttributes">The value of the property.</param>
+    /// <param name="breakAfterJavaFieldAnnotations">The value of the property.</param>
+    /// <param name="breakArrays">The value of the property.</param>
+    /// <param name="breakBeforeBinaryOperators">The value of the property.</param>
+    /// <param name="breakBeforeBraces">The value of the property.</param>
+    /// <param name="breakBeforeConceptDeclarations">The value of the property.</param>
+    /// <param name="breakBeforeInheritanceComma">The value of the property.</param>
+    /// <param name="breakBeforeInlineAsmColon">The value of the property.</param>
+    /// <param name="breakBeforeTernaryOperators">The value of the property.</param>
+    /// <param name="breakConstructorInitializers">The value of the property.</param>
+    /// <param name="breakConstructorInitializersBeforeComma">The value of the property.</param>
+    /// <param name="breakInheritanceList">The value of the property.</param>
+    /// <param name="breakStringLiterals">The value of the property.</param>
+    /// <param name="columnLimit">The value of the property.</param>
+    /// <param name="commentPragmas">The value of the property.</param>
+    /// <param name="compactNamespaces">The value of the property.</param>
+    /// <param name="constructorInitializerAllOnOneLineOrOnePerLine">The value of the property.</param>
+    /// <param name="constructorInitializerIndentWidth">The value of the property.</param>
+    /// <param name="continuationIndentWidth">The value of the property.</param>
+    /// <param name="cpp11BracedListStyle">The value of the property.</param>
+    /// <param name="deriveLineEnding">The value of the property.</param>
+    /// <param name="derivePointerAlignment">The value of the property.</param>
+    /// <param name="disableFormat">The value of the property.</param>
+    /// <param name="emptyLineAfterAccessModifier">The value of the property.</param>
+    /// <param name="emptyLineBeforeAccessModifier">The value of the property.</param>
+    /// <param name="experimentalAutoDetectBinPacking">The value of the property.</param>
+    /// <param name="fixNamespaceComments">The value of the property.</param>
+    /// <param name="forEachMacros">The value of the property.</param>
+    /// <param name="ifMacros">The value of the property.</param>
+    /// <param name="includeBlocks">The value of the property.</param>
+    /// <param name="includeCategories">The value of the property.</param>
+    /// <param name="includeIsMainRegex">The value of the property.</param>
+    /// <param name="includeIsMainSourceRegex">The value of the property.</param>
+    /// <param name="indentAccessModifiers">The value of the property.</param>
+    /// <param name="indentCaseBlocks">The value of the property.</param>
+    /// <param name="indentCaseLabels">The value of the property.</param>
+    /// <param name="indentExternBlock">The value of the property.</param>
+    /// <param name="indentGotoLabels">The value of the property.</param>
+    /// <param name="indentPpDirectives">The value of the property.</param>
+    /// <param name="indentRequires">The value of the property.</param>
+    /// <param name="indentRequiresClause">The value of the property.</param>
+    /// <param name="indentWidth">The value of the property.</param>
+    /// <param name="indentWrappedFunctionNames">The value of the property.</param>
+    /// <param name="insertBraces">The value of the property.</param>
+    /// <param name="insertNewlineAtEof">The value of the property.</param>
+    /// <param name="insertTrailingCommas">The value of the property.</param>
+    /// <param name="integerLiteralSeparator">The value of the property.</param>
+    /// <param name="javaImportGroup">The value of the property.</param>
+    /// <param name="javaScriptQuotes">The value of the property.</param>
+    /// <param name="javaScriptWrapImports">The value of the property.</param>
+    /// <param name="keepEmptyLinesAtTheStartOfBlocks">The value of the property.</param>
+    /// <param name="lambdaBodyIndentation">The value of the property.</param>
+    /// <param name="language">The value of the property.</param>
+    /// <param name="lineEnding">The value of the property.</param>
+    /// <param name="macroBlockBegin">The value of the property.</param>
+    /// <param name="macroBlockEnd">The value of the property.</param>
+    /// <param name="maxEmptyLinesToKeep">The value of the property.</param>
+    /// <param name="namespaceIndentation">The value of the property.</param>
+    /// <param name="namespaceMacros">The value of the property.</param>
+    /// <param name="objCBinPackProtocolList">The value of the property.</param>
+    /// <param name="objCBlockIndentWidth">The value of the property.</param>
+    /// <param name="objCBreakBeforeNestedBlockParam">The value of the property.</param>
+    /// <param name="objCSpaceAfterProperty">The value of the property.</param>
+    /// <param name="objCSpaceBeforeProtocolList">The value of the property.</param>
+    /// <param name="packConstructorInitializers">The value of the property.</param>
+    /// <param name="penaltyBreakAssignment">The value of the property.</param>
+    /// <param name="penaltyBreakBeforeFirstCallParameter">The value of the property.</param>
+    /// <param name="penaltyBreakComment">The value of the property.</param>
+    /// <param name="penaltyBreakFirstLessLess">The value of the property.</param>
+    /// <param name="penaltyBreakOpenParenthesis">The value of the property.</param>
+    /// <param name="penaltyBreakString">The value of the property.</param>
+    /// <param name="penaltyBreakTemplateDeclaration">The value of the property.</param>
+    /// <param name="penaltyExcessCharacter">The value of the property.</param>
+    /// <param name="penaltyIndentedWhitespace">The value of the property.</param>
+    /// <param name="penaltyReturnTypeOnItsOwnLine">The value of the property.</param>
+    /// <param name="pointerAlignment">The value of the property.</param>
+    /// <param name="pPIndentWidth">The value of the property.</param>
+    /// <param name="qualifierAlignment">The value of the property.</param>
+    /// <param name="qualifierOrder">The value of the property.</param>
+    /// <param name="rawStringFormats">The value of the property.</param>
+    /// <param name="referenceAlignment">The value of the property.</param>
+    /// <param name="reflowComments">The value of the property.</param>
+    /// <param name="removeBracesLlvm">The value of the property.</param>
+    /// <param name="removeSemicolon">The value of the property.</param>
+    /// <param name="requiresClausePosition">The value of the property.</param>
+    /// <param name="requiresExpressionIndentation">The value of the property.</param>
+    /// <param name="separateDefinitionBlocks">The value of the property.</param>
+    /// <param name="shortNamespaceLines">The value of the property.</param>
+    /// <param name="sortIncludes">The value of the property.</param>
+    /// <param name="sortJavaStaticImport">The value of the property.</param>
+    /// <param name="sortUsingDeclarations">The value of the property.</param>
+    /// <param name="spaceAfterCStyleCast">The value of the property.</param>
+    /// <param name="spaceAfterLogicalNot">The value of the property.</param>
+    /// <param name="spaceAfterTemplateKeyword">The value of the property.</param>
+    /// <param name="spaceAroundPointerQualifiers">The value of the property.</param>
+    /// <param name="spaceBeforeAssignmentOperators">The value of the property.</param>
+    /// <param name="spaceBeforeCaseColon">The value of the property.</param>
+    /// <param name="spaceBeforeCpp11BracedList">The value of the property.</param>
+    /// <param name="spaceBeforeCtorInitializerColon">The value of the property.</param>
+    /// <param name="spaceBeforeInheritanceColon">The value of the property.</param>
+    /// <param name="spaceBeforeParens">The value of the property.</param>
+    /// <param name="spaceBeforeParensOptions">The value of the property.</param>
+    /// <param name="spaceBeforeRangeBasedForLoopColon">The value of the property.</param>
+    /// <param name="spaceBeforeSquareBrackets">The value of the property.</param>
+    /// <param name="spaceInEmptyBlock">The value of the property.</param>
+    /// <param name="spaceInEmptyParentheses">The value of the property.</param>
+    /// <param name="spacesBeforeTrailingComments">The value of the property.</param>
+    /// <param name="spacesInAngles">The value of the property.</param>
+    /// <param name="spacesInConditionalStatement">The value of the property.</param>
+    /// <param name="spacesInContainerLiterals">The value of the property.</param>
+    /// <param name="spacesInCStyleCastParentheses">The value of the property.</param>
+    /// <param name="spacesInLineCommentPrefix">The value of the property.</param>
+    /// <param name="spacesInParentheses">The value of the property.</param>
+    /// <param name="spacesInSquareBrackets">The value of the property.</param>
+    /// <param name="standard">The value of the property.</param>
+    /// <param name="statementAttributeLikeMacros">The value of the property.</param>
+    /// <param name="statementMacros">The value of the property.</param>
+    /// <param name="tabWidth">The value of the property.</param>
+    /// <param name="typenameMacros">The value of the property.</param>
+    /// <param name="useCrlf">The value of the property.</param>
+    /// <param name="useTab">The value of the property.</param>
+    /// <param name="whitespaceSensitiveMacros">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<ClangFormatSchema> Create<TContext>(in TContext context, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source accessModifierOffset = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source alignAfterOpenBracket = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source alignArrayOfStructures = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source<TContext> alignConsecutiveAssignments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source<TContext> alignConsecutiveBitFields = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source<TContext> alignConsecutiveDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source<TContext> alignConsecutiveMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source alignEscapedNewlines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source alignOperands = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source<TContext> alignTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllArgumentsOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllConstructorInitializersOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllParametersOfDeclarationOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source allowShortBlocksOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortCaseLabelsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortEnumsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source allowShortFunctionsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source allowShortIfStatementsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source allowShortLambdasOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortLoopsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source alwaysBreakAfterDefinitionReturnType = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source alwaysBreakAfterReturnType = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source alwaysBreakBeforeMultilineStrings = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source alwaysBreakTemplateDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source<TContext> attributeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackArguments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackParameters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source bitFieldColonSpacing = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source<TContext> braceWrapping = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source breakAfterAttributes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakAfterJavaFieldAnnotations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakArrays = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source breakBeforeBinaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source breakBeforeBraces = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source breakBeforeConceptDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeInheritanceComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source breakBeforeInlineAsmColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeTernaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source breakConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakConstructorInitializersBeforeComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source breakInheritanceList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakStringLiterals = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source columnLimit = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source commentPragmas = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source compactNamespaces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source constructorInitializerAllOnOneLineOrOnePerLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source constructorInitializerIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source continuationIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source cpp11BracedListStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source deriveLineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source derivePointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source disableFormat = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source emptyLineAfterAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source emptyLineBeforeAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source experimentalAutoDetectBinPacking = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source fixNamespaceComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source<TContext> forEachMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source<TContext> ifMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source includeBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source<TContext> includeCategories = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainSourceRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentAccessModifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseBlocks = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source indentExternBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentGotoLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source indentPpDirectives = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequires = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequiresClause = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source indentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentWrappedFunctionNames = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertBraces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source<TContext> integerLiteralSeparator = default, in Corvus.ClangFormatBenchmark.Current.JsonArray.Source<TContext> javaImportGroup = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source lambdaBodyIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source language = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source lineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockBegin = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockEnd = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source maxEmptyLinesToKeep = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source namespaceIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source<TContext> namespaceMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source objCBinPackProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source objCBlockIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCBreakBeforeNestedBlockParam = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceAfterProperty = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceBeforeProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source packConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source penaltyBreakAssignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source penaltyBreakBeforeFirstCallParameter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source penaltyBreakComment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source penaltyBreakFirstLessLess = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source penaltyBreakOpenParenthesis = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source penaltyBreakString = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source penaltyBreakTemplateDeclaration = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source penaltyExcessCharacter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source penaltyIndentedWhitespace = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source penaltyReturnTypeOnItsOwnLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source pointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source pPIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source qualifierAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source<TContext> qualifierOrder = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source<TContext> rawStringFormats = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source referenceAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source reflowComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeBracesLlvm = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeSemicolon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source requiresClausePosition = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source requiresExpressionIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source separateDefinitionBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source shortNamespaceLines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source sortIncludes = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source sortJavaStaticImport = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source sortUsingDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterCStyleCast = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterLogicalNot = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterTemplateKeyword = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source spaceAroundPointerQualifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeAssignmentOperators = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCaseColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCpp11BracedList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCtorInitializerColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeInheritanceColon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source spaceBeforeParens = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source<TContext> spaceBeforeParensOptions = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeRangeBasedForLoopColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source spacesBeforeTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source spacesInAngles = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInConditionalStatement = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInContainerLiterals = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInCStyleCastParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source<TContext> spacesInLineCommentPrefix = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInParentheses = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source standard = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source<TContext> statementAttributeLikeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source<TContext> statementMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source tabWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source<TContext> typenameMacros = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source useCrlf = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source useTab = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source<TContext> whitespaceSensitiveMacros = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, accessModifierOffset, alignAfterOpenBracket, alignArrayOfStructures, alignConsecutiveAssignments, alignConsecutiveBitFields, alignConsecutiveDeclarations, alignConsecutiveMacros, alignEscapedNewlines, alignOperands, alignTrailingComments, allowAllArgumentsOnNextLine, allowAllConstructorInitializersOnNextLine, allowAllParametersOfDeclarationOnNextLine, allowShortBlocksOnASingleLine, allowShortCaseLabelsOnASingleLine, allowShortEnumsOnASingleLine, allowShortFunctionsOnASingleLine, allowShortIfStatementsOnASingleLine, allowShortLambdasOnASingleLine, allowShortLoopsOnASingleLine, alwaysBreakAfterDefinitionReturnType, alwaysBreakAfterReturnType, alwaysBreakBeforeMultilineStrings, alwaysBreakTemplateDeclarations, attributeMacros, basedOnStyle, binPackArguments, binPackParameters, bitFieldColonSpacing, braceWrapping, breakAfterAttributes, breakAfterJavaFieldAnnotations, breakArrays, breakBeforeBinaryOperators, breakBeforeBraces, breakBeforeConceptDeclarations, breakBeforeInheritanceComma, breakBeforeInlineAsmColon, breakBeforeTernaryOperators, breakConstructorInitializers, breakConstructorInitializersBeforeComma, breakInheritanceList, breakStringLiterals, columnLimit, commentPragmas, compactNamespaces, constructorInitializerAllOnOneLineOrOnePerLine, constructorInitializerIndentWidth, continuationIndentWidth, cpp11BracedListStyle, deriveLineEnding, derivePointerAlignment, disableFormat, emptyLineAfterAccessModifier, emptyLineBeforeAccessModifier, experimentalAutoDetectBinPacking, fixNamespaceComments, forEachMacros, ifMacros, includeBlocks, includeCategories, includeIsMainRegex, includeIsMainSourceRegex, indentAccessModifiers, indentCaseBlocks, indentCaseLabels, indentExternBlock, indentGotoLabels, indentPpDirectives, indentRequires, indentRequiresClause, indentWidth, indentWrappedFunctionNames, insertBraces, insertNewlineAtEof, insertTrailingCommas, integerLiteralSeparator, javaImportGroup, javaScriptQuotes, javaScriptWrapImports, keepEmptyLinesAtTheStartOfBlocks, lambdaBodyIndentation, language, lineEnding, macroBlockBegin, macroBlockEnd, maxEmptyLinesToKeep, namespaceIndentation, namespaceMacros, objCBinPackProtocolList, objCBlockIndentWidth, objCBreakBeforeNestedBlockParam, objCSpaceAfterProperty, objCSpaceBeforeProtocolList, packConstructorInitializers, penaltyBreakAssignment, penaltyBreakBeforeFirstCallParameter, penaltyBreakComment, penaltyBreakFirstLessLess, penaltyBreakOpenParenthesis, penaltyBreakString, penaltyBreakTemplateDeclaration, penaltyExcessCharacter, penaltyIndentedWhitespace, penaltyReturnTypeOnItsOwnLine, pointerAlignment, pPIndentWidth, qualifierAlignment, qualifierOrder, rawStringFormats, referenceAlignment, reflowComments, removeBracesLlvm, removeSemicolon, requiresClausePosition, requiresExpressionIndentation, separateDefinitionBlocks, shortNamespaceLines, sortIncludes, sortJavaStaticImport, sortUsingDeclarations, spaceAfterCStyleCast, spaceAfterLogicalNot, spaceAfterTemplateKeyword, spaceAroundPointerQualifiers, spaceBeforeAssignmentOperators, spaceBeforeCaseColon, spaceBeforeCpp11BracedList, spaceBeforeCtorInitializerColon, spaceBeforeInheritanceColon, spaceBeforeParens, spaceBeforeParensOptions, spaceBeforeRangeBasedForLoopColon, spaceBeforeSquareBrackets, spaceInEmptyBlock, spaceInEmptyParentheses, spacesBeforeTrailingComments, spacesInAngles, spacesInConditionalStatement, spacesInContainerLiterals, spacesInCStyleCastParentheses, spacesInLineCommentPrefix, spacesInParentheses, spacesInSquareBrackets, standard, statementAttributeLikeMacros, statementMacros, tabWidth, typenameMacros, useCrlf, useTab, whitespaceSensitiveMacros);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<ClangFormatSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }
