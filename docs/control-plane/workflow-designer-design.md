@@ -674,7 +674,10 @@ compile; it serves recorded fixtures, clearly marked).
    meta-schema picked by the document's declared version, plus `WorkflowDocumentAnalyzer`
    (CodeGeneration) collecting every document-local semantic finding — goto/retry targets,
    `dependsOn`, criterion syntax via the runtime's own `CompiledCriterion`, runtime-expression
-   syntax, reusable component references, duplicate ids, and first-match-wins reachability.
+   syntax, reusable component references, duplicate ids, first-match-wins reachability, and
+   implicit `$steps` dependencies (§5.8.5.2.4: an unknown `$steps` target or a combined
+   explicit+implicit dependency cycle is an error; a dependency that reorders a no-`dependsOn`
+   workflow is a warning).
    Source-dependent checks (operationId/channelPath resolution) arrive with attached sources
    (slice 2), the schemas endpoint alongside them. `<arazzo-workspace-table>` and the designer
    shell are BUILT: the demo boots into the workspace view, opens a working copy through

@@ -152,6 +152,71 @@ public class WorkflowDocumentAnalyzerTests
     }
 
     [TestMethod]
+    public void Unknown_steps_output_reference_is_an_error()
+    {
+        // $steps.ghost.outputs.z targets no step in the workflow — silently undefined at runtime today (§5.8.5.2.4), an error here.
+        IReadOnlyList<WorkflowDocumentDiagnostic> diagnostics = Analyze("""
+        {
+          "workflows": [
+            {
+              "workflowId": "w",
+              "steps": [
+                { "stepId": "a", "operationId": "x", "outputs": { "y": "$steps.ghost.outputs.z" } }
+              ]
+            }
+          ]
+        }
+        """);
+
+        diagnostics.ShouldContain(d => d.Severity == WorkflowDocumentDiagnosticSeverity.Error && d.Category == "implicit-dependency");
+    }
+
+    [TestMethod]
+    public void Combined_explicit_and_implicit_dependency_cycle_is_an_error()
+    {
+        // stepX dependsOn stepY (explicit stepY->stepX); stepY reads $steps.stepX.outputs (implicit stepX->stepY). The
+        // combined graph is cyclic and must be diagnosed, not silently mis-executed as a forward, undefined reference.
+        IReadOnlyList<WorkflowDocumentDiagnostic> diagnostics = Analyze("""
+        {
+          "workflows": [
+            {
+              "workflowId": "w",
+              "steps": [
+                { "stepId": "stepX", "operationId": "x", "dependsOn": ["stepY"], "outputs": { "p": "$response.body#/n" } },
+                { "stepId": "stepY", "operationId": "x", "outputs": { "q": "$steps.stepX.outputs.p" } }
+              ]
+            }
+          ]
+        }
+        """);
+
+        diagnostics.ShouldContain(d => d.Severity == WorkflowDocumentDiagnosticSeverity.Error && d.Category == "dependency-cycle");
+    }
+
+    [TestMethod]
+    public void Implicit_dependencies_forcing_a_reorder_without_dependsOn_is_a_warning()
+    {
+        // No step declares dependsOn, but stepEarly (declared first) reads $steps.stepLate.outputs — the implicit dependency
+        // forces stepLate to run first. It runs correctly after the sort (§5.8.5.2.4 MUST), but the author almost certainly
+        // mis-ordered the array (§5.5.5.2.5), so warn rather than reject.
+        IReadOnlyList<WorkflowDocumentDiagnostic> diagnostics = Analyze("""
+        {
+          "workflows": [
+            {
+              "workflowId": "w",
+              "steps": [
+                { "stepId": "stepEarly", "operationId": "x", "outputs": { "b": "$steps.stepLate.outputs.p" } },
+                { "stepId": "stepLate", "operationId": "x", "outputs": { "p": "$response.body#/n" } }
+              ]
+            }
+          ]
+        }
+        """);
+
+        diagnostics.ShouldContain(d => d.Severity == WorkflowDocumentDiagnosticSeverity.Warning && d.Category == "implicit-dependency");
+    }
+
+    [TestMethod]
     public void Criterion_syntax_checks_with_the_runtimes_own_compiler()
     {
         IReadOnlyList<WorkflowDocumentDiagnostic> diagnostics = Analyze("""

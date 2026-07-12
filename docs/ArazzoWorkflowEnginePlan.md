@@ -340,8 +340,22 @@ Key points:
 - `onSuccess`/`onFailure` actions: `end`, `goto` (step/workflow), `retry`
   (`retryAfter`, `retryLimit`); workflow-level `successActions`/`failureActions`
   as defaults. Generate a labelled-loop / state-machine executor.
-- `dependsOn` ordering; sub-workflow steps (`workflowId`); workflow `outputs`
-  surfaced via `$workflows.<id>.outputs.*`.
+- **Step ordering — explicit *and* implicit dependencies (Arazzo 1.1 §5.8.5.2.4).**
+  `WorkflowExecutorEmitter.TopologicallyOrder` respects `dependsOn` and *also* treats every
+  same-workflow `$steps.<id>.*` runtime-expression reference — on `parameters`, `requestBody`
+  (payload + replacements), `successCriteria`, `outputs`, and `onSuccess`/`onFailure` action
+  criteria — as an **implicit dependency**, ordering the referenced step before the referencing
+  one. The document-order tie-break is preserved, so a workflow whose declaration order already
+  satisfies every edge emits byte-identically (the change is a no-op for well-ordered documents).
+  A cycle in the combined explicit+implicit graph is a generation-time error whose message names
+  the implicit edges (an author who never wrote `dependsOn` is told where the hidden edge came
+  from). Cross-workflow reference forms and workflow-level `outputs` (which evaluate after all
+  steps) impose no ordering, matching `dependsOn`'s existing treatment. `WorkflowDocumentAnalyzer`
+  mirrors the rule for the designer's Problems tray: an unknown `$steps` target is an error, the
+  combined cycle is an error, and — only in a workflow that declares no `dependsOn` — an implicit
+  edge that forces a reorder is a warning (the run is spec-conformant after the sort, per the MUST,
+  but the step array is almost certainly mis-ordered; §5.5.5.2.5).
+- sub-workflow steps (`workflowId`); workflow `outputs` surfaced via `$workflows.<id>.outputs.*`.
 - `components` + `Reusable` (`$components.*` resolution, parameter overrides).
 
 ### Phase 4 — Bodies, selectors, source resolution

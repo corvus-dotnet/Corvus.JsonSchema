@@ -186,7 +186,157 @@ public static class WorkflowDocumentAnalyzer
             }
         }
 
+        CheckImplicitDependencies(steps, pointers, stepIds, diagnostics);
         CheckReachability(steps, pointers, stepIds, flows, diagnostics);
+    }
+
+    // ── implicit dependencies ($steps.<id>.* runtime references; Arazzo 1.1 §5.8.5.2.4) ──────────────
+    // A step that reads $steps.<id>.* implicitly depends on <id>. The generator folds those edges into
+    // the topological order (WorkflowExecutorEmitter.TopologicallyOrder), so this pass mirrors what it
+    // would do: an unknown $steps target is an error (silently undefined at run time otherwise); the
+    // combined dependsOn+implicit graph being cyclic is an error; and — in a workflow that declares no
+    // dependsOn at all — an implicit dependency that forces a reorder is a warning, because the step
+    // array is almost certainly mis-ordered even though the run will still succeed after the sort.
+    private static void CheckImplicitDependencies(
+        in JsonElement steps,
+        PointerBuilder pointers,
+        List<string> stepIds,
+        List<WorkflowDocumentDiagnostic> diagnostics)
+    {
+        if (steps.ValueKind != JsonValueKind.Array || stepIds.Count == 0)
+        {
+            return;
+        }
+
+        var indexById = new Dictionary<string, int>(StringComparer.Ordinal);
+        int si = 0;
+        foreach (JsonElement step in steps.EnumerateArray())
+        {
+            if (ReadString(step, "stepId"u8) is { Length: > 0 } id)
+            {
+                indexById.TryAdd(id, si);
+            }
+
+            si++;
+        }
+
+        int count = si;
+        var inDegree = new int[count];
+        var dependents = new List<int>[count];
+        for (int i = 0; i < count; i++)
+        {
+            dependents[i] = [];
+        }
+
+        var edgeSet = new HashSet<(int From, int To)>();
+        void AddEdge(int from, int to)
+        {
+            if (from != to && edgeSet.Add((from, to)))
+            {
+                dependents[from].Add(to);
+                inDegree[to]++;
+            }
+        }
+
+        bool anyDependsOn = false;
+        int reorderStepIndex = -1;
+        var references = new HashSet<string>(StringComparer.Ordinal);
+
+        using (PointerScope stepsScope = pointers.Push("steps"))
+        {
+            si = 0;
+            foreach (JsonElement step in steps.EnumerateArray())
+            {
+                int self = si;
+                si++;
+                if (step.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                // Explicit dependsOn contributes to the same graph (unknown targets already reported by CheckDependsOn).
+                if (step.TryGetProperty("dependsOn"u8, out JsonElement deps) && deps.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement dep in deps.EnumerateArray())
+                    {
+                        if (dep.ValueKind == JsonValueKind.String && dep.GetString() is { Length: > 0 } dn && indexById.TryGetValue(dn, out int di))
+                        {
+                            anyDependsOn = true;
+                            AddEdge(di, self);
+                        }
+                    }
+                }
+
+                references.Clear();
+                CollectStepReferences(step, references);
+                foreach (string reference in references)
+                {
+                    if (indexById.TryGetValue(reference, out int ri))
+                    {
+                        if (ri > self && reorderStepIndex < 0)
+                        {
+                            reorderStepIndex = self;
+                        }
+
+                        AddEdge(ri, self);
+                    }
+                    else
+                    {
+                        using PointerScope indexScope = pointers.Push(self);
+                        diagnostics.Add(new(
+                            WorkflowDocumentDiagnosticSeverity.Error,
+                            "implicit-dependency",
+                            pointers.Materialize(),
+                            $"A runtime expression references $steps.{reference}, which is not a step in this workflow (it resolves to nothing at run time)."));
+                    }
+                }
+            }
+        }
+
+        // Kahn's algorithm over the combined graph; a shortfall means a cycle.
+        var ready = new SortedSet<int>();
+        for (int i = 0; i < count; i++)
+        {
+            if (inDegree[i] == 0)
+            {
+                ready.Add(i);
+            }
+        }
+
+        int emitted = 0;
+        while (ready.Count > 0)
+        {
+            int next = ready.Min;
+            ready.Remove(next);
+            emitted++;
+            foreach (int dependent in dependents[next])
+            {
+                if (--inDegree[dependent] == 0)
+                {
+                    ready.Add(dependent);
+                }
+            }
+        }
+
+        if (emitted != count)
+        {
+            using PointerScope stepsScope = pointers.Push("steps");
+            diagnostics.Add(new(
+                WorkflowDocumentDiagnosticSeverity.Error,
+                "dependency-cycle",
+                pointers.Materialize(),
+                "The steps form a dependency cycle (dependsOn together with implicit $steps references); they cannot be ordered."));
+        }
+        else if (reorderStepIndex >= 0 && !anyDependsOn)
+        {
+            using PointerScope stepsScope = pointers.Push("steps");
+            using PointerScope indexScope = pointers.Push(reorderStepIndex);
+            diagnostics.Add(new(
+                WorkflowDocumentDiagnosticSeverity.Warning,
+                "implicit-dependency",
+                pointers.Materialize(),
+                "This step reads a later-declared step's outputs via a runtime expression, so it will be reordered to run after that step. Declare the steps in dependency order (or add dependsOn) to make the order explicit."));
+        }
     }
 
     // ── dependsOn (workflow-level names workflows; step-level names steps) ────────────────────────
@@ -511,6 +661,105 @@ public static class WorkflowDocumentAnalyzer
 
                 i++;
             }
+        }
+    }
+
+    // Collects the step ids that <paramref name="step"/> references through a $steps.<id>.* runtime
+    // expression on any of its expression-bearing surfaces (parameters, requestBody, success criteria,
+    // inline onSuccess/onFailure criteria, outputs) — the same surfaces the generator reads.
+    private static void CollectStepReferences(in JsonElement step, HashSet<string> into)
+    {
+        if (step.TryGetProperty("parameters"u8, out JsonElement parameters) && parameters.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement parameter in parameters.EnumerateArray())
+            {
+                AddExpressionReferences(ReadString(parameter, "value"u8), into);
+            }
+        }
+
+        if (step.TryGetProperty("requestBody"u8, out JsonElement body) && body.ValueKind == JsonValueKind.Object)
+        {
+            AddExpressionReferences(ReadString(body, "payload"u8), into);
+            if (body.TryGetProperty("replacements"u8, out JsonElement replacements) && replacements.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement replacement in replacements.EnumerateArray())
+                {
+                    AddExpressionReferences(ReadString(replacement, "value"u8), into);
+                }
+            }
+        }
+
+        CollectCriteriaReferences(step, "successCriteria"u8, into);
+        CollectActionCriteriaReferences(step, "onSuccess"u8, into);
+        CollectActionCriteriaReferences(step, "onFailure"u8, into);
+
+        if (step.TryGetProperty("outputs"u8, out JsonElement outputs) && outputs.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> output in outputs.EnumerateObject())
+            {
+                if (output.Value.ValueKind == JsonValueKind.String)
+                {
+                    AddExpressionReferences(output.Value.GetString(), into);
+                }
+            }
+        }
+    }
+
+    private static void CollectCriteriaReferences(in JsonElement owner, ReadOnlySpan<byte> property, HashSet<string> into)
+    {
+        if (owner.TryGetProperty(property, out JsonElement criteria) && criteria.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement criterion in criteria.EnumerateArray())
+            {
+                if (criterion.ValueKind == JsonValueKind.Object)
+                {
+                    AddExpressionReferences(ReadString(criterion, "condition"u8), into);
+                    AddExpressionReferences(ReadString(criterion, "context"u8), into);
+                }
+            }
+        }
+    }
+
+    private static void CollectActionCriteriaReferences(in JsonElement owner, ReadOnlySpan<byte> property, HashSet<string> into)
+    {
+        if (owner.TryGetProperty(property, out JsonElement actions) && actions.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement action in actions.EnumerateArray())
+            {
+                if (action.ValueKind == JsonValueKind.Object)
+                {
+                    CollectCriteriaReferences(action, "criteria"u8, into);
+                }
+            }
+        }
+    }
+
+    // Adds every $steps.<id>. step id found in <paramref name="expression"/> (bare or interpolated,
+    // possibly several) to <paramref name="into"/>. A step id is [A-Za-z0-9_-]+ delimited by the '.'.
+    private static void AddExpressionReferences(string? expression, HashSet<string> into)
+    {
+        if (string.IsNullOrEmpty(expression))
+        {
+            return;
+        }
+
+        const string prefix = "$steps.";
+        int i = 0;
+        while ((i = expression!.IndexOf(prefix, i, StringComparison.Ordinal)) >= 0)
+        {
+            int idStart = i + prefix.Length;
+            int end = idStart;
+            while (end < expression.Length && (char.IsAsciiLetterOrDigit(expression[end]) || expression[end] == '_' || expression[end] == '-'))
+            {
+                end++;
+            }
+
+            if (end > idStart && end < expression.Length && expression[end] == '.')
+            {
+                into.Add(expression[idStart..end]);
+            }
+
+            i = idStart;
         }
     }
 

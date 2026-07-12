@@ -109,6 +109,102 @@ public partial class WorkflowExecutorEndToEndTests
             .Message.ShouldContain("cycle");
     }
 
+    // §5.8.5.2.4: an output reference ($steps.<id>.outputs.<field>) is an IMPLICIT dependency the executor must honour.
+    // stepX dependsOn stepY (explicit edge stepY->stepX); stepY reads $steps.stepX.outputs (implicit edge stepX->stepY).
+    // The combined graph is a CYCLE and must be diagnosed, not silently mis-ordered into a forward, undefined reference.
+    private const string ImplicitCycleDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "cyclicImplicit",
+              "steps": [
+                {
+                  "stepId": "stepX",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "1" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "dependsOn": [ "stepY" ],
+                  "outputs": { "petName": "$response.body#/name" }
+                },
+                {
+                  "stepId": "stepY",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "2" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "result": "$steps.stepX.outputs.petName" }
+                }
+              ],
+              "outputs": {}
+            }
+          ]
+        }
+        """;
+
+    // §5.8.5.2.4: with NO explicit dependsOn anywhere, an output reference is STILL an implicit dependency the executor
+    // must order around. stepEarly is declared first but reads $steps.stepLate.outputs, so stepLate must run first.
+    private const string ImplicitReorderDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "implicitOrdered",
+              "steps": [
+                {
+                  "stepId": "stepEarly",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "1" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "borrowed": "$steps.stepLate.outputs.petName" }
+                },
+                {
+                  "stepId": "stepLate",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "2" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": {}
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public void Emit_throws_for_an_implicit_output_reference_cycle()
+    {
+        // stepX dependsOn stepY (explicit) AND stepY reads $steps.stepX.outputs (implicit) — the combined graph is cyclic.
+        Should.Throw<InvalidOperationException>(() => EmitGetPetExecutor(ImplicitCycleDocument, "CyclicImplicitWorkflow"))
+            .Message.ShouldContain("cycle");
+    }
+
+    [TestMethod]
+    public async Task Generated_executor_orders_steps_by_an_implicit_output_reference()
+    {
+        string source = EmitGetPetExecutor(ImplicitReorderDocument, "ImplicitOrderedWorkflow");
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ImplicitOrderedWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        await pending;
+
+        // stepEarly is declared first, but it reads stepLate's output, so stepLate (/pets/2) must run before stepEarly (/pets/1).
+        transport.Requests.Count.ShouldBe(2);
+        transport.Requests[0].Path.ShouldBe("/pets/2");
+        transport.Requests[1].Path.ShouldBe("/pets/1");
+    }
+
     private const string WorkflowDependsOnDocument = """
         {
           "arazzo": "1.1.0",
