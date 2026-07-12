@@ -29,6 +29,10 @@
   --arazzo-status-completed: #2a8a4a;
   --arazzo-status-cancelled: #6b7280;
   --arazzo-status-faulted: #d4351c;
+  /* The workflow-diff overlay (<arazzo-design-surface> diffState) draws from --arazzo-diff-added/-removed/
+     -changed, which default to --arazzo-status-completed/-faulted/-suspended via nested var() fallbacks at the
+     consuming element. Deliberately NOT declared here: a :root alias would freeze the root colours and stop
+     subtree theming (visual-diff §5). Set --arazzo-diff-* up-tree only to override diff appearance. */
 }
 
 /* Dark palette — shared by the OS-preference media query and an explicit data-theme="dark". */

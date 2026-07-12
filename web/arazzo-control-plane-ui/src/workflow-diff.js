@@ -279,8 +279,10 @@ export function diffWorkflowPair(leftDoc, rightDoc, { leftWorkflowId, rightWorkf
   }
   const defaultsChanged = !eq(leftWf?.successActions, rightWf?.successActions) || !eq(leftWf?.failureActions, rightWf?.failureActions);
   if (defaultsChanged) {
-    if ((leftGraph.defaults.successActions.length + leftGraph.defaults.failureActions.length) > 0) paint.left.nodes.defaults = 'changed';
-    if ((rightGraph.defaults.successActions.length + rightGraph.defaults.failureActions.length) > 0) paint.right.nodes.defaults = 'changed';
+    // the defaults card is a dedicated `.defaults` element (data-id="defaults"), painted via a top-level
+    // diffState.defaults field — not a node id (§5).
+    if ((leftGraph.defaults.successActions.length + leftGraph.defaults.failureActions.length) > 0) paint.left.defaults = 'changed';
+    if ((rightGraph.defaults.successActions.length + rightGraph.defaults.failureActions.length) > 0) paint.right.defaults = 'changed';
     summary.changed++;
     const which = [];
     if (!eq(leftWf?.successActions, rightWf?.successActions)) which.push('successActions');

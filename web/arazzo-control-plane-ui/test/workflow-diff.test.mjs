@@ -105,7 +105,7 @@ test('a defaults (workflow successActions) edit is a workflow entry + defaults p
   const e = d.workflow.find((x) => x.area === 'defaults');
   assert.ok(e);
   assert.deepEqual(e.changedGroups, ['successActions']);
-  assert.equal(d.paint.right.nodes.defaults, 'changed');
+  assert.equal(d.paint.right.defaults, 'changed');
 });
 
 test('add + remove that do NOT share a binding never pair', () => {
