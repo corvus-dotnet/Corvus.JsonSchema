@@ -10,6 +10,8 @@ using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.Arazzo.Generation;
+using Corvus.Text.Json.Arazzo.Directories;
+using Corvus.Text.Json.Arazzo.Directories.Keycloak;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -316,6 +318,26 @@ if (seedExampleData)
     await exampleSeed.SeedAsync(new ExampleSeedContext(
         catalog, sourceCredentials, environmentStore, environmentAdministratorStore, sourceStore,
         availabilityStore, accessRequests, availabilityRequestStore, specsDir));
+
+    // Seed the observed-identity ("seen") typeahead so the grant pickers are non-empty on a fresh boot: the realm groups
+    // as Team grantees, each stamped the SAME {sys:group=<name>, sys:iss} identity a live member carries (DemoData) — so a
+    // grant on an observed pick confers reach, exactly like a directory pick (§16.5.4). Provenance "seed" marks the origin.
+    static Corvus.Text.Json.Arazzo.Durability.JsonString Observed(string v)
+    {
+        using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> doc =
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(System.Text.Encoding.UTF8.GetBytes($"\"{v}\""));
+        return doc.RootElement.Clone();
+    }
+    foreach ((string group, string label) in new[]
+    {
+        ("arazzo-admins", "Arazzo administrators"),
+        ("payments", "Payments team"),
+        ("onboarding", "Onboarding team"),
+    })
+    {
+        await observedIdentityStore.SeenAsync(
+            GranteeKind.Team.ToObservedKind(), Observed(group), Observed(label), DemoData.GroupIdentity(group), complete: true, "seed", default);
+    }
 }
 
 // DEMO: the open demo has no interactive administrator, so stand in for the development environment's administrator
@@ -423,6 +445,58 @@ if (!string.IsNullOrWhiteSpace(gitHubClientId))
         gitHubSecrets);
 }
 
+// The grantee directory (§16.5.4): resolve REAL Keycloak users/groups/roles for the view/operate/administer grant
+// pickers, via the arazzo-directory service-account client (client-credentials; the realm import grants it
+// realm-management view-users/query-groups). Enabled only when the deployment injects the Keycloak base URL (the
+// AppHost does). Groups map to Team grantees stamped {sys:group=<group>, sys:iss=KeycloakIssuer} — the SAME identity
+// the runtime stamper and the seeded admins carry (DemoData), so a directory pick set-equals a live caller. The adapter
+// stamps sys:iss from Options.Issuer; the mapper only emits the group/sub/role tag (DirectoryIssuer adds the issuer).
+// NB the Keycloak adapter does not fetch a user's group memberships, so a Person grantee carries sys:sub, not sys:group.
+KeycloakPrincipalDirectory? granteeDirectory = null;
+string? keycloakBaseUrl = builder.Configuration["ControlPlane:Keycloak:BaseUrl"];
+if (!string.IsNullOrWhiteSpace(keycloakBaseUrl))
+{
+    ISecretResolver directorySecrets = new SecretResolverBuilder().AddEnvironment().Build();
+    var directoryMapper = DirectorySpanIdentityMapper.FromIdentity(
+        [],
+        static (DirectoryRecordView record, ref IdentityBuilder identity) =>
+        {
+            switch (record.Kind)
+            {
+                case GranteeKind.Team:
+                    identity.Add("sys:group"u8, record.ValueUtf8);
+                    return true;
+                case GranteeKind.Person:
+                    identity.Add("sys:sub"u8, record.ValueUtf8);
+                    return true;
+                case GranteeKind.Role:
+                    identity.Add("sys:role"u8, record.ValueUtf8);
+                    return true;
+                default:
+                    return false;
+            }
+        });
+    granteeDirectory = new KeycloakPrincipalDirectory(
+        new KeycloakDirectoryOptions
+        {
+            Issuer = DemoData.KeycloakIssuer,
+            BaseUrl = new Uri(keycloakBaseUrl),
+            Realm = "arazzo",
+            TokenRealm = "arazzo",
+            Authentication = new KeycloakClientCredentials(
+                builder.Configuration["ControlPlane:Directory:ClientId"] ?? "arazzo-directory",
+                DirectoryCredential.Parse("env://ARAZZO_DIRECTORY_CLIENT_SECRET")),
+            Kinds = new Dictionary<GranteeKind, KeycloakResource>
+            {
+                [GranteeKind.Team] = KeycloakResource.Groups,
+                [GranteeKind.Person] = KeycloakResource.Users,
+                [GranteeKind.Role] = KeycloakResource.Roles,
+            },
+        },
+        directorySecrets,
+        directoryMapper);
+}
+
 // The real control-plane API, under a conventional base path the UI points at. Row security (reach scoping) is
 // applied only when authorization is on — the open, unauthenticated demo stays fully visible. The access-request
 // surface keys a grant on the requester's `preferred_username`, the same claim the resolver matches.
@@ -452,6 +526,7 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     availabilityStore: availabilityStore,
     availabilityRequestStore: availabilityRequestStore,
     observedIdentityStore: observedIdentityStore,
+    principalDirectory: granteeDirectory,
     workspaceWorkflowStore: workspaceStore,
     workflowStateStore: stateStore,
     draftRunStore: draftRunStore,

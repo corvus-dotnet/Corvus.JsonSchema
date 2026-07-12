@@ -232,6 +232,14 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__RequireAuthorization", "true")
     .WithReference(keycloak)
     .WaitFor(keycloak)
+    // Grantee-directory (§16.5.4): the control plane resolves real Keycloak users/groups/roles for the grant pickers
+    // through the arazzo-directory service-account client (realm import gives it realm-management view-users/query-groups).
+    // The Keycloak base URL is otherwise only in service-discovery config, so surface it explicitly; the client id is
+    // public config; the secret is injected as an env var the directory resolves via env://ARAZZO_DIRECTORY_CLIENT_SECRET
+    // (must equal the realm import's client secret).
+    .WithEnvironment("ControlPlane__Keycloak__BaseUrl", keycloak.GetEndpoint("http"))
+    .WithEnvironment("ControlPlane__Directory__ClientId", "arazzo-directory")
+    .WithEnvironment("ARAZZO_DIRECTORY_CLIENT_SECRET", "arazzo-directory-dev-secret")
     // Onboarding, ledger, and kyc are real external sources: inject their endpoints so the control plane's live-
     // execution transports route those sources there (its startup live runs call them), and wait for them to be healthy.
     .WithEnvironment("ControlPlane__Sources__Onboarding", onboarding.GetEndpoint("http"))

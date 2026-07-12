@@ -66,6 +66,17 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "arazzo-directory",
+      "name": "Arazzo grantee directory (service account)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "arazzo-directory-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
     }
   ]
 }

@@ -20,6 +20,14 @@
       "lastName": "Payments",
       "credentials": [{ "type": "password", "value": "alice", "temporary": false }],
       "groups": ["/payments"]
+    },
+    {
+      "username": "service-account-arazzo-directory",
+      "enabled": true,
+      "serviceAccountClientId": "arazzo-directory",
+      "clientRoles": {
+        "realm-management": ["view-users", "query-users", "query-groups", "view-clients"]
+      }
     }
   ]
 }
