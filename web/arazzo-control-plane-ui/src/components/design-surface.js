@@ -15,7 +15,11 @@
 //              .layoutOverrides (manual {id:{x,y}}, survives re-layout), .selection
 //              ({type:'node'|'edge'|'defaults', id?}|null), .breakpoints (iterable of stepIds),
 //              .debugState ({active?, steps?: {id: 'done-success'|'done-failure'|'skipped'},
-//              edges?: [edgeId]}|null)
+//              edges?: [edgeId]}|null),
+//              .diffState ({nodes/edges: {id: 'added'|'removed'|'changed'}, defaults?: 'changed',
+//              notes?: {id: text}}|null — the visual-diff overlay; debug wins if both set; its adornments
+//              (badges/notes/halos) do NOT track node drags, so readonly hosts only — §5),
+//              .view ({tx, ty, k} pan/zoom; get returns a copy, set is silent — no event)
 // Attributes : readonly (mutation gestures off; pan/zoom/select/breakpoints still work)
 // Events     : selection-changed {selection}, layout-changed {overrides}, entry-changed
 //              {stepId} (a drag from the start node's entry port onto a step — the host reorders
@@ -47,6 +51,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     /** @private */ this._selection = null;
     /** @private */ this._breakpoints = new Set();
     /** @private */ this._debugState = null;
+    /** @private */ this._diffState = null;
     /** @private */ this._view = { tx: 40, ty: 40, k: 1 };
     /** @private */ this._gesture = null; // { type: 'pan'|'drag'|'draw', ... }
     /** @private */ this._fitted = false;
@@ -100,6 +105,26 @@ class ArazzoDesignSurface extends ArazzoElement {
   set debugState(value) {
     this._debugState = value || null;
     this._applyDebug();
+    this._applyDiff(); // order-independent precedence: debug wins, so setting it (re-)clears/restores diff paint
+  }
+
+  /** Diff overlay (visual diff, workflow-designer §6.4): {nodes:{id:'added'|'removed'|'changed'},
+   *  edges:{id:same}, defaults?:'changed', notes?:{id:text}} | null. Independent of debugState; if both are
+   *  set, debug wins (order-independent — either setter reconciles). */
+  get diffState() { return this._diffState; }
+  set diffState(value) {
+    this._diffState = value || null;
+    this._applyDiff();
+  }
+
+  /** The pan/zoom view {tx, ty, k}. Get returns a copy; SET IS SILENT (no event) — the compare host assigns
+   *  one shared fit to both sides here (§4.6). fit() is also silent; slice E adds only the view-changed GESTURE
+   *  event so mirroring reacts to user pan/zoom, never to a programmatic set. */
+  get view() { return { ...this._view }; }
+  set view(value) {
+    if (!value) return;
+    this._view = { tx: value.tx ?? this._view.tx, ty: value.ty ?? this._view.ty, k: value.k ?? this._view.k };
+    this._applyView();
   }
 
   /** The current world positions of every node — hand back as `layoutOverrides` before replacing
@@ -243,6 +268,29 @@ class ArazzoDesignSurface extends ArazzoElement {
           50% { stroke-opacity: 0.35; }
         }
         @media (prefers-reduced-motion: reduce) { .node.st-active .card { animation: none; } }
+
+        /* Diff overlay (visual-diff §5). Colour AND a non-colour channel (dash pattern / badge / halo).
+           Colours come from dedicated --arazzo-diff-{added,removed,changed} tokens that DEFAULT to the status
+           palette through NESTED fallbacks (never :root aliases — those would freeze the root's status colours
+           and stop subtree theming); override those three tokens up-tree to restyle diff without touching status. */
+        svg.diffing .node:not(.df-added):not(.df-removed):not(.df-changed) { opacity: 0.6; }
+        svg.diffing .edge:not(.df-added):not(.df-removed):not(.df-changed) { opacity: 0.45; }
+        .node.df-added rect.card, .node.df-added circle.card { stroke: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); stroke-width: 2.5; }
+        .node.df-removed rect.card, .node.df-removed circle.card { stroke: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); stroke-width: 2.5; stroke-dasharray: 5 3; }
+        .node.df-changed rect.card, .node.df-changed circle.card { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-width: 2.5; }
+        .defaults.df-changed rect.card { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-width: 2.5; }
+        .df-badge { pointer-events: none; }
+        .df-badge circle { stroke: var(--_bg); stroke-width: 1.5; }
+        .df-badge text { font: 700 11px var(--_font); fill: #fff; }
+        .df-badge.df-added circle { fill: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
+        .df-badge.df-removed circle { fill: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); }
+        .df-badge.df-changed circle { fill: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
+        .df-note { pointer-events: none; font: 10px var(--_font); paint-order: stroke; stroke: var(--_surface);
+                   stroke-width: 3; fill: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
+        .df-halo { pointer-events: none; fill: none; stroke-width: 6; opacity: 0.4; }
+        .df-halo.df-added { stroke: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
+        .df-halo.df-removed { stroke: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); stroke-dasharray: 6 4; }
+        .df-halo.df-changed { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-dasharray: 2 4; }
         .empty { padding: 40px 12px; }
       </style>
       <svg part="surface" tabindex="0" role="application" aria-label="Workflow design surface">
@@ -325,6 +373,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     this._applySelection();
     this._applyBreakpoints();
     this._applyDebug();
+    this._applyDiff();
     if (!this._fitted) { this._fitted = true; requestAnimationFrame(() => this.fit()); }
   }
 
@@ -579,6 +628,74 @@ class ArazzoDesignSurface extends ArazzoElement {
     for (const el of this.$$('.edge')) {
       el.classList.toggle('lit', lit.has(el.getAttribute('data-id')));
     }
+  }
+
+  /** @private — the diff overlay (visual-diff design §5): classification classes on nodes/edges/the defaults
+   *  card, a dim on unclassified elements, and dynamic adornments (corner badge, rename note, edge halo).
+   *  Mirrors _applyDebug. Debug wins, order-independently: with debugState set the diff paints nothing.
+   *  STALENESS: _moveNode re-paths only .hit/.line/.elabel, so these adornments do not follow a node drag —
+   *  acceptable because diffState hosts (compare) are readonly; an editable host must extend _moveNode first. */
+  _applyDiff() {
+    const svg = this.$('svg');
+    if (!svg) return;
+    for (const el of this.$$('.node, .edge, .defaults')) el.classList.remove('df-added', 'df-removed', 'df-changed');
+    for (const el of this.$$('.df-badge, .df-note, .df-halo')) el.remove();
+    const state = this._debugState ? null : this._diffState; // debug wins
+    svg.classList.toggle('diffing', !!state);
+    if (!state) return;
+
+    const extras = this.$('.extras');
+    const GLYPH = { added: '＋', removed: '−', changed: 'Δ' };
+    for (const [id, cls] of Object.entries(state.nodes || {})) {
+      const node = this.$(`.node[data-id="${cssEscape(id)}"]`);
+      if (!node) continue;
+      node.classList.add(`df-${cls}`);
+      const pos = this._positions[id];
+      if (pos && extras) {
+        extras.append(this._diffBadge(pos, cls, GLYPH[cls] || '·'));
+        if (state.notes?.[id]) extras.append(this._diffNote(pos, state.notes[id]));
+      }
+    }
+    if (state.defaults) { const d = this.$('.defaults'); if (d) d.classList.add(`df-${state.defaults}`); }
+    for (const [id, cls] of Object.entries(state.edges || {})) {
+      const edge = this.$(`.edge[data-id="${cssEscape(id)}"]`);
+      if (!edge) continue;
+      edge.classList.add(`df-${cls}`);
+      const line = edge.querySelector('.line');
+      if (line) {
+        const halo = document.createElementNS(SVG, 'path');
+        halo.setAttribute('class', `df-halo df-${cls}`);
+        halo.setAttribute('d', line.getAttribute('d') || '');
+        edge.insertBefore(halo, line); // beneath .line; after .hit so it never eats pointer events
+      }
+    }
+  }
+
+  /** @private — a corner badge (＋/−/Δ) at a classified node, in the .extras group (absolute, per the
+   *  retarget-handle precedent). pointer-events:none so hit-testing is untouched. */
+  _diffBadge(pos, cls, glyph) {
+    const g = document.createElementNS(SVG, 'g');
+    g.setAttribute('class', `df-badge df-${cls}`);
+    g.setAttribute('transform', `translate(${pos.x + NODE_WIDTH - 6} ${pos.y + 4})`);
+    const c = document.createElementNS(SVG, 'circle');
+    c.setAttribute('r', '9');
+    g.append(c);
+    const t = document.createElementNS(SVG, 'text');
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('dy', '3.5');
+    t.textContent = glyph;
+    g.append(t);
+    return g;
+  }
+
+  /** @private — a rename note chip under a node (left "now getPet" / right "was fetchPet"). */
+  _diffNote(pos, text) {
+    const t = document.createElementNS(SVG, 'text');
+    t.setAttribute('class', 'df-note');
+    t.setAttribute('x', String(pos.x + 4));
+    t.setAttribute('y', String(pos.y + NODE_HEIGHT + 13));
+    t.textContent = text;
+    return t;
   }
 
   // ── Interaction (pointer state machine; shadow-root listeners only) ──────────────────────────

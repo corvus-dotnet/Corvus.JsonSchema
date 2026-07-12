@@ -301,4 +301,69 @@ describe('<arazzo-design-surface>', () => {
     el.selection = { type: 'edge', id: 'seq:validate-order' };
     ok(!el.shadowRoot.querySelector('.retarget'), 'sequence edges cannot be retargeted');
   });
+
+  it('diffState applies classification classes, the defaults card, and adornments', () => {
+    make();
+    el.diffState = {
+      nodes: { 'validate-order': 'changed', 'manual-review': 'added' },
+      edges: { 'seq:validate-order': 'added' },
+      defaults: 'changed',
+      notes: { 'validate-order': 'was checkOrder' },
+    };
+    ok(el.shadowRoot.querySelector('svg').classList.contains('diffing'));
+    ok(node('validate-order').classList.contains('df-changed'));
+    ok(node('manual-review').classList.contains('df-added'));
+    ok(el.shadowRoot.querySelector('.edge[data-id="seq:validate-order"]').classList.contains('df-added'), 'edge classified');
+    ok(el.shadowRoot.querySelector('.defaults').classList.contains('df-changed'), 'defaults card painted');
+    const badge = el.shadowRoot.querySelector('.df-badge');
+    ok(badge, 'a corner badge renders');
+    equal(getComputedStyle(badge).pointerEvents, 'none', 'adornments never eat pointer events');
+    equal(getComputedStyle(el.shadowRoot.querySelector('.df-halo')).pointerEvents, 'none');
+    ok(el.shadowRoot.querySelector('.df-note'), 'a rename note chip renders');
+  });
+
+  it('diffState clears on null and survives a .graph reassignment', () => {
+    make();
+    el.diffState = { nodes: { 'validate-order': 'added' } };
+    ok(node('validate-order').classList.contains('df-added'));
+    el.graph = projectWorkflow(designerFixture, 'place-order'); // re-render -> _applyDiff re-runs
+    ok(node('validate-order').classList.contains('df-added'), 'paint survives a graph reassignment');
+    el.diffState = null;
+    ok(!el.shadowRoot.querySelector('svg').classList.contains('diffing'), 'null clears the overlay');
+    ok(!node('validate-order').classList.contains('df-added'));
+    ok(!el.shadowRoot.querySelector('.df-badge'), 'adornments removed');
+  });
+
+  it('debug wins over diff, order-independently', () => {
+    make();
+    el.diffState = { nodes: { 'validate-order': 'changed' } };
+    el.debugState = { steps: { 'validate-order': 'done-success' } }; // set AFTER diff
+    ok(!node('validate-order').classList.contains('df-changed'), 'debug clears the diff paint');
+    ok(!el.shadowRoot.querySelector('svg').classList.contains('diffing'));
+    el.debugState = null;
+    ok(node('validate-order').classList.contains('df-changed'), 'clearing debug restores the diff paint');
+  });
+
+  it('diff colours resolve through --arazzo-diff-* then the status-token fallback', () => {
+    make();
+    el.diffState = { nodes: { 'validate-order': 'changed' } };
+    const rectStroke = () => getComputedStyle(node('validate-order').querySelector('rect.card')).stroke;
+    el.style.setProperty('--arazzo-status-suspended', 'rgb(4, 5, 6)'); // tier 2: the status fallback
+    equal(rectStroke(), 'rgb(4, 5, 6)', 'df-changed falls back to the status token');
+    el.style.setProperty('--arazzo-diff-changed', 'rgb(1, 2, 3)'); // tier 1: the dedicated token wins
+    equal(rectStroke(), 'rgb(1, 2, 3)', 'the dedicated --arazzo-diff-changed token wins');
+  });
+
+  it('view get returns a copy and set is silent (no event)', async () => {
+    make();
+    let fired = false;
+    el.addEventListener('view-changed', () => { fired = true; });
+    el.view = { tx: 12, ty: 34, k: 2 };
+    const v = el.view;
+    equal(v.tx, 12); equal(v.ty, 34); equal(v.k, 2);
+    v.tx = 999; // mutating the copy must not affect the surface
+    equal(el.view.tx, 12, 'get returns a copy');
+    await Promise.resolve();
+    ok(!fired, 'a programmatic set emits nothing (slice E adds only the gesture event)');
+  });
 });
