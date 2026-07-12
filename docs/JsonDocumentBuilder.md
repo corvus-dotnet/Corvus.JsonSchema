@@ -343,6 +343,33 @@ on the base schema (`title`, `description`, `$comment`, `examples`, and so on) d
 > Note: a branch can always be read back out of the union with the generated `TryGetAs…` / `Match`
 > methods — see [Polymorphism with Discriminators](../ExampleRecipes/013-PolymorphismWithDiscriminators/).
 
+## Creating an Immutable Document Directly: `Create()`
+
+Everything above builds a *mutable*, workspace-scoped document. Often, though, the reason you are building a document is to hand the finished result to a caller — an API response, a value to cache, a document to store — as an immutable `ParsedJsonDocument<T>`. Reaching that from a builder means a serialization round trip: build, write the bytes out, parse them back.
+
+Generated types have a better route. Every generated type emits `Create()` factory overloads that mirror its `CreateBuilder()` overloads, minus the `JsonWorkspace` parameter, returning a self-contained `ParsedJsonDocument<T>` directly:
+
+```csharp
+using ParsedJsonDocument<Person> createdDoc = Person.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: "Brontë",
+    givenName: "Anne",
+    height: 1.52);
+Console.WriteLine(createdDoc.RootElement);
+```
+
+Under the covers the document text and its parsed metadata are written **once, directly, as the values are added** — there is no mutable intermediate to serialize and no parse step — and the pooled builder behind the factory is rented from a thread-local cache, so steady-state construction allocates only the returned document's pooled buffers. Values embedded from other documents are copied into the backing at the point they are added, so the result never depends on the lifetime of its sources.
+
+**Choosing between them:**
+
+| You are… | Use |
+|---|---|
+| Building a document to return, cache, or store — no further changes | `Create()` |
+| Assembling a document you will keep modifying | `CreateBuilder()` |
+| Modifying JSON you received | `Parse` to a builder (see below) |
+
+`Create()` exists on generated types only (it is emitted by the code generator); dynamic documents built through `JsonElement` continue to use the workspace patterns above. See the [Data Object recipe](../ExampleRecipes/001-DataObject/) for a worked example, and note the result is `IDisposable` — it owns pooled memory, exactly like a parsed document.
+
 ## Working with Existing JSON
 
 In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.
