@@ -1,8 +1,8 @@
 # Version History
 
-## V5.3.0
+## V5.2.7
 
-V5.3.0 adds `Create()` factory methods to generated types: the `ParsedJsonDocument<T>`-producing analogue of `CreateBuilder()`, for the create-but-don't-modify pattern.
+V5.2.7 adds `Create()` factory methods to generated types: the `ParsedJsonDocument<T>`-producing analogue of `CreateBuilder()`, for the create-but-don't-modify pattern.
 
 ### Breaking changes
 
