@@ -1786,21 +1786,25 @@
       const owner = await document.getElementById('ask').ask({
         title: 'Publish to the catalog',
         message: 'Validates the document and re-runs the scenario suite server-side; the new version starts as a draft. Who owns it?',
-        field: { label: 'Owner (name <email>)', value: 'You <you@example.com>' },
+        fields: [
+          { key: 'name', label: 'Owner name', value: 'You' },
+          { key: 'email', label: 'Owner email', value: 'you@example.com', placeholder: 'name@example.com' },
+        ],
         confirmLabel: 'Publish',
       });
       if (!owner) return; // the publish dialog was cancelled
-      const m = /^(.*?)\s*<([^>]+)>$/.exec(owner);
-      if (!m) {
-        // A malformed owner used to abort SILENTLY (log only) — say why, so Publish never "does nothing".
+      const ownerName = (owner.name ?? '').trim();
+      const ownerEmail = (owner.email ?? '').trim();
+      if (!ownerEmail) {
+        // The server requires an owner email; two fields make the requirement obvious (no format to mis-type).
         logEvent('publish-invalid-owner', { owner });
-        showToast('Publish needs the owner as "Name <email>", e.g. You <you@example.com>.', 'warn');
-        setSaveUi('⚠ publish needs an owner as "Name <email>"');
+        showToast('Publish needs an owner email.', 'warn');
+        setSaveUi('⚠ publish needs an owner email');
         return;
       }
       try {
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
-        const version = await client.publishWorkingCopy(shell.id, { owner: { name: m[1] || m[2], email: m[2] } });
+        const version = await client.publishWorkingCopy(shell.id, { owner: { name: ownerName || ownerEmail, email: ownerEmail } });
         const suite = version.evidence?.suite;
         showToast(`Published ${version.baseWorkflowId} v${version.versionNumber} (draft)${suite ? ` — ${suite.passed}/${suite.total} scenarios green` : ''}. Promote it from the catalog when ready.`);
         setSaveUi(`published ${version.baseWorkflowId} v${version.versionNumber} (draft)`);
