@@ -42,6 +42,12 @@ const COALESCE_MS = 900;
 /** The list properties whose items carry a stable identity key. */
 const IDENTITY_KEYS = { workflows: 'workflowId', steps: 'stepId', sourceDescriptions: 'name' };
 
+/** The ONE deterministic text form (2-space JSON) for an Arazzo document — the text editor's `model.text`
+ *  and the compare Text-merge view share it so a merge round-trips through the same serialization. */
+export function serializeDocument(document) {
+  return JSON.stringify(document, null, 2);
+}
+
 export class WorkflowDocumentModel extends EventTarget {
   /**
    * @param {object} document  The Arazzo document (cloned in).
@@ -162,7 +168,7 @@ export class WorkflowDocumentModel extends EventTarget {
 
   /** The deterministic text form (2-space JSON) the text editor binds to. */
   get text() {
-    return JSON.stringify(this._document, null, 2);
+    return serializeDocument(this._document);
   }
 
   /**

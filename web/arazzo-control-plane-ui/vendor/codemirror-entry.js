@@ -16,3 +16,4 @@ export * as autocomplete from '@codemirror/autocomplete';
 export * as commands from '@codemirror/commands';
 export * as lezerHighlight from '@lezer/highlight';
 export * as langJson from '@codemirror/lang-json';
+export * as merge from '@codemirror/merge';

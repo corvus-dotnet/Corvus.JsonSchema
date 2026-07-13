@@ -1,6 +1,7 @@
 // Tier 3 — <arazzo-workflow-compare>: the side-by-side dialog with the visual-diff overlay.
 import '../../src/components/workflow-compare.js';
-import { ok, equal, mount } from './helpers.js';
+import { ArazzoExpressionInput } from '../../src/components/expression-input.js';
+import { ok, equal, waitFor, mount } from './helpers.js';
 
 const base = () => ({
   arazzo: '1.1.0',
@@ -199,15 +200,58 @@ describe('<arazzo-workflow-compare>', () => {
     ok(!el.shadowRoot.querySelector('.sync').hidden, 'sync returns');
   });
 
-  it('Text mode is disabled until the merge-view slice; the mode switch shows with a diff', () => {
+  it('the mode switch shows all three modes when there is a diff', () => {
     open(base(), base());
     ok(!el.shadowRoot.querySelector('.modes').hidden, 'the mode switch is shown when there is a diff to compare');
-    equal(el.shadowRoot.querySelector('.mode[data-mode="text"]').disabled, true, 'Text is disabled');
+    const modes = [...el.shadowRoot.querySelectorAll('.mode')].map((b) => b.dataset.mode);
+    ok(modes.includes('side') && modes.includes('overlay') && modes.includes('text'), 'Side by side · Overlay · Text');
+    ok(!el.shadowRoot.querySelector('.mode[data-mode="text"]').disabled, 'Text is enabled (CM loads lazily on switch)');
   });
 
   it('the mode switch is hidden when diff is off', () => {
     open(base(), base(), { diff: false });
     ok(el.shadowRoot.querySelector('.modes').hidden);
+  });
+
+  it('Text mode renders a read-only CodeMirror MergeView with change chunks', async function () {
+    this.timeout(20000);
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    open(l, r);
+    el.shadowRoot.querySelector('.mode[data-mode="text"]').click();
+    await ArazzoExpressionInput.loadCm(); // vendored bundle — no network
+    const host = el.shadowRoot.querySelector('.textmerge');
+    await waitFor(() => host.querySelector('.cm-mergeView'), 15000);
+    equal(host.querySelectorAll('.cm-editor').length, 2, 'two panes (a and b)');
+    await waitFor(() => host.querySelector('.cm-changedLine, .cm-changedText'), 5000);
+    ok(host.querySelector('.cm-changedLine, .cm-changedText'), 'a change chunk is highlighted');
+    const contents = [...host.querySelectorAll('.cm-content')];
+    ok(contents.length === 2 && contents.every((c) => c.getAttribute('contenteditable') === 'false'),
+      'both panes are read-only (no merge target)');
+  });
+
+  it('Text mode is disabled with an explanatory title when CodeMirror cannot load', async () => {
+    const savedCm = ArazzoExpressionInput._cm;
+    const savedLoader = ArazzoExpressionInput.cmLoader;
+    ArazzoExpressionInput._cm = null;
+    ArazzoExpressionInput.cmLoader = () => Promise.reject(new Error('offline'));
+    try {
+      const l = base();
+      const r = base();
+      r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+      open(l, r);
+      el.shadowRoot.querySelector('.mode[data-mode="text"]').click();
+      const host = el.shadowRoot.querySelector('.textmerge');
+      await waitFor(() => host.querySelector('.tm-unavailable'), 5000);
+      const btn = el.shadowRoot.querySelector('.mode[data-mode="text"]');
+      ok(btn.disabled, 'Text is disabled when CM fails');
+      ok(/unavailable/i.test(btn.title), 'with an explanatory title');
+      ok(!host.querySelector('.cm-mergeView'), 'no merge editor');
+    } finally {
+      ArazzoExpressionInput._cm = savedCm;
+      ArazzoExpressionInput.cmLoader = savedLoader;
+    }
   });
 
   it('syncs one side view onto the other; the "Sync views" toggle stops it', () => {
