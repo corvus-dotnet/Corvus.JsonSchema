@@ -368,14 +368,14 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         workspace.TakeOwnership(granteeDoc);
         Models.ResolvedGrantee grantee = granteeDoc.RootElement;
 
-        // The grantee's identity is already the resolved internal sys: form at the wire (design §16.5.4 — an identity is
-        // described back as {dimension,value} grants over its sys: tags, e.g. sys:sub). It is taken verbatim (no
-        // re-resolution) and keys the administered-workflows reverse index and the credential IsUsableBy match directly.
+        // The grantee's identity arrives in the operator-facing (sys:-stripped) wire form; resolve it back to the internal
+        // sys: tag set (via ControlPlaneAccess) so it keys the administered-workflows reverse index and the credential
+        // IsUsableBy match correctly (the digest is over the sys: tags).
         SecurityTagSet granteeIdentity = SecurityTagSet.Empty;
-        if (grantee.Identity.IsNotUndefined())
+        if (this.access is { } access && grantee.Identity.IsNotUndefined())
         {
-            Models.ResolvedGrantee.AdministratorIdentityArray identity = grantee.Identity;
-            granteeIdentity = SecurityTagSet.Build(in identity, WriteGranteeIdentity);
+            var identityState = new GranteeIdentityState(access, grantee.Identity);
+            granteeIdentity = SecurityTagSet.Build(in identityState, WriteGranteeIdentity);
         }
 
         // bindings: page the store keeping only the bindings whose claim the grantee satisfies. A contributing page's
@@ -639,17 +639,30 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         => GetAccessGrantsResult.BadRequest(
             Problem("invalid-grantee", "Invalid grantee token", 400, "The 'grantee' query parameter is not a valid resolved-grantee token."), workspace);
 
-    // Writes the grantee's already-resolved sys: identity grants into the identity buffer verbatim: each dimension/value
-    // is read as unescaped UTF-8 straight off the grantee document (no managed string per grant) and added as a tag. The
-    // wire identity is the sys: form (§16.5.4), so no re-resolution is needed. An absent identity yields the empty set.
-    private static void WriteGranteeIdentity(ref IdentityBuilder builder, in Models.ResolvedGrantee.AdministratorIdentityArray identity)
+    // Reconstructs the grantee's INTERNAL identity from its wire grants. A grantee's identity is described back over the
+    // wire in the operator-facing form — the sys: prefix STRIPPED (design §16.5.4 / DescribeUsageScope), e.g. {group,iss}
+    // for a team — so it must be resolved back through ControlPlaneAccess.ResolveUsageGrantInto (which re-adds the
+    // reserved prefix: group -> sys:group), exactly as every peer handler does (AdministratorsHandler.BuildGranteeIdentity).
+    // Using the wire dimension verbatim yields {group,iss} whose digest never matches the stored {sys:group,sys:iss}
+    // founder/usage identity, so administers and usage-scoped credentials would resolve to nothing. An absent identity
+    // yields the empty set.
+    private static void WriteGranteeIdentity(ref IdentityBuilder builder, in GranteeIdentityState state)
     {
-        foreach (Models.AdministratorIdentity grant in identity.EnumerateArray())
+        foreach (Models.AdministratorIdentity grant in state.Identity.EnumerateArray())
         {
             using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
             using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
-            builder.Add(dimension.Span, value.Span);
+            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
         }
+    }
+
+    // The grantee identity + the access policy that maps its wire grants back to internal sys: tags, threaded into the
+    // closure-free SecurityTagSet.Build.
+    private readonly ref struct GranteeIdentityState(ControlPlaneAccess access, Models.ResolvedGrantee.AdministratorIdentityArray identity)
+    {
+        public ControlPlaneAccess Access { get; } = access;
+
+        public Models.ResolvedGrantee.AdministratorIdentityArray Identity { get; } = identity;
     }
 
     // Whether a binding grants the grantee reach: the wildcard '*' claim matches every principal; otherwise the
