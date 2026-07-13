@@ -277,6 +277,95 @@ public class WorkflowSchemaMetadataGeneratorTests
         Prop(Prop(labels, "additionalProperties"), "type").GetString().ShouldBe("string");
     }
 
+    [TestMethod]
+    public void Normalises_allOf_simple_property_merges()
+    {
+        // Mirrors test/schema-descriptor.test.mjs — the generator and the client normaliser must agree.
+        const string Merged = """
+            {
+              "arazzo": "1.1.0",
+              "info": { "title": "t", "version": "1.0.0" },
+              "sourceDescriptions": [],
+              "workflows": [
+                {
+                  "workflowId": "merge-v1",
+                  "inputs": {
+                    "type": "object",
+                    "properties": {
+                      "simple": {
+                        "allOf": [
+                          { "type": "object", "properties": { "a": { "type": "string" } }, "required": ["a"] },
+                          { "type": "object", "properties": { "b": { "type": "integer" } }, "required": ["b"] }
+                        ]
+                      },
+                      "reordered": {
+                        "allOf": [
+                          { "properties": { "id": { "type": "string", "format": "uuid" } } },
+                          { "properties": { "id": { "format": "uuid", "type": "string" } } }
+                        ]
+                      },
+                      "titled": {
+                        "title": "Account",
+                        "description": "merged",
+                        "allOf": [ { "properties": { "a": {} } }, { "properties": { "b": {} } } ]
+                      },
+                      "nested": {
+                        "allOf": [ { "properties": { "choice": { "oneOf": [ { "type": "string" }, { "type": "integer" } ] } } } ]
+                      },
+                      "conflict": {
+                        "allOf": [ { "properties": { "id": { "type": "string" } } }, { "properties": { "id": { "type": "integer" } } } ]
+                      },
+                      "nonObject": {
+                        "allOf": [ { "type": "object", "properties": { "a": {} } }, { "type": "string" } ]
+                      },
+                      "extraKeyword": {
+                        "allOf": [ { "type": "object", "properties": { "a": {} }, "minProperties": 1 } ]
+                      }
+                    }
+                  },
+                  "steps": []
+                }
+              ]
+            }
+            """;
+
+        byte[] metadata = WorkflowSchemaMetadataGenerator.Generate(Encoding.UTF8.GetBytes(Merged), []);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(metadata);
+        JsonElement props = Prop(Prop(Prop(Prop(doc.RootElement, "workflows"), "merge-v1"), "inputs"), "properties");
+
+        // A simple allOf of object branches → one merged object: union of properties, union of required.
+        JsonElement simple = Prop(props, "simple");
+        Prop(simple, "type").GetString().ShouldBe("object");
+        Prop(Prop(Prop(simple, "properties"), "a"), "type").GetString().ShouldBe("string");
+        Prop(Prop(Prop(simple, "properties"), "b"), "type").GetString().ShouldBe("integer");
+        JsonElement required = Prop(simple, "required");
+        required.GetArrayLength().ShouldBe(2);
+        required[0].GetString().ShouldBe("a");
+        required[1].GetString().ShouldBe("b");
+
+        // An agreeing same-key overlap merges despite reordered keys (order-insensitive structural equality).
+        JsonElement reordered = Prop(props, "reordered");
+        Prop(reordered, "type").GetString().ShouldBe("object");
+        Prop(Prop(Prop(reordered, "properties"), "id"), "type").GetString().ShouldBe("string");
+
+        // Siblings on the node (title/description) survive the merge.
+        JsonElement titled = Prop(props, "titled");
+        Prop(titled, "type").GetString().ShouldBe("object");
+        Prop(titled, "title").GetString().ShouldBe("Account");
+        Prop(titled, "description").GetString().ShouldBe("merged");
+
+        // A merged property is itself normalised — a nested oneOf becomes a union descriptor.
+        JsonElement nested = Prop(props, "nested");
+        Prop(Prop(Prop(nested, "properties"), "choice"), "type").GetString().ShouldBe("union");
+
+        // Not-simple cases fall back to the raw typeless descriptor: absence-of-type, never type=="unknown".
+        foreach (string raw in new[] { "conflict", "nonObject", "extraKeyword" })
+        {
+            JsonElement descriptor = Prop(props, raw);
+            descriptor.TryGetProperty("type", out _).ShouldBeFalse($"'{raw}' must fall back to a typeless descriptor");
+        }
+    }
+
     private static JsonElement Prop(JsonElement element, string name)
     {
         element.TryGetProperty(name, out JsonElement value).ShouldBeTrue($"expected property '{name}'");
