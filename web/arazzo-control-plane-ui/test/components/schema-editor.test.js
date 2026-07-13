@@ -160,6 +160,18 @@ describe('<arazzo-schema-editor>', () => {
     ok('city' in s2.properties.a.properties, 'the inlined copy carries the target content');
   });
 
+  it('New shared type… extracts the node into the library and references it (§6)', async () => {
+    make({ type: 'object', properties: { addr: { type: 'object', properties: { city: { type: 'string' } } } } });
+    const addrType = names().find((n) => n.value === 'addr').closest('.node').querySelector('select.type');
+    ok([...addrType.querySelectorAll('option')].some((o) => o.value === 'new-ref'), 'the New shared type… action is offered');
+    const created = nextEvent(el, 'library-create');
+    const changed = nextEvent(el, 'schema-changed');
+    addrType.value = 'new-ref'; addrType.dispatchEvent(new Event('change'));
+    const ev = (await created).detail;
+    ok(ev.name && ev.schema.properties.city, 'library-create carries the extracted schema');
+    equal((await changed).detail.schema.properties.addr.$ref, `#/components/inputs/${ev.name}`, 'the node now references the new shared type');
+  });
+
   it('a dangling library reference renders a problem row', () => {
     make({ type: 'object', properties: { a: { $ref: '#/components/inputs/Missing' } } });
     el.library = { Present: { type: 'object' } };

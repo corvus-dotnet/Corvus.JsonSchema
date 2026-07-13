@@ -177,6 +177,12 @@ class ArazzoWorkflowInspector extends ArazzoElement {
         else this._workflow.inputs = schema;
         this._emit();
       });
+      // "New shared type…" extracts a schema into the document's components.inputs library (§6): persist it
+      // through the same component-changed channel the shared-action editors use.
+      inputs.addEventListener('library-create', (e) => {
+        ((this._components ??= {}).inputs ??= {})[e.detail.name] = e.detail.schema;
+        this.emit('component-changed', { kind: 'inputs', name: e.detail.name, action: e.detail.schema });
+      });
     }
 
     this._applyFocus();
