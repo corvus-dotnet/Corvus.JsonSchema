@@ -343,6 +343,15 @@ export function diff(before, after, path = [], out = []) {
   if (deepEqual(before, after)) return out;
 
   if (isPlainObject(before) && isPlainObject(after)) {
+    // Order/rename-aware object rule (schema-authoring §4): per-key ops LOSE a pure key reorder (all
+    // values deep-equal ⇒ zero ops, the edit vanishes at commit) and mangle a rename (remove+set
+    // re-appends the key at the object's END). When the retained keys changed order, or a removed key's
+    // value deep-equals an added key's value (a rename), emit ONE whole-object set instead — coarser
+    // collaboration granularity for that one object is the accepted cost.
+    if (objectReorderedOrRenamed(before, after)) {
+      out.push({ kind: 'set', path, value: structuredClone(after), prev: structuredClone(before) });
+      return out;
+    }
     for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
       const b = before[key];
       const a = after[key];
@@ -401,6 +410,26 @@ function diffIdentityList(before, after, path, out) {
 function hasUniqueIds(list) {
   const ids = list.map(itemId);
   return ids.every((id) => id != null) && new Set(ids).size === ids.length;
+}
+
+// True when a plain object's edit is a reorder of retained keys, or a rename (a removed key's value
+// deep-equals an added key's value) — cases the per-key diff cannot represent (schema-authoring §4).
+function objectReorderedOrRenamed(before, after) {
+  const bKeys = Object.keys(before);
+  const aKeys = Object.keys(after);
+  const bSet = new Set(bKeys);
+  const aSet = new Set(aKeys);
+  const bRetained = bKeys.filter((k) => aSet.has(k));
+  const aRetained = aKeys.filter((k) => bSet.has(k));
+  if (bRetained.some((k, i) => k !== aRetained[i])) return true; // retained keys changed order
+  const removed = bKeys.filter((k) => !aSet.has(k));
+  const added = aKeys.filter((k) => !bSet.has(k));
+  for (const rk of removed) {
+    for (const ak of added) {
+      if (deepEqual(before[rk], after[ak])) return true; // a rename (value carried to a new key)
+    }
+  }
+  return false;
 }
 
 function isPlainObject(v) {
