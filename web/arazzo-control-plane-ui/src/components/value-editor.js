@@ -15,8 +15,14 @@
 // inputs, number inputs with min/max/step, enum dropdowns, checkboxes, nested objects, unions, tuples, maps,
 // add/remove arrays), and falls back to a raw-JSON textarea for anything it can't type. Used as the output
 // editor for Skip's `skipOutputs`; a future state-patch builder can reuse it to edit each operation's value.
+//
+// It also accepts RAW (un-baked) schemas: every node is passed through `normalizeDescriptor` (schema-descriptor.js)
+// at the buildField boundary, so a raw `oneOf`/`anyOf` renders the union chooser and a simple `allOf` its merged
+// form — combiner-free schemas and already-baked descriptors are unchanged. It does NOT resolve `$ref` (that stays
+// the baked path's job), so a reference-rooted schema still degrades to the raw-JSON fallback.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { normalizeDescriptor } from '../schema-descriptor.js';
 
 const VALIDATE_DEBOUNCE_MS = 350;
 
@@ -134,7 +140,9 @@ class ArazzoValueEditor extends ArazzoElement {
     this._errorTargets = [];
     this._clearErrors();
 
-    const descriptor = this._descriptor;
+    // Evaluate the empty-schema guard against the NORMALIZED descriptor so a raw simple `allOf` (no top-level
+    // `properties`) renders its merged form instead of being swallowed to the raw-JSON fallback (§3.2a / slice C).
+    const descriptor = normalizeDescriptor(this._descriptor);
     const noFields = !descriptor || typeof descriptor !== 'object'
       || (descriptor.type === 'object'
         && (!descriptor.properties || Object.keys(descriptor.properties).length === 0)
@@ -283,7 +291,12 @@ function attachError(container, ctx, pathFn) {
  * @param {{ name: (string|null), required: boolean }} ctx
  * @returns {{ node: HTMLElement, read: () => any }}
  */
-function buildField(d, ctx) {
+function buildField(rawD, ctx) {
+  // Normalize raw combiner schemas at the node boundary (schema-form §3.2a): raw oneOf/anyOf → a union
+  // descriptor, a simple allOf → a merged object. Baked descriptors and plain typed schemas pass through
+  // unchanged, so combiner-free inputs render identically. Recursion re-enters here, so nested combiners
+  // normalize as encountered. Refs are NOT resolved (that stays the baked path's job).
+  const d = normalizeDescriptor(rawD);
   const type = d?.type;
 
   if (d && d.const !== undefined) {
