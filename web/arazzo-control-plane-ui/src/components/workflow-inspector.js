@@ -11,6 +11,7 @@
 //   insp.addEventListener('workflow-changed', (e) => { doc.workflows[i] = e.detail.workflow; });
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { wireGuardedJson } from './guarded-json.js';
 import { buildActionList, ACTION_LIST_CSS } from './action-list.js';
 import './outputs-editor.js';
 
@@ -166,26 +167,18 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       this._emit();
     });
     const inputs = form.querySelector('.inputs');
-    inputs?.addEventListener('input', () => {
-      const hint = form.querySelector('.inputs-hint');
-      if (!inputs.value.trim()) {
-        inputs.classList.remove('invalid');
-        hint.textContent = 'drives the typed inputs form and $inputs completions';
-        delete this._workflow.inputs;
-        this._emit();
-        return;
-      }
-      try {
-        this._workflow.inputs = JSON.parse(inputs.value);
-        inputs.classList.remove('invalid');
-        hint.textContent = 'drives the typed inputs form and $inputs completions';
-        this._emit();
-      } catch (err) {
-        inputs.classList.add('invalid');
-        hint.textContent = `not JSON yet: ${String(err.message).slice(0, 80)}`;
-        // Keep the last valid schema until this parses.
-      }
-    });
+    if (inputs) {
+      wireGuardedJson(inputs, {
+        hint: form.querySelector('.inputs-hint'),
+        baseHint: 'drives the typed inputs form and $inputs completions',
+        emptyDeletes: true, // blank clears workflow.inputs
+        onCommit: (value) => {
+          if (value === undefined) delete this._workflow.inputs;
+          else this._workflow.inputs = value;
+          this._emit();
+        },
+      });
+    }
 
     this._applyFocus();
   }

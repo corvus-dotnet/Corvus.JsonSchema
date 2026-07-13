@@ -15,6 +15,7 @@
 // editors AUTHOR `$components.…` references against these keys and localize copies from them.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { wireGuardedJson } from './guarded-json.js';
 import './action-editor.js';
 
 const COMPONENT_KINDS = [
@@ -314,17 +315,11 @@ class ArazzoDocumentInspector extends ArazzoElement {
         <textarea rows="4" spellcheck="false">${escapeHtml(JSON.stringify(value, null, 2))}</textarea>
         <div class="hint schema-hint">a JSON Schema; referenced from workflow inputs</div>`;
       const area = content.querySelector('textarea');
-      area.addEventListener('input', () => {
-        const hint = content.querySelector('.schema-hint');
-        try {
-          this._doc.components[kind][key] = JSON.parse(area.value);
-          area.classList.remove('invalid');
-          hint.textContent = 'a JSON Schema; referenced from workflow inputs';
-          this._emit();
-        } catch (err) {
-          area.classList.add('invalid');
-          hint.textContent = `not JSON yet: ${String(err.message).slice(0, 80)}`;
-        }
+      wireGuardedJson(area, {
+        hint: content.querySelector('.schema-hint'),
+        baseHint: 'a JSON Schema; referenced from workflow inputs',
+        emptyDeletes: false, // blank holds last-valid (no delete branch), unlike the other two hosts
+        onCommit: (value) => { this._doc.components[kind][key] = value; this._emit(); },
       });
     }
 
