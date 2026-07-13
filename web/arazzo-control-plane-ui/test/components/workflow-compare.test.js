@@ -156,6 +156,60 @@ describe('<arazzo-workflow-compare>', () => {
     ok(el.shadowRoot.querySelector('.grid').classList.contains('cl-collapsed'));
   });
 
+  const overlay = () => el.shadowRoot.querySelector('.side-overlay arazzo-design-surface');
+  const ovNodeCls = (id) => overlay().shadowRoot.querySelector(`.node[data-id="${id}"]`)?.classList;
+
+  it('Overlay mode renders ONE ghost surface: base solid, the other side translucent', () => {
+    const l = base();
+    l.workflows[0].steps.push({ stepId: 'e', operationId: 'op.e' }); // present only on the left → removed
+    const r = base();
+    r.workflows[0].steps.push({ stepId: 'd', operationId: 'op.d' }); // present only on the right → added
+    open(l, r);
+    el.shadowRoot.querySelector('.mode[data-mode="overlay"]').click();
+    ok(overlay(), 'a single overlay surface is rendered');
+    ok(!el.shadowRoot.querySelector('.side-left arazzo-design-surface'), 'the two side-by-side surfaces are gone');
+    ok(overlay().shadowRoot.querySelector('svg').classList.contains('diff-overlay'), 'the overlay svg class is on');
+    ok(ovNodeCls('e').contains('df-removed') && ovNodeCls('e').contains('df-ghost'), 'the removed left step is a ghost');
+    ok(ovNodeCls('d').contains('df-added') && !ovNodeCls('d').contains('df-ghost'), 'the added right step is solid (base = right)');
+    ok(el.shadowRoot.querySelector('.sync').hidden, 'view sync is hidden on a single surface');
+  });
+
+  it('the change list selects on the single surface in overlay mode', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps.push({ stepId: 'd', operationId: 'op.d' });
+    open(l, r);
+    el.shadowRoot.querySelector('.mode[data-mode="overlay"]').click();
+    const added = [...el.shadowRoot.querySelectorAll('.cl-item')].find((b) => b.textContent.trim() === '+ d');
+    added.click();
+    equal(overlay().selection?.id, 'd', 'the added step selects on the overlay surface');
+    ok(added.classList.contains('current'));
+  });
+
+  it('switching Overlay → Side by side restores the two surfaces', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    open(l, r);
+    el.shadowRoot.querySelector('.mode[data-mode="overlay"]').click();
+    ok(overlay(), 'in overlay');
+    el.shadowRoot.querySelector('.mode[data-mode="side"]').click();
+    ok(surface('left') && surface('right'), 'both side-by-side surfaces return');
+    ok(!el.shadowRoot.querySelector('.side-overlay'), 'the overlay surface is gone');
+    ok(!el.shadowRoot.querySelector('.sync').hidden, 'sync returns');
+  });
+
+  it('Text mode is disabled until the merge-view slice; the mode switch shows with a diff', () => {
+    open(base(), base());
+    ok(!el.shadowRoot.querySelector('.modes').hidden, 'the mode switch is shown when there is a diff to compare');
+    equal(el.shadowRoot.querySelector('.mode[data-mode="text"]').disabled, true, 'Text is disabled');
+  });
+
+  it('the mode switch is hidden when diff is off', () => {
+    open(base(), base(), { diff: false });
+    ok(el.shadowRoot.querySelector('.modes').hidden);
+  });
+
   it('syncs one side view onto the other; the "Sync views" toggle stops it', () => {
     open(base(), base());
     const left = surface('left');

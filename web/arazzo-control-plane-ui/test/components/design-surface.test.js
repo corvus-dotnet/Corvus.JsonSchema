@@ -393,4 +393,25 @@ describe('<arazzo-design-surface>', () => {
     pointer('pointerup', svg, { clientX: 90, clientY: 70 });
     ok(events > 0, 'a pan gesture emits view-changed');
   });
+
+  it('overlay ghost mode: df-ghost composes with classification and the diff-overlay svg class (§4.7)', () => {
+    make();
+    el.diffState = {
+      nodes: { 'validate-order': 'changed', 'manual-review': 'removed' },
+      edges: { 'seq:validate-order': 'removed' },
+      ghosts: { nodes: ['manual-review'], edges: ['seq:validate-order'] },
+      overlay: true,
+    };
+    const svg = el.shadowRoot.querySelector('svg');
+    ok(svg.classList.contains('diff-overlay'), 'overlay adds the diff-overlay svg class');
+    const ghostNode = node('manual-review');
+    ok(ghostNode.classList.contains('df-removed') && ghostNode.classList.contains('df-ghost'), 'a ghost keeps its class AND gains df-ghost');
+    ok(!node('validate-order').classList.contains('df-ghost'), 'a solid (base) element is not a ghost');
+    const ghostEdge = el.shadowRoot.querySelector('.edge[data-id="seq:validate-order"]');
+    ok(ghostEdge.classList.contains('df-ghost'), 'a ghost edge gains df-ghost');
+    equal(getComputedStyle(ghostNode).opacity, '0.5', 'ghosts render translucent');
+    el.diffState = { nodes: { 'validate-order': 'changed' } }; // a non-overlay diff clears the overlay class
+    ok(!svg.classList.contains('diff-overlay'), 'diff-overlay clears when overlay is not set');
+    ok(!node('validate-order').classList.contains('df-ghost'));
+  });
 });

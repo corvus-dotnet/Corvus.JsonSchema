@@ -112,7 +112,11 @@ class ArazzoDesignSurface extends ArazzoElement {
   }
 
   /** Diff overlay (visual diff, workflow-designer §6.4): {nodes:{id:'added'|'removed'|'changed'},
-   *  edges:{id:same}, defaults?:'changed', notes?:{id:text}} | null. Independent of debugState; if both are
+   *  edges:{id:same}, defaults?:'changed', notes?:{id:text},
+   *  ghosts?:{nodes:[id], edges:[id]}, overlay?:true} | null. In OVERLAY (ghost) mode (§4.7) a single graph
+   *  carries both versions: `overlay:true` adds the `diff-overlay` svg class and the `ghosts` ids render
+   *  translucent (df-ghost, half opacity) atop their classification — elements absent from the base version.
+   *  ghosts.edges also lists ghost-only exit-chip ids (workflow:X). Independent of debugState; if both are
    *  set, debug wins (order-independent — either setter reconciles). */
   get diffState() { return this._diffState; }
   set diffState(value) {
@@ -324,6 +328,9 @@ class ArazzoDesignSurface extends ArazzoElement {
         .df-halo.df-added { stroke: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
         .df-halo.df-removed { stroke: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); stroke-dasharray: 6 4; }
         .df-halo.df-changed { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-dasharray: 2 4; }
+        /* Overlay (ghost) mode (§4.7): the base version solid, the other side's exclusives rendered
+           translucent on top — the same classification colour/pattern/badge, at half opacity. */
+        svg.diff-overlay .node.df-ghost, svg.diff-overlay .edge.df-ghost, svg.diff-overlay .exit-chip.df-ghost { opacity: 0.5; }
         .empty { padding: 40px 12px; }
       </style>
       <svg part="surface" tabindex="0" role="application" aria-label="Workflow design surface">
@@ -671,18 +678,22 @@ class ArazzoDesignSurface extends ArazzoElement {
   _applyDiff() {
     const svg = this.$('svg');
     if (!svg) return;
-    for (const el of this.$$('.node, .edge, .defaults')) el.classList.remove('df-added', 'df-removed', 'df-changed');
+    for (const el of this.$$('.node, .edge, .defaults, .exit-chip')) el.classList.remove('df-added', 'df-removed', 'df-changed', 'df-ghost');
     for (const el of this.$$('.df-badge, .df-note, .df-halo')) el.remove();
     const state = this._debugState ? null : this._diffState; // debug wins
     svg.classList.toggle('diffing', !!state);
+    svg.classList.toggle('diff-overlay', !!state && !!state.overlay); // ghost mode (§4.7): translucent ghosts
     if (!state) return;
 
+    const ghostNodes = new Set(state.ghosts?.nodes || []);
+    const ghostEdges = new Set(state.ghosts?.edges || []); // includes ghost-only exit-chip ids (workflow:X)
     const extras = this.$('.extras');
     const GLYPH = { added: '＋', removed: '−', changed: 'Δ' };
     for (const [id, cls] of Object.entries(state.nodes || {})) {
       const node = this.$(`.node[data-id="${cssEscape(id)}"]`);
       if (!node) continue;
       node.classList.add(`df-${cls}`);
+      if (ghostNodes.has(id)) node.classList.add('df-ghost');
       const pos = this._positions[id];
       if (pos && extras) {
         extras.append(this._diffBadge(pos, cls, GLYPH[cls] || '·'));
@@ -694,6 +705,7 @@ class ArazzoDesignSurface extends ArazzoElement {
       const edge = this.$(`.edge[data-id="${cssEscape(id)}"]`);
       if (!edge) continue;
       edge.classList.add(`df-${cls}`);
+      if (ghostEdges.has(id)) edge.classList.add('df-ghost');
       const line = edge.querySelector('.line');
       if (line) {
         const halo = document.createElementNS(SVG, 'path');
@@ -701,6 +713,11 @@ class ArazzoDesignSurface extends ArazzoElement {
         halo.setAttribute('d', line.getAttribute('d') || '');
         edge.insertBefore(halo, line); // beneath .line; after .hit so it never eats pointer events
       }
+    }
+    // Ghost-only exit chips: no colour classification, just the translucency channel (classed like edges).
+    for (const id of ghostEdges) {
+      const chip = this.$(`.exit-chip[data-id="${cssEscape(id)}"]`);
+      if (chip) chip.classList.add('df-ghost');
     }
   }
 
