@@ -15,6 +15,16 @@ describe('<arazzo-schema-editor>', () => {
   const rows = () => el.shadowRoot.querySelectorAll('.node');
   const names = () => [...el.shadowRoot.querySelectorAll('.rowline .name')];
 
+  // "New shared type…" (#99) now prompts for the name via an ad-hoc <arazzo-input-dialog> in document.body;
+  // find it, set the name, and confirm.
+  async function drivePromptDialog(value) {
+    let dlg = null;
+    for (let i = 0; i < 60 && !dlg; i++) { dlg = document.body.querySelector('arazzo-input-dialog'); if (!dlg) await new Promise((r) => setTimeout(r)); }
+    const field = dlg.shadowRoot.querySelector('.in-field');
+    if (value != null) field.value = value;
+    dlg.shadowRoot.querySelector('.confirm').click();
+  }
+
   it('renders a property row per object property, with type + required reflected', () => {
     make({ type: 'object', properties: { amount: { type: 'number' }, note: { type: 'string' } }, required: ['amount'] });
     const ns = names().map((n) => n.value);
@@ -167,9 +177,26 @@ describe('<arazzo-schema-editor>', () => {
     const created = nextEvent(el, 'library-create');
     const changed = nextEvent(el, 'schema-changed');
     addrType.value = 'new-ref'; addrType.dispatchEvent(new Event('change'));
+    // #99: creating a shared type now prompts for its name via the kit dialog — name it, then confirm.
+    await drivePromptDialog('Address');
     const ev = (await created).detail;
-    ok(ev.name && ev.schema.properties.city, 'library-create carries the extracted schema');
+    equal(ev.name, 'Address', 'library-create carries the chosen name');
+    ok(ev.schema.properties.city, 'library-create carries the extracted schema');
     equal((await changed).detail.schema.properties.addr.$ref, `#/components/inputs/${ev.name}`, 'the node now references the new shared type');
+  });
+
+  it('format is a constrained dropdown, not free text (#102)', async () => {
+    make({ type: 'object', properties: { when: { type: 'string' } } });
+    const whenRow = names().find((n) => n.value === 'when').closest('.node');
+    whenRow.querySelector('details.more').open = true;
+    const label = [...whenRow.querySelectorAll('.more-body label')].find((l) => l.textContent === 'format');
+    const control = label.nextElementSibling;
+    equal(control.tagName, 'SELECT', 'format renders as a select');
+    ok([...control.options].some((o) => o.value === 'date-time'), 'offers the recognised string formats');
+    ok([...control.options].some((o) => o.value === '' && /none/.test(o.textContent)), 'defaults to (none)');
+    const changed = nextEvent(el, 'schema-changed');
+    control.value = 'uuid'; control.dispatchEvent(new Event('change'));
+    equal((await changed).detail.schema.properties.when.format, 'uuid', 'selecting sets the format');
   });
 
   it('a dangling library reference renders a problem row', () => {

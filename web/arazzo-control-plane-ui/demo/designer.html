@@ -1694,6 +1694,16 @@
       }, { origin: 'components-panel', label: 'edit components', coalesce: true });
     });
 
+    // "open in library" on a schema editor's $ref row (bubbles from the workflow inputs editor or the
+    // components panel itself): jump to the Components tab and reveal + expand the referenced shared type.
+    document.addEventListener('library-open', (e) => {
+      if (!shell.id) return;
+      const name = e.detail?.name;
+      refreshComponentsPanel();
+      switchSideTab('components');
+      if (name) requestAnimationFrame(() => componentsPanel.openEntry('inputs', name));
+    });
+
     // The Git tab loads lazily on activation (flushing the autosave first — the panel reads the
     // STORED copy) and refreshes each visit; no GitHub call happens until you look.
     document.querySelector('.side-tabs [data-tab="git"]').addEventListener('click', async () => {
@@ -1779,9 +1789,15 @@
         field: { label: 'Owner (name <email>)', value: 'You <you@example.com>' },
         confirmLabel: 'Publish',
       });
-      if (!owner) return;
+      if (!owner) return; // the publish dialog was cancelled
       const m = /^(.*?)\s*<([^>]+)>$/.exec(owner);
-      if (!m) { logEvent('publish-invalid-owner', { owner }); return; }
+      if (!m) {
+        // A malformed owner used to abort SILENTLY (log only) — say why, so Publish never "does nothing".
+        logEvent('publish-invalid-owner', { owner });
+        showToast('Publish needs the owner as "Name <email>", e.g. You <you@example.com>.', 'warn');
+        setSaveUi('⚠ publish needs an owner as "Name <email>"');
+        return;
+      }
       try {
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
         const version = await client.publishWorkingCopy(shell.id, { owner: { name: m[1] || m[2], email: m[2] } });

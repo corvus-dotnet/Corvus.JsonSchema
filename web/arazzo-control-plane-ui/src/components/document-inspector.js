@@ -15,6 +15,7 @@
 // editors AUTHOR `$components.…` references against these keys and localize copies from them.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { promptText } from './prompt.js';
 import './schema-editor.js';
 import './action-editor.js';
 
@@ -98,10 +99,20 @@ class ArazzoDocumentInspector extends ArazzoElement {
         .add { font-size: 12px; justify-self: start; }
         .entry { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; min-width: 0; }
         .entry > * { min-width: 0; }
-        .entry .ehead { display: flex; align-items: center; gap: 6px; }
+        .entry .ehead { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; }
+        .entry > summary.ehead::-webkit-details-marker { display: none; }
+        .entry > summary.ehead::before { content: '▸'; flex: none; color: var(--_muted); font-size: 10px; transition: transform 0.15s ease; }
+        .entry[open] > summary.ehead::before { transform: rotate(90deg); }
+        .entry:not([open]) > .econtent { display: none; }
         .entry .ehead code { font-size: 12px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
         .entry .ehead .spacer { flex: 1; }
         .entry .edel { font-size: 11px; padding: 1px 7px; }
+        .entry.flash { animation: entry-flash 1.3s ease-out; }
+        @keyframes entry-flash {
+          0%, 30% { border-color: var(--_accent); box-shadow: inset 0 0 0 1px var(--_accent), 0 0 0 3px color-mix(in srgb, var(--_accent) 24%, transparent); }
+          100% { border-color: var(--_border); box-shadow: none; }
+        }
+        @media (prefers-reduced-motion: reduce) { .entry.flash { animation: none; } }
       </style>
       <div class="form" part="form"></div>
     `;
@@ -259,26 +270,50 @@ class ArazzoDocumentInspector extends ArazzoElement {
     return { type: 'object' }; // inputs: a schema
   }
 
-  /** @private */
+  /** @private — a collapsible library entry. Large documents can hold hundreds of components, so each
+   *  entry is a roll-up (`<details>`) whose editor is built LAZILY the first time it is expanded; a
+   *  collapsed entry costs a header only. `openEntry` expands one on demand (the $ref "open in library"). */
   _renderComponentEntry(kind, key) {
-    const entry = document.createElement('div');
+    const entry = document.createElement('details');
     entry.className = 'entry';
+    entry.dataset.kind = kind;
+    entry.dataset.key = key;
     entry.innerHTML = `
-      <div class="ehead">
+      <summary class="ehead">
         <code>$components.${escapeHtml(kind)}.${escapeHtml(key)}</code>
         <span class="spacer"></span>
+        <button class="edup ghost" type="button" title="Duplicate as a new entry to modify">⧉</button>
         <button class="edel ghost" type="button" title="Delete (references to it will dangle — validate flags them)">✕</button>
-      </div>
+      </summary>
       <div class="econtent"></div>`;
-    entry.querySelector('.edel').addEventListener('click', () => {
+    entry.querySelector('.edup').addEventListener('click', async (e) => {
+      e.preventDefault(); e.stopPropagation(); // a click in the summary must not toggle the roll-up
+      const chosen = await promptText({ title: `Duplicate ${key}`, label: 'New name', value: `${key}Copy`, confirmLabel: 'Duplicate' });
+      if (chosen == null || !chosen.trim()) return;
+      let name = chosen.trim();
+      while (name in this._doc.components[kind]) name += 'Copy';
+      this._doc.components[kind][name] = structuredClone(this._doc.components[kind][key]);
+      this._renderComponents();
+      this._emit();
+      requestAnimationFrame(() => this.openEntry(kind, name)); // reveal + expand the copy
+    });
+    entry.querySelector('.edel').addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation(); // a click in the summary must not toggle the roll-up
       delete this._doc.components[kind][key];
       if (!Object.keys(this._doc.components[kind]).length) delete this._doc.components[kind];
       if (!Object.keys(this._doc.components).length) delete this._doc.components;
       this._renderComponents();
       this._emit();
     });
-
     const content = entry.querySelector('.econtent');
+    entry.addEventListener('toggle', () => {
+      if (entry.open && !content.firstChild) this._buildComponentContent(kind, key, content);
+    });
+    return entry;
+  }
+
+  /** @private — builds the editor for one component entry into `content` (called lazily on first expand). */
+  _buildComponentContent(kind, key, content) {
     const value = this._doc.components[kind][key];
     if (kind === 'successActions' || kind === 'failureActions') {
       const editor = document.createElement('arazzo-action-editor');
@@ -325,8 +360,24 @@ class ArazzoDocumentInspector extends ArazzoElement {
       });
       content.prepend(ed);
     }
+  }
 
-    return entry;
+  /** Reveals a components-library entry (kind + key): scrolls it into view and briefly flashes its border.
+   *  Called by the designer when "open in library" is clicked on a $ref row (the schema editor's
+   *  `library-open` event). Returns whether the entry was found. */
+  openEntry(kind, key) {
+    const el = this.shadowRoot?.querySelector(
+      `.entry[data-kind="${CSS.escape(String(kind))}"][data-key="${CSS.escape(String(key))}"]`);
+    if (!el) return false;
+    el.open = true; // expand the roll-up
+    // Build its editor now (don't wait for the async `toggle`), so the revealed entry is ready immediately.
+    const content = el.querySelector('.econtent');
+    if (content && !content.firstChild) this._buildComponentContent(kind, key, content);
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('flash');
+    void el.offsetWidth; // restart the animation if it was mid-flight
+    el.classList.add('flash');
+    return true;
   }
 
   /** @private */
