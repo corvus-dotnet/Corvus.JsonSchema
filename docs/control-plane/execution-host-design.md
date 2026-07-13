@@ -1492,6 +1492,14 @@ eligible-for-All`) remains step 6.
 > `{dimension, value}` tuples via the interim `<arazzo-admin-grant-input>`, rather than driving the (built)
 > `GET /identity/{whoami,capabilities,grantees}` endpoints from a grantee picker.
 
+> **Superseded (2026-07, ratified membership model).** The exact set-equality rule below has been superseded by a
+> **membership (subset)** model: a principal administers / reaches / may-use a target iff the principal's whole stamped
+> `sys:` identity **contains** the target's named identity. See
+> [`identity-membership-campaign.md`](identity-membership-campaign.md) for the decision, the current-state map of every
+> matching surface, and an antagonistic review of the remaining asymmetries (the environment reverse-index and the
+> administration mutation gates are still exact and are tracked there). The paragraph below is retained as the original
+> resolved-grantee rationale; read "set-equality" as "subset" for the authorization surfaces.
+
 Administration (§15) and entitlement (§16.5) both **name a security identity**, and membership is **exact set-equality**
 on the caller's whole stamped `sys:` identity (`WorkflowAdministrators.IsAdministeredBy` — *"a superset or partial match
 is not an administrator"*). A hand-typed `{dimension, value}` is therefore a footgun: a value the deployment never stamps
