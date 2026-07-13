@@ -11,6 +11,8 @@
 //
 // Standalone-capable: it renders metadata + governance (obsolete / delete) itself and offers download links
 // for the package, workflow and each source document. Layer 2 listens to its events to keep the table in sync.
+// When the base workflow has more than one version, the header also offers "Compare with version…", which opens
+// the shared read-only <arazzo-workflow-compare> dialog on two versions' documents (visual-diff design §9.11).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
 import './tag-editor.js';
@@ -19,6 +21,7 @@ import './access-request-dialog.js';
 import './availability-request-dialog.js';
 import './availability-matrix.js';
 import './credential-dialog.js';
+import './workflow-compare.js';
 
 /**
  * Whether a credential binding is usable by a workflow's runs — a client-side approximation of the backend's §13
@@ -224,6 +227,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
           <span class="wf"></span>
           <span class="ver"></span>
           <label class="vswitch" part="version-switch" hidden>Version <select class="version-switch" aria-label="Switch version"></select></label>
+          <label class="vswitch vcompare" part="version-compare" hidden>Compare with <select class="compare-with" aria-label="Compare with another version"><option value="">version…</option></select></label>
           <span class="grow"></span>
           <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
         </header>
@@ -231,8 +235,16 @@ class ArazzoCatalogDetail extends ArazzoElement {
         <div class="security" part="security" hidden></div>
       </div>
       <arazzo-credential-dialog></arazzo-credential-dialog>
+      <arazzo-workflow-compare></arazzo-workflow-compare>
     `;
     this.$('.close').addEventListener('click', () => this.emit('close'));
+    // "Compare with version…" opens the shared read-only compare dialog for two versions of this base
+    // workflow (§9.11); the select resets to its placeholder so it reads as an action, not a mode.
+    this.$('.compare-with').addEventListener('change', (e) => {
+      const n = e.target.value;
+      e.target.value = '';
+      if (n !== '') this._openCompare(Number(n));
+    });
     // Credential setup is rooted here, where the source + its auth are known (§7.5). Re-list a source's bindings on save.
     this.$('arazzo-credential-dialog').addEventListener('credential-saved', () => {
       this._creds = null; // invalidate the cache so the new/changed binding shows
@@ -244,17 +256,54 @@ class ArazzoCatalogDetail extends ArazzoElement {
     });
   }
 
-  /** Populate the header version dropdown from {@link #versions} (hidden when there is only one version). */
+  /** Populate the header version dropdown + the "Compare with…" picker from {@link #versions}
+   *  (both hidden when there is only one version). */
   renderVersionSwitch() {
     const wrap = this.$('.vswitch');
     const sel = this.$('.version-switch');
+    const cmpWrap = this.$('.vcompare');
+    const cmp = this.$('.compare-with');
     if (!wrap || !sel) return;
     const versions = this._versions || [];
-    if (versions.length <= 1) { wrap.hidden = true; sel.innerHTML = ''; return; }
+    if (versions.length <= 1) {
+      wrap.hidden = true; sel.innerHTML = '';
+      if (cmpWrap) cmpWrap.hidden = true;
+      if (cmp) cmp.innerHTML = '<option value="">version…</option>';
+      return;
+    }
     wrap.hidden = false;
     const current = this.versionNumber;
     sel.innerHTML = versions.map((v) =>
       `<option value="${escapeHtml(String(v.versionNumber))}"${v.versionNumber === current ? ' selected' : ''}>v${escapeHtml(String(v.versionNumber))} · ${escapeHtml(v.status)}</option>`).join('');
+    if (cmpWrap && cmp) {
+      cmpWrap.hidden = false;
+      cmp.innerHTML = '<option value="">version…</option>' + versions.filter((v) => v.versionNumber !== current).map((v) =>
+        `<option value="${escapeHtml(String(v.versionNumber))}">v${escapeHtml(String(v.versionNumber))} · ${escapeHtml(v.status)}</option>`).join('');
+    }
+  }
+
+  /** @private — open the shared read-only compare dialog for this base workflow's current version against
+   *  another (§9.11). Sides read older→newer so the diff reads before→after; per-side ids are the explicit
+   *  `{base}-v{n}` (the diff model handles differing workflow ids). Documents come from `getCatalogWorkflow`. */
+  async _openCompare(otherN) {
+    const client = this.client;
+    const base = this.baseWorkflowId;
+    const current = this.versionNumber;
+    if (!client || !base || current == null || otherN == null || otherN === current) return;
+    const [lo, hi] = current < otherN ? [current, otherN] : [otherN, current];
+    try {
+      const [loDoc, hiDoc] = await Promise.all([
+        client.getCatalogWorkflow(base, lo),
+        client.getCatalogWorkflow(base, hi),
+      ]);
+      const label = (n) => `${base} · v${n}${n === current ? ' (current)' : ''}`;
+      this.$('arazzo-workflow-compare').open({
+        left: { label: label(lo), document: loDoc, workflowId: `${base}-v${lo}` },
+        right: { label: label(hi), document: hiDoc, workflowId: `${base}-v${hi}` },
+      });
+    } catch (err) {
+      this.emit('error', { problem: err.problem || { title: err.message, status: err.status }, error: err });
+    }
   }
 
   renderBody() {
