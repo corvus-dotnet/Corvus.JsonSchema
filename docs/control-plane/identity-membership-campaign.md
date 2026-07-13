@@ -82,7 +82,20 @@ administration under set-equality. Membership over a rich identity resolves both
   `A_caller_whose_identity_contains_an_administrator_may_change_administration` (workflow + environment) + a
   transfer variant, plus `Adding_a_more_specific_identity_…_is_a_genuine_addition` guarding idempotency-stays-exact;
   15/15 in-memory administration tests green.
-- **S5 — collision-probe under membership**, overview prefix fix, rule-eval hardening (see the review below).
+- **S5a — overview prefix fix (H6) + rule-eval hardening (H4) — DONE** (this slice). H6: the access-grants overview
+  strips the deployment-configured internal prefix (new public `ControlPlaneRowSecurityPolicy.StripInternalPrefix` +
+  `ControlPlaneAccess.StripInternalPrefix`, threaded into `BindingAppliesToGrantee`) instead of a hardcoded `sys:`;
+  it is a latent divergence today (no shipping policy overrides the prefix, so it is always `sys:`), so the fix
+  future-proofs a non-`sys:` deployment. H4: documented (design §16.5.5) that reach-rule evaluation reads the claim
+  map, so every reach-relevant dimension must be ambient-provided or resolver-stamped, never a raw token claim — the
+  review's stated remediation is documentation, and this is it.
+- **S5b — collision-probe subset-overlap warning (H5) — DEFERRED, needs a decision.** Unlike its S5a siblings this is
+  a full API-first + 10-backend slice: `FindIdentityConflictAsync` is an O(1) digest-indexed exact-collision probe
+  (no scan, by design). A subset-overlap warning is bidirectional and asymmetric — "new grant CONTAINS an existing
+  grantee" is tractable via a `SubsetDigests` lookup against the existing digest index, but "new grant is CONTAINED BY
+  an existing grantee" (the review's narrow-directory-mapper example) needs superset enumeration, which is unbounded
+  and requires a scan the store design forbids. Which direction(s) to detect, and how to surface the warning (a new
+  response field), is a design decision to take before implementing.
 - **S6 — demo resolver enrichment + relaunch**, live-verify; then container conformance for the 8 backends.
 
 ## Current state — every identity-matching surface
@@ -142,13 +155,13 @@ guarantees `sub` is globally unique. Options: extend the binding shape to a tag-
 grants to name the issuer dimension alongside the subject; or document the constraint and keep reach
 group-grained. Decision needed before per-person reach grants ship.
 
-**H4 — Reach rule evaluation still trusts raw token claims (pre-existing, low-medium).** Binding *selection*
-(#1) is on the forgery-resistant stamped identity, but a matched binding's *rule* (`sys:tenant == $claim.tenant`)
-is evaluated against the **raw claim map** except where an ambient dimension overrides the same name. For any
-dimension the deployment does not stamp as ambient, a forged token claim flows straight into the reach
-predicate. Ambient closes the tenant case; the general case is a deployment responsibility that should be
-documented (stamp every reach-relevant dimension as ambient, or from the internal-tag resolver, not the raw
-token).
+**H4 — Reach rule evaluation trusts raw token claims (pre-existing, low-medium) — DOCUMENTED (S5a).** Binding
+*selection* (#1) is on the forgery-resistant stamped identity, but a matched binding's *rule*
+(`sys:tenant == $claim.tenant`) is evaluated against the raw claim map except where an ambient dimension overrides
+the same name. For any dimension the deployment does not stamp as ambient, a forged token claim flows straight into
+the reach predicate. Ambient closes the tenant case; the general case is a deployment responsibility, now documented
+in design §16.5.5 (every reach-relevant dimension must be ambient-provided or resolver-stamped, never a raw token
+claim) — the review's own stated remediation. Not a code change.
 
 **H5 — Collision probe only catches exact collisions, not subset overlaps (membership-specific, low-medium).**
 `FindIdentityConflictAsync` refuses a grant whose resolved identity **set-equals** an existing grantee's. Under
@@ -158,10 +171,14 @@ no conflict is raised (the digests differ). Set-equality is correct for detectin
 membership model additionally wants a **subset-overlap warning** at grant time (surface it, do not hard-block —
 overlap can be intentional).
 
-**H6 — Overview hardcodes the `sys:` prefix (divergence, low).** `BindingAppliesToGrantee`'s `StripSysPrefix`
-strips the literal `"sys:"`, whereas runtime `Matches`/`CallerMatches` strip the deployment-configured
-`InternalTagPrefix`. On any deployment whose internal prefix is not `sys:`, the overview and enforcement
-disagree. Fix: thread the configured prefix into the overview.
+**H6 — Overview hardcoded the `sys:` prefix (divergence, low) — RESOLVED (S5a).** `BindingAppliesToGrantee`'s
+`StripSysPrefix` stripped the literal `"sys:"`, whereas runtime `Matches`/`CallerMatches` strip the
+deployment-configured `InternalTagPrefix`. Fixed: a public `ControlPlaneRowSecurityPolicy.StripInternalPrefix` (over
+the cached UTF-8 prefix) with a `ControlPlaneAccess.StripInternalPrefix` delegator, threaded into the overview match;
+a no-access host falls back to the `"sys:"` default. This is latent today — no shipping policy overrides
+`InternalTagPrefix`, so the configured prefix is always `sys:` — so it future-proofs a non-`sys:` deployment rather
+than fixing a live bug. Covered by a `StripInternalPrefix_uses_the_deployment_configured_prefix` unit test over a
+custom-prefix policy; the existing overview suite is the no-regression lock on the `sys:` path.
 
 **H7 — The demo does not exercise the membership generalization (coverage, low).** The demo resolver stamps
 only `{sys:group, sys:iss}` (not `sys:sub`), and `DemoData.GroupIdentity` is built so a seeded grant

@@ -389,7 +389,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             bool contributed = false;
             foreach (SecurityBindingDocument binding in page.Bindings)
             {
-                if (BindingAppliesToGrantee(binding, grantee))
+                if (BindingAppliesToGrantee(binding, grantee, this.access))
                 {
                     matchedBindings.Add(binding);
                     contributed = true;
@@ -676,7 +676,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     // (and value, when the binding pins one). Compared bytes-native off both documents' UTF-8 — the binding's raw
     // ClaimType/ClaimValue vs each grantee identity item's sys:-stripped dimension / value read as unescaped spans — so
     // nothing is materialised into a managed string or grant list.
-    private static bool BindingAppliesToGrantee(SecurityBindingDocument binding, Models.ResolvedGrantee grantee)
+    private static bool BindingAppliesToGrantee(SecurityBindingDocument binding, Models.ResolvedGrantee grantee, ControlPlaneAccess? access)
     {
         if (binding.ClaimType.ValueEquals("*"u8))
         {
@@ -693,10 +693,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         {
             using UnescapedUtf8JsonString dimension = item.DimensionValue.GetUtf8String();
 
-            // The grantee identity is the resolved sys: form; a binding keys on the operator-facing claim it derives
-            // from (design §6.5, lossy), so strip the sys: prefix before matching (sys:sub -> sub; a bare team/role
-            // dimension is unchanged).
-            if (!binding.ClaimType.ValueEquals(StripSysPrefix(dimension.Span)))
+            // The grantee identity is the resolved internal form; a binding keys on the operator-facing claim it derives
+            // from (design §6.5, lossy), so strip the deployment-configured internal prefix before matching (sys:sub ->
+            // sub; a bare team/role dimension is unchanged). Using the configured prefix (via ControlPlaneAccess) keeps
+            // this overview match aligned with runtime enforcement on a deployment whose prefix is not the "sys:" default;
+            // with no access resolver at all, the default prefix is the correct fallback.
+            ReadOnlySpan<byte> claim = access is { } a ? a.StripInternalPrefix(dimension.Span) : StripDefaultInternalPrefix(dimension.Span);
+            if (!binding.ClaimType.ValueEquals(claim))
             {
                 continue;
             }
@@ -716,9 +719,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         return false;
     }
 
-    // Strips the internal "sys:" namespace prefix from a resolved identity dimension to recover the operator-facing claim
-    // a binding keys on (sys:sub -> sub); a dimension without the prefix (a bare team/role) is returned unchanged.
-    private static ReadOnlySpan<byte> StripSysPrefix(ReadOnlySpan<byte> dimension)
+    // Strips the DEFAULT internal namespace prefix from a resolved identity dimension — the fallback used only when there
+    // is no ControlPlaneAccess resolver to supply the deployment-configured prefix (an unscoped host). The literal is the
+    // UTF-8 of SecurityShell.DefaultInternalPrefix ("sys:"). A dimension without the prefix (a bare team/role) is
+    // returned unchanged.
+    private static ReadOnlySpan<byte> StripDefaultInternalPrefix(ReadOnlySpan<byte> dimension)
         => dimension.StartsWith("sys:"u8) ? dimension["sys:"u8.Length..] : dimension;
 
     // The bindings array reuses the existing whole-summary projection (BuildBindingSummary) per matched binding — the
