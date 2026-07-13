@@ -90,6 +90,12 @@ class ArazzoWorkflowCompare extends ArazzoElement {
 
   /** @private — (re)compute the diff, entries, and derived flags from the current sides. */
   _computeDiff(diff) {
+    // Snapshot pristine documents BEFORE diffing (the diff normalises/mutates the inputs in place); the
+    // before→after detail panel reads field values from these, not the mutated live documents.
+    this._raw = {
+      left: this._clone(this._sides.left?.document),
+      right: this._clone(this._sides.right?.document),
+    };
     this._diff = diff
       ? diffWorkflowPair(this._sides.left?.document ?? {}, this._sides.right?.document ?? {},
         { leftWorkflowId: this._workflowIds.left, rightWorkflowId: this._workflowIds.right })
@@ -138,7 +144,17 @@ class ArazzoWorkflowCompare extends ArazzoElement {
         .tm-view { flex: 1; min-height: 0; overflow: auto; }
         .tm-view .cm-mergeView, .tm-view .cm-mergeViewEditors, .tm-view .cm-editor { height: 100%; }
         .tm-unavailable { padding: 24px; color: var(--_muted); font-size: 13px; }
-        .changelist { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; border-right: 1px solid var(--_border); }
+        .changelist { display: grid; grid-template-rows: auto minmax(0, 1.4fr) auto; min-height: 0; border-right: 1px solid var(--_border); }
+        .cl-detail { border-top: 1px solid var(--_border); background: var(--_bg); overflow: auto; max-height: 42%; padding: 8px 10px; font-size: 12px; }
+        .cl-detail:empty, .grid.cl-collapsed .cl-detail { display: none; }
+        .cl-detail .dh { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); margin: 0 0 6px; }
+        .cl-detail .fd { margin: 0 0 9px; }
+        .cl-detail .fk { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); margin-bottom: 2px; }
+        .cl-detail .fv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--_border); }
+        .cl-detail .fv.before { color: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); background: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 8%, transparent); }
+        .cl-detail .fv.after { color: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); background: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 9%, transparent); margin-top: 3px; }
+        .cl-detail .fv.absent { color: var(--_muted); font-style: italic; background: none; }
+        .cl-detail .arrow { color: var(--_muted); font-size: 10px; margin: 1px 0; }
         .cl-head { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--_border); font-size: 12px; }
         .cl-title { margin-right: auto; font-weight: 600; }
         .grid.cl-collapsed .cl-title, .grid.cl-collapsed .cl-prev, .grid.cl-collapsed .cl-next, .grid.cl-collapsed .cl-body { display: none; }
@@ -191,6 +207,7 @@ class ArazzoWorkflowCompare extends ArazzoElement {
               <button class="cl-next ghost" type="button" title="Next change">›</button>
             </div>
             <div class="cl-body"></div>
+            <div class="cl-detail"></div>
           </div>
           <div class="stage"></div>
         </div>
@@ -462,6 +479,81 @@ class ArazzoWorkflowCompare extends ArazzoElement {
       }
     }
     this.$('.cl-body').innerHTML = html || '<div class="cl-group">No differences</div>';
+    const detail = this.$('.cl-detail'); if (detail) detail.innerHTML = ''; // cleared until a selection
+  }
+
+  /** @private — the field-level before→after panel for the selected changed node (§6): resolve the entry's
+   *  left/right object from the two documents and list each differing field, old value over new. */
+  _renderDetail(entry) {
+    const box = this.$('.cl-detail');
+    if (!box) return;
+    const { before, after, title } = this._entryValues(entry);
+    if (before === undefined && after === undefined) { box.innerHTML = ''; return; } // e.g. a flow edge — no field values
+    const deltas = this._fieldDeltas(before, after);
+    const head = `<p class="dh">${escapeHtml(title)}</p>`;
+    if (!deltas.length) { box.innerHTML = head + '<div class="fd"><div class="fk">no field-level differences</div></div>'; return; }
+    box.innerHTML = head + deltas.map((d) => `<div class="fd"><div class="fk">${escapeHtml(d.key)}</div>`
+      + (d.before === undefined ? '<div class="fv absent">absent</div>' : `<div class="fv before">${escapeHtml(d.before)}</div>`)
+      + '<div class="arrow">↓</div>'
+      + (d.after === undefined ? '<div class="fv absent">absent</div>' : `<div class="fv after">${escapeHtml(d.after)}</div>`)
+      + '</div>').join('');
+  }
+
+  /** @private — {before, after, title} objects for an entry, drawn from the two documents. */
+  _entryValues(entry) {
+    const leftDoc = this._raw?.left ?? this._sides.left?.document, rightDoc = this._raw?.right ?? this._sides.right?.document;
+    const lWf = this._workflowIds.left, rWf = this._workflowIds.right;
+    if (entry.group === 'steps') {
+      const before = this._stepOf(leftDoc, lWf, entry.leftId ?? entry.id);
+      const after = this._stepOf(rightDoc, rWf, entry.rightId ?? entry.id);
+      const title = entry.type === 'added' ? `Added step: ${entry.rightId}`
+        : entry.type === 'removed' ? `Removed step: ${entry.leftId}`
+        : entry.type === 'renamed' ? `${entry.leftId} → ${entry.rightId}`
+        : `Step: ${entry.id ?? entry.rightId ?? entry.leftId}`;
+      return { before, after, title };
+    }
+    if (entry.group === 'workflow') {
+      if (entry.area === 'components') return { before: leftDoc?.components, after: rightDoc?.components, title: `components${entry.component ? ` — ${entry.component}` : ''}` };
+      const lw = this._workflowOf(leftDoc, lWf), rw = this._workflowOf(rightDoc, rWf);
+      return { before: lw?.[entry.area], after: rw?.[entry.area], title: `workflow: ${entry.area}` };
+    }
+    return { before: undefined, after: undefined, title: '' };
+  }
+
+  /** @private — differing top-level fields between two objects (or the whole value for a primitive/absent). */
+  _fieldDeltas(before, after) {
+    const bothObj = before && after && typeof before === 'object' && typeof after === 'object'
+      && !Array.isArray(before) && !Array.isArray(after);
+    if (!bothObj) {
+      if (this._stable(before) === this._stable(after)) return [];
+      return [{ key: '(value)', before: before === undefined ? undefined : this._fmt(before), after: after === undefined ? undefined : this._fmt(after) }];
+    }
+    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort();
+    const out = [];
+    for (const k of keys) {
+      if (this._stable(before[k]) === this._stable(after[k])) continue;
+      out.push({ key: k, before: k in before ? this._fmt(before[k]) : undefined, after: k in after ? this._fmt(after[k]) : undefined });
+    }
+    return out;
+  }
+
+  /** @private */ _clone(d) { if (d == null) return d; try { return structuredClone(d); } catch { return JSON.parse(JSON.stringify(d)); } }
+  /** @private */ _stable(v) { return v === undefined ? undefined : JSON.stringify(v); }
+  /** @private */ _fmt(v) { const s = typeof v === 'string' ? v : JSON.stringify(v, null, (v && typeof v === 'object') ? 1 : 0); return s.length > 500 ? `${s.slice(0, 500)}…` : s; }
+  /** @private — the workflow with steps for wfId, else the first workflow that actually has steps, else [0]. */
+  _workflowOf(doc, wfId) {
+    const ws = doc?.workflows || [];
+    return ws.find((w) => w.workflowId === wfId && Array.isArray(w.steps)) || ws.find((w) => Array.isArray(w.steps)) || ws[0];
+  }
+
+  /** @private — a step by id, searched across all workflows (robust to which workflow object carries steps). */
+  _stepOf(doc, wfId, stepId) {
+    if (stepId == null) return undefined;
+    for (const w of (doc?.workflows || [])) {
+      const s = (w.steps || []).find((x) => x.stepId === stepId);
+      if (s) return s;
+    }
+    return undefined;
   }
 
   /** @private — the Take / Keep buttons for an entry (merge only). Seq and component-sourced flow entries
@@ -540,6 +632,7 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     for (const b of this.$$('.cl-item')) b.classList.toggle('current', Number(b.dataset.i) === i);
     this.$(`.cl-item[data-i="${i}"]`)?.scrollIntoView({ block: 'nearest' });
     const entry = this._entries[i];
+    this._renderDetail(entry); // §6 before→after values for the selected changed node
     if (this._mode === 'overlay') {
       const surface = this.$('.side-overlay arazzo-design-surface');
       if (!surface) return;

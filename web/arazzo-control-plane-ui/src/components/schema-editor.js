@@ -234,14 +234,16 @@ class ArazzoSchemaEditor extends ArazzoElement {
     // shared types + "New shared type…" (create/extract one), then the inline primitives, then combiners.
     let html = '<optgroup label="Shared types">'
       + libNames.map((n) => `<option value="ref:${escapeHtml(n)}">${escapeHtml(n)} ↗</option>`).join('')
-      + '<option value="new-ref">＋ New shared type…</option></optgroup>';
+      + '<option value="new-ref">＋ New shared type…</option>'
+      + '<option value="move-ref">→ Move to shared type…</option></optgroup>';
     html += '<optgroup label="Inline">' + RENDERABLE_TYPES.map((t) => `<option value="${t}">${TYPE_LABEL[t]}</option>`).join('') + '</optgroup>';
     html += '<optgroup label="Combiner">' + COMBINER_KINDS.map((k) => `<option value="${k}">${COMBINER_LABEL[k]}</option>`).join('') + '</optgroup>';
     sel.innerHTML = html;
     const cls = classifyNode(schema);
     sel.value = cls.kind === 'combiner' ? cls.combiner : (schema.type ?? 'object');
     sel.addEventListener('change', () => {
-      if (sel.value === 'new-ref') { this._createSharedType(schema); return; }
+      if (sel.value === 'new-ref') { this._createSharedType(schema, { blank: true }); return; } // a fresh, empty type
+      if (sel.value === 'move-ref') { this._createSharedType(schema, { blank: false }); return; } // extract this node
       if (sel.value.startsWith('ref:')) { this._applyRef(schema, sel.value.slice(4)); return; }
       onChange(sel.value, sel);
     });
@@ -256,17 +258,22 @@ class ArazzoSchemaEditor extends ArazzoElement {
     this._commit();
   }
 
-  /** Extract this node's schema into a NEW shared library type and reference it (§6). Prompts for the name
-   *  (the author names their own type, rather than an auto-generated SharedTypeN). The host persists the new
-   *  entry via the `library-create` event; the local `.library` updates so the reference resolves at once. */
-  async _createSharedType(schema) {
+  /** Create a shared library type and reference this node to it (§6). Two modes: <em>New</em> (`blank`) seeds a
+   *  fresh empty object type — a clean starting point that does not inherit this node's content; <em>Move</em>
+   *  extracts this node's current schema into the shared type. Either way the author names it (not an
+   *  auto-generated SharedTypeN). The host persists the entry via `library-create`; the local `.library` updates
+   *  so the reference resolves at once. */
+  async _createSharedType(schema, { blank = false } = {}) {
     let suggestion = 'SharedType';
     for (let n = 2; this._library && suggestion in this._library; n++) suggestion = `SharedType${n}`;
-    const chosen = await promptText({ title: 'New shared type', label: 'Name', value: suggestion, confirmLabel: 'Create' });
+    const chosen = await promptText({
+      title: blank ? 'New shared type' : 'Move to shared type',
+      label: 'Name', value: suggestion, confirmLabel: blank ? 'Create' : 'Move',
+    });
     if (chosen == null || !chosen.trim()) { this._renderForm(); return; } // cancelled/blank — revert the type dropdown
     let name = chosen.trim();
     while (this._library && name in this._library) name += '_copy'; // keep the chosen name unless it collides
-    const seed = structuredClone(schema);
+    const seed = blank ? { type: 'object' } : structuredClone(schema);
     this._library = { ...(this._library || {}), [name]: seed };
     this.emit('library-create', { name, schema: seed });
     this._applyRef(schema, name);

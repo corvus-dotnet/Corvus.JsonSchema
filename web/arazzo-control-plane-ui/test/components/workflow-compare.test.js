@@ -131,6 +131,19 @@ describe('<arazzo-workflow-compare>', () => {
     ok(item.classList.contains('current'), 'the clicked entry is marked current');
   });
 
+  it('the detail panel shows the selected step\'s fields before → after (#90)', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    open(l, r);
+    const item = [...el.shadowRoot.querySelectorAll('.cl-item')].find((b) => b.textContent.trim().startsWith('Δ a'));
+    item.click();
+    const detail = el.shadowRoot.querySelector('.cl-detail');
+    ok(/successCriteria/.test(detail.textContent), 'lists the changed field');
+    ok(detail.querySelector('.fv.absent'), 'the field is absent on the left (before)');
+    ok(/\$statusCode == 200/.test(detail.querySelector('.fv.after')?.textContent || ''), 'shows the after value');
+  });
+
   it('an added step selects on the right only; a removed step on the left only', () => {
     const l = base();
     const r = base();
