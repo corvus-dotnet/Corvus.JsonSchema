@@ -415,6 +415,30 @@ test('the workflow inputs are authored with the typed schema editor, not a texta
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('the inputs schema editor offers the library $ref picker (§6)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#surface .node').first().waitFor({ state: 'attached' });
+  const seen = await page.evaluate(() => {
+    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
+      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
+    }));
+    const se = document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor');
+    if (!se) return { ok: false };
+    se.library = { Address: { type: 'object', properties: { city: { type: 'string' } } } }; // a library → the picker appears
+    const refSel = se.shadowRoot.querySelector('select.ref');
+    return { ok: true, hasRef: !!refSel, hasAddress: refSel ? [...refSel.options].some((o) => o.value === 'Address') : false };
+  });
+  expect(seen.ok && seen.hasRef, 'the "reference…" picker renders when a library exists').toBe(true);
+  expect(seen.hasAddress, 'the library schema is offered').toBe(true);
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('§18 debug run: starting against a dev environment pumps get-debug-run to a paused state (R5 async)', async ({ page }) => {
   const errors = [];
   // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by

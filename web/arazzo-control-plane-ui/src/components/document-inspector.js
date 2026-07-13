@@ -315,6 +315,7 @@ class ArazzoDocumentInspector extends ArazzoElement {
       content.innerHTML = '<div class="hint">a JSON Schema; referenced from workflow inputs</div>';
       const ed = document.createElement('arazzo-schema-editor');
       ed.emptyDeletes = false;
+      ed.library = this._doc.components?.inputs; // the sibling library schemas, for the $ref picker (§6)
       ed.value = value;
       ed.addEventListener('schema-changed', (e) => { this._doc.components[kind][key] = e.detail.schema; this._emit(); });
       content.prepend(ed);
