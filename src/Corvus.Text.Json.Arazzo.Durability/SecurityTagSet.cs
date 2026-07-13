@@ -472,6 +472,70 @@ public readonly struct SecurityTagSet
         }
     }
 
+    /// <summary>
+    /// Whether every tag in this set is present in <paramref name="other"/> (this ⊆ other), the membership comparison the
+    /// identity-membership model uses (a principal administers / reaches a target iff the target's named identity is a
+    /// subset of the principal's stamped identity — design §16.5.4, membership supersedes set-equality). Computed
+    /// string-free on the unescaped UTF-8 key/value spans, so it materializes no managed string, no list, and nothing
+    /// escapes to the heap. The empty set is a subset of every set.
+    /// </summary>
+    /// <param name="other">The candidate superset (e.g. the caller's whole stamped identity).</param>
+    /// <returns><see langword="true"/> if every tag in this set is present in <paramref name="other"/>.</returns>
+    public bool IsSubsetOf(SecurityTagSet other)
+    {
+        if (this.json.IsEmpty)
+        {
+            return true;
+        }
+
+        if (other.json.IsEmpty || this.Count > other.Count)
+        {
+            return false;
+        }
+
+        Utf8Enumerator mine = this.EnumerateUtf8();
+        try
+        {
+            while (mine.MoveNext())
+            {
+                if (!other.ContainsTag(mine.CurrentKey, mine.CurrentValue))
+                {
+                    return false;
+                }
+            }
+        }
+        finally
+        {
+            mine.Dispose();
+        }
+
+        return true;
+    }
+
+    /// <summary>Whether this set contains a tag with the given key and value, compared string-free on the unescaped UTF-8
+    /// spans. The inner enumerator owns its own escape scratch, so the caller's <paramref name="key"/>/<paramref name="value"/>
+    /// spans (a view over a different backing) stay valid across the scan.</summary>
+    private bool ContainsTag(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+    {
+        Utf8Enumerator e = this.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                if (e.CurrentKey.SequenceEqual(key) && e.CurrentValue.SequenceEqual(value))
+                {
+                    return true;
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+
+        return false;
+    }
+
     /// <summary>Gets an allocation-free enumerator over the security tags (each <see cref="SecurityTag.Key"/>/<see cref="SecurityTag.Value"/> is decoded once at the driver leaf). Lets a <c>{ k, v }</c> / BSON / SQL backend write its embedded form without a <see cref="List{T}"/>.</summary>
     /// <returns>The enumerator.</returns>
     public Enumerator GetEnumerator() => new(this.json.Span);
