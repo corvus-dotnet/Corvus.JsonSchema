@@ -165,7 +165,8 @@ class ArazzoWorkflowCompare extends ArazzoElement {
         .side-head { padding: 6px 12px; font-size: 12px; color: var(--_muted); border-bottom: 1px solid var(--_border);
                      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .side arazzo-design-surface { display: block; width: 100%; height: 100%; min-height: 0; }
-        .hl[aria-pressed="false"] { opacity: 0.6; text-decoration: line-through; }
+        .hl[aria-pressed="false"], .sync[aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
+        .sync[aria-pressed="true"] { background: var(--_surface); box-shadow: inset 0 0 0 1px var(--_border); }
         [hidden] { display: none !important; }
       </style>
       <dialog>
@@ -280,9 +281,20 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     const { merge, state, view, langJson } = cm;
     const readonlyExts = [state.EditorState.readOnly.of(true), view.EditorView.editable.of(false)];
     const dirtyWatch = view.EditorView.updateListener.of((u) => { if (u.docChanged) this._markMergeDirty(); });
+    // The MergeView is created without a dark CM theme, so its "N unchanged lines" collapse bars and gutters
+    // fall back to CodeMirror's light defaults (black-on-white in the dark app). Theme them from the kit tokens
+    // so they track light/dark automatically, instead of switching CM's whole base theme.
+    const mergeChrome = view.EditorView.theme({
+      '.cm-collapsedLines': {
+        color: 'var(--arazzo-muted, #6b7280)',
+        background: 'linear-gradient(to bottom, transparent 0, var(--arazzo-surface, #f7f8fa) 30%, var(--arazzo-surface, #f7f8fa) 70%, transparent 100%)',
+      },
+      '.cm-collapsedLines:hover': { color: 'var(--arazzo-text, #1c2024)' },
+      '.cm-gutters': { background: 'var(--arazzo-surface, #f7f8fa)', color: 'var(--arazzo-muted, #6b7280)', border: 'none' },
+    });
     const pane = (doc, editable) => ({
       doc,
-      extensions: [langJson.json(), view.lineNumbers(), ...(editable ? [dirtyWatch] : readonlyExts)],
+      extensions: [langJson.json(), view.lineNumbers(), mergeChrome, ...(editable ? [dirtyWatch] : readonlyExts)],
     });
     // revertControls push the OTHER side's chunks INTO the merge-target pane (a=left, b=right).
     const opts = {

@@ -31,15 +31,25 @@ import {
   setType, constraintsDroppedOnType, addVariant, removeVariant, reorderVariant, setConstraint,
 } from '../schema-authoring.js';
 import './value-editor.js';
+import { promptText } from './prompt.js';
 
 const PREVIEW_DEBOUNCE_MS = 350;
 const TYPE_LABEL = { object: 'object', array: 'array', string: 'string', number: 'number', integer: 'integer', boolean: 'boolean', null: 'null' };
 const COMBINER_LABEL = { oneOf: 'one of', anyOf: 'any of', allOf: 'all of' };
+// The `format` keyword is a constrained dropdown, not free text — the recognised JSON Schema string
+// formats (kept in step with value-editor.js's control map) and the OpenAPI numeric formats.
+const FORMATS = {
+  string: ['date-time', 'date', 'time', 'duration', 'email', 'idn-email', 'hostname', 'idn-hostname',
+    'ipv4', 'ipv6', 'uri', 'uri-reference', 'iri', 'iri-reference', 'uuid', 'uri-template',
+    'json-pointer', 'relative-json-pointer', 'regex'],
+  number: ['float', 'double'],
+  integer: ['int32', 'int64'],
+};
 // Per-type "more…" constraints (title/enum/const/default are added for every type).
 const CONSTRAINTS = {
-  string: [['format', 'text'], ['pattern', 'text'], ['minLength', 'number'], ['maxLength', 'number']],
-  number: [['minimum', 'number'], ['maximum', 'number'], ['multipleOf', 'number']],
-  integer: [['minimum', 'number'], ['maximum', 'number'], ['multipleOf', 'number']],
+  string: [['format', 'format'], ['pattern', 'text'], ['minLength', 'number'], ['maxLength', 'number']],
+  number: [['format', 'format'], ['minimum', 'number'], ['maximum', 'number'], ['multipleOf', 'number']],
+  integer: [['format', 'format'], ['minimum', 'number'], ['maximum', 'number'], ['multipleOf', 'number']],
   array: [['minItems', 'number'], ['maxItems', 'number'], ['uniqueItems', 'checkbox']],
   object: [],
   boolean: [], null: [],
@@ -246,12 +256,17 @@ class ArazzoSchemaEditor extends ArazzoElement {
     this._commit();
   }
 
-  /** Extract this node's schema into a NEW shared library type and reference it (§6). The host persists the
-   *  new entry via the `library-create` event; the local `.library` updates so the reference resolves at once. */
-  _createSharedType(schema) {
+  /** Extract this node's schema into a NEW shared library type and reference it (§6). Prompts for the name
+   *  (the author names their own type, rather than an auto-generated SharedTypeN). The host persists the new
+   *  entry via the `library-create` event; the local `.library` updates so the reference resolves at once. */
+  async _createSharedType(schema) {
+    let suggestion = 'SharedType';
+    for (let n = 2; this._library && suggestion in this._library; n++) suggestion = `SharedType${n}`;
+    const chosen = await promptText({ title: 'New shared type', label: 'Name', value: suggestion, confirmLabel: 'Create' });
+    if (chosen == null || !chosen.trim()) { this._renderForm(); return; } // cancelled/blank — revert the type dropdown
+    let name = chosen.trim();
+    while (this._library && name in this._library) name += '_copy'; // keep the chosen name unless it collides
     const seed = structuredClone(schema);
-    let name = 'SharedType';
-    for (let n = 2; this._library && name in this._library; n++) name = `SharedType${n}`;
     this._library = { ...(this._library || {}), [name]: seed };
     this.emit('library-create', { name, schema: seed });
     this._applyRef(schema, name);
@@ -411,6 +426,18 @@ class ArazzoSchemaEditor extends ArazzoElement {
 
   _constraintRow(body, schema, key, kind) {
     const label = document.createElement('label'); label.textContent = key;
+    if (kind === 'format') {
+      // `format` is constrained to the recognised set for the node's type (string / numeric), with a
+      // "(none)" default — no free text, no spurious value.
+      const sel = document.createElement('select');
+      sel.disabled = this.readonly;
+      const options = FORMATS[schema.type] ?? FORMATS.string;
+      sel.innerHTML = ['', ...options].map((f) => `<option value="${escapeHtml(f)}">${f || '(none)'}</option>`).join('');
+      sel.value = typeof schema.format === 'string' ? schema.format : '';
+      sel.addEventListener('change', () => { setConstraint(schema, 'format', sel.value || undefined); this._commit(); });
+      body.append(label, sel);
+      return;
+    }
     const input = document.createElement('input');
     input.type = kind === 'number' ? 'number' : (kind === 'checkbox' ? 'checkbox' : 'text');
     input.disabled = this.readonly;

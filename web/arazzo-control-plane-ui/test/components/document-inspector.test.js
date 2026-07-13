@@ -30,13 +30,25 @@ describe('<arazzo-document-inspector>', () => {
     return el;
   }
 
+  // Component entries are collapsible roll-ups whose editor is built lazily on first expand; open the
+  // entry (and fire `toggle` synchronously) before asserting on its embedded editor.
+  function expand(entry) {
+    entry.open = true;
+    entry.dispatchEvent(new Event('toggle'));
+    return entry;
+  }
+  const entryFor = (kind, key) => el.shadowRoot.querySelector(
+    key ? `.entry[data-kind="${kind}"][data-key="${key}"]` : `.entry[data-kind="${kind}"]`);
+
   it('renders info, sources, workflows, and the components library', () => {
     make();
     equal(el.shadowRoot.querySelector('.ititle').value, 'Orders');
     equal(el.shadowRoot.querySelector('.sources .sname').textContent, 'payments');
     ok(el.shadowRoot.textContent.includes('place-order'), 'workflows list');
     ok(el.shadowRoot.textContent.includes('$components.parameters.page'), 'component entries render their reference form');
-    ok(el.shadowRoot.querySelector('arazzo-action-editor'), 'a component action embeds the action editor');
+    ok(!el.shadowRoot.querySelector('arazzo-action-editor'), 'a collapsed component entry has not built its editor yet');
+    expand(entryFor('failureActions', 'give-up'));
+    ok(el.shadowRoot.querySelector('arazzo-action-editor'), 'expanding a component action builds the action editor');
   });
 
   it('edits info fields; source descriptions are read-only (the Sources panel owns them)', async () => {
@@ -86,6 +98,7 @@ describe('<arazzo-document-inspector>', () => {
     // Edit the failure action through its embedded editor (scoped to its group — the add above
     // re-rendered, and successActions now embeds an editor earlier in DOM order).
     const failureGroup = [...el.shadowRoot.querySelectorAll('.components > div')].find((g) => g.querySelector('h4').textContent === 'failureActions');
+    expand(failureGroup.querySelector('.entry')); // the give-up roll-up: build its editor
     const editor = failureGroup.querySelector('arazzo-action-editor');
     const name = editor.shadowRoot.querySelector('.name');
     name.value = 'give-up-renamed';
@@ -104,6 +117,7 @@ describe('<arazzo-document-inspector>', () => {
 
   it('a component input schema is authored via the typed schema editor', async () => {
     make({ ...DOC, components: { inputs: { pagination: { type: 'object' } } } });
+    expand(entryFor('inputs', 'pagination')); // roll-up: build its schema editor lazily
     const ed = el.shadowRoot.querySelector('.entry arazzo-schema-editor');
     ok(ed, 'the schema editor renders for a components.inputs entry');
     equal(ed.value.type, 'object', 'seeded from the component schema');
