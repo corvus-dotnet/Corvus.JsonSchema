@@ -62,11 +62,13 @@ public readonly partial struct WorkflowAdministrators
         }
     }
 
-    /// <summary>Whether <paramref name="candidate"/> is one of this workflow's administrator identities (design §14.2): true
-    /// iff <paramref name="candidate"/> equals one of the administrator sets exactly (order-independent set equality), so a
-    /// caller presenting a superset or a partial match is <em>not</em> an administrator.</summary>
-    /// <param name="candidate">The candidate administrator identity (the caller's stamped administrator tags).</param>
-    /// <returns><see langword="true"/> if the candidate is an administrator.</returns>
+    /// <summary>Whether <paramref name="candidate"/> administers this workflow (design §16.5.4, membership model): true iff
+    /// one of the administrator identities is a <strong>subset</strong> of <paramref name="candidate"/> — the caller's whole
+    /// stamped identity <em>contains</em> a named administrator identity. Membership supersedes the earlier exact
+    /// set-equality (a richer caller identity still administers a group/team founder); the resolved-grantee model keeps a
+    /// named founder at the exact grain, so a coarse founder cannot over-grant.</summary>
+    /// <param name="candidate">The candidate administrator identity (the caller's whole stamped identity tags).</param>
+    /// <returns><see langword="true"/> if the candidate administers this workflow.</returns>
     public bool IsAdministeredBy(SecurityTagSet candidate)
     {
         if (this.Administrators.IsUndefined())
@@ -76,7 +78,7 @@ public readonly partial struct WorkflowAdministrators
 
         foreach (AdministratorIdentity administrator in this.Administrators.EnumerateArray())
         {
-            if (WorkflowIdentity.SameAdministrator(SecurityTagSet.CopyFrom(administrator.Tags), candidate))
+            if (SecurityTagSet.CopyFrom(administrator.Tags).IsSubsetOf(candidate))
             {
                 return true;
             }
