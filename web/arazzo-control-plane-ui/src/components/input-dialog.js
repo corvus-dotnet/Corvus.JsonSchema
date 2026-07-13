@@ -7,10 +7,12 @@
 //   const name = await ask.ask({ title: 'New working copy', field: { label: 'Name', value: 'untitled' } });
 //   const sure = await ask.ask({ title: 'Delete?', message: '…', confirmLabel: 'Delete', danger: true });
 //
-// ask(options) → Promise resolving to the field's string (field mode), true (confirm mode), or
-// null (cancelled/dismissed). One ask at a time; a second ask while open rejects the first as null.
+// ask(options) → Promise resolving to the field's string (single-field mode), an object keyed by each
+// field's `key` (multi-field mode), true (confirm mode), or null (cancelled/dismissed). One ask at a
+// time; a second ask while open rejects the first as null.
 //
-// Properties : (none) · Methods: ask({title, message?, field?: {label, value?, placeholder?}, confirmLabel?, cancelLabel?, danger?})
+// Properties : (none) · Methods: ask({title, message?, field?: {label, value?, placeholder?},
+//              fields?: [{key, label, value?, placeholder?}], confirmLabel?, cancelLabel?, danger?})
 // Events     : (none; the promise is the contract)
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
@@ -20,15 +22,29 @@ class ArazzoInputDialog extends ArazzoElement {
     this.render();
   }
 
-  /** Opens the modal; resolves with the value (field mode), true (confirm mode), or null. */
-  ask({ title, message, field, confirmLabel = 'OK', cancelLabel = 'Cancel', danger = false } = {}) {
+  /** Opens the modal; resolves with the value (single field), an object keyed by field (multi-field),
+   *  true (confirm mode), or null (cancelled). */
+  ask({ title, message, field, fields, confirmLabel = 'OK', cancelLabel = 'Cancel', danger = false } = {}) {
     this._resolve?.(null); // a second ask supersedes the first
-    this.renderBody({ title, message, field, confirmLabel, cancelLabel, danger });
+    this.renderBody({ title, message, field, fields, confirmLabel, cancelLabel, danger });
     const dialog = this.$('dialog');
     dialog.showModal();
     this.$('.in-field')?.focus();
     this.$('.in-field')?.select?.();
     return new Promise((resolve) => { this._resolve = resolve; });
+  }
+
+  /** @private — the current field value(s): a string (single), an object keyed by field (multi), or
+   *  true (no field = confirm mode). */
+  collect() {
+    const inputs = [...this.shadowRoot.querySelectorAll('.in-field')];
+    if (!inputs.length) return true;
+    if (this._multi) {
+      const out = {};
+      for (const i of inputs) out[i.dataset.key] = i.value;
+      return out;
+    }
+    return inputs[0].value;
   }
 
   /** @private */
@@ -65,25 +81,29 @@ class ArazzoInputDialog extends ArazzoElement {
   }
 
   /** @private */
-  renderBody({ title, message, field, confirmLabel, cancelLabel, danger }) {
+  renderBody({ title, message, field, fields, confirmLabel, cancelLabel, danger }) {
     if (!this.shadowRoot.firstElementChild) this.render();
+    // Multi-field mode carries a `key` per field and resolves to an object; single `field` keeps the
+    // string contract; no field is a plain confirm.
+    const list = fields ?? (field ? [{ ...field, key: null }] : []);
+    this._multi = !!fields;
     this.$('.frame').innerHTML = `
       <div class="head"><h2>${escapeHtml(title ?? 'Confirm')}</h2></div>
       <div class="body">
         ${message ? `<div class="message">${escapeHtml(message)}</div>` : ''}
-        ${field ? `<label>${escapeHtml(field.label ?? 'Value')}
-          <input class="in-field" type="text" value="${escapeHtml(field.value ?? '')}" placeholder="${escapeHtml(field.placeholder ?? '')}" spellcheck="false">
-        </label>` : ''}
+        ${list.map((f) => `<label>${escapeHtml(f.label ?? 'Value')}
+          <input class="in-field" data-key="${escapeHtml(f.key ?? '')}" type="text" value="${escapeHtml(f.value ?? '')}" placeholder="${escapeHtml(f.placeholder ?? '')}" spellcheck="false">
+        </label>`).join('')}
       </div>
       <div class="foot">
         <button class="cancel" type="button">${escapeHtml(cancelLabel)}</button>
         <button class="confirm${danger ? ' danger' : ''}" type="button">${escapeHtml(confirmLabel)}</button>
       </div>`;
     this.$('.cancel').addEventListener('click', () => this.settle(null));
-    this.$('.confirm').addEventListener('click', () => this.settle(this.$('.in-field') ? this.$('.in-field').value : true));
-    this.$('.in-field')?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') this.settle(this.$('.in-field').value);
-    });
+    this.$('.confirm').addEventListener('click', () => this.settle(this.collect()));
+    for (const inp of this.shadowRoot.querySelectorAll('.in-field')) {
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.settle(this.collect()); });
+    }
   }
 }
 
