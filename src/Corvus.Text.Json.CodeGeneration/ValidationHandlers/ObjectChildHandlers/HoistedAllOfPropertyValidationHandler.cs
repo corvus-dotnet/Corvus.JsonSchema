@@ -220,7 +220,13 @@ internal sealed class HoistedAllOfPropertyValidationHandler : IChildObjectProper
             return generator;
         }
 
-        foreach (IGrouping<string, HoistedBranchMetadata> keywordGroup in branchMetadataList.GroupBy(b => b.KeywordName))
+        // Branch contexts are pushed in forward order in AppendValidationSetup ([b0, b1, ... bN]),
+        // so their child contexts must be committed in reverse order ([bN, ... b1, b0]) to satisfy
+        // the results collector's LIFO context-sequence invariant. Branches are contiguous per
+        // keyword in branchMetadataList, so reversing both the keyword-group order and the
+        // within-group order reproduces the exact reverse of the push order. All other per-branch
+        // work (composedIsMatch accumulation, ApplyEvaluated, required checks) is order-independent.
+        foreach (IGrouping<string, HoistedBranchMetadata> keywordGroup in branchMetadataList.GroupBy(b => b.KeywordName).Reverse())
         {
             string keywordName = keywordGroup.Key;
 
@@ -230,7 +236,7 @@ internal sealed class HoistedAllOfPropertyValidationHandler : IChildObjectProper
                 continue;
             }
 
-            foreach (HoistedBranchMetadata branchMeta in keywordGroup)
+            foreach (HoistedBranchMetadata branchMeta in keywordGroup.Reverse())
             {
                 EmitRequiredChecks(generator, branchMeta);
 
@@ -384,8 +390,10 @@ internal sealed class HoistedAllOfPropertyValidationHandler : IChildObjectProper
             .PopIndent()
             .AppendLineIndent("}");
 
-        // Post-loop: required checks, ApplyEvaluated, CommitChildContext, EvaluatedKeyword
-        foreach (HoistedBranchMetadata branchMeta in keywordBranches)
+        // Post-loop: required checks, ApplyEvaluated, CommitChildContext, EvaluatedKeyword.
+        // Contexts were pushed in forward order above, so commit them in reverse to satisfy the
+        // results collector's LIFO context-sequence invariant (see AppendValidationCode).
+        foreach (HoistedBranchMetadata branchMeta in Enumerable.Reverse(keywordBranches))
         {
             EmitRequiredChecks(generator, branchMeta);
 
