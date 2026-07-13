@@ -169,6 +169,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
     const inputs = form.querySelector('arazzo-schema-editor.inputs');
     if (inputs) {
       inputs.emptyDeletes = true; // JSON-tier blank clears workflow.inputs (§3.4)
+      inputs.library = this._components?.inputs; // the components.inputs library for the $ref picker (§6)
       inputs.value = this._workflow.inputs ?? { type: 'object' };
       inputs.addEventListener('schema-changed', (e) => {
         const schema = e.detail.schema;

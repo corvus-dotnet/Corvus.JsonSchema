@@ -1366,13 +1366,32 @@
       sessionTriggers.push(e.detail);
       runSimulation();
     });
+    // The run dialog + completions consume the server's BAKED, ref-resolved inputs schema (§6): a
+    // $ref-rooted, combiner-rooted, or union inputs schema has no top-level `properties`, so gating on
+    // raw wf.inputs.properties would never open the dialog. `bakedSchemas` caches the last fetch for the
+    // (synchronous) completions; the run button fetches fresh.
+    let bakedSchemas = null;
+    async function fetchBakedInputs(wfId) {
+      try {
+        const schemas = await client.getWorkingCopySchemas(shell.id);
+        bakedSchemas = schemas;
+        return schemas?.workflows?.[wfId]?.inputs ?? null;
+      } catch { return null; }
+    }
+    function inputsRenderable(d) {
+      if (!d || typeof d !== 'object') return false;
+      if (d.type === 'union' || Array.isArray(d.variants)) return true;
+      if (d.properties && Object.keys(d.properties).length) return true;
+      if (Array.isArray(d.enum) || d.const !== undefined) return true;
+      return ['string', 'number', 'integer', 'boolean'].includes(d.type);
+    }
     simBtn.addEventListener('click', async () => {
       if (shell.debugRun) { void advanceDebugRun({ pause: debugRunPause('continue') }); return; } // attached ▶ = run to next breakpoint / end
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
-      const properties = wf?.inputs?.properties;
+      const baked = await fetchBakedInputs(select.value); // ref-resolved, so a $ref/combiner-rooted schema still opens
       const envs = await loadDraftRunEnvironments();
-      if (!tray.trace && ((properties && Object.keys(properties).length) || envs.length)) {
-        const staged = await askForInputs(wf?.inputs ?? { type: 'object' });
+      if (!tray.trace && (inputsRenderable(baked ?? wf?.inputs) || envs.length)) {
+        const staged = await askForInputs(baked ?? wf?.inputs ?? { type: 'object' });
         if (staged === null) return; // cancelled
         sessionInputs = staged.inputs;
         if (staged.environment) {
@@ -1557,7 +1576,9 @@
     refreshExpressionContext = () => {
       const wf = (doc.workflows ?? []).find((w) => w.workflowId === select.value) ?? doc.workflows?.[0];
       expr.completionContext = {
-        inputs: wf?.inputs, // a JSON Schema: names + type details, pointer descent below
+        // Prefer the server's BAKED, ref-resolved inputs schema (§6) so $inputs completions work for a
+        // $ref/combiner-rooted schema; fall back to the raw schema until the first bake lands.
+        inputs: bakedSchemas?.workflows?.[wf?.workflowId]?.inputs ?? wf?.inputs,
         outputs: Object.keys(wf?.outputs || {}),
         steps: Object.fromEntries((wf?.steps ?? []).map((s) => [s.stepId, {
           outputs: Object.keys(s.outputs || {}),

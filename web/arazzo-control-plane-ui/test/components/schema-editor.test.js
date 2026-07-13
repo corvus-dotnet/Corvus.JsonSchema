@@ -141,6 +141,30 @@ describe('<arazzo-schema-editor>', () => {
     equal((await changed).detail.schema.properties.code.const, 7, 'const typed by the integer row');
   });
 
+  it('references a library schema (reference row) and detaches by inlining the target (§6)', async () => {
+    make({ type: 'object', properties: { a: { type: 'string' } } });
+    el.library = { Address: { type: 'object', properties: { city: { type: 'string' } } } };
+    ok(el.shadowRoot.querySelector('select.ref'), 'a "reference…" picker appears when a library exists');
+    const aRef = names().find((n) => n.value === 'a').closest('.node').querySelector('select.ref');
+    const changed = nextEvent(el, 'schema-changed');
+    aRef.value = 'Address'; aRef.dispatchEvent(new Event('change'));
+    equal((await changed).detail.schema.properties.a.$ref, '#/components/inputs/Address');
+    const refRow = [...el.shadowRoot.querySelectorAll('.node')].find((n) => n.textContent.includes('#/components/inputs/Address'));
+    ok(refRow, 'renders a reference row');
+    const detach = [...refRow.querySelectorAll('.iconbtn')].find((b) => b.textContent === 'detach');
+    const changed2 = nextEvent(el, 'schema-changed');
+    detach.click();
+    const s2 = (await changed2).detail.schema;
+    equal(s2.properties.a.type, 'object', 'detach inlines the target');
+    ok('city' in s2.properties.a.properties, 'the inlined copy carries the target content');
+  });
+
+  it('a dangling library reference renders a problem row', () => {
+    make({ type: 'object', properties: { a: { $ref: '#/components/inputs/Missing' } } });
+    el.library = { Present: { type: 'object' } };
+    ok([...el.shadowRoot.querySelectorAll('.ghost')].some((g) => /not found/.test(g.textContent)), 'a dangling target is flagged');
+  });
+
   it('the preview renders value-editor from the authored schema (union for oneOf)', async () => {
     make({ type: 'object', properties: { pick: { oneOf: [{ type: 'string' }, { type: 'integer' }] } } });
     el.shadowRoot.querySelector('.preview').open = true;

@@ -64,7 +64,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
   }
 
   get library() { return this._library; }
-  set library(v) { this._library = v || null; }
+  set library(v) { this._library = v || null; if (this._built) this._render(); }
 
   /** JSON-tier blank behaviour (§3.4). When true, clearing the JSON buffer emits `schema-changed {schema:
    *  undefined}` so the host can delete the whole schema (workflow-inspector); when false (default) a blank
@@ -206,6 +206,9 @@ class ArazzoSchemaEditor extends ArazzoElement {
     node.className = 'node' + (ctx.root ? '' : ' child');
     node.dataset.kind = cls.kind;
     if (cls.kind === 'boolean-schema') { this._renderBoolean(node, schema, ctx); return node; }
+    // A sole-`$ref` (no siblings) to the library renders as a reference row; `$ref` WITH siblings stays advanced,
+    // because the baked path's ResolveRef replaces the node (siblings would vanish from the form, §6).
+    if (this._isSoleRef(schema)) { this._renderReference(node, schema, ctx); return node; }
     if (cls.kind === 'advanced') { this._renderAdvanced(node, schema, cls, ctx); return node; }
     if (cls.kind === 'combiner') { this._renderCombiner(node, schema, cls, ctx); return node; }
     this._renderRenderable(node, schema, ctx);
@@ -226,6 +229,68 @@ class ArazzoSchemaEditor extends ArazzoElement {
     sel.value = cls.kind === 'combiner' ? cls.combiner : (schema.type ?? 'object');
     sel.addEventListener('change', () => onChange(sel.value, sel));
     return sel;
+  }
+
+  _isSoleRef(schema) {
+    return schema && typeof schema === 'object' && typeof schema.$ref === 'string' && Object.keys(schema).length === 1;
+  }
+
+  /** The "Reference library schema…" picker — null when there is no library to reference. Selecting a name
+   *  replaces the node with `{ $ref: '#/components/inputs/<name>' }` (rendered thereafter as a reference row). */
+  _refSelect(schema) {
+    const names = this._library ? Object.keys(this._library) : [];
+    if (!names.length) return null;
+    const sel = document.createElement('select');
+    sel.className = 'ref';
+    sel.disabled = this.readonly;
+    sel.innerHTML = '<option value="">reference…</option>' + names.map((n) => `<option value="${n}">${escapeHtml(n)}</option>`).join('');
+    sel.addEventListener('change', () => {
+      if (!sel.value) return;
+      const name = sel.value;
+      for (const k of Object.keys(schema)) delete schema[k];
+      schema.$ref = `#/components/inputs/${name}`;
+      this._renderForm(); this._commit();
+    });
+    return sel;
+  }
+
+  /** A reference row: the target, "open in library", and "detach" (inline-copy the target). A target absent
+   *  from `.library` renders as a problem row (the server's pass 4 flags it authoritatively). */
+  _renderReference(node, schema, ctx) {
+    const line = document.createElement('div'); line.className = 'rowline';
+    this._namedHead(line, ctx);
+    node.appendChild(line);
+    const m = /^#\/components\/inputs\/(.+)$/.exec(schema.$ref);
+    const name = m ? m[1] : null;
+    const dangling = !name || !(this._library && name in this._library);
+    const row = document.createElement('div');
+    row.className = dangling ? 'ghost' : 'advanced';
+    row.innerHTML = `<span>→ library schema <strong>${escapeHtml(schema.$ref)}</strong>${dangling ? ' — not found' : ''}</span>`;
+    const open = document.createElement('button'); open.className = 'iconbtn'; open.type = 'button'; open.textContent = 'open in library';
+    open.addEventListener('click', () => this.emit('library-open', { name }));
+    const detach = document.createElement('button'); detach.className = 'iconbtn'; detach.type = 'button'; detach.textContent = 'detach';
+    detach.disabled = this.readonly || dangling;
+    detach.addEventListener('click', () => {
+      const target = this._library[name];
+      for (const k of Object.keys(schema)) delete schema[k];
+      Object.assign(schema, structuredClone(target)); // inline copy — the reference becomes an owned schema
+      this._renderForm(); this._commit();
+    });
+    row.append(open, detach);
+    node.appendChild(row);
+  }
+
+  /** The shared leading controls for a named row: name (rename-guarded) · required ★ · ▲▼ · ✕. */
+  _namedHead(line, ctx) {
+    if (ctx.name == null) return;
+    const name = document.createElement('input'); name.className = 'name'; name.value = ctx.name; name.disabled = this.readonly;
+    name.addEventListener('change', () => this._renameRow(ctx, name));
+    line.appendChild(name);
+    const req = document.createElement('button'); req.className = 'req'; req.type = 'button'; req.textContent = '★'; req.title = 'Required';
+    req.setAttribute('aria-pressed', String(!!ctx.isRequired)); req.disabled = this.readonly;
+    req.addEventListener('click', () => { setRequired(ctx.parent, ctx.name, req.getAttribute('aria-pressed') !== 'true'); this._renderForm(); this._commit(); });
+    line.appendChild(req);
+    line.appendChild(this._reorderRemove(ctx));
   }
 
   async _changeType(schema, node, newValue, sel) {
@@ -260,6 +325,8 @@ class ArazzoSchemaEditor extends ArazzoElement {
       line.appendChild(name);
     }
     line.appendChild(this._typeSelect(schema, (v, sel) => this._changeType(schema, node, v, sel)));
+    const ref = this._refSelect(schema); // "Reference library schema…" on the root and object property rows (§6)
+    if (ref) line.appendChild(ref);
     if (ctx.name != null) {
       const req = document.createElement('button');
       req.className = 'req';

@@ -1563,7 +1563,12 @@ export function createMockControlPlane(options = {}) {
         steps[step.stepId] = entry;
       }
 
-      workflows[wf.workflowId] = { inputs: wf.inputs || { type: 'object', properties: {} }, steps };
+      // Resolve a root-level `#/components/inputs/<name>` reference like the real generator's ResolveRef, so a
+      // $ref-rooted inputs schema bakes to a renderable descriptor for the run dialog / completions (§6).
+      let inputs = wf.inputs || { type: 'object', properties: {} };
+      const refMatch = typeof inputs.$ref === 'string' && /^#\/components\/inputs\/(.+)$/.exec(inputs.$ref);
+      if (refMatch && wc.document?.components?.inputs?.[refMatch[1]]) inputs = structuredClone(wc.document.components.inputs[refMatch[1]]);
+      workflows[wf.workflowId] = { inputs, steps };
     }
 
     return { formatVersion: 1, workflows };
