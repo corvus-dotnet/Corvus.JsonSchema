@@ -70,7 +70,18 @@ administration under set-equality. Membership over a rich identity resolves both
   DISTINCT-union query per backend across all 10 environment stores; a `subset-of-a-richer-caller` membership
   conformance test; benchmark migrated to the subset-digest query. In-memory + Sqlite runtime-verified
   (16/16 each); 8 container backends build-verified, container conformance pending. This closes H1.
-- **S4 — mutation-gate membership** (the confirmed asymmetry below): the add/remove/transfer authorization.
+- **S4 — mutation-gate membership — DONE** (this slice). The add/remove/transfer authorization for both workflows
+  (`SecuredWorkflowCatalog`) and environments (`SecuredEnvironmentAdministration`) now routes through a membership
+  predicate `IsAdministeredByMember` (caller's identity CONTAINS a current administrator's identity) instead of
+  `WorkflowIdentity.SameAdministrator` set-equality, matching the forward publish check, the reverse index, and the
+  overview `administers`. The identity operations stay exact set-equality (`IsMember` for add-idempotency + `Dedupe`;
+  `IndexOfDigest` for digest removal; the collision probe) — those are correctly exact. Also caught + fixed while
+  here: the publish gate's version-1 fallback (`CheckAdministrationAsync`, the no-explicit-store / legacy path) was
+  still `SameAdministrator` while its explicit-record sibling was already membership — now both membership, closing
+  an S1 completeness gap. This closes H2 and part of H8 (the `SameAdministrator` doc-comment). Repro tests:
+  `A_caller_whose_identity_contains_an_administrator_may_change_administration` (workflow + environment) + a
+  transfer variant, plus `Adding_a_more_specific_identity_…_is_a_genuine_addition` guarding idempotency-stays-exact;
+  15/15 in-memory administration tests green.
 - **S5 — collision-probe under membership**, overview prefix fix, rule-eval hardening (see the review below).
 - **S6 — demo resolver enrichment + relaunch**, live-verify; then container conformance for the 8 backends.
 
@@ -110,15 +121,17 @@ environment never appeared in their inbox. S3 made the read side membership — 
 `ListAdministeredAsync(IReadOnlyList<string>)` across all 10 environment stores — so the reverse index now
 matches the forward check. The paging-helper XML doc claim that "the index can never miss a match" is true again.
 
-**H2 — Administration mutation gates are set-equality (asymmetry, medium; the overview over-promises).** The
-add/remove/transfer authorization for both workflows (`SecuredWorkflowCatalog` L602) and environments
-(`SecuredEnvironmentAdministration` L318) goes through `WorkflowIdentity.SameAdministrator` = **set-equality**,
-while the forward publish check, the reverse index, and the access-grants **overview `administers`** are all
-membership. Effect: a caller whose identity is a strict superset of a stored admin identity is *shown and
-indexed as administering* the workflow (and can publish versions), yet is **denied** managing its administrator
-set. The security console over-promises relative to what the mutation gate allows. Fix = S4: route the
-mutation authz through `IsAdministeredBy` (membership); keep the exact-digest paths (`RemoveByDigest`,
-`Dedupe`, the collision probe) on set-equality — those are identity operations, correctly exact.
+**H2 — Administration mutation gates were set-equality (asymmetry, medium) — RESOLVED by S4.** Previously the
+add/remove/transfer authorization for both workflows (`SecuredWorkflowCatalog`) and environments
+(`SecuredEnvironmentAdministration`) went through `WorkflowIdentity.SameAdministrator` = set-equality, while the
+forward publish check, the reverse index, and the access-grants overview `administers` were all membership. Effect:
+a caller whose identity was a strict superset of a stored admin identity was shown and indexed as administering the
+workflow (and could publish versions), yet was denied managing its administrator set — the console over-promised
+relative to the gate. S4 routes both mutation gates through a `IsAdministeredByMember` membership predicate (caller
+CONTAINS a current administrator's identity), matching the read side, and additionally fixed the publish gate's
+version-1 fallback (`CheckAdministrationAsync`), which was still set-equality where its explicit-record sibling was
+already membership. The exact-digest paths (digest removal, `Dedupe`, add-idempotency, the collision probe) stay
+set-equality — those are identity operations, correctly exact.
 
 **H3 — Reach bindings cannot pin a multi-tag identity (structural, medium).** A `SecurityBindingDocument` is
 one `claimType` + optional `claimValue`, so a per-person reach grant can only key on a single dimension
@@ -152,16 +165,17 @@ disagree. Fix: thread the configured prefix into the overview.
 
 **H7 — The demo does not exercise the membership generalization (coverage, low).** The demo resolver stamps
 only `{sys:group, sys:iss}` (not `sys:sub`), and `DemoData.GroupIdentity` is built so a seeded grant
-*set-equals* a single-group caller. So the demo's happy path keeps every identity set-equal: the set-equality
-mutation gates (H2) never bite (the environment reverse index no longer applies here — S3 made it membership),
-and Person/`sub` grants are unsatisfiable by live callers. The generalization is real but untested by the
-demo's own data; S6 should enrich the identity and add a live scenario where a caller strictly contains a founder.
+*set-equals* a single-group caller. So the demo's happy path keeps every identity set-equal, which means none of
+the membership generalizations (the reverse index made membership by S2/S3, the mutation gates by S4) is exercised,
+and Person/`sub` grants are unsatisfiable by live callers. The generalization is real but untested by the demo's
+own data; S6 should enrich the identity and add a live scenario where a caller strictly contains a founder.
 
-**H8 — `WorkflowIdentity.SameAdministrator` and both paging-helper docs are mislabelled (docs, trivial).**
-`SameAdministrator` is set-equality but its doc-comment calls it "the membership comparison"; the
-`*AdministeredPaging.DistinctDigests` docs claim the write-side digests "are exactly the digests the forward
-check compares" — now true only because the *read* side compensates: `SubsetDigests` at query time for both
-workflows (S2) and environments (S3).
+**H8 — mislabelled docs (docs, trivial) — RESOLVED.** `SameAdministrator`'s doc-comment called set-equality "the
+membership comparison"; S4 relabelled it as the exact identity-operation comparison and pointed the authorization
+gate at `IsAdministeredByMember`, and fixed the `AccessRequestApprovalService` §15-gate comment (it cited
+`SameAdministrator`, but the code uses `IsAdministeredBy` membership). The `*AdministeredPaging.DistinctDigests`
+docs' claim that the write-side digests "are exactly the digests the forward check compares" is now accurate in
+context: the *read* side compensates with `SubsetDigests` at query time for both workflows (S2) and environments (S3).
 
 ## Gates (every slice)
 

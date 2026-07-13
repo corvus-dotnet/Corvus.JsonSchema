@@ -14,7 +14,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 /// <remarks>
 /// <para><b>§15 gate.</b> Only a §15 administrator of the target workflow may approve, deny, or revoke a request
-/// (<see cref="ISecuredWorkflowCatalog.GetAdministratorsAsync"/> + <see cref="WorkflowIdentity.SameAdministrator"/>).
+/// (<see cref="ISecuredWorkflowCatalog.GetAdministratorsAsync"/> + <see cref="WorkflowAdministrators.IsAdministeredBy"/>,
+/// membership per §16.5.4 — a caller whose identity contains a current administrator's identity qualifies).
 /// <b>Self-elevation</b> (an eligible requester) skips the human approver — eligibility <em>is</em> the
 /// authorization — but is otherwise identical.</para>
 /// <para><b>Platform cap.</b> An approval grants <em>at most</em> the requested scopes intersected with the

@@ -24,6 +24,9 @@ public sealed class WorkflowAdministrationTests
     private static readonly SecurityTagSet Acme = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]);
     private static readonly SecurityTagSet Globex = SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]);
 
+    // A richer caller identity that strictly CONTAINS Acme (a superset): the acme tenant plus a person sub-claim.
+    private static readonly SecurityTagSet AcmeAlice = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme"), new SecurityTag("sub", "alice")]);
+
     [TestMethod]
     public async Task An_added_administrator_may_publish_a_new_version()
     {
@@ -52,6 +55,31 @@ public sealed class WorkflowAdministrationTests
         // globex is not an administrator, so it cannot add itself (no self-grant).
         await Should.ThrowAsync<WorkflowAdministrationException>(async () =>
             await AddAdministratorAsync(catalog, "flow", Globex, caller: Globex));
+    }
+
+    [TestMethod]
+    public async Task A_caller_whose_identity_contains_an_administrator_may_change_administration()
+    {
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
+        await catalog.AddAsync(Package("flow"), Owner, default, Acme, default); // acme is the sole administrator
+
+        // Membership (§16.5.4): AcmeAlice strictly CONTAINS the stored acme identity, so it administers the workflow
+        // and may add a co-administrator — even though its identity is not set-equal to acme. Under the superseded
+        // set-equality mutation gate this threw WorkflowAdministrationException.
+        using ParsedJsonDocument<WorkflowAdministrators> admins = await AddAdministratorAsync(catalog, "flow", Globex, caller: AcmeAlice);
+        admins.RootElement.AdministratorCount.ShouldBe(2);
+    }
+
+    [TestMethod]
+    public async Task Adding_a_more_specific_identity_than_an_administrator_is_a_genuine_addition()
+    {
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
+        await catalog.AddAsync(Package("flow"), Owner, default, Acme, default); // acme = {tenant=acme}
+
+        // Add-idempotency stays EXACT set-equality (an identity operation), not membership: AcmeAlice is a different,
+        // more specific identity, so adding it is a real second administrator, never an idempotent no-op.
+        using ParsedJsonDocument<WorkflowAdministrators> admins = await AddAdministratorAsync(catalog, "flow", AcmeAlice, caller: Acme);
+        admins.RootElement.AdministratorCount.ShouldBe(2);
     }
 
     [TestMethod]
