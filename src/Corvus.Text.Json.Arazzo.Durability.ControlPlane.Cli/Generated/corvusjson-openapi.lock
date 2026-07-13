@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-12T07:18:47.4464479\u002B00:00",
+  "generatedAt": "2026-07-13T23:32:55.0461226\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -465,6 +465,15 @@
     "Models/AvailabilityRequestView.StatusEntity.cs",
     "Models/AvailabilityRequestView.StatusEntity.Mutable.cs",
     "Models/AvailabilityRequestView.StatusEntity.JsonSchema.cs",
+    "Models/BroadeningAdvisory.cs",
+    "Models/BroadeningAdvisory.Mutable.cs",
+    "Models/BroadeningAdvisory.JsonSchema.cs",
+    "Models/BroadeningAdvisory.BroadeningOverlapGranteeArray.cs",
+    "Models/BroadeningAdvisory.BroadeningOverlapGranteeArray.Mutable.cs",
+    "Models/BroadeningAdvisory.BroadeningOverlapGranteeArray.JsonSchema.cs",
+    "Models/BroadeningOverlapGrantee.cs",
+    "Models/BroadeningOverlapGrantee.Mutable.cs",
+    "Models/BroadeningOverlapGrantee.JsonSchema.cs",
     "Models/CancelRequest.cs",
     "Models/CancelRequest.Mutable.cs",
     "Models/CancelRequest.JsonSchema.cs",
@@ -1325,9 +1334,9 @@
     "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B275faa873cdd6668596aeb0eeb5d9072e17c648f",
+  "generatorVersion": "1.0.0\u002Bd6ffbd1b858f28852db0588c51ffb7dd9cc65b36",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "eed273d2349ee3ba4e64a5025df3d76fe4f03ab858e1f4317f733d64a11a8b16",
+  "specFileHash": "ec8fc477b744a56da048939463623e1a9c692fd08e8e48438bded10765e8cf65",
   "specVersion": "3.2"
 }

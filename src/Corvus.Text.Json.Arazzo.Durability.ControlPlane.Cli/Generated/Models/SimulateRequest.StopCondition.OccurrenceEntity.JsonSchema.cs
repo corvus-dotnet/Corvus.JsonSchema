@@ -44,7 +44,7 @@ public readonly partial struct SimulateRequest
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops).
+        /// Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops). Occurrences are counted cumulatively by the root run.
         /// </para>
         /// <para>
         /// Examples:

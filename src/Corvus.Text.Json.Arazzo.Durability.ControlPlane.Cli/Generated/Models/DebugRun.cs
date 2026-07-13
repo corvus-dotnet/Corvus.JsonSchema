@@ -303,7 +303,7 @@ public readonly partial struct DebugRun
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+    /// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace Trace

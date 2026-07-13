@@ -7306,9 +7306,33 @@
           "administrators": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/AdministratorGrant" }
-          }
+          },
+          "broadeningAdvisory": { "$ref": "#/components/schemas/BroadeningAdvisory" }
         },
         "required": ["administrators"]
+      },
+      "BroadeningOverlapGrantee": {
+        "type": "object",
+        "description": "An existing grantee whose resolved identity the just-granted (narrower) identity STRICTLY contains (§16.5.4 membership) — the grant broadens administration to also admit this grantee, and everyone whose identity contains the grant. Reach-filtered to grantees the caller may see.",
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/GranteeKind" },
+          "value": { "type": "string", "description": "The grantee's subject value (e.g. the person/team/role name)." },
+          "label": { "type": "string", "description": "An optional human-friendly display label for the grantee." }
+        },
+        "required": ["kind", "value"]
+      },
+      "BroadeningAdvisory": {
+        "type": "object",
+        "description": "A NON-BLOCKING advisory (§16.5.4): the identity just granted is broader than one or more existing grantees, so it confers administration on every principal whose identity contains it, not only the named grantees. Present on an add-administrator response only when such an overlap exists (reach-filtered to what the caller may see); the grant itself still succeeds. Compare the hard-blocking identity-collision (409), which refuses an ambiguous set-equal grant.",
+        "properties": {
+          "message": { "type": "string", "description": "A human-readable explanation that the granted identity is broader than the listed existing grantees." },
+          "subsumesGrantees": {
+            "type": "array",
+            "description": "The existing grantees the granted identity strictly contains (reach-visible to the caller); the grant broadens administration to also admit each of them.",
+            "items": { "$ref": "#/components/schemas/BroadeningOverlapGrantee" }
+          }
+        },
+        "required": ["message", "subsumesGrantees"]
       },
       "AdministratorSetWrite": {
         "type": "object",

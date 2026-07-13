@@ -180,6 +180,27 @@ public readonly partial struct AdministratorList
     }
 
     /// <summary>
+    /// Gets the (optional) <c>broadeningAdvisory</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A NON-BLOCKING advisory (&#167;16.5.4): the identity just granted is broader than one or more existing grantees, so it confers administration on every principal whose identity contains it, not only the named grantees. Present on an add-administrator response only when such an overlap exists (reach-filtered to what the caller may see); the grant itself still succeeds. Compare the hard-blocking identity-collision (409), which refuses an ambiguous set-equal grant.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BroadeningAdvisory BroadeningAdvisory
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BroadeningAdvisoryUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BroadeningAdvisory value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the number of properties in the object.
     /// </summary>
     /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -628,9 +649,19 @@ public readonly partial struct AdministratorList
         public const string Administrators = "administrators";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="BroadeningAdvisory"/>.
+        /// </summary>
+        public const string BroadeningAdvisory = "broadeningAdvisory";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Administrators"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AdministratorsUtf8 => "administrators"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="BroadeningAdvisory"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> BroadeningAdvisoryUtf8 => "broadeningAdvisory"u8;
     }
 
     /// <summary>
@@ -642,6 +673,11 @@ public readonly partial struct AdministratorList
         /// Gets the escaped UTF-8 JSON property name for <see cref="Administrators"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Administrators => "administrators"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="BroadeningAdvisory"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> BroadeningAdvisory => "broadeningAdvisory"u8;
     }
 
     /// <summary>
@@ -654,5 +690,10 @@ public readonly partial struct AdministratorList
         /// Gets the pre-baked property name blob for <see cref="Administrators"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Administrators => [0x05, 0x01, 0x00, 0x00, 0x22, 0x61, 0x64, 0x6D, 0x69, 0x6E, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x6F, 0x72, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="BroadeningAdvisory"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> BroadeningAdvisory => [0x45, 0x01, 0x00, 0x00, 0x22, 0x62, 0x72, 0x6F, 0x61, 0x64, 0x65, 0x6E, 0x69, 0x6E, 0x67, 0x41, 0x64, 0x76, 0x69, 0x73, 0x6F, 0x72, 0x79, 0x22];
     }
 }
