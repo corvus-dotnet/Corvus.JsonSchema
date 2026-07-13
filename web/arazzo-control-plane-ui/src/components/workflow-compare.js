@@ -47,10 +47,10 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     this._renderChangeList();
 
     this.$('dialog').showModal();
-    // Fit after the dialog lays out — a surface fits against its own measured viewport.
-    requestAnimationFrame(() => {
-      for (const surface of this.$$('arazzo-design-surface')) surface.fit();
-    });
+    this._wireViewSync();
+    // Fit after the dialog lays out. With a diff, ONE fit over the union extent is assigned to both
+    // surfaces (§4.6 shared fit) so matched steps sit level; without one, each side fits itself.
+    requestAnimationFrame(() => this._sharedFit());
   }
 
   close() { this.$('dialog')?.close(); }
@@ -102,6 +102,7 @@ class ArazzoWorkflowCompare extends ArazzoElement {
           <h2>Compare workflow versions</h2>
           <span class="legend"></span>
           <button class="hl ghost" type="button" aria-pressed="true" hidden>Highlight changes</button>
+          <button class="sync ghost" type="button" aria-pressed="true" title="Pan/zoom one side to scroll both">Sync views</button>
           <button class="close ghost" type="button" title="Close">✕</button>
         </div>
         <div class="grid">
@@ -120,6 +121,7 @@ class ArazzoWorkflowCompare extends ArazzoElement {
       </dialog>`;
     this.$('.close').addEventListener('click', () => this.close());
     this.$('.hl').addEventListener('click', () => this._toggleHighlight());
+    this.$('.sync').addEventListener('click', () => this._toggleSync());
     this.$('.cl-prev').addEventListener('click', () => this._cycle(-1));
     this.$('.cl-next').addEventListener('click', () => this._cycle(1));
     this.$('.cl-collapse').addEventListener('click', () => this._toggleCollapse());
@@ -172,6 +174,42 @@ class ArazzoWorkflowCompare extends ArazzoElement {
       const surface = this.$(`.side-${which} arazzo-design-surface`);
       if (surface) surface.diffState = this._highlight ? this._diff.paint[which] : null;
     }
+  }
+
+  /** @private — ONE fit over the union extent, assigned to BOTH surfaces so matched steps sit level (§4.6
+   *  shared fit); without a diff each surface fits itself. Equal viewports (the 1fr columns) → identical view. */
+  _sharedFit() {
+    const left = this.$('.side-left arazzo-design-surface');
+    const right = this.$('.side-right arazzo-design-surface');
+    if (this._diff && left && right) {
+      const points = [...Object.values(this._diff.layout.left), ...Object.values(this._diff.layout.right)];
+      left.fit(points);
+      right.view = left.view; // silent set; the same transform on the equal-width column → aligned
+    } else {
+      for (const s of [left, right]) s?.fit();
+    }
+  }
+
+  /** @private — mirror each side's USER pan/zoom (view-changed) onto the other; the mirror's `set view` is
+   *  silent so there is no feedback (the guard is belt-and-suspenders). Default on; "Sync views" flips it. */
+  _wireViewSync() {
+    this._syncViews = true;
+    const left = this.$('.side-left arazzo-design-surface');
+    const right = this.$('.side-right arazzo-design-surface');
+    const link = (from, to) => from?.addEventListener('view-changed', (e) => {
+      if (!this._syncViews || this._mirroring || !to) return;
+      this._mirroring = true;
+      to.view = e.detail;
+      this._mirroring = false;
+    });
+    link(left, right);
+    link(right, left);
+  }
+
+  /** @private */
+  _toggleSync() {
+    this._syncViews = !this._syncViews;
+    this.$('.sync').setAttribute('aria-pressed', String(this._syncViews));
   }
 
   /** @private — the grouped change list (§4.5 / §6 item 4). */

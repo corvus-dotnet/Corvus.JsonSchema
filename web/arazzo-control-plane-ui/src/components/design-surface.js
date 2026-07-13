@@ -28,7 +28,9 @@
 //              {from, to, kind}, breakpoint-toggled {stepId, enabled}, node-activated {stepId},
 //              delete-requested {selection},
 //              edge-retargeted {id, actionName, from, kind, to} (the selected action edge's
-//              arrowhead dragged onto another node/the end terminal — the host rewrites the action)
+//              arrowhead dragged onto another node/the end terminal — the host rewrites the action),
+//              view-changed {tx, ty, k} (emitted from USER pan/zoom gestures ONLY — fit(), centerOn(),
+//              and a programmatic `set view` stay silent, so a mirror never feeds back)
 // Methods    : fit() — zoom/centre the whole graph into view; centerOn(id) — pan (at the current
 //              zoom) so a node/edge sits at the viewport centre.
 
@@ -132,12 +134,15 @@ class ArazzoDesignSurface extends ArazzoElement {
    *  `.graph` to keep the canvas stable across a re-projection (no surprise reflow on edit). */
   get positions() { return { ...this._positions }; }
 
-  /** Fit the whole graph into the viewport with a margin. */
-  fit() {
+  /** Fit into the viewport with a margin: the graph's own nodes, or — when `points` (world {x,y}[]) is
+   *  given — that explicit extent (the compare host passes the union extent for one SHARED fit). Silent. */
+  fit(points) {
     const svg = this.$('svg');
-    if (!svg || !this._graph?.nodes.length) return;
-    const xs = this._graph.nodes.map((n) => this._positions[n.id]?.x ?? 0);
-    const ys = this._graph.nodes.map((n) => this._positions[n.id]?.y ?? 0);
+    if (!svg) return;
+    const pts = points ?? this._graph?.nodes?.map((n) => this._positions[n.id]).filter(Boolean);
+    if (!pts?.length) return;
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
     const minX = Math.min(...xs) - 40;
     const minY = Math.min(...ys) - 40;
     const maxX = Math.max(...xs) + NODE_WIDTH + 240; // room for the defaults card / exit chips
@@ -809,6 +814,7 @@ class ArazzoDesignSurface extends ArazzoElement {
         this._view.tx = g.tx + (e.clientX - g.x);
         this._view.ty = g.ty + (e.clientY - g.y);
         this._applyView();
+        this.emit('view-changed', { tx: this._view.tx, ty: this._view.ty, k: this._view.k });
       } else if (g.type === 'drag') {
         if (this.readonly) return;
         g.moved = true;
@@ -885,6 +891,7 @@ class ArazzoDesignSurface extends ArazzoElement {
       this._view.ty = cy - ((cy - this._view.ty) / this._view.k) * k;
       this._view.k = k;
       this._applyView();
+      this.emit('view-changed', { tx: this._view.tx, ty: this._view.ty, k: this._view.k });
     }, { passive: false });
 
     svg.addEventListener('dblclick', (e) => {

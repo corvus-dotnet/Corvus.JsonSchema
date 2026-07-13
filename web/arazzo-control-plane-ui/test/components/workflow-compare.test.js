@@ -155,4 +155,18 @@ describe('<arazzo-workflow-compare>', () => {
     el.shadowRoot.querySelector('.cl-collapse').click();
     ok(el.shadowRoot.querySelector('.grid').classList.contains('cl-collapsed'));
   });
+
+  it('syncs one side view onto the other; the "Sync views" toggle stops it', () => {
+    open(base(), base());
+    const left = surface('left');
+    const right = surface('right');
+    left.dispatchEvent(new CustomEvent('view-changed', { detail: { tx: 5, ty: 6, k: 1.2 }, bubbles: true, composed: true }));
+    equal(right.view.tx, 5); equal(right.view.ty, 6); equal(right.view.k, 1.2);
+    right.dispatchEvent(new CustomEvent('view-changed', { detail: { tx: 7, ty: 8, k: 0.9 }, bubbles: true, composed: true }));
+    equal(left.view.tx, 7, 'mirrors both directions');
+    el.shadowRoot.querySelector('.sync').click(); // sync off
+    right.view = { tx: 0, ty: 0, k: 1 };
+    left.dispatchEvent(new CustomEvent('view-changed', { detail: { tx: 99, ty: 99, k: 2 }, bubbles: true, composed: true }));
+    equal(right.view.tx, 0, 'no mirror after the toggle turns sync off');
+  });
 });

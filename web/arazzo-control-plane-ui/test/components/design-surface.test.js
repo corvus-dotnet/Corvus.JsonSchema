@@ -378,4 +378,19 @@ describe('<arazzo-design-surface>', () => {
     ok(Math.abs(cx - box.width / 2) < 1, 'node centre lands at viewport centre x');
     ok(Math.abs(cy - box.height / 2) < 1, 'node centre lands at viewport centre y');
   });
+
+  it('view-changed fires from a user pan gesture, not from fit()/centerOn/a programmatic set', () => {
+    make();
+    const svg = el.shadowRoot.querySelector('svg');
+    let events = 0;
+    el.addEventListener('view-changed', () => { events += 1; });
+    el.view = { tx: 12, ty: 12, k: 1 };
+    el.fit();
+    el.centerOn('validate-order');
+    equal(events, 0, 'programmatic set / fit / centerOn stay silent');
+    pointer('pointerdown', svg, { clientX: 20, clientY: 20 });
+    pointer('pointermove', svg, { clientX: 90, clientY: 70 });
+    pointer('pointerup', svg, { clientX: 90, clientY: 70 });
+    ok(events > 0, 'a pan gesture emits view-changed');
+  });
 });
