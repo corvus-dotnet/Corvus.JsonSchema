@@ -55,13 +55,17 @@ NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 // standalone single-process demo still seeds. A production host sets it false and gets only the real store + policy.
 bool seedExampleData = builder.Configuration.GetValue("ControlPlane:SeedExampleData", true);
 string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => $"\"{s}\""));
+
+// identityClaimType is the internal `group` DIMENSION (not the OIDC `groups` claim): reach binding applicability is
+// decided by MEMBERSHIP over the caller's canonical sys: identity (§16.5.4), and the resolver below maps the `groups`
+// claim to the sys:group tag — so the genesis binding keys on `group`, matching sys:group after the prefix is stripped.
 using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
     ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions>.Parse(
         System.Text.Encoding.UTF8.GetBytes($$"""
         {
           "genesisAdminGroup": "arazzo-admins",
           "genesisScopes": [{{genesisScopesJson}}],
-          "identityClaimType": "groups",
+          "identityClaimType": "group",
           "internalTagPrefix": "sys:",
           "selfElevationGroups": ["arazzo-admins"],
           "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] },
