@@ -418,6 +418,7 @@ loading/empty/error states; scope-gated actions. (Attribute/event tables in the 
 | `<arazzo-source-acquisition-dialog>` | Add a source: pick from registry · fetch from URL (+ optional credential) · upload · import from GitHub. |
 | `<arazzo-step-inspector>` | Selected step: binding (operation/workflow/channel pickers), parameters (typed), `requestBody` payload via `<arazzo-payload-editor>` — **schema-driven structure with expression-capable leaves**: fields from the binding's schema (nested objects as fieldsets, type chips), every scalar an `<arazzo-expression-input>` (completions included), literals coerced to the schema's type while runtime expressions stay strings — with a full-fidelity guarded JSON view (schema-less bindings get JSON only; unknown keys are always preserved) + replacements, success criteria, local actions, outputs. **Operation-derived templates** (from `listSourceOperations`): success criteria + one failure action per documented response — with a catch-all from the documented `default`, or an explicit `unexpected-failure` fallback when the operation documents none — and a request-body/message-payload **skeleton built from the binding's schema** (structure typed for you; values, usually runtime expressions, yours to fill). Templates fill empty sections and insert above any existing catch-all without duplicating; they never overwrite. *Decided (2026-07-04):* the templated fallback is an explicit `end` action, not an absent case — an unmatched failure would otherwise **fault** the run (resumable), and for designed workflows an explicit, visible, retargetable fallback beats an invisible fault path; scenarios surface the difference in testing, and authors retarget the action (goto/retry) in one click. |
 | `<arazzo-workflow-inspector>` | Selected workflow: `inputs` schema editor, workflow-level actions (the defaults layer), `outputs`, `parameters`, `dependsOn`. |
+| `<arazzo-schema-editor>` | Typed JSON-Schema authoring for a workflow's `inputs` and the components library's input schemas (§5.3a): property rows (type/format/required), first-class `oneOf`/`anyOf`/`allOf` combiner nodes, advanced nodes for constructs the visual tier does not render (preserved and JSON-editable), a Form \| JSON toggle over the guarded editor, a live typed preview (a `<arazzo-value-editor>` on the authored schema), and a shared-type reference picker against `components.inputs`. |
 | `<arazzo-document-inspector>` | `info`, source descriptions, `components` (reusable library management). |
 | `<arazzo-criteria-editor>` | An ordered list of criterion rows: type picker (`simple`/`regex`/`jsonpath`; a version select only where a real choice exists), `context` expression input, condition editor with syntax highlighting + live server validation. `xpath` is schema-valid Arazzo but the runtime does not evaluate it — never offered for new criteria; preserved and flagged ⚠ when a document carries it. |
 | `<arazzo-expression-input>` | Single-line highlighted runtime-expression / JSONPath editor with completions from the schema context (§7.2). Reused by criteria, parameters, outputs, payload replacements, scenario expectations. |
@@ -434,6 +435,44 @@ loading/empty/error states; scope-gated actions. (Attribute/event tables in the 
 Reused as-is: `<arazzo-value-editor>` (typed forms), `<arazzo-workflow-picker>`,
 `<arazzo-grantee-picker>` (workspace administration), `<arazzo-catalog-add-dialog>` patterns
 (publish dialog), pager, status badge, confirm dialog.
+
+### 5.3a The schema editor (§15 item 8 — resolved 2026-07-13)
+
+`<arazzo-schema-editor>` authors a workflow's `inputs` and the components library's input schemas
+as a typed form rather than a guarded JSON textarea. It edits a **subset** of JSON Schema visually
+and stays **lossless** over the rest: constructs the visual tier does not render survive untouched
+and stay JSON-editable, so a round-trip never disturbs unrendered keywords or key order elsewhere.
+
+- **Typed nodes.** Property rows carry type, format, required, enum/const, and a typed `default`
+  edited by the same `<arazzo-value-editor>` machinery. Object and array nodes nest.
+- **First-class combiners.** `oneOf`/`anyOf`/`allOf` are authored as combiner nodes, not dropped to
+  raw JSON. The renderer (`schema-descriptor.js` `normalizeDescriptor`) and the server's baked-schema
+  generator (`WorkflowSchemaMetadataGenerator`) apply the **same** normalization so both consumers
+  agree: `oneOf`/`anyOf` become a union variant picker (null branch collapses to nullable, a lone
+  branch unwraps, an explicit OpenAPI `discriminator` is honoured), and a **simple `allOf` merges**
+  into one object descriptor. The simple-`allOf` rule: every branch is an object schema contributing
+  only `properties`/`required` (plus `type: object`/`title`/`description`); the merge is the union of
+  `properties` and of `required`, with a same-key overlap allowed only when the two subschemas are
+  structurally equal (**order-insensitive**, so the two normalizers cannot disagree on reordered
+  keys). A conflict, a non-object branch, or a branch keyword beyond that set makes it not-simple and
+  falls back to a raw typeless descriptor, never a guessed last-writer-wins merge.
+- **Advanced nodes.** A keyword the form does not render, `not`, `patternProperties`, `$ref` with
+  siblings, and the like show as a labelled advanced row that preserves the raw subschema and opens
+  the JSON tier. Nothing is destroyed.
+- **JSON tier.** A Form | JSON toggle over the shared guarded editor (`wireGuardedJson`): edits apply
+  only when they parse; per host, a blank commit either deletes (workflow inputs) or holds the last
+  valid value (document inspector). The form tier never deletes.
+- **Server validation pass.** `/workspace/workflows/{id}/validate` gains a fourth pass that
+  meta-validates each embedded `inputs` schema against the JSON Schema 2020-12 meta-schema with the
+  product's own validator, emitting positioned findings (`/workflows/N/inputs/…`,
+  `/components/inputs/K/…`) into the Problems tray, plus a dangling-local-`$ref` finding that nothing
+  else detects. This is authoritative; the client tier is authoring convenience.
+- **Reference picker.** The type menu leads with the shared library: reference an existing
+  `components.inputs` type, extract the current node into a new shared type, or author inline. A
+  reference renders as a reference row (open in library, or detach to an inline copy); a dangling
+  target is a problem row. Referencing shared types is the simple default for nested schemas. The
+  client renderer does not resolve `$ref`s (no document root at its seam), so the run dialog and
+  expression completions consume the server's **baked** ref-resolved schemas.
 
 ### 5.4 Layer 2 — `<arazzo-workflow-designer>`
 
@@ -841,8 +880,10 @@ compile; it serves recorded fixtures, clearly marked).
    step parameters and both action lists offer "+ Add reference…" against the library, and
    reference rows localize (materialise the component inline) or detach. The demo's ⚙ Document
    mode routes document edits through the model (undoable, coalesced); duplicate component names
-   flag visibly. Editing-parity exception, deliberate: workflow `inputs` and component input
-   schemas edit as guarded JSON, not a typed schema-authoring form — tracked as §15 item 8.*
+   flag visibly. Editing-parity exception now closed (2026-07-13, pack 2): workflow `inputs` and
+   component input schemas author with the typed `<arazzo-schema-editor>` (§5.3a) — combiner nodes
+   and merged `allOf` forms included, unrendered constructs preserved as advanced nodes; `$ref`s
+   resolve on the baked path, so the run dialog and completions consume the server's baked schemas.*
 5. **Simulator + debug.** Server `WorkflowSimulator` + trace + stateless stepping; debug controls,
    context explorer, trace viewer, canvas overlay, expression console.
    *Status: server half BUILT. `WorkflowSimulator` lives in `Corvus.Text.Json.Arazzo.Testing` (the
@@ -1039,17 +1080,20 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    inlines sub-workflow execution without recording nested step records yet. The engine should
    emit them so step-into works on server traces. (The §6.2 HTTP-trigger source — the Sources
    panel's Catalog mode — needs nothing: a trigger step is a plain OpenAPI operation.)
-8. **Typed schema-authoring form** — workflow `inputs` and the components library's input schemas
-   currently edit as guarded JSON textareas (parse-gated, last-valid-wins), not a typed
-   JSON-Schema-authoring form. That is the one deliberate exception to the slice-4 "full editing
-   parity" bar. Options when picked up: (a) a purpose-built schema form (property rows,
-   type/format/required toggles, nested objects) — the full answer, but a sizeable component in
-   its own right; (b) reuse the payload-editor's schema-driven form machinery pointed at the
-   JSON-Schema *meta*-schema — cheaper, but meta-schema forms are notoriously clunky; (c) keep
-   guarded JSON and invest instead in inline validation + completions from the CM6 tier.
-   (Recommend: (a) as its own post-slice-8 increment; the guarded JSON editor is honest and
-   lossless meanwhile. Revisit once the simulator's typed inputs form — which CONSUMES these
-   schemas — makes the authoring pain concrete.)
+8. **Typed schema-authoring form** — **resolved 2026-07-13 (pack 2).** Built as
+   `<arazzo-schema-editor>` (§5.3a), option (a): typed property rows, first-class
+   `oneOf`/`anyOf`/`allOf` combiner nodes normalized identically by the client renderer and the
+   server's baked-schema generator, advanced nodes that preserve unrendered constructs, a Form | JSON
+   toggle over the guarded editor, a server meta-validation pass with positioned Problems findings, a
+   shared-type reference picker, and a live typed preview. The original analysis: workflow `inputs`
+   and the components library's input schemas edited as guarded JSON textareas (parse-gated,
+   last-valid-wins), the one deliberate exception to the slice-4 "full editing parity" bar. The
+   options weighed were (a) a purpose-built schema form (property rows, type/format/required toggles,
+   nested objects) — the full answer, but a sizeable component in its own right; (b) reuse the
+   payload-editor's schema-driven form machinery pointed at the JSON-Schema *meta*-schema — cheaper,
+   but meta-schema forms are clunky; (c) keep guarded JSON and invest instead in inline validation +
+   completions from the CM6 tier. Option (a) was chosen, with the guarded JSON retained as the
+   lossless JSON tier underneath.
 
 ## 18. Remote dev-environment debug runs (ratified 2026-07-06)
 
