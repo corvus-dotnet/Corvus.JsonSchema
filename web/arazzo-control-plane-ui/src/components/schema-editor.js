@@ -220,18 +220,18 @@ class ArazzoSchemaEditor extends ArazzoElement {
     sel.className = 'type';
     sel.disabled = this.readonly;
     const libNames = this._library ? Object.keys(this._library) : [];
-    let html = '';
-    // Referencing a shared library type is the ENCOURAGED default for nested schemas — lead the type menu
-    // with it (§6), so reusing a common type is as easy as picking `string`, ahead of inlining a fresh one.
-    if (libNames.length) {
-      html += '<optgroup label="Shared types">' + libNames.map((n) => `<option value="ref:${escapeHtml(n)}">${escapeHtml(n)} ↗</option>`).join('') + '</optgroup>';
-    }
-    html += '<optgroup label="Type">' + RENDERABLE_TYPES.map((t) => `<option value="${t}">${TYPE_LABEL[t]}</option>`).join('') + '</optgroup>';
+    // Reusing a shared type is the ENCOURAGED default for nested schemas (§6) — the type menu leads with the
+    // shared types + "New shared type…" (create/extract one), then the inline primitives, then combiners.
+    let html = '<optgroup label="Shared types">'
+      + libNames.map((n) => `<option value="ref:${escapeHtml(n)}">${escapeHtml(n)} ↗</option>`).join('')
+      + '<option value="new-ref">＋ New shared type…</option></optgroup>';
+    html += '<optgroup label="Inline">' + RENDERABLE_TYPES.map((t) => `<option value="${t}">${TYPE_LABEL[t]}</option>`).join('') + '</optgroup>';
     html += '<optgroup label="Combiner">' + COMBINER_KINDS.map((k) => `<option value="${k}">${COMBINER_LABEL[k]}</option>`).join('') + '</optgroup>';
     sel.innerHTML = html;
     const cls = classifyNode(schema);
     sel.value = cls.kind === 'combiner' ? cls.combiner : (schema.type ?? 'object');
     sel.addEventListener('change', () => {
+      if (sel.value === 'new-ref') { this._createSharedType(schema); return; }
       if (sel.value.startsWith('ref:')) { this._applyRef(schema, sel.value.slice(4)); return; }
       onChange(sel.value, sel);
     });
@@ -244,6 +244,17 @@ class ArazzoSchemaEditor extends ArazzoElement {
     schema.$ref = `#/components/inputs/${name}`;
     this._renderForm();
     this._commit();
+  }
+
+  /** Extract this node's schema into a NEW shared library type and reference it (§6). The host persists the
+   *  new entry via the `library-create` event; the local `.library` updates so the reference resolves at once. */
+  _createSharedType(schema) {
+    const seed = structuredClone(schema);
+    let name = 'SharedType';
+    for (let n = 2; this._library && name in this._library; n++) name = `SharedType${n}`;
+    this._library = { ...(this._library || {}), [name]: seed };
+    this.emit('library-create', { name, schema: seed });
+    this._applyRef(schema, name);
   }
 
   _isSoleRef(schema) {

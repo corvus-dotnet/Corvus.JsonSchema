@@ -318,6 +318,11 @@ class ArazzoDocumentInspector extends ArazzoElement {
       ed.library = this._doc.components?.inputs; // the sibling library schemas, for the $ref picker (§6)
       ed.value = value;
       ed.addEventListener('schema-changed', (e) => { this._doc.components[kind][key] = e.detail.schema; this._emit(); });
+      // "New shared type…" adds a sibling components.inputs entry (§6).
+      ed.addEventListener('library-create', (e) => {
+        ((this._doc.components ??= {}).inputs ??= {})[e.detail.name] = e.detail.schema;
+        this._emit();
+      });
       content.prepend(ed);
     }
 
