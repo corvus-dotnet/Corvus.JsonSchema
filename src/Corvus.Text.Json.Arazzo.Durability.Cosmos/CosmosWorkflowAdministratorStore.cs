@@ -274,23 +274,39 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
     /// <inheritdoc/>
     // This project generates its own JsonString (per-root type identity), so the seam parameter is fully qualified to the
     // core JsonString the IWorkflowAdministratorStore signature uses (mirrors CosmosRunnerRegistry.ListAsync).
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
+        if (adminDigests.Count == 0)
+        {
+            return WorkflowAdministeredPage.Create([]);
+        }
 
         // The keyset cursor (the base id to page strictly after) reifies once here for the @after query parameter (leaf).
         // Cosmos orders strings ordinally — the contract's order — so ORDER BY c.baseWorkflowId matches the other backends.
         string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
 
-        // Cross-partition keyset page: every workflow whose mirrored adminDigests contains the caller's digest, ordered by
-        // base id and sought strictly past the cursor. The lazy stream iterator is drained only until one row beyond the
-        // page, so the read is bounded — never every administered workflow.
+        // Cross-partition keyset page under membership (§16.5.4): a workflow whose mirrored adminDigests contains ANY of the
+        // caller's subset digests, ordered by base id and sought strictly past the cursor. A document matches once
+        // regardless of how many digests hit, so no DISTINCT. The lazy stream iterator is drained only until one row beyond
+        // the page, so the read is bounded — never every administered workflow.
+        string[] terms = new string[adminDigests.Count];
+        for (int i = 0; i < adminDigests.Count; i++)
+        {
+            terms[i] = "ARRAY_CONTAINS(c.adminDigests, @d" + i + ")";
+        }
+
+        string contains = string.Join(" OR ", terms);
         string where = after is null
-            ? " WHERE ARRAY_CONTAINS(c.adminDigests, @digest)"
-            : " WHERE ARRAY_CONTAINS(c.adminDigests, @digest) AND c.baseWorkflowId > @after";
-        var definition = new QueryDefinition("SELECT c.baseWorkflowId FROM c" + where + " ORDER BY c.baseWorkflowId")
-            .WithParameter("@digest", adminDigest);
+            ? $" WHERE ({contains})"
+            : $" WHERE ({contains}) AND c.baseWorkflowId > @after";
+        var definition = new QueryDefinition("SELECT c.baseWorkflowId FROM c" + where + " ORDER BY c.baseWorkflowId");
+        for (int i = 0; i < adminDigests.Count; i++)
+        {
+            definition = definition.WithParameter("@d" + i, adminDigests[i]);
+        }
+
         if (after is not null)
         {
             definition = definition.WithParameter("@after", after);

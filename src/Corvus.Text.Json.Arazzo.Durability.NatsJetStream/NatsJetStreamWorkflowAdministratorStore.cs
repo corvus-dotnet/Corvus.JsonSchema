@@ -170,25 +170,32 @@ public sealed class NatsJetStreamWorkflowAdministratorStore : IWorkflowAdministr
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
-        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
-
-        // Recover the digest's administered base ids via a server-side key filter (aidx.{digest}.>), decode each from its
-        // marker key, and order them client-side (KV listing is unordered) — string.CompareOrdinal is the contract's order.
-        string prefix = string.Concat(IndexPrefix, adminDigest, ".");
-        var ids = new List<string>();
-        await foreach (string markerKey in this.store.GetKeysAsync([prefix + ">"], cancellationToken: cancellationToken).ConfigureAwait(false))
+        if (adminDigests.Count == 0)
         {
-            if (markerKey.StartsWith(prefix, StringComparison.Ordinal))
-            {
-                ids.Add(Dec(markerKey[prefix.Length..]));
-            }
+            return WorkflowAdministeredPage.Create([]);
         }
 
-        ids.Sort(StringComparer.Ordinal);
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // Membership (§16.5.4): union each digest's marker-key prefix (aidx.{digest}.>), decoding each base id. A base id
+        // under more than one matching digest appears once (the SortedSet dedupes + orders ordinally — the contract's
+        // order; KV listing is unordered); then apply the keyset cursor + page.
+        var ids = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (string digest in adminDigests)
+        {
+            string prefix = string.Concat(IndexPrefix, digest, ".");
+            await foreach (string markerKey in this.store.GetKeysAsync([prefix + ">"], cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                if (markerKey.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    ids.Add(Dec(markerKey[prefix.Length..]));
+                }
+            }
+        }
 
         var rows = new List<string>(Math.Min(pageSize + 1, ids.Count));
         foreach (string id in ids)

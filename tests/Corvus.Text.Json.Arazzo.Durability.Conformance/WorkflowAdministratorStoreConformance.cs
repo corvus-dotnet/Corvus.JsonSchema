@@ -228,14 +228,14 @@ public abstract class WorkflowAdministratorStoreConformance
 
         // Walk every page via the continuation token with a small limit, round-tripped through the JsonString seam
         // exactly as the HTTP layer does; collect base ids in page order.
-        string digest = SecurityIdentityDigest.Compute(acme)!;
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(acme);
         var seen = new List<string>();
         byte[]? token = null;
         int pages = 0;
         do
         {
             using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
-            using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 2, tokenDoc?.RootElement ?? default, default);
+            using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digests, 2, tokenDoc?.RootElement ?? default, default);
             page.BaseWorkflowIds.Count.ShouldBeLessThanOrEqualTo(2);
             seen.AddRange(page.BaseWorkflowIds);
             token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
@@ -251,8 +251,27 @@ public abstract class WorkflowAdministratorStoreConformance
         await Should.ThrowAsync<FormatException>(async () =>
         {
             using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> badToken = AsJsonString("this~is~not~a~token"u8);
-            using WorkflowAdministeredPage bad = await store.ListAdministeredAsync(digest, 2, badToken.RootElement, default);
+            using WorkflowAdministeredPage bad = await store.ListAdministeredAsync(digests, 2, badToken.RootElement, default);
         });
+    }
+
+    [TestMethod]
+    public async Task The_reverse_index_finds_a_founder_that_is_a_subset_of_a_richer_caller_identity()
+    {
+        IWorkflowAdministratorStore store = await this.NewStoreAsync();
+
+        // The workflow's administrator is the team identity {sys:tenant=acme} (a founder).
+        SecurityTagSet founder = Administrator("acme");
+        await store.PutAsync("nightly-reconcile", [this.Identity(founder)], WorkflowEtag.None, "alice", default);
+
+        // Membership (§16.5.4): a richer caller identity that CONTAINS the founder administers the workflow, because the
+        // founder's digest is among the caller's subset digests. (Under the superseded exact-digest lookup the richer
+        // caller's whole-identity digest did not equal the founder's, so it found nothing.)
+        SecurityTagSet richerCaller = AdministratorWith(("sys:tenant", "acme"), ("sys:sub", "alice"));
+        (await this.AdministeredByAsync(store, richerCaller)).ShouldBe(["nightly-reconcile"]);
+
+        // A caller whose identity does not contain the founder (different tenant) administers nothing.
+        (await this.AdministeredByAsync(store, AdministratorWith(("sys:tenant", "globex"), ("sys:sub", "alice")))).ShouldBeEmpty();
     }
 
     private static SecurityTagSet Administrator(string tenant) => SecurityTagSet.FromTags([new SecurityTag("sys:tenant", tenant)]);
@@ -280,13 +299,13 @@ public abstract class WorkflowAdministratorStoreConformance
     // the token round-tripped through the JsonString seam exactly as the HTTP layer does.
     private async ValueTask<List<string>> AdministeredByAsync(IWorkflowAdministratorStore store, SecurityTagSet identity)
     {
-        string digest = SecurityIdentityDigest.Compute(identity)!;
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(identity);
         var result = new List<string>();
         byte[]? token = null;
         do
         {
             using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
-            using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 0, tokenDoc?.RootElement ?? default, default);
+            using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digests, 0, tokenDoc?.RootElement ?? default, default);
             result.AddRange(page.BaseWorkflowIds);
             token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
         }

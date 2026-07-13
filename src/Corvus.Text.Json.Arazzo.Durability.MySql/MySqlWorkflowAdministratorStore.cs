@@ -167,10 +167,14 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
+        if (adminDigests.Count == 0)
+        {
+            return WorkflowAdministeredPage.Create([]);
+        }
 
         // The keyset cursor (the base id to page strictly after) reifies once here for the @after parameter — the SQL leaf
         // — never per row. The index columns are utf8mb4_bin so the keyset compare is binary (ordinal; the contract's order).
@@ -178,10 +182,13 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
 
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
+
+        // Membership (§16.5.4): match any of the caller's subset digests. DISTINCT because a base id indexed under more
+        // than one matching digest (multiple administrator identities the caller subsumes) would otherwise repeat.
+        string inList = BuildInList(select, adminDigests);
         select.CommandText = after is null
-            ? "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest ORDER BY BaseWorkflowId LIMIT @n;"
-            : "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest AND BaseWorkflowId > @after ORDER BY BaseWorkflowId LIMIT @n;";
-        select.Parameters.AddWithValue("@digest", adminDigest);
+            ? $"SELECT DISTINCT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest IN ({inList}) ORDER BY BaseWorkflowId LIMIT @n;"
+            : $"SELECT DISTINCT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest IN ({inList}) AND BaseWorkflowId > @after ORDER BY BaseWorkflowId LIMIT @n;";
         select.Parameters.AddWithValue("@n", pageSize + 1);
         if (after is not null)
         {
@@ -230,6 +237,20 @@ public sealed class MySqlWorkflowAdministratorStore : IWorkflowAdministratorStor
             index.Parameters.AddWithValue("@id", baseWorkflowId);
             await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    // Binds one @dN parameter per subset digest and returns the "@d0,@d1,…" list for the IN clause (the digest set is
+    // bounded — SecurityIdentityDigest.SubsetDigests caps it).
+    private static string BuildInList(MySqlCommand command, IReadOnlyList<string> adminDigests)
+    {
+        string[] names = new string[adminDigests.Count];
+        for (int i = 0; i < adminDigests.Count; i++)
+        {
+            names[i] = "@d" + i;
+            command.Parameters.AddWithValue(names[i], adminDigests[i]);
+        }
+
+        return string.Join(',', names);
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));

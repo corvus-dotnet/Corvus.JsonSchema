@@ -210,29 +210,49 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
-
-        // The keyset cursor (the base id to page strictly after) reifies once here, never per row. The digest's sorted-set
-        // members are the administered base ids (score 0), so a ZRANGEBYLEX is an ordinal keyset over base ids — the
-        // contract's order; seek strictly past the cursor and take pageSize+1 for the lookahead.
-        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
-        RedisValue[] members = await this.database.SortedSetRangeByValueAsync(
-            IndexKey(adminDigest),
-            min: after is null ? default : after,
-            max: default,
-            exclude: after is null ? Exclude.None : Exclude.Start,
-            order: Order.Ascending,
-            skip: 0,
-            take: pageSize + 1).ConfigureAwait(false);
-
-        var rows = new List<string>(members.Length);
-        foreach (RedisValue member in members)
+        if (adminDigests.Count == 0)
         {
-            rows.Add((string)member!);
+            return WorkflowAdministeredPage.Create([]);
+        }
+
+        // The keyset cursor (the base id to page strictly after) reifies once here, never per row. Each digest's sorted-set
+        // members are the administered base ids (score 0), so a ZRANGEBYLEX is an ordinal keyset over base ids.
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // Membership (§16.5.4): union the per-digest sets. Reading each set's smallest pageSize+1 past the cursor and merging
+        // (dedupe + ordinal order via the SortedSet) yields the global smallest pageSize+1 — a base id in more than one
+        // matching set appears once.
+        var merged = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (string digest in adminDigests)
+        {
+            RedisValue[] members = await this.database.SortedSetRangeByValueAsync(
+                IndexKey(digest),
+                min: after is null ? default : after,
+                max: default,
+                exclude: after is null ? Exclude.None : Exclude.Start,
+                order: Order.Ascending,
+                skip: 0,
+                take: pageSize + 1).ConfigureAwait(false);
+
+            foreach (RedisValue member in members)
+            {
+                merged.Add((string)member!);
+            }
+        }
+
+        var rows = new List<string>(Math.Min(pageSize + 1, merged.Count));
+        foreach (string id in merged)
+        {
+            rows.Add(id);
+            if (rows.Count > pageSize)
+            {
+                break;
+            }
         }
 
         return WorkflowAdministeredPaging.ToPage(rows, pageSize);

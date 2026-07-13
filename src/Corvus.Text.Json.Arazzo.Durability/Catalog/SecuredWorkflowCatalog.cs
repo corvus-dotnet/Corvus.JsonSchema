@@ -360,9 +360,12 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<string>> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken)
     {
-        // The reverse administration index lives on the administrator store and is keyed by the identity digest. With no
-        // store configured (or the empty identity, which has no digest), the caller administers nothing.
-        if (this.administrators is not { } store || SecurityIdentityDigest.Compute(callerIdentity) is not { } digest)
+        // The reverse administration index lives on the administrator store, keyed by each administrator identity's digest.
+        // Under the membership model (§16.5.4) the caller administers a workflow iff one of its administrator identities is a
+        // subset of the caller's identity, so the query keys are the distinct-key SUBSET digests of the caller's identity.
+        // With no store configured (or the empty identity, whose subset set is empty), the caller administers nothing.
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(callerIdentity);
+        if (this.administrators is not { } store || digests.Count == 0)
         {
             return [];
         }
@@ -377,7 +380,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         {
             while (true)
             {
-                using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 0, token, cancellationToken).ConfigureAwait(false);
+                using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digests, 0, token, cancellationToken).ConfigureAwait(false);
                 administered.AddRange(page.BaseWorkflowIds);
 
                 tokenDocument?.Dispose();
