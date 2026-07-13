@@ -15,6 +15,7 @@
 // edited as guarded raw JSON (unparseable input never emits; the last valid payload stands).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { wireGuardedJson } from './guarded-json.js';
 import './expression-input.js';
 
 class ArazzoPayloadEditor extends ArazzoElement {
@@ -179,25 +180,11 @@ class ArazzoPayloadEditor extends ArazzoElement {
       <div class="hint payload-hint">JSON; runtime expressions allowed in strings</div>
     `;
     const ta = wrap.querySelector('textarea');
-    ta.addEventListener('input', () => {
-      const hint = wrap.querySelector('.payload-hint');
-      if (!ta.value.trim()) {
-        ta.classList.remove('invalid');
-        hint.textContent = 'JSON; runtime expressions allowed in strings';
-        this._value = undefined;
-        this._emit();
-        return;
-      }
-      try {
-        this._value = JSON.parse(ta.value);
-        ta.classList.remove('invalid');
-        hint.textContent = 'JSON; runtime expressions allowed in strings';
-        this._emit();
-      } catch (err) {
-        ta.classList.add('invalid');
-        hint.textContent = `not JSON yet: ${String(err.message).slice(0, 80)}`;
-        // Never emit a broken payload; the last valid one stands.
-      }
+    wireGuardedJson(ta, {
+      hint: wrap.querySelector('.payload-hint'),
+      baseHint: 'JSON; runtime expressions allowed in strings',
+      emptyDeletes: true, // blank clears the payload (never emits a broken one)
+      onCommit: (value) => { this._value = value; this._emit(); },
     });
     return wrap;
   }
