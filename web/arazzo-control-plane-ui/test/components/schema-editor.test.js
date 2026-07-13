@@ -170,19 +170,34 @@ describe('<arazzo-schema-editor>', () => {
     ok('city' in s2.properties.a.properties, 'the inlined copy carries the target content');
   });
 
-  it('New shared type… extracts the node into the library and references it (§6)', async () => {
+  it('Move to shared type… extracts the node into the library and references it (§6, #101)', async () => {
+    make({ type: 'object', properties: { addr: { type: 'object', properties: { city: { type: 'string' } } } } });
+    const addrType = names().find((n) => n.value === 'addr').closest('.node').querySelector('select.type');
+    ok([...addrType.querySelectorAll('option')].some((o) => o.value === 'move-ref'), 'the Move to shared type… action is offered');
+    const created = nextEvent(el, 'library-create');
+    const changed = nextEvent(el, 'schema-changed');
+    addrType.value = 'move-ref'; addrType.dispatchEvent(new Event('change'));
+    // #99: creating a shared type prompts for its name via the kit dialog — name it, then confirm.
+    await drivePromptDialog('Address');
+    const ev = (await created).detail;
+    equal(ev.name, 'Address', 'library-create carries the chosen name');
+    ok(ev.schema.properties.city, 'the moved type carries the extracted schema');
+    equal((await changed).detail.schema.properties.addr.$ref, `#/components/inputs/${ev.name}`, 'the node now references the new shared type');
+  });
+
+  it('New shared type… creates a BLANK type, not the node content (#101)', async () => {
     make({ type: 'object', properties: { addr: { type: 'object', properties: { city: { type: 'string' } } } } });
     const addrType = names().find((n) => n.value === 'addr').closest('.node').querySelector('select.type');
     ok([...addrType.querySelectorAll('option')].some((o) => o.value === 'new-ref'), 'the New shared type… action is offered');
     const created = nextEvent(el, 'library-create');
     const changed = nextEvent(el, 'schema-changed');
     addrType.value = 'new-ref'; addrType.dispatchEvent(new Event('change'));
-    // #99: creating a shared type now prompts for its name via the kit dialog — name it, then confirm.
-    await drivePromptDialog('Address');
+    await drivePromptDialog('Fresh');
     const ev = (await created).detail;
-    equal(ev.name, 'Address', 'library-create carries the chosen name');
-    ok(ev.schema.properties.city, 'library-create carries the extracted schema');
-    equal((await changed).detail.schema.properties.addr.$ref, `#/components/inputs/${ev.name}`, 'the node now references the new shared type');
+    equal(ev.name, 'Fresh');
+    equal(ev.schema.type, 'object', 'a fresh empty object type');
+    ok(!ev.schema.properties, 'does not inherit the node content (no city)');
+    equal((await changed).detail.schema.properties.addr.$ref, '#/components/inputs/Fresh', 'the node references the new blank type');
   });
 
   it('format is a constrained dropdown, not free text (#102)', async () => {
