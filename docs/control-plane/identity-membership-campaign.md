@@ -64,7 +64,12 @@ administration under set-equality. Membership over a rich identity resolves both
   `IWorkflowAdministratorStore.ListAdministeredAsync(IReadOnlyList<string> adminDigests, …)`; one native
   DISTINCT-union query per backend across all 10 stores; membership conformance test. In-memory + Sqlite
   runtime-verified; 8 container backends build-verified, container conformance pending.
-- **S3 — environment reverse-index membership** (the confirmed asymmetry below): the environment twin of S2.
+- **S3 — environment reverse-index membership — DONE** (this slice). The byte-for-byte twin of S2 on the
+  environment stack: `SecuredEnvironmentAdministration` reads `SecurityIdentityDigest.SubsetDigests`;
+  `IEnvironmentAdministratorStore.ListAdministeredAsync(IReadOnlyList<string> adminDigests, …)`; one native
+  DISTINCT-union query per backend across all 10 environment stores; a `subset-of-a-richer-caller` membership
+  conformance test; benchmark migrated to the subset-digest query. In-memory + Sqlite runtime-verified
+  (16/16 each); 8 container backends build-verified, container conformance pending. This closes H1.
 - **S4 — mutation-gate membership** (the confirmed asymmetry below): the add/remove/transfer authorization.
 - **S5 — collision-probe under membership**, overview prefix fix, rule-eval hardening (see the review below).
 - **S6 — demo resolver enrichment + relaunch**, live-verify; then container conformance for the 8 backends.
@@ -96,13 +101,14 @@ the entry whose identity is exactly X").
 
 Ranked by severity. Each is a verified code observation, not a hypothesis.
 
-**H1 — Environment reverse-index is still exact-digest (asymmetry, medium).** `SecuredEnvironmentAdministration`
-computes a **single** whole-identity digest (`SecurityIdentityDigest.Compute`) and queries
-`IEnvironmentAdministratorStore.ListAdministeredAsync(string)`, while the environment *forward* check
-(`IsAdministeredBy`, #6) is membership and the *workflow* reverse index (#4) is membership. Effect: an
-approver whose identity strictly contains the founder identity can approve promotions (forward authz passes)
-but the environment never appears in their inbox. Fix = S3 (the environment twin of S2). The paging-helper
-XML doc that claims "the index can never miss a match" is **false** for environments until then.
+**H1 — Environment reverse-index was still exact-digest (asymmetry, medium) — RESOLVED by S3.** Previously
+`SecuredEnvironmentAdministration` computed a **single** whole-identity digest (`SecurityIdentityDigest.Compute`)
+and queried `IEnvironmentAdministratorStore.ListAdministeredAsync(string)`, while the environment *forward*
+check (`IsAdministeredBy`, #6) and the *workflow* reverse index (#4) were both membership. Effect: an approver
+whose identity strictly contained the founder identity could approve promotions (forward authz passed) but the
+environment never appeared in their inbox. S3 made the read side membership — `SubsetDigests` +
+`ListAdministeredAsync(IReadOnlyList<string>)` across all 10 environment stores — so the reverse index now
+matches the forward check. The paging-helper XML doc claim that "the index can never miss a match" is true again.
 
 **H2 — Administration mutation gates are set-equality (asymmetry, medium; the overview over-promises).** The
 add/remove/transfer authorization for both workflows (`SecuredWorkflowCatalog` L602) and environments
@@ -147,14 +153,15 @@ disagree. Fix: thread the configured prefix into the overview.
 **H7 — The demo does not exercise the membership generalization (coverage, low).** The demo resolver stamps
 only `{sys:group, sys:iss}` (not `sys:sub`), and `DemoData.GroupIdentity` is built so a seeded grant
 *set-equals* a single-group caller. So the demo's happy path keeps every identity set-equal: the set-equality
-mutation gates (H2) and the exact environment reverse index (H1) never bite, and Person/`sub` grants are
-unsatisfiable by live callers. The generalization is real but untested by the demo's own data; S6 should
-enrich the identity and add a live scenario where a caller strictly contains a founder.
+mutation gates (H2) never bite (the environment reverse index no longer applies here — S3 made it membership),
+and Person/`sub` grants are unsatisfiable by live callers. The generalization is real but untested by the
+demo's own data; S6 should enrich the identity and add a live scenario where a caller strictly contains a founder.
 
 **H8 — `WorkflowIdentity.SameAdministrator` and both paging-helper docs are mislabelled (docs, trivial).**
 `SameAdministrator` is set-equality but its doc-comment calls it "the membership comparison"; the
 `*AdministeredPaging.DistinctDigests` docs claim the write-side digests "are exactly the digests the forward
-check compares" — now true only because the *read* side compensates (workflows) or false (environments, H1).
+check compares" — now true only because the *read* side compensates: `SubsetDigests` at query time for both
+workflows (S2) and environments (S3).
 
 ## Gates (every slice)
 

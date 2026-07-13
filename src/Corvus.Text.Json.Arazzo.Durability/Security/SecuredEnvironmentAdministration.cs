@@ -62,8 +62,12 @@ public sealed class SecuredEnvironmentAdministration
     /// <returns>The environment names the caller administers (ordered by name), drained across the reverse index's keyset pages.</returns>
     public async ValueTask<IReadOnlyList<string>> ListAdministeredEnvironmentsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken)
     {
-        // The reverse administration index is keyed by the identity digest; the empty identity has no digest.
-        if (SecurityIdentityDigest.Compute(callerIdentity) is not { } digest)
+        // Membership model (§16.5.4): the caller administers an environment iff one of its administrator identities is a
+        // subset of the caller's identity, so the reverse-index query keys are the distinct-key SUBSET digests of the
+        // caller's identity (each administrator identity is indexed under its own whole-set digest). The empty identity
+        // has no subsets and administers nothing.
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(callerIdentity);
+        if (digests.Count == 0)
         {
             return [];
         }
@@ -78,7 +82,7 @@ public sealed class SecuredEnvironmentAdministration
         {
             while (true)
             {
-                using EnvironmentAdministeredPage page = await this.store.ListAdministeredAsync(digest, 0, token, cancellationToken).ConfigureAwait(false);
+                using EnvironmentAdministeredPage page = await this.store.ListAdministeredAsync(digests, 0, token, cancellationToken).ConfigureAwait(false);
                 administered.AddRange(page.EnvironmentNames);
 
                 tokenDocument?.Dispose();

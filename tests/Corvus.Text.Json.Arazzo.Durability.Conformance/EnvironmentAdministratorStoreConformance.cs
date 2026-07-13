@@ -198,9 +198,9 @@ public abstract class EnvironmentAdministratorStoreConformance
         await store.PutAsync("qa", [this.Identity(globex)], WorkflowEtag.None, "bob", default);
 
         // Each administrator sees exactly the environments their identity administers, ordered by environment name.
-        (await ListAdministeredAsync(store, Digest(acme))).ShouldBe(["production", "staging"]);
-        (await ListAdministeredAsync(store, Digest(globex))).ShouldBe(["qa", "staging"]);
-        (await ListAdministeredAsync(store, Digest(Administrator("nobody")))).ShouldBeEmpty();
+        (await ListAdministeredAsync(store, acme)).ShouldBe(["production", "staging"]);
+        (await ListAdministeredAsync(store, globex)).ShouldBe(["qa", "staging"]);
+        (await ListAdministeredAsync(store, Administrator("nobody"))).ShouldBeEmpty();
     }
 
     [TestMethod]
@@ -219,8 +219,8 @@ public abstract class EnvironmentAdministratorStoreConformance
         // Transfer administration from acme to globex: acme must no longer appear, globex now does.
         await store.PutAsync("production", [this.Identity(globex)], etag, "alice", default);
 
-        (await ListAdministeredAsync(store, Digest(acme))).ShouldBeEmpty();
-        (await ListAdministeredAsync(store, Digest(globex))).ShouldBe(["production"]);
+        (await ListAdministeredAsync(store, acme)).ShouldBeEmpty();
+        (await ListAdministeredAsync(store, globex)).ShouldBe(["production"]);
     }
 
     [TestMethod]
@@ -233,7 +233,7 @@ public abstract class EnvironmentAdministratorStoreConformance
 
         await store.DeleteAsync("production", default);
 
-        (await ListAdministeredAsync(store, Digest(acme))).ShouldBe(["staging"]);
+        (await ListAdministeredAsync(store, acme)).ShouldBe(["staging"]);
     }
 
     [TestMethod]
@@ -247,13 +247,14 @@ public abstract class EnvironmentAdministratorStoreConformance
             await store.PutAsync(environment, [this.Identity(acme)], WorkflowEtag.None, "alice", default);
         }
 
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(acme);
         var seen = new List<string>();
         byte[]? token = null;
         int pages = 0;
         do
         {
             using ParsedJsonDocument<JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
-            using EnvironmentAdministeredPage page = await store.ListAdministeredAsync(Digest(acme), 3, tokenDoc?.RootElement ?? default, default);
+            using EnvironmentAdministeredPage page = await store.ListAdministeredAsync(digests, 3, tokenDoc?.RootElement ?? default, default);
             page.EnvironmentNames.Count.ShouldBeLessThanOrEqualTo(3);
             seen.AddRange(page.EnvironmentNames);
             token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
@@ -265,19 +266,37 @@ public abstract class EnvironmentAdministratorStoreConformance
         seen.ShouldBe(environments.OrderBy(e => e, StringComparer.Ordinal).ToArray());
     }
 
-    // The collision-probe digest of an identity (the reverse-index key); the identities used here always have a digest.
-    private static string Digest(SecurityTagSet tags)
-        => SecurityIdentityDigest.Compute(tags) ?? throw new InvalidOperationException("The identity has no digest.");
-
-    // Drains the reverse index for a digest across all keyset pages into one ordered list.
-    private static async Task<List<string>> ListAdministeredAsync(IEnvironmentAdministratorStore store, string digest)
+    [TestMethod]
+    public async Task The_reverse_index_finds_a_founder_that_is_a_subset_of_a_richer_caller_identity()
     {
+        IEnvironmentAdministratorStore store = await this.NewStoreAsync();
+
+        // The environment's administrator is the team identity {sys:tenant=acme} (a founder).
+        SecurityTagSet founder = Administrator("acme");
+        await store.PutAsync("production", [this.Identity(founder)], WorkflowEtag.None, "alice", default);
+
+        // Membership (§16.5.4): a richer caller identity that CONTAINS the founder administers the environment, because the
+        // founder's digest is among the caller's subset digests. (Under the superseded exact-digest lookup the richer
+        // caller's whole-identity digest did not equal the founder's, so it found nothing.)
+        SecurityTagSet richerCaller = AdministratorWith(("sys:tenant", "acme"), ("sys:sub", "alice"));
+        (await ListAdministeredAsync(store, richerCaller)).ShouldBe(["production"]);
+
+        // A caller whose identity does not contain the founder (different tenant) administers nothing.
+        (await ListAdministeredAsync(store, AdministratorWith(("sys:tenant", "globex"), ("sys:sub", "alice")))).ShouldBeEmpty();
+    }
+
+    // Drains the reverse index for an identity across all keyset pages into one ordered list. Membership (§16.5.4): the
+    // query is the identity's subset digests, so any administrator whose set the caller CONTAINS is matched (deduped +
+    // ordered by the store), not only an exact-set match.
+    private static async Task<List<string>> ListAdministeredAsync(IEnvironmentAdministratorStore store, SecurityTagSet identity)
+    {
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(identity);
         var all = new List<string>();
         byte[]? token = null;
         do
         {
             using ParsedJsonDocument<JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
-            using EnvironmentAdministeredPage page = await store.ListAdministeredAsync(digest, 1000, tokenDoc?.RootElement ?? default, default);
+            using EnvironmentAdministeredPage page = await store.ListAdministeredAsync(digests, 1000, tokenDoc?.RootElement ?? default, default);
             all.AddRange(page.EnvironmentNames);
             token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
         }
