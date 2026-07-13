@@ -92,9 +92,9 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
     }
 
     /// <inheritdoc/>
-    public ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
 
         // Decode the keyset cursor (the base id to page strictly after) from the request's token; the in-memory storage
@@ -103,23 +103,49 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
 
         lock (this.gate)
         {
+            // Union the per-digest ordered sets (membership §16.5.4: a base id administered via more than one matching
+            // subset digest appears once). The common case — a single matching digest — references that set directly with
+            // no allocation; a merge set is built only when two or more of the caller's subset digests hit.
+            SortedSet<string>? single = null;
+            SortedSet<string>? merged = null;
+            foreach (string digest in adminDigests)
+            {
+                if (!this.byDigest.TryGetValue(digest, out SortedSet<string>? ids))
+                {
+                    continue;
+                }
+
+                if (merged is not null)
+                {
+                    merged.UnionWith(ids);
+                }
+                else if (single is null)
+                {
+                    single = ids;
+                }
+                else
+                {
+                    merged = new SortedSet<string>(single, StringComparer.Ordinal);
+                    merged.UnionWith(ids);
+                    single = null;
+                }
+            }
+
             // The SortedSet enumerates base ids in ordinal order — the keyset order every backend pages by. Take the
             // pageSize+1 smallest past the cursor into a flat list; ToPage trims the lookahead and seeds the next token.
             var rows = new List<string>(pageSize + 1);
-            if (this.byDigest.TryGetValue(adminDigest, out SortedSet<string>? ids))
+            IEnumerable<string> ordered = (IEnumerable<string>?)merged ?? single ?? [];
+            foreach (string id in ordered)
             {
-                foreach (string id in ids)
+                if (cursor is not null && string.CompareOrdinal(id, cursor) <= 0)
                 {
-                    if (cursor is not null && string.CompareOrdinal(id, cursor) <= 0)
-                    {
-                        continue; // at or before the cursor — already returned on an earlier page
-                    }
+                    continue; // at or before the cursor — already returned on an earlier page
+                }
 
-                    rows.Add(id);
-                    if (rows.Count > pageSize)
-                    {
-                        break;
-                    }
+                rows.Add(id);
+                if (rows.Count > pageSize)
+                {
+                    break;
                 }
             }
 
