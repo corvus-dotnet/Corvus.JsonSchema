@@ -81,6 +81,16 @@ public abstract class ControlPlaneRowSecurityPolicy
     /// <returns><see langword="true"/> if the key carries the reserved internal prefix.</returns>
     public bool IsInternalTag(ReadOnlySpan<byte> keyUtf8) => keyUtf8.StartsWith(this.InternalTagPrefixUtf8);
 
+    /// <summary>Strips the reserved internal-tag prefix from a resolved identity dimension (as unescaped UTF-8),
+    /// recovering the operator-facing claim a binding keys on (<c>sys:sub</c> → <c>sub</c>); a dimension without the
+    /// prefix (a bare team/role) is returned unchanged. The span-based counterpart of <see cref="IsInternalTag"/>, over
+    /// the cached UTF-8 prefix, so a caller matches the access-grants overview to runtime enforcement without a hardcoded
+    /// literal prefix.</summary>
+    /// <param name="dimensionUtf8">The resolved identity dimension key as unescaped UTF-8.</param>
+    /// <returns>The dimension with the internal prefix removed if present; otherwise unchanged (a slice of the input).</returns>
+    public ReadOnlySpan<byte> StripInternalPrefix(ReadOnlySpan<byte> dimensionUtf8)
+        => dimensionUtf8.StartsWith(this.InternalTagPrefixUtf8) ? dimensionUtf8[this.InternalTagPrefixUtf8.Length..] : dimensionUtf8;
+
     /// <summary>Gets the reserved internal-tag key prefix (the public accessor of <see cref="InternalTagPrefix"/>) — the
     /// security wrapper reads it to preserve a version's internal tags across an admin re-tag (§14.2).</summary>
     public string InternalTagKeyPrefix => this.InternalTagPrefix;
@@ -307,6 +317,15 @@ internal sealed class ControlPlaneAccess
     /// <param name="keyUtf8">The tag key as unescaped UTF-8.</param>
     /// <returns><see langword="true"/> if the key carries the reserved internal prefix.</returns>
     public bool IsInternalTag(ReadOnlySpan<byte> keyUtf8) => this.policy?.IsInternalTag(keyUtf8) ?? false;
+
+    /// <summary>Strips the deployment-configured internal-tag prefix from a resolved identity dimension (UTF-8),
+    /// recovering the operator-facing claim a binding keys on (<c>sys:sub</c> → <c>sub</c>); a dimension without the
+    /// prefix, or an unscoped deployment (no policy), returns it unchanged. The access-grants overview matches bindings
+    /// to a grantee through this, so it uses the same prefix runtime enforcement does rather than a hardcoded literal.</summary>
+    /// <param name="dimensionUtf8">The resolved identity dimension key as unescaped UTF-8.</param>
+    /// <returns>The dimension with the internal prefix removed if present; otherwise unchanged.</returns>
+    public ReadOnlySpan<byte> StripInternalPrefix(ReadOnlySpan<byte> dimensionUtf8)
+        => this.policy is { } p ? p.StripInternalPrefix(dimensionUtf8) : dimensionUtf8;
 
     /// <summary>Gets the reserved internal-tag key prefix for the current deployment — the security wrapper uses it to
     /// preserve a version's internal tags across an admin re-tag (§14.2). Falls back to the default when unscoped (no

@@ -247,6 +247,27 @@ public sealed class ControlPlaneRowSecurityTests
         }
     }
 
+    [TestMethod]
+    public void StripInternalPrefix_uses_the_deployment_configured_prefix_not_a_hardcoded_literal()
+    {
+        // The default policy's reserved prefix is "sys:": a sys:-prefixed identity dimension is stripped to the
+        // operator-facing claim a binding keys on (the access-grants overview matches through this).
+        ControlPlaneRowSecurityPolicy defaultPolicy = new TenantRowSecurityPolicy();
+        Strip(defaultPolicy, "sys:sub"u8).ShouldBe("sub");
+        Strip(defaultPolicy, "team"u8).ShouldBe("team"); // no prefix — unchanged
+
+        // A deployment whose configured prefix is "int:" strips "int:", NOT the "sys:" literal (H6): the overview must
+        // follow the policy, not a hardcoded prefix. A "sys:" dimension is left intact (it is not this deployment's
+        // internal prefix), and a bare dimension is unchanged.
+        ControlPlaneRowSecurityPolicy custom = new CustomInternalPrefixPolicy();
+        Strip(custom, "int:sub"u8).ShouldBe("sub");
+        Strip(custom, "sys:sub"u8).ShouldBe("sys:sub");
+        Strip(custom, "team"u8).ShouldBe("team");
+
+        static string Strip(ControlPlaneRowSecurityPolicy policy, ReadOnlySpan<byte> dimension)
+            => Encoding.UTF8.GetString(policy.StripInternalPrefix(dimension));
+    }
+
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;
@@ -413,5 +434,14 @@ public sealed class ControlPlaneRowSecurityTests
         public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
 
         public override void ValidateUserTags(SecurityTagSet userTags) => Shell.ValidateUserTags(userTags);
+    }
+
+    // A deployment whose reserved internal prefix is not the "sys:" default — exercises H6 (the access-grants overview
+    // must strip the CONFIGURED prefix, not a hardcoded "sys:").
+    private sealed class CustomInternalPrefixPolicy : ControlPlaneRowSecurityPolicy
+    {
+        protected override string InternalTagPrefix => "int:";
+
+        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
     }
 }
