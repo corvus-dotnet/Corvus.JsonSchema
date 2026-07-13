@@ -92,6 +92,39 @@ test('the Catalog tab lists versions and opens a version detail with downloads',
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('the Catalog detail compares two versions: overlay paints the diff, Text is disabled (§9.11)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Catalog' }).click();
+
+  // nightly-reconcile carries a real version history (v1 predates two steps v2/v3 add), so its detail offers
+  // "Compare with version…". Comparing the current version with v1 always yields added/removed steps.
+  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  const detail = page.locator('arazzo-catalog-detail');
+  await expect(detail).toBeVisible();
+  const compareWith = detail.locator('.compare-with');
+  await expect(compareWith).toBeVisible();
+  await compareWith.selectOption({ index: 1 }); // the first sibling version (whichever is current)
+
+  const compare = detail.locator('arazzo-workflow-compare');
+  await expect(compare.locator('dialog[open]')).toBeVisible();
+  await expect(compare.locator('.legend')).not.toHaveText('No differences in this workflow');
+  await expect(compare.locator('.legend')).toContainText(/added|changed|removed/);
+  // At least one classified node paints in side-by-side.
+  await expect(compare.locator('arazzo-design-surface .node.df-added, arazzo-design-surface .node.df-changed').first()).toBeVisible();
+
+  // Overlay mode: one union surface with the diff-overlay class; Text stays disabled until the merge-view slice.
+  await compare.locator('.mode[data-mode="overlay"]').click();
+  await expect(compare.locator('.side-overlay arazzo-design-surface')).toBeVisible();
+  await expect(compare.locator('.side-left arazzo-design-surface')).toHaveCount(0);
+  await expect(compare.locator('.mode[data-mode="text"]')).toBeDisabled();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('the Runners tab shows the registered execution hosts and their health', async ({ page }) => {
   const errors = [];
   // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by

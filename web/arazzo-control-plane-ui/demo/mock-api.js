@@ -492,8 +492,21 @@ function pickVariant(d, value) {
 
 function workflowDoc(workflowId, title, description, sourceRefs) {
   const base = workflowId.replace(/-v\d+$/, '');
-  const stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
+  const n = Number(workflowId.match(/-v(\d+)$/)?.[1] ?? '1');
+  let stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
   const bindings = STEP_BINDINGS[base] ?? {};
+  // nightly-reconcile carries a REAL version history so the catalog compare host (§9.11) has something to
+  // diff: v1 predates discrepancy flagging + automated corrections (added in v2), and v3 tightens
+  // matchEntries with an explicit success criterion. v2 stays the canonical six-step pipeline (a completed
+  // run pins its cursor at 6, and v3's evidence names all six steps).
+  if (base === 'nightly-reconcile' && n <= 1) {
+    stepIds = stepIds.filter((s) => s !== 'flagDiscrepancies' && s !== 'postCorrections');
+  }
+  const steps = stepIds.map((stepId) => ({ stepId, operationId: stepId, ...structuredClone(bindings[stepId] ?? {}) }));
+  if (base === 'nightly-reconcile' && n >= 3) {
+    const m = steps.find((s) => s.stepId === 'matchEntries');
+    if (m) m.successCriteria = [{ condition: '$statusCode == 200' }];
+  }
   return {
     arazzo: '1.1.0',
     info: { title, description },
@@ -501,7 +514,7 @@ function workflowDoc(workflowId, title, description, sourceRefs) {
     workflows: [{
       workflowId,
       ...(WORKFLOW_INPUTS[base] ? { inputs: structuredClone(WORKFLOW_INPUTS[base]) } : {}),
-      steps: stepIds.map((stepId) => ({ stepId, operationId: stepId, ...structuredClone(bindings[stepId] ?? {}) })),
+      steps,
       ...(WORKFLOW_OUTPUTS[base] ? { outputs: structuredClone(WORKFLOW_OUTPUTS[base]) } : {}),
     }],
   };

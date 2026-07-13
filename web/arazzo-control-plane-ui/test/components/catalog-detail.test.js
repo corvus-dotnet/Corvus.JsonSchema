@@ -267,6 +267,49 @@ describe('<arazzo-catalog-detail>', () => {
     await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"]'));
     equal(el.shadowRoot.querySelector('.setup-menu'), null, 'no + menu without credentials:write');
   });
+
+  // ── "Compare with version…" catalog compare host (visual-diff §9.11) ──────────────────────────
+  it('offers "Compare with version…" listing the OTHER versions of a multi-version base', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    const cmp = await waitFor(() => {
+      const c = el.shadowRoot.querySelector('.compare-with');
+      return c && !el.shadowRoot.querySelector('.vcompare').hidden ? c : null;
+    });
+    const opts = [...cmp.options].map((o) => o.value);
+    ok(opts.includes('1') && opts.includes('2'), 'lists the sibling versions');
+    ok(!opts.includes('3'), 'excludes the current version');
+  });
+
+  it('hides the compare affordance for a single-version base', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'onboard-customer', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('[part="hash"]'));
+    await waitFor(() => el.versions); // versions list resolved
+    ok(el.shadowRoot.querySelector('.vcompare').hidden, 'no compare picker with one version');
+  });
+
+  it('selecting a version opens the read-only compare dialog with both documents diffed', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    const cmp = await waitFor(() => {
+      const c = el.shadowRoot.querySelector('.compare-with');
+      return c && [...c.options].some((o) => o.value === '1') ? c : null;
+    });
+    cmp.value = '1';
+    cmp.dispatchEvent(new Event('change'));
+    equal(cmp.value, '', 'the picker resets to its placeholder (acts as an action)');
+    const compare = el.shadowRoot.querySelector('arazzo-workflow-compare');
+    const dialog = await waitFor(() => compare.shadowRoot.querySelector('dialog[open]'));
+    ok(dialog, 'the shared compare dialog opened');
+    const legend = compare.shadowRoot.querySelector('.legend').textContent;
+    ok(legend && legend !== 'No differences in this workflow', `the legend reports differences (${legend})`);
+    // v1 (predates flagDiscrepancies + postCorrections) → v3 adds them: painted on the newer (right) side.
+    const right = compare.shadowRoot.querySelector('.side-right arazzo-design-surface');
+    await waitFor(() => right.shadowRoot.querySelector('.node.df-added'));
+    ok(right.shadowRoot.querySelector('.node.df-added'), 'an added step is painted on the newer side');
+    ok(right.hasAttribute('readonly'), 'the compared surface is read-only (no merge target)');
+  });
 });
 
 describe('<arazzo-catalog> panel', () => {
