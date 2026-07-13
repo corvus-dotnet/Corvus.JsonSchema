@@ -412,7 +412,7 @@ loading/empty/error states; scope-gated actions. (Attribute/event tables in the 
 | Element | Responsibility |
 |---------|----------------|
 | `<arazzo-workspace-table>` | Working copies list: open, create (blank / from version / from Git), delete. Emits `working-copy-selected`. |
-| `<arazzo-design-surface>` | The diagram area (§6). Renders the graph projection; direct manipulation (add/move/connect/delete, marquee select, pan/zoom, auto-layout); debug overlay (active step, taken edges, breakpoints); emits `selection-changed`, `step-created`, `edge-created`, `breakpoint-toggled`, … |
+| `<arazzo-design-surface>` | The diagram area (§6). Renders the graph projection; direct manipulation (add/move/connect/delete, marquee select, pan/zoom, auto-layout); debug overlay (active step, taken edges, breakpoints); a `diffState` overlay channel (added/removed/changed classes + ghost mode, §6.4); emits `selection-changed`, `step-created`, `edge-created`, `breakpoint-toggled`, `view-changed`, … |
 | `<arazzo-text-editor>` | CodeMirror 6 wrapper (lazy-loaded, §7); document text mode with schema validation markers, expression token highlighting, selection sync. |
 | `<arazzo-operation-browser>` | Left rail: the document's sources + each one's operation surface (search/filter; drag or click-to-add). "Add source…" opens the acquisition dialog. |
 | `<arazzo-source-acquisition-dialog>` | Add a source: pick from registry · fetch from URL (+ optional credential) · upload · import from GitHub. |
@@ -429,6 +429,7 @@ loading/empty/error states; scope-gated actions. (Attribute/event tables in the 
 | `<arazzo-trace-viewer>` | The recorded trace: step timeline with per-step request/response and criterion truth tables; the time-travel scrubber; click-to-navigate to canvas/inspector. |
 | `<arazzo-evidence-badge>` | Evidence summary for a catalog version (suite verdict, count, at); embedded by `<arazzo-catalog-detail>`. |
 | `<arazzo-github-dialog>` | Sign-in status, repo/branch/path binding, pull/commit (+PR) actions for a Git-bound working copy. |
+| `<arazzo-workflow-compare>` | Reusable side-by-side / overlay / text comparison of any two workflow versions (§6.4). Paints the visual diff via each surface's `diffState`, a grouped change list with Prev/Next, and — with `mergeTarget` on a side — Take/Keep verbs emitting `change-accepted` / `merge-text-applied` for the host to apply to its one model. Opened by the Git history browser and catalog-detail's "Compare with version…". |
 
 Reused as-is: `<arazzo-value-editor>` (typed forms), `<arazzo-workflow-picker>`,
 `<arazzo-grantee-picker>` (workspace administration), `<arazzo-catalog-add-dialog>` patterns
@@ -528,6 +529,114 @@ free-form containers, no plugin system. Precedent for this size and style alread
 773-line schema-form generator (`value-editor.js`), the hand-rolled `.awp` container, and the
 playground's bespoke SVG block renderer. Debug overlays are the projection re-rendered with trace
 decorations — there is no second rendering path to keep in sync.
+
+### 6.4 Comparison & the diff overlay (§15-8d — resolved 2026-07-13)
+
+`<arazzo-workflow-compare>` compares any two workflow versions. It opens from the Git pane's history
+browser (working copy vs a commit), from catalog-detail's "Compare with version…" affordance (two
+catalog versions, §9.11 below), and from any host that supplies a document pair. On top of the plain
+side-by-side it paints a **visual diff** and, when a side is the working copy, drives an **interactive
+merge**. It is Layer 1: ids in, classes and events out, and it never mutates a document.
+
+**The diff model — `workflow-diff.js` (Layer 0.5, DOM-free).** `diffWorkflowPair(left, right, {ids})`
+classifies the pair on top of the §6.2 projection and the document model's identity-aware structural
+`diff()` — it never writes a second structural differ. Matching rules:
+
+- **Steps.** Identity by `stepId` first; then binding-gated **rename** detection over the residue — two
+  steps pair only when they share a binding key (`operationId` / `operationPath` / `channelPath`+action
+  / `workflowId`), scored by field-group similarity, assigned greedily with deterministic tie-breaks.
+  Content is read from the rename-normalized identity-list `diff`, so a **reorder is a `move`, never a
+  `changed`** (its seq edges and change-list entry carry it), and a renamed step presents as one entry
+  (changed + a rename note), never remove+add.
+- **Edges.** Semantic keys `kind|from|to|actionName`, left endpoints mapped through the step id-map,
+  duplicates paired in two passes (equal attribute tuples first). Action-order changes classify as
+  `changed` — first-match-wins makes precedence semantic. Each action edge also resolves its **raw list
+  index** and reusable component name from the raw document (the resolved list drops unresolvable refs,
+  so a resolved index is not a raw index — merge payloads address the raw document).
+- **Workflow surfaces.** `inputs`⇒`#start`, `outputs`⇒`#end`, `successActions`/`failureActions`⇒the
+  defaults card, plus a **components area**: a shared `$components` action body change classifies no
+  step, only its referee edges — the components entry carries it.
+
+**The `diffState` channel on `<arazzo-design-surface>`.** A named channel parallel to `debugState`
+(explicit channels, class-application without rebuilds): `{nodes:{id:'added'|'removed'|'changed'},
+edges:{id:same}, defaults?:'changed', notes?:{id:text}, ghosts?:{nodes,edges}, overlay?:true} | null`.
+`_applyDiff()` mirrors `_applyDebug()` — the classification classes, dynamic adornments (a ＋/−/Δ corner
+badge, a rename note chip, an edge halo beneath the line, all `pointer-events:none`), and a dim on
+unclassified elements. Debug wins order-independently (either setter reconciles). Adornments do not
+track a node drag (readonly hosts only). `diffState` and `debugState` are independent; compare never
+sets `debugState`, the designer never sets `diffState`.
+
+**Visual language — colour and a non-colour channel, never colour alone:**
+
+| class | token (with its default chain) | non-colour channel |
+|---|---|---|
+| `df-added` | `--arazzo-diff-added` → `--arazzo-status-completed` → `#2a8a4a` | solid stroke + ＋ badge; solid halo |
+| `df-removed` | `--arazzo-diff-removed` → `--arazzo-status-faulted` → `#d4351c` | **dashed** stroke + − badge; dashed halo |
+| `df-changed` | `--arazzo-diff-changed` → `--arazzo-status-suspended` → `#b07d18` | solid stroke + Δ badge + note chip; dotted halo |
+
+**The `--arazzo-diff-*` token contract.** Diff appearance gets its own custom properties, separately
+stylable from the status palette but defaulting to it through a **nested fallback at every point of use**
+(`var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a))`). We deliberately do **not** declare
+`--arazzo-diff-*: var(--arazzo-status-*)` aliases in `arazzo-kit.css`: an unregistered custom property
+substitutes its `var()` references at the element where it is declared and inherits the resolved value,
+so a `:root` alias would freeze the root's status colours and stop tracking subtree theme overrides (the
+kit deliberately supports these — `SHARED_CSS` never sets `--arazzo-*` on `:host` for exactly this
+reason). With nested fallbacks a host-set `--arazzo-diff-*` up-tree wins; otherwise the status token
+resolves at the consuming element (light/dark and subtree themes flow through); otherwise the hex.
+
+**Shared union layout.** Both surfaces read one layout computed over the union of the two graphs (right
+id-space, left-only nodes spliced after their matched predecessor), split per side through the id-map, so
+matched steps sit level across the split. The compare host runs one fit over the union extent and assigns
+the identical `view` to both equal-width columns; with union coordinates, syncing one side's pan/zoom
+scrolls both (default on, with an unlock toggle).
+
+**Three modes** (a segmented switch; legend, "Highlight changes" toggle, and change list are common
+chrome across all three):
+
+- **Side by side** — the two surfaces with the overlay painted.
+- **Overlay (ghost)** — one union surface from `buildGhostProjection(result, base)`: the base version
+  solid, the other side's exclusive elements appended as translucent ghosts (`df-ghost` composed with the
+  classification, `svg.diff-overlay .df-ghost { opacity:~0.5 }`), in the base side's id-space with
+  `ghost:`-prefixed exclusive edges. Base = the merge target when one is set, else the right side.
+- **Text** — a CodeMirror **MergeView** over the two documents, serialized with the one deterministic
+  `serializeDocument` the text editor uses (`highlightChanges` + `collapseUnchanged`; shadow root passed
+  as `root`). Read-only without a merge target. If CM cannot load, Text is disabled with a title — there
+  is no textarea fallback for a merge editor. (Vendored via `@codemirror/merge` in the single-instance
+  `src/vendor/codemirror.mjs` bundle.)
+
+**Interactive merge (§6.4 of the pack).** When a side is opened with `mergeTarget: true` (the Git panel
+sets it on the working-copy side, sourced from the LIVE model via a `documentSource` callback so autosave
+cannot stale the merge), the change list gains **Take / Keep**. *Take* adopts the other side's state for
+that one entry; *Keep* marks it reviewed (session-scoped, keyed by a stable `group|kind|semantic-ids`
+key that survives `refresh`, since the working copy IS the merge state — a change not taken is kept by
+definition). The component emits, never mutating a document:
+
+- `change-accepted { entry, apply, workflowId }` where `apply` is one of `insert-step` / `remove-step` /
+  `replace-step` (rename accepts a wholesale replace — the model's identity ops handle the id change) /
+  `move-step` / `insert-action` / `remove-action` / `replace-action` (action payloads carry **raw list
+  indices**, freshly derived every Take) / `set-area` (`inputs`/`outputs`/`summary`/`description`/
+  `defaults`) / `set-component`. **Seq-edge and component-sourced flow entries expose no Take** — a route
+  hint points at their carrier (the moved step entry / the components entry).
+- `merge-text-applied { text }` from the Text mode's editable merge-target pane (chunk `revertControls`
+  from the other side, one **Apply** button).
+
+The Layer-2 host (the designer, which owns the one `WorkflowDocumentModel`) applies each event via
+`model.update(mutator, {label})` / `model.applyText(text, {label})` — the identity-aware differ reduces
+it to minimal ops, so a merge accept is the same op a canvas edit emits: undoable, labelled, and
+collaboration-safe. The host then hands the fresh document back via `compare.refresh({left})`; the diff
+recomputes, resolved entries disappear, all modes repaint. Verb serialization (a Take/Apply locks every
+verb until `refresh`) and text-buffer exclusivity (a dirty MergeView disables list Takes) keep indices
+freshly derived and a half-finished merge from clobbering a Take. Because every accept is an ordinary
+edit, the §3.1 single-model invariant holds — the canvas and text editor behind the dialog update live.
+
+**Recorded alternatives.** (1) A git-style content-similarity rename fallback over the residue the binding
+gate leaves behind (git pairs delete+add at ≥50% similarity; GumTree's bottom-up matcher uses dice ≥0.5)
+— started without it because every fallback pairing is harder to explain in the UI than a plain removal
+plus addition. (2) A step-scoped merge popover (one step's JSON in a small MergeView from a changed node)
+— cheap now the merge package is vendored, but a separate increment; the `changedGroups` chips cover the
+need meanwhile. (3) This delivers 8c's useful core (cherry-pick adoption into the working copy) without
+three-way base tracking; divergence detection and conflict presentation remain 8c's open scope, and the
+§4.2 matcher stays a pure module so that work can reuse it.
 
 ## 7. Text mode and expression editing
 
@@ -893,16 +1002,17 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    the UI confirms with a danger dialog). A true three-way merge needs the binding to record the
    pulled commit sha (the base), divergence detection, and a conflict presentation — design work,
    not a quick add.
-8d. **Visual diff overlay on the comparison visualizer** — the Git pane's history browser ships
+8d. **Visual diff overlay on the comparison visualizer** — *Resolved 2026-07-13; see §6.4.* Shipped:
+   binding-gated matching (renames paired, reorders `move`d not `changed`), the `diffState` overlay
+   channel with dedicated `--arazzo-diff-*` tokens, a shared union layout, three comparison modes
+   (side-by-side, overlay/ghost, CodeMirror MergeView text), a grouped change list, the catalog-detail
+   compare host (§9.11), and an interactive Take/Keep merge that emits `change-accepted` /
+   `merge-text-applied` for the host to apply to its one model. The Git pane's history browser ships
    commit browsing (`GET /github/repos/{owner}/{repo}/commits`, scoped to the bound branch and
-   document), rollback (a danger-confirmed pull carrying the commit's `ref` — the binding never
-   changes, so the next commit records the rollback on the branch), and
-   `<arazzo-workflow-compare>`: a REUSABLE side-by-side of any two workflow versions as two
-   read-only design surfaces (current-vs-commit today; catalog versions or two commits are the
-   same call). The follow-on is the diff OVERLAY: classify nodes/edges added/removed/changed
-   (stepId-keyed, content-hashed for "changed") and paint the classification through the
-   surfaces' existing per-node state channel — design the matching rules (renames, reordered
-   steps) before building.
+   document) and rollback (a danger-confirmed pull carrying the commit's `ref` — the binding never
+   changes, so the next commit records the rollback on the branch); Compare opens the overlay by
+   default. Remaining out of scope: the similarity rename fallback, a step-scoped merge popover, and
+   8c's three-way base tracking / conflict presentation (§6.4 recorded alternatives).
 8b. **Step-output overrides (engine)** — BUILT for debug runs (§18 slice 3c).
    `SimulationScenario.StepOutputOverrides` (stepId → provided outputs) is the real seam: at the
    checkpoint boundary the replay unwinds the executor, records the overridden step as skipped
