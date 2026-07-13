@@ -1,7 +1,7 @@
 // Tier 3 — <arazzo-workflow-compare>: the side-by-side dialog with the visual-diff overlay.
 import '../../src/components/workflow-compare.js';
 import { ArazzoExpressionInput } from '../../src/components/expression-input.js';
-import { ok, equal, waitFor, mount } from './helpers.js';
+import { ok, equal, waitFor, nextEvent, mount } from './helpers.js';
 
 const base = () => ({
   arazzo: '1.1.0',
@@ -28,6 +28,17 @@ describe('<arazzo-workflow-compare>', () => {
   const surface = (which) => el.shadowRoot.querySelector(`.side-${which} arazzo-design-surface`);
   const nodeCls = (which, id) => surface(which).shadowRoot.querySelector(`.node[data-id="${id}"]`)?.classList;
   const legend = () => el.shadowRoot.querySelector('.legend').textContent;
+
+  // A comparison whose LEFT side is the working-copy merge target (as the git panel opens it).
+  function openMerge(left, right, extra = {}) {
+    el = document.createElement('arazzo-workflow-compare');
+    mount(el);
+    el.open({ left: { label: 'Working copy', document: left, mergeTarget: true }, right: { label: 'Commit', document: right }, workflowId: 'w', ...extra });
+    return el;
+  }
+  const rows = () => [...el.shadowRoot.querySelectorAll('.cl-item')];
+  const rowFor = (match) => rows().find((r) => match(r.querySelector('.cl-sel').textContent.trim()));
+  const takeOf = (row) => row.querySelector('.cl-take');
 
   it('paints a changed step on both sides and shows a legend count', () => {
     const l = base();
@@ -266,5 +277,163 @@ describe('<arazzo-workflow-compare>', () => {
     right.view = { tx: 0, ty: 0, k: 1 };
     left.dispatchEvent(new CustomEvent('view-changed', { detail: { tx: 99, ty: 99, k: 2 }, bubbles: true, composed: true }));
     equal(right.view.tx, 0, 'no mirror after the toggle turns sync off');
+  });
+
+  // ── Interactive merge (§6.4) ──────────────────────────────────────────────────────────────────
+  it('exposes no Take/Keep verbs without a merge target', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    open(l, r); // no mergeTarget
+    equal(el.shadowRoot.querySelectorAll('.cl-take').length, 0, 'no Take buttons');
+    equal(el.shadowRoot.querySelectorAll('.cl-keep').length, 0, 'no Keep buttons');
+  });
+
+  it('Take on an added step emits insert-step with the other side’s step + our index', async () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps.push({ stepId: 'd', operationId: 'op.d' });
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t === '+ d')).click();
+    const { apply } = (await accepted).detail;
+    equal(apply.kind, 'insert-step');
+    equal(apply.step.stepId, 'd');
+    equal(apply.index, 3, 'after c (our last common predecessor)');
+  });
+
+  it('Take on a removed step emits remove-step', async () => {
+    const l = base();
+    l.workflows[0].steps.push({ stepId: 'e', operationId: 'op.e' });
+    const r = base();
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t === '− e')).click();
+    const { apply } = (await accepted).detail;
+    equal(apply.kind, 'remove-step');
+    equal(apply.stepId, 'e');
+  });
+
+  it('Take on a changed step emits replace-step with the other side’s content', async () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t.startsWith('Δ a'))).click();
+    const { apply } = (await accepted).detail;
+    equal(apply.kind, 'replace-step');
+    equal(apply.stepId, 'a');
+    ok(apply.step.successCriteria, 'carries the new content');
+  });
+
+  it('Take on a renamed step emits replace-step carrying the new stepId', async () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[1].stepId = 'bx'; // op.b binding preserved → rename b→bx
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t.includes('b → bx'))).click();
+    const { apply } = (await accepted).detail;
+    equal(apply.kind, 'replace-step');
+    equal(apply.stepId, 'b');
+    equal(apply.step.stepId, 'bx', 'the model handles the id change as remove+insert');
+  });
+
+  it('Take on a moved step emits move-step with a target index', async () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps = [r.workflows[0].steps[1], r.workflows[0].steps[0], r.workflows[0].steps[2]]; // b,a,c
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t.startsWith('moved'))).click();
+    const { apply } = (await accepted).detail;
+    equal(apply.kind, 'move-step');
+    ok(typeof apply.index === 'number');
+  });
+
+  it('Take on an added action edge emits insert-action scoped to that action', async () => {
+    const l = base(); // step a has no onSuccess
+    const r = base();
+    r.workflows[0].steps[0].onSuccess = [{ name: 'retry', type: 'goto', stepId: 'b' }];
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t.includes('edge a → b') && t.includes('retry'))).click(); // the success goto, not the removed seq edge
+    const { apply } = (await accepted).detail;
+    equal(apply.kind, 'insert-action');
+    equal(apply.stepId, 'a');
+    equal(apply.list, 'onSuccess');
+    equal(apply.action.name, 'retry');
+    equal(apply.index, 0, 'a’s empty onSuccess list');
+  });
+
+  it('Take on a changed action edge emits replace-action at the raw index', async () => {
+    const l = base(); // b.onSuccess = [{name:'go', goto c}]
+    const r = base();
+    r.workflows[0].steps[1].onSuccess = [{ name: 'go', type: 'goto', stepId: 'c', criteria: [{ condition: '$statusCode == 200' }] }];
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t.includes('edge b → c') && t.startsWith('Δ'))).click();
+    const { apply } = (await accepted).detail;
+    equal(apply.kind, 'replace-action');
+    equal(apply.stepId, 'b');
+    equal(apply.index, 0);
+    ok(apply.action.criteria, 'carries the new action body');
+  });
+
+  it('seq-edge flow entries route rather than Take', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps.push({ stepId: 'd', operationId: 'op.d' }); // adds a seq edge c → d
+    openMerge(l, r);
+    const seqRow = rowFor((t) => t.includes('seq edge') && t.includes('d'));
+    ok(seqRow, 'a seq-edge entry exists');
+    ok(!takeOf(seqRow), 'no Take on a seq edge');
+    ok(seqRow.querySelector('.cl-route'), 'a route hint is shown instead');
+  });
+
+  it('Take locks every verb until refresh; refresh re-enables them', async () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps.push({ stepId: 'd', operationId: 'op.d' });
+    openMerge(l, r);
+    const accepted = nextEvent(el, 'change-accepted');
+    takeOf(rowFor((t) => t === '+ d')).click();
+    await accepted;
+    ok([...el.shadowRoot.querySelectorAll('.cl-take')].every((b) => b.disabled), 'all Takes disabled after a Take');
+    // The host applied the step; recompute against the merged document.
+    const merged = base();
+    merged.workflows[0].steps.push({ stepId: 'd', operationId: 'op.d' });
+    el.refresh({ left: { document: merged } });
+    ok(![...el.shadowRoot.querySelectorAll('.cl-take')].some((b) => b.disabled), 'verbs re-enabled after refresh');
+  });
+
+  it('Keep dims an entry and survives refresh (stable key)', () => {
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    r.workflows[0].steps[2].successCriteria = [{ condition: '$statusCode == 200' }]; // a second change survives
+    openMerge(l, r);
+    const row = rowFor((t) => t.startsWith('Δ a'));
+    row.querySelector('.cl-keep').click();
+    ok(row.classList.contains('reviewed'), 'the kept entry dims');
+    el.refresh({ left: { document: base() }, right: { document: r } }); // recompute (a still changed)
+    ok(rowFor((t) => t.startsWith('Δ a')).classList.contains('reviewed'), 'still reviewed after refresh');
+  });
+
+  it('Text merge: the merge-target pane is editable, the other read-only, with an Apply button', async function () {
+    this.timeout(20000);
+    const l = base();
+    const r = base();
+    r.workflows[0].steps[0].successCriteria = [{ condition: '$statusCode == 200' }];
+    openMerge(l, r);
+    el.shadowRoot.querySelector('.mode[data-mode="text"]').click();
+    await ArazzoExpressionInput.loadCm();
+    const host = el.shadowRoot.querySelector('.textmerge');
+    await waitFor(() => host.querySelector('.cm-mergeView'), 15000);
+    ok(host.querySelector('.tm-apply'), 'an Apply button is present with a merge target');
+    const contents = [...host.querySelectorAll('.cm-content')];
+    equal(contents.filter((c) => c.getAttribute('contenteditable') === 'true').length, 1, 'exactly one editable pane');
+    equal(contents.filter((c) => c.getAttribute('contenteditable') === 'false').length, 1, 'the other is read-only');
   });
 });
