@@ -234,12 +234,31 @@ public sealed class SecuredEnvironmentAdministration
             cancellationToken).ConfigureAwait(false);
     }
 
-    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags).
+    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags). This is the
+    // EXACT identity comparison used by the identity operations — add-idempotency (is this exact identity already present)
+    // and Dedupe (drop set-equal duplicates) — not the administration authorization gate; see IsAdministeredByMember.
     private static bool IsMember(List<AdministratorIdentity> admins, SecurityTagSet candidate)
     {
         foreach (AdministratorIdentity administrator in admins)
         {
             if (WorkflowIdentity.SameAdministrator(TagsOf(administrator), candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Whether a caller administers the set by MEMBERSHIP (§16.5.4): the caller's canonical identity CONTAINS (is a superset
+    // of) some administrator's identity. This is the mutation authorization gate, matching the forward check
+    // (EnvironmentAdministrators.IsAdministeredBy) and the reverse index. Contrast IsMember, which is exact set-equality for
+    // the identity operations. The exact-digest paths (IndexOfDigest removal, Dedupe) stay exact.
+    private static bool IsAdministeredByMember(List<AdministratorIdentity> admins, SecurityTagSet caller)
+    {
+        foreach (AdministratorIdentity administrator in admins)
+        {
+            if (TagsOf(administrator).IsSubsetOf(caller))
             {
                 return true;
             }
@@ -319,7 +338,7 @@ public sealed class SecuredEnvironmentAdministration
                     admins.AddRange(current.Administrators.EnumerateArray());
                 }
 
-                if (admins.Count == 0 || !IsMember(admins, callerIdentity))
+                if (admins.Count == 0 || !IsAdministeredByMember(admins, callerIdentity))
                 {
                     throw new EnvironmentAdministrationException(environmentName);
                 }

@@ -513,10 +513,11 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     // Read-only administration probe for the publish gate (§13/§14.2): whether the base id has an established administration
-    // and, if so, whether the candidate (the submitter's stamped identity) is one of its administrators — compared by tags
-    // set-equality, no identity-list materialization. An unknown base id (no explicit record and no version 1) is
-    // unestablished, so the submitter establishes administration by publishing version 1. Works whether or not an explicit
-    // administrator store is configured (the version-1 identity is the implicit default).
+    // and, if so, whether the candidate (the submitter's stamped identity) administers it by membership (§16.5.4) — the
+    // candidate CONTAINS a stored/derived administrator identity — no identity-list materialization. An unknown base id (no
+    // explicit record and no version 1) is unestablished, so the submitter establishes administration by publishing
+    // version 1. Works whether or not an explicit administrator store is configured (the version-1 identity is the implicit
+    // default).
     private async ValueTask<(bool Established, bool IsAdministrator)> CheckAdministrationAsync(string baseWorkflowId, SecurityTagSet candidate, CancellationToken cancellationToken)
     {
         if (this.administrators is { } store)
@@ -535,7 +536,11 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         }
 
         SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-        return (true, WorkflowIdentity.SameAdministrator(ownerIdentity, candidate));
+
+        // Membership (§16.5.4): the version-1 owner administers iff the candidate (submitter) identity CONTAINS the owner
+        // identity — the same rule the explicit-record path applies via IsAdministeredBy above, so the no-explicit-store /
+        // legacy fallback stays consistent with the stored-record deployment (S4).
+        return (true, ownerIdentity.IsSubsetOf(candidate));
     }
 
     // Loads the current administrators of a base id for a mutation: the explicit record (returned to keep its identities
@@ -599,7 +604,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
             try
             {
                 // An unknown base id, or a caller who is not a current administrator, is refused identically (non-disclosing).
-                if (admins.Count == 0 || !IsMember(admins, callerIdentity))
+                if (admins.Count == 0 || !IsAdministeredByMember(admins, callerIdentity))
                 {
                     activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-administered");
                     throw new WorkflowAdministrationException(baseWorkflowId);
@@ -642,12 +647,32 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         }
     }
 
-    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags).
+    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags). This is the
+    // EXACT identity comparison used by the identity operations — add-idempotency (is this exact identity already present)
+    // and Dedupe (drop set-equal duplicates) — not the administration authorization gate; see IsAdministeredByMember.
     private static bool IsMember(List<AdministratorIdentity> admins, SecurityTagSet candidate)
     {
         foreach (AdministratorIdentity administrator in admins)
         {
             if (WorkflowIdentity.SameAdministrator(TagsOf(administrator), candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Whether a caller administers the set by MEMBERSHIP (§16.5.4): the caller's canonical identity CONTAINS (is a superset
+    // of) some administrator's identity. This is the mutation authorization gate, matching the forward publish check
+    // (WorkflowAdministrators.IsAdministeredBy) and the reverse index — a strict superset of a current administrator both
+    // administers and (post-S4) may manage the administrator set. Contrast IsMember, which is exact set-equality for the
+    // identity operations. The exact-digest paths (IndexOfDigest removal, Dedupe, the collision probe) stay exact.
+    private static bool IsAdministeredByMember(List<AdministratorIdentity> admins, SecurityTagSet caller)
+    {
+        foreach (AdministratorIdentity administrator in admins)
+        {
+            if (TagsOf(administrator).IsSubsetOf(caller))
             {
                 return true;
             }
