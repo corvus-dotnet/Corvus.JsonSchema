@@ -120,11 +120,16 @@ class ArazzoGranteePicker extends ArazzoElement {
           <input class="q" type="search" part="input" autocomplete="off" role="combobox" aria-expanded="false"
                  aria-autocomplete="list" placeholder="${escapeHtml(placeholder)}" aria-label="${escapeHtml(placeholder)}">
         </div>
-        <ul class="results" role="listbox" hidden></ul>
+        <ul class="results" role="listbox" popover="manual" hidden></ul>
         <div class="selected" hidden></div>
         <div class="msg" hidden></div>
       </div>
     `;
+    // The results list is a top-layer popover so an overflow ancestor (a panel/dialog) can't clip it and it
+    // always paints above everything; JS anchors it to the input and flips it up when there's no room below.
+    // Where the Popover API is unavailable it stays an absolutely-positioned list (the prior behaviour).
+    this._popoverOk = typeof this.$('.results')?.showPopover === 'function';
+    if (this._popoverOk) this.$('.results').removeAttribute('hidden'); // the UA hides a popover until showPopover()
     this.renderKindFilter();
     const input = this.$('.q');
     input.addEventListener('input', () => {
@@ -142,6 +147,10 @@ class ArazzoGranteePicker extends ArazzoElement {
   disconnectedCallback() {
     clearTimeout(this._timer);
     if (this._onDocDown) document.removeEventListener('pointerdown', this._onDocDown);
+    if (this._reposition) {
+      window.removeEventListener('scroll', this._reposition, true);
+      window.removeEventListener('resize', this._reposition);
+    }
   }
 
   /** @private */
@@ -292,13 +301,52 @@ class ArazzoGranteePicker extends ArazzoElement {
   /** @private */
   showResults() {
     const list = this.$('.results');
-    if (list) { list.hidden = false; this.$('.q')?.setAttribute('aria-expanded', 'true'); }
+    const input = this.$('.q');
+    if (!list || !input) return;
+    if (this._popoverOk) {
+      this.positionResults();
+      if (!list.matches(':popover-open')) list.showPopover();
+      // Keep it anchored while open (the panel scrolls / the window resizes underneath the top-layer list).
+      this._reposition ??= () => { if (list.matches(':popover-open')) this.positionResults(); };
+      window.addEventListener('scroll', this._reposition, true);
+      window.addEventListener('resize', this._reposition);
+    } else {
+      list.hidden = false;
+    }
+    input.setAttribute('aria-expanded', 'true');
+  }
+
+  /** @private — anchor the top-layer results to the input, flipping above when there is no room below. */
+  positionResults() {
+    const list = this.$('.results');
+    const input = this.$('.q');
+    if (!list || !input) return;
+    const r = input.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom;
+    const flipUp = below < 260 && r.top > below;
+    list.style.position = 'fixed';
+    list.style.margin = '0';
+    list.style.left = `${r.left}px`;
+    list.style.width = `${r.width}px`;
+    list.style.maxHeight = `${Math.max(160, (flipUp ? r.top : below) - 12)}px`;
+    if (flipUp) { list.style.top = 'auto'; list.style.bottom = `${window.innerHeight - r.top + 4}px`; }
+    else { list.style.bottom = 'auto'; list.style.top = `${r.bottom + 4}px`; }
   }
 
   /** @private */
   hideResults() {
     const list = this.$('.results');
-    if (list) { list.hidden = true; this.$('.q')?.setAttribute('aria-expanded', 'false'); }
+    if (!list) return;
+    if (this._popoverOk) {
+      if (list.matches(':popover-open')) list.hidePopover();
+      if (this._reposition) {
+        window.removeEventListener('scroll', this._reposition, true);
+        window.removeEventListener('resize', this._reposition);
+      }
+    } else {
+      list.hidden = true;
+    }
+    this.$('.q')?.setAttribute('aria-expanded', 'false');
   }
 
   /** @private */
