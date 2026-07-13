@@ -219,39 +219,35 @@ class ArazzoSchemaEditor extends ArazzoElement {
     const sel = document.createElement('select');
     sel.className = 'type';
     sel.disabled = this.readonly;
-    let html = '<optgroup label="Type">';
-    for (const t of RENDERABLE_TYPES) html += `<option value="${t}">${TYPE_LABEL[t]}</option>`;
-    html += '</optgroup><optgroup label="Combiner">';
-    for (const k of COMBINER_KINDS) html += `<option value="${k}">${COMBINER_LABEL[k]}</option>`;
-    html += '</optgroup>';
+    const libNames = this._library ? Object.keys(this._library) : [];
+    let html = '';
+    // Referencing a shared library type is the ENCOURAGED default for nested schemas — lead the type menu
+    // with it (§6), so reusing a common type is as easy as picking `string`, ahead of inlining a fresh one.
+    if (libNames.length) {
+      html += '<optgroup label="Shared types">' + libNames.map((n) => `<option value="ref:${escapeHtml(n)}">${escapeHtml(n)} ↗</option>`).join('') + '</optgroup>';
+    }
+    html += '<optgroup label="Type">' + RENDERABLE_TYPES.map((t) => `<option value="${t}">${TYPE_LABEL[t]}</option>`).join('') + '</optgroup>';
+    html += '<optgroup label="Combiner">' + COMBINER_KINDS.map((k) => `<option value="${k}">${COMBINER_LABEL[k]}</option>`).join('') + '</optgroup>';
     sel.innerHTML = html;
     const cls = classifyNode(schema);
     sel.value = cls.kind === 'combiner' ? cls.combiner : (schema.type ?? 'object');
-    sel.addEventListener('change', () => onChange(sel.value, sel));
+    sel.addEventListener('change', () => {
+      if (sel.value.startsWith('ref:')) { this._applyRef(schema, sel.value.slice(4)); return; }
+      onChange(sel.value, sel);
+    });
     return sel;
+  }
+
+  /** Replace a node with a reference to a shared library schema (in place). */
+  _applyRef(schema, name) {
+    for (const k of Object.keys(schema)) delete schema[k];
+    schema.$ref = `#/components/inputs/${name}`;
+    this._renderForm();
+    this._commit();
   }
 
   _isSoleRef(schema) {
     return schema && typeof schema === 'object' && typeof schema.$ref === 'string' && Object.keys(schema).length === 1;
-  }
-
-  /** The "Reference library schema…" picker — null when there is no library to reference. Selecting a name
-   *  replaces the node with `{ $ref: '#/components/inputs/<name>' }` (rendered thereafter as a reference row). */
-  _refSelect(schema) {
-    const names = this._library ? Object.keys(this._library) : [];
-    if (!names.length) return null;
-    const sel = document.createElement('select');
-    sel.className = 'ref';
-    sel.disabled = this.readonly;
-    sel.innerHTML = '<option value="">reference…</option>' + names.map((n) => `<option value="${n}">${escapeHtml(n)}</option>`).join('');
-    sel.addEventListener('change', () => {
-      if (!sel.value) return;
-      const name = sel.value;
-      for (const k of Object.keys(schema)) delete schema[k];
-      schema.$ref = `#/components/inputs/${name}`;
-      this._renderForm(); this._commit();
-    });
-    return sel;
   }
 
   /** A reference row: the target, "open in library", and "detach" (inline-copy the target). A target absent
@@ -325,8 +321,6 @@ class ArazzoSchemaEditor extends ArazzoElement {
       line.appendChild(name);
     }
     line.appendChild(this._typeSelect(schema, (v, sel) => this._changeType(schema, node, v, sel)));
-    const ref = this._refSelect(schema); // "Reference library schema…" on the root and object property rows (§6)
-    if (ref) line.appendChild(ref);
     if (ctx.name != null) {
       const req = document.createElement('button');
       req.className = 'req';
