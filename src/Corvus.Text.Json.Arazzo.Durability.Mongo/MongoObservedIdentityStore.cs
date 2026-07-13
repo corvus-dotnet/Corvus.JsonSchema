@@ -285,6 +285,71 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing.
+        if (identity.IsEmpty)
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
+        string kindToken = kind.ToToken();
+        string valueKey = (string)value;
+
+        // Mongo does not index the identity tags queryably (reach is applied in memory, see the class remarks), so the
+        // strict-superset overlap is a client-side scan: stream every grantee in sortKey order, parse its identity, and
+        // keep those whose tag set strictly contains the authored identity (skipping the authored (kind, value)), up to
+        // the cap.
+        IFindFluent<BsonDocument, BsonDocument> find = this.identities.Find(Builders<BsonDocument>.Filter.Empty)
+            .Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"));
+
+        var docs = new PooledDocumentList<ObservedIdentity>(cap);
+        try
+        {
+            using IAsyncCursor<BsonDocument> mongoCursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            while (docs.Count < cap && await mongoCursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument row in mongoCursor.Current)
+                {
+                    if (docs.Count >= cap)
+                    {
+                        break;
+                    }
+
+                    if (row["subjectKind"].AsString == kindToken && row["subjectValue"].AsString == valueKey)
+                    {
+                        continue; // the authored grantee itself
+                    }
+
+                    byte[] docBytes = row["doc"].AsBsonBinaryData.Bytes;
+                    bool broadens;
+                    using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(docBytes))
+                    {
+                        SecurityTagSet candidateTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                            : SecurityTagSet.Empty;
+                        broadens = identity.IsSubsetOf(candidateTags) && !candidateTags.IsSubsetOf(identity);
+                    }
+
+                    if (broadens)
+                    {
+                        docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(docBytes));
+                    }
+                }
+            }
+
+            return ObservedIdentityPage.Create(docs);
+        }
+        catch
+        {
+            docs.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient && this.client is IDisposable disposable)
