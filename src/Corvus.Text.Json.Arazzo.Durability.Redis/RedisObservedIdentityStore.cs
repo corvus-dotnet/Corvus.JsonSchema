@@ -164,6 +164,73 @@ public sealed class RedisObservedIdentityStore : IObservedIdentityStore, IAsyncD
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing.
+        if (identity.IsEmpty)
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
+        string kindToken = kind.ToToken();
+        string valueKey = (string)value;
+
+        // Redis has no queryable identity-tag index (reach is applied in memory), so the strict-superset overlap is a
+        // client-side scan over the index sortKeys: fetch each candidate's document, parse its identity, and keep those
+        // whose tag set strictly contains the authored identity (skipping the authored (kind, value)), up to the cap.
+        RedisValue[] sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
+        Array.Sort(sortKeys, static (a, b) => string.CompareOrdinal((string)a!, (string)b!));
+
+        var docs = new PooledDocumentList<ObservedIdentity>(cap);
+        try
+        {
+            foreach (RedisValue member in sortKeys)
+            {
+                if (docs.Count >= cap)
+                {
+                    break;
+                }
+
+                (string subjectValue, string subjectKind) = SplitSortKey((string)member!);
+                if (string.Equals(subjectKind, kindToken, StringComparison.Ordinal) && string.Equals(subjectValue, valueKey, StringComparison.Ordinal))
+                {
+                    continue; // the authored grantee itself
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                using Lease<byte>? lease = await this.database.StringGetLeaseAsync(IdentityKey(subjectKind, subjectValue)).ConfigureAwait(false);
+                if (lease is not { Length: > 0 })
+                {
+                    continue;
+                }
+
+                bool broadens;
+                using (ParsedJsonDocument<ObservedIdentity> candidate = ParsedJsonDocument<ObservedIdentity>.Parse(lease.Memory))
+                {
+                    SecurityTagSet candidateTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                        : SecurityTagSet.Empty;
+                    broadens = identity.IsSubsetOf(candidateTags) && !candidateTags.IsSubsetOf(identity);
+                }
+
+                if (broadens)
+                {
+                    docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(lease.Span));
+                }
+            }
+
+            return ObservedIdentityPage.Create(docs);
+        }
+        catch
+        {
+            docs.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);

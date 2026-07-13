@@ -89,13 +89,20 @@ administration under set-equality. Membership over a rich identity resolves both
   future-proofs a non-`sys:` deployment. H4: documented (design §16.5.5) that reach-rule evaluation reads the claim
   map, so every reach-relevant dimension must be ambient-provided or resolver-stamped, never a raw token claim — the
   review's stated remediation is documentation, and this is it.
-- **S5b — collision-probe subset-overlap warning (H5) — DEFERRED, needs a decision.** Unlike its S5a siblings this is
-  a full API-first + 10-backend slice: `FindIdentityConflictAsync` is an O(1) digest-indexed exact-collision probe
-  (no scan, by design). A subset-overlap warning is bidirectional and asymmetric — "new grant CONTAINS an existing
-  grantee" is tractable via a `SubsetDigests` lookup against the existing digest index, but "new grant is CONTAINED BY
-  an existing grantee" (the review's narrow-directory-mapper example) needs superset enumeration, which is unbounded
-  and requires a scan the store design forbids. Which direction(s) to detect, and how to surface the warning (a new
-  response field), is a design decision to take before implementing.
+- **S5b — collision-probe broadening-overlap warning (H5) — store IN PROGRESS.** Decision taken (with the user): the
+  security-relevant direction is *broadening* — granting a narrow identity that is a strict **subset** of an existing
+  broader grantee (`X ⊊ G`) silently confers administration on everyone containing `X`. Detecting it needs superset
+  enumeration, so a per-kind/per-backend **scan** (the user accepted this over the no-scan norm, optimizing each
+  backend). The warning is **non-blocking**, echoes the subsumed grantees **reach-filtered to the caller** (prior art:
+  AWS Access Analyzer / GCP Recommender surface breadth findings, named, not hidden), full set audited.
+  - **Store DONE (S5b-1):** `IObservedIdentityStore.FindBroadeningOverlapsAsync` (finds grantees whose identity
+    strictly contains the grant; full reach; fail-safe empty default). Native per backend across all 10: SQL
+    (Sqlite/Postgres/MySql/SqlServer) push the strict-superset predicate to the child `ObservedIdentitySecurityTags`
+    table (contains-all-authored-tags count = |X| + total-tags > |X|); Cosmos = `EXISTS`-per-tag over `securityTags`
+    + `ARRAY_LENGTH`; Mongo/Redis/AzureStorage/NATS = client-scan (no queryable tag index). Cross-kind conformance
+    test; in-memory + Sqlite 8/8, 8 container backends build-verified (container conformance pending).
+  - **Surface pending (S5b-2):** OpenAPI advisory on the add-administrator response + regen; handler wiring (workflow +
+    env) calling the probe, reach-filtering the echo via `ControlPlaneAccess.Current()`, telemetry audit; server tests.
 - **S6 — demo resolver enrichment + relaunch**, live-verify; then container conformance for the 8 backends.
 
 ## Current state — every identity-matching surface

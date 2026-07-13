@@ -222,6 +222,52 @@ public abstract class ObservedIdentityStoreConformance
         current!.RootElement.SubjectValueValue.ShouldBe("carol");
     }
 
+    [TestMethod]
+    public async Task FindBroadeningOverlaps_surfaces_grantees_whose_identity_strictly_contains_the_grant()
+    {
+        IObservedIdentityStore store = await this.NewStoreAsync();
+
+        // An existing PERSON grantee with a rich identity {group=admins, sub=alice}, and a TEAM grantee whose identity is
+        // exactly {group=admins}.
+        SecurityTagSet alice = SecurityTagSet.FromTags([new SecurityTag("sys:group", "admins"), new SecurityTag("sys:sub", "alice")]);
+        SecurityTagSet adminsGroup = SecurityTagSet.FromTags([new SecurityTag("sys:group", "admins")]);
+        await store.SeenAsync(Person, Str("alice"), Str("Alice"), alice, true, "administrator", default);
+        await store.SeenAsync(Team, Str("admins"), Str("Admins"), adminsGroup, true, "administrator", default);
+
+        // Granting the narrower identity {group=admins} broadens administration to also admit alice (whose identity
+        // strictly contains it) and everyone else in group=admins — a cross-kind subset overlap the probe surfaces. The
+        // team "admins" holds exactly {group=admins} (set-equal, not a strict superset), so it is the FindIdentityConflict
+        // case and is excluded from the broadening overlap.
+        using (ObservedIdentityPage page = await store.FindBroadeningOverlapsAsync(Team, Str("new-admins"), adminsGroup, 10, default))
+        {
+            page.Identities.Count.ShouldBe(1);
+            page.Identities.Single().SubjectKindValue.ShouldBe("person");
+            page.Identities.Single().SubjectValueValue.ShouldBe("alice");
+        }
+
+        // The REDUNDANT direction is not a broadening overlap: granting a broader (more specific) identity that an existing
+        // grantee is a subset of does not broaden anything, so nothing is surfaced.
+        SecurityTagSet alicePlus = SecurityTagSet.FromTags([new SecurityTag("sys:group", "admins"), new SecurityTag("sys:sub", "alice"), new SecurityTag("sys:iss", "ldap")]);
+        using (ObservedIdentityPage page = await store.FindBroadeningOverlapsAsync(Person, Str("alice-2"), alicePlus, 10, default))
+        {
+            page.Identities.Count.ShouldBe(0);
+        }
+
+        // A grant that has no strict superset among the grantees (a distinct, unrelated identity) surfaces nothing.
+        SecurityTagSet other = SecurityTagSet.FromTags([new SecurityTag("sys:group", "billing")]);
+        using (ObservedIdentityPage page = await store.FindBroadeningOverlapsAsync(Team, Str("billing"), other, 10, default))
+        {
+            page.Identities.Count.ShouldBe(0);
+        }
+
+        // The empty (unscoped) identity is a subset of everything but grants no administration scope, so it broadens
+        // nothing and never warns.
+        using (ObservedIdentityPage page = await store.FindBroadeningOverlapsAsync(Team, Str("any"), SecurityTagSet.Empty, 10, default))
+        {
+            page.Identities.Count.ShouldBe(0);
+        }
+    }
+
     // The seam carries the grantee kind as its JSON value (ObservedIdentity.GranteeKind); these are the enum constants the
     // tests pass, with AllKinds (undefined) meaning "all kinds" to a search.
     private static readonly ObservedIdentity.GranteeKind Person = ObservedIdentity.GranteeKind.EnumValues.Person;

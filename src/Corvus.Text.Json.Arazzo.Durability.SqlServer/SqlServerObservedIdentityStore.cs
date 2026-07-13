@@ -268,6 +268,71 @@ public sealed class SqlServerObservedIdentityStore : IObservedIdentityStore
             : (ParsedJsonDocument<ObservedIdentity>?)null;
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing.
+        if (identity.IsEmpty)
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
+        // Materialise the authored tags once; the pushdown finds grantees whose tag set STRICTLY contains all of them.
+        List<SecurityTag> tags = identity.ToList();
+        string kindToken = kind.ToToken();
+        string valueKey = (string)value;
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+
+        // Strict superset pushed to the child tag table: a candidate contains every authored tag (its count of tags
+        // matching the authored (key,value) set equals the authored tag count) AND has strictly more tags in total (a
+        // proper superset, not the set-equal FindIdentityConflict case). Both correlated counts ride the child-table
+        // indexes — no table scan.
+        var membership = new System.Text.StringBuilder();
+        for (int i = 0; i < tags.Count; i++)
+        {
+            if (i > 0)
+            {
+                membership.Append(" OR ");
+            }
+
+            membership.Append("(t.TagKey = @tk").Append(i).Append(" AND t.TagValue = @tv").Append(i).Append(')');
+            select.Parameters.AddWithValue("@tk" + i.ToString(CultureInfo.InvariantCulture), tags[i].Key);
+            select.Parameters.AddWithValue("@tv" + i.ToString(CultureInfo.InvariantCulture), tags[i].Value);
+        }
+
+        select.CommandText =
+            "SELECT TOP (@lim) o.SubjectKind, o.SubjectValue, o.Document FROM ObservedIdentities o " +
+            "WHERE NOT (o.SubjectKind = @k AND o.SubjectValue = @v) " +
+            "AND (SELECT COUNT(*) FROM ObservedIdentitySecurityTags t WHERE t.SubjectKind = o.SubjectKind AND t.SubjectValue = o.SubjectValue AND (" + membership + ")) = @xc " +
+            "AND (SELECT COUNT(*) FROM ObservedIdentitySecurityTags t2 WHERE t2.SubjectKind = o.SubjectKind AND t2.SubjectValue = o.SubjectValue) > @xc " +
+            "ORDER BY o.SubjectValue, o.SubjectKind;";
+        select.Parameters.AddWithValue("@k", kindToken);
+        select.Parameters.AddWithValue("@v", valueKey);
+        select.Parameters.AddWithValue("@xc", tags.Count);
+        select.Parameters.AddWithValue("@lim", cap);
+
+        var docs = new PooledDocumentList<ObservedIdentity>(cap);
+        try
+        {
+            await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                docs.Add(ReadDocument(reader, 2));
+            }
+
+            return ObservedIdentityPage.Create(docs);
+        }
+        catch
+        {
+            docs.Dispose();
+            throw;
+        }
+    }
+
     // The driver mints the Document column as a byte[] (the read leaf — GetFieldValue); parse it NON-COPYING (it is a fresh
     // managed array kept alive by the returned document) — no redundant pooled copy of bytes we already own.
     private static ParsedJsonDocument<ObservedIdentity> ReadDocument(SqlDataReader reader, int ordinal)
