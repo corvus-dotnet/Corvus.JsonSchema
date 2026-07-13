@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -251,7 +251,7 @@ public readonly partial struct SimulationTrace
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The step the replay paused before, when `outcome` is `paused`.
+    /// The step the replay paused before, when `outcome` is `paused`. A **scoped step path**: a bare `stepId` for a root step, or a slash-joined `parent/child/...` path (each segment a `stepId`, outermost first) when the stop fired inside a sub-workflow.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PausedBefore
@@ -329,6 +329,27 @@ public readonly partial struct SimulationTrace
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WaitUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>workflowId</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The sub-workflow&#39;s `workflowId`, present only on a nested `subTrace` and absent on the root trace. Marks this trace as one sub-workflow invocation&#39;s records within its parent; the client&#39;s step-into ascent stops where it becomes absent.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString WorkflowId
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WorkflowIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -821,6 +842,11 @@ public readonly partial struct SimulationTrace
         public const string Wait = "wait";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="WorkflowId"/>.
+        /// </summary>
+        public const string WorkflowId = "workflowId";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="ClockAdvances"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ClockAdvancesUtf8 => "clockAdvances"u8;
@@ -859,6 +885,11 @@ public readonly partial struct SimulationTrace
         /// Gets the JSON property name for <see cref="Wait"/>.
         /// </summary>
         public static ReadOnlySpan<byte> WaitUtf8 => "wait"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="WorkflowId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> WorkflowIdUtf8 => "workflowId"u8;
     }
 
     /// <summary>
@@ -905,6 +936,11 @@ public readonly partial struct SimulationTrace
         /// Gets the escaped UTF-8 JSON property name for <see cref="Wait"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Wait => "wait"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="WorkflowId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> WorkflowId => "workflowId"u8;
     }
 
     /// <summary>
@@ -952,5 +988,10 @@ public readonly partial struct SimulationTrace
         /// Gets the pre-baked property name blob for <see cref="Wait"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Wait => [0x65, 0x00, 0x00, 0x00, 0x22, 0x77, 0x61, 0x69, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="WorkflowId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> WorkflowId => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x77, 0x6F, 0x72, 0x6B, 0x66, 0x6C, 0x6F, 0x77, 0x49, 0x64, 0x22];
     }
 }

@@ -291,7 +291,7 @@ public readonly partial struct DebugRunPause
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Pause before these steps execute — breakpoints.
+        /// Pause before these steps execute — breakpoints. Each entry is a **scoped step path**: a bare `stepId` for a root step, or a slash-joined `parent/child/...` path for a step inside a sub-workflow (a bare id never matches a sub-workflow&#39;s step).
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DebugRunPause.JsonStringArray.Mutable BeforeSteps

@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 public readonly partial struct SimulationTrace

@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 public readonly partial struct SimulationTrace
@@ -263,11 +263,35 @@ public readonly partial struct SimulationTrace
             }
 
             /// <summary>
+            /// Gets the (optional) <c>skipped</c> property.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// True when a Skip resume skipped this step rather than executing it (the durable debug-run Skip protocol). Absent or false for an executed step.
+            /// </para>
+            /// </remarks>
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean Skipped
+            {
+                get
+                {
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkippedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+                    {
+                        return value;
+                    }
+
+                    return default;
+                }
+            }
+
+            /// <summary>
             /// Gets the <c>status</c> property.
             /// </summary>
             /// <remarks>
             /// <para>
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+            /// </para>
+            /// <para>
+            /// The step&#39;s terminal status, or — on a sub-workflow parent step whose child did not finish — `paused` (a scoped stop fired inside the child) or `suspended` (the child is awaiting a timer or message).
             /// </para>
             /// </remarks>
             public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity Status
@@ -296,6 +320,30 @@ public readonly partial struct SimulationTrace
                 get
                 {
                     if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+                    {
+                        return value;
+                    }
+
+                    return default;
+                }
+            }
+
+            /// <summary>
+            /// Gets the (optional) <c>subTrace</c> property.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// For a step bound to another workflow (`workflowId`), the nested trace of that sub-workflow&#39;s execution — the same shape as the root trace, carrying its own `workflowId`. Powers step-into; absent for non-sub-workflow steps.
+            /// </para>
+            /// <para>
+            /// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
+            /// </para>
+            /// </remarks>
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace SubTrace
+            {
+                get
+                {
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubTraceUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace value))
                     {
                         return value;
                     }
@@ -789,6 +837,11 @@ public readonly partial struct SimulationTrace
                 public const string Requests = "requests";
 
                 /// <summary>
+                /// Gets the JSON property name for <see cref="Skipped"/>.
+                /// </summary>
+                public const string Skipped = "skipped";
+
+                /// <summary>
                 /// Gets the JSON property name for <see cref="Status"/>.
                 /// </summary>
                 public const string Status = "status";
@@ -797,6 +850,11 @@ public readonly partial struct SimulationTrace
                 /// Gets the JSON property name for <see cref="StepId"/>.
                 /// </summary>
                 public const string StepId = "stepId";
+
+                /// <summary>
+                /// Gets the JSON property name for <see cref="SubTrace"/>.
+                /// </summary>
+                public const string SubTrace = "subTrace";
 
                 /// <summary>
                 /// Gets the JSON property name for <see cref="SuccessCriteria"/>.
@@ -824,6 +882,11 @@ public readonly partial struct SimulationTrace
                 public static ReadOnlySpan<byte> RequestsUtf8 => "requests"u8;
 
                 /// <summary>
+                /// Gets the JSON property name for <see cref="Skipped"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SkippedUtf8 => "skipped"u8;
+
+                /// <summary>
                 /// Gets the JSON property name for <see cref="Status"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
@@ -832,6 +895,11 @@ public readonly partial struct SimulationTrace
                 /// Gets the JSON property name for <see cref="StepId"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> StepIdUtf8 => "stepId"u8;
+
+                /// <summary>
+                /// Gets the JSON property name for <see cref="SubTrace"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SubTraceUtf8 => "subTrace"u8;
 
                 /// <summary>
                 /// Gets the JSON property name for <see cref="SuccessCriteria"/>.
@@ -865,6 +933,11 @@ public readonly partial struct SimulationTrace
                 public static ReadOnlySpan<byte> Requests => "requests"u8;
 
                 /// <summary>
+                /// Gets the escaped UTF-8 JSON property name for <see cref="Skipped"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Skipped => "skipped"u8;
+
+                /// <summary>
                 /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> Status => "status"u8;
@@ -873,6 +946,11 @@ public readonly partial struct SimulationTrace
                 /// Gets the escaped UTF-8 JSON property name for <see cref="StepId"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> StepId => "stepId"u8;
+
+                /// <summary>
+                /// Gets the escaped UTF-8 JSON property name for <see cref="SubTrace"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SubTrace => "subTrace"u8;
 
                 /// <summary>
                 /// Gets the escaped UTF-8 JSON property name for <see cref="SuccessCriteria"/>.
@@ -907,6 +985,11 @@ public readonly partial struct SimulationTrace
                 public static ReadOnlySpan<byte> Requests => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x22];
 
                 /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Skipped"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Skipped => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6B, 0x69, 0x70, 0x70, 0x65, 0x64, 0x22];
+
+                /// <summary>
                 /// Gets the pre-baked property name blob for <see cref="Status"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
@@ -915,6 +998,11 @@ public readonly partial struct SimulationTrace
                 /// Gets the pre-baked property name blob for <see cref="StepId"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> StepId => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x65, 0x70, 0x49, 0x64, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="SubTrace"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SubTrace => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x62, 0x54, 0x72, 0x61, 0x63, 0x65, 0x22];
 
                 /// <summary>
                 /// Gets the pre-baked property name blob for <see cref="SuccessCriteria"/>.

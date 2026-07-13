@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 public readonly partial struct SimulationTrace
@@ -47,6 +47,11 @@ public readonly partial struct SimulationTrace
             /// <summary>
             /// Generated from JSON Schema.
             /// </summary>
+            /// <remarks>
+            /// <para>
+            /// The step&#39;s terminal status, or — on a sub-workflow parent step whose child did not finish — `paused` (a scoped stop fired inside the child) or `suspended` (the child is awaiting a timer or message).
+            /// </para>
+            /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
             public readonly partial struct StatusEntity
                 : IJsonElement<StatusEntity>
@@ -72,6 +77,22 @@ public readonly partial struct SimulationTrace
                     /// A constant for the <c>enum</c> keyword.
                     /// </summary>
                     public static readonly StatusEntity EnumJson2 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"faulted\""u8]);
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
+                    public static readonly byte[] Enum3 = "paused"u8.ToArray();
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
+                    public static readonly StatusEntity EnumJson3 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"paused\""u8]);
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
+                    public static readonly byte[] Enum4 = "suspended"u8.ToArray();
+                    /// <summary>
+                    /// A constant for the <c>enum</c> keyword.
+                    /// </summary>
+                    public static readonly StatusEntity EnumJson4 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"suspended\""u8]);
                 }
 
                 /// <summary>
@@ -100,10 +121,44 @@ public readonly partial struct SimulationTrace
                     /// as a UTF8 byte array.
                     /// </summary>
                     public static ReadOnlySpan<byte> FaultedUtf8 => Constants.Enum2;
+
+                    /// <summary>
+                    /// Gets the string "paused"
+                    /// as a <see cref="StatusEntity"/>.
+                    /// </summary>
+                    public static StatusEntity Paused { get; } = Constants.EnumJson3;
+                    /// <summary>
+                    /// Gets the string "paused"
+                    /// as a UTF8 byte array.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> PausedUtf8 => Constants.Enum3;
+
+                    /// <summary>
+                    /// Gets the string "suspended"
+                    /// as a <see cref="StatusEntity"/>.
+                    /// </summary>
+                    public static StatusEntity Suspended { get; } = Constants.EnumJson4;
+                    /// <summary>
+                    /// Gets the string "suspended"
+                    /// as a UTF8 byte array.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SuspendedUtf8 => Constants.Enum4;
                 }
 
                 public static partial class JsonSchema
                 {
+                    private static EnumStringSet BuildEnumStringSet()
+                    {
+                        return new EnumStringSet([
+                            static () => "completed"u8,
+                            static () => "faulted"u8,
+                            static () => "paused"u8,
+                            static () => "suspended"u8,
+                        ]);
+                    }
+
+                    private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
@@ -149,12 +204,7 @@ public readonly partial struct SimulationTrace
                         {
                             using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
-                            if (unescapedUtf8JsonString.Span.SequenceEqual("completed"u8))
-                            {
-                                goto enumShortCircuitSuccess;
-                            }
-
-                            if (unescapedUtf8JsonString.Span.SequenceEqual("faulted"u8))
+                            if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
                             {
                                 goto enumShortCircuitSuccess;
                             }

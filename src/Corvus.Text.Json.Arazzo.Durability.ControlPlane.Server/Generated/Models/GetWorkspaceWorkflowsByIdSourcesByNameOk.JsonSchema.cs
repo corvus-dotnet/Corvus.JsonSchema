@@ -283,6 +283,10 @@ public readonly partial struct GetWorkspaceWorkflowsByIdSourcesByNameOk
                 }
             }
 
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf1_context);
+            context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
+
             if ((~(hoistedAllOf0_requiredBits[0]) & HoistedAllOf0RequiredBitMask0) == 0)
             {
                 if (hoistedAllOf0_context.HasCollector)
@@ -339,10 +343,6 @@ public readonly partial struct GetWorkspaceWorkflowsByIdSourcesByNameOk
             allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
             context.ApplyEvaluated(ref hoistedAllOf0_context);
             context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
-
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf1_context);
-            context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
 
             context.EvaluatedKeyword(allOfComposedIsMatch, allOfComposedIsMatch  ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
         }

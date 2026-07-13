@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 public readonly partial struct SimulationTrace
@@ -72,8 +72,10 @@ public readonly partial struct SimulationTrace
                 private static readonly JsonSchemaPathProvider AttemptSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/attempt"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider OutputsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/outputs"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider RequestsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requests"u8, buffer, out written);
+                private static readonly JsonSchemaPathProvider SkippedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/skipped"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider StepIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/stepId"u8, buffer, out written);
+                private static readonly JsonSchemaPathProvider SubTraceSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/subTrace/$ref"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider SuccessCriteriaSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/successCriteria"u8, buffer, out written);
 
                 private static void MatchActionTakenValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
@@ -143,10 +145,25 @@ public readonly partial struct SimulationTrace
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                 }
 
-                private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                private static void MatchSkipped(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext4 =
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
+                            parentDocument,
+                            parentDocumentIndex,
+                            ref context,
+                            JsonPropertyNames.SkippedUtf8,
+                            evaluationPath: SkippedSchemaEvaluationPath);
+
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+                    context.CommitChildContext(childContext4.IsMatch, ref childContext4);
+                }
+
+                private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                {
+                    context.AddLocalEvaluatedProperty(propertyCount);
+                    JsonSchemaContext childContext5 =
                         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
@@ -154,8 +171,8 @@ public readonly partial struct SimulationTrace
                             JsonPropertyNames.StatusUtf8,
                             evaluationPath: StatusSchemaEvaluationPath);
 
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
-                    context.CommitChildContext(childContext4.IsMatch, ref childContext4);
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+                    context.CommitChildContext(childContext5.IsMatch, ref childContext5);
 
                     if (!context.HasCollector && !context.IsMatch)
                     {
@@ -168,7 +185,7 @@ public readonly partial struct SimulationTrace
                 private static void MatchStepId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
-                    JsonSchemaContext childContext5 =
+                    JsonSchemaContext childContext6 =
                         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
@@ -176,8 +193,8 @@ public readonly partial struct SimulationTrace
                             JsonPropertyNames.StepIdUtf8,
                             evaluationPath: StepIdSchemaEvaluationPath);
 
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
-                    context.CommitChildContext(childContext5.IsMatch, ref childContext5);
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
+                    context.CommitChildContext(childContext6.IsMatch, ref childContext6);
 
                     if (!context.HasCollector && !context.IsMatch)
                     {
@@ -187,10 +204,25 @@ public readonly partial struct SimulationTrace
                     requiredBitBuffer[RequiredOffsetForStepId] |= RequiredBitForStepId;
                 }
 
+                private static void MatchSubTrace(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                {
+                    context.AddLocalEvaluatedProperty(propertyCount);
+                    JsonSchemaContext childContext7 =
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.JsonSchema.PushChildContextUnescaped(
+                            parentDocument,
+                            parentDocumentIndex,
+                            ref context,
+                            JsonPropertyNames.SubTraceUtf8,
+                            evaluationPath: SubTraceSchemaEvaluationPath);
+
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
+                    context.CommitChildContext(childContext7.IsMatch, ref childContext7);
+                }
+
                 private static void MatchSuccessCriteria(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
-                    JsonSchemaContext childContext6 =
+                    JsonSchemaContext childContext8 =
                         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
@@ -198,8 +230,8 @@ public readonly partial struct SimulationTrace
                             JsonPropertyNames.SuccessCriteriaUtf8,
                             evaluationPath: SuccessCriteriaSchemaEvaluationPath);
 
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
-                    context.CommitChildContext(childContext6.IsMatch, ref childContext6);
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
+                    context.CommitChildContext(childContext8.IsMatch, ref childContext8);
                 }
 
                 private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
@@ -209,8 +241,10 @@ public readonly partial struct SimulationTrace
                         (static () => JsonPropertyNames.AttemptUtf8, MatchAttempt),
                         (static () => JsonPropertyNames.OutputsUtf8, MatchOutputs),
                         (static () => JsonPropertyNames.RequestsUtf8, MatchRequests),
+                        (static () => JsonPropertyNames.SkippedUtf8, MatchSkipped),
                         (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
                         (static () => JsonPropertyNames.StepIdUtf8, MatchStepId),
+                        (static () => JsonPropertyNames.SubTraceUtf8, MatchSubTrace),
                         (static () => JsonPropertyNames.SuccessCriteriaUtf8, MatchSuccessCriteria),
                     ]);
                 }

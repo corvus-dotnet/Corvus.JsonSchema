@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -358,7 +358,7 @@ public readonly partial struct SimulationTrace
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The step the replay paused before, when `outcome` is `paused`.
+        /// The step the replay paused before, when `outcome` is `paused`. A **scoped step path**: a bare `stepId` for a root step, or a slash-joined `parent/child/...` path (each segment a `stepId`, outermost first) when the stop fired inside a sub-workflow.
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable PausedBefore
@@ -436,6 +436,27 @@ public readonly partial struct SimulationTrace
             get
             {
                 if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WaitUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>workflowId</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The sub-workflow&#39;s `workflowId`, present only on a nested `subTrace` and absent on the root trace. Marks this trace as one sub-workflow invocation&#39;s records within its parent; the client&#39;s step-into ascent stops where it becomes absent.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable WorkflowId
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WorkflowIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -979,6 +1000,51 @@ public readonly partial struct SimulationTrace
             return result;
         }
 
+        /// <summary>
+        /// Set the <c>workflowId</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetWorkflowId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.WorkflowIdUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WorkflowIdUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WorkflowId, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>workflowId</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveWorkflowId()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.WorkflowIdUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
         /// <inheritdoc/>
         public void WriteTo(Utf8JsonWriter writer)
         {
@@ -1317,6 +1383,7 @@ public readonly partial struct SimulationTrace
         private readonly Corvus.Text.Json.JsonElement.Source _createArg6;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg7;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source _createArg8;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg9;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1331,7 +1398,7 @@ public readonly partial struct SimulationTrace
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source arg8)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1341,6 +1408,7 @@ public readonly partial struct SimulationTrace
             _createArg6 = arg6;
             _createArg7 = arg7;
             _createArg8 = arg8;
+            _createArg9 = arg9;
             _kind = Kind.Create;
         }
 
@@ -1361,7 +1429,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1386,7 +1454,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1411,7 +1479,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1436,7 +1504,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1461,7 +1529,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1497,6 +1565,7 @@ public readonly partial struct SimulationTrace
         private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg6;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg7;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> _createArg8;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg9;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1509,7 +1578,7 @@ public readonly partial struct SimulationTrace
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> arg8)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1520,6 +1589,7 @@ public readonly partial struct SimulationTrace
             _createArg6 = arg6;
             _createArg7 = arg7;
             _createArg8 = arg8;
+            _createArg9 = arg9;
             _kind = Kind.Create;
         }
 
@@ -1538,7 +1608,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1563,7 +1633,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1588,7 +1658,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1613,7 +1683,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1638,7 +1708,7 @@ public readonly partial struct SimulationTrace
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1679,7 +1749,8 @@ public readonly partial struct SimulationTrace
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source fault = default,
             in Corvus.Text.Json.JsonElement.Source outputs = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default)
         {
             outcome.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outcome, ref builder);
             steps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Steps, ref builder);
@@ -1689,6 +1760,7 @@ public readonly partial struct SimulationTrace
             outputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref builder);
             pausedBefore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PausedBefore, ref builder);
             wait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Wait, ref builder);
+            workflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WorkflowId, ref builder);
         }
 
         /// <summary>
@@ -1702,9 +1774,10 @@ public readonly partial struct SimulationTrace
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source fault = default,
             in Corvus.Text.Json.JsonElement.Source outputs = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default)
         {
-            Create(ref _builder, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait);
+            Create(ref _builder, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait, workflowId);
         }
 
         /// <summary>
@@ -1720,7 +1793,8 @@ public readonly partial struct SimulationTrace
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> fault = default,
             in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1733,6 +1807,7 @@ public readonly partial struct SimulationTrace
             outputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref builder);
             pausedBefore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PausedBefore, ref builder);
             wait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Wait, ref builder);
+            workflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WorkflowId, ref builder);
         }
 
         /// <summary>
@@ -1747,12 +1822,13 @@ public readonly partial struct SimulationTrace
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> fault = default,
             in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait);
+            Create(context, ref _builder, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait, workflowId);
         }
 
         /// <summary>
@@ -1858,11 +1934,12 @@ public readonly partial struct SimulationTrace
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
         /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source arg8, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
             o.EndObject();
         }
 
@@ -1879,14 +1956,15 @@ public readonly partial struct SimulationTrace
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
         /// <param name="arg8">The value of the property.</param>
+        /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> arg8, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
             o.EndObject();
         }
     }
@@ -1931,10 +2009,11 @@ public readonly partial struct SimulationTrace
     /// <param name="outputs">The value of the <c>"outputs"</c> property.</param>
     /// <param name="pausedBefore">The value of the <c>"pausedBefore"</c> property.</param>
     /// <param name="wait">The value of the <c>"wait"</c> property.</param>
+    /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source clockAdvances = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source fault = default, scoped in Corvus.Text.Json.JsonElement.Source outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source clockAdvances = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source fault = default, scoped in Corvus.Text.Json.JsonElement.Source outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default)
     {
-        return new Source(outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait);
+        return new Source(outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait, workflowId);
     }
 
     /// <summary>
@@ -1950,13 +2029,14 @@ public readonly partial struct SimulationTrace
     /// <param name="outputs">The value of the <c>"outputs"</c> property.</param>
     /// <param name="pausedBefore">The value of the <c>"pausedBefore"</c> property.</param>
     /// <param name="wait">The value of the <c>"wait"</c> property.</param>
+    /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> clockAdvances = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> fault = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> steps, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> clockAdvances = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> fault = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait);
+        return new Source<TContext>(context, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait, workflowId);
     }
 
     /// <summary>
@@ -2060,15 +2140,16 @@ public readonly partial struct SimulationTrace
     /// <param name="outputs">The value of the property.</param>
     /// <param name="pausedBefore">The value of the property.</param>
     /// <param name="wait">The value of the property.</param>
+    /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source clockAdvances = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source fault = default, in Corvus.Text.Json.JsonElement.Source outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source clockAdvances = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source fault = default, in Corvus.Text.Json.JsonElement.Source outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source wait = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait);
+        ovb.Create(outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait, workflowId);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2089,9 +2170,10 @@ public readonly partial struct SimulationTrace
     /// <param name="outputs">The value of the property.</param>
     /// <param name="pausedBefore">The value of the property.</param>
     /// <param name="wait">The value of the property.</param>
+    /// <param name="workflowId">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> clockAdvances = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> fault = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.OutcomeEntity.Source outcome, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.Source<TContext> steps, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source stepsExecuted, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.ClockAdvanceArray.Source<TContext> clockAdvances = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationFault.Source<TContext> fault = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source pausedBefore = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulationWait.Source<TContext> wait = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2100,7 +2182,7 @@ public readonly partial struct SimulationTrace
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait);
+        ovb.Create(context, outcome, steps, stepsExecuted, clockAdvances, fault, outputs, pausedBefore, wait, workflowId);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

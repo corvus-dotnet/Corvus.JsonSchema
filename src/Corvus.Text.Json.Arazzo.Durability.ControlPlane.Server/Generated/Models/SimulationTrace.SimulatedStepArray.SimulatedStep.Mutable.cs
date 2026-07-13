@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 public readonly partial struct SimulationTrace
@@ -370,11 +370,35 @@ public readonly partial struct SimulationTrace
                 }
 
                 /// <summary>
+                /// Gets the (optional) <c>skipped</c> property.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// True when a Skip resume skipped this step rather than executing it (the durable debug-run Skip protocol). Absent or false for an executed step.
+                /// </para>
+                /// </remarks>
+                public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Mutable Skipped
+                {
+                    get
+                    {
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkippedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Mutable value))
+                        {
+                            return value;
+                        }
+
+                        return default;
+                    }
+                }
+
+                /// <summary>
                 /// Gets the <c>status</c> property.
                 /// </summary>
                 /// <remarks>
                 /// <para>
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+                /// </para>
+                /// <para>
+                /// The step&#39;s terminal status, or — on a sub-workflow parent step whose child did not finish — `paused` (a scoped stop fired inside the child) or `suspended` (the child is awaiting a timer or message).
                 /// </para>
                 /// </remarks>
                 public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Mutable Status
@@ -403,6 +427,30 @@ public readonly partial struct SimulationTrace
                     get
                     {
                         if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                        {
+                            return value;
+                        }
+
+                        return default;
+                    }
+                }
+
+                /// <summary>
+                /// Gets the (optional) <c>subTrace</c> property.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// For a step bound to another workflow (`workflowId`), the nested trace of that sub-workflow&#39;s execution — the same shape as the root trace, carrying its own `workflowId`. Powers step-into; absent for non-sub-workflow steps.
+                /// </para>
+                /// <para>
+                /// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
+                /// </para>
+                /// </remarks>
+                public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Mutable SubTrace
+                {
+                    get
+                    {
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubTraceUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Mutable value))
                         {
                             return value;
                         }
@@ -746,6 +794,51 @@ public readonly partial struct SimulationTrace
                 }
 
                 /// <summary>
+                /// Set the <c>skipped</c> property.
+                /// </summary>
+                /// <param name="value">The value of the property to add.</param>
+                public void SetSkipped(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source value)
+                {
+                    CheckValidInstance();
+
+                    if (value.IsUndefined)
+                    {
+                        JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SkippedUtf8);
+                        _documentVersion = _parent.Version;
+                        return;
+                    }
+
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkippedUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                    {
+                        // We are going to replace just the value
+                        value.AddAsItem(ref cvb);
+                        _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+                    }
+                    else
+                    {
+                        // We are going to insert the new value
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Skipped, ref cvb);
+                        int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                        _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+                    }
+
+                    _documentVersion = _parent.Version;
+                }
+
+                /// <summary>
+                /// Remove the <c>skipped</c> property, if present.
+                /// </summary>
+                /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+                public bool RemoveSkipped()
+                {
+                    CheckValidInstance();
+                    bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SkippedUtf8);
+                    _documentVersion = _parent.Version;
+                    return result;
+                }
+
+                /// <summary>
                 /// Set the <c>status</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
@@ -805,6 +898,87 @@ public readonly partial struct SimulationTrace
                     }
 
                     _documentVersion = _parent.Version;
+                }
+
+                /// <summary>
+                /// Set the <c>subTrace</c> property.
+                /// </summary>
+                /// <param name="value">The value of the property to add.</param>
+                public void SetSubTrace(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source value)
+                {
+                    CheckValidInstance();
+
+                    if (value.IsUndefined)
+                    {
+                        JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SubTraceUtf8);
+                        _documentVersion = _parent.Version;
+                        return;
+                    }
+
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubTraceUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                    {
+                        // We are going to replace just the value
+                        value.AddAsItem(ref cvb);
+                        _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+                    }
+                    else
+                    {
+                        // We are going to insert the new value
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubTrace, ref cvb);
+                        int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                        _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+                    }
+
+                    _documentVersion = _parent.Version;
+                }
+
+                /// <summary>
+                /// Set the <c>subTrace</c> property.
+                /// </summary>
+                /// <param name="value">The value of the property to add.</param>
+                public void SetSubTrace<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    CheckValidInstance();
+
+                    if (value.IsUndefined)
+                    {
+                        JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SubTraceUtf8);
+                        _documentVersion = _parent.Version;
+                        return;
+                    }
+
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubTraceUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                    {
+                        // We are going to replace just the value
+                        value.AddAsItem(ref cvb);
+                        _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+                    }
+                    else
+                    {
+                        // We are going to insert the new value
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubTrace, ref cvb);
+                        int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                        _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+                    }
+
+                    _documentVersion = _parent.Version;
+                }
+
+                /// <summary>
+                /// Remove the <c>subTrace</c> property, if present.
+                /// </summary>
+                /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+                public bool RemoveSubTrace()
+                {
+                    CheckValidInstance();
+                    bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SubTraceUtf8);
+                    _documentVersion = _parent.Version;
+                    return result;
                 }
 
                 /// <summary>
@@ -1224,7 +1398,9 @@ public readonly partial struct SimulationTrace
                 private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source _createArg4;
                 private readonly Corvus.Text.Json.JsonElement.Source _createArg5;
                 private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source _createArg6;
-                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source _createArg7;
+                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg7;
+                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source _createArg8;
+                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source _createArg9;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1239,7 +1415,7 @@ public readonly partial struct SimulationTrace
 
                 internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source arg7)
+                internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source arg9)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1248,6 +1424,8 @@ public readonly partial struct SimulationTrace
                     _createArg5 = arg5;
                     _createArg6 = arg6;
                     _createArg7 = arg7;
+                    _createArg8 = arg8;
+                    _createArg9 = arg9;
                     _kind = Kind.Create;
                 }
 
@@ -1268,7 +1446,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1293,7 +1471,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1318,7 +1496,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1343,7 +1521,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1368,7 +1546,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndItem(handle);
                                 break;
                             }
@@ -1402,7 +1580,9 @@ public readonly partial struct SimulationTrace
                 private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> _createArg4;
                 private readonly Corvus.Text.Json.JsonElement.Source<TContext> _createArg5;
                 private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> _createArg6;
-                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> _createArg7;
+                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg7;
+                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> _createArg8;
+                private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> _createArg9;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1415,7 +1595,7 @@ public readonly partial struct SimulationTrace
 
                 internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> arg7)
+                internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> arg9)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1425,6 +1605,8 @@ public readonly partial struct SimulationTrace
                     _createArg5 = arg5;
                     _createArg6 = arg6;
                     _createArg7 = arg7;
+                    _createArg8 = arg8;
+                    _createArg9 = arg9;
                     _kind = Kind.Create;
                 }
 
@@ -1443,7 +1625,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1468,7 +1650,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1493,7 +1675,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1518,7 +1700,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndProperty(handle);
                                 break;
                             }
@@ -1543,7 +1725,7 @@ public readonly partial struct SimulationTrace
                         case Kind.Create:
                             {
                                 ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, ref valueBuilder);
                                 valueBuilder.EndItem(handle);
                                 break;
                             }
@@ -1583,6 +1765,8 @@ public readonly partial struct SimulationTrace
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source actionTaken = default,
                     in Corvus.Text.Json.JsonElement.Source outputs = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source requests = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source subTrace = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source successCriteria = default)
                 {
                     attempt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Attempt, ref builder);
@@ -1591,6 +1775,8 @@ public readonly partial struct SimulationTrace
                     actionTaken.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ActionTakenValue, ref builder);
                     outputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref builder);
                     requests.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Requests, ref builder);
+                    skipped.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Skipped, ref builder);
+                    subTrace.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubTrace, ref builder);
                     successCriteria.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuccessCriteria, ref builder);
                 }
 
@@ -1604,9 +1790,11 @@ public readonly partial struct SimulationTrace
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source actionTaken = default,
                     in Corvus.Text.Json.JsonElement.Source outputs = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source requests = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source subTrace = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source successCriteria = default)
                 {
-                    Create(ref _builder, attempt, status, stepId, actionTaken, outputs, requests, successCriteria);
+                    Create(ref _builder, attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
                 }
 
                 /// <summary>
@@ -1621,6 +1809,8 @@ public readonly partial struct SimulationTrace
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> actionTaken = default,
                     in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> requests = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> subTrace = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> successCriteria = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
@@ -1632,6 +1822,8 @@ public readonly partial struct SimulationTrace
                     actionTaken.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ActionTakenValue, ref builder);
                     outputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref builder);
                     requests.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Requests, ref builder);
+                    skipped.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Skipped, ref builder);
+                    subTrace.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubTrace, ref builder);
                     successCriteria.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuccessCriteria, ref builder);
                 }
 
@@ -1646,12 +1838,14 @@ public readonly partial struct SimulationTrace
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> actionTaken = default,
                     in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> requests = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default,
+                    in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> subTrace = default,
                     in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> successCriteria = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
                 {
-                    Create(context, ref _builder, attempt, status, stepId, actionTaken, outputs, requests, successCriteria);
+                    Create(context, ref _builder, attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
                 }
 
                 /// <summary>
@@ -1756,11 +1950,13 @@ public readonly partial struct SimulationTrace
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="arg7">The value of the property.</param>
+                /// <param name="arg8">The value of the property.</param>
+                /// <param name="arg9">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source arg7, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source arg9, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
-                    Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                    Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
                     o.EndObject();
                 }
 
@@ -1776,14 +1972,16 @@ public readonly partial struct SimulationTrace
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="arg7">The value of the property.</param>
+                /// <param name="arg8">The value of the property.</param>
+                /// <param name="arg9">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> arg7, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
                 {
                     o.StartObject();
-                    Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                    Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
                     o.EndObject();
                 }
             }
@@ -1826,11 +2024,13 @@ public readonly partial struct SimulationTrace
             /// <param name="actionTaken">The value of the <c>"actionTaken"</c> property.</param>
             /// <param name="outputs">The value of the <c>"outputs"</c> property.</param>
             /// <param name="requests">The value of the <c>"requests"</c> property.</param>
+            /// <param name="skipped">The value of the <c>"skipped"</c> property.</param>
+            /// <param name="subTrace">The value of the <c>"subTrace"</c> property.</param>
             /// <param name="successCriteria">The value of the <c>"successCriteria"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source actionTaken = default, scoped in Corvus.Text.Json.JsonElement.Source outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source requests = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source successCriteria = default)
+            public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source actionTaken = default, scoped in Corvus.Text.Json.JsonElement.Source outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source requests = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source subTrace = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source successCriteria = default)
             {
-                return new Source(attempt, status, stepId, actionTaken, outputs, requests, successCriteria);
+                return new Source(attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
             }
 
             /// <summary>
@@ -1844,14 +2044,16 @@ public readonly partial struct SimulationTrace
             /// <param name="actionTaken">The value of the <c>"actionTaken"</c> property.</param>
             /// <param name="outputs">The value of the <c>"outputs"</c> property.</param>
             /// <param name="requests">The value of the <c>"requests"</c> property.</param>
+            /// <param name="skipped">The value of the <c>"skipped"</c> property.</param>
+            /// <param name="subTrace">The value of the <c>"subTrace"</c> property.</param>
             /// <param name="successCriteria">The value of the <c>"successCriteria"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> actionTaken = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> requests = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> successCriteria = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> actionTaken = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> requests = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> subTrace = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> successCriteria = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
-                return new Source<TContext>(context, attempt, status, stepId, actionTaken, outputs, requests, successCriteria);
+                return new Source<TContext>(context, attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
             }
 
             /// <summary>
@@ -1953,16 +2155,18 @@ public readonly partial struct SimulationTrace
             /// <param name="actionTaken">The value of the property.</param>
             /// <param name="outputs">The value of the property.</param>
             /// <param name="requests">The value of the property.</param>
+            /// <param name="skipped">The value of the property.</param>
+            /// <param name="subTrace">The value of the property.</param>
             /// <param name="successCriteria">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source actionTaken = default, in Corvus.Text.Json.JsonElement.Source outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source requests = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source successCriteria = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source actionTaken = default, in Corvus.Text.Json.JsonElement.Source outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source requests = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source subTrace = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source successCriteria = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 cvb.StartObject();
                 Builder ovb = new(cvb);
-                ovb.Create(attempt, status, stepId, actionTaken, outputs, requests, successCriteria);
+                ovb.Create(attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
                 cvb = ovb._builder;
                 cvb.EndObject();
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1981,10 +2185,12 @@ public readonly partial struct SimulationTrace
             /// <param name="actionTaken">The value of the property.</param>
             /// <param name="outputs">The value of the property.</param>
             /// <param name="requests">The value of the property.</param>
+            /// <param name="skipped">The value of the property.</param>
+            /// <param name="subTrace">The value of the property.</param>
             /// <param name="successCriteria">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> actionTaken = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> requests = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> successCriteria = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInteger.Source attempt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source stepId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> actionTaken = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> requests = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source skipped = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.Source<TContext> subTrace = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> successCriteria = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
@@ -1993,7 +2199,7 @@ public readonly partial struct SimulationTrace
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 cvb.StartObject();
                 Builder ovb = new(cvb);
-                ovb.Create(context, attempt, status, stepId, actionTaken, outputs, requests, successCriteria);
+                ovb.Create(context, attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
                 cvb = ovb._builder;
                 cvb.EndObject();
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
