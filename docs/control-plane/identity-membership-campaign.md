@@ -56,13 +56,105 @@ administration under set-equality. Membership over a rich identity resolves both
 
 ## Slices (per-piece, test-first, gated)
 
-- **S1 — core (in-memory reference).** Subset predicate; `IsAdministeredBy` → subset; reach `Matches` +
-  self-elevation → membership over canonical identity; rich identity; seed re-key; in-memory
-  `ListAdministeredWorkflowsAsync` subset-digest fan-out; server + durability (in-memory) tests green.
-- **S2 — reverse-index fan-out across the 9 backends** + conformance (the subset-digest query per backend).
-- **S3 — collision-probe semantics** under membership + tests.
-- **S4 — demo resolver + seed + relaunch**, live-verify admin reach + administers + `sub` grants.
-- **S5 — test migration sweep** (raw-claim binding tests) + design-doc §16.5.4 decision update + catalog gate.
+- **S1 — core + reach — DONE** (commits `4d97510`, `bb3962e`). `SecurityTagSet.IsSubsetOf`; both
+  `IsAdministeredBy` forward checks → subset; `PersistentRowSecurityPolicy.Matches` + the self-elevation
+  guard → membership over the canonical identity (not raw claims); genesis seed re-keyed `groups`→`group`
+  dimension; ~75 raw-claim-contract tests migrated to a resolver; server 242/242, durability 450/450.
+- **S2 — workflow reverse-index membership — DONE** (commit `ff0cccb`). `SecurityIdentityDigest.SubsetDigests`;
+  `IWorkflowAdministratorStore.ListAdministeredAsync(IReadOnlyList<string> adminDigests, …)`; one native
+  DISTINCT-union query per backend across all 10 stores; membership conformance test. In-memory + Sqlite
+  runtime-verified; 8 container backends build-verified, container conformance pending.
+- **S3 — environment reverse-index membership** (the confirmed asymmetry below): the environment twin of S2.
+- **S4 — mutation-gate membership** (the confirmed asymmetry below): the add/remove/transfer authorization.
+- **S5 — collision-probe under membership**, overview prefix fix, rule-eval hardening (see the review below).
+- **S6 — demo resolver enrichment + relaunch**, live-verify; then container conformance for the 8 backends.
+
+## Current state — every identity-matching surface
+
+Verified by code audit after S1+S2. "Membership" = the caller's canonical identity **contains** the named
+identity (subset). "Set-equality" = exact, order-independent. "Per-tag" = the identity contains one named
+`dimension=value`. Role is **authorization** ("may this caller do X") or an **identity operation** ("act on
+the entry whose identity is exactly X").
+
+| # | Surface | Predicate | Role | Consistent? |
+|---|---------|-----------|------|-------------|
+| 1 | Reach binding selection (`PersistentRowSecurityPolicy.Matches`) | per-tag over the stamped `sys:` identity | authz | membership ✓ |
+| 2 | Reach rule evaluation (`ResolveReach`/`CollectClaims`) | rule over **raw claims** + ambient (ambient authoritative) | authz | see review |
+| 3 | Workflow admin — forward (`WorkflowAdministrators.IsAdministeredBy`) | subset | authz | membership ✓ |
+| 4 | Workflow admin — reverse index (`ListAdministeredAsync`) | subset-digest union | authz-support | membership ✓ |
+| 5 | Workflow admin — mutation gate (`SecuredWorkflowCatalog.IsMember`, L602) | **set-equality** | authz | **asymmetric** |
+| 6 | Environment admin — forward (`EnvironmentAdministrators.IsAdministeredBy`) | subset | authz | membership ✓ |
+| 7 | Environment admin — reverse index (`SecuredEnvironmentAdministration`, L66) | **single exact digest** | authz-support | **asymmetric** |
+| 8 | Environment admin — mutation gate (`SecuredEnvironmentAdministration.IsMember`, L318) | **set-equality** | authz | **asymmetric** |
+| 9 | Credential usage (`SourceCredentialBinding.IsUsableBy`) | per-tag (`usageTags ⊆ runTags`) | authz | membership ✓ |
+| 10 | Self-elevation guard (`CallerMatches`) | per-tag over the stamped identity | authz | membership ✓ |
+| 11 | Identity collision probe (`FindIdentityConflictAsync`) | exact digest | uniqueness | by design; see review |
+| 12 | Access-grants overview (`BindingAppliesToGrantee`/administers/usage) | per-tag / subset-digest / per-tag | reporting | agrees with 1/4/9; see review |
+| 13 | Reach binding grain (`SecurityBindingDocument`) | single `claimType` + optional `claimValue` | shape | **cannot pin a multi-tag identity** |
+
+## Antagonistic review — holes, asymmetries, open issues
+
+Ranked by severity. Each is a verified code observation, not a hypothesis.
+
+**H1 — Environment reverse-index is still exact-digest (asymmetry, medium).** `SecuredEnvironmentAdministration`
+computes a **single** whole-identity digest (`SecurityIdentityDigest.Compute`) and queries
+`IEnvironmentAdministratorStore.ListAdministeredAsync(string)`, while the environment *forward* check
+(`IsAdministeredBy`, #6) is membership and the *workflow* reverse index (#4) is membership. Effect: an
+approver whose identity strictly contains the founder identity can approve promotions (forward authz passes)
+but the environment never appears in their inbox. Fix = S3 (the environment twin of S2). The paging-helper
+XML doc that claims "the index can never miss a match" is **false** for environments until then.
+
+**H2 — Administration mutation gates are set-equality (asymmetry, medium; the overview over-promises).** The
+add/remove/transfer authorization for both workflows (`SecuredWorkflowCatalog` L602) and environments
+(`SecuredEnvironmentAdministration` L318) goes through `WorkflowIdentity.SameAdministrator` = **set-equality**,
+while the forward publish check, the reverse index, and the access-grants **overview `administers`** are all
+membership. Effect: a caller whose identity is a strict superset of a stored admin identity is *shown and
+indexed as administering* the workflow (and can publish versions), yet is **denied** managing its administrator
+set. The security console over-promises relative to what the mutation gate allows. Fix = S4: route the
+mutation authz through `IsAdministeredBy` (membership); keep the exact-digest paths (`RemoveByDigest`,
+`Dedupe`, the collision probe) on set-equality — those are identity operations, correctly exact.
+
+**H3 — Reach bindings cannot pin a multi-tag identity (structural, medium).** A `SecurityBindingDocument` is
+one `claimType` + optional `claimValue`, so a per-person reach grant can only key on a single dimension
+(`sub=alice`), matching **any** identity carrying `sys:sub=alice` regardless of `sys:iss`/tenant. Reach is
+structurally coarser than administration (which stores the whole resolved `sys:` tag set and matches by
+subset), so a `sub`-keyed reach grant is a cross-issuer / cross-tenant collision unless the deployment
+guarantees `sub` is globally unique. Options: extend the binding shape to a tag-set selector; or require reach
+grants to name the issuer dimension alongside the subject; or document the constraint and keep reach
+group-grained. Decision needed before per-person reach grants ship.
+
+**H4 — Reach rule evaluation still trusts raw token claims (pre-existing, low-medium).** Binding *selection*
+(#1) is on the forgery-resistant stamped identity, but a matched binding's *rule* (`sys:tenant == $claim.tenant`)
+is evaluated against the **raw claim map** except where an ambient dimension overrides the same name. For any
+dimension the deployment does not stamp as ambient, a forged token claim flows straight into the reach
+predicate. Ambient closes the tenant case; the general case is a deployment responsibility that should be
+documented (stamp every reach-relevant dimension as ambient, or from the internal-tag resolver, not the raw
+token).
+
+**H5 — Collision probe only catches exact collisions, not subset overlaps (membership-specific, low-medium).**
+`FindIdentityConflictAsync` refuses a grant whose resolved identity **set-equals** an existing grantee's. Under
+membership, a directory mapper that mints a *narrow* identity (e.g. `{sys:group=admins}`) which is a **subset**
+of an existing person's identity silently confers that person's-and-everyone-in-the-group's administration, and
+no conflict is raised (the digests differ). Set-equality is correct for detecting duplicate grantees; a
+membership model additionally wants a **subset-overlap warning** at grant time (surface it, do not hard-block —
+overlap can be intentional).
+
+**H6 — Overview hardcodes the `sys:` prefix (divergence, low).** `BindingAppliesToGrantee`'s `StripSysPrefix`
+strips the literal `"sys:"`, whereas runtime `Matches`/`CallerMatches` strip the deployment-configured
+`InternalTagPrefix`. On any deployment whose internal prefix is not `sys:`, the overview and enforcement
+disagree. Fix: thread the configured prefix into the overview.
+
+**H7 — The demo does not exercise the membership generalization (coverage, low).** The demo resolver stamps
+only `{sys:group, sys:iss}` (not `sys:sub`), and `DemoData.GroupIdentity` is built so a seeded grant
+*set-equals* a single-group caller. So the demo's happy path keeps every identity set-equal: the set-equality
+mutation gates (H2) and the exact environment reverse index (H1) never bite, and Person/`sub` grants are
+unsatisfiable by live callers. The generalization is real but untested by the demo's own data; S6 should
+enrich the identity and add a live scenario where a caller strictly contains a founder.
+
+**H8 — `WorkflowIdentity.SameAdministrator` and both paging-helper docs are mislabelled (docs, trivial).**
+`SameAdministrator` is set-equality but its doc-comment calls it "the membership comparison"; the
+`*AdministeredPaging.DistinctDigests` docs claim the write-side digests "are exactly the digests the forward
+check compares" — now true only because the *read* side compensates (workflows) or false (environments, H1).
 
 ## Gates (every slice)
 
@@ -75,3 +167,5 @@ This is the most security-sensitive code in the control plane. Membership makes 
 identity load-bearing** (a founder named `{sys:iss}` = everyone from that issuer). The resolved-grantee
 model must keep resolving founders to the exact grain; never store a coarse single-tag founder for a person.
 Re-verify the #96(ii) administration fix and the self-elevation guard explicitly under the new semantics.
+When adding a new identity-matching surface, classify it (authorization → membership; identity operation →
+exact) and add it to the current-state table above, so no future asymmetry goes unrecorded.
