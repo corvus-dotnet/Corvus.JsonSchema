@@ -41,6 +41,7 @@ public readonly partial struct AdministratorList
         private const uint RequiredBitMask0 =
             RequiredBitForAdministrators;
         private static readonly JsonSchemaPathProvider AdministratorsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/administrators"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider BroadeningAdvisorySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/broadeningAdvisory/$ref"u8, buffer, out written);
 
         private static void MatchAdministrators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
@@ -64,20 +65,38 @@ public readonly partial struct AdministratorList
             requiredBitBuffer[RequiredOffsetForAdministrators] |= RequiredBitForAdministrators;
         }
 
+        private static void MatchBroadeningAdvisory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext1 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.BroadeningAdvisoryUtf8,
+                    evaluationPath: BroadeningAdvisorySchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+        }
+
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        {
+            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
+                (static () => JsonPropertyNames.AdministratorsUtf8, MatchAdministrators),
+                (static () => JsonPropertyNames.BroadeningAdvisoryUtf8, MatchBroadeningAdvisory),
+            ]);
+        }
+
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
         out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
-            if (span.SequenceEqual(JsonPropertyNames.AdministratorsUtf8))
-            {
-                matcher = MatchAdministrators;
-                return true;
-            }
-
-            matcher = default;
-            return false;
+            return Matchers.TryGetNamedMatcher(span, out matcher);
         }
 
         /// <summary>

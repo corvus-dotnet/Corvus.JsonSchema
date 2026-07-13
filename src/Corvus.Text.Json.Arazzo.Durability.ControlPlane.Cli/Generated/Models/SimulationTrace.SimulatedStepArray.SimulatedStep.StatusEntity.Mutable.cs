@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.
+/// The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step&#39;s `subTrace` is itself a SimulationTrace.
 /// </para>
 /// </remarks>
 public readonly partial struct SimulationTrace
@@ -47,6 +47,11 @@ public readonly partial struct SimulationTrace
             /// <summary>
             /// Generated from JSON Schema.
             /// </summary>
+            /// <remarks>
+            /// <para>
+            /// The step&#39;s terminal status, or — on a sub-workflow parent step whose child did not finish — `paused` (a scoped stop fired inside the child) or `suspended` (the child is awaiting a timer or message).
+            /// </para>
+            /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
             public readonly partial struct StatusEntity
             {
@@ -420,12 +425,16 @@ public readonly partial struct SimulationTrace
                     /// <param name="context">The context to pass to the match function.</param>
                     /// <param name="matchCompleted">Match 1st item.</param>
                     /// <param name="matchFaulted">Match 2nd item.</param>
+                    /// <param name="matchPaused">Match 3rd item.</param>
+                    /// <param name="matchSuspended">Match 4th item.</param>
                     /// <param name="defaultMatch">Match any other value.</param>
                     /// <returns>An instance of the value returned by the match function.</returns>
                     public TResult Match<TContext, TResult>(
                         in TContext context,
                         Func<TContext, TResult> matchCompleted,
                         Func<TContext, TResult> matchFaulted,
+                        Func<TContext, TResult> matchPaused,
+                        Func<TContext, TResult> matchSuspended,
                         Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
@@ -441,6 +450,16 @@ public readonly partial struct SimulationTrace
                             return matchFaulted(context);
                         }
 
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            return matchPaused(context);
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            return matchSuspended(context);
+                        }
+
                         return defaultMatch(context);
                     }
 
@@ -450,11 +469,15 @@ public readonly partial struct SimulationTrace
                     /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                     /// <param name="matchCompleted">Match 1st item.</param>
                     /// <param name="matchFaulted">Match 2nd item.</param>
+                    /// <param name="matchPaused">Match 3rd item.</param>
+                    /// <param name="matchSuspended">Match 4th item.</param>
                     /// <param name="defaultMatch">Match any other value.</param>
                     /// <returns>An instance of the value returned by the match function.</returns>
                     public TResult Match<TResult>(
                         Func<TResult> matchCompleted,
                         Func<TResult> matchFaulted,
+                        Func<TResult> matchPaused,
+                        Func<TResult> matchSuspended,
                         Func<TResult> defaultMatch)
                     {
                         if (this.ValueEquals(Constants.Enum1))
@@ -465,6 +488,16 @@ public readonly partial struct SimulationTrace
                         if (this.ValueEquals(Constants.Enum2))
                         {
                             return matchFaulted();
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            return matchPaused();
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            return matchSuspended();
                         }
 
                         return defaultMatch();

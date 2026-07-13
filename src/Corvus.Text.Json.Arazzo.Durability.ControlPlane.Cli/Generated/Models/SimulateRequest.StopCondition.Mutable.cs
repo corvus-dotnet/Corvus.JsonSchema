@@ -281,7 +281,7 @@ public readonly partial struct SimulateRequest
             /// </summary>
             /// <remarks>
             /// <para>
-            /// Pause before this step executes (the paused context is the state the step will see).
+            /// Pause before this step executes (the paused context is the state the step will see). A **scoped step path**: a bare `stepId` targets a root step; a slash-joined `parent/child/...` path (each segment a `stepId`, outermost first) targets a step inside a sub-workflow. A bare id never matches a sub-workflow&#39;s step.
             /// </para>
             /// </remarks>
             public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable BeforeStepId
@@ -323,7 +323,7 @@ public readonly partial struct SimulateRequest
             /// </summary>
             /// <remarks>
             /// <para>
-            /// Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops).
+            /// Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops). Occurrences are counted cumulatively by the root run.
             /// </para>
             /// </remarks>
             public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulateRequest.StopCondition.OccurrenceEntity.Mutable Occurrence
