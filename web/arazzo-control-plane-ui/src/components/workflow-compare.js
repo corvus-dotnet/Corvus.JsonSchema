@@ -12,9 +12,11 @@
 //
 // A segmented mode switch (Side by side · Overlay · Text) sits in the head. OVERLAY (§4.7/§6.2) renders
 // ONE surface from `buildGhostProjection`: the base version solid, the other side's exclusive elements
-// as translucent ghosts (base = the merge target when one is set, else the right side). TEXT is a
-// CodeMirror MergeView (a later slice; disabled until then). The legend, "Highlight changes" toggle, and
-// change list are common chrome across all modes.
+// as translucent ghosts (base = the merge target when one is set, else the right side). TEXT (§6.3) is a
+// CodeMirror MergeView over the two documents, serialized with the same deterministic pretty-print the
+// text editor uses (`serializeDocument`); both panes read-only (interactive merge is a later slice). If
+// CodeMirror cannot load, Text is disabled with an explanatory title — there is no textarea fallback for a
+// merge editor. The legend, "Highlight changes" toggle, and change list are common chrome across all modes.
 //
 //   const dlg = document.createElement('arazzo-workflow-compare');
 //   host.appendChild(dlg);
@@ -32,6 +34,8 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { projectWorkflow } from '../workflow-graph.js';
 import { diffWorkflowPair, buildGhostProjection } from '../workflow-diff.js';
+import { serializeDocument } from '../workflow-document-model.js';
+import { ArazzoExpressionInput } from './expression-input.js';
 import './design-surface.js';
 
 const GROUPS = [['steps', 'Steps'], ['flow', 'Flow'], ['workflow', 'Workflow']];
@@ -65,7 +69,10 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     requestAnimationFrame(() => this._fitStage());
   }
 
-  close() { this.$('dialog')?.close(); }
+  close() {
+    if (this._mergeView) { this._mergeView.destroy(); this._mergeView = null; }
+    this.$('dialog')?.close();
+  }
 
   /** @private — per-side wins over the shared id, else the side's first workflow. */
   _resolveWorkflowId(side, sharedWorkflowId) {
@@ -90,7 +97,10 @@ class ArazzoWorkflowCompare extends ArazzoElement {
         .grid:not(.has-diff) .changelist { display: none; }
         .grid.cl-collapsed { --cl-w: 44px; }
         .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; }
-        .stage.is-overlay { grid-template-columns: minmax(0, 1fr); }
+        .stage.is-overlay, .stage.is-text { grid-template-columns: minmax(0, 1fr); }
+        .textmerge { min-width: 0; min-height: 0; overflow: auto; font-size: 12px; }
+        .textmerge .cm-mergeView, .textmerge .cm-mergeViewEditors, .textmerge .cm-editor { height: 100%; }
+        .tm-unavailable { padding: 24px; color: var(--_muted); font-size: 13px; }
         .changelist { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; border-right: 1px solid var(--_border); }
         .cl-head { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--_border); font-size: 12px; }
         .cl-title { margin-right: auto; font-weight: 600; }
@@ -120,7 +130,7 @@ class ArazzoWorkflowCompare extends ArazzoElement {
           <div class="modes" role="group" aria-label="Comparison mode" hidden>
             <button class="mode ghost" type="button" data-mode="side" aria-pressed="true">Side by side</button>
             <button class="mode ghost" type="button" data-mode="overlay" aria-pressed="false">Overlay</button>
-            <button class="mode ghost" type="button" data-mode="text" aria-pressed="false" disabled title="Text merge — coming soon">Text</button>
+            <button class="mode ghost" type="button" data-mode="text" aria-pressed="false" title="Side-by-side text merge (CodeMirror)">Text</button>
           </div>
           <button class="hl ghost" type="button" aria-pressed="true" hidden>Highlight changes</button>
           <button class="sync ghost" type="button" aria-pressed="true" title="Pan/zoom one side to scroll both">Sync views</button>
@@ -171,9 +181,19 @@ class ArazzoWorkflowCompare extends ArazzoElement {
   }
 
   /** @private — (re)build the stage for the current mode. Side-by-side = two surfaces; Overlay = one ghost
-   *  surface (§6.2). The change list, legend, and toggle are common chrome and are not rebuilt here. */
+   *  surface (§6.2); Text = a CodeMirror MergeView (§6.3). The change list, legend, and toggle are common
+   *  chrome and are not rebuilt here. */
   _renderStage() {
     const stage = this.$('.stage');
+    if (this._mergeView) { this._mergeView.destroy(); this._mergeView = null; } // free the prior CM instance
+    if (this._mode === 'text' && this._diff) {
+      stage.classList.remove('is-overlay');
+      stage.classList.add('is-text');
+      stage.innerHTML = '<div class="textmerge"></div>';
+      this._renderTextMerge();
+      return;
+    }
+    stage.classList.remove('is-text');
     const overlay = this._mode === 'overlay' && this._diff;
     stage.classList.toggle('is-overlay', !!overlay);
     if (overlay) {
@@ -184,6 +204,36 @@ class ArazzoWorkflowCompare extends ArazzoElement {
       this.renderSide('.side-left', this._sides.left, this._workflowIds.left, 'left');
       this.renderSide('.side-right', this._sides.right, this._workflowIds.right, 'right');
     }
+  }
+
+  /** @private — Text mode (§6.3): a CodeMirror MergeView over both documents, serialized identically to the
+   *  text editor (`serializeDocument`). Both panes read-only in this slice (interactive merge is slice H). If
+   *  CM cannot load, Text is disabled with an explanatory title — no textarea fallback for a merge editor. */
+  async _renderTextMerge() {
+    const host = this.$('.textmerge');
+    let cm = null;
+    try { cm = await ArazzoExpressionInput.loadCm(); } catch { cm = null; }
+    if (this._mode !== 'text' || !host.isConnected) return; // a mode switch raced the async load
+    if (!cm?.merge?.MergeView) {
+      const btn = this.$('.mode[data-mode="text"]');
+      if (btn) { btn.disabled = true; btn.title = 'Text merge is unavailable — CodeMirror could not load.'; }
+      host.innerHTML = '<div class="tm-unavailable">Text merge is unavailable in this environment.</div>';
+      return;
+    }
+    const { merge, state, view, langJson } = cm;
+    const pane = (doc) => ({
+      doc,
+      extensions: [langJson.json(), view.lineNumbers(), state.EditorState.readOnly.of(true), view.EditorView.editable.of(false)],
+    });
+    this._mergeView = new merge.MergeView({
+      parent: host,
+      root: this.shadowRoot,
+      orientation: 'a-b',
+      highlightChanges: true,
+      collapseUnchanged: {},
+      a: pane(serializeDocument(this._sides.left?.document ?? {})),
+      b: pane(serializeDocument(this._sides.right?.document ?? {})),
+    });
   }
 
   /** @private — overlay mode's single surface: the ghost projection (base solid + the other side's ghosts). */
@@ -206,19 +256,22 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     this.$('.modes').hidden = !this._diff;
   }
 
-  /** @private — switch comparison mode (Text is disabled until the merge-view slice). */
+  /** @private — switch comparison mode. A disabled button (e.g. Text when CM failed to load) is inert. */
   _setMode(mode) {
-    if (!mode || mode === 'text' || mode === this._mode || !this._diff) return;
+    if (!mode || mode === this._mode || !this._diff) return;
+    if (this.$(`.mode[data-mode="${mode}"]`)?.disabled) return;
     this._mode = mode;
     for (const b of this.$$('.mode')) b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
-    this.$('.sync').hidden = mode !== 'side'; // view sync is moot on a single surface
+    this.$('.sync').hidden = mode !== 'side'; // view sync is moot on a single surface / the text panes
     this._renderStage();
     this._wireViewSync();
     requestAnimationFrame(() => this._fitStage());
   }
 
-  /** @private — fit the current mode's surface(s): the shared union fit side-by-side, one fit in overlay. */
+  /** @private — fit the current mode's surface(s): the shared union fit side-by-side, one fit in overlay.
+   *  Text mode has nothing to fit (the MergeView scrolls itself). */
   _fitStage() {
+    if (this._mode === 'text') return;
     if (this._mode === 'overlay' && this._ghost) {
       const s = this.$('.side-overlay arazzo-design-surface');
       s?.fit(Object.values(this._ghost.layout));

@@ -116,11 +116,15 @@ test('the Catalog detail compares two versions: overlay paints the diff, Text is
   // At least one classified node paints in side-by-side.
   await expect(compare.locator('arazzo-design-surface .node.df-added, arazzo-design-surface .node.df-changed').first()).toBeVisible();
 
-  // Overlay mode: one union surface with the diff-overlay class; Text stays disabled until the merge-view slice.
+  // Overlay mode: one union surface with the diff-overlay class.
   await compare.locator('.mode[data-mode="overlay"]').click();
   await expect(compare.locator('.side-overlay arazzo-design-surface')).toBeVisible();
   await expect(compare.locator('.side-left arazzo-design-surface')).toHaveCount(0);
-  await expect(compare.locator('.mode[data-mode="text"]')).toBeDisabled();
+
+  // Text mode: a CodeMirror MergeView over the two documents (loads the vendored bundle lazily).
+  await compare.locator('.mode[data-mode="text"]').click();
+  await expect(compare.locator('.textmerge .cm-mergeView')).toBeVisible();
+  await expect(compare.locator('.textmerge .cm-editor')).toHaveCount(2);
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
