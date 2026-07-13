@@ -1647,6 +1647,8 @@
     const gitDialog = document.getElementById('gitpanel');
     gitDialog.client = client;
     gitDialog.windowOpener = mockAuthOpener;
+    // The compare dialog's merge target reads the LIVE model, never the panel's stale snapshot (§6.4).
+    gitDialog.documentSource = () => model.document;
     // The Components tab shows the document's reusable library, refreshed on each visit (and
     // whenever the model changes while it is showing). Persisting merges exactly like settings.
     const componentsPanel = document.getElementById('componentspanel');
@@ -1700,6 +1702,42 @@
     gitDialog.addEventListener('committed', (e) => {
       setSaveUi('committed to GitHub');
       logEvent('git-committed', e.detail.result);
+    });
+
+    // Interactive merge (§6.4): the compare dialog (nested in the git panel) emits Take/Apply events that
+    // BUBBLE composed to here. The host owns the ONE model — apply each as an ordinary, undoable, labelled
+    // edit, then hand the fresh document back so the diff recomputes and the resolved entry disappears.
+    function applyMergeAccept(apply, workflowId) {
+      model.update((d) => {
+        const wf = d.workflows.find((w) => w.workflowId === workflowId) || d.workflows[0];
+        if (!wf) return;
+        wf.steps = wf.steps || [];
+        switch (apply.kind) {
+          case 'insert-step': wf.steps.splice(apply.index, 0, apply.step); break;
+          case 'remove-step': wf.steps = wf.steps.filter((s) => s.stepId !== apply.stepId); break;
+          case 'replace-step': { const i = wf.steps.findIndex((s) => s.stepId === apply.stepId); if (i >= 0) wf.steps[i] = apply.step; break; }
+          case 'move-step': { const i = wf.steps.findIndex((s) => s.stepId === apply.stepId); if (i >= 0) { const [s] = wf.steps.splice(i, 1); wf.steps.splice(apply.index, 0, s); } break; }
+          case 'insert-action': { const st = wf.steps.find((s) => s.stepId === apply.stepId); if (st) { st[apply.list] = st[apply.list] || []; st[apply.list].splice(apply.index, 0, apply.action); } break; }
+          case 'remove-action': { const st = wf.steps.find((s) => s.stepId === apply.stepId); if (st && st[apply.list]) st[apply.list].splice(apply.index, 1); break; }
+          case 'replace-action': { const st = wf.steps.find((s) => s.stepId === apply.stepId); if (st && st[apply.list]) st[apply.list][apply.index] = apply.action; break; }
+          case 'set-area':
+            if (apply.area === 'defaults') {
+              if (apply.value.successActions === undefined) delete wf.successActions; else wf.successActions = apply.value.successActions;
+              if (apply.value.failureActions === undefined) delete wf.failureActions; else wf.failureActions = apply.value.failureActions;
+            } else if (apply.value === undefined) { delete wf[apply.area]; } else { wf[apply.area] = apply.value; }
+            break;
+          case 'set-component':
+            if (apply.value === undefined) { if (d.components?.[apply.list]) delete d.components[apply.list][apply.name]; }
+            else { d.components = d.components || {}; d.components[apply.list] = d.components[apply.list] || {}; d.components[apply.list][apply.name] = apply.value; }
+            break;
+        }
+      }, { origin: 'merge', label: `merge ${apply.kind}` });
+      gitDialog.compareDialog?.refresh({ left: { document: model.document } });
+    }
+    gitDialog.addEventListener('change-accepted', (e) => applyMergeAccept(e.detail.apply, e.detail.workflowId));
+    gitDialog.addEventListener('merge-text-applied', (e) => {
+      model.applyText(e.detail.text, { origin: 'merge', label: 'merge text' });
+      gitDialog.compareDialog?.refresh({ left: { document: model.document } });
     });
 
     // The deliberate publish act (§4.6): autosave first (publish reads the STORED document), then

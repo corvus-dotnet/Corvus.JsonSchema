@@ -41,21 +41,22 @@ import './design-surface.js';
 const GROUPS = [['steps', 'Steps'], ['flow', 'Flow'], ['workflow', 'Workflow']];
 
 class ArazzoWorkflowCompare extends ArazzoElement {
-  /** Opens the comparison; each side projects read-only and (when diff is on) paints the overlay. */
+  /** Opens the comparison; each side projects read-only and (when diff is on) paints the overlay.
+   *  A side may carry `mergeTarget: true` (at most one — the working-copy side): the change list then
+   *  gains Take/Keep verbs whose Take emits `change-accepted` / `merge-text-applied` for the host to apply
+   *  to its single model (§6.4). The component never mutates a document. */
   open({ left, right, workflowId, diff = true } = {}) {
     this.render();
     const leftWorkflowId = this._resolveWorkflowId(left, workflowId);
     const rightWorkflowId = this._resolveWorkflowId(right, workflowId);
     this._sides = { left, right };
     this._workflowIds = { left: leftWorkflowId, right: rightWorkflowId };
-    this._diff = diff ? diffWorkflowPair(left?.document ?? {}, right?.document ?? {}, { leftWorkflowId, rightWorkflowId }) : null;
-    this._highlight = !!this._diff;
-    this._entries = this._diff ? [...this._diff.steps, ...this._diff.flow, ...this._diff.workflow] : [];
+    this._mergeSide = left?.mergeTarget ? 'left' : (right?.mergeTarget ? 'right' : null); // at most one; left wins
+    this._reviewed = new Set(); // Keep marks, keyed by stable entry key (survives refresh)
     this._current = -1;
     this._mode = 'side';
     this._syncViews = true;
-    // Overlay base = the merge target when one is set (slice H), else the right side (§6.2).
-    this._base = left?.mergeTarget ? 'left' : 'right';
+    this._computeDiff(diff);
 
     this._renderStage();
     this._renderModes();
@@ -67,6 +68,37 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     // Fit after the dialog lays out. With a diff, ONE fit over the union extent is assigned to both
     // surfaces (§4.6 shared fit) so matched steps sit level; without one, each side fits itself.
     requestAnimationFrame(() => this._fitStage());
+  }
+
+  /** Recompute the diff after the host applied a Take (§6.4): swap in the updated document(s), keep the
+   *  mode + reviewed set, re-enable the verbs, and repaint. The host calls this after model.update/applyText. */
+  refresh({ left, right } = {}) {
+    if (!this._sides) return; // never opened — nothing to recompute
+    if (left) this._sides.left = { ...this._sides.left, ...left };
+    if (right) this._sides.right = { ...this._sides.right, ...right };
+    this._workflowIds = {
+      left: this._resolveWorkflowId(this._sides.left, this._workflowIds.left),
+      right: this._resolveWorkflowId(this._sides.right, this._workflowIds.right),
+    };
+    this._verbsLocked = false;
+    this._computeDiff(this._diff != null);
+    this._renderStage();
+    this._renderLegend();
+    this._renderChangeList();
+    requestAnimationFrame(() => this._fitStage());
+  }
+
+  /** @private — (re)compute the diff, entries, and derived flags from the current sides. */
+  _computeDiff(diff) {
+    this._diff = diff
+      ? diffWorkflowPair(this._sides.left?.document ?? {}, this._sides.right?.document ?? {},
+        { leftWorkflowId: this._workflowIds.left, rightWorkflowId: this._workflowIds.right })
+      : null;
+    this._highlight = !!this._diff;
+    this._entries = this._diff ? [...this._diff.steps, ...this._diff.flow, ...this._diff.workflow] : [];
+    this._verbsLocked = false;
+    // Overlay base = the merge target when one is set (§6.2), else the right side.
+    this._base = this._mergeSide || 'right';
   }
 
   close() {
@@ -98,8 +130,13 @@ class ArazzoWorkflowCompare extends ArazzoElement {
         .grid.cl-collapsed { --cl-w: 44px; }
         .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; }
         .stage.is-overlay, .stage.is-text { grid-template-columns: minmax(0, 1fr); }
-        .textmerge { min-width: 0; min-height: 0; overflow: auto; font-size: 12px; }
-        .textmerge .cm-mergeView, .textmerge .cm-mergeViewEditors, .textmerge .cm-editor { height: 100%; }
+        .textmerge { min-width: 0; min-height: 0; display: flex; flex-direction: column; font-size: 12px; }
+        .tm-bar { flex: none; display: flex; justify-content: flex-end; padding: 6px 10px; border-bottom: 1px solid var(--_border); }
+        .tm-apply { font: 12px var(--_font); padding: 3px 12px; border: 1px solid var(--_border); border-radius: 6px;
+                    background: var(--_accent, #3b6cf6); color: #fff; cursor: pointer; }
+        .tm-apply[disabled] { opacity: 0.5; cursor: default; background: var(--_bg); color: var(--_muted); }
+        .tm-view { flex: 1; min-height: 0; overflow: auto; }
+        .tm-view .cm-mergeView, .tm-view .cm-mergeViewEditors, .tm-view .cm-editor { height: 100%; }
         .tm-unavailable { padding: 24px; color: var(--_muted); font-size: 13px; }
         .changelist { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; border-right: 1px solid var(--_border); }
         .cl-head { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--_border); font-size: 12px; }
@@ -107,10 +144,18 @@ class ArazzoWorkflowCompare extends ArazzoElement {
         .grid.cl-collapsed .cl-title, .grid.cl-collapsed .cl-prev, .grid.cl-collapsed .cl-next, .grid.cl-collapsed .cl-body { display: none; }
         .cl-body { overflow: auto; padding: 4px 0 8px; }
         .cl-group { padding: 6px 10px 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--_muted); }
-        .cl-item { display: block; width: 100%; text-align: left; border: none; background: none; color: inherit; cursor: pointer;
-                   font: 12px var(--_font); padding: 3px 10px; }
+        .cl-item { display: flex; align-items: center; gap: 4px; padding-right: 6px; }
         .cl-item:hover { background: var(--_surface); }
         .cl-item.current { background: var(--_surface); box-shadow: inset 3px 0 0 var(--_accent); }
+        .cl-item.reviewed .cl-sel { opacity: 0.5; text-decoration: line-through; }
+        .cl-sel { flex: 1; min-width: 0; text-align: left; border: none; background: none; color: inherit; cursor: pointer;
+                  font: 12px var(--_font); padding: 3px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cl-take, .cl-keep { flex: none; font: 11px var(--_font); padding: 1px 6px; border: 1px solid var(--_border);
+                             border-radius: 5px; background: var(--_bg); color: inherit; cursor: pointer; }
+        .cl-take:hover:not([disabled]), .cl-keep:hover:not([disabled]) { background: var(--_surface); }
+        .cl-take[disabled], .cl-keep[disabled] { opacity: 0.4; cursor: default; }
+        .cl-route { flex: none; color: var(--_muted); cursor: help; padding: 0 4px; }
+        .grid:not(.merging) .cl-take, .grid:not(.merging) .cl-keep, .grid:not(.merging) .cl-route { display: none; }
         .cl-mark { font-weight: 700; }
         .cl-mark.added { color: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
         .cl-mark.removed { color: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); }
@@ -158,7 +203,11 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     this.$('.cl-collapse').addEventListener('click', () => this._toggleCollapse());
     this.$('.cl-body').addEventListener('click', (e) => {
       const item = e.target.closest('.cl-item');
-      if (item) this._selectEntry(Number(item.dataset.i));
+      if (!item) return;
+      const i = Number(item.dataset.i);
+      if (e.target.closest('.cl-take')) { this._take(i); return; }
+      if (e.target.closest('.cl-keep')) { this._keep(i); return; }
+      this._selectEntry(i);
     });
   }
 
@@ -207,10 +256,13 @@ class ArazzoWorkflowCompare extends ArazzoElement {
   }
 
   /** @private — Text mode (§6.3): a CodeMirror MergeView over both documents, serialized identically to the
-   *  text editor (`serializeDocument`). Both panes read-only in this slice (interactive merge is slice H). If
-   *  CM cannot load, Text is disabled with an explanatory title — no textarea fallback for a merge editor. */
+   *  text editor (`serializeDocument`). Read-only without a merge target; with one, the merge-target pane is
+   *  editable, gains chunk `revertControls` from the other side, and an Apply button emits the merged text
+   *  (§6.4). A dirty buffer disables list Takes (text-buffer exclusivity). If CM cannot load, Text is
+   *  disabled with an explanatory title — no textarea fallback for a merge editor. */
   async _renderTextMerge() {
     const host = this.$('.textmerge');
+    this._mergeDirty = false;
     let cm = null;
     try { cm = await ArazzoExpressionInput.loadCm(); } catch { cm = null; }
     if (this._mode !== 'text' || !host.isConnected) return; // a mode switch raced the async load
@@ -220,20 +272,49 @@ class ArazzoWorkflowCompare extends ArazzoElement {
       host.innerHTML = '<div class="tm-unavailable">Text merge is unavailable in this environment.</div>';
       return;
     }
+    const merging = !!this._mergeSide;
+    host.innerHTML = merging
+      ? '<div class="tm-bar"><button class="tm-apply" type="button" disabled>Apply merge</button></div><div class="tm-view"></div>'
+      : '<div class="tm-view"></div>';
+    if (merging) this.$('.tm-apply').addEventListener('click', () => this._applyTextMerge());
     const { merge, state, view, langJson } = cm;
-    const pane = (doc) => ({
+    const readonlyExts = [state.EditorState.readOnly.of(true), view.EditorView.editable.of(false)];
+    const dirtyWatch = view.EditorView.updateListener.of((u) => { if (u.docChanged) this._markMergeDirty(); });
+    const pane = (doc, editable) => ({
       doc,
-      extensions: [langJson.json(), view.lineNumbers(), state.EditorState.readOnly.of(true), view.EditorView.editable.of(false)],
+      extensions: [langJson.json(), view.lineNumbers(), ...(editable ? [dirtyWatch] : readonlyExts)],
     });
-    this._mergeView = new merge.MergeView({
-      parent: host,
+    // revertControls push the OTHER side's chunks INTO the merge-target pane (a=left, b=right).
+    const opts = {
+      parent: this.$('.tm-view'),
       root: this.shadowRoot,
       orientation: 'a-b',
       highlightChanges: true,
       collapseUnchanged: {},
-      a: pane(serializeDocument(this._sides.left?.document ?? {})),
-      b: pane(serializeDocument(this._sides.right?.document ?? {})),
-    });
+      a: pane(serializeDocument(this._sides.left?.document ?? {}), merging && this._mergeSide === 'left'),
+      b: pane(serializeDocument(this._sides.right?.document ?? {}), merging && this._mergeSide === 'right'),
+    };
+    if (merging) opts.revertControls = this._mergeSide === 'left' ? 'b-to-a' : 'a-to-b';
+    this._mergeView = new merge.MergeView(opts);
+  }
+
+  /** @private — a text-merge edit dirties the buffer: enable Apply, disable list Takes until apply/refresh. */
+  _markMergeDirty() {
+    if (this._mergeDirty) return;
+    this._mergeDirty = true;
+    const apply = this.$('.tm-apply');
+    if (apply) apply.disabled = false;
+    for (const b of this.$$('.cl-take, .cl-keep')) b.disabled = true;
+  }
+
+  /** @private — Apply the merged text: emit `merge-text-applied { text }` (the host applies + refreshes,
+   *  which rebuilds this view pristine). Locks verbs until refresh, like a Take. */
+  _applyTextMerge() {
+    if (!this._mergeSide || !this._mergeView) return;
+    const targetView = this._mergeSide === 'left' ? this._mergeView.a : this._mergeView.b;
+    const text = targetView?.state.doc.toString() ?? '';
+    this._setVerbsLocked(true);
+    this.emit('merge-text-applied', { text });
   }
 
   /** @private — overlay mode's single surface: the ghost projection (base solid + the other side's ghosts). */
@@ -347,10 +428,12 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     this.$('.sync').setAttribute('aria-pressed', String(this._syncViews));
   }
 
-  /** @private — the grouped change list (§4.5 / §6 item 4). */
+  /** @private — the grouped change list (§4.5 / §6 item 4). With a merge target each takeable entry gains
+   *  Take / Keep verbs (§6.4); reviewed (Kept) entries dim and survive refresh. */
   _renderChangeList() {
     const grid = this.$('.grid');
     grid.classList.toggle('has-diff', !!this._diff);
+    grid.classList.toggle('merging', !!this._mergeSide);
     if (!this._diff) return;
     this.$('.cl-title').textContent = `Changes (${this._entries.length})`;
     let html = '';
@@ -360,10 +443,34 @@ class ArazzoWorkflowCompare extends ArazzoElement {
       html += `<div class="cl-group">${heading}</div>`;
       for (const [entry, i] of items) {
         const { mark, text } = this._entryLabel(entry);
-        html += `<button class="cl-item" type="button" data-i="${i}"><span class="cl-mark ${entry.type}">${escapeHtml(mark)}</span> ${escapeHtml(text)}</button>`;
+        const reviewed = this._reviewed?.has(this._entryKey(entry));
+        html += `<div class="cl-item${reviewed ? ' reviewed' : ''}" data-i="${i}">`
+          + `<button class="cl-sel" type="button"><span class="cl-mark ${entry.type}">${escapeHtml(mark)}</span> ${escapeHtml(text)}</button>`
+          + this._verbsHtml(entry) + '</div>';
       }
     }
     this.$('.cl-body').innerHTML = html || '<div class="cl-group">No differences</div>';
+  }
+
+  /** @private — the Take / Keep buttons for an entry (merge only). Seq and component-sourced flow entries
+   *  are informational: no Take, a title pointing at their carrier (the moved step / the components entry). */
+  _verbsHtml(entry) {
+    if (!this._mergeSide) return '';
+    const route = this._routeHint(entry);
+    if (route) return `<span class="cl-route" title="${escapeHtml(route)}">↪</span>`;
+    if (!this._takePayload(entry)) return '';
+    const dis = this._verbsLocked ? ' disabled' : '';
+    return `<button class="cl-take" type="button"${dis} title="Take the other version's change">Take</button>`
+      + `<button class="cl-keep" type="button"${dis} title="Keep this side (mark reviewed)">Keep</button>`;
+  }
+
+  /** @private — why a flow entry routes rather than Takes: seq edges project step order (Take the moved
+   *  step); a component-sourced action change lives on the components entry (Take that). */
+  _routeHint(entry) {
+    if (entry.group !== 'flow') return null;
+    if (entry.kind === 'seq') return 'Ordering — Take the moved step entry instead.';
+    if (entry.component || entry.reference) return `Shared action — Take the components entry (${entry.component ?? entry.reference}).`;
+    return null;
   }
 
   /** @private — a mark glyph + text for one change-list entry. */
@@ -451,6 +558,150 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     const grid = this.$('.grid');
     const collapsed = grid.classList.toggle('cl-collapsed');
     this.$('.cl-collapse').setAttribute('aria-expanded', String(!collapsed));
+  }
+
+  // ── Interactive merge (§6.4): the component emits events; the host owns the model ────────────────
+
+  /** @private — a stable key for an entry so Keep survives refresh (never a list index / occurrence). */
+  _entryKey(entry) {
+    if (entry.group === 'steps') return `steps|${entry.type}|${entry.leftId ?? ''}→${entry.rightId ?? ''}`;
+    if (entry.group === 'flow') return `flow|${entry.kind}|${entry.leftFrom ?? entry.rightFrom ?? entry.from}|${entry.to}|${entry.actionName ?? ''}`;
+    return `workflow|${entry.area}|${entry.component ?? ''}`;
+  }
+
+  /** @private — 'left'/'right' of the side that is NOT the merge target. */
+  _otherSide() { return this._mergeSide === 'left' ? 'right' : 'left'; }
+
+  /** @private — the resolved workflow's steps for a side. */
+  _stepsOf(side) {
+    const doc = this._sides[side]?.document;
+    const wf = (doc?.workflows || []).find((w) => w.workflowId === this._workflowIds[side]);
+    return wf?.steps || [];
+  }
+
+  _workflowOf(side) {
+    const doc = this._sides[side]?.document;
+    return (doc?.workflows || []).find((w) => w.workflowId === this._workflowIds[side]) || {};
+  }
+
+  _stepById(side, id) { return this._stepsOf(side).find((s) => s.stepId === id); }
+
+  /** @private — map a step id on the OTHER side to its id on OUR (merge) side (identity matches + renames). */
+  _ourIdOf(theirId) {
+    const idMap = this._diff.idMap; // left → right
+    if (this._mergeSide === 'left') { for (const [l, r] of idMap) if (r === theirId) return l; return theirId; }
+    return idMap.get(theirId) ?? theirId;
+  }
+
+  /** @private — our-side insert index for a step present in THEIRS at theirIdx: just after the nearest
+   *  preceding their-step that also exists in ours (else 0) — preserves order against common siblings. */
+  _ourStepIndex(theirStepId) {
+    const their = this._stepsOf(this._otherSide());
+    const our = this._stepsOf(this._mergeSide);
+    const ti = their.findIndex((s) => s.stepId === theirStepId);
+    for (let k = ti - 1; k >= 0; k--) {
+      const oi = our.findIndex((s) => s.stepId === this._ourIdOf(their[k].stepId));
+      if (oi >= 0) return oi + 1;
+    }
+    return 0;
+  }
+
+  /** @private — our-side insert index for an action Take: after the nearest common preceding action, but
+   *  never after a catch-all (an action with no criteria must stay last — §3.2). */
+  _actionInsertIndex(ourStepId, list, theirStep, theirRawIndex) {
+    const ourList = (this._stepById(this._mergeSide, ourStepId)?.[list]) || [];
+    const theirList = theirStep?.[list] || [];
+    const nameAt = (a) => a?.name ?? null;
+    let idx = ourList.length;
+    for (let k = theirRawIndex - 1; k >= 0; k--) {
+      const nm = nameAt(theirList[k]);
+      const oi = nm != null ? ourList.findIndex((a) => nameAt(a) === nm) : -1;
+      if (oi >= 0) { idx = oi + 1; break; }
+    }
+    const catchAll = ourList.findIndex((a) => !(a?.criteria?.length));
+    return catchAll >= 0 ? Math.min(idx, catchAll) : idx;
+  }
+
+  /** @private — the `apply` payload for a takeable entry, or null when it isn't takeable (§6.4). Take makes
+   *  OUR (merge-target) side match THEIRS for this one entry; indices are freshly derived every call. */
+  _takePayload(entry) {
+    if (!this._mergeSide) return null;
+    const M = this._mergeSide;
+    const T = this._otherSide();
+    if (entry.group === 'steps') {
+      const ourId = M === 'left' ? entry.leftId : entry.rightId;
+      const theirId = M === 'left' ? entry.rightId : entry.leftId;
+      if (entry.type === 'moved') {
+        const id = ourId ?? theirId;
+        return { kind: 'move-step', stepId: id, index: this._ourStepIndex(theirId ?? id) };
+      }
+      const ourHas = !!ourId && !!this._stepById(M, ourId);
+      const theirStep = theirId ? this._stepById(T, theirId) : null;
+      if (ourHas && !theirStep) return { kind: 'remove-step', stepId: ourId };
+      if (!ourHas && theirStep) return { kind: 'insert-step', step: structuredClone(theirStep), index: this._ourStepIndex(theirId) };
+      if (ourHas && theirStep) return { kind: 'replace-step', stepId: ourId, step: structuredClone(theirStep) };
+      return null;
+    }
+    if (entry.group === 'flow') {
+      if (this._routeHint(entry)) return null; // seq / component-sourced route elsewhere
+      const list = entry.list;
+      const ourFrom = M === 'left' ? (entry.leftFrom ?? (entry.rightFrom && this._ourIdOf(entry.rightFrom)))
+        : (entry.rightFrom ?? (entry.leftFrom && this._ourIdOf(entry.leftFrom)));
+      const theirFrom = M === 'left' ? entry.rightFrom : entry.leftFrom;
+      const ourRaw = M === 'left' ? entry.leftRawIndex : entry.rightRawIndex;
+      const theirRaw = M === 'left' ? entry.rightRawIndex : entry.leftRawIndex;
+      const theirStep = theirFrom != null ? this._stepById(T, theirFrom) : null;
+      const theirAction = theirStep && theirRaw != null ? theirStep[list]?.[theirRaw] : null;
+      if (entry.type === 'removed' && ourFrom != null && ourRaw != null) {
+        return { kind: 'remove-action', stepId: ourFrom, list, index: ourRaw };
+      }
+      if (entry.type === 'added' && ourFrom != null && theirAction) {
+        return { kind: 'insert-action', stepId: ourFrom, list, action: structuredClone(theirAction), index: this._actionInsertIndex(ourFrom, list, theirStep, theirRaw) };
+      }
+      if (entry.type === 'changed' && ourFrom != null && ourRaw != null && theirAction) {
+        return { kind: 'replace-action', stepId: ourFrom, list, index: ourRaw, action: structuredClone(theirAction) };
+      }
+      return null;
+    }
+    // workflow-area entries
+    const theirWf = this._workflowOf(T);
+    if (entry.area === 'inputs' || entry.area === 'outputs' || entry.area === 'summary' || entry.area === 'description') {
+      return { kind: 'set-area', area: entry.area, value: structuredClone(theirWf[entry.area]) };
+    }
+    if (entry.area === 'defaults') {
+      return { kind: 'set-area', area: 'defaults', value: { successActions: structuredClone(theirWf.successActions), failureActions: structuredClone(theirWf.failureActions) } };
+    }
+    if (entry.area === 'components' && entry.component) {
+      const [clist, name] = entry.component.split('.');
+      const value = this._sides[T]?.document?.components?.[clist]?.[name];
+      return { kind: 'set-component', list: clist, name, value: value === undefined ? undefined : structuredClone(value) };
+    }
+    return null;
+  }
+
+  /** @private — Take: emit `change-accepted { entry, apply }` and lock ALL verbs until the host's
+   *  refresh() arrives (verb serialization — indices are only fresh if no second Take fires meanwhile). */
+  _take(i) {
+    if (this._verbsLocked || this._mergeDirty) return;
+    const entry = this._entries[i];
+    const apply = entry && this._takePayload(entry);
+    if (!apply) return;
+    this._setVerbsLocked(true);
+    this.emit('change-accepted', { entry, apply, workflowId: this._workflowIds[this._mergeSide] });
+  }
+
+  /** @private — Keep: mark the entry reviewed (session only; the working copy IS the merge state, §9.9). */
+  _keep(i) {
+    const entry = this._entries[i];
+    if (!entry) return;
+    this._reviewed.add(this._entryKey(entry));
+    this.$(`.cl-item[data-i="${i}"]`)?.classList.add('reviewed');
+  }
+
+  /** @private — disable/enable every Take/Keep button (a failed host apply must not strand a stale diff). */
+  _setVerbsLocked(locked) {
+    this._verbsLocked = locked;
+    for (const b of this.$$('.cl-take, .cl-keep')) b.disabled = locked;
   }
 }
 

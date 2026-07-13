@@ -593,8 +593,14 @@ class ArazzoGitDialog extends ArazzoElement {
     return row;
   }
 
-  /** @private — fetch the bound document AT the commit and open the reusable side-by-side
-   *  visualizer: current state on the left, the commit on the right. */
+  /** The reusable compare dialog, so the host can `refresh()` it after applying a merge Take (§6.4). */
+  get compareDialog() { return this.$('.compare'); }
+
+  /** @private — fetch the bound document AT the commit and open the reusable side-by-side visualizer:
+   *  current state on the left (the MERGE TARGET), the commit on the right. The working-copy document is
+   *  read from the LIVE model via `documentSource` (§6.4 merge-session integrity) — the panel's own
+   *  `_workingCopy` snapshot goes stale under autosave, and a merge must compute Takes against the document
+   *  the host actually mutates. */
   async compareCommit(commit) {
     this.clearError();
     const binding = this.historyScope();
@@ -602,10 +608,11 @@ class ArazzoGitDialog extends ArazzoElement {
     try {
       const node = await this._client.browseRepo(binding.owner, binding.repo, { path: binding.path, ref: commit.sha });
       const historic = decodeJsonFile(node);
+      const live = this.documentSource ? this.documentSource() : (this._workingCopy?.document ?? {});
       this.$('.compare').open({
-        left: { label: `Working copy (current) — ${this._workingCopy?.name ?? ''}`, document: this._workingCopy?.document ?? {} },
+        left: { label: `Working copy (current) — ${this._workingCopy?.name ?? ''}`, document: live, mergeTarget: !!this.documentSource },
         right: { label: `${commit.sha.slice(0, 7)} — ${commit.message ?? ''}`, document: historic },
-        workflowId: this._workingCopy?.document?.workflows?.[0]?.workflowId,
+        workflowId: live?.workflows?.[0]?.workflowId,
       });
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);

@@ -317,8 +317,11 @@ export function diffWorkflowPair(leftDoc, rightDoc, { leftWorkflowId, rightWorkf
 }
 
 // A structured flow (edge) change-list entry. `rightEdge`/`leftEdge` are the enriched projection edges.
+// It also carries the merge provenance a Take needs (§4.3.6): the action LIST, each side's source step,
+// and each side's RAW list index (resolved index ≠ raw index — reusable refs drop from the resolved list).
 function edgeEntry(type, rightEdge, leftEdge) {
   const e = rightEdge || leftEdge;
+  const list = e.kind === 'seq' ? null : (e.kind === 'failure' ? 'onFailure' : 'onSuccess');
   return {
     group: 'flow',
     type,
@@ -330,6 +333,12 @@ function edgeEntry(type, rightEdge, leftEdge) {
     leftId: leftEdge?.id,
     rightId: rightEdge?.id,
     component: (rightEdge?.componentName ?? leftEdge?.componentName) || undefined,
+    reference: (rightEdge?.reference ?? leftEdge?.reference) || undefined,
+    list,
+    leftFrom: leftEdge?.from,
+    rightFrom: rightEdge?.from,
+    leftRawIndex: leftEdge?.rawIndex,
+    rightRawIndex: rightEdge?.rawIndex,
   };
 }
 
