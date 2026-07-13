@@ -4,7 +4,6 @@
 
 using System.Buffers;
 using System.Buffers.Text;
-using System.Security.Claims;
 using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
@@ -503,8 +502,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private bool SelfElevates(SecurityBindingDocument draft, out Models.ProblemDetails.Source problem)
     {
         problem = default;
-        ClaimsPrincipal? principal = this.access?.CurrentPrincipal;
-        if (principal is null)
+        if (this.access is not { } access || access.CurrentPrincipal is null)
         {
             return false;
         }
@@ -514,7 +512,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return false;
         }
 
-        if (!CallerMatches(principal, draft.ClaimTypeValue, draft.ClaimValueOrNull))
+        if (!CallerMatches(access.InternalTags(), access.InternalTagPrefix, draft.ClaimTypeValue, draft.ClaimValueOrNull))
         {
             return false;
         }
@@ -533,20 +531,28 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private static bool GrantsElevatedReach(SecurityBindingDocument.VerbGrantInfo grant)
         => grant.ValueKind == JsonValueKind.Object && !grant.IsEmptyValue;
 
-    // Whether the caller holds the binding's claim: the wildcard '*' matches every authenticated caller; a claim-type-only
-    // binding matches any value of that type; otherwise the exact type+value must be present.
-    private static bool CallerMatches(ClaimsPrincipal principal, string claimType, string? claimValue)
+    // Whether the caller holds the binding's claim by MEMBERSHIP over the caller's canonical sys: identity (§16.5.4): the
+    // wildcard '*' matches every authenticated caller; a claim-type-only binding matches any value of that dimension;
+    // otherwise the caller's stamped identity must CONTAIN a tag whose operator-facing dimension (the sys: prefix stripped)
+    // equals the claim type and value. Decided on the same identity the runtime reach matcher uses (not raw token claims).
+    private static bool CallerMatches(IReadOnlyList<SecurityTag> identity, string prefix, string claimType, string? claimValue)
     {
         if (claimType == "*")
         {
             return true;
         }
 
-        // A claim-type-only binding matches any value of that type; the exact overloads take strings (no capturing
-        // predicate closure). HasClaim(type, value) is ordinal; FindFirst(type) avoids a lambda for the type-only case.
-        return claimValue is null
-            ? principal.FindFirst(claimType) is not null
-            : principal.HasClaim(claimType, claimValue);
+        foreach (SecurityTag tag in identity)
+        {
+            string dimension = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
+            if (string.Equals(dimension, claimType, StringComparison.Ordinal)
+                && (claimValue is null || string.Equals(tag.Value, claimValue, StringComparison.Ordinal)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // SecurityRuleSummary is congruent with the stored SecurityRuleDocument (identical fields — the single-document

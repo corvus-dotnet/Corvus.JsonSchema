@@ -25,16 +25,47 @@ public sealed class PersistentRowSecurityPolicyTests
     private static ClaimsPrincipal Principal(params (string Type, string Value)[] claims)
         => new(new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)).ToList(), "test"));
 
+    // Maps every claim to a sys: identity dimension — the test analogue of a deployment's claim→tag resolver, so a binding
+    // keyed on the operator-facing dimension (role/sub/team/group) is SELECTED by the caller's canonical identity
+    // (§16.5.4 membership), not by a raw token claim. Rule parameters ($claim.tenant) still read the raw claims separately.
+    private static IReadOnlyList<SecurityTag> ClaimsToTags(ClaimsPrincipal? principal)
+        => principal?.Claims.Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + c.Type, c.Value)).ToList() ?? [];
+
     [TestMethod]
     public async Task Before_refresh_everything_is_denied()
     {
         var store = new InMemorySecurityPolicyStore();
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
 
         // No RefreshAsync yet → no bindings → deny-by-default for every verb.
         AccessContext ctx = policy.Resolve(Principal(("role", "operator")));
         ctx.Admits(AccessVerb.Read, Acme).ShouldBeFalse();
         ctx.Admits(AccessVerb.Write, Acme).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_binding_keyed_on_a_dimension_is_selected_by_the_canonical_identity_not_the_raw_claim()
+    {
+        var store = new InMemorySecurityPolicyStore();
+
+        // The genesis-style admin binding keys on the operator-facing DIMENSION 'group' (not the OIDC 'groups' claim).
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("group", "arazzo-admins", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
+
+        // The deployment resolver maps the OIDC 'groups' claim to the sys:group dimension (the demo's mapping).
+        static IReadOnlyList<SecurityTag> GroupsToSysGroup(ClaimsPrincipal? p)
+            => p?.FindAll("groups").Select(c => new SecurityTag("sys:group", c.Value)).ToList() ?? [];
+
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: GroupsToSysGroup);
+        await policy.RefreshAsync();
+
+        // A caller whose 'groups' claim resolves to sys:group=arazzo-admins is SELECTED by the 'group' binding → full
+        // reach. (Under the superseded raw-claim matcher the 'group' binding never matched the 'groups' claim — #96(i).)
+        AccessContext ctx = policy.Resolve(Principal(("groups", "arazzo-admins")));
+        ctx.Reach(AccessVerb.Read).ShouldBeNull(); // unrestricted
+        ctx.Admits(AccessVerb.Write, Globex).ShouldBeTrue();
+
+        // A caller in a different group carries a different canonical identity and is not selected.
+        policy.Resolve(Principal(("groups", "payments"))).Admits(AccessVerb.Read, Acme).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -46,7 +77,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "admin",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("role", "tenant-admin"), ("tenant", "acme")));
@@ -66,7 +97,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "admin",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("role", "operator")));
@@ -84,7 +115,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "admin",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("role", "nobody"), ("tenant", "acme")));
@@ -102,7 +133,7 @@ public sealed class PersistentRowSecurityPolicyTests
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "a", VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("group", "g", VerbGrant.Rules("globex-only"), VerbGrant.None, VerbGrant.None), "admin", default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("role", "a"), ("group", "g")));
@@ -115,7 +146,7 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         var store = new InMemorySecurityPolicyStore();
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         policy.Resolve(null).Admits(AccessVerb.Read, Acme).ShouldBeFalse();
@@ -131,7 +162,7 @@ public sealed class PersistentRowSecurityPolicyTests
 
         // Deployment shell mandates the tenant via an internal tag; the binding narrows by team.
         var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
-        var policy = new PersistentRowSecurityPolicy(store, shell);
+        var policy = new PersistentRowSecurityPolicy(store, shell, ClaimsToTags);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("role", "u"), ("tenant", "acme")));
@@ -148,7 +179,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "approver",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         // The granted scopes survive the store round-trip (schema → write → snapshot → resolve).
@@ -165,7 +196,7 @@ public sealed class PersistentRowSecurityPolicyTests
 
         // A binding with reach grants but no scopes is the common (standing-rule) case → the zero-allocation fast path.
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None), "admin", default);
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldBeEmpty();
@@ -178,7 +209,7 @@ public sealed class PersistentRowSecurityPolicyTests
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("sub", "alice", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("team", "payments", VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite, ControlPlaneScopes.CatalogRead]), "approver", default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         // runs:write appears in both bindings but resolves once (union, deduplicated).
@@ -197,7 +228,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "approver",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         ClaimsPrincipal alice = Principal(("sub", "alice"));
@@ -214,7 +245,7 @@ public sealed class PersistentRowSecurityPolicyTests
     {
         var store = new InMemorySecurityPolicyStore();
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.None, VerbGrant.None, VerbGrant.None, scopes: [ControlPlaneScopes.RunsWrite]), "approver", default);
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         policy.ResolveGrantedScopes(null).ShouldBeEmpty();
@@ -232,7 +263,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "approver",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store, timeProvider: new FixedClock(ClockNow));
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags, timeProvider: new FixedClock(ClockNow));
         await policy.RefreshAsync();
 
         ClaimsPrincipal alice = Principal(("sub", "alice"));
@@ -251,7 +282,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "approver",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store, timeProvider: new FixedClock(ClockNow));
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags, timeProvider: new FixedClock(ClockNow));
         await policy.RefreshAsync();
 
         ClaimsPrincipal alice = Principal(("sub", "alice"));
@@ -273,7 +304,7 @@ public sealed class PersistentRowSecurityPolicyTests
             "approver",
             default);
 
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         ClaimsPrincipal alice = Principal(("sub", "alice"));
@@ -288,7 +319,7 @@ public sealed class PersistentRowSecurityPolicyTests
         // everyone an operator. By default that grant is demoted to no reach (deny-by-default).
         var store = new InMemorySecurityPolicyStore();
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("sub", "anyone")));
@@ -305,7 +336,7 @@ public sealed class PersistentRowSecurityPolicyTests
         var store = new InMemorySecurityPolicyStore();
         await SeedRuleAsync(store, "acme-only", "tenant == 'acme'", "admin");
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Rules("acme-only"), VerbGrant.None, VerbGrant.None), "admin", default);
-        var policy = new PersistentRowSecurityPolicy(store);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("sub", "anyone")));
@@ -319,7 +350,7 @@ public sealed class PersistentRowSecurityPolicyTests
         // A genuinely single-tenant deployment may opt back in to "everyone is an operator".
         var store = new InMemorySecurityPolicyStore();
         await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
-        var policy = new PersistentRowSecurityPolicy(store, allowWildcardUnrestrictedReach: true);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags, allowWildcardUnrestrictedReach: true);
         await policy.RefreshAsync();
 
         AccessContext ctx = policy.Resolve(Principal(("sub", "anyone")));
@@ -340,7 +371,7 @@ public sealed class PersistentRowSecurityPolicyTests
         });
 
         // With the ordering configured the rule ranks: at/below confidential is admitted, above it is denied.
-        var policy = new PersistentRowSecurityPolicy(store, orderings: orderings);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags, orderings: orderings);
         await policy.RefreshAsync();
         AccessContext ctx = policy.Resolve(Principal(("role", "reader")));
         ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("classification", "public")])).ShouldBeTrue();
@@ -349,7 +380,7 @@ public sealed class PersistentRowSecurityPolicyTests
 
         // Without orderings (the default), the ordered comparison denies everything (fail-closed) — proving the threading
         // through PersistentRowSecurityPolicy is exactly what makes the rule rank.
-        var unconfigured = new PersistentRowSecurityPolicy(store);
+        var unconfigured = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
         await unconfigured.RefreshAsync();
         unconfigured.Resolve(Principal(("role", "reader")))
             .Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("classification", "public")])).ShouldBeFalse();

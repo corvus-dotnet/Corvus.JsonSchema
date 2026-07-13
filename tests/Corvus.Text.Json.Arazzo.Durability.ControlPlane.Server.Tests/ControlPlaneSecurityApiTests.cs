@@ -299,8 +299,10 @@ public sealed class ControlPlaneSecurityApiTests
         app.UseAuthorization();
 
         // RowSecurityOnly: the row-security policy is active (so the security handler sees the caller for the
-        // self-elevation guard) while capability-scope gating is off (the test exercises the guard, not scopes).
-        var policy = new PersistentRowSecurityPolicy(policyStore);
+        // self-elevation guard) while capability-scope gating is off (the test exercises the guard, not scopes). The
+        // resolver maps the caller's claims to sys: dimensions so the guard's membership check (§16.5.4) resolves the
+        // caller's identity (e.g. team=payments → sys:team=payments), not a raw token claim.
+        var policy = new PersistentRowSecurityPolicy(policyStore, internalTagResolver: static p => p?.Claims.Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + c.Type, c.Value)).ToList() ?? []);
         await policy.RefreshAsync();
         app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, securityPolicyStore: policyStore);
         await app.StartAsync();

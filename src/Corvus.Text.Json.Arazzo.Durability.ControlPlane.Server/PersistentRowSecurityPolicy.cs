@@ -150,9 +150,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         var matched = new List<BindingClauses>();
         if (principal?.Identity?.IsAuthenticated == true)
         {
+            IReadOnlyList<SecurityTag> identity = this.GetInternalTags(principal);
             foreach (BindingClauses binding in current.Bindings)
             {
-                if (Matches(binding, principal) && !IsExpired(binding, now))
+                if (this.Matches(binding, identity) && !IsExpired(binding, now))
                 {
                     matched.Add(binding);
                 }
@@ -182,9 +183,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         // (and only when some binding is time-bound); an expired grant is excluded fail-safe.
         DateTimeOffset now = current.AnyExpiringBindings ? this.timeProvider.GetUtcNow() : default;
         List<string>? granted = null;
+        IReadOnlyList<SecurityTag> identity = this.GetInternalTags(principal);
         foreach (BindingClauses binding in current.Bindings)
         {
-            if (binding.Scopes.Length == 0 || !Matches(binding, principal) || IsExpired(binding, now))
+            if (binding.Scopes.Length == 0 || !this.Matches(binding, identity) || IsExpired(binding, now))
             {
                 continue;
             }
@@ -269,17 +271,25 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
         }
     }
 
-    private static bool Matches(BindingClauses binding, ClaimsPrincipal principal)
+    // Whether a binding applies to the caller by MEMBERSHIP over the caller's canonical sys: identity (§16.5.4): the
+    // wildcard '*' matches every authenticated caller; otherwise the caller's stamped identity must CONTAIN a tag whose
+    // operator-facing dimension (the sys: prefix stripped) equals the binding's claim type, and its value when the
+    // binding pins one. Reach is thus decided on the same ambient-stamped identity as administration and ownership, so
+    // the access overview cannot disagree with enforcement — not on raw, un-normalized token claims (a forged claim the
+    // deployment's claim→tag transform would drop cannot switch a binding on).
+    private bool Matches(BindingClauses binding, IReadOnlyList<SecurityTag> identity)
     {
         if (string.Equals(binding.ClaimType, "*", StringComparison.Ordinal))
         {
             return true;
         }
 
-        foreach (Claim claim in principal.Claims)
+        string prefix = this.InternalTagPrefix;
+        foreach (SecurityTag tag in identity)
         {
-            if (string.Equals(claim.Type, binding.ClaimType, StringComparison.Ordinal)
-                && (binding.ClaimValue is null || string.Equals(claim.Value, binding.ClaimValue, StringComparison.Ordinal)))
+            string dimension = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
+            if (string.Equals(dimension, binding.ClaimType, StringComparison.Ordinal)
+                && (binding.ClaimValue is null || string.Equals(tag.Value, binding.ClaimValue, StringComparison.Ordinal)))
             {
                 return true;
             }
