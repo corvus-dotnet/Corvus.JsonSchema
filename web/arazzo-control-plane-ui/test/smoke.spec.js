@@ -384,6 +384,37 @@ test('an operation dropped onto the designer starts templated from its documente
   await expect(page.locator('arazzo-step-inspector .prow .pfixed').first()).toContainText('checks');
 });
 
+test('the workflow inputs are authored with the typed schema editor, not a textarea (§15-8)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#surface .node').first().waitFor({ state: 'attached' }); // canvas projected
+  // Selecting the workflow's START node scopes the inspector to the inputs schema (the node sits off-canvas
+  // until fit, so drive the surface's own selection event). The nested schema editor lives two shadow roots
+  // deep; traverse it directly in one evaluate rather than through Playwright's cross-shadow locator.
+  const seen = await page.evaluate(() => {
+    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
+      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
+    }));
+    const wi = document.querySelector('arazzo-workflow-inspector');
+    const se = wi?.shadowRoot?.querySelector('arazzo-schema-editor');
+    return {
+      hasEditor: !!se,
+      noTextarea: !wi?.shadowRoot?.querySelector('textarea.inputs'),
+      hasRow: !!se?.shadowRoot?.querySelector('.rowline .name'),
+      hasToggle: !!se?.shadowRoot?.querySelector('.t-json'),
+    };
+  });
+  expect(seen.hasEditor, 'the inputs are authored by the schema editor').toBe(true);
+  expect(seen.noTextarea, 'the old guarded textarea is gone').toBe(true);
+  expect(seen.hasRow && seen.hasToggle, 'the Form tier renders rows + the Form|JSON toggle').toBe(true);
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('§18 debug run: starting against a dev environment pumps get-debug-run to a paused state (R5 async)', async ({ page }) => {
   const errors = [];
   // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by

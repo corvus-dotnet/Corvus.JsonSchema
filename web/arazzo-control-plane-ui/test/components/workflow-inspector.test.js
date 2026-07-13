@@ -27,23 +27,20 @@ describe('<arazzo-workflow-inspector>', () => {
   it('renders summary, inputs schema, the defaults layer, and outputs', () => {
     make();
     equal(el.shadowRoot.querySelector('.summary').value, 'The happy path.');
-    ok(el.shadowRoot.querySelector('.inputs').value.includes('"orderId"'));
+    ok('orderId' in (el.shadowRoot.querySelector('arazzo-schema-editor.inputs').value.properties || {}), 'inputs schema loaded into the editor');
     ok(el.shadowRoot.querySelector('.wfailure summary').textContent.includes('give-up'));
     equal(Object.keys(el.shadowRoot.querySelector('arazzo-outputs-editor').value)[0], 'receiptId');
   });
 
-  it('guards the inputs schema: invalid JSON never emits', () => {
+  it('the inputs schema editor drives workflow.inputs; a JSON-tier blank deletes it', () => {
     make();
-    const inputs = el.shadowRoot.querySelector('.inputs');
-    let emitted = 0;
-    el.addEventListener('workflow-changed', () => emitted++);
-    inputs.value = '{ nope';
-    inputs.dispatchEvent(new Event('input', { bubbles: true }));
-    equal(emitted, 0);
-    ok(inputs.classList.contains('invalid'));
-    inputs.value = '{ "type": "object" }';
-    inputs.dispatchEvent(new Event('input', { bubbles: true }));
-    equal(emitted, 1);
+    const ed = el.shadowRoot.querySelector('arazzo-schema-editor.inputs');
+    let last = null;
+    el.addEventListener('workflow-changed', (e) => { last = e.detail.workflow; });
+    ed.dispatchEvent(new CustomEvent('schema-changed', { detail: { schema: { type: 'object', properties: { x: { type: 'string' } } } }, bubbles: true, composed: true }));
+    ok(last?.inputs?.properties?.x, 'a schema-changed updates workflow.inputs');
+    ed.dispatchEvent(new CustomEvent('schema-changed', { detail: { schema: undefined }, bubbles: true, composed: true }));
+    ok(!('inputs' in last), 'schema:undefined (a JSON-tier blank) deletes workflow.inputs');
   });
 
   it('adding a workflow failure action emits the defaults layer', async () => {
@@ -112,10 +109,9 @@ describe('<arazzo-workflow-inspector>', () => {
     ok(!el.shadowRoot.querySelector('.summary'), 'no summary fields either');
 
     // Scoped edits still round-trip the WHOLE workflow object.
-    const area = el.shadowRoot.querySelector('.inputs');
-    area.value = '{"type":"object"}';
+    const ed = el.shadowRoot.querySelector('arazzo-schema-editor.inputs');
     const changed = nextEvent(el, 'workflow-changed');
-    area.dispatchEvent(new Event('input'));
+    ed.dispatchEvent(new CustomEvent('schema-changed', { detail: { schema: { type: 'object' } }, bubbles: true, composed: true }));
     const wf = (await changed).detail.workflow;
     equal(wf.inputs.type, 'object');
     ok(wf.workflowId, 'the untouched rest of the workflow survives the scoped edit');

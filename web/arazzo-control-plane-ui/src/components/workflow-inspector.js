@@ -11,8 +11,8 @@
 //   insp.addEventListener('workflow-changed', (e) => { doc.workflows[i] = e.detail.workflow; });
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import { wireGuardedJson } from './guarded-json.js';
 import { buildActionList, ACTION_LIST_CSS } from './action-list.js';
+import './schema-editor.js';
 import './outputs-editor.js';
 
 class ArazzoWorkflowInspector extends ArazzoElement {
@@ -122,8 +122,8 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       ${wants('inputs') ? `
       <h3 data-section="inputs">inputs (JSON Schema)</h3>
       <div>
-        <textarea class="inputs" rows="6" spellcheck="false">${w.inputs !== undefined ? escapeHtml(JSON.stringify(w.inputs, null, 2)) : ''}</textarea>
-        <div class="hint inputs-hint">drives the typed inputs form and $inputs completions</div>
+        <arazzo-schema-editor class="inputs"></arazzo-schema-editor>
+        <div class="hint">drives the typed inputs form and $inputs completions</div>
       </div>` : ''}
 
       ${wants('success') ? `
@@ -166,17 +166,15 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       else delete this._workflow.description;
       this._emit();
     });
-    const inputs = form.querySelector('.inputs');
+    const inputs = form.querySelector('arazzo-schema-editor.inputs');
     if (inputs) {
-      wireGuardedJson(inputs, {
-        hint: form.querySelector('.inputs-hint'),
-        baseHint: 'drives the typed inputs form and $inputs completions',
-        emptyDeletes: true, // blank clears workflow.inputs
-        onCommit: (value) => {
-          if (value === undefined) delete this._workflow.inputs;
-          else this._workflow.inputs = value;
-          this._emit();
-        },
+      inputs.emptyDeletes = true; // JSON-tier blank clears workflow.inputs (§3.4)
+      inputs.value = this._workflow.inputs ?? { type: 'object' };
+      inputs.addEventListener('schema-changed', (e) => {
+        const schema = e.detail.schema;
+        if (schema === undefined) delete this._workflow.inputs;
+        else this._workflow.inputs = schema;
+        this._emit();
       });
     }
 
