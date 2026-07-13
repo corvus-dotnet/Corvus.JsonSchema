@@ -1025,8 +1025,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
     }
 
-    /// <summary>The three validation passes (schema conformance, document-local semantics, workspace source
-    /// integrity), shared by <c>validate</c> and the publish gate.</summary>
+    /// <summary>The four validation passes (schema conformance, document-local semantics, workspace source
+    /// integrity, and embedded inputs-schema meta-validation), shared by <c>validate</c> and the publish gate.</summary>
     private async ValueTask<List<Finding>> CollectDiagnosticsAsync(JsonElement document, JsonElement attachments, CancellationToken cancellationToken)
     {
         var findings = new List<Finding>();
@@ -1069,8 +1069,126 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         //     attachments, so "delete a declared source that steps still use" surfaces HERE.
         await this.CheckSourceIntegrityAsync(document, attachments, findings, cancellationToken).ConfigureAwait(false);
 
+        // 4 — the inputs schemas the Arazzo meta-schema treats as opaque (each workflow.inputs and every
+        //     components.inputs.*) meta-validated against JSON Schema 2020-12, plus a dangling local-$ref
+        //     check (§6). Pass 4 validates a SUB-element, so results come back schema-relative and are rebased
+        //     under the schema's document location (pass 1 gets document-rooted paths for free).
+        MetaValidateInputsSchemas(in document, findings);
+
         return findings;
     }
+
+    /// <summary>Meta-validates each embedded inputs schema (workflow.inputs, components.inputs.*) against JSON
+    /// Schema 2020-12 and flags dangling local component references — closing a real gap: nothing else validates
+    /// the CONTENT of an inputs schema (the Arazzo meta-schema models it as just object-or-boolean).</summary>
+    private static void MetaValidateInputsSchemas(in JsonElement document, List<Finding> findings)
+    {
+        if (document.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        if (document.TryGetProperty("workflows"u8, out JsonElement workflows) && workflows.ValueKind == JsonValueKind.Array)
+        {
+            int i = 0;
+            foreach (JsonElement workflow in workflows.EnumerateArray())
+            {
+                if (workflow.ValueKind == JsonValueKind.Object && workflow.TryGetProperty("inputs"u8, out JsonElement inputs))
+                {
+                    MetaValidateInputsSchema(in inputs, $"/workflows/{i}/inputs", in document, findings);
+                }
+
+                i++;
+            }
+        }
+
+        if (document.TryGetProperty("components"u8, out JsonElement components) && components.ValueKind == JsonValueKind.Object
+            && components.TryGetProperty("inputs"u8, out JsonElement inputsLibrary) && inputsLibrary.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> entry in inputsLibrary.EnumerateObject())
+            {
+                JsonElement value = entry.Value;
+                MetaValidateInputsSchema(in value, $"/components/inputs/{EscapeJsonPointerSegment(entry.Name)}", in document, findings);
+            }
+        }
+    }
+
+    /// <summary>Meta-validates one inputs schema, rebasing each finding's schema-relative path under
+    /// <paramref name="basePath"/>, then flags any dangling local component reference.</summary>
+    private static void MetaValidateInputsSchema(in JsonElement schema, string basePath, in JsonElement document, List<Finding> findings)
+    {
+        if (findings.Count >= MaxValidationErrors)
+        {
+            return;
+        }
+
+        using (JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed))
+        {
+            InputsMetaSchema.Value.Validate(in schema, collector);
+            foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
+            {
+                if (!result.IsMatch)
+                {
+                    findings.Add(new("error", "schema", basePath + result.GetDocumentEvaluationLocationText(), result.GetMessageText(), result.GetSchemaEvaluationLocationText()));
+                    if (findings.Count >= MaxValidationErrors)
+                    {
+                        return;
+                    }
+                }
+            }
+        }
+
+        CheckDanglingInputsReferences(in schema, basePath, in document, findings);
+    }
+
+    /// <summary>Flags a <c>#/components/inputs/&lt;name&gt;</c> reference whose target is absent — nothing else
+    /// detects it (meta-validation cannot, the analyzer does not, and the baked path silently degrades to raw).</summary>
+    private static void CheckDanglingInputsReferences(in JsonElement node, string basePath, in JsonElement document, List<Finding> findings)
+    {
+        if (findings.Count >= MaxValidationErrors)
+        {
+            return;
+        }
+
+        if (node.ValueKind == JsonValueKind.Object)
+        {
+            if (node.TryGetProperty("$ref"u8, out JsonElement reference) && reference.ValueKind == JsonValueKind.String
+                && reference.GetString() is { } target && target.StartsWith("#/components/inputs/", StringComparison.Ordinal))
+            {
+                string name = target["#/components/inputs/".Length..];
+                if (!InputsLibraryHasEntry(in document, name))
+                {
+                    findings.Add(new("error", "schema", basePath, $"References the library schema '{name}', which does not exist under components.inputs.", null));
+                }
+            }
+
+            foreach (JsonProperty<JsonElement> property in node.EnumerateObject())
+            {
+                JsonElement child = property.Value;
+                if (child.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                {
+                    CheckDanglingInputsReferences(in child, basePath, in document, findings);
+                }
+            }
+        }
+        else if (node.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in node.EnumerateArray())
+            {
+                CheckDanglingInputsReferences(in item, basePath, in document, findings);
+            }
+        }
+    }
+
+    private static bool InputsLibraryHasEntry(in JsonElement document, string name)
+    {
+        return document.TryGetProperty("components"u8, out JsonElement components) && components.ValueKind == JsonValueKind.Object
+            && components.TryGetProperty("inputs"u8, out JsonElement inputs) && inputs.ValueKind == JsonValueKind.Object
+            && inputs.TryGetProperty(name, out _);
+    }
+
+    private static string EscapeJsonPointerSegment(string segment)
+        => segment.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
 
     /// <summary>Runs one stored scenario against the simulator and judges its expectations.</summary>
     private async ValueTask<(SimulationResult Result, List<ScenarioSuite.Verdict> Verdicts)> RunOneScenarioAsync(ParsedJsonDocument<WorkspaceWorkflow> w, JsonElement scenario, CancellationToken cancellationToken)
@@ -1940,6 +2058,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
     // One positioned finding, from either pass (SchemaLocation only on schema-conformance findings).
     private readonly record struct Finding(string Severity, string Category, string InstancePath, string Message, string? SchemaLocation);
+
+    /// <summary>The JSON Schema 2020-12 meta-schema, compiled once — validates the CONTENT of embedded inputs
+    /// schemas (pass 4). The meta-schema ships embedded and auto-resolves through the validator's cache.</summary>
+    private static readonly Lazy<ValidatorSchema> InputsMetaSchema = new(() =>
+        ValidatorSchema.FromText("{\"$ref\":\"https://json-schema.org/draft/2020-12/schema\"}", "corvus:meta/inputs-2020-12"));
 
     /// <summary>The embedded Arazzo meta-schemas, compiled once and picked by the document's declared <c>arazzo</c> version.</summary>
     private static class ArazzoMetaSchema

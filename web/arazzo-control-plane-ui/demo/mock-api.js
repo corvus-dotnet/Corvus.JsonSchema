@@ -3214,6 +3214,36 @@ export function createMockControlPlane(options = {}) {
     return findings;
   }
 
+  // Mirrors the server's pass 4 (schema-form §5): the Arazzo meta-schema treats inputs schemas as opaque, so
+  // validate the CONTENT of each workflow.inputs + components.inputs.* structurally (enough to flag nonsense
+  // keyword values) plus a dangling local-$ref check (§6). The real server runs the full 2020-12 meta-schema.
+  function inputsSchemaFindings(doc) {
+    const out = [];
+    const has = (o, k) => o && Object.prototype.hasOwnProperty.call(o, k);
+    const check = (schema, basePath) => {
+      if (schema === true || schema === false || schema === undefined) return; // boolean/absent schemas are fine
+      if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+        out.push({ severity: 'error', category: 'schema', instancePath: basePath, message: 'An inputs schema must be a JSON Schema object or boolean.' });
+        return;
+      }
+      if (has(schema, 'type') && !(typeof schema.type === 'string' || (Array.isArray(schema.type) && schema.type.every((t) => typeof t === 'string')))) {
+        out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/type`, message: 'The "type" keyword must be a string or an array of strings.' });
+      }
+      if (has(schema, 'required') && !Array.isArray(schema.required)) out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/required`, message: 'The "required" keyword must be an array.' });
+      if (has(schema, 'properties') && (typeof schema.properties !== 'object' || Array.isArray(schema.properties))) out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/properties`, message: 'The "properties" keyword must be an object.' });
+      if (has(schema, 'enum') && !Array.isArray(schema.enum)) out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/enum`, message: 'The "enum" keyword must be an array.' });
+      if (typeof schema.$ref === 'string') {
+        const m = /^#\/components\/inputs\/(.+)$/.exec(schema.$ref);
+        if (m && !(doc.components?.inputs && m[1] in doc.components.inputs)) {
+          out.push({ severity: 'error', category: 'schema', instancePath: basePath, message: `References the library schema '${m[1]}', which does not exist under components.inputs.` });
+        }
+      }
+    };
+    for (const [wi, wf] of (doc.workflows || []).entries()) if (has(wf, 'inputs')) check(wf.inputs, `/workflows/${wi}/inputs`);
+    for (const [name, schema] of Object.entries(doc.components?.inputs || {})) check(schema, `/components/inputs/${name}`);
+    return out;
+  }
+
   function validateWorkingCopyDocument(doc, attachments = []) {
     const diagnostics = [];
     const schemaError = (instancePath, message) => diagnostics.push({ severity: 'error', category: 'schema', instancePath, message });
@@ -3257,6 +3287,7 @@ export function createMockControlPlane(options = {}) {
 
     diagnostics.push(...workspaceSourceFindings(doc, attachments));
     diagnostics.push(...payloadTypingFindings(doc, attachments));
+    diagnostics.push(...inputsSchemaFindings(doc));
     const anyError = diagnostics.some((d) => d.severity === 'error');
     return { valid: !anyError, diagnostics };
   }

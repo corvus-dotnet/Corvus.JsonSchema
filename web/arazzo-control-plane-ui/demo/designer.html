@@ -491,6 +491,13 @@
         select.value = workflow.workflowId;
         project();
       }
+      // An inputs-schema finding (§5 pass 4) opens the workflow's inputs schema editor — the START anchor.
+      if (/^\/workflows\/\d+\/inputs(\/|$)/.test(path)) {
+        surface.selection = { type: 'node', id: '#start' };
+        showSelection(surface.selection);
+        switchSideTab('inspect');
+        return;
+      }
       const stepId = m[2] != null ? workflow.steps?.[Number(m[2])]?.stepId : null;
       if (stepId) {
         surface.selection = { type: 'node', id: stepId };
