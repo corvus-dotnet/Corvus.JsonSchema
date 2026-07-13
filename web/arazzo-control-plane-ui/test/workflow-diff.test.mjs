@@ -1,7 +1,7 @@
 // Tier 1 — the pure workflow comparison model (workflow-diff.js). DOM-free; node --test.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { diffWorkflowPair } from '../src/workflow-diff.js';
+import { diffWorkflowPair, buildGhostProjection } from '../src/workflow-diff.js';
 
 // A base single-workflow document; each test clones and mutates it (structuredClone), then compares.
 const base = () => ({
@@ -227,4 +227,92 @@ test('equality is key-order sensitive on whole-value surfaces (pinned limitation
   wf(r).inputs = { properties: { amount: { type: 'number' } }, type: 'object' };
   const d = D(l, r);
   assert.ok(d.workflow.some((e) => e.area === 'inputs'), 'a key-order-only inputs difference classifies as changed');
+});
+
+// ── §4.7 overlay ghost projection ─────────────────────────────────────────────────────────────────
+// A fixture with one of every exclusivity: a removed step (reserveStock), an added step (fraudCheck),
+// a renamed step (validate→checkOrder), and a changed step (charge). left → right.
+const ghostFixture = () => {
+  const l = base();
+  wf(l).steps = [
+    { stepId: 'validate', operationId: 'op.validate' },
+    { stepId: 'reserveStock', operationId: 'op.reserve', onSuccess: [{ name: 'ok', type: 'goto', stepId: 'charge' }] },
+    { stepId: 'charge', operationId: 'op.charge' },
+  ];
+  const r = base();
+  wf(r).steps = [
+    { stepId: 'checkOrder', operationId: 'op.validate' },              // rename of validate
+    { stepId: 'fraudCheck', operationId: 'op.fraud' },                 // added
+    { stepId: 'charge', operationId: 'op.charge', successCriteria: [{ condition: '$statusCode == 200' }] }, // changed
+  ];
+  return { l, r };
+};
+
+test('buildGhostProjection (base=right): base solid, left-only appended as ghosts', () => {
+  const { l, r } = ghostFixture();
+  const d = D(l, r);
+  const g = buildGhostProjection(d, 'right');
+  const ids = g.graph.nodes.map((n) => n.id);
+  assert.ok(ids.includes('checkOrder') && ids.includes('fraudCheck') && ids.includes('charge'), 'base (right) nodes present');
+  assert.ok(ids.includes('reserveStock'), 'the removed left step is appended as a ghost node');
+  assert.ok(g.paint.ghosts.nodes.includes('reserveStock'), 'reserveStock is in the ghosts list');
+  assert.equal(g.paint.nodes.reserveStock, 'removed', 'the ghost keeps its removed classification');
+  assert.equal(g.paint.nodes.fraudCheck, 'added', 'a solid added step keeps its class, not a ghost');
+  assert.ok(!g.paint.ghosts.nodes.includes('fraudCheck'), 'the added (base) step is NOT a ghost');
+  assert.equal(g.paint.overlay, true);
+});
+
+test('buildGhostProjection: exclusive ghost edges carry ghost: ids and map endpoints into base space', () => {
+  const { l, r } = ghostFixture();
+  const d = D(l, r);
+  const g = buildGhostProjection(d, 'right');
+  const ghostSeq = g.graph.edges.find((e) => e.id.startsWith('ghost:') && e.from === 'reserveStock');
+  assert.ok(ghostSeq, 'the removed reserveStock→charge edge is a ghost edge');
+  assert.equal(ghostSeq.to, 'charge', 'its matched endpoint maps into base id-space');
+  assert.ok(g.paint.ghosts.edges.includes(ghostSeq.id), 'the ghost edge is listed');
+  assert.equal(g.paint.edges[ghostSeq.id], 'removed');
+});
+
+test('buildGhostProjection (base=left): symmetric — right-only appended as ghosts', () => {
+  const { l, r } = ghostFixture();
+  const d = D(l, r);
+  const g = buildGhostProjection(d, 'left');
+  const ids = g.graph.nodes.map((n) => n.id);
+  assert.ok(ids.includes('validate') && ids.includes('reserveStock'), 'base (left) nodes present, solid');
+  assert.ok(ids.includes('fraudCheck'), 'the added right step is appended as a ghost node');
+  assert.ok(g.paint.ghosts.nodes.includes('fraudCheck'), 'fraudCheck is a ghost with base=left');
+  assert.equal(g.paint.nodes.fraudCheck, 'added');
+  assert.ok(!g.paint.ghosts.nodes.includes('reserveStock'), 'the removed step is solid (base) with base=left');
+  assert.equal(g.paint.nodes.reserveStock, 'removed');
+});
+
+test('buildGhostProjection: no id collisions and every node/edge is laid out', () => {
+  const { l, r } = ghostFixture();
+  const d = D(l, r);
+  for (const base of ['left', 'right']) {
+    const g = buildGhostProjection(d, base);
+    const nodeIds = g.graph.nodes.map((n) => n.id);
+    assert.equal(new Set(nodeIds).size, nodeIds.length, `no duplicate node ids (base=${base})`);
+    const edgeIds = g.graph.edges.map((e) => e.id);
+    assert.equal(new Set(edgeIds).size, edgeIds.length, `no duplicate edge ids (base=${base})`);
+    for (const n of g.graph.nodes) assert.ok(g.layout[n.id], `${n.id} has a position (base=${base})`);
+  }
+});
+
+test('buildGhostProjection: entryMap resolves every change-list step entry to a surface id', () => {
+  const { l, r } = ghostFixture();
+  const d = D(l, r);
+  const g = buildGhostProjection(d, 'right');
+  const surfaceNodeIds = new Set(g.graph.nodes.map((n) => n.id));
+  for (const e of d.steps) {
+    const id = g.entryMap.get(e.rightId) ?? g.entryMap.get(e.leftId);
+    assert.ok(id && surfaceNodeIds.has(id), `${e.type} ${e.rightId ?? e.leftId} resolves to a rendered node (${id})`);
+  }
+});
+
+test('buildGhostProjection is deterministic (run-twice)', () => {
+  const { l, r } = ghostFixture();
+  const d = D(l, r);
+  const norm = (g) => ({ nodes: g.graph.nodes.map((n) => n.id), edges: g.graph.edges.map((e) => e.id), paint: g.paint, layout: g.layout, entryMap: [...g.entryMap.entries()] });
+  assert.deepEqual(norm(buildGhostProjection(d, 'right')), norm(buildGhostProjection(d, 'right')));
 });

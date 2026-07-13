@@ -14,6 +14,11 @@
 //   // r.paint.{left,right} — diffState-ready { nodes, edges, notes } keyed by each side's projection ids (§5)
 //   // r.layout.{left,right} — shared union-layout positions per side, so matched steps sit level (§4.6)
 //
+//   import { buildGhostProjection } from './workflow-diff.js';
+//   const g = buildGhostProjection(r, 'right'); // overlay mode's data (§4.7): ONE union graph in the
+//   // base side's id-space (base solid, the other side's exclusives appended as translucent ghosts).
+//   // g.graph / g.paint (diffState with ghosts + overlay:true) / g.layout / g.entryMap (projection id → surface id).
+//
 // Equality is JSON.stringify (key-order-SENSITIVE), consistent with the document model's deepEqual.
 // Whole-value comparisons here (workflow inputs/outputs/defaults/components and the rename-group
 // similarity score) therefore flag a key-order-only difference as changed; step CONTENT flows through
@@ -359,4 +364,86 @@ function buildUnionLayout(leftGraph, rightGraph, idMap) {
   const right = {};
   for (const n of rightGraph.nodes) { const p = positions[n.id]; if (p) right[n.id] = p; }
   return { left, right };
+}
+
+// §4.7 — overlay mode's data. Fold a diff `result` into ONE graph in the BASE side's id-space: the base
+// side rendered solid (its §4.2/§4.3 classification), the OTHER side's exclusive nodes/edges appended as
+// translucent ghosts (elements absent from the base version). `base` is 'left' or 'right' — the caller
+// picks (§6.2: the merge target when set, else 'right'); the module stays symmetric. Returns a
+// projectWorkflow-shaped `graph`, a diffState-ready `paint` (with `ghosts` + `overlay: true`), the union
+// `layout` re-keyed to base ids, and an `entryMap` (each side's projection node/edge id → its id on the
+// single overlay surface) so the change list can select/centre on the one surface.
+export function buildGhostProjection(result, base = 'right') {
+  const other = base === 'left' ? 'right' : 'left';
+  const baseGraph = base === 'left' ? result.leftGraph : result.rightGraph;
+  const otherGraph = base === 'left' ? result.rightGraph : result.leftGraph;
+  const basePaint = result.paint[base];
+  const otherPaint = result.paint[other];
+
+  // map an OTHER-side projection id into base id-space. base 'right' ⇒ left→right via idMap directly;
+  // base 'left' ⇒ right→left via the reverse map. An exclusive id maps to itself (never remapped).
+  let toBase;
+  if (base === 'right') {
+    toBase = (id) => result.idMap.get(id) ?? id;
+  } else {
+    const rev = new Map();
+    for (const [l, r] of result.idMap) rev.set(r, l);
+    toBase = (id) => rev.get(id) ?? id;
+  }
+
+  const baseNodeIds = new Set(baseGraph.nodes.map((n) => n.id));
+  const isWf = (id) => typeof id === 'string' && id.startsWith('workflow:');
+
+  // exclusive other-side nodes: their base-space id is not already a base node (START/END always map).
+  const ghostNodeSrc = otherGraph.nodes.filter((n) => !baseNodeIds.has(toBase(n.id)));
+  const ghostNodes = ghostNodeSrc.map((n) => ({ ...n, id: toBase(n.id) }));
+  // exclusive other-side edges: those the diff painted with the other side's exclusive class.
+  const exclusiveClass = other === 'left' ? 'removed' : 'added';
+  const ghostEdgeSrc = otherGraph.edges.filter((e) => otherPaint.edges[e.id] === exclusiveClass);
+  const ghostEdges = ghostEdgeSrc.map((e) => ({
+    ...e, id: `ghost:${e.id}`, from: toBase(e.from), to: isWf(e.to) ? e.to : toBase(e.to),
+  }));
+
+  const graph = { ...baseGraph, nodes: [...baseGraph.nodes, ...ghostNodes], edges: [...baseGraph.edges, ...ghostEdges] };
+
+  // paint, in base id-space: base classification verbatim, then the appended ghosts keep theirs + join
+  // the `ghosts` membership lists (the surface renders those translucent, §5).
+  const nodePaint = { ...basePaint.nodes };
+  const notes = { ...basePaint.notes };
+  const ghostNodeIds = [];
+  ghostNodeSrc.forEach((n, i) => {
+    const gid = ghostNodes[i].id;
+    if (otherPaint.nodes[n.id]) nodePaint[gid] = otherPaint.nodes[n.id];
+    if (otherPaint.notes?.[n.id]) notes[gid] = otherPaint.notes[n.id];
+    ghostNodeIds.push(gid);
+  });
+  const edgePaint = { ...basePaint.edges };
+  const ghostEdgeIds = [];
+  ghostEdges.forEach((e) => { edgePaint[e.id] = exclusiveClass; ghostEdgeIds.push(e.id); });
+  // ghost-only exit chips (`workflow:X` reached only by ghost edges) — classed like edges (§4.7).
+  const baseExitTargets = new Set(baseGraph.edges.filter((e) => isWf(e.to)).map((e) => e.to));
+  for (const e of ghostEdges) {
+    if (isWf(e.to) && !baseExitTargets.has(e.to) && !ghostEdgeIds.includes(e.to)) ghostEdgeIds.push(e.to);
+  }
+
+  const paint = { nodes: nodePaint, edges: edgePaint, notes, ghosts: { nodes: ghostNodeIds, edges: ghostEdgeIds }, overlay: true };
+  if (basePaint.defaults) paint.defaults = basePaint.defaults; // a defaults change with no base card is list-only
+
+  // layout = the §4.6 union positions re-keyed to base ids. Both sides came from ONE layout call, so base
+  // and ghost positions are already mutually consistent.
+  const layout = {};
+  for (const n of baseGraph.nodes) { const p = result.layout[base][n.id]; if (p) layout[n.id] = p; }
+  ghostNodeSrc.forEach((n, i) => { const p = result.layout[other][n.id]; if (p) layout[ghostNodes[i].id] = p; });
+
+  // entryMap: any projection id (either side) → the overlay surface's id. Base ids map to themselves;
+  // other-side node ids map through toBase (matched → the base solid node; exclusive → its ghost id);
+  // exclusive other-side edges map to their `ghost:`-prefixed id. A changed edge's base-side id is always
+  // present in its change-list entry, so matched other-side edges need no entry.
+  const entryMap = new Map();
+  for (const n of baseGraph.nodes) entryMap.set(n.id, n.id);
+  for (const e of baseGraph.edges) entryMap.set(e.id, e.id);
+  for (const n of otherGraph.nodes) entryMap.set(n.id, toBase(n.id));
+  ghostEdgeSrc.forEach((e, i) => entryMap.set(e.id, ghostEdges[i].id));
+
+  return { graph, paint, layout, entryMap, base };
 }
