@@ -6441,12 +6441,12 @@
             "properties": {
               "beforeStepId": {
                 "type": "string",
-                "description": "Pause before this step executes (the paused context is the state the step will see)."
+                "description": "Pause before this step executes (the paused context is the state the step will see). A **scoped step path**: a bare `stepId` targets a root step; a slash-joined `parent/child/...` path (each segment a `stepId`, outermost first) targets a step inside a sub-workflow. A bare id never matches a sub-workflow's step."
               },
               "occurrence": {
                 "type": "integer",
                 "default": 1,
-                "description": "Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops)."
+                "description": "Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops). Occurrences are counted cumulatively by the root run."
               },
               "breakpoints": {
                 "type": "array",
@@ -6479,7 +6479,7 @@
       "description": "Where a debug run pauses (workflow-designer design \u00a718): after every step (single-stepping) and/or before named steps (breakpoints). Absent \u2014 the run proceeds to completion, a wait, or a fault.",
       "properties": {
         "afterEachStep": { "type": "boolean", "description": "Pause after every executed step \u2014 the dock's single-step." },
-        "beforeSteps": { "type": "array", "description": "Pause before these steps execute \u2014 breakpoints.", "items": { "type": "string" } }
+        "beforeSteps": { "type": "array", "description": "Pause before these steps execute \u2014 breakpoints. Each entry is a **scoped step path**: a bare `stepId` for a root step, or a slash-joined `parent/child/...` path for a step inside a sub-workflow (a bare id never matches a sub-workflow's step).", "items": { "type": "string" } }
       }
     },
     "DebugRunStart": {
@@ -6531,8 +6531,12 @@
     "SimulationTrace": {
         "type": "object",
         "title": "SimulationTrace",
-        "description": "The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls.",
+        "description": "The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step's `subTrace` is itself a SimulationTrace.",
         "properties": {
+          "workflowId": {
+            "type": "string",
+            "description": "The sub-workflow's `workflowId`, present only on a nested `subTrace` and absent on the root trace. Marks this trace as one sub-workflow invocation's records within its parent; the client's step-into ascent stops where it becomes absent."
+          },
           "outcome": {
             "type": "string",
             "enum": [
@@ -6546,7 +6550,7 @@
           },
           "pausedBefore": {
             "type": "string",
-            "description": "The step the replay paused before, when `outcome` is `paused`."
+            "description": "The step the replay paused before, when `outcome` is `paused`. A **scoped step path**: a bare `stepId` for a root step, or a slash-joined `parent/child/...` path (each segment a `stepId`, outermost first) when the stop fired inside a sub-workflow."
           },
           "outputs": {
             "description": "The workflow outputs value, when `outcome` is `completed`."
@@ -6610,8 +6614,11 @@
                   "type": "string",
                   "enum": [
                     "completed",
-                    "faulted"
-                  ]
+                    "faulted",
+                    "paused",
+                    "suspended"
+                  ],
+                  "description": "The step's terminal status, or — on a sub-workflow parent step whose child did not finish — `paused` (a scoped stop fired inside the child) or `suspended` (the child is awaiting a timer or message)."
                 },
                 "attempt": {
                   "type": "integer",
@@ -6698,6 +6705,14 @@
                   "required": [
                     "type"
                   ]
+                },
+                "skipped": {
+                  "type": "boolean",
+                  "description": "True when a Skip resume skipped this step rather than executing it (the durable debug-run Skip protocol). Absent or false for an executed step."
+                },
+                "subTrace": {
+                  "$ref": "#/components/schemas/SimulationTrace",
+                  "description": "For a step bound to another workflow (`workflowId`), the nested trace of that sub-workflow's execution — the same shape as the root trace, carrying its own `workflowId`. Powers step-into; absent for non-sub-workflow steps."
                 }
               },
               "required": [
