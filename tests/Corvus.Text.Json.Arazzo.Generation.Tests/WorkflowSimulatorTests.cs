@@ -153,6 +153,112 @@ public sealed class WorkflowSimulatorTests
         };
     }
 
+    // Defect 0 (pack 3 §15-8a): a parent workflow whose step invokes another workflow by workflowId.
+    // The durable code generator emits the sub-workflow call with the wrong argument shape today (a token
+    // positionally into the IWorkflowRun? parameter — CS1503), so the provider swallows the compile
+    // failure and the simulation reports NotExecutable. It must compile and run.
+    private const string SubWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Nested", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                { "stepId": "call-child", "workflowId": "child", "parameters": [ { "name": "petId", "value": "$inputs.petId" } ] }
+              ]
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                {
+                  "stepId": "get-pet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    // Defect 0 (pack 3 §15-8a), goto-workflow half: a step whose onSuccess transfers control to another
+    // workflow (type: goto with a workflowId). The durable tail-call at ControlFlowEmitter :1030 has the
+    // same wrong argument shape (a token into the IWorkflowRun? slot — CS1503), so the provider swallows it
+    // and reports NotExecutable. It must compile and run, returning the target workflow's result.
+    private const string GotoWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Router", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "router",
+              "steps": [
+                {
+                  "stepId": "check",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "onSuccess": [ { "name": "handoff", "type": "goto", "workflowId": "target" } ]
+                }
+              ]
+            },
+            {
+              "workflowId": "target",
+              "steps": [
+                {
+                  "stepId": "get-pet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task A_durable_simulation_of_a_sub_workflow_step_is_executable()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(Encoding.UTF8.GetBytes(SubWorkflowJson), Sources, scenario);
+
+        // NotExecutable would mean the durable codegen did not compile (the provider swallows the CS1503 into a
+        // null artifact); Completed proves the sub-workflow was invoked, its outputs unwrapped, and the parent ran on.
+        result.Outcome.ShouldBe(SimulationOutcome.Completed, "durable sub-workflow codegen must compile and run");
+    }
+
+    [TestMethod]
+    public async Task A_durable_simulation_of_a_goto_workflow_action_is_executable()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(Encoding.UTF8.GetBytes(GotoWorkflowJson), Sources, scenario);
+
+        // The same durable compile break lands on the goto-workflow tail-call (ControlFlowEmitter :1030); a
+        // transferred-control run returns the target workflow's result as its own.
+        result.Outcome.ShouldBe(SimulationOutcome.Completed, "durable goto-workflow codegen must compile and run");
+    }
+
     [TestMethod]
     public async Task A_full_replay_traces_steps_exchanges_truth_tables_and_outputs()
     {
