@@ -185,16 +185,22 @@ public sealed class MongoEnvironmentAdministratorStore : IEnvironmentAdministrat
     }
 
     /// <inheritdoc/>
-    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+        if (adminDigests.Count == 0)
+        {
+            return EnvironmentAdministeredPage.Create([]);
+        }
 
         // The keyset cursor (the environment name == _id to page strictly after) reifies once here for the filter leaf,
         // never per row. Mongo's default string sort/compare is binary over UTF-8 (ordinal) — the contract's order.
         string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
 
-        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.AnyEq("adminDigests", adminDigest);
+        // Membership (§16.5.4): a doc matches if its adminDigests array holds any of the caller's subset digests (AnyIn).
+        // A document is returned once regardless of how many match, so no de-duplication is needed.
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.AnyIn("adminDigests", adminDigests);
         if (after is not null)
         {
             filter &= Builders<BsonDocument>.Filter.Gt("_id", after);

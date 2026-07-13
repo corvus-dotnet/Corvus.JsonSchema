@@ -201,26 +201,32 @@ public sealed class NatsJetStreamEnvironmentAdministratorStore : IEnvironmentAdm
     }
 
     /// <inheritdoc/>
-    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
-        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
-
-        // Recover the digest's administered environment names via a server-side key filter (eaidx.{digest}.>), decode each
-        // from its marker key, and order them client-side (KV listing is unordered) — string.CompareOrdinal is the contract's
-        // order.
-        string prefix = string.Concat(IndexPrefix, adminDigest, ".");
-        var names = new List<string>();
-        await foreach (string markerKey in this.store.GetKeysAsync([prefix + ">"], cancellationToken: cancellationToken).ConfigureAwait(false))
+        if (adminDigests.Count == 0)
         {
-            if (markerKey.StartsWith(prefix, StringComparison.Ordinal))
-            {
-                names.Add(Dec(markerKey[prefix.Length..]));
-            }
+            return EnvironmentAdministeredPage.Create([]);
         }
 
-        names.Sort(StringComparer.Ordinal);
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // Membership (§16.5.4): union each digest's marker-key prefix (eaidx.{digest}.>), decoding each name. An environment
+        // under more than one matching digest appears once (the SortedSet dedupes + orders ordinally — the contract's order;
+        // KV listing is unordered); then apply the keyset cursor + page.
+        var names = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (string digest in adminDigests)
+        {
+            string prefix = string.Concat(IndexPrefix, digest, ".");
+            await foreach (string markerKey in this.store.GetKeysAsync([prefix + ">"], cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                if (markerKey.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    names.Add(Dec(markerKey[prefix.Length..]));
+                }
+            }
+        }
 
         var rows = new List<string>(Math.Min(pageSize + 1, names.Count));
         foreach (string name in names)

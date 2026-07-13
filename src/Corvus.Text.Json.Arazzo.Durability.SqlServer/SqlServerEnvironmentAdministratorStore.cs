@@ -163,10 +163,14 @@ public sealed class SqlServerEnvironmentAdministratorStore : IEnvironmentAdminis
     }
 
     /// <inheritdoc/>
-    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+        if (adminDigests.Count == 0)
+        {
+            return EnvironmentAdministeredPage.Create([]);
+        }
 
         // The keyset cursor (the environment name to page strictly after) reifies once here for the @after parameter — the
         // SQL leaf — never per row. The index columns are Latin1_General_BIN2 so the keyset compare is ordinal (the
@@ -175,10 +179,13 @@ public sealed class SqlServerEnvironmentAdministratorStore : IEnvironmentAdminis
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
+
+        // Membership (§16.5.4): match any of the caller's subset digests. DISTINCT because an environment indexed under
+        // more than one matching digest (multiple administrator identities the caller subsumes) would otherwise repeat.
+        string inList = BuildInList(select, adminDigests);
         select.CommandText = after is null
-            ? "SELECT TOP (@n) EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest ORDER BY EnvironmentName;"
-            : "SELECT TOP (@n) EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest AND EnvironmentName > @after ORDER BY EnvironmentName;";
-        select.Parameters.AddWithValue("@digest", adminDigest);
+            ? $"SELECT DISTINCT TOP (@n) EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest IN ({inList}) ORDER BY EnvironmentName;"
+            : $"SELECT DISTINCT TOP (@n) EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest IN ({inList}) AND EnvironmentName > @after ORDER BY EnvironmentName;";
         select.Parameters.AddWithValue("@n", pageSize + 1);
         if (after is not null)
         {
@@ -199,6 +206,19 @@ public sealed class SqlServerEnvironmentAdministratorStore : IEnvironmentAdminis
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
+
+    // Binds one @dN parameter per subset digest and returns the "@d0,@d1,…" list for the IN clause (bounded — SubsetDigests caps it).
+    private static string BuildInList(SqlCommand command, IReadOnlyList<string> adminDigests)
+    {
+        string[] names = new string[adminDigests.Count];
+        for (int i = 0; i < adminDigests.Count; i++)
+        {
+            names[i] = "@d" + i;
+            command.Parameters.AddWithValue(names[i], adminDigests[i]);
+        }
+
+        return string.Join(',', names);
+    }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
