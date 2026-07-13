@@ -141,13 +141,14 @@ describe('<arazzo-schema-editor>', () => {
     equal((await changed).detail.schema.properties.code.const, 7, 'const typed by the integer row');
   });
 
-  it('references a library schema (reference row) and detaches by inlining the target (§6)', async () => {
+  it('references a library schema from the type menu and detaches by inlining the target (§6)', async () => {
     make({ type: 'object', properties: { a: { type: 'string' } } });
     el.library = { Address: { type: 'object', properties: { city: { type: 'string' } } } };
-    ok(el.shadowRoot.querySelector('select.ref'), 'a "reference…" picker appears when a library exists');
-    const aRef = names().find((n) => n.value === 'a').closest('.node').querySelector('select.ref');
+    // Shared library types LEAD the type menu (the encouraged default), not a separate picker.
+    const aType = names().find((n) => n.value === 'a').closest('.node').querySelector('select.type');
+    ok([...aType.querySelectorAll('optgroup[label="Shared types"] option')].some((o) => o.value === 'ref:Address'), 'shared types lead the type menu');
     const changed = nextEvent(el, 'schema-changed');
-    aRef.value = 'Address'; aRef.dispatchEvent(new Event('change'));
+    aType.value = 'ref:Address'; aType.dispatchEvent(new Event('change'));
     equal((await changed).detail.schema.properties.a.$ref, '#/components/inputs/Address');
     const refRow = [...el.shadowRoot.querySelectorAll('.node')].find((n) => n.textContent.includes('#/components/inputs/Address'));
     ok(refRow, 'renders a reference row');

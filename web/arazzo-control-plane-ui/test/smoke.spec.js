@@ -429,11 +429,12 @@ test('the inputs schema editor offers the library $ref picker (§6)', async ({ p
     }));
     const se = document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor');
     if (!se) return { ok: false };
-    se.library = { Address: { type: 'object', properties: { city: { type: 'string' } } } }; // a library → the picker appears
-    const refSel = se.shadowRoot.querySelector('select.ref');
-    return { ok: true, hasRef: !!refSel, hasAddress: refSel ? [...refSel.options].some((o) => o.value === 'Address') : false };
+    se.library = { Address: { type: 'object', properties: { city: { type: 'string' } } } }; // a library → shared types lead the type menu
+    const typeSel = se.shadowRoot.querySelector('select.type');
+    const opts = typeSel ? [...typeSel.querySelectorAll('optgroup[label="Shared types"] option')].map((o) => o.value) : [];
+    return { ok: true, hasShared: opts.length > 0, hasAddress: opts.includes('ref:Address') };
   });
-  expect(seen.ok && seen.hasRef, 'the "reference…" picker renders when a library exists').toBe(true);
+  expect(seen.ok && seen.hasShared, 'shared library types lead the type menu when a library exists').toBe(true);
   expect(seen.hasAddress, 'the library schema is offered').toBe(true);
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
