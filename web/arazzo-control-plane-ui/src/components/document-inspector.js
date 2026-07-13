@@ -15,7 +15,7 @@
 // editors AUTHOR `$components.…` references against these keys and localize copies from them.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import { wireGuardedJson } from './guarded-json.js';
+import './schema-editor.js';
 import './action-editor.js';
 
 const COMPONENT_KINDS = [
@@ -310,17 +310,14 @@ class ArazzoDocumentInspector extends ArazzoElement {
       });
       content.querySelector('.cpvalue').addEventListener('input', (e) => { value.value = e.target.value; this._emit(); });
     } else {
-      // inputs: a JSON Schema — the guarded JSON editor (typed schema authoring is a later slice).
-      content.innerHTML = `
-        <textarea rows="4" spellcheck="false">${escapeHtml(JSON.stringify(value, null, 2))}</textarea>
-        <div class="hint schema-hint">a JSON Schema; referenced from workflow inputs</div>`;
-      const area = content.querySelector('textarea');
-      wireGuardedJson(area, {
-        hint: content.querySelector('.schema-hint'),
-        baseHint: 'a JSON Schema; referenced from workflow inputs',
-        emptyDeletes: false, // blank holds last-valid (no delete branch), unlike the other two hosts
-        onCommit: (value) => { this._doc.components[kind][key] = value; this._emit(); },
-      });
+      // inputs: a JSON Schema — the typed schema editor (Form | JSON). Its JSON-tier blank holds last-valid
+      // (emptyDeletes false), the library's own semantics — unlike workflow-inspector.
+      content.innerHTML = '<div class="hint">a JSON Schema; referenced from workflow inputs</div>';
+      const ed = document.createElement('arazzo-schema-editor');
+      ed.emptyDeletes = false;
+      ed.value = value;
+      ed.addEventListener('schema-changed', (e) => { this._doc.components[kind][key] = e.detail.schema; this._emit(); });
+      content.prepend(ed);
     }
 
     return entry;

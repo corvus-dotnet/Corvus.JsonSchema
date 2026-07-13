@@ -66,6 +66,12 @@ class ArazzoSchemaEditor extends ArazzoElement {
   get library() { return this._library; }
   set library(v) { this._library = v || null; }
 
+  /** JSON-tier blank behaviour (§3.4). When true, clearing the JSON buffer emits `schema-changed {schema:
+   *  undefined}` so the host can delete the whole schema (workflow-inspector); when false (default) a blank
+   *  buffer is just invalid JSON, holding last-valid (document-inspector). The FORM tier never deletes. */
+  get emptyDeletes() { return !!this._emptyDeletes; }
+  set emptyDeletes(v) { this._emptyDeletes = !!v; }
+
   get title() { return this._title; }
   set title(v) { this._title = v || ''; if (this._built) this._render(); }
 
@@ -178,8 +184,11 @@ class ArazzoSchemaEditor extends ArazzoElement {
       wireGuardedJson(ta, {
         hint: this.$('.json-hint'),
         baseHint: 'the raw JSON Schema; edits apply when it parses',
-        emptyDeletes: false,
-        onCommit: (value) => { this._schema = value; this._commit(); },
+        emptyDeletes: this._emptyDeletes, // per host (§3.4)
+        onCommit: (value) => {
+          if (value === undefined) { this.emit('schema-changed', { schema: undefined }); return; } // host deletes
+          this._schema = value; this._commit();
+        },
       });
     }
   }
@@ -318,6 +327,9 @@ class ArazzoSchemaEditor extends ArazzoElement {
     body.className = 'more-body';
     const rows = [['title', 'text'], ...(CONSTRAINTS[type] || [])];
     for (const [key, kind] of rows) this._constraintRow(body, schema, key, kind);
+    // enum (chip list) + const, values typed by the row's type (§3.2).
+    this._enumRow(body, schema);
+    this._constRow(body, schema);
     // typed default (§9.4) — value-editor typed by the row's schema.
     this._defaultRow(body, schema);
     details.innerHTML = '<summary>more…</summary>';
@@ -342,6 +354,40 @@ class ArazzoSchemaEditor extends ArazzoElement {
       setConstraint(schema, key, value);
       this._commit();
     });
+    body.append(label, input);
+  }
+
+  _enumRow(body, schema) {
+    const label = document.createElement('label'); label.textContent = 'enum';
+    const wrap = document.createElement('div'); wrap.className = 'full';
+    const chips = document.createElement('div'); chips.className = 'chips';
+    const render = () => {
+      chips.replaceChildren();
+      (Array.isArray(schema.enum) ? schema.enum : []).forEach((v, i) => {
+        const c = document.createElement('span'); c.className = 'chip'; c.textContent = JSON.stringify(v);
+        const x = document.createElement('button'); x.className = 'iconbtn'; x.type = 'button'; x.textContent = '×'; x.disabled = this.readonly;
+        x.addEventListener('click', () => { schema.enum.splice(i, 1); if (!schema.enum.length) delete schema.enum; render(); this._commit(); });
+        c.appendChild(x); chips.appendChild(c);
+      });
+    };
+    render();
+    const add = document.createElement('input'); add.placeholder = 'add value + Enter'; add.disabled = this.readonly;
+    add.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || add.value === '') return;
+      e.preventDefault();
+      schema.enum = Array.isArray(schema.enum) ? schema.enum : [];
+      schema.enum.push(coerce(add.value, schema.type));
+      add.value = ''; render(); this._commit();
+    });
+    wrap.append(chips, add);
+    body.append(label, wrap);
+  }
+
+  _constRow(body, schema) {
+    const label = document.createElement('label'); label.textContent = 'const';
+    const input = document.createElement('input'); input.disabled = this.readonly;
+    input.value = schema.const === undefined ? '' : (typeof schema.const === 'string' ? schema.const : JSON.stringify(schema.const));
+    input.addEventListener('input', () => { if (input.value === '') delete schema.const; else schema.const = coerce(input.value, schema.type); this._commit(); });
     body.append(label, input);
   }
 
@@ -514,6 +560,14 @@ class ArazzoSchemaEditor extends ArazzoElement {
     for (const [k, v] of Object.entries(schema)) out[k] = (v && typeof v === 'object') ? this._resolveLibraryRefs(v, seen) : v;
     return out;
   }
+}
+
+// Coerce a text entry to the row's declared type (enum/const values are typed): number/integer → Number,
+// boolean → true/false, anything else stays a string.
+function coerce(str, type) {
+  if (type === 'number' || type === 'integer') { const n = Number(str); return Number.isNaN(n) ? str : n; }
+  if (type === 'boolean') { if (str === 'true') return true; if (str === 'false') return false; return str; }
+  return str;
 }
 
 // A one-line advanced summary: `$defs (2) · not · patternProperties (1)`.

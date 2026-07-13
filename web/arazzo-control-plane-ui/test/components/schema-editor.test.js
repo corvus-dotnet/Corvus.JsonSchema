@@ -121,6 +121,26 @@ describe('<arazzo-schema-editor>', () => {
     ok(ghost && /missing/.test(ghost.textContent), 'the orphan required name is flagged');
   });
 
+  it('authors enum chips (typed by the row type) and a const in more…', async () => {
+    make({ type: 'object', properties: { status: { type: 'string' }, code: { type: 'integer' } } });
+    // Open the status row's more… and add two enum values.
+    const statusRow = names().find((n) => n.value === 'status').closest('.node');
+    statusRow.querySelector('details.more').open = true;
+    const enumAdd = [...statusRow.querySelectorAll('.more-body input')].find((i) => i.placeholder?.includes('add value'));
+    const addValue = async (v) => { const c = nextEvent(el, 'schema-changed'); enumAdd.value = v; enumAdd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); return (await c).detail.schema; };
+    await addValue('pending');
+    const schema = await addValue('settled');
+    equal(JSON.stringify(schema.properties.status.enum), JSON.stringify(['pending', 'settled']), 'string enum values stay strings');
+    // A numeric const on the integer row coerces to a number.
+    const codeRow = names().find((n) => n.value === 'code').closest('.node');
+    codeRow.querySelector('details.more').open = true;
+    const constInput = [...codeRow.querySelectorAll('.more-body label')].find((l) => l.textContent === 'const').nextElementSibling;
+    const changed = nextEvent(el, 'schema-changed');
+    constInput.value = '7';
+    constInput.dispatchEvent(new Event('input'));
+    equal((await changed).detail.schema.properties.code.const, 7, 'const typed by the integer row');
+  });
+
   it('the preview renders value-editor from the authored schema (union for oneOf)', async () => {
     make({ type: 'object', properties: { pick: { oneOf: [{ type: 'string' }, { type: 'integer' }] } } });
     el.shadowRoot.querySelector('.preview').open = true;

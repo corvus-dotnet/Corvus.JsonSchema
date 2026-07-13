@@ -102,16 +102,13 @@ describe('<arazzo-document-inspector>', () => {
     equal(doc.components.parameters, undefined);
   });
 
-  it('guards a component input schema as JSON', async () => {
+  it('a component input schema is authored via the typed schema editor', async () => {
     make({ ...DOC, components: { inputs: { pagination: { type: 'object' } } } });
-    const area = el.shadowRoot.querySelector('.entry textarea');
-    area.value = '{ nope';
-    area.dispatchEvent(new Event('input'));
-    ok(area.classList.contains('invalid'), 'broken JSON flags without emitting');
-
-    area.value = '{"type":"string"}';
+    const ed = el.shadowRoot.querySelector('.entry arazzo-schema-editor');
+    ok(ed, 'the schema editor renders for a components.inputs entry');
+    equal(ed.value.type, 'object', 'seeded from the component schema');
     const changed = nextEvent(el, 'document-changed');
-    area.dispatchEvent(new Event('input'));
+    ed.dispatchEvent(new CustomEvent('schema-changed', { detail: { schema: { type: 'string' } }, bubbles: true, composed: true }));
     equal((await changed).detail.document.components.inputs.pagination.type, 'string');
   });
 
