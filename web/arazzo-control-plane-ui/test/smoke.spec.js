@@ -440,6 +440,45 @@ test('the inputs schema editor offers the library $ref picker (§6)', async ({ p
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('a nonsense inputs schema authored in the JSON tier surfaces a positioned Problems finding (§8)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#surface .node').first().waitFor({ state: 'attached' });
+
+  // Scope the inspector to the workflow inputs (START node), then wait for the schema editor to mount.
+  await page.evaluate(() => {
+    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
+      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
+    }));
+  });
+  await expect.poll(async () => page.evaluate(() =>
+    !!document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor'),
+  )).toBe(true);
+
+  // Author a nonsense schema ("type": 123 — type must be a string) in the JSON tier. The guarded-json
+  // textarea commits on input the moment it parses, so this emits schema-changed → autosave → validate.
+  await page.evaluate(() => {
+    const se = document.querySelector('arazzo-workflow-inspector').shadowRoot.querySelector('arazzo-schema-editor');
+    se.shadowRoot.querySelector('.t-json').click();
+    const ta = se.shadowRoot.querySelector('textarea.json');
+    ta.value = '{"type": 123}';
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  // The mock's inputs meta-validation (mirror of the server's pass 4) surfaces a positioned finding: the
+  // Problems badge lights and the tray lists it under the workflow's inputs, at the offending keyword.
+  const badge = page.locator('#problems-badge');
+  await expect.poll(async () => Number((await badge.textContent().catch(() => '0')) || '0'), { timeout: 8000 }).toBeGreaterThan(0);
+  await page.locator('[data-tab="problems"]').click();
+  await expect(page.locator('#problems')).toContainText('/workflows/0/inputs/type');
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('§18 debug run: starting against a dev environment pumps get-debug-run to a paused state (R5 async)', async ({ page }) => {
   const errors = [];
   // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by

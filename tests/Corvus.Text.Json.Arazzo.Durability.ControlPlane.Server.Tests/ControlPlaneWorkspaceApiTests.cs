@@ -450,6 +450,122 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Meta_validation_accepts_valid_inputs_schemas_including_boolean_schemas()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // A well-formed inputs schema on the workflow, plus a boolean schema in the library
+        // (true is a valid JSON Schema) — pass 4 (embedded inputs meta-validation) has nothing to say.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Clean inputs", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "components": { "inputs": { "Anything": true } },
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": "object", "properties": { "orderId": { "type": "string" } } },
+            "steps": [{ "stepId": "a", "operationId": "listPets" }]
+          }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeTrue();
+        outcome.RootElement.GetProperty("diagnostics").GetArrayLength().ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task Meta_validation_reports_a_positioned_finding_for_a_nonsense_workflow_inputs_schema()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // "type": 123 is not a valid JSON Schema keyword value. The Arazzo meta-schema lets it
+        // through (it does not descend into the inputs schema), so pass 4 is the only thing that
+        // catches it — positioned inside the workflow's inputs.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Bad inputs", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": 123 },
+            "steps": [{ "stepId": "a", "operationId": "listPets" }]
+          }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement[] findings = [.. outcome.RootElement.GetProperty("diagnostics").EnumerateArray()];
+        findings.ShouldContain(f =>
+            f.GetProperty("category").GetString() == "schema"
+            && f.GetProperty("severity").GetString() == "error"
+            && f.GetProperty("instancePath").GetString()!.StartsWith("/workflows/0/inputs", System.StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public async Task Meta_validation_reports_a_positioned_finding_for_a_nonsense_library_inputs_schema()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // The same nonsense in a components.inputs library entry is positioned under that entry.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Bad library", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "components": { "inputs": { "Money": { "type": 42 } } },
+          "workflows": [{ "workflowId": "w", "steps": [{ "stepId": "a", "operationId": "listPets" }] }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement[] findings = [.. outcome.RootElement.GetProperty("diagnostics").EnumerateArray()];
+        findings.ShouldContain(f =>
+            f.GetProperty("category").GetString() == "schema"
+            && f.GetProperty("instancePath").GetString()!.StartsWith("/components/inputs/Money", System.StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public async Task Meta_validation_flags_a_dangling_local_inputs_reference()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // A $ref to a library schema that does not exist. Meta-validation cannot see it, the
+        // analyzer does not, and the baked path silently degrades to raw — only pass 4 flags it,
+        // positioned at the referencing node.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Dangling ref", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "$ref": "#/components/inputs/Missing" },
+            "steps": [{ "stepId": "a", "operationId": "listPets" }]
+          }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement finding = outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Single(d => d.GetProperty("category").GetString() == "schema" && d.GetProperty("instancePath").GetString() == "/workflows/0/inputs");
+        finding.GetProperty("message").GetString()!.ShouldContain("Missing");
+    }
+
+    [TestMethod]
     public async Task Warnings_do_not_fail_validation()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
