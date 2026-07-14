@@ -50,4 +50,13 @@ public sealed class OktaDirectoryOptions
 
     /// <summary>Gets the per-grantee-kind resource mapping; a kind absent from the map is not searchable.</summary>
     public required IReadOnlyDictionary<GranteeKind, OktaResource> Kinds { get; init; }
+
+    /// <summary>
+    /// Gets how long a resolved person's fetched group memberships are cached before a re-fetch (design §16.5.4) — the
+    /// per-search membership expansion resolves a person to its full <c>sys:group</c> identity, and this caps how often that
+    /// costs a per-user round-trip. A short TTL is safe: the directory-resolved identity feeds the grantee picker and the
+    /// effective-access read view only, never a live request's authorization (that is re-derived from the caller's own fresh
+    /// token). Defaults to one minute; <see cref="TimeSpan.Zero"/> disables the cache.
+    /// </summary>
+    public TimeSpan MembershipCacheTtl { get; init; } = TimeSpan.FromSeconds(60);
 }

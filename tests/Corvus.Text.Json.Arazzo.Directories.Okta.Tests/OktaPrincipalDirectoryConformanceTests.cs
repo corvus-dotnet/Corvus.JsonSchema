@@ -8,6 +8,7 @@ using Corvus.Text.Json.Arazzo.Directories.Conformance;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
 
 namespace Corvus.Text.Json.Arazzo.Directories.Okta.Tests;
 
@@ -68,6 +69,18 @@ public sealed class OktaPrincipalDirectoryConformanceTests : PrincipalDirectoryC
         return new ValueTask<IPrincipalDirectory>(new OktaPrincipalDirectory(options, new FixedSecretResolver(Token), mapper, httpClient));
     }
 
+    [TestMethod]
+    public async Task Expands_a_person_to_its_group_memberships()
+    {
+        IPrincipalDirectory directory = await this.CreateAsync();
+
+        // alice belongs to the payments group (the mock's /users/id-alice/groups), so her resolved identity carries the
+        // membership-expanded sys:team=payments — what lets the effective-access lookup surface the grants she inherits.
+        ResolvedPrincipal alice = (await directory.SearchAsync(GranteeKind.Person, "alice", 1, default)).Single();
+
+        alice.Identity.ToList().ShouldContain(new SecurityTag("sys:team", "payments"));
+    }
+
     // A minimal Okta Management API: serves the fixture principals, honouring `<attr> sw "x"` and `limit`. Users / groups
     // are bare arrays with profile-nested attributes; roles are wrapped in a `roles` property with a top-level label.
     private static class OktaMockBackend
@@ -81,6 +94,13 @@ public sealed class OktaPrincipalDirectoryConformanceTests : PrincipalDirectoryC
 
         private static readonly string[] Groups = ["payments", "billing"];
         private static readonly string[] Roles = ["workflow-admin", "viewer"];
+
+        // Group memberships per user id (for /users/{id}/groups): alice belongs to payments, so a directory-resolved alice
+        // carries sys:team=payments (the membership-expansion proof). Everyone else is ungrouped.
+        private static readonly Dictionary<string, string[]> Memberships = new(StringComparer.Ordinal)
+        {
+            ["id-alice"] = ["payments"],
+        };
 
         public static HttpResponseMessage Respond(HttpRequestMessage request)
         {
@@ -98,6 +118,16 @@ public sealed class OktaPrincipalDirectoryConformanceTests : PrincipalDirectoryC
             if (path.EndsWith("/users", StringComparison.Ordinal))
             {
                 return StubHttpMessageHandler.Json(Array(Users.Where(u => Matches(filterAttribute, prefix, "profile.login", u.Login)).Select(u => UserJson(u.Login, u.Display, u.Tenant)).Take(limit)));
+            }
+
+            // A user's group memberships (/api/v1/users/{id}/groups) — the membership-expansion fetch. Checked before the
+            // group-list route since both end with `/groups`.
+            if (path.Contains("/users/", StringComparison.Ordinal) && path.EndsWith("/groups", StringComparison.Ordinal))
+            {
+                string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                string userId = segments.Length >= 2 ? segments[^2] : string.Empty;
+                string[] memberships = Memberships.TryGetValue(userId, out string[]? m) ? m : [];
+                return StubHttpMessageHandler.Json(Array(memberships.Select(GroupJson)));
             }
 
             if (path.EndsWith("/groups", StringComparison.Ordinal))
