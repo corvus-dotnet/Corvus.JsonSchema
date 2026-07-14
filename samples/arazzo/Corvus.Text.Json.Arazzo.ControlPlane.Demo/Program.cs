@@ -17,6 +17,7 @@ using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
 using Corvus.Text.Json.AsyncApi.Nats;
+using Corvus.Text.Json.Internal;
 using Npgsql;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
@@ -400,21 +401,33 @@ if (requireAuthorization)
 
     app.MapPost("/logout", async (HttpContext http) =>
     {
-        // RP-initiated logout. Carry ONLY the id token into the OIDC sign-out so Keycloak's end-session endpoint
-        // receives a valid id_token_hint. Passing the whole authenticated AuthenticationProperties would drag ALL
-        // the SaveTokens (access + id + refresh) into the OIDC `state` param, bloating the logout URL until Keycloak
-        // rejects it (HTTP 431 — request headers/URL too large); a fresh properties with no token omits the hint and
-        // Keycloak rejects "Invalid parameter: id_token_hint". Just the id token is the sweet spot. Land back on /.
+        // RP-initiated logout, robust to a stale session. Read the saved tokens, then ALWAYS clear the local cookie first
+        // so the user is signed out of the app no matter what Keycloak does next.
         AuthenticateResult auth = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         string? idToken = auth.Properties?.GetTokenValue("id_token");
-        AuthenticationProperties props = new() { RedirectUri = "/" };
-        if (!string.IsNullOrEmpty(idToken))
+        string? refreshToken = auth.Properties?.GetTokenValue("refresh_token");
+        await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        // Keycloak's end-session endpoint needs a VALID, unexpired id_token_hint. We only saved the login-time id_token,
+        // which has a short lifespan (~5 min) and is orphaned if Keycloak was restarted (fresh signing keys) — Keycloak then
+        // rejects a stale/expired hint with "Invalid parameter: id_token_hint". So mint a fresh id_token from the saved
+        // refresh_token: a success proves the session is live, and we do the full sign-out (ending the Keycloak SSO session
+        // too, so the next sign-in re-authenticates). If the refresh fails the session is genuinely stale, so we skip the
+        // Keycloak round-trip and land the (already locally signed-out) user back on /. Carrying ONLY the id_token into the
+        // OIDC properties keeps it out of the `state` param (the whole token set there would bloat the URL to a 431).
+        string? hint = !string.IsNullOrEmpty(refreshToken)
+            ? await RefreshIdTokenAsync(http.RequestServices, refreshToken, http.RequestAborted)
+            : idToken;
+
+        if (!string.IsNullOrEmpty(hint))
         {
-            props.StoreTokens([new AuthenticationToken { Name = "id_token", Value = idToken }]);
+            AuthenticationProperties props = new() { RedirectUri = "/" };
+            props.StoreTokens([new AuthenticationToken { Name = "id_token", Value = hint }]);
+            await http.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, props);
+            return;
         }
 
-        await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        await http.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, props);
+        http.Response.Redirect("/");
     });
 
     app.MapGet("/me", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true
@@ -595,3 +608,66 @@ app.Lifetime.ApplicationStarted.Register(() =>
 app.Lifetime.ApplicationStopping.Register(() => draftRunner.StopAsync().AsTask().GetAwaiter().GetResult());
 
 app.Run();
+
+// Exchanges the saved refresh_token for a fresh token set (the id_token is returned via the openid scope) at the Keycloak
+// token endpoint — the same realm + confidential client the BFF authenticates with, over the plain client the directory
+// adapter already uses against this Keycloak. Best-effort: any failure (a stale refresh_token, network, misconfiguration)
+// returns null so the logout falls back to a local-only sign-out.
+static async Task<string?> RefreshIdTokenAsync(IServiceProvider services, string refreshToken, CancellationToken cancellationToken)
+{
+    string? baseUrl = services.GetRequiredService<IConfiguration>()["ControlPlane:Keycloak:BaseUrl"];
+    if (string.IsNullOrWhiteSpace(baseUrl))
+    {
+        return null;
+    }
+
+    try
+    {
+        using var client = new HttpClient();
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "refresh_token",
+            ["refresh_token"] = refreshToken,
+            ["client_id"] = "arazzo-ui",
+            ["client_secret"] = "arazzo-ui-dev-secret",
+            ["scope"] = "openid",
+        });
+        var tokenEndpoint = new Uri(new Uri(baseUrl), "/realms/arazzo/protocol/openid-connect/token");
+        using HttpResponseMessage response = await client.PostAsync(tokenEndpoint, form, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        return ReadIdToken(body);
+    }
+    catch (HttpRequestException)
+    {
+        return null;
+    }
+}
+
+// Reads the `id_token` string out of a Keycloak token response in place (the Corvus reader, no STJ DOM), or null if absent.
+static string? ReadIdToken(ReadOnlySpan<byte> body)
+{
+    var reader = new Utf8JsonReader(body);
+    if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+    {
+        return null;
+    }
+
+    while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+    {
+        if (reader.ValueTextEquals("id_token"u8))
+        {
+            reader.Read();
+            return reader.GetString();
+        }
+
+        reader.Read();
+        reader.Skip();
+    }
+
+    return null;
+}
