@@ -196,7 +196,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
   blankForm(mode, editId) {
     return {
       mode, editId, personBlocked: false, granteeLabel: '',
-      claimType: '', claimValue: '', description: '', formError: null,
+      claimType: '', claimValue: '', additionalClauses: [], description: '', formError: null,
       verbs: { read: { mode: 'denied', scopes: [] }, write: { mode: 'denied', scopes: [] }, purge: { mode: 'denied', scopes: [] } },
     };
   }
@@ -218,6 +218,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     const f = this.blankForm('edit', id);
     f.claimType = g.claimType || '';
     f.claimValue = g.claimValue || '';
+    f.additionalClauses = (g.additionalClauses || []).map((c) => ({ dimension: c.dimension || '', value: c.value || '' }));
     for (const verb of VERBS) {
       f.verbs[verb] = { mode: grantMode(g[verb]), scopes: Array.isArray(g[verb]?.ruleNames) ? [...g[verb].ruleNames] : [] };
     }
@@ -243,11 +244,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
       f.granteeLabel = grantee.label || grantee.value || 'this person';
       f.claimType = '';
       f.claimValue = '';
+      f.additionalClauses = [];
     } else {
       f.personBlocked = false;
-      const primary = (grantee.identity || [])[0];
+      const identity = grantee.identity || [];
+      const primary = identity[0];
       f.claimType = primary?.dimension || grantee.kind || '';
       f.claimValue = primary?.value || grantee.value || '';
+      // The whole resolved identity is the selector: the first dimension is the primary claim, every remaining
+      // dimension is an additional clause ANDed with it (§16.5.4). Pinning the full identity is what stops a grant
+      // keyed on a bare name (a group/role) from also matching the same name under a different issuer or tenant.
+      f.additionalClauses = identity.slice(1).map((t) => ({ dimension: t.dimension || '', value: t.value || '' }));
       f.granteeLabel = grantee.label || grantee.value || '';
     }
     this.renderDetail();
@@ -263,6 +270,10 @@ class ArazzoGrantsPanel extends ArazzoElement {
       purge: verb(f.verbs.purge),
     };
     if (f.claimValue.trim()) body.claimValue = f.claimValue.trim();
+    const clauses = (f.additionalClauses || [])
+      .filter((c) => c.dimension.trim())
+      .map((c) => (c.value.trim() ? { dimension: c.dimension.trim(), value: c.value.trim() } : { dimension: c.dimension.trim() }));
+    if (clauses.length) body.additionalClauses = clauses;
     if (f.description.trim()) body.description = f.description.trim();
     return body;
   }
@@ -352,6 +363,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
         tbody tr.selectable:hover { background: var(--_surface); }
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .claim { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .claim-and { font-weight: 400; color: var(--_muted); }
         .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
         .verbs b { color: var(--_text); font-weight: 600; text-transform: capitalize; }
         .gdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
@@ -446,7 +458,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     } else {
       list.innerHTML = this._grants.map((g) => `
         <tr class="grow-row selectable" part="row" data-id="${escapeHtml(g.id)}" aria-selected="${String(g.id === this._selectedId)}">
-          <td part="cell"><span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}</span>${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}</td>
+          <td part="cell"><span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}${(g.additionalClauses || []).map((c) => ` <span class="claim-and">+ ${escapeHtml(c.dimension)}${c.value ? '=' + escapeHtml(c.value) : ''}</span>`).join('')}</span>${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}</td>
           <td part="cell"><div class="verbs">${VERBS.map((v) => `<span><b>${v}</b> ${escapeHtml(grantSummary(g[v]))}</span>`).join('')}</div></td>
         </tr>`).join('');
       this.$$('.grow-row').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.id)));
@@ -508,6 +520,9 @@ class ArazzoGrantsPanel extends ArazzoElement {
               ${f.personBlocked ? `<div class="error-banner steer"><span>Per-person elevation for <strong>${escapeHtml(f.granteeLabel)}</strong> goes through the <strong>access-request flow</strong>, not a direct grant — request and have it approved instead.</span></div>` : ''}`}
             <div class="field"><span>Claim type</span><input class="f-claimType" placeholder="team" value="${escapeHtml(f.claimType)}" ${isEdit ? 'readonly' : ''}></div>
             <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}" ${isEdit ? 'readonly' : ''}></div>
+            ${(f.additionalClauses && f.additionalClauses.length) ? `
+              <div class="field"><span>AND every one of</span><div class="chips">${f.additionalClauses.map((c) => `<span class="chip">${escapeHtml(c.dimension)}${c.value ? ' = ' + escapeHtml(c.value) : ''}</span>`).join('')}</div></div>
+              <div class="caveat">This grant pins the grantee's <strong>full resolved identity</strong> — it applies only to a caller who carries every one of these dimensions, so it will not match the same name under a different issuer or tenant.</div>` : ''}
             ${isEdit
               ? `<div class="caveat">The claim identifies <strong>who</strong> this grant applies to and is fixed after creation — to change who, delete this grant and create a new one via the picker.</div>`
               : `<div class="caveat">A claim is only as trustworthy as the issuer asserting it. With multiple semi-trusted identity providers, prefer an issuer-qualified claim over a bare one.</div>`}

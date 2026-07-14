@@ -121,7 +121,7 @@ administration under set-equality. Membership over a rich identity resolves both
     S2/S3/S5b carried.
   - **Remaining:** a live Aspire / Keycloak / podman relaunch to observe a member administering a group-founded
     workflow through membership (the only unverified path left; the code is proven by unit + conformance tests).
-- **S7 — reach binding tag-set selector (H3) — S7a–S7c + core tests DONE; S7d (CLI/UI/seed) remaining.** Make a reach binding's selector a tag
+- **S7 — reach binding tag-set selector (H3) — S7a–S7c + core tests + S7d authoring DONE; only the live-demo seed remains.** Make a reach binding's selector a tag
   **set** matched by **subset** against the caller's canonical identity, exactly like administration — so per-person
   reach can pin `{sub, iss}` and stop being cross-issuer. **Recommended shape: additive, not a big-bang rewrite.**
   Keep `claimType` + optional `claimValue` as the primary (required) clause and add an optional
@@ -159,9 +159,19 @@ administration under set-equality. Membership over a rich identity resolves both
   - **S7 tests DONE (core):** a `PersistentRowSecurityPolicy` test proves a `{sub=alice}` + `{iss=keycloak}` binding
     matches a keycloak alice and NOT an ldap alice (also an end-to-end store round-trip — a dropped clause would let the
     ldap alice through). Server 245/245, in-memory + Sqlite conformance 13/13 each, no regression.
-  - **S7d REMAINING:** CLI `SecurityCommands` clause authoring, the web binding editor (`grants-panel.js`), and a
-    demonstrating seed binding — the operator-facing authoring surface. Then optional handler-level HTTP tests for the
-    overview / self-elevation multi-clause paths.
+  - **S7d authoring DONE:** the CLI `SecurityCommands` gained a repeatable `--clause dimension=value` option (parsed
+    into `additionalClauses` in `BuildBinding`). The web binding editor (`grants-panel.js`) is correct-by-construction:
+    selecting a grantee pins its FULL resolved identity — the first dimension is the primary claim, every remaining
+    dimension becomes a read-only additional-clause chip ("AND every one of …"); `buildBody` sends them, `select`/list
+    surface them, and a caveat explains the cross-issuer/tenant protection. The demo mock (`mock-api.js`) was made
+    faithful: `normalizeBinding` round-trips `additionalClauses` and the access-grants overview match requires the full
+    clause conjunction (mirroring `BindingAppliesToGrantee`). Verified: 11/11 grants-panel component tests (incl. a new
+    multi-dimension round-trip case), 273/273 node unit tests, CLI builds warning-free.
+  - **S7d live-demo seed REMAINING (needs a decision):** the live demo (real Postgres via the bootstrap) still seeds the
+    genesis admin grant single-clause. The principled demonstration is pinning the issuer on that grant
+    (`{group=arazzo-admins} AND {iss=<demo Keycloak>}`), which needs an optional `additionalClauses` on
+    `DeploymentBootstrapOptions` (a production config-contract change, IdP-agnostic) + a fresh provision + a live Keycloak
+    verify. Alternatives: a demo-local extra reader binding (additive, lower-risk), or defer. Not yet done.
 
 ## Current state — every identity-matching surface
 

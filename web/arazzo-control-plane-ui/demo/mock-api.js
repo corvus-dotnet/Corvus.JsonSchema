@@ -2428,6 +2428,11 @@ export function createMockControlPlane(options = {}) {
       order: Number.isFinite(body.order) ? body.order : 0,
     };
     if (body.claimValue != null) b.claimValue = body.claimValue;
+    // The tag-set selector's extra clauses (§16.5.4) are stored verbatim, mirroring the server's whole-document
+    // round-trip — a binding applies only to a caller whose identity contains every clause (see handleAccessGrants).
+    if (Array.isArray(body.additionalClauses) && body.additionalClauses.length) {
+      b.additionalClauses = body.additionalClauses.map((c) => (c.value != null ? { dimension: c.dimension, value: c.value } : { dimension: c.dimension }));
+    }
     if (body.description) b.description = body.description;
     return b;
   }
@@ -2456,12 +2461,14 @@ export function createMockControlPlane(options = {}) {
     const idents = Array.isArray(grantee.identity) ? grantee.identity : [];
     const stripSys = (d) => (typeof d === 'string' && d.startsWith('sys:')) ? d.slice(4) : d;
 
-    // bindings: a binding matches when its claimType is the wildcard, or an identity dimension (sys: stripped) equals the
-    // claimType and (the binding is value-agnostic, or the values match). Same summary shape the bindings list returns.
+    // bindings: a binding matches when the grantee's identity contains EVERY clause of its tag-set selector (§16.5.4) —
+    // the primary clause (claimType/claimValue; the wildcard '*' matches any) AND each additional clause. A clause is
+    // satisfied when an identity dimension (sys: stripped) equals the clause dimension and (the clause is value-agnostic,
+    // or the values match). Same summary shape the bindings list returns; mirrors the server's BindingAppliesToGrantee.
+    const clauseSatisfied = (dim, val) => idents.some((t) => stripSys(t.dimension) === dim && (val == null || val === '' || t.value === val));
     const bindings = securityBindings
-      .filter((b) => b.claimType === '*'
-        || idents.some((t) => stripSys(t.dimension) === b.claimType
-          && (b.claimValue == null || b.claimValue === '' || t.value === b.claimValue)))
+      .filter((b) => (b.claimType === '*' || clauseSatisfied(b.claimType, b.claimValue))
+        && (b.additionalClauses || []).every((c) => clauseSatisfied(c.dimension, c.value)))
       .map((b) => structuredClone(b));
 
     // administers: a base workflow the grantee administers — its admin array holds a grant whose identity is a subset of
