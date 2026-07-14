@@ -50,4 +50,14 @@ public sealed class KeycloakDirectoryOptions
 
     /// <summary>Gets the per-grantee-kind Admin resource mapping; a kind absent from the map is not searchable.</summary>
     public required IReadOnlyDictionary<GranteeKind, KeycloakResource> Kinds { get; init; }
+
+    /// <summary>
+    /// Gets how long a resolved person's fetched group memberships are cached before a re-fetch (design §16.5.4) — the
+    /// per-search membership expansion always resolves a person to its full <c>sys:group</c> membership identity, and this
+    /// caps how often that costs a Keycloak round-trip per user. A short TTL is safe: the directory-resolved identity feeds
+    /// the grantee picker and the effective-access read view only, never a live request's authorization (that is always
+    /// re-derived from the caller's own fresh token), so at worst the picker shows a slightly stale membership. Defaults to
+    /// one minute; <see cref="TimeSpan.Zero"/> disables the cache (every search re-fetches).
+    /// </summary>
+    public TimeSpan MembershipCacheTtl { get; init; } = TimeSpan.FromSeconds(60);
 }
