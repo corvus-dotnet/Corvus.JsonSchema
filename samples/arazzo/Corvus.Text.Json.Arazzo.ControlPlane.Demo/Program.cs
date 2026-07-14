@@ -193,10 +193,13 @@ var securityPolicy = await PostgresSecurityPolicyStore.ConnectAsync(dataSource);
 var labelOrderings = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap.BuildLabelOrderings(bootstrapOptions);
 var entitlements = new PersistentRowSecurityPolicy(
     securityPolicy,
-    // A Keycloak principal's row identity is its group tags PLUS the deployment issuer (sys:iss, §16.5.5) — the same
-    // DemoData.KeycloakIssuer the seeded admin grants and the grantee-directory adapter stamp, so a directory-resolved or
-    // seeded grant set-equals the live caller (WorkflowIdentity.SameAdministrator). A principal with no groups (e.g. a
-    // DevApiKey) carries no identity here and resolves through the unscoped/System path.
+    // A Keycloak principal's row identity is its group tags PLUS its per-person subject (sys:sub, §16.5.4) PLUS the
+    // deployment issuer (sys:iss, §16.5.5) — the same DemoData.KeycloakIssuer the seeded admin grants and the
+    // grantee-directory adapter stamp. Stamping sys:sub makes a live member's identity a STRICT SUPERSET of a group-only
+    // grant (e.g. the seeded {sys:group=arazzo-admins, sys:iss} founder), so the member administers / reaches / may-use it
+    // by MEMBERSHIP (§16.5.4 — caller contains founder), not set-equality — exercising the membership model live rather
+    // than keeping every identity set-equal. A principal with no groups (e.g. a DevApiKey) carries no identity here and
+    // resolves through the unscoped / System path (unchanged).
     internalTagResolver: static principal =>
     {
         SecurityTag[] groups = principal?.FindAll("groups")
@@ -206,9 +209,17 @@ var entitlements = new PersistentRowSecurityPolicy(
             return groups;
         }
 
-        var tags = new SecurityTag[groups.Length + 1];
+        string? sub = principal?.FindFirst("sub")?.Value;
+        bool hasSub = !string.IsNullOrEmpty(sub);
+        var tags = new SecurityTag[groups.Length + (hasSub ? 2 : 1)];
         Array.Copy(groups, tags, groups.Length);
-        tags[groups.Length] = DemoData.IssuerTag;
+        int next = groups.Length;
+        if (hasSub)
+        {
+            tags[next++] = new SecurityTag(SecurityShell.DefaultInternalPrefix + "sub", sub!);
+        }
+
+        tags[next] = DemoData.IssuerTag;
         return tags;
     },
     orderings: labelOrderings);
@@ -328,8 +339,9 @@ if (seedExampleData)
         availabilityStore, accessRequests, availabilityRequestStore, specsDir));
 
     // Seed the observed-identity ("seen") typeahead so the grant pickers are non-empty on a fresh boot: the realm groups
-    // as Team grantees, each stamped the SAME {sys:group=<name>, sys:iss} identity a live member carries (DemoData) — so a
-    // grant on an observed pick confers reach, exactly like a directory pick (§16.5.4). Provenance "seed" marks the origin.
+    // as Team grantees, each stamped the {sys:group=<name>, sys:iss} identity (DemoData) — a SUBSET of a live member's now
+    // richer {sys:group, sys:sub, sys:iss}, so a grant on an observed group pick confers reach to every member of that
+    // group by MEMBERSHIP (§16.5.4), exactly like a directory pick. Provenance "seed" marks the origin.
     static Corvus.Text.Json.Arazzo.Durability.JsonString Observed(string v)
     {
         using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> doc =

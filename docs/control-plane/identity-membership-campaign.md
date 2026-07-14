@@ -107,7 +107,15 @@ administration under set-equality. Membership over a rich identity resolves both
     (the full count goes to the ambient activity for audit), and build the advisory bytes-native only when overlaps
     exist — the add always succeeds. Server test proves a `{sys:tenant=acme}` grant naming the subsumed
     `{sys:tenant=acme, sys:sub=alice}` person and omitting the advisory when nothing is subsumed. This closes H5.
-- **S6 — demo resolver enrichment + relaunch**, live-verify; then container conformance for the 8 backends.
+- **S6 — demo resolver enrichment (H7) — code DONE; live-verify + container conformance pending.** The demo's
+  runtime `internalTagResolver` now stamps the principal's `sys:sub` alongside its `sys:group`(s) + `sys:iss`, so a
+  live Keycloak member carries `{sys:group, sys:sub, sys:iss}` — a STRICT SUPERSET of a seeded group grant
+  `{sys:group=arazzo-admins, sys:iss}`. The member therefore administers / reaches / may-use it by membership
+  (§16.5.4 — caller contains founder), not set-equality, so the demo's own data now exercises the membership model
+  (the reverse indexes from S2/S3, the mutation gates from S4) rather than keeping every identity set-equal. The
+  no-group / unscoped (DevApiKey → System) path is unchanged. Demo builds warning-free. Remaining: a live Aspire /
+  Keycloak / podman relaunch to observe a member administering a group-founded workflow, and container conformance
+  for `FindBroadeningOverlapsAsync` (S5b) + the S2/S3 reverse-index queries across the 8 container backends.
 
 ## Current state — every identity-matching surface
 
