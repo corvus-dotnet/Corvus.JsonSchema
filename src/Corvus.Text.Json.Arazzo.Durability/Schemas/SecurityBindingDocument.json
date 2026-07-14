@@ -3,7 +3,7 @@
   "title": "SecurityBindingDocument",
   "description": "The persisted form of a claim→rule binding (design §14.2): per-verb grants plus audit and optimistic-concurrency metadata. Backends store this document verbatim.",
   "type": "object",
-  "required": ["id", "claimType", "read", "write", "purge", "order", "createdBy", "createdAt", "etag"],
+  "required": ["id", "claimType", "read", "write", "purge", "createdBy", "createdAt", "etag"],
   "properties": {
     "id": {
       "type": "string",
@@ -42,7 +42,8 @@
     "order": {
       "type": "integer",
       "format": "int32",
-      "description": "Resolution order (ascending)."
+      "default": 0,
+      "description": "Resolution order (ascending). Server-assigned, not part of the create/update write body: a draft carried from that body has no order, and this default (0) is what the generated accessor materialises and the store persists for it."
     },
     "description": {
       "type": "string",

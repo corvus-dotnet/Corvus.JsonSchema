@@ -30,7 +30,9 @@ public readonly partial struct SecurityBindingDocument
     /// <summary>Gets the required claim value, or <see langword="null"/> (matches any value).</summary>
     public string? ClaimValueOrNull => this.ClaimValue.IsNotUndefined() ? (string)this.ClaimValue : null;
 
-    /// <summary>Gets the resolution order (ascending).</summary>
+    /// <summary>Gets the resolution order (ascending). The schema declares <c>order</c> optional with a <c>default</c> of 0,
+    /// so the generated <see cref="Order"/> accessor materialises 0 when the property is absent (a create/update draft carried
+    /// from the write body, which supplies no order). A store that projects the order into a column reads that 0 safely.</summary>
     public int OrderValue => this.Order;
 
     /// <summary>Gets the optional human description, or <see langword="null"/>.</summary>
@@ -221,13 +223,14 @@ public readonly partial struct SecurityBindingDocument
     // JSON values flow straight into the builder); id and the server-stamped audit/concurrency fields are added here.
     private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
-        // The draft may be a request body that omits verb grants / order (both optional on the write body but required on
-        // the stored document); default an omitted grant to None and an omitted order to 0 — the semantics the handler's
-        // Models.VerbGrant -> VerbGrantInfo conversion used to apply before the body was carried bytes-to-bytes.
+        // The draft may be a request body that omits verb grants / order; default an omitted grant to None — the semantics
+        // the handler's Models.VerbGrant -> VerbGrantInfo conversion used to apply before the body was carried bytes-to-bytes.
+        // Order needs no such guard: the schema declares it optional with a default of 0, so draft.Order materialises 0 when
+        // absent (the write body carries none) and the persisted value comes straight from that.
         VerbGrantInfo read = draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None;
         VerbGrantInfo write = draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None;
         VerbGrantInfo purge = draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None;
-        int order = draft.Order.IsNotUndefined() ? (int)draft.Order : 0;
+        int order = (int)draft.Order;
         return CreateBuilder(
             workspace,
             claimType: draft.ClaimType,
@@ -254,9 +257,9 @@ public readonly partial struct SecurityBindingDocument
         JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
         builder.RootElement.SetClaimType(draft.ClaimType);
 
-        // As BuildNew: a draft carried from the (optional-field) write body may omit verb grants / order — default an
-        // omitted grant to None and an omitted order to 0 so the replaced binding stays valid (the PUT-replaces semantics).
-        builder.RootElement.SetOrder(draft.Order.IsNotUndefined() ? (int)draft.Order : 0);
+        // As BuildNew: a draft carried from the (optional-field) write body may omit verb grants — default an omitted grant
+        // to None so the replaced binding stays valid (the PUT-replaces semantics). Order carries its schema default (0).
+        builder.RootElement.SetOrder((int)draft.Order);
         builder.RootElement.SetRead(draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None);
         builder.RootElement.SetWrite(draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None);
         builder.RootElement.SetPurge(draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None);

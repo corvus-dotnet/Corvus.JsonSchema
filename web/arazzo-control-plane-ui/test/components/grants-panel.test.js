@@ -142,7 +142,9 @@ describe('<arazzo-grants-panel>', () => {
     await pickGrantee(el, 'payments-eu');
     equal($(el, '.f-claimType').value, 'team', 'primary claim is the first identity dimension');
     equal($(el, '.f-claimValue').value, 'payments-eu', 'primary value');
-    ok($(el, '.chips .chip'), 'the remaining identity dimension is shown as an additional-clause chip');
+    ok([...el.shadowRoot.querySelectorAll('.f-clause-dim')].some((i) => i.value === 'sys:iss')
+      && [...el.shadowRoot.querySelectorAll('.f-clause-val')].some((i) => i.value === 'https://keycloak'),
+      'the remaining identity dimension is shown as an editable additional-clause row');
     setVerbMode(el, 'read', 'unrestricted');
     const changed = nextEvent(el, 'grants-changed');
     $(el, '.confirm').click();
@@ -150,6 +152,42 @@ describe('<arazzo-grants-panel>', () => {
     const g = e.detail.grants.find((x) => x.claimType === 'team' && x.claimValue === 'payments-eu');
     ok(g, 'grant created');
     ok((g.additionalClauses || []).some((c) => c.dimension === 'sys:iss' && c.value === 'https://keycloak'), 'the issuer dimension is pinned as an additional clause (not dropped)');
+  });
+
+  it('authors an additional identity clause by hand (add-clause), not only via the picker', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    setInput(el, '.f-claimType', 'team');
+    setInput(el, '.f-claimValue', 'payments');
+    // No grantee picked: the operator pins an issuer clause directly, so a single-claim grant is not the only option.
+    $(el, '.add-clause').click();
+    setInput(el, '.f-clause-dim', 'iss');
+    setInput(el, '.f-clause-val', 'https://keycloak');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    const g = e.detail.grants.find((x) => x.claimType === 'team' && x.claimValue === 'payments'
+      && (x.additionalClauses || []).some((c) => c.dimension === 'iss' && c.value === 'https://keycloak'));
+    ok(g, 'a hand-authored multi-clause grant is created');
+  });
+
+  it('creates a plain single-claim grant with no order supplied (server defaults it)', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    setInput(el, '.f-claimType', 'role');
+    setInput(el, '.f-claimValue', 'tenant-admin');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    const g = e.detail.grants.find((x) => x.claimType === 'role' && x.claimValue === 'tenant-admin');
+    ok(g, 'a single-claim grant is created without the client ever sending an order');
+    ok(!editorOpen(el), 'the pane clears after create (no error banner)');
   });
 
   it('steers a person grantee to the request flow instead of a direct grant', async () => {

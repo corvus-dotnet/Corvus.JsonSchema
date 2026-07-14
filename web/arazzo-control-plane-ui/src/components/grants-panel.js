@@ -390,6 +390,13 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .chips { display: flex; gap: 6px; flex-wrap: wrap; }
         .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 999px; padding: 2px 8px; }
         .chip button { border: none; background: none; cursor: pointer; color: var(--_muted); font-size: 13px; line-height: 1; padding: 0; }
+        .clauses { display: grid; gap: 6px; }
+        .clause-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+        .clause-row input { font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; min-width: 0; }
+        .clause-del { border: 1px solid var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 9px; line-height: 1; }
+        .clause-del:hover { color: var(--_text); }
+        .add-clause { justify-self: start; font: inherit; font-size: 12px; border: 1px dashed var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 10px; }
+        .add-clause:hover { color: var(--_text); border-color: var(--_muted); }
         .scope-empty { font-size: 12px; color: var(--_muted); }
         .verb-mode { font: inherit; padding: 7px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         .rule-search { position: relative; }
@@ -497,6 +504,37 @@ class ArazzoGrantsPanel extends ArazzoElement {
       </div>`;
   }
 
+  /**
+   * The additional-clause selector. On create it is editable: a grant keys on one claim, and the operator can pin more
+   * identity dimensions (issuer, tenant, …) the caller must ALSO carry, authoring the same tag-set selector (§16.5.4)
+   * the grantee picker fills from a resolved identity. On edit it is the read-only chip summary — the claim selector is
+   * fixed after creation. Empty clauses are dropped in buildBody, so a blank added row is harmless.
+   */
+  additionalClausesHtml(f, editable) {
+    const clauses = f.additionalClauses || [];
+    if (!editable) {
+      if (!clauses.length) return '';
+      return `
+        <div class="field"><span>AND every one of</span><div class="chips">${clauses.map((c) => `<span class="chip">${escapeHtml(c.dimension)}${c.value ? ' = ' + escapeHtml(c.value) : ''}</span>`).join('')}</div></div>
+        <div class="caveat">This grant pins the grantee's <strong>full resolved identity</strong> — it applies only to a caller who carries every one of these dimensions, so it will not match the same name under a different issuer or tenant.</div>`;
+    }
+
+    const rows = clauses.map((c, i) => `
+      <div class="clause-row" data-idx="${i}">
+        <input class="f-clause-dim" placeholder="dimension (e.g. iss)" value="${escapeHtml(c.dimension)}">
+        <input class="f-clause-val" placeholder="(any value)" value="${escapeHtml(c.value)}">
+        <button class="clause-del" type="button" title="Remove clause" aria-label="Remove clause">✕</button>
+      </div>`).join('');
+    return `
+      <div class="field"><span>AND also${clauses.length ? '' : ' (optional)'}</span>
+        <div class="clauses">
+          ${rows}
+          <button class="add-clause" type="button">+ Add identity clause</button>
+        </div>
+      </div>
+      <div class="caveat">A grant keys on one claim. Add a clause to require <strong>another identity dimension</strong> (e.g. an issuer or tenant) the caller must <em>also</em> carry, so the grant matches only that exact identity and not the same name under a different issuer. Picking a grantee above fills these in from its resolved identity.</div>`;
+  }
+
   renderDetail() {
     const pane = this._pane;
     if (!pane) return;
@@ -520,9 +558,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
               ${f.personBlocked ? `<div class="error-banner steer"><span>Per-person elevation for <strong>${escapeHtml(f.granteeLabel)}</strong> goes through the <strong>access-request flow</strong>, not a direct grant — request and have it approved instead.</span></div>` : ''}`}
             <div class="field"><span>Claim type</span><input class="f-claimType" placeholder="team" value="${escapeHtml(f.claimType)}" ${isEdit ? 'readonly' : ''}></div>
             <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}" ${isEdit ? 'readonly' : ''}></div>
-            ${(f.additionalClauses && f.additionalClauses.length) ? `
-              <div class="field"><span>AND every one of</span><div class="chips">${f.additionalClauses.map((c) => `<span class="chip">${escapeHtml(c.dimension)}${c.value ? ' = ' + escapeHtml(c.value) : ''}</span>`).join('')}</div></div>
-              <div class="caveat">This grant pins the grantee's <strong>full resolved identity</strong> — it applies only to a caller who carries every one of these dimensions, so it will not match the same name under a different issuer or tenant.</div>` : ''}
+            ${this.additionalClausesHtml(f, !isEdit)}
             ${isEdit
               ? `<div class="caveat">The claim identifies <strong>who</strong> this grant applies to and is fixed after creation — to change who, delete this grant and create a new one via the picker.</div>`
               : `<div class="caveat">A claim is only as trustworthy as the issuer asserting it. With multiple semi-trusted identity providers, prefer an issuer-qualified claim over a bare one.</div>`}
@@ -554,6 +590,13 @@ class ArazzoGrantsPanel extends ArazzoElement {
     pane.querySelector('.f-claimType')?.addEventListener('input', (e) => { f.claimType = e.target.value; });
     pane.querySelector('.f-claimValue')?.addEventListener('input', (e) => { f.claimValue = e.target.value; });
     pane.querySelector('.f-description')?.addEventListener('input', (e) => { f.description = e.target.value; });
+
+    // Additional-clause rows: input mutates in place (no re-render, so the caret holds); add/remove re-render.
+    const clauseIdx = (el) => Number(el.closest('.clause-row').dataset.idx);
+    pane.querySelectorAll('.f-clause-dim').forEach((el) => el.addEventListener('input', (e) => { f.additionalClauses[clauseIdx(e.target)].dimension = e.target.value; }));
+    pane.querySelectorAll('.f-clause-val').forEach((el) => el.addEventListener('input', (e) => { f.additionalClauses[clauseIdx(e.target)].value = e.target.value; }));
+    pane.querySelectorAll('.clause-del').forEach((el) => el.addEventListener('click', (e) => { f.additionalClauses.splice(clauseIdx(e.target), 1); this.renderDetail(); }));
+    pane.querySelector('.add-clause')?.addEventListener('click', () => { (f.additionalClauses ||= []).push({ dimension: '', value: '' }); this.renderDetail(); });
 
     pane.querySelectorAll('.verb-mode').forEach((sel) => sel.addEventListener('change', () => {
       f.verbs[sel.dataset.verb].mode = sel.value;
