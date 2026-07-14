@@ -498,7 +498,7 @@ public readonly struct SecurityTagSet
         {
             while (mine.MoveNext())
             {
-                if (!other.ContainsTag(mine.CurrentKey, mine.CurrentValue))
+                if (!other.Contains(mine.CurrentKey, mine.CurrentValue))
                 {
                     return false;
                 }
@@ -513,9 +513,14 @@ public readonly struct SecurityTagSet
     }
 
     /// <summary>Whether this set contains a tag with the given key and value, compared string-free on the unescaped UTF-8
-    /// spans. The inner enumerator owns its own escape scratch, so the caller's <paramref name="key"/>/<paramref name="value"/>
-    /// spans (a view over a different backing) stay valid across the scan.</summary>
-    private bool ContainsTag(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+    /// spans (no managed string, nothing escapes to the heap) — the single-tag membership check the identity-expansion and
+    /// dedup paths use, and the per-tag primitive under <see cref="IsSubsetOf"/>. The inner enumerator owns its own escape
+    /// scratch, so the caller's <paramref name="key"/>/<paramref name="value"/> spans (a view over a different backing) stay
+    /// valid across the scan.</summary>
+    /// <param name="key">The tag key as unescaped UTF-8.</param>
+    /// <param name="value">The tag value as unescaped UTF-8.</param>
+    /// <returns><see langword="true"/> if a tag with exactly this key and value is present.</returns>
+    public bool Contains(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
         Utf8Enumerator e = this.EnumerateUtf8();
         try

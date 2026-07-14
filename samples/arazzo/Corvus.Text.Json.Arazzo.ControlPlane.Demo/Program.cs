@@ -475,7 +475,10 @@ if (!string.IsNullOrWhiteSpace(gitHubClientId))
 // AppHost does). Groups map to Team grantees stamped {sys:group=<group>, sys:iss=KeycloakIssuer} — the SAME identity
 // the runtime stamper and the seeded admins carry (DemoData), so a directory pick set-equals a live caller. The adapter
 // stamps sys:iss from Options.Issuer; the mapper only emits the group/sub/role tag (DirectoryIssuer adds the issuer).
-// NB the Keycloak adapter does not fetch a user's group memberships, so a Person grantee carries sys:sub, not sys:group.
+// A Person is resolved to its FULL membership-expanded identity (§16.5.4): the adapter fetches the user's real Keycloak
+// groups and unions a sys:group per group through this same mapper, so a directory-resolved person carries
+// {sys:sub, sys:group per membership, sys:iss} — the exact identity the login resolver stamps for that person, which is
+// what lets the effective-access lookup surface the grants a person inherits through its groups.
 KeycloakPrincipalDirectory? granteeDirectory = null;
 string? keycloakBaseUrl = builder.Configuration["ControlPlane:Keycloak:BaseUrl"];
 if (!string.IsNullOrWhiteSpace(keycloakBaseUrl))
