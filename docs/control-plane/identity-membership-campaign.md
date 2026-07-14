@@ -121,6 +121,22 @@ administration under set-equality. Membership over a rich identity resolves both
     S2/S3/S5b carried.
   - **Remaining:** a live Aspire / Keycloak / podman relaunch to observe a member administering a group-founded
     workflow through membership (the only unverified path left; the code is proven by unit + conformance tests).
+- **S7 — reach binding tag-set selector (H3) — RATIFIED, not started.** Make a reach binding's selector a tag
+  **set** matched by **subset** against the caller's canonical identity, exactly like administration — so per-person
+  reach can pin `{sub, iss}` and stop being cross-issuer. **Recommended shape: additive, not a big-bang rewrite.**
+  Keep `claimType` + optional `claimValue` as the primary (required) clause and add an optional
+  `additionalClauses: [{ dimension, value? }]`; a binding applies iff the primary clause AND every additional clause
+  is contained in the caller's identity (membership). This keeps every existing single-clause binding, the seed, and
+  the ~75 migrated tests working, and adds the multi-tag capability incrementally. Blast radius (audited): the binding
+  is stored as a verbatim document, so the 10 stores likely round-trip the new field with no per-backend column change
+  (verify, don't fan out) — the real work is the **three match sites** (`PersistentRowSecurityPolicy.Matches`,
+  `ArazzoControlPlaneSecurityHandler.BindingAppliesToGrantee`, and the overview), the **access-request subject-match**
+  (`AccessRequestApprovalService`), the **CLI** (`SecurityCommands`) + **web binding editor** (`grants-panel.js`), a
+  demonstrating seed binding, and tests (a `{sub=alice, iss=keycloak}` binding matches a keycloak alice, not an ldap
+  one). Suggested slices: **S7a** schema + regen; **S7b** the three match sites + subject-match; **S7c** store
+  round-trip verification (+ conformance if any store shape changed); **S7d** CLI + UI authoring + seed; **S7e** tests.
+  S7 should land before per-person reach grants are offered in the UI (S6's `sys:sub` enrichment makes them
+  satisfiable). It is a full slice on the scale of S5b and is best executed as its own focused effort.
 
 ## Current state — every identity-matching surface
 
@@ -177,7 +193,13 @@ structurally coarser than administration (which stores the whole resolved `sys:`
 subset), so a `sub`-keyed reach grant is a cross-issuer / cross-tenant collision unless the deployment
 guarantees `sub` is globally unique. Options: extend the binding shape to a tag-set selector; or require reach
 grants to name the issuer dimension alongside the subject; or document the constraint and keep reach
-group-grained. Decision needed before per-person reach grants ship.
+group-grained. **DECIDED (with the user): the full tag-set selector.** A reach binding's selector becomes a tag
+**set** matched by **subset** against the caller's canonical identity — identical to how administration matches
+(`SecurityTagSet.IsSubsetOf`) — so a per-person binding can pin `{sub=alice, iss=keycloak}` and match only a
+keycloak alice, not an ldap one. This is the tidy conclusion of "membership everywhere". Scheduled as **S7**
+below (a full slice: pre-ship, but a large consumer surface). Note the irony: S6's `sys:sub` enrichment is
+exactly what makes a per-person reach binding satisfiable live, so S7 should land before per-person reach grants
+are offered in the UI.
 
 **H4 — Reach rule evaluation trusts raw token claims (pre-existing, low-medium) — DOCUMENTED (S5a).** Binding
 *selection* (#1) is on the forgery-resistant stamped identity, but a matched binding's *rule*
