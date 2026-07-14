@@ -2215,6 +2215,160 @@ public readonly partial struct SimulationTrace
             {
                 return workspace.CreateBuilder<SimulatedStep, Mutable>(this);
             }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<SimulatedStep> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<SimulatedStep>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<SimulatedStep> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<SimulatedStep>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<SimulatedStep> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<SimulatedStep>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="attempt">The value of the property.</param>
+            /// <param name="status">The value of the property.</param>
+            /// <param name="stepId">The value of the property.</param>
+            /// <param name="actionTaken">The value of the property.</param>
+            /// <param name="outputs">The value of the property.</param>
+            /// <param name="requests">The value of the property.</param>
+            /// <param name="skipped">The value of the property.</param>
+            /// <param name="subTrace">The value of the property.</param>
+            /// <param name="successCriteria">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<SimulatedStep> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source attempt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source stepId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source actionTaken = default, in Corvus.Text.Json.JsonElement.Source outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source requests = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source skipped = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.Source subTrace = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source successCriteria = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<SimulatedStep>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="attempt">The value of the property.</param>
+            /// <param name="status">The value of the property.</param>
+            /// <param name="stepId">The value of the property.</param>
+            /// <param name="actionTaken">The value of the property.</param>
+            /// <param name="outputs">The value of the property.</param>
+            /// <param name="requests">The value of the property.</param>
+            /// <param name="skipped">The value of the property.</param>
+            /// <param name="subTrace">The value of the property.</param>
+            /// <param name="successCriteria">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<SimulatedStep> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source attempt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source stepId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.ActionTaken.Source<TContext> actionTaken = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputs = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.SimulatedExchangeArray.Source<TContext> requests = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source skipped = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.Source<TContext> subTrace = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SimulationTrace.SimulatedStepArray.SimulatedStep.CriterionVerdictArray.Source<TContext> successCriteria = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, attempt, status, stepId, actionTaken, outputs, requests, skipped, subTrace, successCriteria);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<SimulatedStep>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
         }
     }
 }

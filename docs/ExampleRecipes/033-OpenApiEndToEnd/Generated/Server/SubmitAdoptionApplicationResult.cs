@@ -42,6 +42,18 @@ public readonly struct SubmitAdoptionApplicationResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="SubmitAdoptionApplicationResult"/> with status 202.</returns>
     public static SubmitAdoptionApplicationResult Accepted(Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.Source body, JsonWorkspace workspace) => new(202, Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a 202 Accepted result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="SubmitAdoptionApplicationResult"/> with status 202.</returns>
+    public static SubmitAdoptionApplicationResult Accepted<TContext>(Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(202, Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Creates a default error result.
@@ -51,6 +63,19 @@ public readonly struct SubmitAdoptionApplicationResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="SubmitAdoptionApplicationResult"/> with status default.</returns>
     public static SubmitAdoptionApplicationResult Default(int statusCode, Petstore.EndToEnd.Server.Models.Error.Source body, JsonWorkspace workspace) => new(statusCode, Petstore.EndToEnd.Server.Models.Error.CreateBuilder(workspace, body, 30).RootElement, "application/json");
+    /// <summary>
+    /// Creates a default Default result from a context-threaded body, materialised in a single pass.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context carried by the body.</typeparam>
+    /// <param name="statusCode">The HTTP status code.</param>
+    /// <param name="body">The context-threaded response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
+    /// <returns>A <see cref="SubmitAdoptionApplicationResult"/> with status default.</returns>
+    public static SubmitAdoptionApplicationResult Default<TContext>(int statusCode, Petstore.EndToEnd.Server.Models.Error.Source<TContext> body, JsonWorkspace workspace)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+        => new(statusCode, Petstore.EndToEnd.Server.Models.Error.CreateBuilder(workspace, in body, 30).RootElement, "application/json");
 
     /// <summary>
     /// Validates the response body against the schema for the current status code.

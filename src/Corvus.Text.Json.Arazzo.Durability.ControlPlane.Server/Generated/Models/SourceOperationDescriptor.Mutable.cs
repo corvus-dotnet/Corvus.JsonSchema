@@ -2291,4 +2291,162 @@ public readonly partial struct SourceOperationDescriptor
     {
         return workspace.CreateBuilder<SourceOperationDescriptor, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<SourceOperationDescriptor> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<SourceOperationDescriptor>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<SourceOperationDescriptor> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<SourceOperationDescriptor>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<SourceOperationDescriptor> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<SourceOperationDescriptor>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="kind">The value of the property.</param>
+    /// <param name="action">The value of the property.</param>
+    /// <param name="channelPath">The value of the property.</param>
+    /// <param name="deprecated">The value of the property.</param>
+    /// <param name="method">The value of the property.</param>
+    /// <param name="operationId">The value of the property.</param>
+    /// <param name="parameters">The value of the property.</param>
+    /// <param name="path">The value of the property.</param>
+    /// <param name="request">The value of the property.</param>
+    /// <param name="responses">The value of the property.</param>
+    /// <param name="summary">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<SourceOperationDescriptor> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.KindEntity.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.ActionEntity.Source action = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source channelPath = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source deprecated = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source method = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source operationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.SourceOperationParameterDescriptorArray.Source parameters = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source path = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.SourceOperationRequestDescriptor.Source request = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.SourceOperationResponses.Source responses = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source summary = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(kind, action, channelPath, deprecated, method, operationId, parameters, path, request, responses, summary);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<SourceOperationDescriptor>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="kind">The value of the property.</param>
+    /// <param name="action">The value of the property.</param>
+    /// <param name="channelPath">The value of the property.</param>
+    /// <param name="deprecated">The value of the property.</param>
+    /// <param name="method">The value of the property.</param>
+    /// <param name="operationId">The value of the property.</param>
+    /// <param name="parameters">The value of the property.</param>
+    /// <param name="path">The value of the property.</param>
+    /// <param name="request">The value of the property.</param>
+    /// <param name="responses">The value of the property.</param>
+    /// <param name="summary">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<SourceOperationDescriptor> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.KindEntity.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.ActionEntity.Source action = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source channelPath = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source deprecated = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source method = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source operationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.SourceOperationParameterDescriptorArray.Source<TContext> parameters = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source path = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.SourceOperationRequestDescriptor.Source<TContext> request = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceOperationDescriptor.SourceOperationResponses.Source<TContext> responses = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source summary = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, kind, action, channelPath, deprecated, method, operationId, parameters, path, request, responses, summary);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<SourceOperationDescriptor>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

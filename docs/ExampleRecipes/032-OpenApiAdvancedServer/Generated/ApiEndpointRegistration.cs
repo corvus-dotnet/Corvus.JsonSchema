@@ -517,9 +517,13 @@ public static class ApiEndpointRegistration
                 }
 
 
+                byte[]? __binary_file = null;
                 try
                 {
-                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>
+                    {
+                        if (part.Name.SequenceEqual("file"u8)) { __binary_file = part.Data.ToArray(); }
+                    }, cancellationToken: context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -534,6 +538,7 @@ public static class ApiEndpointRegistration
                     PetId = PetIdValue,
                     SessionToken = SessionTokenValue,
                     Body = bodyDoc!.RootElement,
+                    File = __binary_file ?? ReadOnlyMemory<byte>.Empty,
                 }
                 ;
 
@@ -628,7 +633,12 @@ public static class ApiEndpointRegistration
                 }
 
                 context.Response.StatusCode = result.StatusCode;
-                if (!result.Body.IsUndefined())
+                if (result.HasBinaryBody)
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/octet-stream";
+                    await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);
+                }
+                else if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
                     Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
@@ -879,6 +889,11 @@ public static class ApiEndpointRegistration
                     }
 
                     await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+                else if (result.HasBinaryBody)
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/octet-stream";
+                    await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);
                 }
                 else if (!result.Body.IsUndefined())
                 {
