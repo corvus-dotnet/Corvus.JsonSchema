@@ -354,6 +354,33 @@ public abstract class SecurityPolicyStoreConformance
     }
 
     [TestMethod]
+    public async Task A_binding_created_from_an_order_less_write_body_defaults_its_order_to_zero()
+    {
+        // The create request body (SecurityBindingWrite) carries no `order` — that is server metadata, like id/etag/created,
+        // defaulted to 0 when the document is written. The handler carries the body verbatim as the draft (a zero-copy
+        // SecurityBindingDocument view over a body that omits order), so a relational store that projects the resolution
+        // order into its sort column reads `draft.OrderValue` off a draft where `order` is ABSENT. That accessor must return
+        // the same 0 default the persisted document uses, not NRE on the missing value — otherwise every UI-authored grant
+        // (the picker sends no order) faults on create.
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+
+        byte[] writeBody = """{"claimType":"role","claimValue":"tenant-admin","read":{"unrestricted":true},"write":{"unrestricted":false},"purge":{"unrestricted":false}}"""u8.ToArray();
+
+        string id;
+        using (ParsedJsonDocument<SecurityBindingDocument> draft = ParsedJsonDocument<SecurityBindingDocument>.Parse(writeBody.AsMemory()))
+        using (ParsedJsonDocument<SecurityBindingDocument> created = await store.AddBindingAsync(draft.RootElement, "alice", default))
+        {
+            id = created.RootElement.IdValue;
+            created.RootElement.OrderValue.ShouldBe(0);
+        }
+
+        using ParsedJsonDocument<SecurityBindingDocument>? fetched = await store.GetBindingAsync(id, default);
+        fetched.ShouldNotBeNull();
+        fetched!.RootElement.OrderValue.ShouldBe(0);
+        fetched.RootElement.ClaimValueOrNull.ShouldBe("tenant-admin");
+    }
+
+    [TestMethod]
     public async Task Listing_bindings_keyset_pages_in_order_id_without_gaps_or_duplicates()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
