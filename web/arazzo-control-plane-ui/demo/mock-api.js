@@ -996,8 +996,11 @@ function seedGrantees() {
   // Resolvable grantees as the server's GET /identity/grantees returns them: a well-known kind, a value/label,
   // the exact sys: identity as a {dimension,value} array, where it was resolved (observed/directory), and whether
   // that identity is the principal's *complete* stamped identity. The picker resolves these — no hand-typed tuples.
+  // A directory person carries its FULL membership-expanded identity (§16.5.4): Ada resolves with her sys:team
+  // membership, so looking her up in the Access Overview surfaces the payments team's reach binding she inherits
+  // through that membership (not only her own sub-keyed grant) — the "look yourself up, see your effective grants" flow.
   return [
-    { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }], source: 'directory', complete: true },
+    { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }, { dimension: 'sys:team', value: 'payments' }], source: 'directory', complete: true },
     { kind: 'person', value: 'u-2099', label: 'Grace Hopper', identity: [{ dimension: 'sys:sub', value: 'u-2099' }], source: 'observed', complete: false },
     { kind: 'team', value: 'payments', label: 'Payments', identity: [{ dimension: 'team', value: 'payments' }], source: 'directory', complete: true },
     { kind: 'role', value: 'sre', label: 'Site Reliability', identity: [{ dimension: 'role', value: 'sre' }], source: 'directory', complete: true },
