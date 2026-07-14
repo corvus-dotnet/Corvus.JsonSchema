@@ -40,6 +40,32 @@ public sealed class DefaultDeploymentBootstrapTests
     }
 
     [TestMethod]
+    public async Task Bootstrap_issuer_qualifies_the_genesis_grant_with_additional_clauses()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        const string optionsJson =
+            """{"genesisAdminGroup":"arazzo-admins","identityClaimType":"group","genesisAdditionalClauses":[{"dimension":"iss","value":"arazzo-keycloak"}]}""";
+        using ParsedJsonDocument<DeploymentBootstrapOptions> optionsDoc = ParsedJsonDocument<DeploymentBootstrapOptions>.Parse(optionsJson);
+        var bootstrap = new DefaultDeploymentBootstrap();
+
+        await bootstrap.BootstrapSecurityAsync(store, optionsDoc.RootElement);
+
+        using PooledDocumentList<SecurityBindingDocument> bindings = await store.ListBindingsAsync(default);
+        SecurityBindingDocument genesis = bindings.Single(b => b.ClaimValueOrNull == "arazzo-admins");
+
+        // The genesis grant is a tag-set selector (§16.5.4): the primary group clause AND the issuer clause, so it applies
+        // only to an arazzo-admins group asserted by THIS deployment's issuer — not a same-named group from another IdP.
+        genesis.ClaimTypeValue.ShouldBe("group");
+        var clauses = new List<(string Dimension, string? Value)>();
+        foreach (SecurityBindingDocument.AdditionalClause clause in genesis.AdditionalClauses.EnumerateArray())
+        {
+            clauses.Add(((string)clause.DimensionValue, clause.Value.IsNotUndefined() ? (string)clause.Value : null));
+        }
+
+        clauses.ShouldBe([("iss", (string?)"arazzo-keycloak")]);
+    }
+
+    [TestMethod]
     public async Task Bootstrap_is_idempotent_across_repeated_runs()
     {
         var store = new InMemorySecurityPolicyStore();

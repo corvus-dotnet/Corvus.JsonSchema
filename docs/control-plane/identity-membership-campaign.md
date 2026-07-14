@@ -121,7 +121,7 @@ administration under set-equality. Membership over a rich identity resolves both
     S2/S3/S5b carried.
   - **Remaining:** a live Aspire / Keycloak / podman relaunch to observe a member administering a group-founded
     workflow through membership (the only unverified path left; the code is proven by unit + conformance tests).
-- **S7 — reach binding tag-set selector (H3) — S7a–S7c + core tests + S7d authoring DONE; only the live-demo seed remains.** Make a reach binding's selector a tag
+- **S7 — reach binding tag-set selector (H3) — DONE.** Make a reach binding's selector a tag
   **set** matched by **subset** against the caller's canonical identity, exactly like administration — so per-person
   reach can pin `{sub, iss}` and stop being cross-issuer. **Recommended shape: additive, not a big-bang rewrite.**
   Keep `claimType` + optional `claimValue` as the primary (required) clause and add an optional
@@ -167,11 +167,16 @@ administration under set-equality. Membership over a rich identity resolves both
     faithful: `normalizeBinding` round-trips `additionalClauses` and the access-grants overview match requires the full
     clause conjunction (mirroring `BindingAppliesToGrantee`). Verified: 11/11 grants-panel component tests (incl. a new
     multi-dimension round-trip case), 273/273 node unit tests, CLI builds warning-free.
-  - **S7d live-demo seed REMAINING (needs a decision):** the live demo (real Postgres via the bootstrap) still seeds the
-    genesis admin grant single-clause. The principled demonstration is pinning the issuer on that grant
-    (`{group=arazzo-admins} AND {iss=<demo Keycloak>}`), which needs an optional `additionalClauses` on
-    `DeploymentBootstrapOptions` (a production config-contract change, IdP-agnostic) + a fresh provision + a live Keycloak
-    verify. Alternatives: a demo-local extra reader binding (additive, lower-risk), or defer. Not yet done.
+  - **S7d live-demo seed DONE (genesis grant issuer-pin, ratified with the user):** added an optional
+    `genesisAdditionalClauses` ([{dimension, value?}], titled `GenesisAdditionalClause`) to `DeploymentBootstrapOptions`
+    (source-gen); `DefaultDeploymentBootstrap.BootstrapSecurityAsync` reads it and threads it into the genesis grant's
+    `Draft(..., additionalClauses:)`. The demo config (Program.cs) pins `{ dimension: "iss", value: DemoData.KeycloakIssuer }`,
+    so the genesis grant is `{group=arazzo-admins} AND {iss=arazzo-keycloak}` — genesis admin applies only to an
+    arazzo-admins group asserted by THIS deployment's Keycloak, not a same-named group from another IdP (the runtime
+    resolver already stamps sys:iss). A bootstrap test proves the seeded genesis binding carries the issuer clause.
+    Bootstrap 4/4, demo builds. NB: `BindingExists` dedupes by (claimType, claimValue) so an existing single-clause
+    genesis grant is not re-issuer-qualified on re-run — the demo resets each run, so a fresh provision gets it; a live
+    upgrade would delete + re-seed. **Applies on the next control-plane rebuild + relaunch (a fresh Postgres provision).**
 
 ## Current state — every identity-matching surface
 

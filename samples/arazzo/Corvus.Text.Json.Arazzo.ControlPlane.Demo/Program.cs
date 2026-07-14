@@ -59,6 +59,9 @@ string genesisScopesJson = string.Join(", ", ControlPlaneScopes.All.Select(s => 
 // identityClaimType is the internal `group` DIMENSION (not the OIDC `groups` claim): reach binding applicability is
 // decided by MEMBERSHIP over the caller's canonical sys: identity (§16.5.4), and the resolver below maps the `groups`
 // claim to the sys:group tag — so the genesis binding keys on `group`, matching sys:group after the prefix is stripped.
+// genesisAdditionalClauses pins the ISSUER too (§16.5.4 tag-set selector, S7): the genesis grant applies only to an
+// arazzo-admins group asserted by THIS deployment's Keycloak (sys:iss = DemoData.KeycloakIssuer, stamped by the resolver
+// below and the directory adapter), so a same-named group from another identity provider does not inherit admin.
 using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions> bootstrapOptionsDoc =
     ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions>.Parse(
         System.Text.Encoding.UTF8.GetBytes($$"""
@@ -66,6 +69,7 @@ using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstr
           "genesisAdminGroup": "arazzo-admins",
           "genesisScopes": [{{genesisScopesJson}}],
           "identityClaimType": "group",
+          "genesisAdditionalClauses": [{ "dimension": "iss", "value": "{{DemoData.KeycloakIssuer}}" }],
           "internalTagPrefix": "sys:",
           "selfElevationGroups": ["arazzo-admins"],
           "labelOrderings": { "classification": ["public", "internal", "confidential", "restricted"] },

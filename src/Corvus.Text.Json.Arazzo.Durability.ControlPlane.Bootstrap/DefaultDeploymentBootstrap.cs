@@ -66,7 +66,8 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
             using ParsedJsonDocument<SecurityBindingDocument> admin = SecurityBindingDocument.Draft(
                 claimType, genesisGroup, read: VerbGrant.Full, write: VerbGrant.Full, purge: VerbGrant.Full,
                 scopes: ReadScopes(options),
-                description: $"Genesis administrator (§16.2 tier 3): the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach.");
+                description: $"Genesis administrator (§16.2 tier 3): the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach.",
+                additionalClauses: ReadAdditionalClauses(options));
             (await securityStore.AddBindingAsync(admin.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
         }
     }
@@ -110,5 +111,24 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         }
 
         return scopes;
+    }
+
+    // The genesis grant's additional identity-dimension clauses (§16.5.4): each is ANDed with the primary group clause,
+    // so the genesis grant applies only to a caller whose canonical identity contains every clause. Null when none are
+    // configured (a single-clause group grant). Used to issuer-qualify the genesis administrator.
+    private static IReadOnlyList<(string Dimension, string? Value)>? ReadAdditionalClauses(DeploymentBootstrapOptions options)
+    {
+        if (!options.GenesisAdditionalClauses.IsNotUndefined())
+        {
+            return null;
+        }
+
+        var clauses = new List<(string Dimension, string? Value)>();
+        foreach (var clause in options.GenesisAdditionalClauses.EnumerateArray())
+        {
+            clauses.Add(((string)clause.DimensionValue, clause.Value.IsNotUndefined() ? (string)clause.Value : null));
+        }
+
+        return clauses.Count > 0 ? clauses : null;
     }
 }
