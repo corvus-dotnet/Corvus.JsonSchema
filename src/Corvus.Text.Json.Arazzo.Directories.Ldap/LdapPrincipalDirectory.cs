@@ -193,11 +193,67 @@ public sealed class LdapPrincipalDirectory : IPrincipalDirectory
             LdapEntry entry = await search.NextAsync(cancellationToken).ConfigureAwait(false);
             if (this.ToRecord(kind, kindOptions, entry) is { } record && this.projector.Project(record) is { } principal)
             {
+                // A person resolves to its FULL membership-expanded identity (design §16.5.4): its group memberships come
+                // back INLINE on the entry (the configured GroupAttribute, e.g. memberOf, requested in BuildAttributeList
+                // and captured into the record's Groups), so no extra round-trip is needed — fold a sys:group per group in
+                // through the same mapper. Teams / roles ARE the memberships, so they are not themselves expanded.
+                if (kind == GranteeKind.Person && record.Groups.Count > 0)
+                {
+                    principal = this.projector.EnrichWithMemberships(principal, GroupNames(record.Groups), null);
+                }
+
                 results.Add(principal);
             }
         }
 
         return results;
+    }
+
+    // The membership names to expand from the inline GroupAttribute values. memberOf (and its kin) usually yields a group's
+    // DN (cn=payments,ou=groups,dc=corp); the identity value is its RDN value (the naming attribute), so extract it. A
+    // GroupAttribute that already yields bare names is passed through unchanged.
+    private static IReadOnlyList<string> GroupNames(IReadOnlyList<string> groupValues)
+    {
+        var names = new List<string>(groupValues.Count);
+        foreach (string value in groupValues)
+        {
+            names.Add(GroupName(value));
+        }
+
+        return names;
+    }
+
+    // The RDN value of a DN (cn=payments,… → payments), or the value itself when it is not a DN (no '='). The RDN value ends
+    // at the first UNescaped comma, so a naming value that itself contains an escaped comma is kept whole. `internal` only so
+    // the extraction can be unit-tested without a directory.
+    internal static string GroupName(string groupValue)
+    {
+        int equals = groupValue.IndexOf('=');
+        if (equals < 0)
+        {
+            return groupValue;
+        }
+
+        int start = equals + 1;
+        int i = start;
+        while (i < groupValue.Length)
+        {
+            char c = groupValue[i];
+            if (c == '\\')
+            {
+                i += 2;
+                continue;
+            }
+
+            if (c == ',')
+            {
+                break;
+            }
+
+            i++;
+        }
+
+        return groupValue[start..Math.Min(i, groupValue.Length)];
     }
 
     private string[] BuildAttributeList(LdapKindOptions kindOptions)
