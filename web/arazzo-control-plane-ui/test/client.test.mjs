@@ -563,6 +563,18 @@ test('getAccessGrants for the payments team projects the team binding', async ()
   assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'), 'the payments team binding (bind-1) is projected');
 });
 
+test('getAccessGrants surfaces a directory person’s grants inherited through group membership (§16.5.4)', async () => {
+  const c = makeClient();
+  // Ada resolved from the DIRECTORY carries her full membership-expanded identity (sys:team=payments), so "look yourself
+  // up" surfaces the payments team's reach binding she INHERITS through that membership, alongside her own sub-keyed grant.
+  const { grantees } = await c.searchGrantees({ q: 'ada', source: 'directory' });
+  const ada = grantees.find((g) => g.value === 'u-1042');
+  assert.ok(ada.identity.some((t) => t.dimension === 'sys:team' && t.value === 'payments'), 'the resolved person carries her team membership');
+  const { bindings } = await c.getAccessGrants(ada);
+  assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'), 'she inherits the payments team binding via her membership');
+  assert.ok(bindings.some((b) => b.claimType === 'sub' && b.claimValue === 'u-1042'), 'her own sub binding is also projected');
+});
+
 // ---- identity / grantee resolution (§16.5.4) ----------------------------------------------------
 
 test('searchGrantees returns the resolved grantees with their exact identity and complete flag', async () => {
@@ -574,7 +586,8 @@ test('searchGrantees returns the resolved grantees with their exact identity and
   assert.equal(ada.label, 'Ada Lovelace');
   assert.equal(ada.source, 'directory');
   assert.equal(ada.complete, true);
-  assert.deepEqual(ada.identity, [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }]);
+  // A directory person resolves to its full membership-expanded identity (§16.5.4): Ada carries her sys:team membership.
+  assert.deepEqual(ada.identity, [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }, { dimension: 'sys:team', value: 'payments' }]);
   const grace = grantees.find((g) => g.value === 'u-2099');
   assert.equal(grace.complete, false, 'an observed-only identity is reported as not complete');
 });
