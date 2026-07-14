@@ -132,6 +132,26 @@ describe('<arazzo-grants-panel>', () => {
     equal($(el, '.f-claimValue').value, 'payments', 'claim value derived');
   });
 
+  it('pins a multi-dimension grantee identity as a tag-set selector (primary + additional clauses)', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' }, {
+      granteesSeed: [{ kind: 'team', value: 'payments-eu', label: 'Payments EU (keycloak)', source: 'directory', complete: true, identity: [{ dimension: 'team', value: 'payments-eu' }, { dimension: 'sys:iss', value: 'https://keycloak' }] }],
+    });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    await pickGrantee(el, 'payments-eu');
+    equal($(el, '.f-claimType').value, 'team', 'primary claim is the first identity dimension');
+    equal($(el, '.f-claimValue').value, 'payments-eu', 'primary value');
+    ok($(el, '.chips .chip'), 'the remaining identity dimension is shown as an additional-clause chip');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    const g = e.detail.grants.find((x) => x.claimType === 'team' && x.claimValue === 'payments-eu');
+    ok(g, 'grant created');
+    ok((g.additionalClauses || []).some((c) => c.dimension === 'sys:iss' && c.value === 'https://keycloak'), 'the issuer dimension is pinned as an additional clause (not dropped)');
+  });
+
   it('steers a person grantee to the request flow instead of a direct grant', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
