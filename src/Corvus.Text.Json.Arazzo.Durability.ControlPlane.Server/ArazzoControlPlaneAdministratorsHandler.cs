@@ -179,9 +179,31 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
                 await this.observed.SeenAsync(kind, value, label, newAdministrator, complete, "administrator", cancellationToken).ConfigureAwait(false);
             }
 
-            var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
+            // Broadening advisory (§16.5.4 H5): surface (non-blocking) any existing grantee this new, narrower identity
+            // STRICTLY subsumes — the grant broadens administration to also admit it (and everyone whose identity contains
+            // the grant). The probe runs at full reach; the echo is reach-filtered to grantees the caller may see (the
+            // full count is recorded on the ambient activity for audit). The overlap page is held alive across the
+            // synchronous response build below, because the advisory items read its grantee kind/value/label spans.
+            using ObservedIdentityPage overlapPage = this.observed is not null && hasKind
+                ? await this.observed.FindBroadeningOverlapsAsync(kind, value, newAdministrator, MaxBroadeningOverlaps, cancellationToken).ConfigureAwait(false)
+                : ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+            List<ObservedIdentity>? overlaps = this.ReachVisibleOverlaps(overlapPage);
+            if (overlaps is { Count: > 0 })
+            {
+                System.Diagnostics.Activity.Current?.SetTag("arazzo.administration.broadening_overlap_count", overlaps.Count);
+            }
+
+            var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access, overlaps);
             return AddAdministratorResult.Ok(
-                Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
+                Models.AdministratorList.Build(
+                    in listContext,
+                    administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants),
+                    broadeningAdvisory: overlaps is { Count: > 0 }
+                        ? Models.BroadeningAdvisory.Build(
+                            in listContext,
+                            message: (Models.JsonString.Source)BroadeningAdvisoryMessage,
+                            subsumesGrantees: Models.BroadeningAdvisory.BroadeningOverlapGranteeArray.Build(in listContext, BuildOverlaps))
+                        : default),
                 workspace);
         }
         catch (WorkflowAdministrationException)
@@ -534,11 +556,74 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     private static SecurityTagSet TagsOf(in WorkflowAdministrators.AdministratorIdentity administrator)
         => SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(administrator.Tags).Memory);
 
-    private readonly ref struct AdministratorListContext(WorkflowAdministrators.AdministratorIdentityArray administrators, ControlPlaneAccess access)
+    // The most subsumed grantees echoed in a single broadening advisory (a bounded warning, not a listing); the full
+    // count is recorded on the activity for audit.
+    private const int MaxBroadeningOverlaps = 16;
+
+    // The advisory text — it names the effect (broadening), not a specific grantee; the subsumesGrantees array carries the
+    // reach-visible parties.
+    private static ReadOnlySpan<byte> BroadeningAdvisoryMessage =>
+        "The identity you granted is broader than the listed existing grantees; it confers administration on every principal whose identity contains it, not only those grantees."u8;
+
+    // Reach-filters the broadening overlaps to grantees the caller may see (§17.1): an unrestricted (System) caller sees
+    // all; a scoped caller sees only overlaps whose identity its read-reach admits. Returns null when nothing is visible so
+    // the advisory is omitted. The returned structs view the still-alive overlap page.
+    private List<ObservedIdentity>? ReachVisibleOverlaps(ObservedIdentityPage page)
+    {
+        if (page.Identities.Count == 0)
+        {
+            return null;
+        }
+
+        SecurityFilter? readReach = this.access.Current().Reach(AccessVerb.Read);
+        var visible = new List<ObservedIdentity>(page.Identities.Count);
+        foreach (ObservedIdentity overlap in page.Identities)
+        {
+            // An unrestricted (System) reach admits every overlap; a scoped reach admits only those its read-reach permits.
+            if (readReach?.IsSatisfiedBy(overlap.IdentityTagsValue) ?? true)
+            {
+                visible.Add(overlap);
+            }
+        }
+
+        return visible.Count > 0 ? visible : null;
+    }
+
+    // Builds the advisory's subsumesGrantees array: each reach-visible overlap's kind/value/label, bytes-native from the
+    // still-alive overlap page (the same GetUtf8String -> JsonString.Source idiom BuildGrant uses).
+    private static void BuildOverlaps(in AdministratorListContext ctx, ref Models.BroadeningAdvisory.BroadeningOverlapGranteeArray.Builder array)
+    {
+        if (ctx.Overlaps is null)
+        {
+            return;
+        }
+
+        foreach (ObservedIdentity overlap in ctx.Overlaps)
+        {
+            using UnescapedUtf8JsonString kind = overlap.SubjectKind.GetUtf8String();
+            using UnescapedUtf8JsonString value = overlap.SubjectValue.GetUtf8String();
+            if (overlap.Label.IsNotUndefined())
+            {
+                using UnescapedUtf8JsonString label = overlap.Label.GetUtf8String();
+                array.AddItem(Models.BroadeningOverlapGrantee.Build(kind: (Models.GranteeKind.Source)kind.Span, value: (Models.JsonString.Source)value.Span, label: (Models.JsonString.Source)label.Span));
+            }
+            else
+            {
+                array.AddItem(Models.BroadeningOverlapGrantee.Build(kind: (Models.GranteeKind.Source)kind.Span, value: (Models.JsonString.Source)value.Span));
+            }
+        }
+    }
+
+    private readonly ref struct AdministratorListContext(WorkflowAdministrators.AdministratorIdentityArray administrators, ControlPlaneAccess access, IReadOnlyList<ObservedIdentity>? overlaps = null)
     {
         public WorkflowAdministrators.AdministratorIdentityArray Administrators { get; } = administrators;
 
         public ControlPlaneAccess Access { get; } = access;
+
+        // The reach-visible existing grantees the just-granted (narrower) identity strictly subsumes (§16.5.4 H5), or null
+        // on the read paths that do not compute a broadening advisory. Their kind/value/label back the advisory items; the
+        // owning ObservedIdentityPage is kept alive by the add handler across the synchronous response build.
+        public IReadOnlyList<ObservedIdentity>? Overlaps { get; } = overlaps;
     }
 
     // Carries one stored administrator (for its kind/label) plus its tags (a non-owning view, for the digest and identity

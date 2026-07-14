@@ -101,8 +101,12 @@ administration under set-equality. Membership over a rich identity resolves both
     table (contains-all-authored-tags count = |X| + total-tags > |X|); Cosmos = `EXISTS`-per-tag over `securityTags`
     + `ARRAY_LENGTH`; Mongo/Redis/AzureStorage/NATS = client-scan (no queryable tag index). Cross-kind conformance
     test; in-memory + Sqlite 8/8, 8 container backends build-verified (container conformance pending).
-  - **Surface pending (S5b-2):** OpenAPI advisory on the add-administrator response + regen; handler wiring (workflow +
-    env) calling the probe, reach-filtering the echo via `ControlPlaneAccess.Current()`, telemetry audit; server tests.
+  - **Surface DONE (S5b-2):** an optional `broadeningAdvisory` (`{ message, subsumesGrantees[] }`) on the
+    `AdministratorList` response (OpenAPI + server/CLI regen, S5b-2a); the workflow and environment add-administrator
+    handlers (S5b-2b) call the probe, **reach-filter the echoed grantees** via `ControlPlaneAccess.Current().Reach(Read)`
+    (the full count goes to the ambient activity for audit), and build the advisory bytes-native only when overlaps
+    exist — the add always succeeds. Server test proves a `{sys:tenant=acme}` grant naming the subsumed
+    `{sys:tenant=acme, sys:sub=alice}` person and omitting the advisory when nothing is subsumed. This closes H5.
 - **S6 — demo resolver enrichment + relaunch**, live-verify; then container conformance for the 8 backends.
 
 ## Current state — every identity-matching surface
@@ -170,13 +174,15 @@ the reach predicate. Ambient closes the tenant case; the general case is a deplo
 in design §16.5.5 (every reach-relevant dimension must be ambient-provided or resolver-stamped, never a raw token
 claim) — the review's own stated remediation. Not a code change.
 
-**H5 — Collision probe only catches exact collisions, not subset overlaps (membership-specific, low-medium).**
-`FindIdentityConflictAsync` refuses a grant whose resolved identity **set-equals** an existing grantee's. Under
-membership, a directory mapper that mints a *narrow* identity (e.g. `{sys:group=admins}`) which is a **subset**
-of an existing person's identity silently confers that person's-and-everyone-in-the-group's administration, and
-no conflict is raised (the digests differ). Set-equality is correct for detecting duplicate grantees; a
-membership model additionally wants a **subset-overlap warning** at grant time (surface it, do not hard-block —
-overlap can be intentional).
+**H5 — Collision probe only caught exact collisions, not subset overlaps (membership-specific, low-medium) —
+RESOLVED by S5b.** `FindIdentityConflictAsync` refuses a grant whose resolved identity set-equals an existing
+grantee's, but a directory mapper minting a *narrow* identity (e.g. `{sys:group=admins}`) that is a **subset** of an
+existing person's identity silently broadened that person's-and-everyone-in-the-group's administration with no
+conflict (the digests differ). S5b adds `FindBroadeningOverlapsAsync` (a strict-superset probe across all 10
+backends — SQL/Cosmos pushdown, doc/KV client-scan) and a non-blocking `broadeningAdvisory` on the
+add-administrator response that echoes the subsumed grantees, reach-filtered to the caller (the full count audited).
+The set-equality collision (409) stays exact for duplicate-grantee detection; the advisory is the additive
+membership warning. The direction detected is broadening (`X ⊊ G`); a redundant narrower grant is not flagged.
 
 **H6 — Overview hardcoded the `sys:` prefix (divergence, low) — RESOLVED (S5a).** `BindingAppliesToGrantee`'s
 `StripSysPrefix` stripped the literal `"sys:"`, whereas runtime `Matches`/`CallerMatches` strip the
