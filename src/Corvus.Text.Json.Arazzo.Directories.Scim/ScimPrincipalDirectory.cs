@@ -66,7 +66,11 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
         int max = limit > 0 ? limit : 1;
         string token = await this.ResolveBearerTokenAsync(cancellationToken).ConfigureAwait(false);
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, BuildSearchUri(this.options.BaseUrl, resourceType, query, max, this.projector.RequiredAttributes));
+        // A person resolves to its FULL membership-expanded identity (design §16.5.4): a SCIM user carries its group
+        // memberships INLINE in the read-only `groups` attribute, so it is requested alongside the search (no extra
+        // round-trip) and folded in below. Teams / roles ARE the memberships, so they are not themselves expanded.
+        bool expand = kind == GranteeKind.Person;
+        using var request = new HttpRequestMessage(HttpMethod.Get, BuildSearchUri(this.options.BaseUrl, resourceType, query, max, this.projector.RequiredAttributes, expand));
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/scim+json"));
         using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -83,9 +87,156 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
         // mapper declares its RequiredAttributes the provider returns only those, so both the response byte[] and the
         // flatten shrink (the attribute-projection seam moves the saving onto the wire; see BuildSearchUri).
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        return this.projector.SupportsSpanProjection
+        IReadOnlyList<ResolvedPrincipal> people = this.projector.SupportsSpanProjection
             ? ProjectResponseSpan(kind, resourceType, body, max, this.projector)
             : ProjectResponse(kind, resourceType, body, max, this.projector);
+        return expand ? this.ExpandMemberships(people, body, resourceType) : people;
+    }
+
+    // Folds each person's inline group memberships into its identity (design §16.5.4). The user's groups are read from the
+    // same response (a second in-place scan pairing each resource's value with its `groups` members), so no round-trip is
+    // added; a sys:group per group is unioned in through the same mapper. A person the scan finds no groups for is unchanged.
+    private IReadOnlyList<ResolvedPrincipal> ExpandMemberships(IReadOnlyList<ResolvedPrincipal> people, byte[] body, ScimResourceType resourceType)
+    {
+        if (people.Count == 0)
+        {
+            return people;
+        }
+
+        Dictionary<string, List<string>> groupsByUser = ParseUserGroups(body, Leaf(resourceType.FilterAttribute));
+        if (groupsByUser.Count == 0)
+        {
+            return people;
+        }
+
+        var expanded = new ResolvedPrincipal[people.Count];
+        for (int i = 0; i < people.Count; i++)
+        {
+            expanded[i] = groupsByUser.TryGetValue(people[i].Value, out List<string>? groups)
+                ? this.projector.EnrichWithMemberships(people[i], groups, null)
+                : people[i];
+        }
+
+        return expanded;
+    }
+
+    // Pairs each resource's grantee value (its FilterAttribute leaf) with its group membership NAMES — the `groups`
+    // multi-valued attribute's member `display` (the group's display name, matching a Group resolved by displayName),
+    // falling back to `value`. A pure in-place scan of the same list response the principals were projected from, so it adds
+    // no round-trip; `internal` only so it can be unit-tested without a network.
+    internal static Dictionary<string, List<string>> ParseUserGroups(byte[] body, string valueLeaf)
+    {
+        var result = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        byte[] valueLeafUtf8 = Encoding.UTF8.GetBytes(valueLeaf);
+        var reader = new Utf8JsonReader(body);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+        {
+            return result;
+        }
+
+        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+        {
+            bool isResources = reader.ValueTextEquals("Resources"u8);
+            reader.Read();
+            if (!isResources || reader.TokenType != JsonTokenType.StartArray)
+            {
+                reader.Skip();
+                continue;
+            }
+
+            while (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+            {
+                string? userValue = null;
+                List<string>? groups = null;
+                while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    bool isValue = reader.ValueTextEquals(valueLeafUtf8);
+                    bool isGroups = reader.ValueTextEquals("groups"u8);
+                    reader.Read();
+                    if (isValue && reader.TokenType == JsonTokenType.String)
+                    {
+                        userValue = reader.GetString();
+                    }
+                    else if (isGroups && reader.TokenType == JsonTokenType.StartArray)
+                    {
+                        groups = ReadGroupNames(ref reader);
+                    }
+                    else if (reader.TokenType == JsonTokenType.StartObject && userValue is null)
+                    {
+                        // The value leaf may be nested one level (an extension/complex attribute); scan for it, ignore the rest.
+                        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                        {
+                            bool nestedValue = reader.ValueTextEquals(valueLeafUtf8);
+                            reader.Read();
+                            if (nestedValue && reader.TokenType == JsonTokenType.String && userValue is null)
+                            {
+                                userValue = reader.GetString();
+                            }
+                            else
+                            {
+                                reader.Skip();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        reader.Skip();
+                    }
+                }
+
+                if (userValue is not null && groups is { Count: > 0 })
+                {
+                    result[userValue] = groups;
+                }
+            }
+
+            return result;
+        }
+
+        return result;
+    }
+
+    // Reads a SCIM `groups` array (reader at its StartArray) to the group NAMES — each member's `display`, or `value` when
+    // absent. Leaves the reader at the matching EndArray.
+    private static List<string> ReadGroupNames(ref Utf8JsonReader reader)
+    {
+        var names = new List<string>();
+        while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+        {
+            if (reader.TokenType != JsonTokenType.StartObject)
+            {
+                reader.Skip();
+                continue;
+            }
+
+            string? display = null;
+            string? value = null;
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                bool isDisplay = reader.ValueTextEquals("display"u8);
+                bool isValue = reader.ValueTextEquals("value"u8);
+                reader.Read();
+                if (isDisplay && reader.TokenType == JsonTokenType.String)
+                {
+                    display = reader.GetString();
+                }
+                else if (isValue && reader.TokenType == JsonTokenType.String)
+                {
+                    value = reader.GetString();
+                }
+                else
+                {
+                    reader.Skip();
+                }
+            }
+
+            if ((display ?? value) is { } name)
+            {
+                names.Add(name);
+            }
+        }
+
+        return names;
     }
 
     /// <inheritdoc/>
@@ -97,7 +248,7 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
         }
     }
 
-    private static Uri BuildSearchUri(Uri baseUrl, ScimResourceType resourceType, string query, int max, IReadOnlyCollection<string> requiredAttributes)
+    private static Uri BuildSearchUri(Uri baseUrl, ScimResourceType resourceType, string query, int max, IReadOnlyCollection<string> requiredAttributes, bool includeGroups)
     {
         // SCIM resources hang off the provider's base path (e.g. https://host/scim/v2 + Users), so we append rather than
         // root-replace (the new Uri(base, "/Users") gotcha). The value-prefix search is the SCIM `sw` (starts-with)
@@ -118,7 +269,7 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
         // mapper declares nothing the parameter is omitted and the full resource is returned (the safe, general default).
         if (requiredAttributes.Count > 0)
         {
-            string attributes = string.Join(",", ProjectionTokens(resourceType, requiredAttributes).Select(Uri.EscapeDataString));
+            string attributes = string.Join(",", ProjectionTokens(resourceType, requiredAttributes, includeGroups).Select(Uri.EscapeDataString));
             url += $"&attributes={attributes}";
         }
 
@@ -126,11 +277,12 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
     }
 
     // The provider tokens to request: the value attribute and (if any) the display attribute the adapter needs to form the
-    // grantee, unioned with the mapper's declared attributes — order-preserved and de-duplicated for a stable request.
-    private static IEnumerable<string> ProjectionTokens(ScimResourceType resourceType, IReadOnlyCollection<string> requiredAttributes)
+    // grantee, unioned with the mapper's declared attributes (and `groups` when a person's memberships are being expanded) —
+    // order-preserved and de-duplicated for a stable request.
+    private static IEnumerable<string> ProjectionTokens(ScimResourceType resourceType, IReadOnlyCollection<string> requiredAttributes, bool includeGroups)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        var ordered = new List<string>(requiredAttributes.Count + 2);
+        var ordered = new List<string>(requiredAttributes.Count + 3);
         Append(resourceType.FilterAttribute);
         if (resourceType.DisplayAttribute is { } display)
         {
@@ -140,6 +292,11 @@ public sealed class ScimPrincipalDirectory : IPrincipalDirectory, IDisposable
         foreach (string attribute in requiredAttributes)
         {
             Append(attribute);
+        }
+
+        if (includeGroups)
+        {
+            Append("groups");
         }
 
         return ordered;
