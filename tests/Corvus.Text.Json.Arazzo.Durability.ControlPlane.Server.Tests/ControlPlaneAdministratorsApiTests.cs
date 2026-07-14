@@ -184,6 +184,39 @@ public sealed class ControlPlaneAdministratorsApiTests
             .StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
+    [TestMethod]
+    public async Task Granting_an_identity_that_subsumes_an_existing_grantee_returns_a_non_blocking_broadening_advisory()
+    {
+        // An existing PERSON grantee whose resolved identity {sys:tenant=acme, sys:sub=alice} STRICTLY contains the team
+        // identity {sys:tenant=acme}, seeded into the observed-identity typeahead store.
+        var observed = new InMemoryObservedIdentityStore();
+        await observed.SeenAsync(
+            ObservedIdentity.GranteeKind.EnumValues.Person,
+            JsonString.ParseValue("\"alice\""),
+            JsonString.ParseValue("\"Alice\""),
+            SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", "acme"), new SecurityTag(SecurityShell.DefaultInternalPrefix + "sub", "alice")]),
+            true,
+            "administrator",
+            default);
+
+        await using Scoped host = await StartAsync(observed: observed, policy: new TenantIdentityPolicy());
+        await EstablishAsync(host.Catalog, "flow", Acme);
+
+        // Granting the narrower team identity {sys:tenant=acme} broadens administration to also admit alice (whose identity
+        // contains it). The add SUCCEEDS (non-blocking, unlike the set-equal collision 409) and the response carries a
+        // broadeningAdvisory naming the subsumed grantee.
+        using Stj.JsonDocument added = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"acme"}""", Write, Acme));
+        Stj.JsonElement advisory = added.RootElement.GetProperty("broadeningAdvisory");
+        advisory.GetProperty("message").GetString().ShouldNotBeNullOrEmpty();
+        advisory.GetProperty("subsumesGrantees").EnumerateArray()
+            .Select(g => $"{g.GetProperty("kind").GetString()}:{g.GetProperty("value").GetString()}")
+            .ShouldBe(["person:alice"]);
+
+        // Granting a distinct identity that subsumes no existing grantee omits the advisory entirely.
+        using Stj.JsonDocument globex = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Acme));
+        globex.RootElement.TryGetProperty("broadeningAdvisory", out _).ShouldBeFalse();
+    }
+
     // Each administrator is now a resolved-identity grant {digest, identity:[{dimension,value}], kind?, label?}; flatten its
     // identity grants to dimension=value strings (each administrator in these tests is a single-grant identity).
     private static IEnumerable<string> Grants(Stj.JsonDocument document)
