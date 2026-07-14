@@ -21,6 +21,27 @@
       "description": "The capability scopes the genesis administrator holds (e.g. 'catalog:read', 'runs:write', 'security:write'). A deployment typically supplies the full control-plane scope set.",
       "uniqueItems": true
     },
+    "genesisAdditionalClauses": {
+      "type": "array",
+      "description": "Extra identity-dimension clauses (design §16.5.4) ANDed with the genesis administrator's primary group clause to form a tag-set selector: the genesis grant then applies only to a caller whose canonical identity also carries every one of these dimensions. Use it to issuer-qualify the genesis grant (dimension 'iss' = the deployment's IdP), so a group of the same name asserted by a different identity provider does not inherit genesis administration. Absent is a single-clause group grant.",
+      "items": {
+        "title": "GenesisAdditionalClause",
+        "type": "object",
+        "required": ["dimension"],
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The operator-facing identity dimension (the internal prefix stripped) the caller must carry."
+          },
+          "value": {
+            "type": "string",
+            "description": "The value the dimension must equal; absent matches any value of the dimension."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
     "labelOrderings": {
       "type": "object",
       "description": "The ordered tag dimensions (§14.2): each property is a dimension name mapping to its labels in ascending order (e.g. classification -> [public, internal, confidential, restricted]). The ordered rule templates rank against these; surfaced read-only at GET /security/orderings.",
