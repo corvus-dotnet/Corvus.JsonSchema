@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability;
@@ -31,10 +30,6 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
     private static readonly TimeSpan RefreshSkew = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan DefaultTokenLifetime = TimeSpan.FromSeconds(60);
 
-    // The membership cache is pruned of expired entries only once it grows past this many distinct users, bounding its size
-    // for a large directory without paying an O(n) sweep on the common (small, warm) path.
-    private const int MembershipCachePruneThreshold = 1024;
-
     private readonly EntraIdDirectoryOptions options;
     private readonly ISecretResolver resolver;
     private readonly DirectoryPrincipalProjector projector;
@@ -42,7 +37,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
     private readonly bool ownsHttpClient;
     private readonly TimeProvider timeProvider;
     private readonly SemaphoreSlim tokenGate = new(1, 1);
-    private readonly ConcurrentDictionary<string, CachedGroups> membershipCache = new(StringComparer.Ordinal);
+    private readonly DirectoryMembershipExpander membershipExpander;
     private volatile CachedToken? cachedToken;
 
     /// <summary>Initializes a new instance of the <see cref="EntraIdPrincipalDirectory"/> class.</summary>
@@ -65,6 +60,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         this.ownsHttpClient = httpClient is null;
         this.httpClient = httpClient ?? new HttpClient();
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.membershipExpander = new DirectoryMembershipExpander(options.MembershipCacheTtl, this.timeProvider);
     }
 
     /// <inheritdoc/>
@@ -103,7 +99,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
             IReadOnlyList<ResolvedPrincipal> people = this.projector.SupportsSpanProjection
                 ? ProjectResponseSpan(kind, resource, body, top, this.projector, ids)
                 : ProjectResponse(kind, resource, body, top, this.projector, ids);
-            return await this.ExpandMembershipsAsync(people, ids, token, cancellationToken).ConfigureAwait(false);
+            return await this.membershipExpander.ExpandAsync(people, ids, this.projector, (id, ct) => this.FetchGroupNamesAsync(id, token, ct), cancellationToken).ConfigureAwait(false);
         }
 
         return this.projector.SupportsSpanProjection
@@ -361,58 +357,6 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         return results;
     }
 
-    // Expands a page of resolved people to their full membership identity (design §16.5.4): fetch each person's group names
-    // (cached per id, all concurrent under the one token so a page of N costs one round-trip of latency, not N), then fold a
-    // sys:group per group into the identity through the SAME mapper. A person whose id is missing is unexpanded.
-    private async ValueTask<IReadOnlyList<ResolvedPrincipal>> ExpandMembershipsAsync(IReadOnlyList<ResolvedPrincipal> people, List<string> ids, string token, CancellationToken cancellationToken)
-    {
-        if (people.Count == 0)
-        {
-            return people;
-        }
-
-        var fetches = new Task<IReadOnlyList<string>>[people.Count];
-        for (int i = 0; i < people.Count; i++)
-        {
-            fetches[i] = this.GetGroupNamesAsync(ids[i], token, cancellationToken);
-        }
-
-        await Task.WhenAll(fetches).ConfigureAwait(false);
-
-        var expanded = new ResolvedPrincipal[people.Count];
-        for (int i = 0; i < people.Count; i++)
-        {
-            expanded[i] = this.projector.EnrichWithMemberships(people[i], fetches[i].Result, null);
-        }
-
-        return expanded;
-    }
-
-    // A person's group names, served from the per-user TTL cache when warm or fetched once and cached otherwise. Staleness is
-    // safe: the directory identity feeds the picker / read view only, never a live request (see MembershipCacheTtl).
-    private async Task<IReadOnlyList<string>> GetGroupNamesAsync(string id, string token, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrEmpty(id))
-        {
-            return [];
-        }
-
-        if (this.membershipCache.TryGetValue(id, out CachedGroups cached) && this.timeProvider.GetUtcNow() < cached.ExpiresAt)
-        {
-            return cached.Names;
-        }
-
-        IReadOnlyList<string> names = await this.FetchGroupNamesAsync(id, token, cancellationToken).ConfigureAwait(false);
-
-        if (this.options.MembershipCacheTtl > TimeSpan.Zero)
-        {
-            this.membershipCache[id] = new CachedGroups(names, this.timeProvider.GetUtcNow() + this.options.MembershipCacheTtl);
-            this.PruneExpiredMemberships();
-        }
-
-        return names;
-    }
-
     // GET {GraphBaseUrl}/users/{id}/memberOf → { value: [{ @odata.type, displayName }, …] } (groups, directory roles, admin
     // units). Only group entries (@odata.type == #microsoft.graph.group) contribute a sys:group; their identity value is the
     // displayName. Throws on a non-success status so a misconfigured app permission surfaces.
@@ -487,25 +431,6 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         }
 
         return names ?? (IReadOnlyList<string>)[];
-    }
-
-    // Bounds the membership cache: once it exceeds the prune threshold, drop the entries that have already expired (the warm
-    // path never pays this — the check short-circuits on Count). TTL drains the rest.
-    private void PruneExpiredMemberships()
-    {
-        if (this.membershipCache.Count <= MembershipCachePruneThreshold)
-        {
-            return;
-        }
-
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        foreach (KeyValuePair<string, CachedGroups> entry in this.membershipCache)
-        {
-            if (now >= entry.Value.ExpiresAt)
-            {
-                this.membershipCache.TryRemove(entry.Key, out _);
-            }
-        }
     }
 
     private static ResolvedPrincipal? Project(GranteeKind kind, EntraIdResource resource, Dictionary<string, IReadOnlyList<string>> attributes, DirectoryPrincipalProjector projector)
@@ -712,8 +637,4 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
     }
 
     private sealed record CachedToken(string AccessToken, DateTimeOffset ExpiresAt);
-
-    // A user's cached group names + when the entry goes stale. A struct so a cache hit is a value read with no per-entry heap
-    // allocation (the names list is shared, not copied).
-    private readonly record struct CachedGroups(IReadOnlyList<string> Names, DateTimeOffset ExpiresAt);
 }

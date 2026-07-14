@@ -4,7 +4,6 @@
 
 using System.Buffers;
 using System.Buffers.Text;
-using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,10 +33,6 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
     private static readonly TimeSpan RefreshSkew = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan DefaultTokenLifetime = TimeSpan.FromSeconds(60);
 
-    // The membership cache is pruned of expired entries only once it grows past this many distinct users, bounding its size
-    // for a large directory without paying an O(n) sweep on the common (small, warm) path.
-    private const int MembershipCachePruneThreshold = 1024;
-
     private readonly GoogleDirectoryOptions options;
     private readonly ISecretResolver resolver;
     private readonly DirectoryPrincipalProjector projector;
@@ -45,7 +40,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
     private readonly bool ownsHttpClient;
     private readonly TimeProvider timeProvider;
     private readonly SemaphoreSlim tokenGate = new(1, 1);
-    private readonly ConcurrentDictionary<string, CachedGroups> membershipCache = new(StringComparer.Ordinal);
+    private readonly DirectoryMembershipExpander membershipExpander;
     private volatile CachedToken? cachedToken;
 
     /// <summary>Initializes a new instance of the <see cref="GooglePrincipalDirectory"/> class.</summary>
@@ -68,6 +63,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         this.ownsHttpClient = httpClient is null;
         this.httpClient = httpClient ?? new HttpClient();
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.membershipExpander = new DirectoryMembershipExpander(options.MembershipCacheTtl, this.timeProvider);
     }
 
     /// <inheritdoc/>
@@ -100,61 +96,21 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
             : ProjectResponse(kind, resource, body, max, this.projector);
 
         // A person resolves to its FULL membership-expanded identity (design §16.5.4): its grantee value IS its primary
-        // email, a valid groups.list userKey, so fetch each person's groups (cached per user) and fold a sys:group per group
-        // (the group's email) in through the same mapper. Teams / roles ARE the memberships, so they are not expanded.
-        return kind == GranteeKind.Person ? await this.ExpandMembershipsAsync(people, token, cancellationToken).ConfigureAwait(false) : people;
-    }
-
-    // Expands a page of resolved people to their full membership identity: fetch each person's group names by its email
-    // userKey (cached, all concurrent under the one token so a page of N costs one round-trip of latency), then fold a
-    // sys:group per group into the identity through the SAME mapper.
-    private async ValueTask<IReadOnlyList<ResolvedPrincipal>> ExpandMembershipsAsync(IReadOnlyList<ResolvedPrincipal> people, string token, CancellationToken cancellationToken)
-    {
-        if (people.Count == 0)
+        // email, a valid groups.list userKey, so each person's membership key is its own value; the expander fetches its
+        // groups (cached per user) and folds a sys:group per group (the group's email) in through the same mapper. Teams /
+        // roles ARE the memberships, so they are not expanded.
+        if (kind != GranteeKind.Person || people.Count == 0)
         {
             return people;
         }
 
-        var fetches = new Task<IReadOnlyList<string>>[people.Count];
-        for (int i = 0; i < people.Count; i++)
+        var keys = new List<string>(people.Count);
+        foreach (ResolvedPrincipal person in people)
         {
-            fetches[i] = this.GetGroupNamesAsync(people[i].Value, token, cancellationToken);
+            keys.Add(person.Value);
         }
 
-        await Task.WhenAll(fetches).ConfigureAwait(false);
-
-        var expanded = new ResolvedPrincipal[people.Count];
-        for (int i = 0; i < people.Count; i++)
-        {
-            expanded[i] = this.projector.EnrichWithMemberships(people[i], fetches[i].Result, null);
-        }
-
-        return expanded;
-    }
-
-    // A person's group names, served from the per-user TTL cache when warm or fetched once and cached otherwise. Staleness is
-    // safe: the directory identity feeds the picker / read view only, never a live request (see MembershipCacheTtl).
-    private async Task<IReadOnlyList<string>> GetGroupNamesAsync(string userKey, string token, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrEmpty(userKey))
-        {
-            return [];
-        }
-
-        if (this.membershipCache.TryGetValue(userKey, out CachedGroups cached) && this.timeProvider.GetUtcNow() < cached.ExpiresAt)
-        {
-            return cached.Names;
-        }
-
-        IReadOnlyList<string> names = await this.FetchGroupNamesAsync(userKey, token, cancellationToken).ConfigureAwait(false);
-
-        if (this.options.MembershipCacheTtl > TimeSpan.Zero)
-        {
-            this.membershipCache[userKey] = new CachedGroups(names, this.timeProvider.GetUtcNow() + this.options.MembershipCacheTtl);
-            this.PruneExpiredMemberships();
-        }
-
-        return names;
+        return await this.membershipExpander.ExpandAsync(people, keys, this.projector, (userKey, ct) => this.FetchGroupNamesAsync(userKey, token, ct), cancellationToken).ConfigureAwait(false);
     }
 
     // GET {DirectoryBaseUrl}/groups?userKey={email} → { groups: [{ email, name, id }, …] }; the group's identity value is its
@@ -210,25 +166,6 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         }
 
         return names ?? (IReadOnlyList<string>)[];
-    }
-
-    // Bounds the membership cache: once it exceeds the prune threshold, drop the entries that have already expired (the warm
-    // path never pays this — the check short-circuits on Count). TTL drains the rest.
-    private void PruneExpiredMemberships()
-    {
-        if (this.membershipCache.Count <= MembershipCachePruneThreshold)
-        {
-            return;
-        }
-
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        foreach (KeyValuePair<string, CachedGroups> entry in this.membershipCache)
-        {
-            if (now >= entry.Value.ExpiresAt)
-            {
-                this.membershipCache.TryRemove(entry.Key, out _);
-            }
-        }
     }
 
     /// <inheritdoc/>
@@ -643,8 +580,4 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
     }
 
     private sealed record CachedToken(string AccessToken, DateTimeOffset ExpiresAt);
-
-    // A user's cached group names + when the entry goes stale. A struct so a cache hit is a value read with no per-entry heap
-    // allocation (the names list is shared, not copied).
-    private readonly record struct CachedGroups(IReadOnlyList<string> Names, DateTimeOffset ExpiresAt);
 }
