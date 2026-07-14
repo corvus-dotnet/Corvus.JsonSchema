@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -29,10 +28,6 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     private static readonly TimeSpan RefreshSkew = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan DefaultTokenLifetime = TimeSpan.FromSeconds(60);
 
-    // The membership cache is pruned of expired entries only once it grows past this many distinct users, bounding its size
-    // for a large directory without paying an O(n) sweep on the common (small, warm) path.
-    private const int MembershipCachePruneThreshold = 1024;
-
     private readonly KeycloakDirectoryOptions options;
     private readonly ISecretResolver resolver;
     private readonly DirectoryPrincipalProjector projector;
@@ -40,7 +35,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     private readonly bool ownsHttpClient;
     private readonly TimeProvider timeProvider;
     private readonly SemaphoreSlim tokenGate = new(1, 1);
-    private readonly ConcurrentDictionary<string, CachedGroups> membershipCache = new(StringComparer.Ordinal);
+    private readonly DirectoryMembershipExpander membershipExpander;
     private volatile CachedToken? cachedToken;
 
     /// <summary>Initializes a new instance of the <see cref="KeycloakPrincipalDirectory"/> class.</summary>
@@ -63,6 +58,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         this.ownsHttpClient = httpClient is null;
         this.httpClient = httpClient ?? new HttpClient();
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.membershipExpander = new DirectoryMembershipExpander(options.MembershipCacheTtl, this.timeProvider);
     }
 
     /// <inheritdoc/>
@@ -103,7 +99,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
             IReadOnlyList<ResolvedPrincipal> people = this.projector.SupportsSpanProjection
                 ? ProjectResponseSpan(kind, resource, body, max, this.projector, uuids)
                 : ProjectResponse(kind, resource, body, max, this.projector, uuids);
-            return await this.ExpandMembershipsAsync(people, uuids, token, cancellationToken).ConfigureAwait(false);
+            return await this.membershipExpander.ExpandAsync(people, uuids, this.projector, (uuid, ct) => this.FetchGroupNamesAsync(uuid, token, ct), cancellationToken).ConfigureAwait(false);
         }
 
         return this.projector.SupportsSpanProjection
@@ -137,60 +133,6 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         string search = query.Length == 0 ? string.Empty : $"&search={Uri.EscapeDataString(query)}";
         string brief = resource == KeycloakResource.Users ? "&briefRepresentation=false" : string.Empty;
         return new Uri(this.options.BaseUrl, $"/admin/realms/{realm}/{resourcePath}?max={max}{search}{brief}");
-    }
-
-    // Expands a page of resolved people to their full membership identity (design §16.5.4): fetch each person's group names
-    // (cached per uuid, all fetches concurrent under the one shared admin token so a page of N costs one round-trip of
-    // latency, not N), then fold a sys:group per group into the identity through the SAME mapper (pure CPU). A person whose
-    // uuid is missing gets an empty membership set and is returned unexpanded.
-    private async ValueTask<IReadOnlyList<ResolvedPrincipal>> ExpandMembershipsAsync(IReadOnlyList<ResolvedPrincipal> people, List<string> uuids, string token, CancellationToken cancellationToken)
-    {
-        if (people.Count == 0)
-        {
-            return people;
-        }
-
-        var fetches = new Task<IReadOnlyList<string>>[people.Count];
-        for (int i = 0; i < people.Count; i++)
-        {
-            fetches[i] = this.GetGroupNamesAsync(uuids[i], token, cancellationToken);
-        }
-
-        await Task.WhenAll(fetches).ConfigureAwait(false);
-
-        var expanded = new ResolvedPrincipal[people.Count];
-        for (int i = 0; i < people.Count; i++)
-        {
-            expanded[i] = this.projector.EnrichWithMemberships(people[i], fetches[i].Result, null);
-        }
-
-        return expanded;
-    }
-
-    // A person's group names, served from the per-user TTL cache when warm (a volatile dictionary read) or fetched once and
-    // cached otherwise. The directory-resolved identity feeds the picker / read view only — a live request re-authorizes from
-    // the caller's own fresh token — so a short staleness window is safe (see MembershipCacheTtl).
-    private async Task<IReadOnlyList<string>> GetGroupNamesAsync(string uuid, string token, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrEmpty(uuid))
-        {
-            return [];
-        }
-
-        if (this.membershipCache.TryGetValue(uuid, out CachedGroups cached) && this.timeProvider.GetUtcNow() < cached.ExpiresAt)
-        {
-            return cached.Names;
-        }
-
-        IReadOnlyList<string> names = await this.FetchGroupNamesAsync(uuid, token, cancellationToken).ConfigureAwait(false);
-
-        if (this.options.MembershipCacheTtl > TimeSpan.Zero)
-        {
-            this.membershipCache[uuid] = new CachedGroups(names, this.timeProvider.GetUtcNow() + this.options.MembershipCacheTtl);
-            this.PruneExpiredMemberships();
-        }
-
-        return names;
     }
 
     // GET /admin/realms/{realm}/users/{id}/groups (briefRepresentation — only id/name/path). The response byte[] is the one
@@ -249,25 +191,6 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         }
 
         return names ?? (IReadOnlyList<string>)[];
-    }
-
-    // Bounds the membership cache: once it exceeds the prune threshold, drop the entries that have already expired (the warm
-    // path never pays this — the check short-circuits on Count). TTL drains the rest.
-    private void PruneExpiredMemberships()
-    {
-        if (this.membershipCache.Count <= MembershipCachePruneThreshold)
-        {
-            return;
-        }
-
-        DateTimeOffset now = this.timeProvider.GetUtcNow();
-        foreach (KeyValuePair<string, CachedGroups> entry in this.membershipCache)
-        {
-            if (now >= entry.Value.ExpiresAt)
-            {
-                this.membershipCache.TryRemove(entry.Key, out _);
-            }
-        }
     }
 
     // The bytes-to-bytes path (used when the mapper is a span mapper). Keycloak is the most bespoke shape: there is no
@@ -813,8 +736,4 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     }
 
     private sealed record CachedToken(string AccessToken, DateTimeOffset ExpiresAt);
-
-    // A user's cached group names + when the entry goes stale. A struct so a cache hit is a value read with no per-entry heap
-    // allocation (the names list is shared, not copied).
-    private readonly record struct CachedGroups(IReadOnlyList<string> Names, DateTimeOffset ExpiresAt);
 }
