@@ -63,13 +63,13 @@ administration under set-equality. Membership over a rich identity resolves both
 - **S2 — workflow reverse-index membership — DONE** (commit `ff0cccb`). `SecurityIdentityDigest.SubsetDigests`;
   `IWorkflowAdministratorStore.ListAdministeredAsync(IReadOnlyList<string> adminDigests, …)`; one native
   DISTINCT-union query per backend across all 10 stores; membership conformance test. In-memory + Sqlite
-  runtime-verified; 8 container backends build-verified, container conformance pending.
+  runtime-verified; 8 container backends container-conformance-verified (podman, 30/30 AdministratorStore each).
 - **S3 — environment reverse-index membership — DONE** (this slice). The byte-for-byte twin of S2 on the
   environment stack: `SecuredEnvironmentAdministration` reads `SecurityIdentityDigest.SubsetDigests`;
   `IEnvironmentAdministratorStore.ListAdministeredAsync(IReadOnlyList<string> adminDigests, …)`; one native
   DISTINCT-union query per backend across all 10 environment stores; a `subset-of-a-richer-caller` membership
   conformance test; benchmark migrated to the subset-digest query. In-memory + Sqlite runtime-verified
-  (16/16 each); 8 container backends build-verified, container conformance pending. This closes H1.
+  (16/16 each); 8 container backends container-conformance-verified (podman, 30/30 AdministratorStore each). This closes H1.
 - **S4 — mutation-gate membership — DONE** (this slice). The add/remove/transfer authorization for both workflows
   (`SecuredWorkflowCatalog`) and environments (`SecuredEnvironmentAdministration`) now routes through a membership
   predicate `IsAdministeredByMember` (caller's identity CONTAINS a current administrator's identity) instead of
@@ -100,22 +100,27 @@ administration under set-equality. Membership over a rich identity resolves both
     (Sqlite/Postgres/MySql/SqlServer) push the strict-superset predicate to the child `ObservedIdentitySecurityTags`
     table (contains-all-authored-tags count = |X| + total-tags > |X|); Cosmos = `EXISTS`-per-tag over `securityTags`
     + `ARRAY_LENGTH`; Mongo/Redis/AzureStorage/NATS = client-scan (no queryable tag index). Cross-kind conformance
-    test; in-memory + Sqlite 8/8, 8 container backends build-verified (container conformance pending).
+    test; in-memory + Sqlite 8/8, 8 container backends container-conformance-verified (podman, ObservedIdentity 8/8 each).
   - **Surface DONE (S5b-2):** an optional `broadeningAdvisory` (`{ message, subsumesGrantees[] }`) on the
     `AdministratorList` response (OpenAPI + server/CLI regen, S5b-2a); the workflow and environment add-administrator
     handlers (S5b-2b) call the probe, **reach-filter the echoed grantees** via `ControlPlaneAccess.Current().Reach(Read)`
     (the full count goes to the ambient activity for audit), and build the advisory bytes-native only when overlaps
     exist — the add always succeeds. Server test proves a `{sys:tenant=acme}` grant naming the subsumed
     `{sys:tenant=acme, sys:sub=alice}` person and omitting the advisory when nothing is subsumed. This closes H5.
-- **S6 — demo resolver enrichment (H7) — code DONE; live-verify + container conformance pending.** The demo's
+- **S6 — demo resolver enrichment (H7) code DONE + container conformance DONE; only live-verify remains.** The demo's
   runtime `internalTagResolver` now stamps the principal's `sys:sub` alongside its `sys:group`(s) + `sys:iss`, so a
   live Keycloak member carries `{sys:group, sys:sub, sys:iss}` — a STRICT SUPERSET of a seeded group grant
   `{sys:group=arazzo-admins, sys:iss}`. The member therefore administers / reaches / may-use it by membership
   (§16.5.4 — caller contains founder), not set-equality, so the demo's own data now exercises the membership model
   (the reverse indexes from S2/S3, the mutation gates from S4) rather than keeping every identity set-equal. The
-  no-group / unscoped (DevApiKey → System) path is unchanged. Demo builds warning-free. Remaining: a live Aspire /
-  Keycloak / podman relaunch to observe a member administering a group-founded workflow, and container conformance
-  for `FindBroadeningOverlapsAsync` (S5b) + the S2/S3 reverse-index queries across the 8 container backends.
+  no-group / unscoped (DevApiKey → System) path is unchanged. Demo builds warning-free.
+  - **Container conformance DONE (podman):** all 8 container backends pass the membership store conformance against
+    real containers — ObservedIdentity (S5b `FindBroadeningOverlapsAsync`) 8/8 each and AdministratorStore (S2 workflow
+    + S3 environment `SubsetDigests` reverse index) 30/30 each. Cosmos's `EXISTS`+`ARRAY_LENGTH` pushdown and
+    SqlServer's `DISTINCT TOP` — the two I could not exercise locally — both verified. This closes the container debt
+    S2/S3/S5b carried.
+  - **Remaining:** a live Aspire / Keycloak / podman relaunch to observe a member administering a group-founded
+    workflow through membership (the only unverified path left; the code is proven by unit + conformance tests).
 
 ## Current state — every identity-matching surface
 
