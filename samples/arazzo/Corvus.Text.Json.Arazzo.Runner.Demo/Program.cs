@@ -118,8 +118,10 @@ var sourceClients = new Dictionary<string, HttpClient>(StringComparer.Ordinal)
 // wrapping token the provisioner left in the shared handoff file (its stand-in for a runtime host / service principal
 // delivering the workload's identity), UNWRAPS it to obtain the AppRole SecretID (which never travelled in plaintext),
 // then AUTHENTICATES via AppRole — RoleID (plain config) + SecretID — for a dynamically-issued, short-TTL, renewable
-// token scoped to the read-only policy. VaultSharp renews it. See the samples README: in production this identity
-// comes from the runtime host's service principal / platform attestation; the sample simulates that here.
+// token scoped to the read-only policy. A VaultTokenLifecycleService (registered below) keeps that token fresh by
+// re-authenticating via AppRole on a timer: VaultSharp does NOT renew or re-authenticate on its own, so a runner that
+// outlives the role's token_max_ttl would otherwise lose ALL Vault access (every credential read 403s). See the samples
+// README: in production this identity comes from the runtime host's service principal / platform attestation.
 string? vaultAddress = builder.Configuration["VAULT_ADDR"];
 string? vaultRoleId = builder.Configuration["Runner:Vault:RoleId"];
 string? vaultWrapTokenFile = builder.Configuration["Runner:Vault:WrapTokenFile"];
@@ -145,6 +147,9 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
     // Share the AppRole-authenticated client with the startup self-check: the wrapping token was single-use (consumed
     // by the unwrap above), so the self-check cannot re-derive the SecretID — it reuses this client.
     builder.Services.AddSingleton(vaultClient);
+    // Keep the AppRole-issued token alive for the life of the runner (it outlives the role's token_max_ttl). Without
+    // this, every credential read 403s once the initial token expires — VaultSharp neither renews nor re-authenticates.
+    builder.Services.AddHostedService<VaultTokenLifecycleService>();
     ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
     var providerFactory = new SourceCredentialProviderFactory(secretResolver);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
