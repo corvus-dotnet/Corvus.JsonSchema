@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-13T23:32:55.0461226\u002B00:00",
+  "generatedAt": "2026-07-14T06:49:38.2255317\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -903,6 +903,9 @@
     "Models/SecretReference.cs",
     "Models/SecretReference.Mutable.cs",
     "Models/SecretReference.JsonSchema.cs",
+    "Models/SecurityBindingClause.cs",
+    "Models/SecurityBindingClause.Mutable.cs",
+    "Models/SecurityBindingClause.JsonSchema.cs",
     "Models/SecurityBindingList.cs",
     "Models/SecurityBindingList.Mutable.cs",
     "Models/SecurityBindingList.JsonSchema.cs",
@@ -912,9 +915,15 @@
     "Models/SecurityBindingSummary.cs",
     "Models/SecurityBindingSummary.Mutable.cs",
     "Models/SecurityBindingSummary.JsonSchema.cs",
+    "Models/SecurityBindingSummary.SecurityBindingClauseArray.cs",
+    "Models/SecurityBindingSummary.SecurityBindingClauseArray.Mutable.cs",
+    "Models/SecurityBindingSummary.SecurityBindingClauseArray.JsonSchema.cs",
     "Models/SecurityBindingWrite.cs",
     "Models/SecurityBindingWrite.Mutable.cs",
     "Models/SecurityBindingWrite.JsonSchema.cs",
+    "Models/SecurityBindingWrite.SecurityBindingClauseArray.cs",
+    "Models/SecurityBindingWrite.SecurityBindingClauseArray.Mutable.cs",
+    "Models/SecurityBindingWrite.SecurityBindingClauseArray.JsonSchema.cs",
     "Models/SecurityBindingWrite.ResolutionOrderAscending.cs",
     "Models/SecurityBindingWrite.ResolutionOrderAscending.Mutable.cs",
     "Models/SecurityBindingWrite.ResolutionOrderAscending.JsonSchema.cs",
@@ -1334,9 +1343,9 @@
     "Models/GetWorkspaceWorkflowsByIdSourcesByNameOk.AllOf1Entity.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bd6ffbd1b858f28852db0588c51ffb7dd9cc65b36",
+  "generatorVersion": "1.0.0\u002B8a23978fbecf0cd5e711aa1812339a718e916890",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "ec8fc477b744a56da048939463623e1a9c692fd08e8e48438bded10765e8cf65",
+  "specFileHash": "d4f39ddb348320851c4255a3482847a0513dc98fb5b199b0c047aeb0cae5e368",
   "specVersion": "3.2"
 }

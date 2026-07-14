@@ -159,6 +159,27 @@ public readonly partial struct SecurityBindingSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>additionalClauses</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector: the binding applies only to a caller whose canonical identity contains every clause. Absent or empty for a legacy single-clause binding.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.SecurityBindingClauseArray AdditionalClauses
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdditionalClausesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingSummary.SecurityBindingClauseArray value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>claimType</c> property.
     /// </summary>
     /// <remarks>
@@ -864,6 +885,11 @@ public readonly partial struct SecurityBindingSummary
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="AdditionalClauses"/>.
+        /// </summary>
+        public const string AdditionalClauses = "additionalClauses";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="ClaimType"/>.
         /// </summary>
         public const string ClaimType = "claimType";
@@ -927,6 +953,11 @@ public readonly partial struct SecurityBindingSummary
         /// Gets the JSON property name for <see cref="Write"/>.
         /// </summary>
         public const string Write = "write";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="AdditionalClauses"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AdditionalClausesUtf8 => "additionalClauses"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="ClaimType"/>.
@@ -1000,6 +1031,11 @@ public readonly partial struct SecurityBindingSummary
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="AdditionalClauses"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AdditionalClauses => "additionalClauses"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="ClaimType"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ClaimType => "claimType"u8;
@@ -1071,6 +1107,11 @@ public readonly partial struct SecurityBindingSummary
     /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="AdditionalClauses"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AdditionalClauses => [0x35, 0x01, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x69, 0x74, 0x69, 0x6F, 0x6E, 0x61, 0x6C, 0x43, 0x6C, 0x61, 0x75, 0x73, 0x65, 0x73, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="ClaimType"/>.
         /// </summary>

@@ -134,6 +134,7 @@ public readonly partial struct SecurityBindingDocument
     /// <param name="scopes">The capability scopes granted (design §14.1); <see langword="null"/>/empty is reach-only.</param>
     /// <param name="expiresAt">When the grant expires (design §16.5.2); <see langword="null"/> is a standing grant.</param>
     /// <param name="eligibleOnly">When <see langword="true"/>, an eligibility assignment (design §16.5.3/§16.5.4), not an active grant.</param>
+    /// <param name="additionalClauses">Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector (design §16.5.4); <see langword="null"/>/empty is a legacy single-clause binding.</param>
     /// <returns>A pooled, disposable draft document the caller must dispose once the store has read it.</returns>
     public static ParsedJsonDocument<SecurityBindingDocument> Draft(
         string claimType,
@@ -145,10 +146,11 @@ public readonly partial struct SecurityBindingDocument
         string? description = null,
         IReadOnlyList<string>? scopes = null,
         DateTimeOffset? expiresAt = null,
-        bool eligibleOnly = false)
+        bool eligibleOnly = false,
+        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses = null)
     {
         ArgumentNullException.ThrowIfNull(claimType);
-        var state = new DraftState(claimType, claimValue, read, write, purge, order, description, scopes, expiresAt, eligibleOnly);
+        var state = new DraftState(claimType, claimValue, read, write, purge, order, description, scopes, expiresAt, eligibleOnly, additionalClauses);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument, DraftState>(
             in state,
             static (Utf8JsonWriter writer, in DraftState c) =>
@@ -158,6 +160,24 @@ public readonly partial struct SecurityBindingDocument
                 if (c.ClaimValue is { } claimValue)
                 {
                     writer.WriteString("claimValue"u8, claimValue);
+                }
+
+                if (c.AdditionalClauses is { Count: > 0 } additionalClauses)
+                {
+                    writer.WriteStartArray("additionalClauses"u8);
+                    foreach ((string dimension, string? value) in additionalClauses)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("dimension"u8, dimension);
+                        if (value is { } clauseValue)
+                        {
+                            writer.WriteString("value"u8, clauseValue);
+                        }
+
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
                 }
 
                 writer.WritePropertyName("read"u8);
@@ -223,6 +243,7 @@ public readonly partial struct SecurityBindingDocument
             description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
             expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
             eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
+            additionalClauses: draft.AdditionalClauses.IsNotUndefined() ? (AdditionalClauseArray.Source)draft.AdditionalClauses : default,
             scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
     }
 
@@ -287,6 +308,15 @@ public readonly partial struct SecurityBindingDocument
             builder.RootElement.RemoveScopes();
         }
 
+        if (draft.AdditionalClauses.IsNotUndefined())
+        {
+            builder.RootElement.SetAdditionalClauses(draft.AdditionalClauses);
+        }
+        else
+        {
+            builder.RootElement.RemoveAdditionalClauses();
+        }
+
         return builder;
     }
 
@@ -302,7 +332,8 @@ public readonly partial struct SecurityBindingDocument
         string? description,
         IReadOnlyList<string>? scopes,
         DateTimeOffset? expiresAt,
-        bool eligibleOnly)
+        bool eligibleOnly,
+        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses)
     {
         public string ClaimType { get; } = claimType;
 
@@ -323,6 +354,8 @@ public readonly partial struct SecurityBindingDocument
         public DateTimeOffset? ExpiresAt { get; } = expiresAt;
 
         public bool EligibleOnly { get; } = eligibleOnly;
+
+        public IReadOnlyList<(string Dimension, string? Value)>? AdditionalClauses { get; } = additionalClauses;
     }
 
     /// <summary>

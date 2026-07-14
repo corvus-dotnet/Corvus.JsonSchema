@@ -121,7 +121,7 @@ administration under set-equality. Membership over a rich identity resolves both
     S2/S3/S5b carried.
   - **Remaining:** a live Aspire / Keycloak / podman relaunch to observe a member administering a group-founded
     workflow through membership (the only unverified path left; the code is proven by unit + conformance tests).
-- **S7 — reach binding tag-set selector (H3) — RATIFIED, not started.** Make a reach binding's selector a tag
+- **S7 — reach binding tag-set selector (H3) — S7a–S7c + core tests DONE; S7d (CLI/UI/seed) remaining.** Make a reach binding's selector a tag
   **set** matched by **subset** against the caller's canonical identity, exactly like administration — so per-person
   reach can pin `{sub, iss}` and stop being cross-issuer. **Recommended shape: additive, not a big-bang rewrite.**
   Keep `claimType` + optional `claimValue` as the primary (required) clause and add an optional
@@ -137,6 +137,31 @@ administration under set-equality. Membership over a rich identity resolves both
   round-trip verification (+ conformance if any store shape changed); **S7d** CLI + UI authoring + seed; **S7e** tests.
   S7 should land before per-person reach grants are offered in the UI (S6's `sys:sub` enrichment makes them
   satisfiable). It is a full slice on the scale of S5b and is best executed as its own focused effort.
+  - **S7a DONE** (schema + regen): added an optional `additionalClauses[]` (`{dimension, value?}`) to the durable
+    `SecurityBindingDocument.json` (source-gen) and the wire `SecurityBindingWrite`/`SecurityBindingSummary` (+ a shared
+    `SecurityBindingClause` component) in the OpenAPI document; regenerated the server + CLI `Generated/`. Each clause
+    field mirrors the administration identity tag (`{dimension, value}`), which H3 said reach should become. Additive:
+    every existing single-clause binding, the seed, and the ~75 migrated tests keep working.
+  - **S7b DONE** (match sites + subject-match): all three reach-match sites now match the selector as a conjunction —
+    a binding applies iff the identity CONTAINS the primary clause AND every additional clause. `PersistentRowSecurityPolicy`
+    (runtime reach + granted scopes; `BindingClauses` carries a pre-resolved `IdentityClause[]`, materialised once per
+    generation), `ArazzoControlPlaneSecurityHandler.BindingAppliesToGrantee` (the access-grants overview, bytes-native),
+    and `CallerMatches` (the self-elevation guard — now fires only when the caller is in the full grant set). The binding
+    summary projection echoes `additionalClauses` back. The access-request eligibility subject-match
+    (`AccessRequestApprovalService.IsStoredEligibleAsync`) is a **fail-safe**: a tag-set eligibility binding does NOT
+    match the single-clause access-request subject (it pins a richer identity the subject cannot demonstrate), so no
+    cross-issuer over-grant leaks through that path.
+  - **S7c DONE** (store round-trip — verify, not fan out): the binding is stored as a verbatim whole-document blob, so
+    the 10 backends need no column change. The real work was threading `additionalClauses` through the durable document's
+    field-by-field completion path (`Draft`/`DraftState`/`BuildNew`/`ApplyUpdate`) — every backend's `SerializeNewBinding`
+    routes through `BuildNew`, so this covers all 10. Proven by a new shared conformance test
+    (`A_tag_set_binding_round_trips_its_additional_clauses`) green in-memory + Sqlite (the other 8 inherit it).
+  - **S7 tests DONE (core):** a `PersistentRowSecurityPolicy` test proves a `{sub=alice}` + `{iss=keycloak}` binding
+    matches a keycloak alice and NOT an ldap alice (also an end-to-end store round-trip — a dropped clause would let the
+    ldap alice through). Server 245/245, in-memory + Sqlite conformance 13/13 each, no regression.
+  - **S7d REMAINING:** CLI `SecurityCommands` clause authoring, the web binding editor (`grants-panel.js`), and a
+    demonstrating seed binding — the operator-facing authoring surface. Then optional handler-level HTTP tests for the
+    overview / self-elevation multi-clause paths.
 
 ## Current state — every identity-matching surface
 
@@ -147,7 +172,7 @@ the entry whose identity is exactly X").
 
 | # | Surface | Predicate | Role | Consistent? |
 |---|---------|-----------|------|-------------|
-| 1 | Reach binding selection (`PersistentRowSecurityPolicy.Matches`) | per-tag over the stamped `sys:` identity | authz | membership ✓ |
+| 1 | Reach binding selection (`PersistentRowSecurityPolicy.Matches`) | tag-set (primary + additional clauses) subset over the stamped `sys:` identity | authz | membership ✓ (S7) |
 | 2 | Reach rule evaluation (`ResolveReach`/`CollectClaims`) | rule over **raw claims** + ambient (ambient authoritative) | authz | see review |
 | 3 | Workflow admin — forward (`WorkflowAdministrators.IsAdministeredBy`) | subset | authz | membership ✓ |
 | 4 | Workflow admin — reverse index (`ListAdministeredAsync`) | subset-digest union | authz-support | membership ✓ |
@@ -159,7 +184,7 @@ the entry whose identity is exactly X").
 | 10 | Self-elevation guard (`CallerMatches`) | per-tag over the stamped identity | authz | membership ✓ |
 | 11 | Identity collision probe (`FindIdentityConflictAsync`) | exact digest | uniqueness | by design; see review |
 | 12 | Access-grants overview (`BindingAppliesToGrantee`/administers/usage) | per-tag / subset-digest / per-tag | reporting | agrees with 1/4/9; see review |
-| 13 | Reach binding grain (`SecurityBindingDocument`) | single `claimType` + optional `claimValue` | shape | **cannot pin a multi-tag identity** |
+| 13 | Reach binding grain (`SecurityBindingDocument`) | primary `claimType`/`claimValue` clause + optional `additionalClauses[]` (tag-set) | shape | can pin a multi-tag identity ✓ (S7) |
 
 ## Antagonistic review — holes, asymmetries, open issues
 
@@ -186,8 +211,8 @@ version-1 fallback (`CheckAdministrationAsync`), which was still set-equality wh
 already membership. The exact-digest paths (digest removal, `Dedupe`, add-idempotency, the collision probe) stay
 set-equality — those are identity operations, correctly exact.
 
-**H3 — Reach bindings cannot pin a multi-tag identity (structural, medium).** A `SecurityBindingDocument` is
-one `claimType` + optional `claimValue`, so a per-person reach grant can only key on a single dimension
+**H3 — Reach bindings cannot pin a multi-tag identity (structural, medium) — RESOLVED (core) by S7.** A `SecurityBindingDocument` was
+one `claimType` + optional `claimValue`, so a per-person reach grant could only key on a single dimension
 (`sub=alice`), matching **any** identity carrying `sys:sub=alice` regardless of `sys:iss`/tenant. Reach is
 structurally coarser than administration (which stores the whole resolved `sys:` tag set and matches by
 subset), so a `sub`-keyed reach grant is a cross-issuer / cross-tenant collision unless the deployment

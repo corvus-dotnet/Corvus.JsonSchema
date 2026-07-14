@@ -17,6 +17,11 @@
       "type": "string",
       "description": "The required claim value; absent matches any value of claimType."
     },
+    "additionalClauses": {
+      "type": "array",
+      "description": "Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector (design §16.5.4): the binding applies only to a caller whose canonical sys: identity CONTAINS every clause (the primary AND each of these), matched by subset exactly as administration matches its identity. This lets a per-person reach grant pin {sub, iss} and match one issuer's principal rather than any principal carrying that sub. Absent or empty is the legacy single-clause binding.",
+      "items": { "$ref": "#/$defs/AdditionalClause" }
+    },
     "read": { "$ref": "#/$defs/VerbGrantInfo" },
     "write": { "$ref": "#/$defs/VerbGrantInfo" },
     "purge": { "$ref": "#/$defs/VerbGrantInfo" },
@@ -68,6 +73,23 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "AdditionalClause": {
+      "title": "AdditionalClause",
+      "type": "object",
+      "description": "One identity-dimension clause of a binding's tag-set selector: the caller's canonical identity must carry this dimension (and value, when pinned) for the binding to apply.",
+      "required": ["dimension"],
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "description": "The operator-facing identity dimension (the sys: prefix stripped) the caller's identity must carry."
+        },
+        "value": {
+          "type": "string",
+          "description": "The value the dimension must equal; absent matches any value of the dimension."
+        }
+      },
+      "additionalProperties": false
+    },
     "VerbGrantInfo": {
       "title": "VerbGrantInfo",
       "type": "object",
