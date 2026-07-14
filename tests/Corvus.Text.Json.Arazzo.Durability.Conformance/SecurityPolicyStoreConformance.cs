@@ -321,6 +321,39 @@ public abstract class SecurityPolicyStoreConformance
     }
 
     [TestMethod]
+    public async Task A_tag_set_binding_round_trips_its_additional_clauses()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+
+        // A per-person reach grant pinning a multi-dimension identity: {sub=alice} AND {iss=keycloak} AND {tenant=acme}
+        // (§16.5.4). The binding is stored verbatim, so the additional clauses must survive add -> get intact and in order.
+        string id;
+        using (ParsedJsonDocument<SecurityBindingDocument> draft = await AddBindingDraftAsync(
+            store,
+            SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None, additionalClauses: [("iss", "keycloak"), ("tenant", "acme")]),
+            "alice",
+            default))
+        {
+            id = draft.RootElement.IdValue;
+        }
+
+        using ParsedJsonDocument<SecurityBindingDocument>? fetched = await store.GetBindingAsync(id, default);
+        fetched.ShouldNotBeNull();
+        fetched!.RootElement.ClaimValueOrNull.ShouldBe("alice");
+
+        var dimensions = new List<string>();
+        var values = new List<string?>();
+        foreach (SecurityBindingDocument.AdditionalClause clause in fetched.RootElement.AdditionalClauses.EnumerateArray())
+        {
+            dimensions.Add((string)clause.DimensionValue);
+            values.Add(clause.Value.IsNotUndefined() ? (string)clause.Value : null);
+        }
+
+        dimensions.ShouldBe(["iss", "tenant"]);
+        values.ShouldBe(["keycloak", "acme"]);
+    }
+
+    [TestMethod]
     public async Task Listing_bindings_keyset_pages_in_order_id_without_gaps_or_duplicates()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();

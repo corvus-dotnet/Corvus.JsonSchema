@@ -266,6 +266,27 @@ public readonly partial struct SecurityBindingWrite
         }
 
         /// <summary>
+        /// Gets the (optional) <c>additionalClauses</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector: the binding applies only to a caller whose canonical identity contains every clause (the primary and each of these), so a per-person reach grant can pin {sub, iss} and match one issuer&#39;s principal rather than any. Omit or empty for a legacy single-clause binding.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Mutable AdditionalClauses
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdditionalClausesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>claimType</c> property.
         /// </summary>
         /// <remarks>
@@ -447,6 +468,87 @@ public readonly partial struct SecurityBindingWrite
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Set the <c>additionalClauses</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetAdditionalClauses(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AdditionalClausesUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdditionalClausesUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalClauses, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>additionalClauses</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetAdditionalClauses<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AdditionalClausesUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdditionalClausesUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalClauses, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>additionalClauses</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveAdditionalClauses()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AdditionalClausesUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -1189,12 +1291,13 @@ public readonly partial struct SecurityBindingWrite
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source _createArg5;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source _createArg6;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source _createArg8;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1209,7 +1312,7 @@ public readonly partial struct SecurityBindingWrite
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg7)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg8)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1218,6 +1321,7 @@ public readonly partial struct SecurityBindingWrite
             _createArg5 = arg5;
             _createArg6 = arg6;
             _createArg7 = arg7;
+            _createArg8 = arg8;
             _kind = Kind.Create;
         }
 
@@ -1238,7 +1342,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1263,7 +1367,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1288,7 +1392,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1313,7 +1417,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1338,7 +1442,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1367,12 +1471,13 @@ public readonly partial struct SecurityBindingWrite
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source _createArg5;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> _createArg6;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> _createArg8;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1385,7 +1490,7 @@ public readonly partial struct SecurityBindingWrite
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg7)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg8)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1395,6 +1500,7 @@ public readonly partial struct SecurityBindingWrite
             _createArg5 = arg5;
             _createArg6 = arg6;
             _createArg7 = arg7;
+            _createArg8 = arg8;
             _kind = Kind.Create;
         }
 
@@ -1413,7 +1519,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1438,7 +1544,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1463,7 +1569,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1488,7 +1594,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1513,7 +1619,7 @@ public readonly partial struct SecurityBindingWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1548,6 +1654,7 @@ public readonly partial struct SecurityBindingWrite
         internal static void Create(
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source additionalClauses = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default,
@@ -1556,6 +1663,7 @@ public readonly partial struct SecurityBindingWrite
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source write = default)
         {
             claimType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClaimType, ref builder);
+            additionalClauses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalClauses, ref builder);
             claimValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClaimValue, ref builder);
             description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
             order.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Order, ref builder);
@@ -1569,6 +1677,7 @@ public readonly partial struct SecurityBindingWrite
         /// </summary>
         public void Create(
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source additionalClauses = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default,
@@ -1576,7 +1685,7 @@ public readonly partial struct SecurityBindingWrite
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source read = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source write = default)
         {
-            Create(ref _builder, claimType, claimValue, description, order, purge, read, write);
+            Create(ref _builder, claimType, additionalClauses, claimValue, description, order, purge, read, write);
         }
 
         /// <summary>
@@ -1586,6 +1695,7 @@ public readonly partial struct SecurityBindingWrite
             in TContext context,
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> additionalClauses = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default,
@@ -1597,6 +1707,7 @@ public readonly partial struct SecurityBindingWrite
         #endif
         {
             claimType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClaimType, ref builder);
+            additionalClauses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalClauses, ref builder);
             claimValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClaimValue, ref builder);
             description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
             order.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Order, ref builder);
@@ -1611,6 +1722,7 @@ public readonly partial struct SecurityBindingWrite
         public void Create<TContext>(
             in TContext context,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> additionalClauses = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default,
@@ -1621,7 +1733,7 @@ public readonly partial struct SecurityBindingWrite
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, claimType, claimValue, description, order, purge, read, write);
+            Create(context, ref _builder, claimType, additionalClauses, claimValue, description, order, purge, read, write);
         }
 
         /// <summary>
@@ -1726,11 +1838,12 @@ public readonly partial struct SecurityBindingWrite
         /// <param name="arg5">The value of the property.</param>
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source arg8, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
 
@@ -1746,14 +1859,15 @@ public readonly partial struct SecurityBindingWrite
         /// <param name="arg5">The value of the property.</param>
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
     }
@@ -1791,6 +1905,7 @@ public readonly partial struct SecurityBindingWrite
     /// Build an instance of the value directly from its property values.
     /// </summary>
     /// <param name="claimType">The value of the <c>"claimType"</c> property.</param>
+    /// <param name="additionalClauses">The value of the <c>"additionalClauses"</c> property.</param>
     /// <param name="claimValue">The value of the <c>"claimValue"</c> property.</param>
     /// <param name="description">The value of the <c>"description"</c> property.</param>
     /// <param name="order">The value of the <c>"order"</c> property.</param>
@@ -1798,9 +1913,9 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="read">The value of the <c>"read"</c> property.</param>
     /// <param name="write">The value of the <c>"write"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source purge = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source read = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source write = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source additionalClauses = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source purge = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source read = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source write = default)
     {
-        return new Source(claimType, claimValue, description, order, purge, read, write);
+        return new Source(claimType, additionalClauses, claimValue, description, order, purge, read, write);
     }
 
     /// <summary>
@@ -1809,6 +1924,7 @@ public readonly partial struct SecurityBindingWrite
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="claimType">The value of the <c>"claimType"</c> property.</param>
+    /// <param name="additionalClauses">The value of the <c>"additionalClauses"</c> property.</param>
     /// <param name="claimValue">The value of the <c>"claimValue"</c> property.</param>
     /// <param name="description">The value of the <c>"description"</c> property.</param>
     /// <param name="order">The value of the <c>"order"</c> property.</param>
@@ -1816,12 +1932,12 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="read">The value of the <c>"read"</c> property.</param>
     /// <param name="write">The value of the <c>"write"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> purge = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> read = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> write = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> additionalClauses = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> purge = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> read = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> write = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, claimType, claimValue, description, order, purge, read, write);
+        return new Source<TContext>(context, claimType, additionalClauses, claimValue, description, order, purge, read, write);
     }
 
     /// <summary>
@@ -1918,6 +2034,7 @@ public readonly partial struct SecurityBindingWrite
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="claimType">The value of the property.</param>
+    /// <param name="additionalClauses">The value of the property.</param>
     /// <param name="claimValue">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
     /// <param name="order">The value of the property.</param>
@@ -1926,13 +2043,13 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="write">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source purge = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source read = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source write = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source additionalClauses = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source purge = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source read = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source write = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(claimType, claimValue, description, order, purge, read, write);
+        ovb.Create(claimType, additionalClauses, claimValue, description, order, purge, read, write);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1946,6 +2063,7 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
     /// <param name="claimType">The value of the property.</param>
+    /// <param name="additionalClauses">The value of the property.</param>
     /// <param name="claimValue">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
     /// <param name="order">The value of the property.</param>
@@ -1954,7 +2072,7 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="write">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> purge = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> read = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> write = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimType, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.SecurityBindingClauseArray.Source<TContext> additionalClauses = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source claimValue = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite.ResolutionOrderAscending.Source order = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> purge = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> read = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant.Source<TContext> write = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1963,7 +2081,7 @@ public readonly partial struct SecurityBindingWrite
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, claimType, claimValue, description, order, purge, read, write);
+        ovb.Create(context, claimType, additionalClauses, claimValue, description, order, purge, read, write);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

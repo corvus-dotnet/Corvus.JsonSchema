@@ -69,6 +69,34 @@ public sealed class PersistentRowSecurityPolicyTests
     }
 
     [TestMethod]
+    public async Task A_tag_set_binding_matches_only_a_caller_whose_identity_contains_every_clause()
+    {
+        var store = new InMemorySecurityPolicyStore();
+
+        // A per-person reach grant that pins BOTH the subject and the issuer: {sub=alice} AND {iss=keycloak} (§16.5.4).
+        // Under the superseded single-clause selector a `sub=alice` grant matched ANY alice regardless of issuer (H3);
+        // the tag-set selector requires the caller's canonical identity to contain every clause.
+        await AddBindingDraftAsync(
+            store,
+            SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None, additionalClauses: [("iss", "keycloak")]),
+            "admin",
+            default);
+
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
+        await policy.RefreshAsync();
+
+        // The keycloak alice carries sys:sub=alice AND sys:iss=keycloak → contains every clause → selected (full read).
+        policy.Resolve(Principal(("sub", "alice"), ("iss", "keycloak"))).Reach(AccessVerb.Read).ShouldBeNull();
+
+        // An ldap alice carries sys:sub=alice but sys:iss=ldap → the {iss=keycloak} clause is absent → NOT selected
+        // (the cross-issuer collision the tag-set selector closes).
+        policy.Resolve(Principal(("sub", "alice"), ("iss", "ldap"))).Admits(AccessVerb.Read, Acme).ShouldBeFalse();
+
+        // An alice with no issuer dimension at all also fails the second clause → NOT selected.
+        policy.Resolve(Principal(("sub", "alice"))).Admits(AccessVerb.Read, Acme).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public async Task A_tenant_binding_scopes_read_and_write_and_denies_ungranted_purge()
     {
         var store = new InMemorySecurityPolicyStore();

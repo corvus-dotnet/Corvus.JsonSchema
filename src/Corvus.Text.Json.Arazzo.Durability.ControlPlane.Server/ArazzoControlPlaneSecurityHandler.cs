@@ -512,7 +512,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return false;
         }
 
-        if (!CallerMatches(access.InternalTags(), access.InternalTagPrefix, draft.ClaimTypeValue, draft.ClaimValueOrNull))
+        if (!CallerMatches(access.InternalTags(), access.InternalTagPrefix, draft))
         {
             return false;
         }
@@ -531,22 +531,46 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private static bool GrantsElevatedReach(SecurityBindingDocument.VerbGrantInfo grant)
         => grant.ValueKind == JsonValueKind.Object && !grant.IsEmptyValue;
 
-    // Whether the caller holds the binding's claim by MEMBERSHIP over the caller's canonical sys: identity (§16.5.4): the
-    // wildcard '*' matches every authenticated caller; a claim-type-only binding matches any value of that dimension;
-    // otherwise the caller's stamped identity must CONTAIN a tag whose operator-facing dimension (the sys: prefix stripped)
-    // equals the claim type and value. Decided on the same identity the runtime reach matcher uses (not raw token claims).
-    private static bool CallerMatches(IReadOnlyList<SecurityTag> identity, string prefix, string claimType, string? claimValue)
+    // Whether the caller holds the binding's full selector by MEMBERSHIP over the caller's canonical sys: identity
+    // (§16.5.4): the caller's stamped identity must CONTAIN every clause — the primary claimType/claimValue clause AND
+    // every additional clause. The wildcard '*' primary matches every authenticated caller; a clause with no value
+    // matches any value of its dimension; otherwise the identity must carry a tag whose operator-facing dimension (the
+    // sys: prefix stripped) equals the clause dimension and value. Decided on the same identity the runtime reach matcher
+    // uses (not raw token claims), so the self-elevation guard fires exactly when the caller is in the set the binding
+    // grants to — a caller who satisfies the primary but not an additional clause is outside the grant and not elevating.
+    private static bool CallerMatches(IReadOnlyList<SecurityTag> identity, string prefix, SecurityBindingDocument draft)
     {
-        if (claimType == "*")
+        // Primary clause: the wildcard matches every authenticated caller; otherwise the identity must contain it.
+        if (!string.Equals(draft.ClaimTypeValue, "*", StringComparison.Ordinal)
+            && !IdentityContains(identity, prefix, draft.ClaimTypeValue, draft.ClaimValueOrNull))
         {
-            return true;
+            return false;
         }
 
+        // Every additional clause must also be contained (the tag-set selector is a conjunction).
+        if (draft.AdditionalClauses.IsNotUndefined())
+        {
+            foreach (SecurityBindingDocument.AdditionalClause clause in draft.AdditionalClauses.EnumerateArray())
+            {
+                if (!IdentityContains(identity, prefix, (string)clause.DimensionValue, clause.Value.IsNotUndefined() ? (string)clause.Value : null))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // Whether the caller's stamped identity contains a tag whose operator-facing dimension (the internal prefix stripped)
+    // equals the clause dimension, and whose value equals the clause value when one is pinned.
+    private static bool IdentityContains(IReadOnlyList<SecurityTag> identity, string prefix, string dimension, string? value)
+    {
         foreach (SecurityTag tag in identity)
         {
-            string dimension = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
-            if (string.Equals(dimension, claimType, StringComparison.Ordinal)
-                && (claimValue is null || string.Equals(tag.Value, claimValue, StringComparison.Ordinal)))
+            string tagDimension = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
+            if (string.Equals(tagDimension, dimension, StringComparison.Ordinal)
+                && (value is null || string.Equals(tag.Value, value, StringComparison.Ordinal)))
             {
                 return true;
             }
@@ -628,6 +652,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             read: Models.VerbGrant.From(binding.Read),
             write: Models.VerbGrant.From(binding.Write),
             claimValue: Models.JsonString.From(binding.ClaimValue),
+            additionalClauses: Models.SecurityBindingSummary.SecurityBindingClauseArray.From(binding.AdditionalClauses),
             description: Models.JsonString.From(binding.Description),
             lastUpdatedAt: Models.JsonDateTime.From(binding.LastUpdatedAt),
             lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy));
@@ -671,46 +696,76 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         public Models.ResolvedGrantee.AdministratorIdentityArray Identity { get; } = identity;
     }
 
-    // Whether a binding grants the grantee reach: the wildcard '*' claim matches every principal; otherwise the
-    // operator-facing claim derived from one of the grantee's sys: identity grants must match the binding's claim type
-    // (and value, when the binding pins one). Compared bytes-native off both documents' UTF-8 — the binding's raw
-    // ClaimType/ClaimValue vs each grantee identity item's sys:-stripped dimension / value read as unescaped spans — so
-    // nothing is materialised into a managed string or grant list.
+    // Whether a binding grants the grantee reach by MEMBERSHIP over the grantee's resolved identity: the binding's
+    // selector is a tag SET (its primary claimType/claimValue clause AND every additional clause), and it applies only
+    // when the grantee's identity CONTAINS every clause. The wildcard '*' primary matches every principal (and, with no
+    // additional clauses, even an identity-less grantee); an additional clause carries no wildcard. Compared bytes-native
+    // off both documents' UTF-8 — each clause's raw dimension/value vs each grantee identity item's sys:-stripped
+    // dimension / value read as unescaped spans — so nothing is materialised into a managed string or grant list.
     private static bool BindingAppliesToGrantee(SecurityBindingDocument binding, Models.ResolvedGrantee grantee, ControlPlaneAccess? access)
     {
-        if (binding.ClaimType.ValueEquals("*"u8))
+        bool wildcardPrimary = binding.ClaimType.ValueEquals("*"u8);
+        bool hasAdditional = binding.AdditionalClauses.IsNotUndefined() && binding.AdditionalClauses.GetArrayLength() > 0;
+
+        // A pure wildcard binding (no additional clauses) matches every principal, even one with no resolved identity.
+        if (wildcardPrimary && !hasAdditional)
         {
             return true;
         }
 
+        // Any non-wildcard clause needs a resolved identity to satisfy.
         if (!grantee.Identity.IsNotUndefined())
         {
             return false;
         }
 
-        bool claimValuePinned = !binding.ClaimValue.IsUndefined();
+        // Primary clause (skipped when wildcard: it already matches every principal).
+        if (!wildcardPrimary && !GranteeSatisfiesClause(binding.ClaimType, binding.ClaimValue, grantee, access))
+        {
+            return false;
+        }
+
+        // Every additional clause must also be satisfied (the tag-set selector is a conjunction).
+        if (hasAdditional)
+        {
+            foreach (SecurityBindingDocument.AdditionalClause clause in binding.AdditionalClauses.EnumerateArray())
+            {
+                if (!GranteeSatisfiesClause(clause.DimensionValue, clause.Value, grantee, access))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // Whether the grantee's resolved identity contains a tag satisfying one selector clause: the operator-facing claim
+    // derived from one of the grantee's sys: identity grants must equal the clause dimension (and value, when the clause
+    // pins one). The grantee identity is the resolved internal form; a clause keys on the operator-facing dimension it
+    // derives from (design §6.5, lossy), so strip the deployment-configured internal prefix before matching (sys:sub ->
+    // sub; a bare team/role dimension is unchanged). Using the configured prefix (via ControlPlaneAccess) keeps this
+    // overview match aligned with runtime enforcement on a deployment whose prefix is not the "sys:" default; with no
+    // access resolver at all, the default prefix is the correct fallback.
+    private static bool GranteeSatisfiesClause(JsonString clauseDimension, JsonString clauseValue, Models.ResolvedGrantee grantee, ControlPlaneAccess? access)
+    {
+        bool valuePinned = !clauseValue.IsUndefined();
         foreach (Models.AdministratorIdentity item in grantee.Identity.EnumerateArray())
         {
             using UnescapedUtf8JsonString dimension = item.DimensionValue.GetUtf8String();
-
-            // The grantee identity is the resolved internal form; a binding keys on the operator-facing claim it derives
-            // from (design §6.5, lossy), so strip the deployment-configured internal prefix before matching (sys:sub ->
-            // sub; a bare team/role dimension is unchanged). Using the configured prefix (via ControlPlaneAccess) keeps
-            // this overview match aligned with runtime enforcement on a deployment whose prefix is not the "sys:" default;
-            // with no access resolver at all, the default prefix is the correct fallback.
             ReadOnlySpan<byte> claim = access is { } a ? a.StripInternalPrefix(dimension.Span) : StripDefaultInternalPrefix(dimension.Span);
-            if (!binding.ClaimType.ValueEquals(claim))
+            if (!clauseDimension.ValueEquals(claim))
             {
                 continue;
             }
 
-            if (!claimValuePinned)
+            if (!valuePinned)
             {
                 return true;
             }
 
             using UnescapedUtf8JsonString value = item.Value.GetUtf8String();
-            if (binding.ClaimValue.ValueEquals(value.Span))
+            if (clauseValue.ValueEquals(value.Span))
             {
                 return true;
             }

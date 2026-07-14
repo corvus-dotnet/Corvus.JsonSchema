@@ -5540,6 +5540,13 @@
             "type": "string",
             "description": "The required claim value; omit to match any value of claimType."
           },
+          "additionalClauses": {
+            "type": "array",
+            "description": "Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector: the binding applies only to a caller whose canonical identity contains every clause (the primary and each of these), so a per-person reach grant can pin {sub, iss} and match one issuer's principal rather than any. Omit or empty for a legacy single-clause binding.",
+            "items": {
+              "$ref": "#/components/schemas/SecurityBindingClause"
+            }
+          },
           "read": {
             "$ref": "#/components/schemas/VerbGrant"
           },
@@ -5563,6 +5570,23 @@
           "claimType"
         ]
       },
+      "SecurityBindingClause": {
+        "type": "object",
+        "description": "One identity-dimension clause of a binding's tag-set selector: the caller's canonical identity must carry this dimension (and value, when pinned).",
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "description": "The operator-facing identity dimension (the sys: prefix stripped) the caller's identity must carry."
+          },
+          "value": {
+            "type": "string",
+            "description": "The value the dimension must equal; omit to match any value of the dimension."
+          }
+        },
+        "required": [
+          "dimension"
+        ]
+      },
       "SecurityBindingSummary": {
         "type": "object",
         "description": "A persisted claim→rule binding.",
@@ -5575,6 +5599,13 @@
           },
           "claimValue": {
             "type": "string"
+          },
+          "additionalClauses": {
+            "type": "array",
+            "description": "Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector: the binding applies only to a caller whose canonical identity contains every clause. Absent or empty for a legacy single-clause binding.",
+            "items": {
+              "$ref": "#/components/schemas/SecurityBindingClause"
+            }
           },
           "read": {
             "$ref": "#/components/schemas/VerbGrant"

@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The content of a claim→rule binding (create or replace).
+/// One identity-dimension clause of a binding&#39;s tag-set selector: the caller&#39;s canonical identity must carry this dimension (and value, when pinned).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct SecurityBindingWrite
+public readonly partial struct SecurityBindingClause
 #if NET8_0_OR_GREATER
-    : IJsonElement<SecurityBindingWrite>,
+    : IJsonElement<SecurityBindingClause>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<SecurityBindingWrite>,
+    : IJsonElement<SecurityBindingClause>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct SecurityBindingWrite
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="SecurityBindingWrite"/> struct.
+    /// Initializes a new instance of the <see cref="SecurityBindingClause"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal SecurityBindingWrite(IJsonDocument parent, int idx)
+    internal SecurityBindingClause(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct SecurityBindingWrite
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static SecurityBindingWrite DefaultInstance { get; }
+    public static SecurityBindingClause DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -159,42 +159,21 @@ public readonly partial struct SecurityBindingWrite
     }
 
     /// <summary>
-    /// Gets the (optional) <c>additionalClauses</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector: the binding applies only to a caller whose canonical identity contains every clause (the primary and each of these), so a per-person reach grant can pin {sub, iss} and match one issuer&#39;s principal rather than any. Omit or empty for a legacy single-clause binding.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.SecurityBindingClauseArray AdditionalClauses
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdditionalClausesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.SecurityBindingClauseArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>claimType</c> property.
+    /// Gets the <c>dimension</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The principal claim type this binding keys on (&#39;*&#39; matches any authenticated principal).
+    /// The operator-facing identity dimension (the sys: prefix stripped) the caller&#39;s identity must carry.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ClaimType
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DimensionValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClaimTypeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DimensionValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -204,118 +183,18 @@ public readonly partial struct SecurityBindingWrite
     }
 
     /// <summary>
-    /// Gets the (optional) <c>claimValue</c> property.
+    /// Gets the (optional) <c>value</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The required claim value; omit to match any value of claimType.
+    /// The value the dimension must equal; omit to match any value of the dimension.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString ClaimValue
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Value
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClaimValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>description</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Description
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>order</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Resolution order (ascending).
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.ResolutionOrderAscending Order
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OrderUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.ResolutionOrderAscending value))
-            {
-                return value;
-            }
-
-            return Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.ResolutionOrderAscending.DefaultInstance;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>purge</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// A per-verb grant in a binding: either unrestricted (full reach — the operator escape) or the conjunction of the named rules. The default (unrestricted false, empty ruleNames) grants nothing for the verb.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant Purge
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PurgeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>read</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// A per-verb grant in a binding: either unrestricted (full reach — the operator escape) or the conjunction of the named rules. The default (unrestricted false, empty ruleNames) grants nothing for the verb.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant Read
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReadUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>write</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// A per-verb grant in a binding: either unrestricted (full reach — the operator escape) or the conjunction of the named rules. The default (unrestricted false, empty ruleNames) grants nothing for the verb.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant Write
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WriteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -358,7 +237,7 @@ public readonly partial struct SecurityBindingWrite
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in SecurityBindingWrite left, in SecurityBindingWrite right)
+    public static bool operator ==(in SecurityBindingClause left, in SecurityBindingClause right)
     {
         return left.Equals(right);
     }
@@ -371,7 +250,7 @@ public readonly partial struct SecurityBindingWrite
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in SecurityBindingWrite left, in SecurityBindingWrite right)
+    public static bool operator !=(in SecurityBindingClause left, in SecurityBindingClause right)
     {
         return !left.Equals(right);
     }
@@ -384,7 +263,7 @@ public readonly partial struct SecurityBindingWrite
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in SecurityBindingWrite left, in JsonElement right)
+    public static bool operator ==(in SecurityBindingClause left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -397,7 +276,7 @@ public readonly partial struct SecurityBindingWrite
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in SecurityBindingWrite left, in JsonElement right)
+    public static bool operator !=(in SecurityBindingClause left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -408,7 +287,7 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(SecurityBindingWrite instance)
+    public static implicit operator JsonElement(SecurityBindingClause instance)
     {
         return JsonElement.From(instance);
     }
@@ -419,9 +298,9 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator SecurityBindingWrite(JsonElement instance)
+    public static implicit operator SecurityBindingClause(JsonElement instance)
     {
-        return SecurityBindingWrite.From(instance);
+        return SecurityBindingClause.From(instance);
     }
 
     /// <summary>
@@ -430,7 +309,7 @@ public readonly partial struct SecurityBindingWrite
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static SecurityBindingWrite From<T>(in T instance)
+    public static SecurityBindingClause From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -455,10 +334,10 @@ public readonly partial struct SecurityBindingWrite
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static SecurityBindingWrite ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static SecurityBindingClause ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<SecurityBindingWrite>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<SecurityBindingClause>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -481,10 +360,10 @@ public readonly partial struct SecurityBindingWrite
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static SecurityBindingWrite ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static SecurityBindingClause ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<SecurityBindingWrite>(json, options);
+        return JsonElementHelpers.ParseValue<SecurityBindingClause>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -507,10 +386,10 @@ public readonly partial struct SecurityBindingWrite
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static SecurityBindingWrite ParseValue(string json, JsonDocumentOptions options = default)
+    public static SecurityBindingClause ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<SecurityBindingWrite>(json, options);
+        return JsonElementHelpers.ParseValue<SecurityBindingClause>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -550,10 +429,10 @@ public readonly partial struct SecurityBindingWrite
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static SecurityBindingWrite ParseValue(ref Utf8JsonReader reader)
+    public static SecurityBindingClause ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<SecurityBindingWrite>(ref reader);
+        return JsonElementHelpers.ParseValue<SecurityBindingClause>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -595,16 +474,16 @@ public readonly partial struct SecurityBindingWrite
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out SecurityBindingWrite? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out SecurityBindingClause? result)
     {
-        return JsonElementHelpers.TryParseValue<SecurityBindingWrite>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<SecurityBindingClause>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new SecurityBindingWrite(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new SecurityBindingClause(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -694,11 +573,11 @@ public readonly partial struct SecurityBindingWrite
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static SecurityBindingWrite IJsonElement<SecurityBindingWrite>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static SecurityBindingClause IJsonElement<SecurityBindingClause>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"SecurityBindingWrite: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"SecurityBindingClause: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -713,11 +592,11 @@ public readonly partial struct SecurityBindingWrite
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="SecurityBindingWrite"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="SecurityBindingClause"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="SecurityBindingWrite"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="SecurityBindingClause"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -726,10 +605,10 @@ public readonly partial struct SecurityBindingWrite
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public SecurityBindingWrite Clone()
+    public SecurityBindingClause Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<SecurityBindingWrite>(_idx);
+        return _parent.CloneElement<SecurityBindingClause>(_idx);
     }
 
     /// <summary>
@@ -737,7 +616,7 @@ public readonly partial struct SecurityBindingWrite
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="SecurityBindingWrite"/> that lives for the lifetime of its
+    /// An immutable <see cref="SecurityBindingClause"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -751,12 +630,12 @@ public readonly partial struct SecurityBindingWrite
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public SecurityBindingWrite Freeze()
+    public SecurityBindingClause Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<SecurityBindingWrite>(_idx);
+            return mutable.FreezeElement<SecurityBindingClause>(_idx);
         }
 
         return this;
@@ -768,84 +647,24 @@ public readonly partial struct SecurityBindingWrite
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="AdditionalClauses"/>.
+        /// Gets the JSON property name for <see cref="DimensionValue"/>.
         /// </summary>
-        public const string AdditionalClauses = "additionalClauses";
+        public const string DimensionValue = "dimension";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ClaimType"/>.
+        /// Gets the JSON property name for <see cref="Value"/>.
         /// </summary>
-        public const string ClaimType = "claimType";
+        public const string Value = "value";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ClaimValue"/>.
+        /// Gets the JSON property name for <see cref="DimensionValue"/>.
         /// </summary>
-        public const string ClaimValue = "claimValue";
+        public static ReadOnlySpan<byte> DimensionValueUtf8 => "dimension"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Description"/>.
+        /// Gets the JSON property name for <see cref="Value"/>.
         /// </summary>
-        public const string Description = "description";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Order"/>.
-        /// </summary>
-        public const string Order = "order";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Purge"/>.
-        /// </summary>
-        public const string Purge = "purge";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Read"/>.
-        /// </summary>
-        public const string Read = "read";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Write"/>.
-        /// </summary>
-        public const string Write = "write";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="AdditionalClauses"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> AdditionalClausesUtf8 => "additionalClauses"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ClaimType"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ClaimTypeUtf8 => "claimType"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="ClaimValue"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ClaimValueUtf8 => "claimValue"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Order"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OrderUtf8 => "order"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Purge"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PurgeUtf8 => "purge"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Read"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ReadUtf8 => "read"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Write"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> WriteUtf8 => "write"u8;
+        public static ReadOnlySpan<byte> ValueUtf8 => "value"u8;
     }
 
     /// <summary>
@@ -854,44 +673,14 @@ public readonly partial struct SecurityBindingWrite
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="AdditionalClauses"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="DimensionValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AdditionalClauses => "additionalClauses"u8;
+        public static ReadOnlySpan<byte> DimensionValue => "dimension"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ClaimType"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Value"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ClaimType => "claimType"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ClaimValue"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ClaimValue => "claimValue"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Description => "description"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Order"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Order => "order"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Purge"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Purge => "purge"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Read"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Read => "read"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Write"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Write => "write"u8;
+        public static ReadOnlySpan<byte> Value => "value"u8;
     }
 
     /// <summary>
@@ -901,43 +690,13 @@ public readonly partial struct SecurityBindingWrite
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="AdditionalClauses"/>.
+        /// Gets the pre-baked property name blob for <see cref="DimensionValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AdditionalClauses => [0x35, 0x01, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x69, 0x74, 0x69, 0x6F, 0x6E, 0x61, 0x6C, 0x43, 0x6C, 0x61, 0x75, 0x73, 0x65, 0x73, 0x22];
+        public static ReadOnlySpan<byte> DimensionValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x6D, 0x65, 0x6E, 0x73, 0x69, 0x6F, 0x6E, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ClaimType"/>.
+        /// Gets the pre-baked property name blob for <see cref="Value"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ClaimType => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x61, 0x69, 0x6D, 0x54, 0x79, 0x70, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ClaimValue"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ClaimValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x61, 0x69, 0x6D, 0x56, 0x61, 0x6C, 0x75, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Description"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Order"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Order => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x72, 0x64, 0x65, 0x72, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Purge"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Purge => [0x75, 0x00, 0x00, 0x00, 0x22, 0x70, 0x75, 0x72, 0x67, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Read"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Read => [0x65, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x64, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Write"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Write => [0x75, 0x00, 0x00, 0x00, 0x22, 0x77, 0x72, 0x69, 0x74, 0x65, 0x22];
+        public static ReadOnlySpan<byte> Value => [0x75, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x22];
     }
 }

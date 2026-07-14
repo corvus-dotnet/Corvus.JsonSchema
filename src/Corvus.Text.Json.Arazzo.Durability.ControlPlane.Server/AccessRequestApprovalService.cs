@@ -486,6 +486,15 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
                 continue;
             }
 
+            // A tag-set eligibility binding (additional clauses beyond the primary) pins a richer identity than the
+            // single-clause access-request subject can demonstrate; it cannot be matched against this subject, so skip it
+            // fail-safe. This never widens self-elevation to a subject that has not shown the extra clauses (the whole
+            // point of the tag-set selector: a {sub, iss}-pinned eligibility must not match a bare-sub request).
+            if (binding.AdditionalClauses.IsNotUndefined() && binding.AdditionalClauses.GetArrayLength() > 0)
+            {
+                continue;
+            }
+
             // A lapsed eligibility window grants nothing — fail-safe, the same shape as an expired active grant.
             if (binding.ExpiresAtValue is { } expiresAt && expiresAt <= now)
             {

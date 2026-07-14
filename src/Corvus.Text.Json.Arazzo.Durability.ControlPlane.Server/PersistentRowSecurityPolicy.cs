@@ -131,6 +131,7 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
                 VerbClauseFor(binding.Write, expressions, demoteUnrestricted),
                 VerbClauseFor(binding.Purge, expressions, demoteUnrestricted),
                 scopes,
+                BuildAdditionalClauses(binding),
                 expiresAt));
         }
 
@@ -272,30 +273,79 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     }
 
     // Whether a binding applies to the caller by MEMBERSHIP over the caller's canonical sys: identity (§16.5.4): the
-    // wildcard '*' matches every authenticated caller; otherwise the caller's stamped identity must CONTAIN a tag whose
-    // operator-facing dimension (the sys: prefix stripped) equals the binding's claim type, and its value when the
-    // binding pins one. Reach is thus decided on the same ambient-stamped identity as administration and ownership, so
-    // the access overview cannot disagree with enforcement — not on raw, un-normalized token claims (a forged claim the
-    // deployment's claim→tag transform would drop cannot switch a binding on).
+    // binding's selector is a tag SET (its primary claimType/claimValue clause AND every additional clause), and it
+    // applies only to a caller whose stamped identity CONTAINS every clause — matched by subset exactly as
+    // administration matches its identity. The wildcard '*' primary matches every authenticated caller; an additional
+    // clause carries no wildcard. Each clause requires a tag whose operator-facing dimension (the sys: prefix stripped)
+    // equals the clause dimension, and its value when the clause pins one. Reach is thus decided on the same
+    // ambient-stamped identity as administration and ownership, so the access overview cannot disagree with enforcement
+    // — not on raw, un-normalized token claims (a forged claim the deployment's claim→tag transform would drop cannot
+    // switch a binding on). A per-person grant can therefore pin {sub, iss} and match one issuer's principal, not any.
     private bool Matches(BindingClauses binding, IReadOnlyList<SecurityTag> identity)
     {
-        if (string.Equals(binding.ClaimType, "*", StringComparison.Ordinal))
+        string prefix = this.InternalTagPrefix;
+
+        // Primary clause: the wildcard matches every authenticated caller; otherwise the identity must contain it.
+        if (!string.Equals(binding.ClaimType, "*", StringComparison.Ordinal)
+            && !IdentityContains(identity, prefix, binding.ClaimType, binding.ClaimValue))
         {
-            return true;
+            return false;
         }
 
-        string prefix = this.InternalTagPrefix;
+        // Every additional clause must also be contained (the tag-set selector is a conjunction; deny if any is absent).
+        foreach (IdentityClause clause in binding.AdditionalClauses)
+        {
+            if (!IdentityContains(identity, prefix, clause.Dimension, clause.Value))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Whether the caller's stamped identity contains a tag whose operator-facing dimension (the internal prefix stripped)
+    // equals the clause dimension, and whose value equals the clause value when one is pinned (a null clause value
+    // matches any value of the dimension).
+    private static bool IdentityContains(IReadOnlyList<SecurityTag> identity, string prefix, string dimension, string? value)
+    {
         foreach (SecurityTag tag in identity)
         {
-            string dimension = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
-            if (string.Equals(dimension, binding.ClaimType, StringComparison.Ordinal)
-                && (binding.ClaimValue is null || string.Equals(tag.Value, binding.ClaimValue, StringComparison.Ordinal)))
+            string tagDimension = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
+            if (string.Equals(tagDimension, dimension, StringComparison.Ordinal)
+                && (value is null || string.Equals(tag.Value, value, StringComparison.Ordinal)))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    // Materialises a binding's additional identity-dimension clauses ONCE per generation into a small value array so the
+    // hot Matches path does no JSON reads. Absent/empty additionalClauses yields the shared empty array (the common
+    // single-clause binding).
+    private static IdentityClause[] BuildAdditionalClauses(SecurityBindingDocument binding)
+    {
+        if (!binding.AdditionalClauses.IsNotUndefined())
+        {
+            return [];
+        }
+
+        int count = binding.AdditionalClauses.GetArrayLength();
+        if (count == 0)
+        {
+            return [];
+        }
+
+        var clauses = new IdentityClause[count];
+        int i = 0;
+        foreach (SecurityBindingDocument.AdditionalClause clause in binding.AdditionalClauses.EnumerateArray())
+        {
+            clauses[i++] = new IdentityClause((string)clause.DimensionValue, clause.Value.IsNotUndefined() ? (string)clause.Value : null);
+        }
+
+        return clauses;
     }
 
     // Pre-resolves a binding's verb grant (at snapshot time) to "((expr1) && (expr2) ...)", or to a null clause if the
@@ -375,9 +425,14 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     // A binding's per-verb grant, pre-resolved at snapshot time: unrestricted (operator) or a (possibly null) clause.
     private readonly record struct VerbClause(bool Unrestricted, string? Clause);
 
-    // A binding pre-resolved at snapshot time: its claim match, the three per-verb clauses, the granted scopes, and the
-    // optional time-bound expiry.
-    private sealed record BindingClauses(string ClaimType, string? ClaimValue, VerbClause Read, VerbClause Write, VerbClause Purge, string[] Scopes, DateTimeOffset? ExpiresAt = null);
+    // A binding pre-resolved at snapshot time: its primary claim clause, any additional identity-dimension clauses
+    // (the tag-set selector's conjunction), the three per-verb clauses, the granted scopes, and the optional time-bound
+    // expiry.
+    private sealed record BindingClauses(string ClaimType, string? ClaimValue, VerbClause Read, VerbClause Write, VerbClause Purge, string[] Scopes, IdentityClause[] AdditionalClauses, DateTimeOffset? ExpiresAt = null);
+
+    // One additional identity-dimension clause of a binding's tag-set selector, pre-resolved at snapshot time: the
+    // caller's identity must contain this dimension (and value, when pinned).
+    private readonly record struct IdentityClause(string Dimension, string? Value);
 
     private sealed record Compiled(long Generation, IReadOnlyList<BindingClauses> Bindings, bool AnyScopeGrants = false, bool AnyExpiringBindings = false)
     {
