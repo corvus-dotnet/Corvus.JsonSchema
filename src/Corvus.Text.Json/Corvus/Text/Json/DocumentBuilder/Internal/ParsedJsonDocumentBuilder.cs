@@ -1618,6 +1618,9 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
     TElement IJsonDocument.CloneElement<TElement>(int index) => throw ConstructionOnly();
 
     /// <inheritdoc />
+    JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace) => throw ConstructionOnly();
+
+    /// <inheritdoc />
     int IJsonDocument.GetDbSize(int index, bool includeEndElement) => throw ConstructionOnly();
 
     /// <inheritdoc />
