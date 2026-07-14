@@ -59,4 +59,13 @@ public sealed class GoogleDirectoryOptions
 
     /// <summary>Gets the OAuth 2.0 scope requested for the token; defaults to the read-only Directory scope.</summary>
     public string Scope { get; init; } = "https://www.googleapis.com/auth/admin.directory.user.readonly https://www.googleapis.com/auth/admin.directory.group.readonly";
+
+    /// <summary>
+    /// Gets how long a resolved person's fetched group memberships are cached before a re-fetch (design §16.5.4) — the
+    /// per-search membership expansion resolves a person to its full <c>sys:group</c> identity, and this caps how often that
+    /// costs a per-user round-trip. A short TTL is safe: the directory-resolved identity feeds the grantee picker and the
+    /// effective-access read view only, never a live request's authorization. Defaults to one minute; <see cref="TimeSpan.Zero"/>
+    /// disables the cache.
+    /// </summary>
+    public TimeSpan MembershipCacheTtl { get; init; } = TimeSpan.FromSeconds(60);
 }

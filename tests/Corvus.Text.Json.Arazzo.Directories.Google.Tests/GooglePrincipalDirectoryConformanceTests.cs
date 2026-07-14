@@ -9,6 +9,7 @@ using Corvus.Text.Json.Arazzo.Directories.Conformance;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Shouldly;
 
 namespace Corvus.Text.Json.Arazzo.Directories.Google.Tests;
 
@@ -77,6 +78,18 @@ public sealed class GooglePrincipalDirectoryConformanceTests : PrincipalDirector
         return new ValueTask<IPrincipalDirectory>(new GooglePrincipalDirectory(options, new FixedSecretResolver(PrivateKeyPem), mapper, httpClient));
     }
 
+    [TestMethod]
+    public async Task Expands_a_person_to_its_group_memberships()
+    {
+        IPrincipalDirectory directory = await this.CreateAsync();
+
+        // alice belongs to the payments group (the mock's groups.list?userKey=alice), so her resolved identity carries the
+        // membership-expanded sys:team=payments — what lets the effective-access lookup surface the grants she inherits.
+        ResolvedPrincipal alice = (await directory.SearchAsync(GranteeKind.Person, "alice", 1, default)).Single();
+
+        alice.Identity.ToList().ShouldContain(new SecurityTag("sys:team", "payments"));
+    }
+
     private static string CreatePrivateKeyPem()
     {
         using var rsa = RSA.Create(2048);
@@ -97,6 +110,13 @@ public sealed class GooglePrincipalDirectoryConformanceTests : PrincipalDirector
 
         private static readonly string[] Groups = ["payments", "billing"];
         private static readonly string[] Roles = ["workflow-admin", "viewer"];
+
+        // Group memberships per userKey (email) for groups.list?userKey=: alice belongs to payments, so a directory-resolved
+        // alice carries sys:team=payments (the membership-expansion proof). Everyone else is ungrouped.
+        private static readonly Dictionary<string, string[]> Memberships = new(StringComparer.Ordinal)
+        {
+            ["alice"] = ["payments"],
+        };
 
         public static HttpResponseMessage Respond(HttpRequestMessage request)
         {
@@ -122,6 +142,15 @@ public sealed class GooglePrincipalDirectoryConformanceTests : PrincipalDirector
 
             if (path.EndsWith("/groups", StringComparison.Ordinal))
             {
+                // A user's group memberships (groups.list?userKey=email) — the membership-expansion fetch, distinguished from
+                // the group search by the userKey query parameter.
+                string? userKey = QueryValue(request.RequestUri.Query, "userKey");
+                if (userKey is not null)
+                {
+                    string[] memberships = Memberships.TryGetValue(userKey, out string[]? m) ? m : [];
+                    return StubHttpMessageHandler.Json($$"""{"groups":[{{Join(memberships.Select(GroupJson))}}]}""");
+                }
+
                 string groups = Join(Groups.Where(g => Matches(field, prefix, "email", g)).Select(GroupJson).Take(max));
                 return StubHttpMessageHandler.Json($$"""{"groups":[{{groups}}]}""");
             }

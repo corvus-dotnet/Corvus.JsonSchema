@@ -7,6 +7,7 @@ using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Directories.Conformance;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Shouldly;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Arazzo.Directories.EntraId.Tests;
@@ -71,6 +72,18 @@ public sealed class EntraIdPrincipalDirectoryConformanceTests : PrincipalDirecto
         return new ValueTask<IPrincipalDirectory>(new EntraIdPrincipalDirectory(options, new FixedSecretResolver("graph-secret"), mapper, httpClient));
     }
 
+    [TestMethod]
+    public async Task Expands_a_person_to_its_group_memberships()
+    {
+        IPrincipalDirectory directory = await this.CreateAsync();
+
+        // alice belongs to the payments group (the mock's /users/id-alice/memberOf), so her resolved identity carries the
+        // membership-expanded sys:team=payments — what lets the effective-access lookup surface the grants she inherits.
+        ResolvedPrincipal alice = (await directory.SearchAsync(GranteeKind.Person, "alice", 1, default)).Single();
+
+        alice.Identity.ToList().ShouldContain(new SecurityTag("sys:team", "payments"));
+    }
+
     // A minimal Microsoft Graph endpoint: mints the client-credentials token, then serves the fixture principals as Graph
     // entities, honouring `$filter=startsWith(<attr>,'x')` and `$top`. Users carry department (= tenant); groups and roles
     // are name-only entities.
@@ -86,6 +99,13 @@ public sealed class EntraIdPrincipalDirectoryConformanceTests : PrincipalDirecto
         private static readonly string[] Groups = ["payments", "billing"];
         private static readonly string[] Roles = ["workflow-admin", "viewer"];
 
+        // Group memberships per user object id (for /users/{id}/memberOf): alice belongs to payments, so a directory-resolved
+        // alice carries sys:team=payments (the membership-expansion proof). Everyone else is ungrouped.
+        private static readonly Dictionary<string, string[]> Memberships = new(StringComparer.Ordinal)
+        {
+            ["id-alice"] = ["payments"],
+        };
+
         public static HttpResponseMessage Respond(HttpRequestMessage request)
         {
             if (request.RequestUri!.AbsolutePath.EndsWith("/oauth2/v2.0/token", StringComparison.Ordinal))
@@ -100,9 +120,19 @@ public sealed class EntraIdPrincipalDirectoryConformanceTests : PrincipalDirecto
             }
 
             Uri uri = request.RequestUri;
-            string resource = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries)[^1];
+            string[] segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            string resource = segments[^1];
             (string? filterAttribute, string? prefix) = ParseFilter(uri.Query);
             int top = ParseTop(uri.Query);
+
+            // A user's group memberships (/users/{id}/memberOf) — the membership-expansion fetch. Entries are typed directory
+            // objects; only #microsoft.graph.group members become sys:group tags.
+            if (resource == "memberOf")
+            {
+                string userId = segments.Length >= 2 ? segments[^2] : string.Empty;
+                string[] memberships = Memberships.TryGetValue(userId, out string[]? m) ? m : [];
+                return StubHttpMessageHandler.Json(CollectionResponse(memberships.Select(GroupMemberJson)));
+            }
 
             IEnumerable<string> entities = resource switch
             {
@@ -161,6 +191,10 @@ public sealed class EntraIdPrincipalDirectoryConformanceTests : PrincipalDirecto
 
         private static string NamedJson(string displayName)
             => $$"""{"id":"id-{{displayName}}","displayName":"{{displayName}}"}""";
+
+        // A memberOf entry typed as a group (the @odata.type the adapter filters on), so it contributes a sys:group.
+        private static string GroupMemberJson(string displayName)
+            => $$"""{"@odata.type":"#microsoft.graph.group","id":"id-{{displayName}}","displayName":"{{displayName}}"}""";
 
         private static string CollectionResponse(IEnumerable<string> entities)
             => $$"""{"@odata.context":"https://graph.example.org/v1.0/$metadata","value":[{{string.Join(",", entities)}}]}""";
