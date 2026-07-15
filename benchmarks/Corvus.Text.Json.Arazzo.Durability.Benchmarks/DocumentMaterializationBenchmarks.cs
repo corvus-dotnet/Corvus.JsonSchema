@@ -105,6 +105,86 @@ public class DocumentMaterializationBenchmarks
         => this.environmentTags = SecurityTagSet.FromTags(
             [new("sys:group", "arazzo-admins"), new("sys:iss", "arazzo-keycloak"), new("classification", "internal")]);
 
+    private ParsedJsonDocument<JsonElement>? accessRequestBody;
+
+    [GlobalSetup(Targets = [nameof(AccessRequestElementDraft_WriterEmbed), nameof(AccessRequestElementDraft_CreateEmbed_Rejected)])]
+    public void SetupAccessRequestBody()
+        => this.accessRequestBody = ParsedJsonDocument<JsonElement>.Parse(
+            """{"baseWorkflowId":"onboard-customer","requestedScopes":["runs:write","runs:read"],"reason":"On-call incident response."}"""u8.ToArray());
+
+    /// <summary>Create() adoption row 2.1, the KEPT shape: the production element-overload access-request draft (the
+    /// warm HTTP path) — the body's parsed elements written once through a writer callback and reparsed once.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AccessRequestElementDraft_WriterEmbed()
+    {
+        JsonElement body = this.accessRequestBody!.RootElement;
+        body.TryGetProperty("baseWorkflowId"u8, out JsonElement baseWorkflowId);
+        body.TryGetProperty("requestedScopes"u8, out JsonElement scopes);
+        body.TryGetProperty("reason"u8, out JsonElement reason);
+        var state = (baseWorkflowId, scopes, "sub", "alice", (string?)"Alice (Payments)", reason, (long?)3600);
+        using ParsedJsonDocument<AccessRequest> draft =
+            PersistedJson.ToPooledDocument<AccessRequest, (JsonElement BaseWorkflowId, JsonElement Scopes, string ClaimType, string ClaimValue, string? Label, JsonElement Reason, long? Duration)>(
+                in state,
+                static (Utf8JsonWriter writer, in (JsonElement BaseWorkflowId, JsonElement Scopes, string ClaimType, string ClaimValue, string? Label, JsonElement Reason, long? Duration) c) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("baseWorkflowId"u8);
+                    c.BaseWorkflowId.WriteTo(writer);
+                    writer.WritePropertyName("requestedScopes"u8);
+                    c.Scopes.WriteTo(writer);
+                    writer.WriteString("subjectClaimType"u8, c.ClaimType);
+                    writer.WriteString("subjectClaimValue"u8, c.ClaimValue);
+                    if (c.Label is { } label)
+                    {
+                        writer.WriteString("requesterLabel"u8, label);
+                    }
+
+                    if (c.Reason.ValueKind != JsonValueKind.Undefined)
+                    {
+                        writer.WritePropertyName("reason"u8);
+                        c.Reason.WriteTo(writer);
+                    }
+
+                    if (c.Duration is { } duration)
+                    {
+                        writer.WriteNumber("requestedDurationSeconds"u8, duration);
+                    }
+
+                    writer.WriteEndObject();
+                });
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 2.1, the REJECTED shape (kept measurable): the generated <c>Create()</c> with
+    /// the body's elements embedded as element-kind Sources. Measured 717→845 ns (alloc flat) against the writer embed —
+    /// per-element blits (bytes copy + metadata append per embed) cost more than one linear reparse of a small
+    /// document, so the element-overload drafts KEEP the writer path (and the pack's R2 "strictly better" note is
+    /// measured-wrong for small embeds).</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AccessRequestElementDraft_CreateEmbed_Rejected()
+    {
+        JsonElement body = this.accessRequestBody!.RootElement;
+        body.TryGetProperty("baseWorkflowId"u8, out JsonElement baseWorkflowId);
+        body.TryGetProperty("requestedScopes"u8, out JsonElement scopes);
+        body.TryGetProperty("reason"u8, out JsonElement reason);
+        using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Create(
+            baseWorkflowId: Corvus.Text.Json.Arazzo.Durability.JsonString.From(baseWorkflowId),
+            createdAt: default,
+            createdBy: default,
+            etag: default,
+            id: default,
+            requestedScopes: AccessRequest.JsonStringArray.From(scopes),
+            status: default,
+            subjectClaimType: "sub",
+            subjectClaimValue: "alice",
+            reason: (Corvus.Text.Json.Arazzo.Durability.JsonString.Source)Corvus.Text.Json.Arazzo.Durability.JsonString.From(reason),
+            requesterLabel: (Corvus.Text.Json.Arazzo.Durability.JsonString.Source)"Alice (Payments)",
+            requestedDurationSeconds: (AccessRequest.RequestedDurationSecondsEntity.Source)3600L);
+        return draft.RootElement.ValueKind;
+    }
+
     /// <summary>Create() adoption row 1.2, the KEPT shape: the production string-overload
     /// <see cref="Environments.Environment.Draft(string, string?, string?, SecurityTagSet)"/> — a writer callback whose
     /// raw <see cref="SecurityTagSet"/> splice (<c>WriteRawValue</c>) dominates the document.</summary>
