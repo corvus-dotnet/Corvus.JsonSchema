@@ -77,6 +77,7 @@ class ArazzoDebugTray extends ArazzoElement {
     const k = Math.max(0, Math.min(this.length, index));
     const steps = {};
     const edges = ['seq:#start'];
+    let pausedParent = null;
     for (let i = 0; i < k; i++) {
       const record = trace.steps[i];
       const failedCriteria = (record.successCriteria ?? []).some((c) => !c.satisfied);
@@ -84,6 +85,12 @@ class ArazzoDebugTray extends ArazzoElement {
       // single source for both the node status and the taken action's edge kind (design §10 bug 3);
       // the edge id itself is minted by the shared grammar so it matches the projection exactly.
       const onFailurePath = record.status === 'faulted' || failedCriteria;
+      // An in-progress sub-workflow parent (its child paused or suspended) is not DONE (§3.5): it
+      // stays out of the done map and pulses as the active node when the scrub reaches the end.
+      if (record.status === 'paused' || record.status === 'suspended') {
+        pausedParent = record.stepId;
+        continue;
+      }
       steps[record.stepId] = onFailurePath ? 'done-failure' : 'done-success';
       const kind = onFailurePath ? 'failure' : 'success';
       const action = record.actionTaken;
@@ -96,7 +103,7 @@ class ArazzoDebugTray extends ArazzoElement {
       }
     }
 
-    const active = k < this.length ? trace.steps[k].stepId : null;
+    const active = k < this.length ? trace.steps[k].stepId : pausedParent;
     if (active === null && trace.outcome === 'completed') steps['#end'] = 'done-success';
     return { active, steps, edges };
   }
@@ -185,7 +192,7 @@ class ArazzoDebugTray extends ArazzoElement {
       this._trace = record.subTrace;
       this._cursor = this.length;
       this.render();
-      this.emit('workflow-focus', { workflowId: record.subTrace.workflowId ?? null });
+      this.emit('workflow-focus', { workflowId: record.subTrace.workflowId ?? null, path: this._stack.map((f) => f.label) });
       this.emit('cursor-changed', { index: this._cursor });
     }));
     this.$('.crumb .up')?.addEventListener('click', () => {
@@ -193,7 +200,7 @@ class ArazzoDebugTray extends ArazzoElement {
       this._trace = frame.trace;
       this._cursor = frame.cursor;
       this.render();
-      this.emit('workflow-focus', { workflowId: this._trace.workflowId ?? null });
+      this.emit('workflow-focus', { workflowId: this._trace.workflowId ?? null, path: this._stack.map((f) => f.label) });
       this.emit('cursor-changed', { index: this._cursor });
     });
     this.$('.override')?.addEventListener('click', () => {
@@ -261,9 +268,12 @@ class ArazzoDebugTray extends ArazzoElement {
     const failed = record.status === 'faulted' || (record.successCriteria ?? []).some((c) => !c.satisfied);
     const at = this._cursor === index + 1;
     const action = record.actionTaken ? record.actionTaken.type + (record.actionTaken.target ? `→${record.actionTaken.target}` : '') : '';
+    // An in-progress sub-workflow parent shows its child's state (⏸ paused / ⏱ suspended), never a green ✓ (§3.5).
+    const waiting = record.status === 'paused' || record.status === 'suspended';
+    const glyph = record.status === 'paused' ? '⏸' : record.status === 'suspended' ? '⏱' : failed ? '✗' : '✓';
     return `<button class="step${at ? ' at' : ''}" type="button" data-index="${index}" title="Inspect after this step">
       <span class="n">${index + 1}</span>
-      <span class="${failed ? 'bad' : 'ok'}">${failed ? '✗' : '✓'}</span>
+      <span class="${waiting ? 'muted' : failed ? 'bad' : 'ok'}">${glyph}</span>
       <span class="nm">${escapeHtml(record.stepId)}${record.skipped ? ' <span class="muted" title="stepped over — outputs provided">⏭</span>' : ''}${record.attempt ? ` <span class="muted">↻${record.attempt}</span>` : ''}</span>
       ${record.subTrace ? `<span class="into ghost" data-into="${index}" title="Step into ${escapeHtml(record.subTrace.workflowId ?? 'the sub-workflow')} — its own trace, scrubbable">⤵</span>` : ''}
       <span class="act">${escapeHtml(action)}</span>

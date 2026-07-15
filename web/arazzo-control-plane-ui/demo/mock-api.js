@@ -3474,7 +3474,7 @@ export function createMockControlPlane(options = {}) {
   // request's scripted mocks, evaluating only `$statusCode ==/!= N` conditions (other conditions
   // count as satisfied when the status is 2xx). Approximate by design — good enough to drive the
   // debug UI's overlay, truth tables, and stepping against the mock control plane.
-  function simulateDocument(doc, request, attachments, depth = 0, sharedTriggers) {
+  function simulateDocument(doc, request, attachments, depth = 0, shared = null) {
     const wf = (doc.workflows ?? []).find((w) => !request.workflowId || w.workflowId === request.workflowId)
       ?? (request.workflowId ? null : doc.workflows?.[0]);
     if (request.workflowId && !doc.workflows?.some((w) => w.workflowId === request.workflowId)) {
@@ -3514,12 +3514,20 @@ export function createMockControlPlane(options = {}) {
     // A down step's request never gets a status, so status-based onFailure/retry criteria do NOT apply — faithful to a
     // real connection failure — and the step faults. A RetryFaultedStep resume clears it (the endpoint recovered).
     const downSteps = new Set(request.downSteps ?? []);
-    const maxSteps = Math.min(request.budget?.maxSteps ?? 256, 1024);
     const clockStart = Date.parse('2020-01-01T00:00:00Z');
-    let clockMs = 0;
-    // Scenario triggers (staged or injected mid-session) queue up for the message waits, in order —
-    // one queue for the whole run, shared with inlined sub-workflows.
-    const triggerQueue = sharedTriggers ?? [...(scenario.triggers ?? [])];
+    // Root-owned state shared across inlined sub-workflows (§15-8a parity with the engine): ONE
+    // step budget, ONE virtual clock (child advances land in the root's clockAdvances), ONE
+    // trigger queue, and ONE arrival-counter space keyed by scoped step path.
+    const state = shared ?? {
+      triggers: [...(scenario.triggers ?? [])],
+      budget: { executed: 0 },
+      maxSteps: Math.min(request.budget?.maxSteps ?? 256, 1024),
+      clock: { ms: 0 },
+      clockAdvances: [],
+      arrivals: new Map(),
+      prefix: '',
+    };
+    const triggerQueue = state.triggers;
     let wait;
 
     const evalCriterion = (condition, status) => {
@@ -3530,8 +3538,6 @@ export function createMockControlPlane(options = {}) {
 
     const steps = [];
     const stepOutputs = {};
-    const clockAdvances = [];
-    const arrivals = new Map();
     const retries = new Map();
     let outcome = 'completed';
     let pausedBefore;
@@ -3541,14 +3547,18 @@ export function createMockControlPlane(options = {}) {
 
     while (index >= 0 && index < wf.steps.length) {
       const step = wf.steps[index];
-      const arrival = (arrivals.get(step.stepId) ?? 0) + 1;
-      arrivals.set(step.stepId, arrival);
-      if (breakpoints.has(step.stepId) || (until.beforeStepId === step.stepId && arrival === (until.occurrence ?? 1))) {
+      // Scoped step paths (§3.5): stops match the COMPOSED path, so a bare id addresses root steps
+      // only; arrivals are root-owned and cumulative, keyed by the composed path.
+      const scopedId = state.prefix + step.stepId;
+      const arrival = (state.arrivals.get(scopedId) ?? 0) + 1;
+      state.arrivals.set(scopedId, arrival);
+      if (breakpoints.has(scopedId) || (until.beforeStepId === scopedId && arrival === (until.occurrence ?? 1))) {
         outcome = 'paused';
         pausedBefore = step.stepId;
         break;
       }
-      if (++executed > maxSteps) { outcome = 'budgetExhausted'; break; }
+      executed += 1;
+      if (++state.budget.executed > state.maxSteps) { outcome = 'budgetExhausted'; break; }
 
       const op = bindingOf(step);
 
@@ -3580,15 +3590,44 @@ export function createMockControlPlane(options = {}) {
       // A sub-workflow step (workflowId binding): the target workflow runs INLINE — its nested
       // trace rides the record (`subTrace`) so the debugger can step into it (§3.3).
       if (typeof step.workflowId === 'string' && step.workflowId && !step.operationId && !step.channelPath) {
-        if (depth >= 4) { outcome = 'faulted'; fault = { stepId: step.stepId, attempt: 1, error: 'Sub-workflow nesting exceeds the demo depth limit.' }; break; }
-        const sub = simulateDocument(doc, { workflowId: step.workflowId, scenario }, attachments, depth + 1, triggerQueue);
+        // The engine's cap (IWorkflowRun.MaxSubWorkflowDepth = 8): runaway recursion exhausts
+        // predictably, exactly like the budget. Child scopes get the shared state with their
+        // composed path prefix — and NO overrides (§10 F6: a root override matching a child's
+        // bare stepId must never fire inside the child).
+        if (depth >= 8) { outcome = 'budgetExhausted'; break; }
+        const sub = simulateDocument(
+          doc,
+          { workflowId: step.workflowId, scenario, until: request.until },
+          attachments,
+          depth + 1,
+          { ...state, prefix: `${state.prefix}${step.stepId}/` });
         if (sub instanceof Response) { outcome = 'faulted'; fault = { stepId: step.stepId, attempt: 1, error: `Sub-workflow '${step.workflowId}' is not executable.` }; break; }
         const subRecord = {
-          stepId: step.stepId, status: sub.outcome === 'faulted' ? 'faulted' : 'completed', attempt: retries.get(step.stepId) ?? 0,
+          stepId: step.stepId,
+          // An in-progress parent presents its child's state as its own status (§3.5) — a paused
+          // or suspended child never reads as a green completed.
+          status: sub.outcome === 'faulted' ? 'faulted'
+            : sub.outcome === 'paused' ? 'paused'
+              : sub.outcome === 'suspended' ? 'suspended'
+                : 'completed',
+          attempt: retries.get(step.stepId) ?? 0,
           subTrace: { workflowId: step.workflowId, ...sub },
           ...(sub.outputs !== undefined ? { outputs: sub.outputs } : {}),
         };
         if (sub.outputs !== undefined) stepOutputs[step.stepId] = sub.outputs;
+        if (sub.outcome === 'paused') {
+          // A scoped stop inside the child: the ancestor record carries the partial sub-trace, and
+          // this level's pausedBefore composes the scoped path segment by segment (§3.5).
+          steps.push(subRecord);
+          outcome = 'paused';
+          pausedBefore = `${step.stepId}/${sub.pausedBefore}`;
+          break;
+        }
+        if (sub.outcome === 'budgetExhausted') {
+          steps.push(subRecord);
+          outcome = 'budgetExhausted';
+          break;
+        }
         if (sub.outcome === 'suspended') {
           // The wait bubbles: the parent suspends where the child does.
           steps.push(subRecord);
@@ -3721,8 +3760,8 @@ export function createMockControlPlane(options = {}) {
           }
           retries.set(step.stepId, used + 1);
           if (fired.retryAfter) {
-            clockMs += fired.retryAfter * 1000;
-            clockAdvances.push({ to: new Date(clockStart + clockMs).toISOString(), reason: 'timer due' });
+            state.clock.ms += fired.retryAfter * 1000;
+            state.clockAdvances.push({ to: new Date(clockStart + state.clock.ms).toISOString(), reason: 'timer due' });
           }
           continue; // re-enter the same step
         }
@@ -3759,8 +3798,8 @@ export function createMockControlPlane(options = {}) {
       ...(wait ? { wait } : {}),
       ...(workflowOutputs !== undefined ? { outputs: workflowOutputs } : {}),
       steps,
-      ...(clockAdvances.length ? { clockAdvances } : {}),
-      stepsExecuted: executed > maxSteps ? maxSteps : steps.length,
+      ...(depth === 0 && state.clockAdvances.length ? { clockAdvances: state.clockAdvances } : {}),
+      stepsExecuted: executed > state.maxSteps ? state.maxSteps : steps.length,
     };
   }
 

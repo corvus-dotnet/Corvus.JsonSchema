@@ -574,3 +574,65 @@ test('§18 debug run: the ⚕ Remediate menu resolves working-copy steps and cle
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('§15-8a step-into: the tray descends into a sub-workflow trace, the canvas follows, the breadcrumb returns', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#workflow').selectOption('order-with-compensation');
+
+  // Simulate against the mocks (the dialog's default target).
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await dlg.locator('.ri-run').click();
+
+  // The parent step offers ⤵; descending shows the child's steps, the breadcrumb, and the canvas follows.
+  const tray = page.locator('arazzo-debug-tray');
+  const into = tray.locator('[data-into]').first();
+  await expect(into).toBeVisible();
+  await into.click();
+  await expect(tray.locator('.crumb')).toBeVisible();
+  await expect(tray.getByText('validate-order').first()).toBeVisible();
+  await expect(page.locator('#workflow')).toHaveValue('place-order');
+
+  // Breadcrumb back: the parent trace and the parent canvas return.
+  await tray.locator('.crumb .up').click();
+  await expect(tray.locator('.crumb')).toHaveCount(0);
+  await expect(page.locator('#workflow')).toHaveValue('order-with-compensation');
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('§15-8a scoped stop: run-to-here inside a focused sub-workflow pauses at the scoped position', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#workflow').selectOption('order-with-compensation');
+
+  // Run once so a trace exists, then step INTO the sub-workflow (the canvas focuses place-order).
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await dlg.locator('.ri-run').click();
+  const tray = page.locator('arazzo-debug-tray');
+  await tray.locator('[data-into]').first().click();
+  await expect(page.locator('#workflow')).toHaveValue('place-order');
+
+  // Run-to-here on a node of the FOCUSED child canvas: the designer composes the scoped path
+  // (run-order/authorize-payment — a step BEFORE the child's message wait, so the stop is reachable),
+  // the mock matches it inside the child, and the trace pauses there with the full scoped path on
+  // the outcome chip (§3.5).
+  const node = page.locator('arazzo-design-surface .node[data-id="authorize-payment"]');
+  await node.click(); // settle the selection (the side panel opening shifts layout) before the second tap
+  await node.dblclick();
+  await expect(tray.getByText(/paused before run-order\/authorize-payment/).first()).toBeVisible();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});

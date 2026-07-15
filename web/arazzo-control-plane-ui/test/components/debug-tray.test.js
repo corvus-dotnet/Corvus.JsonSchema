@@ -238,14 +238,61 @@ describe('<arazzo-debug-tray>', () => {
     ok(into, 'a sub-workflow step offers ⤵');
     const focused = nextEvent(el, 'workflow-focus');
     into.click();
-    equal((await focused).detail.workflowId, 'place-order', 'descending focuses the sub-workflow');
+    const descended = await focused;
+    equal(descended.detail.workflowId, 'place-order', 'descending focuses the sub-workflow');
+    equal(JSON.stringify(descended.detail.path), '["run-order"]', 'the focus event carries the descent STEP path (§3.5 breakpoint composition)');
     ok(el.shadowRoot.textContent.includes('get-pet'), 'the nested steps render');
     ok(el.shadowRoot.querySelector('.crumb'), 'the breadcrumb shows where you are');
 
     const refocused = nextEvent(el, 'workflow-focus');
     el.shadowRoot.querySelector('.crumb .up').click();
-    equal((await refocused).detail.workflowId, null, "stepping out restores the run's own workflow");
+    const ascended = await refocused;
+    equal(ascended.detail.workflowId, null, "stepping out restores the run's own workflow");
+    equal(JSON.stringify(ascended.detail.path), '[]', 'the path empties back at the root');
     ok(el.shadowRoot.textContent.includes('run-order'), 'the parent trace is back');
     ok(!el.shadowRoot.querySelector('.crumb'), 'no breadcrumb at the top level');
+  });
+
+  it('an in-progress sub-workflow parent renders paused, never a green tick (§3.5)', () => {
+    make({
+      outcome: 'paused',
+      pausedBefore: 'call-child/get-pet',
+      stepsExecuted: 1,
+      steps: [{
+        stepId: 'call-child',
+        status: 'paused',
+        attempt: 0,
+        subTrace: { workflowId: 'place-order', outcome: 'paused', pausedBefore: 'get-pet', stepsExecuted: 0, steps: [] },
+      }],
+    });
+
+    const row = el.shadowRoot.querySelector('.step');
+    ok(row.textContent.includes('⏸'), 'the paused parent shows the pause glyph');
+    ok(!row.querySelector('.ok'), 'no green tick for an in-progress parent');
+    ok(el.shadowRoot.textContent.includes('call-child/get-pet'), 'the scoped pausedBefore path renders');
+
+    // The canvas frame: the paused parent is the ACTIVE (pulsing) node, not a done one.
+    const frame = el.frameAt(el.length);
+    equal(frame.active, 'call-child', 'the paused parent pulses as active');
+    equal(frame.steps['call-child'], undefined, 'it is not marked done');
+  });
+
+  it('a suspended sub-workflow parent renders the timer glyph and stays active (§3.5)', () => {
+    make({
+      outcome: 'suspended',
+      stepsExecuted: 1,
+      wait: { kind: 'timer', dueAt: '2020-01-01T00:00:05Z' },
+      steps: [{
+        stepId: 'call-child',
+        status: 'suspended',
+        attempt: 0,
+        subTrace: { workflowId: 'place-order', outcome: 'suspended', stepsExecuted: 1, steps: [TRACE.steps[0]] },
+      }],
+    });
+
+    const row = el.shadowRoot.querySelector('.step');
+    ok(row.textContent.includes('⏱'), 'the suspended parent shows the timer glyph');
+    const frame = el.frameAt(el.length);
+    equal(frame.active, 'call-child', 'the suspended parent pulses as active');
   });
 });

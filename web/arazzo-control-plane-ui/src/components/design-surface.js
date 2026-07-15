@@ -53,6 +53,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     /** @private */ this._positions = {};
     /** @private */ this._selection = null;
     /** @private */ this._breakpoints = new Set();
+    /** @private */ this._lastTap = null; // pointer-based double-tap detection (node-activated)
     /** @private */ this._debugState = null;
     /** @private */ this._diffState = null;
     /** @private */ this._view = { tx: 40, ty: 40, k: 1 };
@@ -859,7 +860,7 @@ class ArazzoDesignSurface extends ArazzoElement {
         this._select(null);
       } else if (g.type === 'drag') {
         if (g.moved) this.emit('layout-changed', { overrides: this.layoutOverrides });
-        else this._select({ type: 'node', id: g.id });
+        else { this._select({ type: 'node', id: g.id }); this._tapNode(g.id, e.timeStamp); }
       } else if (g.type === 'bp') {
         const enabled = !this._breakpoints.has(g.id);
         this._breakpoints[enabled ? 'add' : 'delete'](g.id);
@@ -867,6 +868,7 @@ class ArazzoDesignSurface extends ArazzoElement {
         this.emit('breakpoint-toggled', { stepId: g.id, enabled });
       } else if (g.type === 'click') {
         this._select(g.hit.type === 'exit' ? { type: 'edge', id: g.hit.id } : { type: g.hit.type, id: g.hit.id });
+        if (g.hit.type === 'node') this._tapNode(g.hit.id, e.timeStamp);
       } else if (g.type === 'draw') {
         this.$('.rubber').setAttribute('hidden', '');
         for (const el of this.$$('.node.link-target')) el.classList.remove('link-target');
@@ -911,10 +913,9 @@ class ArazzoDesignSurface extends ArazzoElement {
       this.emit('view-changed', { tx: this._view.tx, ty: this._view.ty, k: this._view.k });
     }, { passive: false });
 
-    svg.addEventListener('dblclick', (e) => {
-      const hit = this._hitOf(e);
-      if (hit?.type === 'node') this.emit('node-activated', { stepId: hit.id });
-    });
+    // node-activated is detected from the POINTER gestures, not the native dblclick: selecting a
+    // node re-renders the diagram, which replaces the clicked element before the browser composes
+    // its dblclick — the native event then targets the bare svg and never resolves a node.
 
     svg.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -937,6 +938,17 @@ class ArazzoDesignSurface extends ArazzoElement {
   }
 
   /** @private — classify what a pointer event landed on, using the composed path (never the document). */
+  /** @private Emits node-activated when the same node is tapped twice in quick succession. */
+  _tapNode(id, at) {
+    if (this._lastTap && this._lastTap.id === id && at - this._lastTap.at < 450) {
+      this._lastTap = null;
+      this.emit('node-activated', { stepId: id });
+      return;
+    }
+
+    this._lastTap = { id, at };
+  }
+
   _hitOf(e) {
     for (const el of e.composedPath()) {
       if (!(el instanceof Element)) break;

@@ -1153,9 +1153,13 @@
       );
     });
     const debugBreakpoints = new Set();
+    // §3.5 scoped breakpoints: the designer holds them as SCOPED step paths, composed from the
+    // tray's descent path; the canvas stays path-ignorant (it sees bare ids for its focused level).
+    let debugFocusPath = [];
     surface.addEventListener('breakpoint-toggled', (e) => {
-      if (e.detail.enabled) debugBreakpoints.add(e.detail.stepId);
-      else debugBreakpoints.delete(e.detail.stepId);
+      const scoped = [...debugFocusPath, e.detail.stepId].join('/');
+      if (e.detail.enabled) debugBreakpoints.add(scoped);
+      else debugBreakpoints.delete(scoped);
     });
 
     // §18 R-UI-3: derive a REMOTE debug run's pause from the canvas breakpoints (pause.beforeSteps = step ids), so
@@ -1214,10 +1218,10 @@
       remediateBtn.hidden = !faultedRun;
     }
 
-    async function runSimulation({ until, stepPastEnd = false } = {}) {
+    async function runSimulation({ until, stepPastEnd = false, workflowId } = {}) {
       if (!shell.id) return;
       try {
-        const command = { workflowId: select.value, scenario: buildScenario() };
+        const command = { workflowId: workflowId ?? select.value, scenario: buildScenario() };
         if (Object.keys(sessionOutputOverrides).length) command.overrides = { stepOutputs: structuredClone(sessionOutputOverrides) };
         if (stepPastEnd && tray.trace) {
           command.budget = { maxSteps: (tray.trace.stepsExecuted ?? 0) + 1 };
@@ -1230,7 +1234,7 @@
         if (shell.dirty && !shell.conflicted) await saveWorkingCopy(); // simulate runs the STORED document
         document.getElementById('debug-dock').hidden = false; // the session docks under the editor
         void feedTraySchemas();
-        shell.debugWorkflow = select.value; // stepping out of a sub-workflow restores this
+        shell.debugWorkflow = command.workflowId; // stepping out of a sub-workflow restores this (a scoped rerun keeps the run's root)
         tray.trace = await client.simulateWorkingCopy(shell.id, command);
         applyDebugFrame();
         logEvent('simulated', { outcome: tray.trace.outcome, steps: tray.trace.stepsExecuted });
@@ -1332,6 +1336,7 @@
     tray.addEventListener('cursor-changed', applyDebugFrame);
     tray.addEventListener('workflow-focus', (e) => {
       // Stepping into/out of a sub-workflow's trace: the canvas follows (null = the run's own).
+      debugFocusPath = e.detail.path ?? [];
       const target = e.detail.workflowId ?? shell.debugWorkflow;
       if (target && [...select.options].some((o) => o.value === target) && select.value !== target) {
         select.value = target;
@@ -1339,6 +1344,12 @@
         surface.fit();
       }
 
+      // The focused canvas shows the suffix set at the focus path — bare ids at the root (§3.5).
+      const prefix = debugFocusPath.length ? `${debugFocusPath.join('/')}/` : '';
+      surface.breakpoints = [...debugBreakpoints]
+        .filter((b) => (prefix ? b.startsWith(prefix) : true))
+        .map((b) => b.slice(prefix.length))
+        .filter((b) => !b.includes('/'));
       applyDebugFrame();
     });
     tray.addEventListener('clear-requested', () => {
@@ -1573,7 +1584,17 @@
     });
     stopBtn.addEventListener('click', () => { if (shell.debugRun) { void client.cancelDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); } tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
     surface.addEventListener('node-activated', (e) => {
-      if (e.detail.id && !e.detail.id.startsWith('#')) runSimulation({ until: { beforeStepId: e.detail.id } });
+      // Run-to-here composes the same way breakpoints do: the focus path plus the node (§3.5).
+      // The surface emits {stepId} (the old read of e.detail.id matched nothing, so double-click
+      // run-to-here never fired — a pre-existing defect the scoped-stop smoke test now covers).
+      const stepId = e.detail.stepId;
+      if (!stepId || stepId.startsWith('#')) return;
+      // While focused inside a sub-workflow, the scoped until addresses the RUN'S root workflow —
+      // the focused canvas shows the child, but the replay always starts from the top (§8.2).
+      runSimulation({
+        until: { beforeStepId: [...debugFocusPath, stepId].join('/') },
+        workflowId: debugFocusPath.length ? shell.debugWorkflow : undefined,
+      });
     });
 
     // Expression console: completions from the SELECTED workflow of the OPEN document — never a
