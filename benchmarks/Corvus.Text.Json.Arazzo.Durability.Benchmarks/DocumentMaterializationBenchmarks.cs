@@ -242,6 +242,42 @@ public class DocumentMaterializationBenchmarks
         return draft.RootElement.ValueKind;
     }
 
+    /// <summary>Create() adoption row 1.6 "before": the replaced security-rule draft — a writer callback (an expression
+    /// + an optional description) serialized through <see cref="PersistedJson.ToPooledDocument{T,TContext}"/> and
+    /// reparsed. Preserved inline so the delta stays measured.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind SecurityRuleDraft_SerializeReparse()
+    {
+        var state = ("sys:tenant == $claim.tenant", (string?)"Tenant isolation.");
+        using ParsedJsonDocument<SecurityRuleDocument> draft =
+            PersistedJson.ToPooledDocument<SecurityRuleDocument, (string Expression, string? Description)>(
+                in state,
+                static (Utf8JsonWriter writer, in (string Expression, string? Description) c) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("expression"u8, c.Expression);
+                    if (c.Description is { } description)
+                    {
+                        writer.WriteString("description"u8, description);
+                    }
+
+                    writer.WriteEndObject();
+                });
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 1.6 "after": the production <see cref="SecurityRuleDocument.Draft"/>, now the
+    /// generated <c>Create()</c> — document text and parse metadata written in one pass, no reparse.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind SecurityRuleDraft_Create()
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft =
+            SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
+        return draft.RootElement.ValueKind;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra

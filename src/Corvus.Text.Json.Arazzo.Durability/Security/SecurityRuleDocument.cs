@@ -95,19 +95,17 @@ public readonly partial struct SecurityRuleDocument
     public static ParsedJsonDocument<SecurityRuleDocument> Draft(string expression, string? description = null)
     {
         ArgumentNullException.ThrowIfNull(expression);
-        return PersistedJson.ToPooledDocument<SecurityRuleDocument, (string Expression, string? Description)>(
-            (expression, description),
-            static (Utf8JsonWriter writer, in (string Expression, string? Description) c) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("expression"u8, c.Expression);
-                if (c.Description is { } description)
-                {
-                    writer.WriteString("description"u8, description);
-                }
 
-                writer.WriteEndObject();
-            });
+        // The generated Create() writes the document text and its parse metadata in one pass — no serialize-then-reparse
+        // round trip. The draft carries only the operator content: a default Source is omitted from the document, so the
+        // server-stamped fields (name/createdBy/createdAt/etag) stay absent for BuildNew to add.
+        return Create(
+            createdAt: default,
+            createdBy: default,
+            etag: default,
+            expression: expression,
+            name: default,
+            description: description is { } d ? (JsonString.Source)d : default);
     }
 
     // Realises a new rule into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
