@@ -339,83 +339,7 @@ public static class ScenarioSuite
         writer.WriteStartArray("steps"u8);
         foreach (SimulatedStepRecord step in r.Steps)
         {
-            writer.WriteStartObject();
-            writer.WriteString("stepId"u8, step.StepId);
-            writer.WriteString("status"u8, step.Faulted ? "faulted"u8 : "completed"u8);
-            writer.WriteNumber("attempt"u8, step.Attempt);
-            if (step.Skipped)
-            {
-                // §15 8b: a step-output override skipped the step — the record's outputs are the
-                // PROVIDED value and no exchange exists (the shape the mock emits and the dock renders).
-                writer.WriteBoolean("skipped"u8, true);
-            }
-
-            if (step.Outputs.ValueKind is not JsonValueKind.Undefined)
-            {
-                writer.WritePropertyName("outputs"u8);
-                step.Outputs.WriteTo(writer);
-            }
-
-            if (step.ExchangeCount > 0)
-            {
-                writer.WriteStartArray("requests"u8);
-                for (int i = 0; i < step.ExchangeCount; i++)
-                {
-                    MockApiExchange exchange = r.Exchanges[step.FirstExchange + i];
-                    writer.WriteStartObject();
-                    writer.WriteString("method"u8, exchange.Method.ToString().ToLowerInvariant());
-                    writer.WriteString("path"u8, exchange.Path);
-                    writer.WriteNumber("status"u8, exchange.StatusCode);
-                    if (!exchange.RequestBody.IsEmpty)
-                    {
-                        writer.WritePropertyName("requestBody"u8);
-                        writer.WriteRawValue(exchange.RequestBody.Span, skipInputValidation: false);
-                    }
-
-                    if (!exchange.ResponseBody.IsEmpty)
-                    {
-                        writer.WritePropertyName("responseBody"u8);
-                        writer.WriteRawValue(exchange.ResponseBody.Span, skipInputValidation: false);
-                    }
-
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-            }
-
-            if (step.SuccessCriteria.Count > 0)
-            {
-                writer.WriteStartArray("successCriteria"u8);
-                foreach (SimulatedCriterionVerdict verdict in step.SuccessCriteria)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("condition"u8, verdict.Condition);
-                    writer.WriteBoolean("satisfied"u8, verdict.Satisfied);
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-            }
-
-            if (step.ActionTaken is { } action)
-            {
-                writer.WriteStartObject("actionTaken"u8);
-                writer.WriteString("type"u8, action.Type);
-                if (action.Name is not null)
-                {
-                    writer.WriteString("name"u8, action.Name);
-                }
-
-                if (action.Target is not null)
-                {
-                    writer.WriteString("target"u8, action.Target);
-                }
-
-                writer.WriteEndObject();
-            }
-
-            writer.WriteEndObject();
+            WriteStepRecord(writer, step, r.Exchanges);
         }
 
         writer.WriteEndArray();
@@ -436,6 +360,183 @@ public static class ScenarioSuite
 
         writer.WriteNumber("stepsExecuted"u8, r.StepsExecuted);
         writer.WriteEndObject();
+    }
+
+    // One executed-step record, recursively (§15-8a): a workflowId-bound step carries its
+    // sub-workflow's nested trace, and an in-progress parent (its child paused or suspended)
+    // presents that state as its own status — never a green "completed".
+    private static void WriteStepRecord(Utf8JsonWriter writer, SimulatedStepRecord step, IReadOnlyList<MockApiExchange> exchanges)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("stepId"u8, step.StepId);
+        writer.WriteString("status"u8, StepStatus(step));
+        writer.WriteNumber("attempt"u8, step.Attempt);
+        if (step.Skipped)
+        {
+            // §15 8b: a step-output override skipped the step — the record's outputs are the
+            // PROVIDED value and no exchange exists (the shape the mock emits and the dock renders).
+            writer.WriteBoolean("skipped"u8, true);
+        }
+
+        if (step.Outputs.ValueKind is not JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName("outputs"u8);
+            step.Outputs.WriteTo(writer);
+        }
+
+        if (step.ExchangeCount > 0)
+        {
+            writer.WriteStartArray("requests"u8);
+            for (int i = 0; i < step.ExchangeCount; i++)
+            {
+                MockApiExchange exchange = exchanges[step.FirstExchange + i];
+                writer.WriteStartObject();
+                writer.WriteString("method"u8, exchange.Method.ToString().ToLowerInvariant());
+                writer.WriteString("path"u8, exchange.Path);
+                writer.WriteNumber("status"u8, exchange.StatusCode);
+                if (!exchange.RequestBody.IsEmpty)
+                {
+                    writer.WritePropertyName("requestBody"u8);
+                    writer.WriteRawValue(exchange.RequestBody.Span, skipInputValidation: false);
+                }
+
+                if (!exchange.ResponseBody.IsEmpty)
+                {
+                    writer.WritePropertyName("responseBody"u8);
+                    writer.WriteRawValue(exchange.ResponseBody.Span, skipInputValidation: false);
+                }
+
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
+        if (step.SuccessCriteria.Count > 0)
+        {
+            writer.WriteStartArray("successCriteria"u8);
+            foreach (SimulatedCriterionVerdict verdict in step.SuccessCriteria)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("condition"u8, verdict.Condition);
+                writer.WriteBoolean("satisfied"u8, verdict.Satisfied);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
+        if (step.ActionTaken is { } action)
+        {
+            writer.WriteStartObject("actionTaken"u8);
+            writer.WriteString("type"u8, action.Type);
+            if (action.Name is not null)
+            {
+                writer.WriteString("name"u8, action.Name);
+            }
+
+            if (action.Target is not null)
+            {
+                writer.WriteString("target"u8, action.Target);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        if (step.SubTrace is { } sub)
+        {
+            writer.WritePropertyName("subTrace"u8);
+            WriteSubTrace(writer, sub, exchanges);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    // The nested trace: the kit's pinned contract {workflowId, ...trace} — a sub-trace always
+    // carries its workflowId (the root trace never does; the tray's ascent depends on that).
+    private static void WriteSubTrace(Utf8JsonWriter writer, SimulatedSubTrace sub, IReadOnlyList<MockApiExchange> exchanges)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("workflowId"u8, sub.WorkflowId);
+        writer.WriteString("outcome"u8, sub.Outcome switch
+        {
+            SimulationOutcome.Completed => "completed"u8,
+            SimulationOutcome.Faulted => "faulted"u8,
+            SimulationOutcome.Paused => "paused"u8,
+            SimulationOutcome.Suspended => "suspended"u8,
+            _ => "budgetExhausted"u8,
+        });
+
+        if (sub.PausedBefore is not null)
+        {
+            writer.WriteString("pausedBefore"u8, sub.PausedBefore);
+        }
+
+        if (sub.Outputs.ValueKind is not JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName("outputs"u8);
+            sub.Outputs.WriteTo(writer);
+        }
+
+        if (sub.Fault is { } fault)
+        {
+            writer.WriteStartObject("fault"u8);
+            writer.WriteString("stepId"u8, fault.StepId);
+            writer.WriteNumber("attempt"u8, fault.Attempt);
+            writer.WriteString("error"u8, fault.Error);
+            writer.WriteEndObject();
+        }
+
+        if (sub.Wait is { } wait)
+        {
+            writer.WriteStartObject("wait"u8);
+            writer.WriteString("kind"u8, wait.Kind == WorkflowWaitKind.Timer ? "timer"u8 : "message"u8);
+            if (wait.Kind == WorkflowWaitKind.Timer)
+            {
+                writer.WriteString("dueAt"u8, wait.DueAt);
+            }
+
+            if (wait.Channel is not null)
+            {
+                writer.WriteString("channel"u8, wait.Channel);
+            }
+
+            if (wait.CorrelationId is not null)
+            {
+                writer.WriteString("correlationId"u8, wait.CorrelationId);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        writer.WriteStartArray("steps"u8);
+        foreach (SimulatedStepRecord step in sub.Steps)
+        {
+            WriteStepRecord(writer, step, exchanges);
+        }
+
+        writer.WriteEndArray();
+        writer.WriteNumber("stepsExecuted"u8, sub.StepsExecuted);
+        writer.WriteEndObject();
+    }
+
+    // A record's wire status: faulted stands; an in-progress sub-workflow parent presents its
+    // child's paused/suspended state (design §3.5); a budget-exhausted partial keeps "completed"
+    // for the record (the trace-level outcome carries the exhaustion — no wire status exists for
+    // it); everything else completed.
+    private static ReadOnlySpan<byte> StepStatus(SimulatedStepRecord step)
+    {
+        if (step.Faulted)
+        {
+            return "faulted"u8;
+        }
+
+        return step.SubTrace?.Outcome switch
+        {
+            SimulationOutcome.Paused => "paused"u8,
+            SimulationOutcome.Suspended => "suspended"u8,
+            _ => "completed"u8,
+        };
     }
 
     /// <summary>The contract's outcome vocabulary for a simulation outcome.</summary>

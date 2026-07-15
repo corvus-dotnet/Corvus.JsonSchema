@@ -173,6 +173,15 @@ public sealed class WorkflowSimulator : IDisposable
         CancellationTokenSource wallClock,
         CancellationToken callerToken)
     {
+        // Every terminal outcome materializes any in-flight sub-workflow scopes first (§15-8a):
+        // a stop/suspension/exhaustion inside a child unwinds before the invoking steps reach
+        // their boundaries, and a goto transfer completes without one.
+        SimulationOutcome Finish(SimulationOutcome outcome)
+        {
+            run.FinalizeInFlightScopes(outcome);
+            return outcome;
+        }
+
         int nextTrigger = 0;
         while (true)
         {
@@ -192,15 +201,15 @@ public sealed class WorkflowSimulator : IDisposable
             }
             catch (SimulationPauseException)
             {
-                return SimulationOutcome.Paused;
+                return Finish(SimulationOutcome.Paused);
             }
             catch (SimulationBudgetException)
             {
-                return SimulationOutcome.BudgetExhausted;
+                return Finish(SimulationOutcome.BudgetExhausted);
             }
             catch (OperationCanceledException) when (!callerToken.IsCancellationRequested)
             {
-                return SimulationOutcome.BudgetExhausted; // the wall-clock cap
+                return Finish(SimulationOutcome.BudgetExhausted); // the wall-clock cap
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -208,15 +217,15 @@ public sealed class WorkflowSimulator : IDisposable
                 // an unscripted status with no declared response, a bodiless response where content
                 // is declared. That is a FAULT in the trace, never a simulator crash.
                 await run.FaultAsync(run.CurrentStepId ?? "(executor)", 1, ex.Message, CancellationToken.None).ConfigureAwait(false);
-                return SimulationOutcome.Faulted;
+                return Finish(SimulationOutcome.Faulted);
             }
 
             switch (kind)
             {
                 case WorkflowRunResultKind.Completed:
-                    return SimulationOutcome.Completed;
+                    return Finish(SimulationOutcome.Completed);
                 case WorkflowRunResultKind.Faulted:
-                    return SimulationOutcome.Faulted;
+                    return Finish(SimulationOutcome.Faulted);
                 default:
                     break;
             }
@@ -226,7 +235,7 @@ public sealed class WorkflowSimulator : IDisposable
             {
                 if (!scenario.AutoAdvanceClock)
                 {
-                    return SimulationOutcome.Suspended;
+                    return Finish(SimulationOutcome.Suspended);
                 }
 
                 clock.Advance(wait.DueAt);
@@ -249,7 +258,7 @@ public sealed class WorkflowSimulator : IDisposable
 
             if (found < 0)
             {
-                return SimulationOutcome.Suspended;
+                return Finish(SimulationOutcome.Suspended);
             }
 
             run.DeliverMessage(scenario.Triggers[found].Payload);
@@ -329,10 +338,29 @@ public sealed class WorkflowSimulator : IDisposable
 
     /// <summary>Post-hoc analysis: criterion truth tables and inferred routing, re-evaluated against the captured deterministic context.</summary>
     private static void AnalyzeTrace(in WorkflowShape shape, SimulationScenario scenario, SimulationResult result, List<IDisposable> owned)
+        => AnalyzeSteps(shape, shape.Workflows, scenario.Inputs, result.Steps, result.Exchanges, owned);
+
+    // Analyzes one trace level's records against ITS workflow's compiled criteria/actions, then
+    // recurses into each record's nested sub-trace with the sub-workflow's own shape (§15-8a).
+    // Child levels evaluate with UNDEFINED $inputs — the child's built inputs document does not
+    // survive the invocation (declared v1 limit; $statusCode/$response criteria are unaffected).
+    // Cross-source sub-workflows have no local shape and are recorded unanalyzed (§10 F10).
+    private static void AnalyzeSteps(
+        in WorkflowShape shape,
+        IReadOnlyDictionary<string, WorkflowShape> workflows,
+        JsonElement inputs,
+        IReadOnlyList<SimulatedStepRecord> steps,
+        IReadOnlyList<MockApiExchange> exchanges,
+        List<IDisposable> owned)
     {
-        for (int i = 0; i < result.Steps.Count; i++)
+        for (int i = 0; i < steps.Count; i++)
         {
-            SimulatedStepRecord record = result.Steps[i];
+            SimulatedStepRecord record = steps[i];
+            if (record.SubTrace is { } sub && workflows.TryGetValue(sub.WorkflowId, out WorkflowShape? childShape))
+            {
+                AnalyzeSteps(childShape, workflows, default, sub.Steps, exchanges, owned);
+            }
+
             if (record.Skipped)
             {
                 // §15 8b: the step never executed — no exchange, no truth table; its routing
@@ -347,22 +375,22 @@ public sealed class WorkflowSimulator : IDisposable
             }
 
             var context = new WorkflowExecutionContext();
-            if (scenario.Inputs.ValueKind is not JsonValueKind.Undefined)
+            if (inputs.ValueKind is not JsonValueKind.Undefined)
             {
-                context.SetInputs(scenario.Inputs);
+                context.SetInputs(inputs);
             }
 
             for (int p = 0; p < i; p++)
             {
-                if (result.Steps[p].Outputs.ValueKind is not JsonValueKind.Undefined)
+                if (steps[p].Outputs.ValueKind is not JsonValueKind.Undefined)
                 {
-                    context.SetStepOutputs(result.Steps[p].StepId, result.Steps[p].Outputs);
+                    context.SetStepOutputs(steps[p].StepId, steps[p].Outputs);
                 }
             }
 
             if (record.ExchangeCount > 0)
             {
-                MockApiExchange last = result.Exchanges[record.FirstExchange + record.ExchangeCount - 1];
+                MockApiExchange last = exchanges[record.FirstExchange + record.ExchangeCount - 1];
                 context.SetResponseStatusCode(last.StatusCode);
                 if (!last.ResponseBody.IsEmpty)
                 {
@@ -395,7 +423,7 @@ public sealed class WorkflowSimulator : IDisposable
             else if (record.ExchangeCount > 0)
             {
                 // No explicit criteria: success is the transport's IsSuccess (2xx).
-                MockApiExchange last = result.Exchanges[record.FirstExchange + record.ExchangeCount - 1];
+                MockApiExchange last = exchanges[record.FirstExchange + record.ExchangeCount - 1];
                 allPassed = last.StatusCode is >= 200 and < 300;
             }
 

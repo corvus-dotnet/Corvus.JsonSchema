@@ -60,6 +60,10 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
     private readonly Dictionary<string, JsonElement> outputs = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> retryCounts = new(StringComparer.Ordinal);
     private readonly List<SimulatedStepRecord> steps = [];
+    private readonly string? workflowId;
+    private int localStepsExecuted;
+    private TracingWorkflowRun? activeChild;
+    private string? activeChildStepId;
 
     // Root-owned shared state: the budget, the exchange cursor, the composed-path arrival counters,
     // the recorded wait, the delivered message, and the (scoped) paused-before path. Child scopes
@@ -98,22 +102,19 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         this.CheckStop(0, throwBeforeAnything: false);
     }
 
-    private TracingWorkflowRun(TracingWorkflowRun root, string pathPrefix, int depth, IReadOnlyList<string> stepIds)
+    private TracingWorkflowRun(TracingWorkflowRun root, string pathPrefix, int depth, IReadOnlyList<string> stepIds, string workflowId)
     {
         this.root = root;
         this.pathPrefix = pathPrefix;
         this.depth = depth;
         this.stepIds = stepIds;
+        this.workflowId = workflowId;
         this.subWorkflowStepIds = root.subWorkflowStepIds;
         this.stop = root.stop;
         this.maxSteps = root.maxSteps;
         this.clock = root.clock;
         this.transport = root.transport;
         this.overrides = EmptyOverrides;
-
-        // A scoped stop may name the child's FIRST step; the run is mid-flight, so unwind (the
-        // driver consumes the pause with the root's scoped pausedBefore already set).
-        this.CheckStop(0, throwBeforeAnything: true);
     }
 
     /// <summary>Gets the executed-step records for THIS scope, in execution order (the root's are the trace).</summary>
@@ -184,7 +185,16 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         // A sub-workflow defined in another source document has no local shape: the child scope
         // still shares the clock/budget surfaces, but records without step attribution (§10 F10).
         IReadOnlyList<string> childStepIds = this.subWorkflowStepIds.TryGetValue(subWorkflowId, out IReadOnlyList<string>? ids) ? ids : [];
-        return new TracingWorkflowRun(this.root, this.pathPrefix + stepId + "/", this.depth + 1, childStepIds);
+        var child = new TracingWorkflowRun(this.root, this.pathPrefix + stepId + "/", this.depth + 1, childStepIds, subWorkflowId);
+
+        // The last invocation's records stand (design §10 F2): a suspension replay re-invokes the
+        // step, and the fresh scope replaces the stale one here. Register BEFORE the first-step
+        // stop check: a scoped stop naming the child's first step unwinds immediately, and the
+        // finalization walk needs the chain to materialize the partial ancestor records (§3.5).
+        this.activeChild = child;
+        this.activeChildStepId = stepId;
+        child.CheckStop(0, throwBeforeAnything: true);
+        return child;
     }
 
     /// <inheritdoc/>
@@ -273,6 +283,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
             && this.overrides.TryGetValue(this.stepIds[this.Cursor], out StepOutputOverride stepOverride))
         {
             string stepId = this.stepIds[this.Cursor];
+            this.localStepsExecuted++;
             if (++this.root.stepsExecuted > this.maxSteps)
             {
                 throw new SimulationBudgetException();
@@ -309,9 +320,20 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         }
 
         string stepId = faultedStepId ?? this.stepIds[this.currentState];
+        this.localStepsExecuted++;
         if (++this.root.stepsExecuted > this.maxSteps)
         {
             throw new SimulationBudgetException();
+        }
+
+        // A workflowId-bound step's boundary attaches its sub-workflow's collected records as the
+        // record's nested trace (§15-8a): terminal here, so the child either completed or faulted.
+        SimulatedSubTrace? subTrace = null;
+        if (this.activeChild is { } child && stepId == this.activeChildStepId)
+        {
+            subTrace = child.ToSubTrace(child.RecordedFault is not null ? SimulationOutcome.Faulted : SimulationOutcome.Completed);
+            this.activeChild = null;
+            this.activeChildStepId = null;
         }
 
         this.steps.Add(new SimulatedStepRecord
@@ -322,9 +344,70 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
             Outputs = this.outputs.TryGetValue(stepId, out JsonElement produced) ? produced : default,
             FirstExchange = this.root.exchangeMark,
             ExchangeCount = this.transport.Exchanges.Count - this.root.exchangeMark,
+            SubTrace = subTrace,
         });
         this.root.exchangeMark = this.transport.Exchanges.Count;
         this.currentState = -1; // consumed; the next boundary needs a fresh state (checkpoint/resume sets it)
+    }
+
+    /// <summary>
+    /// Materializes the in-flight ancestor chain when the run ends with sub-workflow scopes still
+    /// open (design §3.5): a stop, suspension, or exhaustion INSIDE a child unwinds without the
+    /// invoking steps ever reaching their boundaries, so each ancestor gets a record carrying a
+    /// PARTIAL sub-trace (the child's records so far, a non-terminal outcome, and — for a pause —
+    /// the scope-local remainder of the scoped path). A goto-workflow transfer that completed also
+    /// lands here: its target's records attach to the transferring step on the terminal outcome.
+    /// The driver calls this once, on the root, at every terminal return; the appended records are
+    /// bookkeeping, not executions — they never count against the budget.
+    /// </summary>
+    /// <param name="outcome">The run's terminal outcome.</param>
+    internal void FinalizeInFlightScopes(SimulationOutcome outcome)
+    {
+        TracingWorkflowRun scope = this.root;
+        while (scope.activeChild is { } child && scope.activeChildStepId is { } stepId)
+        {
+            SimulationOutcome childOutcome = outcome == SimulationOutcome.Completed
+                ? (child.RecordedFault is not null ? SimulationOutcome.Faulted : SimulationOutcome.Completed)
+                : outcome;
+            scope.steps.Add(new SimulatedStepRecord
+            {
+                StepId = stepId,
+                Attempt = scope.retryCounts.GetValueOrDefault(stepId),
+                Faulted = false,
+                FirstExchange = this.root.exchangeMark,
+                ExchangeCount = 0,
+                SubTrace = child.ToSubTrace(childOutcome),
+            });
+            scope.activeChild = null;
+            scope.activeChildStepId = null;
+            scope = child;
+        }
+    }
+
+    /// <summary>Snapshots this scope's collected records as its invoking step's nested trace.</summary>
+    private SimulatedSubTrace ToSubTrace(SimulationOutcome outcome)
+    {
+        // The root's pausedBefore is the FULL scoped path; this scope's trace addresses steps
+        // relative to itself, so its pausedBefore is the remainder below its own prefix.
+        string? localPausedBefore = null;
+        if (outcome == SimulationOutcome.Paused
+            && this.root.pausedBefore is { } full
+            && full.StartsWith(this.pathPrefix, StringComparison.Ordinal))
+        {
+            localPausedBefore = full[this.pathPrefix.Length..];
+        }
+
+        return new SimulatedSubTrace
+        {
+            WorkflowId = this.workflowId ?? string.Empty,
+            Outcome = outcome,
+            PausedBefore = localPausedBefore,
+            Fault = this.RecordedFault,
+            Wait = outcome == SimulationOutcome.Suspended ? this.root.recordedWait : null,
+            Outputs = this.WorkflowOutputs,
+            Steps = this.steps,
+            StepsExecuted = this.localStepsExecuted,
+        };
     }
 
     /// <summary>

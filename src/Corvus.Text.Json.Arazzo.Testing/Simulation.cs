@@ -129,6 +129,45 @@ public sealed class SimulatedStepRecord
 
     /// <summary>Gets the inferred routing decision for this step.</summary>
     public SimulatedAction? ActionTaken { get; internal set; }
+
+    /// <summary>Gets the sub-workflow execution's nested trace, when this step is workflowId-bound (§15-8a).</summary>
+    public SimulatedSubTrace? SubTrace { get; init; }
+}
+
+/// <summary>
+/// A sub-workflow execution's complete nested trace, attached to its invoking step's record
+/// (§15-8a, design §3.1) — the same trace shape, recursively. Lightweight by design: it owns
+/// nothing (child records index the ROOT result's exchange list, and every element lives in the
+/// root result's workspace), so it is deliberately NOT a <see cref="SimulationResult"/>. When a
+/// suspension replays the child, the LAST invocation's records stand (design §10 F2); a stop or
+/// exhaustion inside the child leaves a PARTIAL sub-trace (a non-terminal <see cref="Outcome"/>)
+/// on each in-flight ancestor record.
+/// </summary>
+public sealed class SimulatedSubTrace
+{
+    /// <summary>Gets the sub-workflow's id (sub-traces always carry one; the root trace never does).</summary>
+    public required string WorkflowId { get; init; }
+
+    /// <summary>Gets how this sub-workflow execution ended (or where it stands, for a partial trace).</summary>
+    public required SimulationOutcome Outcome { get; init; }
+
+    /// <summary>Gets the scope-local scoped step path the stop landed before, for a partial paused trace.</summary>
+    public string? PausedBefore { get; init; }
+
+    /// <summary>Gets the fault, when the sub-workflow faulted.</summary>
+    public WorkflowFault? Fault { get; init; }
+
+    /// <summary>Gets the unsatisfied wait, when the sub-workflow suspended.</summary>
+    public WorkflowWait? Wait { get; init; }
+
+    /// <summary>Gets the sub-workflow's outputs, when it completed.</summary>
+    public JsonElement Outputs { get; init; }
+
+    /// <summary>Gets the sub-workflow's executed steps, in execution order (recursively the same record shape).</summary>
+    public required IReadOnlyList<SimulatedStepRecord> Steps { get; init; }
+
+    /// <summary>Gets the steps this sub-workflow execution contributed to the one global budget.</summary>
+    public required int StepsExecuted { get; init; }
 }
 
 /// <summary>One criterion's re-evaluated verdict.</summary>
