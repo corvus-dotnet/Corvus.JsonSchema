@@ -312,7 +312,7 @@ public readonly partial struct AttachSourceRequest
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The inline document&#39;s type (openapi | asyncapi | arazzo); detected from the document&#39;s own top-level field when omitted.
+        /// The inline document&#39;s type (openapi | asyncapi | arazzo | jsonschema); detected from the document&#39;s own top-level field when omitted (a JSON Schema document declares none, so pass jsonschema explicitly).
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable Type

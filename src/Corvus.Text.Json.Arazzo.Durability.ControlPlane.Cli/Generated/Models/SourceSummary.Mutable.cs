@@ -445,7 +445,7 @@ public readonly partial struct SourceSummary
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The kind of document a source registers (design &#167;7.6): an OpenAPI description for an HTTP API source, or an AsyncAPI description for a messaging source.
+        /// The kind of document a source registers (design &#167;7.6): an OpenAPI description for an HTTP API source, an AsyncAPI description for a messaging source, or a JSON Schema document that workflow inputs schemas reference by external $ref (schemas/&lt;name&gt;#&lt;pointer&gt;). A jsonschema source is never a sourceDescription (the Arazzo spec pins that enum) — it attaches to a working copy alongside the declared sources and resolves through the standard registered-document mechanism.
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceType.Mutable Type

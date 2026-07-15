@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The kind of document a source registers (design &#167;7.6): an OpenAPI description for an HTTP API source, or an AsyncAPI description for a messaging source.
+/// The kind of document a source registers (design &#167;7.6): an OpenAPI description for an HTTP API source, an AsyncAPI description for a messaging source, or a JSON Schema document that workflow inputs schemas reference by external $ref (schemas/&lt;name&gt;#&lt;pointer&gt;). A jsonschema source is never a sourceDescription (the Arazzo spec pins that enum) — it attaches to a working copy alongside the declared sources and resolves through the standard registered-document mechanism.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -399,12 +399,14 @@ public readonly partial struct SourceType
         /// <param name="context">The context to pass to the match function.</param>
         /// <param name="matchOpenapi">Match 1st item.</param>
         /// <param name="matchAsyncapi">Match 2nd item.</param>
+        /// <param name="matchJsonschema">Match 3rd item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
             in TContext context,
             Func<TContext, TResult> matchOpenapi,
             Func<TContext, TResult> matchAsyncapi,
+            Func<TContext, TResult> matchJsonschema,
             Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -420,6 +422,11 @@ public readonly partial struct SourceType
                 return matchAsyncapi(context);
             }
 
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchJsonschema(context);
+            }
+
             return defaultMatch(context);
         }
 
@@ -429,11 +436,13 @@ public readonly partial struct SourceType
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="matchOpenapi">Match 1st item.</param>
         /// <param name="matchAsyncapi">Match 2nd item.</param>
+        /// <param name="matchJsonschema">Match 3rd item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
             Func<TResult> matchOpenapi,
             Func<TResult> matchAsyncapi,
+            Func<TResult> matchJsonschema,
             Func<TResult> defaultMatch)
         {
             if (this.ValueEquals(Constants.Enum1))
@@ -444,6 +453,11 @@ public readonly partial struct SourceType
             if (this.ValueEquals(Constants.Enum2))
             {
                 return matchAsyncapi();
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchJsonschema();
             }
 
             return defaultMatch();

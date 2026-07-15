@@ -6899,7 +6899,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The source type (openapi | asyncapi | arazzo), recorded for inline attachments and echoed from the registry otherwise."
+            "description": "The source type (openapi | asyncapi | arazzo | jsonschema), recorded for inline attachments and echoed from the registry otherwise. A jsonschema attachment is referenced by inputs-schema external $ref (schemas/<name>#<pointer>), not by sourceDescriptions."
           },
           "attachedBy": {
             "type": "string"
@@ -6950,7 +6950,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The inline document's type (openapi | asyncapi | arazzo); detected from the document's own top-level field when omitted."
+            "description": "The inline document's type (openapi | asyncapi | arazzo | jsonschema); detected from the document's own top-level field when omitted (a JSON Schema document declares none, so pass jsonschema explicitly)."
           }
         }
       },
@@ -7531,8 +7531,8 @@
       },
       "SourceType": {
         "type": "string",
-        "description": "The kind of document a source registers (design §7.6): an OpenAPI description for an HTTP API source, or an AsyncAPI description for a messaging source.",
-        "enum": ["openapi", "asyncapi"]
+        "description": "The kind of document a source registers (design §7.6): an OpenAPI description for an HTTP API source, an AsyncAPI description for a messaging source, or a JSON Schema document that workflow inputs schemas reference by external $ref (schemas/<name>#<pointer>). A jsonschema source is never a sourceDescription (the Arazzo spec pins that enum) — it attaches to a working copy alongside the declared sources and resolves through the standard registered-document mechanism.",
+        "enum": ["openapi", "asyncapi", "jsonschema"]
       },
       "SourceDocument": {
         "type": "object",

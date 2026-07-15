@@ -566,6 +566,72 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Meta_validation_flags_a_dangling_external_schema_reference()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // An inputs schema referencing an external schema document (schemas/<name>#<pointer>) that is NOT
+        // attached: pass 4 flags it, positioned at the referencing node, naming the missing attachment.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "External ref", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": "object", "properties": { "address": { "$ref": "schemas/acme-types#/$defs/Address" } } },
+            "steps": [{ "stepId": "a", "operationId": "listPets" }]
+          }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement finding = outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Single(d => d.GetProperty("category").GetString() == "schema" && d.GetProperty("instancePath").GetString() == "/workflows/0/inputs");
+        finding.GetProperty("message").GetString()!.ShouldContain("acme-types");
+    }
+
+    [TestMethod]
+    public async Task An_attached_external_schema_resolves_the_reference_and_is_exempt_from_source_integrity()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "External ref", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": "object", "properties": { "address": { "$ref": "schemas/acme-types#/$defs/Address" } } },
+            "steps": [{ "stepId": "a", "operationId": "listPets" }]
+          }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Attach the external schema document under the referenced name. A JSON Schema document declares no
+        // openapi/asyncapi/arazzo marker, so the type is passed explicitly.
+        (await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}/sources/acme-types",
+            """{"document":{"$defs":{"Address":{"type":"object","properties":{"line1":{"type":"string"}}}}},"type":"jsonschema"}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The external reference now resolves — no schema finding — and the schema attachment is exempt from the
+        // "attached but not declared in sourceDescriptions" integrity info (it is deliberately not a sourceDescription:
+        // the Arazzo spec pins that enum to arazzo/openapi/asyncapi).
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeTrue();
+        outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Count(d => d.GetProperty("message").GetString()!.Contains("acme-types")).ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task Warnings_do_not_fail_validation()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());

@@ -402,7 +402,7 @@ public readonly partial struct AttachedSource
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The source type (openapi | asyncapi | arazzo), recorded for inline attachments and echoed from the registry otherwise.
+        /// The source type (openapi | asyncapi | arazzo | jsonschema), recorded for inline attachments and echoed from the registry otherwise. A jsonschema attachment is referenced by inputs-schema external $ref (schemas/&lt;name&gt;#&lt;pointer&gt;), not by sourceDescriptions.
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable Type

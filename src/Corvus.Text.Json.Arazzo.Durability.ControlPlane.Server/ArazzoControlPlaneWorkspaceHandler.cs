@@ -1063,14 +1063,17 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         // 3 — workspace-level source integrity: the document's operation bindings cross-checked
         //     against the working copy's ATTACHED sources. Document-local passes cannot see the
-        //     attachments, so "delete a declared source that steps still use" surfaces HERE.
-        await this.CheckSourceIntegrityAsync(document, attachments, findings, cancellationToken).ConfigureAwait(false);
+        //     attachments, so "delete a declared source that steps still use" surfaces HERE. Returns the
+        //     jsonschema attachment names (they are not sourceDescriptions) for pass 4's external-$ref check.
+        HashSet<string> schemaAttachments = await this.CheckSourceIntegrityAsync(document, attachments, findings, cancellationToken).ConfigureAwait(false);
 
         // 4 — the inputs schemas the Arazzo meta-schema treats as opaque (each workflow.inputs and every
-        //     components.inputs.*) meta-validated against JSON Schema 2020-12, plus a dangling local-$ref
-        //     check (§6). Pass 4 validates a SUB-element, so results come back schema-relative and are rebased
-        //     under the schema's document location (pass 1 gets document-rooted paths for free).
-        MetaValidateInputsSchemas(in document, findings);
+        //     components.inputs.*) meta-validated against JSON Schema 2020-12, plus a dangling $ref
+        //     check (§6): a local components.inputs reference must exist, and an external schemas/<name>
+        //     reference must name an attached jsonschema document. Pass 4 validates a SUB-element, so results
+        //     come back schema-relative and are rebased under the schema's document location (pass 1 gets
+        //     document-rooted paths for free).
+        MetaValidateInputsSchemas(in document, schemaAttachments, findings);
 
         return findings;
     }
@@ -1078,7 +1081,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     /// <summary>Meta-validates each embedded inputs schema (workflow.inputs, components.inputs.*) against JSON
     /// Schema 2020-12 and flags dangling local component references — closing a real gap: nothing else validates
     /// the CONTENT of an inputs schema (the Arazzo meta-schema models it as just object-or-boolean).</summary>
-    private static void MetaValidateInputsSchemas(in JsonElement document, List<Finding> findings)
+    private static void MetaValidateInputsSchemas(in JsonElement document, HashSet<string> schemaAttachments, List<Finding> findings)
     {
         if (document.ValueKind != JsonValueKind.Object)
         {
@@ -1092,7 +1095,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 if (workflow.ValueKind == JsonValueKind.Object && workflow.TryGetProperty("inputs"u8, out JsonElement inputs))
                 {
-                    MetaValidateInputsSchema(in inputs, $"/workflows/{i}/inputs", in document, findings);
+                    MetaValidateInputsSchema(in inputs, $"/workflows/{i}/inputs", in document, schemaAttachments, findings);
                 }
 
                 i++;
@@ -1105,14 +1108,14 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             foreach (JsonProperty<JsonElement> entry in inputsLibrary.EnumerateObject())
             {
                 JsonElement value = entry.Value;
-                MetaValidateInputsSchema(in value, $"/components/inputs/{EscapeJsonPointerSegment(entry.Name)}", in document, findings);
+                MetaValidateInputsSchema(in value, $"/components/inputs/{EscapeJsonPointerSegment(entry.Name)}", in document, schemaAttachments, findings);
             }
         }
     }
 
     /// <summary>Meta-validates one inputs schema, rebasing each finding's schema-relative path under
     /// <paramref name="basePath"/>, then flags any dangling local component reference.</summary>
-    private static void MetaValidateInputsSchema(in JsonElement schema, string basePath, in JsonElement document, List<Finding> findings)
+    private static void MetaValidateInputsSchema(in JsonElement schema, string basePath, in JsonElement document, HashSet<string> schemaAttachments, List<Finding> findings)
     {
         if (findings.Count >= MaxValidationErrors)
         {
@@ -1135,12 +1138,14 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             }
         }
 
-        CheckDanglingInputsReferences(in schema, basePath, in document, findings);
+        CheckDanglingInputsReferences(in schema, basePath, in document, schemaAttachments, findings);
     }
 
-    /// <summary>Flags a <c>#/components/inputs/&lt;name&gt;</c> reference whose target is absent — nothing else
-    /// detects it (meta-validation cannot, the analyzer does not, and the baked path silently degrades to raw).</summary>
-    private static void CheckDanglingInputsReferences(in JsonElement node, string basePath, in JsonElement document, List<Finding> findings)
+    /// <summary>Flags a <c>#/components/inputs/&lt;name&gt;</c> reference whose target is absent, and a
+    /// <c>schemas/&lt;name&gt;#&lt;pointer&gt;</c> external reference whose named jsonschema document is not attached
+    /// to this working copy — nothing else detects either (meta-validation cannot, the analyzer does not, and the
+    /// baked path silently degrades to raw).</summary>
+    private static void CheckDanglingInputsReferences(in JsonElement node, string basePath, in JsonElement document, HashSet<string> schemaAttachments, List<Finding> findings)
     {
         if (findings.Count >= MaxValidationErrors)
         {
@@ -1150,12 +1155,27 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         if (node.ValueKind == JsonValueKind.Object)
         {
             if (node.TryGetProperty("$ref"u8, out JsonElement reference) && reference.ValueKind == JsonValueKind.String
-                && reference.GetString() is { } target && target.StartsWith("#/components/inputs/", StringComparison.Ordinal))
+                && reference.GetString() is { } target)
             {
-                string name = target["#/components/inputs/".Length..];
-                if (!InputsLibraryHasEntry(in document, name))
+                if (target.StartsWith("#/components/inputs/", StringComparison.Ordinal))
                 {
-                    findings.Add(new("error", "schema", basePath, $"References the library schema '{name}', which does not exist under components.inputs.", null));
+                    string name = target["#/components/inputs/".Length..];
+                    if (!InputsLibraryHasEntry(in document, name))
+                    {
+                        findings.Add(new("error", "schema", basePath, $"References the library schema '{name}', which does not exist under components.inputs.", null));
+                    }
+                }
+                else if (target.StartsWith("schemas/", StringComparison.Ordinal))
+                {
+                    // The external form (design §6): schemas/<name>#<pointer> resolves against the working copy's
+                    // jsonschema attachment named <name> (packaged alongside the sources at publish, registered
+                    // with the generation resolver under the same relative URI).
+                    int fragment = target.IndexOf('#', StringComparison.Ordinal);
+                    string name = (fragment < 0 ? target : target[..fragment])["schemas/".Length..];
+                    if (!schemaAttachments.Contains(name))
+                    {
+                        findings.Add(new("error", "schema", basePath, $"References the external schema '{name}', which is not attached — attach a jsonschema source under that name.", null));
+                    }
                 }
             }
 
@@ -1164,7 +1184,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 JsonElement child = property.Value;
                 if (child.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
                 {
-                    CheckDanglingInputsReferences(in child, basePath, in document, findings);
+                    CheckDanglingInputsReferences(in child, basePath, in document, schemaAttachments, findings);
                 }
             }
         }
@@ -1172,7 +1192,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         {
             foreach (JsonElement item in node.EnumerateArray())
             {
-                CheckDanglingInputsReferences(in item, basePath, in document, findings);
+                CheckDanglingInputsReferences(in item, basePath, in document, schemaAttachments, findings);
             }
         }
     }
@@ -2137,7 +2157,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     /// (info), operation bindings absent from every resolvable surface (warning), and steps binding
     /// operations with no sourceDescriptions at all (error).
     /// </summary>
-    private async ValueTask CheckSourceIntegrityAsync(JsonElement document, JsonElement attachments, List<Finding> findings, CancellationToken cancellationToken)
+    private async ValueTask<HashSet<string>> CheckSourceIntegrityAsync(JsonElement document, JsonElement attachments, List<Finding> findings, CancellationToken cancellationToken)
     {
         var declared = new List<string>();
         if (document.TryGetProperty("sourceDescriptions"u8, out JsonElement sourceDescriptions) && sourceDescriptions.ValueKind == JsonValueKind.Array)
@@ -2152,6 +2172,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         var attachedNames = new HashSet<string>(StringComparer.Ordinal);
+        var schemaAttachments = new HashSet<string>(StringComparer.Ordinal);
         var operations = new HashSet<string>(StringComparer.Ordinal);
         var channels = new HashSet<string>(StringComparer.Ordinal);
         var operationNodes = new Dictionary<string, (JsonElement Root, JsonElement Operation)>(StringComparer.Ordinal);
@@ -2165,6 +2186,15 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 if (!attachment.TryGetProperty("name"u8, out JsonElement name) || name.GetString() is not { Length: > 0 } attachedName)
                 {
+                    continue;
+                }
+
+                // A jsonschema attachment is deliberately NOT a sourceDescription (the Arazzo spec pins that enum):
+                // it exists to be referenced by inputs-schema external $ref (schemas/<name>#<pointer>), so it is
+                // exempt from the declaration cross-check and carries no operation surface.
+                if (attachment.TryGetProperty("type"u8, out JsonElement attachmentType) && attachmentType.ValueEquals("jsonschema"u8))
+                {
+                    schemaAttachments.Add(attachedName);
                     continue;
                 }
 
@@ -2208,7 +2238,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         if (!document.TryGetProperty("workflows"u8, out JsonElement workflows) || workflows.ValueKind != JsonValueKind.Array)
         {
-            return;
+            return schemaAttachments;
         }
 
         int workflowIndex = -1;
@@ -2236,7 +2266,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 if (declared.Count == 0)
                 {
                     findings.Add(new("error", "workspace-sources", "/sourceDescriptions", "Steps bind operations but the document declares no sourceDescriptions — nothing can resolve them.", null));
-                    return; // one document-level error says it all
+                    return schemaAttachments; // one document-level error says it all
                 }
 
                 if (!anySurfaceResolved)
@@ -2281,6 +2311,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 }
             }
         }
+
+        return schemaAttachments;
         }
         finally
         {
