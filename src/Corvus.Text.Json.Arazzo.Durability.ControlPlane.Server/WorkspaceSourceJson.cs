@@ -71,49 +71,42 @@ internal static class WorkspaceSourceJson
     /// <returns>A pooled draft; dispose once the store call returns (the store reads it synchronously).</returns>
     public static ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> DraftReplacingAttachment(in JsonElement currentSources, string name, string kind, string? sourceName, in JsonElement document, string? type, string actor, DateTimeOffset attachedAt)
     {
+        // The generated contextful Create() realises the draft (text + parse metadata) in one pooled pass: the kept
+        // stored entries blit in as elements, the new entry folds in from properties, and every other property is
+        // omitted via default Sources (the store carries them forward).
         var state = new AttachState(currentSources, name, kind, sourceName, document, type, actor, attachedAt);
-        return PersistedJson.ToPooledDocument<WorkspaceWorkflows.WorkspaceWorkflow, AttachState>(
-            state,
-            static (Utf8JsonWriter writer, in AttachState s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteStartArray("sources"u8);
-                if (s.Current.ValueKind == JsonValueKind.Array)
+        return WorkspaceWorkflows.WorkspaceWorkflow.Create(
+            context: state,
+            createdAt: default,
+            createdBy: default,
+            document: default,
+            etag: default,
+            id: default,
+            name: default,
+            sources: WorkspaceWorkflows.WorkspaceWorkflow.AttachedSourceArray.Build(
+                state,
+                static (in AttachState s, ref WorkspaceWorkflows.WorkspaceWorkflow.AttachedSourceArray.Builder b) =>
                 {
-                    foreach (JsonElement entry in s.Current.EnumerateArray())
+                    if (s.Current.ValueKind == JsonValueKind.Array)
                     {
-                        if (!EntryHasName(entry, s.Name))
+                        foreach (JsonElement entry in s.Current.EnumerateArray())
                         {
-                            entry.WriteTo(writer);
+                            if (!EntryHasName(entry, s.Name))
+                            {
+                                b.AddItem(WorkspaceWorkflows.WorkspaceWorkflow.AttachedSource.From(entry));
+                            }
                         }
                     }
-                }
 
-                writer.WriteStartObject();
-                writer.WriteString("name"u8, s.Name);
-                writer.WriteString("kind"u8, s.Kind);
-                if (s.SourceName is not null)
-                {
-                    writer.WriteString("sourceName"u8, s.SourceName);
-                }
-
-                if (s.Type is not null)
-                {
-                    writer.WriteString("type"u8, s.Type);
-                }
-
-                if (s.Document.ValueKind != JsonValueKind.Undefined)
-                {
-                    writer.WritePropertyName("document"u8);
-                    s.Document.WriteTo(writer);
-                }
-
-                writer.WriteString("attachedBy"u8, s.Actor);
-                writer.WriteString("attachedAt"u8, s.AttachedAt);
-                writer.WriteEndObject();
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-            });
+                    b.AddItem(WorkspaceWorkflows.WorkspaceWorkflow.AttachedSource.Build(
+                        attachedAt: s.AttachedAt,
+                        attachedBy: s.Actor,
+                        kind: s.Kind,
+                        name: s.Name,
+                        document: s.Document.ValueKind != JsonValueKind.Undefined ? (WorkspaceWorkflows.WorkspaceWorkflow.AttachedSource.DocumentEntity.Source)WorkspaceWorkflows.WorkspaceWorkflow.AttachedSource.DocumentEntity.From(s.Document) : default,
+                        sourceName: s.SourceName is { } sn ? (JsonString.Source)sn : default,
+                        type: s.Type is { } t ? (JsonString.Source)t : default));
+                }));
     }
 
     /// <summary>Builds the detach draft — the replacement attachment set minus the named entry — in one
@@ -123,27 +116,32 @@ internal static class WorkspaceSourceJson
     /// <returns>A pooled draft; dispose once the store call returns.</returns>
     public static ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> DraftRemovingAttachment(in JsonElement currentSources, string name)
     {
+        // The generated contextful Create() realises the draft in one pooled pass: the surviving stored entries blit
+        // in as elements; every other property is omitted via default Sources (the store carries them forward).
         var state = new DetachState(currentSources, name);
-        return PersistedJson.ToPooledDocument<WorkspaceWorkflows.WorkspaceWorkflow, DetachState>(
-            state,
-            static (Utf8JsonWriter writer, in DetachState s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteStartArray("sources"u8);
-                if (s.Current.ValueKind == JsonValueKind.Array)
+        return WorkspaceWorkflows.WorkspaceWorkflow.Create(
+            context: state,
+            createdAt: default,
+            createdBy: default,
+            document: default,
+            etag: default,
+            id: default,
+            name: default,
+            sources: WorkspaceWorkflows.WorkspaceWorkflow.AttachedSourceArray.Build(
+                state,
+                static (in DetachState s, ref WorkspaceWorkflows.WorkspaceWorkflow.AttachedSourceArray.Builder b) =>
                 {
-                    foreach (JsonElement entry in s.Current.EnumerateArray())
+                    if (s.Current.ValueKind == JsonValueKind.Array)
                     {
-                        if (!EntryHasName(entry, s.Name))
+                        foreach (JsonElement entry in s.Current.EnumerateArray())
                         {
-                            entry.WriteTo(writer);
+                            if (!EntryHasName(entry, s.Name))
+                            {
+                                b.AddItem(WorkspaceWorkflows.WorkspaceWorkflow.AttachedSource.From(entry));
+                            }
                         }
                     }
-                }
-
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-            });
+                }));
     }
 
     /// <summary>Builds the create draft in one pooled write+parse pass: the display name resolved in

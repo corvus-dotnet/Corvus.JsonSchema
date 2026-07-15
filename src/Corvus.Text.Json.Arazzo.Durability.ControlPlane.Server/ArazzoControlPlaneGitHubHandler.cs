@@ -454,19 +454,47 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
                 }
             }
 
-            // One etag-guarded save: the pulled document, the replacement inline attachment set (only
-            // when specs are bound), and the replacement scenario set (only when the directory is bound).
-            using ParsedJsonDocument<JsonElement>? sourcesDoc = specs.Count > 0 ? this.WriteInlineAttachments(specs) : null;
-            using ParsedJsonDocument<JsonElement>? scenariosDoc = scenariosBound ? WriteScenarioSet(scenarioDocs) : null;
-            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceWorkflow.Draft(
-                default,
-                default,
-                default,
-                pulledDocument.RootElement,
-                default,
-                sourcesDoc is { } s ? s.RootElement : default,
-                SecurityTagSet.Empty,
-                scenarios: scenariosDoc is { } sc ? sc.RootElement : default);
+            // One etag-guarded save realised by the generated contextful Create() in a single pooled pass: the pulled
+            // document blits in as an element, the replacement inline attachment set folds in per bound spec (each
+            // spec document blitted), and the replacement scenario set folds in per scenario — no intermediate
+            // attachment/scenario documents. Properties the pull does not touch are omitted via default Sources.
+            var pullSet = new PullSet(specs, scenarioDocs, this.actor, this.timeProvider.GetUtcNow());
+            using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceWorkflow.Create(
+                context: pullSet,
+                createdAt: default,
+                createdBy: default,
+                document: (WorkspaceWorkflow.DocumentEntity.Source)WorkspaceWorkflow.DocumentEntity.From(pulledDocument.RootElement),
+                etag: default,
+                id: default,
+                name: default,
+                sources: specs.Count > 0
+                    ? WorkspaceWorkflow.AttachedSourceArray.Build(
+                        pullSet,
+                        static (in PullSet s, ref WorkspaceWorkflow.AttachedSourceArray.Builder b) =>
+                        {
+                            foreach ((string name, ParsedJsonDocument<JsonElement> document) in s.Specs)
+                            {
+                                b.AddItem(WorkspaceWorkflow.AttachedSource.Build(
+                                    attachedAt: s.At,
+                                    attachedBy: s.Actor,
+                                    kind: "inline",
+                                    name: name,
+                                    document: WorkspaceWorkflow.AttachedSource.DocumentEntity.From(document.RootElement),
+                                    type: DetectType(document.RootElement) is { } type ? (JsonString.Source)type : default));
+                            }
+                        })
+                    : default(WorkspaceWorkflow.AttachedSourceArray.Source<PullSet>),
+                scenarios: scenariosBound
+                    ? WorkspaceWorkflow.JsonObjectArray.Build(
+                        pullSet,
+                        static (in PullSet s, ref WorkspaceWorkflow.JsonObjectArray.Builder b) =>
+                        {
+                            foreach (ParsedJsonDocument<JsonElement> scenario in s.Scenarios)
+                            {
+                                b.AddItem(JsonObject.From(scenario.RootElement));
+                            }
+                        })
+                    : default(WorkspaceWorkflow.JsonObjectArray.Source<PullSet>));
             ParsedJsonDocument<WorkspaceWorkflow>? saved = await store.UpdateAsync(id, draft.RootElement, new WorkflowEtag((string)parameters.Body.ExpectedEtag), this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
             if (saved is not { } updated)
             {
@@ -899,51 +927,16 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         }
     }
 
-    // The replacement inline attachment set a pull writes: one inline entry per bound spec, typed by
-    // the document's own top-level field, audit-stamped as the pull.
-    private ParsedJsonDocument<JsonElement> WriteInlineAttachments(List<(string Name, ParsedJsonDocument<JsonElement> Document)> specs)
+    // The pull's one-pass save context: the bound spec documents, the scenario set, and the audit stamp.
+    private readonly struct PullSet(List<(string Name, ParsedJsonDocument<JsonElement> Document)> specs, List<ParsedJsonDocument<JsonElement>> scenarios, string actor, DateTimeOffset at)
     {
-        return PersistedJson.ToPooledDocument<JsonElement, (List<(string Name, ParsedJsonDocument<JsonElement> Document)> Specs, string Actor, DateTimeOffset At)>(
-            (specs, this.actor, this.timeProvider.GetUtcNow()),
-            static (Utf8JsonWriter writer, in (List<(string Name, ParsedJsonDocument<JsonElement> Document)> Specs, string Actor, DateTimeOffset At) s) =>
-            {
-                writer.WriteStartArray();
-                foreach ((string name, ParsedJsonDocument<JsonElement> document) in s.Specs)
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("name"u8, name);
-                    writer.WriteString("kind"u8, "inline"u8);
-                    if (DetectType(document.RootElement) is { } type)
-                    {
-                        writer.WriteString("type"u8, type);
-                    }
+        public List<(string Name, ParsedJsonDocument<JsonElement> Document)> Specs { get; } = specs;
 
-                    writer.WritePropertyName("document"u8);
-                    document.RootElement.WriteTo(writer);
-                    writer.WriteString("attachedBy"u8, s.Actor);
-                    writer.WriteString("attachedAt"u8, s.At);
-                    writer.WriteEndObject();
-                }
+        public List<ParsedJsonDocument<JsonElement>> Scenarios { get; } = scenarios;
 
-                writer.WriteEndArray();
-            });
-    }
+        public string Actor { get; } = actor;
 
-    // The replacement scenario set a pull writes (the <name>.scenario.json values, in listing order).
-    private static ParsedJsonDocument<JsonElement> WriteScenarioSet(List<ParsedJsonDocument<JsonElement>> scenarios)
-    {
-        return PersistedJson.ToPooledDocument<JsonElement, List<ParsedJsonDocument<JsonElement>>>(
-            scenarios,
-            static (Utf8JsonWriter writer, in List<ParsedJsonDocument<JsonElement>> all) =>
-            {
-                writer.WriteStartArray();
-                foreach (ParsedJsonDocument<JsonElement> scenario in all)
-                {
-                    scenario.RootElement.WriteTo(writer);
-                }
-
-                writer.WriteEndArray();
-            });
+        public DateTimeOffset At { get; } = at;
     }
 
     // The files a commit writes, in deterministic order: the document, each bound spec (inline

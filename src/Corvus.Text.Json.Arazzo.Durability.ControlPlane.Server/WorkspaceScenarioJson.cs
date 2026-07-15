@@ -20,23 +20,22 @@ internal static class WorkspaceScenarioJson
     /// <summary>Writes the list response.</summary>
     public static ParsedJsonDocument<Models.GetWorkspaceWorkflowsByIdScenariosOk> ListResponse(in JsonElement scenarios)
     {
-        return PersistedJson.ToPooledDocument<Models.GetWorkspaceWorkflowsByIdScenariosOk, JsonElement>(
-            scenarios,
-            static (Utf8JsonWriter writer, in JsonElement s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteStartArray("scenarios"u8);
-                if (s.ValueKind == JsonValueKind.Array)
+        // The generated contextful Create() realises the response (text + parse metadata) in one pooled pass;
+        // the stored scenarios blit in as elements.
+        return Models.GetWorkspaceWorkflowsByIdScenariosOk.Create(
+            context: scenarios,
+            scenarios: Models.GetWorkspaceWorkflowsByIdScenariosOk.ScenarioArray.Build(
+                scenarios,
+                static (in JsonElement s, ref Models.GetWorkspaceWorkflowsByIdScenariosOk.ScenarioArray.Builder b) =>
                 {
-                    foreach (JsonElement scenario in s.EnumerateArray())
+                    if (s.ValueKind == JsonValueKind.Array)
                     {
-                        scenario.WriteTo(writer);
+                        foreach (JsonElement scenario in s.EnumerateArray())
+                        {
+                            b.AddItem(Models.Scenario.From(scenario));
+                        }
                     }
-                }
-
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-            });
+                }));
     }
 
     /// <summary>Finds a scenario by name (an undefined element when absent).</summary>
@@ -59,68 +58,73 @@ internal static class WorkspaceScenarioJson
     /// <summary>A draft replacing (or appending) the named scenario — the whole-set RMW write.</summary>
     public static ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> DraftUpserting(in JsonElement currentScenarios, in JsonElement scenario, string name)
     {
-        return PersistedJson.ToPooledDocument<WorkspaceWorkflows.WorkspaceWorkflow, (JsonElement Current, JsonElement Scenario, string Name)>(
-            (currentScenarios, scenario, name),
-            static (Utf8JsonWriter writer, in (JsonElement Current, JsonElement Scenario, string Name) s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteStartArray("scenarios"u8);
-                if (s.Current.ValueKind == JsonValueKind.Array)
+        // The generated contextful Create() realises the draft in one pooled pass: the kept stored scenarios and the
+        // upserted one blit in as elements; every other property is omitted via default Sources (the store carries
+        // them forward).
+        return WorkspaceWorkflows.WorkspaceWorkflow.Create(
+            context: (currentScenarios, scenario, name),
+            createdAt: default,
+            createdBy: default,
+            document: default,
+            etag: default,
+            id: default,
+            name: default,
+            scenarios: WorkspaceWorkflows.WorkspaceWorkflow.JsonObjectArray.Build(
+                (currentScenarios, scenario, name),
+                static (in (JsonElement Current, JsonElement Scenario, string Name) s, ref WorkspaceWorkflows.WorkspaceWorkflow.JsonObjectArray.Builder b) =>
                 {
-                    foreach (JsonElement entry in s.Current.EnumerateArray())
+                    if (s.Current.ValueKind == JsonValueKind.Array)
                     {
-                        if (!(entry.TryGetProperty("name"u8, out JsonElement n) && n.ValueEquals(s.Name)))
+                        foreach (JsonElement entry in s.Current.EnumerateArray())
                         {
-                            entry.WriteTo(writer);
+                            if (!(entry.TryGetProperty("name"u8, out JsonElement n) && n.ValueEquals(s.Name)))
+                            {
+                                b.AddItem(JsonObject.From(entry));
+                            }
                         }
                     }
-                }
 
-                s.Scenario.WriteTo(writer);
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-            });
+                    b.AddItem(JsonObject.From(s.Scenario));
+                }));
     }
 
     /// <summary>A draft with the named scenario removed (the caller checks presence first).</summary>
     public static ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> DraftRemoving(in JsonElement currentScenarios, string name)
     {
-        return PersistedJson.ToPooledDocument<WorkspaceWorkflows.WorkspaceWorkflow, (JsonElement Current, string Name)>(
-            (currentScenarios, name),
-            static (Utf8JsonWriter writer, in (JsonElement Current, string Name) s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteStartArray("scenarios"u8);
-                if (s.Current.ValueKind == JsonValueKind.Array)
+        // The generated contextful Create() realises the draft in one pooled pass: the surviving stored scenarios
+        // blit in as elements; every other property is omitted via default Sources.
+        return WorkspaceWorkflows.WorkspaceWorkflow.Create(
+            context: (currentScenarios, name),
+            createdAt: default,
+            createdBy: default,
+            document: default,
+            etag: default,
+            id: default,
+            name: default,
+            scenarios: WorkspaceWorkflows.WorkspaceWorkflow.JsonObjectArray.Build(
+                (currentScenarios, name),
+                static (in (JsonElement Current, string Name) s, ref WorkspaceWorkflows.WorkspaceWorkflow.JsonObjectArray.Builder b) =>
                 {
-                    foreach (JsonElement entry in s.Current.EnumerateArray())
+                    if (s.Current.ValueKind == JsonValueKind.Array)
                     {
-                        if (!(entry.TryGetProperty("name"u8, out JsonElement n) && n.ValueEquals(s.Name)))
+                        foreach (JsonElement entry in s.Current.EnumerateArray())
                         {
-                            entry.WriteTo(writer);
+                            if (!(entry.TryGetProperty("name"u8, out JsonElement n) && n.ValueEquals(s.Name)))
+                            {
+                                b.AddItem(JsonObject.From(entry));
+                            }
                         }
                     }
-                }
-
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-            });
+                }));
     }
 
     /// <summary>Writes the put response: the stored scenario + the working copy's fresh etag.</summary>
     public static ParsedJsonDocument<Models.PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk> PutResponse(in JsonElement scenario, string etag)
-    {
-        return PersistedJson.ToPooledDocument<Models.PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk, (JsonElement Scenario, string Etag)>(
-            (scenario, etag),
-            static (Utf8JsonWriter writer, in (JsonElement Scenario, string Etag) s) =>
-            {
-                writer.WriteStartObject();
-                writer.WritePropertyName("scenario"u8);
-                s.Scenario.WriteTo(writer);
-                writer.WriteString("etag"u8, s.Etag);
-                writer.WriteEndObject();
-            });
-    }
+
+        // The generated Create() realises the response in one pooled pass; the stored scenario blits in as an element.
+        => Models.PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk.Create(
+            etag: etag,
+            scenario: Models.Scenario.From(scenario));
 
     /// <summary>
     /// Resolves every attached source's OpenAPI operations to (source, operationId) → (method, path

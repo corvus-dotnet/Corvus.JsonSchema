@@ -1911,11 +1911,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         // The stored attachment IS the restore payload: name + kind + (sourceName | document) —
-        // copied into a workspace-owned pooled document (the store copy disposes with this scope).
+        // blitted whole into a workspace-owned pooled document by the generated Create() (the store
+        // copy disposes with this scope).
         ParsedJsonDocument<Models.GetWorkspaceWorkflowsByIdSourcesByNameOk> response =
-            PersistedJson.ToPooledDocument<Models.GetWorkspaceWorkflowsByIdSourcesByNameOk, JsonElement>(
-                attachment,
-                static (Utf8JsonWriter writer, in JsonElement entry) => entry.WriteTo(writer));
+            Models.GetWorkspaceWorkflowsByIdSourcesByNameOk.Create(
+                Models.GetWorkspaceWorkflowsByIdSourcesByNameOk.From(attachment));
         workspace.TakeOwnership(response);
         return GetWorkingCopySourceResult.Ok(response.RootElement, workspace);
     }

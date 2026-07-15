@@ -306,32 +306,19 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
                 return FetchSourceDocumentResult.BadRequest(Problem("invalid-fetch", "Invalid fetch", 400, detail!), workspace);
         }
 
-        // The response envelope writes in one pooled pass with the fetched document copied
-        // bytes-to-bytes; the fetcher's pooled document then disposes (the body owns its own storage).
+        // The generated Create() realises the response envelope (text + parse metadata) in one pooled pass with the
+        // fetched document blitted in as an element; the fetcher's pooled document then disposes (the body owns its
+        // own storage).
         using (fetched)
         {
-            ParsedJsonDocument<Models.FetchedSourceDocument> response = PersistedJson.ToPooledDocument<Models.FetchedSourceDocument, SourceDocumentFetcher.FetchedDocument>(
-                fetched!,
-                static (Utf8JsonWriter writer, in SourceDocumentFetcher.FetchedDocument f) =>
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("url"u8, f.Url);
-                    writer.WriteString("type"u8, f.Type);
-                    if (f.Version is { } version)
-                    {
-                        writer.WriteString("version"u8, version);
-                    }
-
-                    writer.WriteString("digest"u8, f.Digest);
-                    if (f.ContentType is { } contentType)
-                    {
-                        writer.WriteString("contentType"u8, contentType);
-                    }
-
-                    writer.WritePropertyName("document"u8);
-                    ((JsonElement)f.Document.RootElement).WriteTo(writer);
-                    writer.WriteEndObject();
-                });
+            SourceDocumentFetcher.FetchedDocument f = fetched!;
+            ParsedJsonDocument<Models.FetchedSourceDocument> response = Models.FetchedSourceDocument.Create(
+                digest: f.Digest,
+                document: Models.FetchedSourceDocument.TheDocumentAsJson.From((JsonElement)f.Document.RootElement),
+                type: f.Type,
+                url: f.Url,
+                contentType: f.ContentType is { } contentType ? (Models.JsonString.Source)contentType : default,
+                version: f.Version is { } version ? (Models.JsonString.Source)version : default);
             workspace.TakeOwnership(response);
             return FetchSourceDocumentResult.Ok(response.RootElement, workspace);
         }
