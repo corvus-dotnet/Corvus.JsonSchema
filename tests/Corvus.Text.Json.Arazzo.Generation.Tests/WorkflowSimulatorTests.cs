@@ -526,6 +526,180 @@ public sealed class WorkflowSimulatorTests
         counting.Builds.ShouldBe(2, "a different document state compiles once more");
     }
 
+    // Defect 1 (pack 3 §15-8a): a parent whose sub-workflow executes more steps than MaxSteps. The
+    // child runs untracked today (null scope), so its steps escape the budget entirely and the
+    // simulation completes; one global budget must count them and fault on exhaustion.
+    private const string NestedBudgetWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "NestedBudget", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                { "stepId": "call-child", "workflowId": "child", "parameters": [ { "name": "petId", "value": "$inputs.petId" } ] }
+              ]
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                { "stepId": "first", "operationId": "getPet", "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ], "successCriteria": [ { "condition": "$statusCode == 200" } ] },
+                { "stepId": "second", "operationId": "getPet", "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ], "successCriteria": [ { "condition": "$statusCode == 200" } ] },
+                { "stepId": "third", "operationId": "getPet", "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ], "successCriteria": [ { "condition": "$statusCode == 200" } ] }
+              ]
+            }
+          ]
+        }
+        """;
+
+    // Defect 2 (pack 3 §15-8a): the retry fixture one level down — the child's retryAfter timer must
+    // ride the shared ManualTimeProvider (suspension bubbling to the root, auto-advance re-entering,
+    // the child replayed fresh per invocation). Today the child runs untracked: no suspension surface,
+    // nothing advances its clock.
+    private const string NestedTimerWorkflowJson = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "NestedTimer", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                { "stepId": "call-child", "workflowId": "child", "parameters": [ { "name": "petId", "value": "$inputs.petId" } ] }
+              ]
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                {
+                  "stepId": "get-pet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "onFailure": [ { "name": "again", "type": "retry", "retryAfter": 5, "retryLimit": 3 } ]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Sub_workflow_steps_count_against_the_one_global_budget()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(NestedBudgetWorkflowJson), Sources, scenario, budget: new SimulationBudget { MaxSteps = 2 });
+
+        // The child's three steps must count against the parent's MaxSteps=2 (decision §8.2); an
+        // untracked child completes the whole run without ever touching the budget.
+        result.Outcome.ShouldBe(SimulationOutcome.BudgetExhausted, "sub-workflow steps must count against the one global budget");
+    }
+
+    [TestMethod]
+    public async Task A_sub_workflow_timer_rides_the_shared_virtual_clock()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks =
+            [
+                new("get", "/pets/{petId}", 503, default),
+                new("get", "/pets/{petId}", 503, default),
+                new("get", "/pets/{petId}", 200, body.RootElement),
+            ],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(Encoding.UTF8.GetBytes(NestedTimerWorkflowJson), Sources, scenario);
+
+        // Mirrors A_retry_with_delay_advances_the_virtual_clock_and_records_each_attempt one level
+        // down (decision §8.3): the child's timer suspension bubbles to the root, the driver advances
+        // the SHARED clock, and the parent replays the child fresh per invocation until it succeeds.
+        result.Outcome.ShouldBe(SimulationOutcome.Completed, "a sub-workflow retry timer must suspend and auto-advance on the shared clock");
+        result.ClockAdvances.Count.ShouldBe(2, "two failed child attempts, each retryAfter=5s on the shared clock");
+        (result.ClockAdvances[1].To - result.ClockAdvances[0].To).ShouldBe(TimeSpan.FromSeconds(5));
+        result.StepsExecuted.ShouldBeGreaterThanOrEqualTo(4, "each child (re)execution counts against the shared budget");
+    }
+
+    [TestMethod]
+    public async Task A_parent_record_does_not_swallow_the_child_exchanges()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(Encoding.UTF8.GetBytes(SubWorkflowJson), Sources, scenario);
+
+        result.Outcome.ShouldBe(SimulationOutcome.Completed);
+
+        // The child recorder owns the child's exchange range: the parent step's record covers only
+        // the parent's own exchanges (none — a workflowId step makes no calls itself). Today the
+        // untracked child's exchange lands inside the parent record's range.
+        SimulatedStepRecord parent = result.Steps.Single(s => s.StepId == "call-child");
+        parent.ExchangeCount.ShouldBe(0, "the child's exchanges belong to the child's records, not the parent step's range");
+        result.Exchanges.Count.ShouldBe(1, "the child's exchange is still in the one global exchange list");
+    }
+
+    [TestMethod]
+    public async Task A_scoped_breakpoint_fires_inside_a_sub_workflow()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(SubWorkflowJson), Sources, scenario,
+            new SimulationStop { Breakpoints = new HashSet<string> { "call-child/get-pet" } });
+
+        // Design §3.5: the composed scoped path addresses the step inside the child; the root trace's
+        // pausedBefore carries the full scoped path.
+        result.Outcome.ShouldBe(SimulationOutcome.Paused, "a scoped breakpoint must fire inside the sub-workflow");
+        result.PausedBefore.ShouldBe("call-child/get-pet");
+    }
+
+    [TestMethod]
+    public async Task A_bare_step_id_breakpoint_does_not_fire_inside_a_sub_workflow()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement)],
+        };
+
+        // "get-pet" exists only INSIDE the child; a bare id addresses root steps only (design §2),
+        // so this run must complete without pausing — pinned deliberately, before and after the seam.
+        using SimulationResult result = await simulator.SimulateAsync(
+            Encoding.UTF8.GetBytes(SubWorkflowJson), Sources, scenario,
+            new SimulationStop { Breakpoints = new HashSet<string> { "get-pet" } });
+
+        result.Outcome.ShouldBe(SimulationOutcome.Completed, "a bare stepId must address root steps only");
+    }
+
     [TestMethod]
     public async Task An_uncompilable_document_reports_not_executable()
     {

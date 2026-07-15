@@ -21,10 +21,37 @@ namespace Corvus.Text.Json.Arazzo.Testing;
 /// Every step completion records a <see cref="SimulatedStepRecord"/> stamped with the exchange range
 /// it produced (the mock transport's exchange count at the two boundaries).
 /// </para>
+/// <para>
+/// A workflowId-bound step executes its sub-workflow through a CHILD SCOPE (§15-8a):
+/// <see cref="BeginSubWorkflow"/> returns a recorder for the child that SHARES the root's step
+/// budget, virtual clock, stop conditions, exchange cursor, and arrival counters (root-owned and
+/// cumulative across child invocations — design §10 F5), while keeping its own step records,
+/// outputs, retry counts, and an EMPTY step-output-override map (a root override matching a child's
+/// bare stepId must never fire inside the child — §10 F6). Child scopes are created fresh per
+/// invocation: a suspension that re-enters the root executor replays the child from its start
+/// (§8.2's replay model one level down). Message delivery forwards root→child so a trigger injected
+/// on the root reaches a receive step inside the child. Cross-source sub-workflows (whose shape
+/// lives in another document) run with an empty step-id map: recorded scopes without step
+/// attribution — declared out of scope for v1 (§10 F10).
+/// </para>
 /// </remarks>
 internal sealed class TracingWorkflowRun : IWorkflowRun
 {
+    /// <summary>
+    /// The nesting depth cap (decision §8.2): a deliberate constant well past any legitimate
+    /// composition depth, so runaway mutual recursion between workflows exhausts predictably
+    /// instead of overflowing the stack. The demo mock aligns to this value (slice E).
+    /// </summary>
+    internal const int MaxSubWorkflowDepth = 8;
+
+    private static readonly IReadOnlyDictionary<string, StepOutputOverride> EmptyOverrides = new Dictionary<string, StepOutputOverride>();
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> EmptyStepIdMap = new Dictionary<string, IReadOnlyList<string>>();
+
+    private readonly TracingWorkflowRun root;
+    private readonly string pathPrefix;
+    private readonly int depth;
     private readonly IReadOnlyList<string> stepIds;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> subWorkflowStepIds;
     private readonly SimulationStop stop;
     private readonly int maxSteps;
     private readonly ManualTimeProvider clock;
@@ -32,12 +59,20 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
     private readonly IReadOnlyDictionary<string, StepOutputOverride> overrides;
     private readonly Dictionary<string, JsonElement> outputs = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> retryCounts = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, int> arrivals = new(StringComparer.Ordinal);
     private readonly List<SimulatedStepRecord> steps = [];
-    private int currentState;
+
+    // Root-owned shared state: the budget, the exchange cursor, the composed-path arrival counters,
+    // the recorded wait, the delivered message, and the (scoped) paused-before path. Child scopes
+    // read and write these through the root so one budget, one clock policy, and one exchange space
+    // hold across nesting.
+    private readonly Dictionary<string, int> arrivals = new(StringComparer.Ordinal);
+    private int stepsExecuted;
     private int exchangeMark;
+    private WorkflowWait? recordedWait;
+    private string? pausedBefore;
     private JsonElement deliveredMessage;
     private bool hasDeliveredMessage;
+    private int currentState;
 
     public TracingWorkflowRun(
         IReadOnlyList<string> stepIds,
@@ -45,9 +80,14 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         int maxSteps,
         ManualTimeProvider clock,
         MockApiTransport transport,
-        IReadOnlyDictionary<string, StepOutputOverride> overrides)
+        IReadOnlyDictionary<string, StepOutputOverride> overrides,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? subWorkflowStepIds = null)
     {
+        this.root = this;
+        this.pathPrefix = string.Empty;
+        this.depth = 0;
         this.stepIds = stepIds;
+        this.subWorkflowStepIds = subWorkflowStepIds ?? EmptyStepIdMap;
         this.stop = stop;
         this.maxSteps = maxSteps;
         this.clock = clock;
@@ -58,25 +98,43 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         this.CheckStop(0, throwBeforeAnything: false);
     }
 
-    /// <summary>Gets the executed-step records, in execution order.</summary>
+    private TracingWorkflowRun(TracingWorkflowRun root, string pathPrefix, int depth, IReadOnlyList<string> stepIds)
+    {
+        this.root = root;
+        this.pathPrefix = pathPrefix;
+        this.depth = depth;
+        this.stepIds = stepIds;
+        this.subWorkflowStepIds = root.subWorkflowStepIds;
+        this.stop = root.stop;
+        this.maxSteps = root.maxSteps;
+        this.clock = root.clock;
+        this.transport = root.transport;
+        this.overrides = EmptyOverrides;
+
+        // A scoped stop may name the child's FIRST step; the run is mid-flight, so unwind (the
+        // driver consumes the pause with the root's scoped pausedBefore already set).
+        this.CheckStop(0, throwBeforeAnything: true);
+    }
+
+    /// <summary>Gets the executed-step records for THIS scope, in execution order (the root's are the trace).</summary>
     public IReadOnlyList<SimulatedStepRecord> Steps => this.steps;
 
-    /// <summary>Gets the total step executions so far (the budget's measure).</summary>
-    public int StepsExecuted { get; private set; }
+    /// <summary>Gets the total step executions so far across every scope (the one global budget's measure).</summary>
+    public int StepsExecuted => this.root.stepsExecuted;
 
-    /// <summary>Gets the workflow outputs recorded by <see cref="CompleteAsync"/>.</summary>
+    /// <summary>Gets the workflow outputs recorded by <see cref="CompleteAsync"/> on this scope.</summary>
     public JsonElement WorkflowOutputs { get; private set; }
 
-    /// <summary>Gets the fault recorded by <see cref="FaultAsync"/>, if any.</summary>
+    /// <summary>Gets the fault recorded by <see cref="FaultAsync"/> on this scope, if any.</summary>
     public WorkflowFault? RecordedFault { get; private set; }
 
-    /// <summary>Gets the wait recorded by the last suspend, if any.</summary>
-    public WorkflowWait? RecordedWait { get; private set; }
+    /// <summary>Gets the wait recorded by the last suspend in ANY scope (a child suspension bubbles), if any.</summary>
+    public WorkflowWait? RecordedWait => this.root.recordedWait;
 
-    /// <summary>Gets the step whose arrival satisfied the stop condition, when the run paused.</summary>
-    public string? PausedBefore { get; private set; }
+    /// <summary>Gets the scoped step path whose arrival satisfied the stop condition, when the run paused.</summary>
+    public string? PausedBefore => this.root.pausedBefore;
 
-    /// <summary>Gets the step currently executing, when one is (fault attribution for executor crashes).</summary>
+    /// <summary>Gets the step currently executing in this scope, when one is (fault attribution for executor crashes).</summary>
     public string? CurrentStepId => this.currentState >= 0 && this.currentState < this.stepIds.Count ? this.stepIds[this.currentState] : null;
 
     /// <inheritdoc/>
@@ -92,14 +150,14 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
     public void BeginInvocation()
     {
         this.currentState = this.Cursor;
-        this.RecordedWait = null;
+        this.root.recordedWait = null;
     }
 
     /// <summary>Hands the next matching trigger's payload to the resumed correlated-receive step.</summary>
     public void DeliverMessage(in JsonElement payload)
     {
-        this.deliveredMessage = payload;
-        this.hasDeliveredMessage = true;
+        this.root.deliveredMessage = payload;
+        this.root.hasDeliveredMessage = true;
     }
 
     /// <inheritdoc/>
@@ -113,6 +171,21 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
 
     /// <inheritdoc/>
     public void SetRetryCount(string stepId, int count) => this.retryCounts[stepId] = count;
+
+    /// <inheritdoc/>
+    public IWorkflowRun? BeginSubWorkflow(string stepId, string subWorkflowId)
+    {
+        if (this.depth + 1 > MaxSubWorkflowDepth)
+        {
+            // Depth is a budget-class limit: unwind to BudgetExhausted rather than overflowing.
+            throw new SimulationBudgetException();
+        }
+
+        // A sub-workflow defined in another source document has no local shape: the child scope
+        // still shares the clock/budget surfaces, but records without step attribution (§10 F10).
+        IReadOnlyList<string> childStepIds = this.subWorkflowStepIds.TryGetValue(subWorkflowId, out IReadOnlyList<string>? ids) ? ids : [];
+        return new TracingWorkflowRun(this.root, this.pathPrefix + stepId + "/", this.depth + 1, childStepIds);
+    }
 
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
@@ -147,7 +220,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         this.RecordStepBoundary(faulted: false);
         this.Cursor = cursor;
         var wait = WorkflowWait.Timer(this.clock.GetUtcNow() + delay);
-        this.RecordedWait = wait;
+        this.root.recordedWait = wait;
         return new(wait);
     }
 
@@ -158,7 +231,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         // just the wait — the resumed invocation re-enters the same state and completes the step.
         this.Cursor = cursor;
         var wait = WorkflowWait.Message(channel, correlationId);
-        this.RecordedWait = wait;
+        this.root.recordedWait = wait;
         return new(wait);
     }
 
@@ -174,10 +247,10 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
     /// <inheritdoc/>
     public bool TryTakeDeliveredMessage(out JsonElement payload)
     {
-        if (this.hasDeliveredMessage)
+        if (this.root.hasDeliveredMessage)
         {
-            payload = this.deliveredMessage;
-            this.hasDeliveredMessage = false;
+            payload = this.root.deliveredMessage;
+            this.root.hasDeliveredMessage = false;
             return true;
         }
 
@@ -200,7 +273,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
             && this.overrides.TryGetValue(this.stepIds[this.Cursor], out StepOutputOverride stepOverride))
         {
             string stepId = this.stepIds[this.Cursor];
-            if (++this.StepsExecuted > this.maxSteps)
+            if (++this.root.stepsExecuted > this.maxSteps)
             {
                 throw new SimulationBudgetException();
             }
@@ -216,7 +289,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
                 Attempt = 0,
                 Skipped = true,
                 Outputs = stepOverride.Outputs,
-                FirstExchange = this.exchangeMark,
+                FirstExchange = this.root.exchangeMark,
                 ExchangeCount = 0,
                 ActionTaken = stepOverride.Action,
             });
@@ -236,7 +309,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         }
 
         string stepId = faultedStepId ?? this.stepIds[this.currentState];
-        if (++this.StepsExecuted > this.maxSteps)
+        if (++this.root.stepsExecuted > this.maxSteps)
         {
             throw new SimulationBudgetException();
         }
@@ -247,14 +320,19 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
             Attempt = faulted ? Math.Max(0, faultedAttempt - 1) : this.retryCounts.GetValueOrDefault(stepId),
             Faulted = faulted,
             Outputs = this.outputs.TryGetValue(stepId, out JsonElement produced) ? produced : default,
-            FirstExchange = this.exchangeMark,
-            ExchangeCount = this.transport.Exchanges.Count - this.exchangeMark,
+            FirstExchange = this.root.exchangeMark,
+            ExchangeCount = this.transport.Exchanges.Count - this.root.exchangeMark,
         });
-        this.exchangeMark = this.transport.Exchanges.Count;
+        this.root.exchangeMark = this.transport.Exchanges.Count;
         this.currentState = -1; // consumed; the next boundary needs a fresh state (checkpoint/resume sets it)
     }
 
-    /// <summary>Halts the replay when the NEXT step matches the stop condition.</summary>
+    /// <summary>
+    /// Halts the replay when the NEXT step matches the stop condition. Steps are addressed by their
+    /// scoped step path (design §3.5): the scope's path prefix composed with the stepId. A bare id
+    /// therefore matches root steps only — a sub-workflow's bare stepId never fires — and arrival
+    /// counters live on the root keyed by the composed path, cumulative across child invocations.
+    /// </summary>
     private void CheckStop(int nextState, bool throwBeforeAnything)
     {
         if (this.stop.IsEmpty || nextState < 0 || nextState >= this.stepIds.Count)
@@ -262,15 +340,15 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
             return;
         }
 
-        string next = this.stepIds[nextState];
-        int arrival = this.arrivals.GetValueOrDefault(next) + 1;
-        this.arrivals[next] = arrival;
+        string next = this.pathPrefix.Length == 0 ? this.stepIds[nextState] : this.pathPrefix + this.stepIds[nextState];
+        int arrival = this.root.arrivals.GetValueOrDefault(next) + 1;
+        this.root.arrivals[next] = arrival;
 
         bool hit = this.stop.Breakpoints.Contains(next)
             || (this.stop.BeforeStepId == next && arrival == this.stop.Occurrence);
         if (hit)
         {
-            this.PausedBefore = next;
+            this.root.pausedBefore = next;
             if (throwBeforeAnything)
             {
                 throw new SimulationPauseException(next);

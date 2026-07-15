@@ -115,7 +115,13 @@ public sealed class WorkflowSimulator : IDisposable
 
         var clock = new ManualTimeProvider();
         var clockAdvances = new List<SimulationClockAdvance>();
-        var run = new TracingWorkflowRun(shape.StepIds, stop, budget.MaxSteps, clock, transport, BuildOverrides(shape, scenario));
+        var subWorkflowStepIds = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, WorkflowShape> entry in shape.Workflows)
+        {
+            subWorkflowStepIds[entry.Key] = entry.Value.StepIds;
+        }
+
+        var run = new TracingWorkflowRun(shape.StepIds, stop, budget.MaxSteps, clock, transport, BuildOverrides(shape, scenario), subWorkflowStepIds);
 
         // UNRENTED deliberately: the rented workspace cache is thread-affine, and this workspace's
         // lifetime is the SimulationResult's — disposed by the caller after awaits, possibly on
@@ -505,6 +511,9 @@ public sealed class WorkflowSimulator : IDisposable
 
         public IReadOnlyList<Action> WorkflowFailureActions { get; private init; } = [];
 
+        /// <summary>Gets every workflow's shape by workflowId (the whole document, the root included).</summary>
+        public IReadOnlyDictionary<string, WorkflowShape> Workflows { get; private init; } = new Dictionary<string, WorkflowShape>(StringComparer.Ordinal);
+
         public static WorkflowShape From(JsonElement root)
         {
             var sourceNames = new List<string>();
@@ -522,16 +531,23 @@ public sealed class WorkflowSimulator : IDisposable
             JsonElement components = default;
             root.TryGetProperty("components"u8, out components);
 
-            var stepIds = new List<string>();
-            var steps = new Dictionary<string, Step>(StringComparer.Ordinal);
-            IReadOnlyList<Action> workflowSuccess = [];
-            IReadOnlyList<Action> workflowFailure = [];
+            // Every workflow in the document gets its own shape, keyed by workflowId — the child
+            // step ids drive sub-workflow scopes (§15-8a), and the per-workflow criteria/actions
+            // drive scoped-stop validation and nested trace analysis. The FIRST workflow is the
+            // simulated one; its shape is the returned root (carrying the map).
+            var byId = new Dictionary<string, WorkflowShape>(StringComparer.Ordinal);
+            List<string>? firstStepIds = null;
+            Dictionary<string, Step>? firstSteps = null;
+            IReadOnlyList<Action> firstSuccess = [];
+            IReadOnlyList<Action> firstFailure = [];
             if (root.TryGetProperty("workflows"u8, out JsonElement workflows) && workflows.ValueKind == JsonValueKind.Array)
             {
                 foreach (JsonElement workflow in workflows.EnumerateArray())
                 {
-                    workflowSuccess = ReadActions(workflow, "successActions"u8, components);
-                    workflowFailure = ReadActions(workflow, "failureActions"u8, components);
+                    IReadOnlyList<Action> workflowSuccess = ReadActions(workflow, "successActions"u8, components);
+                    IReadOnlyList<Action> workflowFailure = ReadActions(workflow, "failureActions"u8, components);
+                    var stepIds = new List<string>();
+                    var steps = new Dictionary<string, Step>(StringComparer.Ordinal);
                     if (workflow.TryGetProperty("steps"u8, out JsonElement stepArray) && stepArray.ValueKind == JsonValueKind.Array)
                     {
                         foreach (JsonElement step in stepArray.EnumerateArray())
@@ -549,17 +565,36 @@ public sealed class WorkflowSimulator : IDisposable
                         }
                     }
 
-                    break; // the FIRST workflow is the simulated one
+                    if (workflow.TryGetProperty("workflowId"u8, out JsonElement workflowId) && workflowId.GetString() is { Length: > 0 } wid)
+                    {
+                        byId[wid] = new WorkflowShape
+                        {
+                            StepIds = stepIds,
+                            SourceNames = sourceNames,
+                            Steps = steps,
+                            WorkflowSuccessActions = workflowSuccess,
+                            WorkflowFailureActions = workflowFailure,
+                        };
+                    }
+
+                    if (firstStepIds is null)
+                    {
+                        firstStepIds = stepIds;
+                        firstSteps = steps;
+                        firstSuccess = workflowSuccess;
+                        firstFailure = workflowFailure;
+                    }
                 }
             }
 
             return new WorkflowShape
             {
-                StepIds = stepIds,
+                StepIds = firstStepIds ?? [],
                 SourceNames = sourceNames,
-                Steps = steps,
-                WorkflowSuccessActions = workflowSuccess,
-                WorkflowFailureActions = workflowFailure,
+                Steps = firstSteps ?? new Dictionary<string, Step>(StringComparer.Ordinal),
+                WorkflowSuccessActions = firstSuccess,
+                WorkflowFailureActions = firstFailure,
+                Workflows = byId,
             };
         }
 
