@@ -86,11 +86,20 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // demo exercises the genuine metadata generator and JSON Schema validator.
         await DemoData.SeedAsync(context.Catalog, context.SpecsDir);
 
+        // The arazzo-admins group's resolved identity (sys:group + the pinned sys:iss issuer) — the identity the
+        // governance seeds below key on: production credential usage, environment administration.
+        SecurityTagSet adminGroup = DemoData.GroupIdentity("arazzo-admins");
+
         // Source-credential bindings — references only (the §13 invariant: never secret material). Each points at the
         // Vault path the AppHost's provisioner seeds (vault://secret/arazzo/<source>#api-key); the runner resolves it
-        // with its read-only token. This populates /credentials (and the CLI + web UI) out of the box.
+        // with its read-only token. This populates /credentials (and the CLI + web UI) out of the box. The PRODUCTION
+        // bindings are usage-scoped to the admin group (§13: only runs carrying the admin identity are entitled), so
+        // the access overview shows the admin team's credential rights; development stays shared (empty usage tags) so
+        // any debug run resolves its credentials.
         foreach (string environment in new[] { "production", "development" })
         {
+            SecurityTagSet usage = environment == "production" ? adminGroup : SecurityTagSet.Empty;
+
             // 'notifications' is the AsyncAPI (NATS) source onboard-customer-async binds (kyc.requests / kyc.verdict). Its
             // transport is the message binder, not a per-source API key, but the debug-run readiness gate requires a binding
             // for EVERY referenced source — so it is seeded here too (its Vault #api-key is provisioned but never resolved
@@ -105,7 +114,8 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                         SourceCredentialKind.ApiKey,
                         // The ApiKey provider resolves the key from the secret reference named "value" (default header
                         // X-API-Key); the reference target is the Vault path's #api-key field the provisioner seeds.
-                        [new SecretReferenceDefinition("value", $"vault://secret/arazzo/{source}#api-key")]),
+                        [new SecretReferenceDefinition("value", $"vault://secret/arazzo/{source}#api-key")],
+                        UsageTags: usage),
                     "demo",
                     cancellationToken);
             }
@@ -139,7 +149,6 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // Environment administrators (§7.7): the arazzo-admins group administers every environment — the key unblock so
         // an administrator can manage grants, promotions, and availability per environment (without this, no interactive
         // administrator exists for the governance surfaces). The identity is the resolved sys:group=arazzo-admins tag.
-        SecurityTagSet adminGroup = DemoData.GroupIdentity("arazzo-admins");
         var administration = new SecuredEnvironmentAdministration(context.EnvironmentAdministrators, "demo");
         foreach (string environmentName in new[] { "development", "staging", "production" })
         {

@@ -275,6 +275,27 @@ public readonly partial struct SecurityBindingSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>eligibleOnly</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// True for a binding that records eligibility only (a PIM assignment the principal may self-elevate to): it confers nothing active.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean EligibleOnly
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EligibleOnlyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>etag</c> property.
     /// </summary>
     /// <remarks>
@@ -287,6 +308,27 @@ public readonly partial struct SecurityBindingSummary
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EtagUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>expiresAt</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When the binding expires (a &#167;16.5.2 time-boxed grant); absent for a non-expiring binding.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime ExpiresAt
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpiresAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
             {
                 return value;
             }
@@ -409,6 +451,27 @@ public readonly partial struct SecurityBindingSummary
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReadUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VerbGrant value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>scopes</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The capability scopes the binding confers on matching principals (design &#167;16.5), if any.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingSummary.JsonStringArray Scopes
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScopesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingSummary.JsonStringArray value))
             {
                 return value;
             }
@@ -915,9 +978,19 @@ public readonly partial struct SecurityBindingSummary
         public const string Description = "description";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="EligibleOnly"/>.
+        /// </summary>
+        public const string EligibleOnly = "eligibleOnly";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Etag"/>.
         /// </summary>
         public const string Etag = "etag";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public const string ExpiresAt = "expiresAt";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Id"/>.
@@ -948,6 +1021,11 @@ public readonly partial struct SecurityBindingSummary
         /// Gets the JSON property name for <see cref="Read"/>.
         /// </summary>
         public const string Read = "read";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Scopes"/>.
+        /// </summary>
+        public const string Scopes = "scopes";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Write"/>.
@@ -985,9 +1063,19 @@ public readonly partial struct SecurityBindingSummary
         public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="EligibleOnly"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EligibleOnlyUtf8 => "eligibleOnly"u8;
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> EtagUtf8 => "etag"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExpiresAtUtf8 => "expiresAt"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Id"/>.
@@ -1018,6 +1106,11 @@ public readonly partial struct SecurityBindingSummary
         /// Gets the JSON property name for <see cref="Read"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ReadUtf8 => "read"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Scopes"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ScopesUtf8 => "scopes"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Write"/>.
@@ -1061,9 +1154,19 @@ public readonly partial struct SecurityBindingSummary
         public static ReadOnlySpan<byte> Description => "description"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="EligibleOnly"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EligibleOnly => "eligibleOnly"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Etag => "etag"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExpiresAt => "expiresAt"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Id"/>.
@@ -1094,6 +1197,11 @@ public readonly partial struct SecurityBindingSummary
         /// Gets the escaped UTF-8 JSON property name for <see cref="Read"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Read => "read"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Scopes"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Scopes => "scopes"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Write"/>.
@@ -1138,9 +1246,19 @@ public readonly partial struct SecurityBindingSummary
         public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
 
         /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="EligibleOnly"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EligibleOnly => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6C, 0x69, 0x67, 0x69, 0x62, 0x6C, 0x65, 0x4F, 0x6E, 0x6C, 0x79, 0x22];
+
+        /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Etag => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x74, 0x61, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExpiresAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExpiresAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Id"/>.
@@ -1171,6 +1289,11 @@ public readonly partial struct SecurityBindingSummary
         /// Gets the pre-baked property name blob for <see cref="Read"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Read => [0x65, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Scopes"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Scopes => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x6F, 0x70, 0x65, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Write"/>.

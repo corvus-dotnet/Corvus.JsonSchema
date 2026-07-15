@@ -130,9 +130,15 @@ public static class ControlPlaneEndpointExtensions
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
         var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access);
 
-        // The access-overview (GET /access/grants) aggregates a grantee's bindings + administered workflows + usable
-        // credentials, so the security handler also reads the catalog (administered workflows) and the credential store.
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore);
+        // The environment administration service (§7.7) is shared by the environments/availability handlers below and
+        // by the access-overview aggregation (administered environments), so it is constructed ahead of both.
+        IEnvironmentAdministratorStore envAdminStore = environmentAdministratorStore ?? new InMemoryEnvironmentAdministratorStore();
+        var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
+
+        // The access-overview (GET /access/grants) aggregates a grantee's bindings + conferred capability scopes +
+        // administered workflows and environments + usable credentials, so the security handler also reads the catalog
+        // (administered workflows), the credential store, and the environment administration reverse index.
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration);
 
         // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
         // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
@@ -158,8 +164,6 @@ public static class ControlPlaneEndpointExtensions
         // administration service over the environment-administrator store), and creating an environment grants the creator
         // administration. Both default to an in-memory store so the endpoints function in development.
         IEnvironmentStore envStore = environmentStore ?? new InMemoryEnvironmentStore();
-        IEnvironmentAdministratorStore envAdminStore = environmentAdministratorStore ?? new InMemoryEnvironmentAdministratorStore();
-        var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
         var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore);
 
         // The sources registry API (§7.6): first-class, reach-scoped source documents a workflow references by name. The

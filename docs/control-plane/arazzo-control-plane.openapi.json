@@ -4846,7 +4846,7 @@
       },
       "AccessGrantsOverview": {
         "type": "object",
-        "description": "The who-can-do-what aggregation for one grantee (design §6.1): the security bindings that grant it reach, the workflows it administers, and the credentials its runs may use.",
+        "description": "The who-can-do-what aggregation for one grantee (design §6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.",
         "properties": {
           "grantee": {
             "$ref": "#/components/schemas/ResolvedGrantee"
@@ -4858,11 +4858,25 @@
               "$ref": "#/components/schemas/SecurityBindingSummary"
             }
           },
+          "capabilities": {
+            "type": "array",
+            "description": "The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible.",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsCapability"
+            }
+          },
           "administers": {
             "type": "array",
-            "description": "The base workflows the grantee administers (exact identity set-equality).",
+            "description": "The base workflows the grantee administers (membership: an administrator identity contained in the grantee's identity).",
             "items": {
               "$ref": "#/components/schemas/AccessGrantsAdministeredWorkflow"
+            }
+          },
+          "administersEnvironments": {
+            "type": "array",
+            "description": "The environments the grantee administers (membership, mirroring administers).",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsAdministeredEnvironment"
             }
           },
           "credentialUsage": {
@@ -4876,8 +4890,46 @@
         "required": [
           "grantee",
           "bindings",
+          "capabilities",
           "administers",
+          "administersEnvironments",
           "credentialUsage"
+        ]
+      },
+      "AccessGrantsCapability": {
+        "type": "object",
+        "description": "One capability scope a grantee's matched bindings confer (design §16.5): active (held now) or eligible-only (a PIM eligibility the grantee may self-elevate to).",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "The capability scope (e.g. runs:write)."
+          },
+          "eligible": {
+            "type": "boolean",
+            "description": "True when the scope is eligible-only (self-elevation required); false when it is held actively."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the last conferring binding expires; absent when a conferring binding never expires."
+          }
+        },
+        "required": [
+          "scope",
+          "eligible"
+        ]
+      },
+      "AccessGrantsAdministeredEnvironment": {
+        "type": "object",
+        "description": "An environment a grantee administers (a link target for the environments panel).",
+        "properties": {
+          "environment": {
+            "type": "string",
+            "description": "The environment name."
+          }
+        },
+        "required": [
+          "environment"
         ]
       },
       "AccessGrantsAdministeredWorkflow": {
@@ -5615,6 +5667,22 @@
           },
           "purge": {
             "$ref": "#/components/schemas/VerbGrant"
+          },
+          "scopes": {
+            "type": "array",
+            "description": "The capability scopes the binding confers on matching principals (design §16.5), if any.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the binding expires (a §16.5.2 time-boxed grant); absent for a non-expiring binding."
+          },
+          "eligibleOnly": {
+            "type": "boolean",
+            "description": "True for a binding that records eligibility only (a PIM assignment the principal may self-elevate to): it confers nothing active."
           },
           "order": {
             "type": "integer",

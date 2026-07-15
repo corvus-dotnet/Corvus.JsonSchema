@@ -36,6 +36,8 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private readonly ControlPlaneAccess? access;
     private readonly ISecuredWorkflowCatalog? catalog;
     private readonly ISourceCredentialStore? credentials;
+    private readonly SecuredEnvironmentAdministration? environments;
+    private readonly TimeProvider timeProvider;
     private readonly string actor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneSecurityHandler"/> class.</summary>
@@ -53,7 +55,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <param name="policy">An optional policy to refresh after a mutation.</param>
     /// <param name="access">The request-scoped access binding the guard reads the caller's claims from (<see langword="null"/> disables the guard — the unscoped posture).</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, string actor = "control-plane")
+    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, SecuredEnvironmentAdministration? environments = null, TimeProvider? timeProvider = null, string actor = "control-plane")
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(actor);
@@ -62,6 +64,8 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         this.access = access;
         this.catalog = catalog;
         this.credentials = credentials;
+        this.environments = environments;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
         this.actor = actor;
     }
 
@@ -409,9 +413,39 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             bindingPageToken = (JsonString)JsonString.CreateBuilder(workspace, (JsonString.Source)page.NextPageToken.Span).RootElement;
         }
 
+        // capabilities: the scopes the matched bindings confer, resolved exactly as the runtime resolver does
+        // (PersistentRowSecurityPolicy.ResolveGrantedScopes): an expired binding confers nothing, and an eligible-only
+        // binding records §16.5.3 eligibility (self-elevation) rather than an active scope. One entry per scope, active
+        // dominating eligible; the entry's expiry is the last conferring binding's, absent when one never expires.
+        SortedDictionary<string, CapabilityGrant>? capabilities = null;
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        foreach (SecurityBindingDocument binding in matchedBindings)
+        {
+            if (binding.ExpiresAtValue is { } bindingExpiry && now >= bindingExpiry)
+            {
+                continue;
+            }
+
+            bool eligible = binding.EligibleOnlyValue;
+            foreach (string scope in binding.ScopesArray())
+            {
+                capabilities ??= new SortedDictionary<string, CapabilityGrant>(StringComparer.Ordinal);
+                var conferred = new CapabilityGrant(eligible, binding.ExpiresAtValue);
+                capabilities[scope] = capabilities.TryGetValue(scope, out CapabilityGrant existing)
+                    ? existing.Merge(conferred)
+                    : conferred;
+            }
+        }
+
         // administers: a single reverse-index lookup keyed by the grantee's identity (bounded; materialised in full).
         IReadOnlyList<string> administered = this.catalog is { } catalog
             ? await catalog.ListAdministeredWorkflowsAsync(granteeIdentity, cancellationToken).ConfigureAwait(false)
+            : [];
+
+        // administersEnvironments: the environment twin of administers (the S3 reverse index, membership over the
+        // grantee's identity).
+        IReadOnlyList<string> administeredEnvironments = this.environments is { } environmentAdministration
+            ? await environmentAdministration.ListAdministeredEnvironmentsAsync(granteeIdentity, cancellationToken).ConfigureAwait(false)
             : [];
 
         // credentialUsage: page the credential store (System context — usage entitlement is not management-reach-scoped)
@@ -450,14 +484,16 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             }
         }
 
-        // Build the response closure-free: a single context carries the three matched collections, threaded through the
+        // Build the response closure-free: a single context carries the five matched collections, threaded through the
         // outer object build and each inner array build (no capturing lambda). The grantee is echoed as a congruent
         // whole-document From wrap over the workspace-owned grantee document.
-        var overviewContext = new AccessGrantsContext(administered, matchedBindings, matchedCredentials);
+        var overviewContext = new AccessGrantsContext(administered, administeredEnvironments, capabilities, matchedBindings, matchedCredentials);
         Models.AccessGrantsOverview.Source<AccessGrantsContext> body = Models.AccessGrantsOverview.Build(
             in overviewContext,
             administers: Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Build(in overviewContext, BuildAdministeredWorkflows),
+            administersEnvironments: Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Build(in overviewContext, BuildAdministeredEnvironments),
             bindings: Models.AccessGrantsOverview.SecurityBindingSummaryArray.Build(in overviewContext, BuildAccessBindings),
+            capabilities: Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Build(in overviewContext, BuildCapabilities),
             credentialUsage: Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Build(in overviewContext, BuildCredentialUsages),
             grantee: (Models.ResolvedGrantee.Source)Models.ResolvedGrantee.From(grantee));
         return GetAccessGrantsResult.Ok(body, workspace);
@@ -637,10 +673,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private static void BuildBindingSummary(in SecurityBindingDocument binding, ref Models.SecurityBindingSummary.Builder b)
     {
         // Scalars carried bytes-native (Models.JsonString.From — zero-copy element wrap); the three verb grants are
-        // congruent with the stored VerbGrantInfo, so they wrap verbatim (Models.VerbGrant.From). The summary
-        // deliberately omits the stored scopes/expiresAt/eligibleOnly — per-field selection keeps them out. The optional
+        // congruent with the stored VerbGrantInfo, so they wrap verbatim (Models.VerbGrant.From). The optional
         // scalars carry the binding's raw CTJ value straight through From() — which propagates Undefined, so an absent
-        // field is omitted with no IsNotUndefined/XxxOrNull ternary (the "Undefined not null" convention).
+        // field is omitted with no IsNotUndefined/XxxOrNull ternary (the "Undefined not null" convention). The stored
+        // scopes/expiresAt/eligibleOnly ride along the same way, so the overview's capabilities are traceable to the
+        // bindings that confer them.
         b.Create(
             claimType: Models.JsonString.From(binding.ClaimType),
             createdAt: binding.CreatedAtValue,
@@ -654,8 +691,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             claimValue: Models.JsonString.From(binding.ClaimValue),
             additionalClauses: Models.SecurityBindingSummary.SecurityBindingClauseArray.From(binding.AdditionalClauses),
             description: Models.JsonString.From(binding.Description),
+            eligibleOnly: Models.JsonBoolean.From(binding.EligibleOnly),
+            expiresAt: Models.JsonDateTime.From(binding.ExpiresAt),
             lastUpdatedAt: Models.JsonDateTime.From(binding.LastUpdatedAt),
-            lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy));
+            lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy),
+            scopes: Models.SecurityBindingSummary.JsonStringArray.From(binding.Scopes));
     }
 
     private static void BuildBindingSummaries(in IReadOnlyList<SecurityBindingDocument> bindings, ref Models.SecurityBindingList.SecurityBindingSummaryArray.Builder array)
@@ -804,6 +844,32 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         }
     }
 
+    private static void BuildAdministeredEnvironments(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Builder array)
+    {
+        foreach (string environment in ctx.AdministeredEnvironments)
+        {
+            array.AddItem(Models.AccessGrantsAdministeredEnvironment.Build(environment: environment));
+        }
+    }
+
+    private static void BuildCapabilities(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Builder array)
+    {
+        if (ctx.Capabilities is not { } capabilities)
+        {
+            return;
+        }
+
+        // The dictionary is ordinal-sorted by scope, so the response order is deterministic. The optional expiry is
+        // omitted via default when no conferring binding expires.
+        foreach (KeyValuePair<string, CapabilityGrant> capability in capabilities)
+        {
+            array.AddItem(Models.AccessGrantsCapability.Build(
+                eligible: capability.Value.Eligible,
+                scope: capability.Key,
+                expiresAt: capability.Value.ExpiresAt is { } expiresAt ? (Models.JsonDateTime.Source)expiresAt : default));
+        }
+    }
+
     private static void BuildAdministeredWorkflow(in string baseWorkflowId, ref Models.AccessGrantsAdministeredWorkflow.Builder b)
         => b.Create(baseWorkflowId: baseWorkflowId);
 
@@ -821,13 +887,36 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
     // The matched aggregation sets, threaded as one context through the access-grants overview build (no closure). The
     // lists hold the matched documents (whose pages were handed to the workspace), so they live to serialization.
-    private readonly ref struct AccessGrantsContext(IReadOnlyList<string> administered, List<SecurityBindingDocument> bindings, List<SourceCredentialBinding> credentials)
+    private readonly ref struct AccessGrantsContext(IReadOnlyList<string> administered, IReadOnlyList<string> administeredEnvironments, SortedDictionary<string, CapabilityGrant>? capabilities, List<SecurityBindingDocument> bindings, List<SourceCredentialBinding> credentials)
     {
         public IReadOnlyList<string> Administered { get; } = administered;
+
+        public IReadOnlyList<string> AdministeredEnvironments { get; } = administeredEnvironments;
+
+        public SortedDictionary<string, CapabilityGrant>? Capabilities { get; } = capabilities;
 
         public List<SecurityBindingDocument> Bindings { get; } = bindings;
 
         public List<SourceCredentialBinding> Credentials { get; } = credentials;
+    }
+
+    // One resolved capability entry: eligible-only (a §16.5.3 eligibility) vs active, and the expiry to show. Merging
+    // two conferrals of the same scope: active dominates eligible (an eligibility adds nothing when the scope is held
+    // actively); within the same class a never-expiring conferral wins outright, otherwise the later expiry stands.
+    private readonly record struct CapabilityGrant(bool Eligible, DateTimeOffset? ExpiresAt)
+    {
+        public CapabilityGrant Merge(CapabilityGrant other)
+        {
+            if (this.Eligible != other.Eligible)
+            {
+                return this.Eligible ? other : this;
+            }
+
+            DateTimeOffset? expiresAt = this.ExpiresAt is { } mine && other.ExpiresAt is { } theirs
+                ? (mine >= theirs ? mine : theirs)
+                : null;
+            return new CapabilityGrant(this.Eligible, expiresAt);
+        }
     }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string kind, string id)

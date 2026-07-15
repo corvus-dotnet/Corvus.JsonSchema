@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the workflows it administers, and the credentials its runs may use.
+/// The who-can-do-what aggregation for one grantee (design &#167;6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.
 /// </para>
 /// </remarks>
 public readonly partial struct AccessGrantsOverview
@@ -34,7 +34,7 @@ public readonly partial struct AccessGrantsOverview
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The base workflows the grantee administers (exact identity set-equality).
+    /// The base workflows the grantee administers (membership: an administrator identity contained in the grantee&#39;s identity).
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
