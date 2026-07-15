@@ -122,9 +122,17 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             ("production", "Production", "Live production environment.", false),
         })
         {
-            using ParsedJsonDocument<CpEnvironment> environment = ParsedJsonDocument<CpEnvironment>.Parse(
-                System.Text.Encoding.UTF8.GetBytes(
-                    $$"""{"name":"{{name}}","displayName":"{{displayName}}","description":"{{description}}","allowsDraftRuns":{{(allowsDraftRuns ? "true" : "false")}}}"""));
+            // The generated Create() builds the draft in one pooled pass (and, unlike the interpolated-string parse it
+            // replaces, cannot produce invalid JSON from a value containing a quote). The server-stamped fields are
+            // omitted via default Sources for the store to stamp.
+            using ParsedJsonDocument<CpEnvironment> environment = CpEnvironment.Create(
+                createdAt: default,
+                createdBy: default,
+                etag: default,
+                name: name,
+                allowsDraftRuns: allowsDraftRuns,
+                description: description,
+                displayName: displayName);
             (await context.EnvironmentStore.AddAsync(environment.RootElement, "demo", cancellationToken)).Dispose();
         }
 
