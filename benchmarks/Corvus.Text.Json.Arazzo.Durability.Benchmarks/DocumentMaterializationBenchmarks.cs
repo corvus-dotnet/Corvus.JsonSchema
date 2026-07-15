@@ -117,6 +117,38 @@ public class DocumentMaterializationBenchmarks
         return draft.RootElement.ValueKind;
     }
 
+    /// <summary>Create() adoption row 1.3 "before": the replaced availability-entry draft — a writer callback (two
+    /// strings + a number) serialized through <see cref="PersistedJson.ToPooledDocument{T,TContext}"/> and reparsed.
+    /// Preserved inline so the delta stays measured.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AvailabilityEntryDraft_SerializeReparse()
+    {
+        var state = ("orders-workflow", 3, "production");
+        using ParsedJsonDocument<AvailabilityEntry> draft =
+            PersistedJson.ToPooledDocument<AvailabilityEntry, (string BaseWorkflowId, int VersionNumber, string Environment)>(
+                in state,
+                static (Utf8JsonWriter writer, in (string BaseWorkflowId, int VersionNumber, string Environment) s) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("baseWorkflowId"u8, s.BaseWorkflowId);
+                    writer.WriteNumber("versionNumber"u8, s.VersionNumber);
+                    writer.WriteString("environment"u8, s.Environment);
+                    writer.WriteEndObject();
+                });
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 1.3 "after": the production <see cref="AvailabilityEntry.Draft"/>, now the
+    /// generated <c>Create()</c> — document text and parse metadata written in one pass, no reparse.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AvailabilityEntryDraft_Create()
+    {
+        using ParsedJsonDocument<AvailabilityEntry> draft = AvailabilityEntry.Draft("orders-workflow", 3, "production");
+        return draft.RootElement.ValueKind;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra
