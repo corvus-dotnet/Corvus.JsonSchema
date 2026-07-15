@@ -149,6 +149,44 @@ public class DocumentMaterializationBenchmarks
         return draft.RootElement.ValueKind;
     }
 
+    /// <summary>Create() adoption row 1.4 "before": the replaced availability-request draft — a writer callback (two
+    /// strings + a number + an optional reason) serialized through <see cref="PersistedJson.ToPooledDocument{T,TContext}"/>
+    /// and reparsed. Preserved inline so the delta stays measured.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AvailabilityRequestDraft_SerializeReparse()
+    {
+        var state = ("orders-workflow", 3, "production", (string?)"Rollout wave 2.");
+        using ParsedJsonDocument<AvailabilityRequest> draft =
+            PersistedJson.ToPooledDocument<AvailabilityRequest, (string BaseWorkflowId, int VersionNumber, string Environment, string? Reason)>(
+                in state,
+                static (Utf8JsonWriter writer, in (string BaseWorkflowId, int VersionNumber, string Environment, string? Reason) c) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("baseWorkflowId"u8, c.BaseWorkflowId);
+                    writer.WriteNumber("versionNumber"u8, c.VersionNumber);
+                    writer.WriteString("environment"u8, c.Environment);
+                    if (c.Reason is { } reason)
+                    {
+                        writer.WriteString("reason"u8, reason);
+                    }
+
+                    writer.WriteEndObject();
+                });
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 1.4 "after": the production <see cref="AvailabilityRequest.Draft"/>, now the
+    /// generated <c>Create()</c> — document text and parse metadata written in one pass, no reparse.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AvailabilityRequestDraft_Create()
+    {
+        using ParsedJsonDocument<AvailabilityRequest> draft =
+            AvailabilityRequest.Draft("orders-workflow", 3, "production", "Rollout wave 2.");
+        return draft.RootElement.ValueKind;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra

@@ -104,22 +104,20 @@ public readonly partial struct AvailabilityRequest
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentException.ThrowIfNullOrEmpty(environment);
-        var state = (baseWorkflowId, versionNumber, environment, reason);
-        return PersistedJson.ToPooledDocument<AvailabilityRequest, (string BaseWorkflowId, int VersionNumber, string Environment, string? Reason)>(
-            in state,
-            static (Utf8JsonWriter writer, in (string BaseWorkflowId, int VersionNumber, string Environment, string? Reason) c) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, c.BaseWorkflowId);
-                writer.WriteNumber(JsonPropertyNames.VersionNumberUtf8, c.VersionNumber);
-                writer.WriteString(JsonPropertyNames.EnvironmentUtf8, c.Environment);
-                if (c.Reason is { } reason)
-                {
-                    writer.WriteString(JsonPropertyNames.ReasonUtf8, reason);
-                }
 
-                writer.WriteEndObject();
-            });
+        // The generated Create() writes the document text and its parse metadata in one pass — no serialize-then-reparse
+        // round trip. The draft carries only the create-content: a default Source is omitted from the document, so the
+        // server-stamped fields (id/status/createdBy/createdAt/etag) stay absent for WriteNew to stamp.
+        return Create(
+            baseWorkflowId: baseWorkflowId,
+            createdAt: default,
+            createdBy: default,
+            environment: environment,
+            etag: default,
+            id: default,
+            status: default,
+            versionNumber: versionNumber,
+            reason: reason is { } r ? (JsonString.Source)r : default);
     }
 
     /// <summary>Realises a new (Pending) request into the caller's (pooled) writer in one pass — the draft's create-content
