@@ -185,6 +185,35 @@ public class DocumentMaterializationBenchmarks
         return draft.RootElement.ValueKind;
     }
 
+    /// <summary>Create() adoption row 2.2 "before": the replaced SerializeNewRuleDoc — the WriteNew trio written
+    /// through <see cref="PersistedJson.ToPooledDocument{T,TContext}"/> and reparsed into the returned pooled document.
+    /// Preserved inline so the delta stays measured.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind SerializeNewRuleDoc_TrioWriteReparse()
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = PersistedJson.ToPooledDocument<SecurityRuleDocument>(this.ruleDraftJson);
+        using ParsedJsonDocument<SecurityRuleDocument> doc =
+            PersistedJson.ToPooledDocument<SecurityRuleDocument, (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
+                ("tenant-scoped", draft.RootElement, "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1")),
+                static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
+                    => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag));
+        return doc.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 2.2 "after": the production <see cref="SecurityPolicySerialization.SerializeNewRuleDoc"/>,
+    /// now the generated <c>Create()</c> — the trio, the write, and the reparse all collapse to one pooled pass, and the
+    /// driver genuinely consumes the parse (field reads + raw bytes).</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind SerializeNewRuleDoc_Create()
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = PersistedJson.ToPooledDocument<SecurityRuleDocument>(this.ruleDraftJson);
+        using ParsedJsonDocument<SecurityRuleDocument> doc = SecurityPolicySerialization.SerializeNewRuleDoc(
+            "tenant-scoped", draft.RootElement, "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1"));
+        return doc.RootElement.ValueKind;
+    }
+
     /// <summary>Create() adoption row 1.2, the KEPT shape: the production string-overload
     /// <see cref="Environments.Environment.Draft(string, string?, string?, SecurityTagSet)"/> — a writer callback whose
     /// raw <see cref="SecurityTagSet"/> splice (<c>WriteRawValue</c>) dominates the document.</summary>
@@ -360,7 +389,7 @@ public class DocumentMaterializationBenchmarks
 
     private byte[] ruleDraftJson = null!;
 
-    [GlobalSetup(Targets = [nameof(SecurityRuleWriteNew_BuilderTrio), nameof(SecurityRuleWriteNew_CreateWrite_Rejected)])]
+    [GlobalSetup(Targets = [nameof(SecurityRuleWriteNew_BuilderTrio), nameof(SecurityRuleWriteNew_CreateWrite_Rejected), nameof(SerializeNewRuleDoc_TrioWriteReparse), nameof(SerializeNewRuleDoc_Create)])]
     public void SetupWriteNew()
     {
         using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");

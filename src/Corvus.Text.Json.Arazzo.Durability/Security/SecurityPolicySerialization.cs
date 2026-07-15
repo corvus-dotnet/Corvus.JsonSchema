@@ -54,10 +54,17 @@ public static class SecurityPolicySerialization
     /// <param name="etag">The new record etag.</param>
     /// <returns>The pooled document that owns the persisted bytes.</returns>
     public static ParsedJsonDocument<SecurityRuleDocument> SerializeNewRuleDoc(string name, SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-        => PersistedJson.ToPooledDocument<SecurityRuleDocument, (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
-            (name, draft, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag));
+
+        // The generated Create() realises the stamped document (text + parse metadata) in one pooled pass — the old
+        // route built the workspace trio, wrote it, and reparsed the bytes. The driver reads fields AND raw bytes off
+        // the returned document, so the parse metadata is genuinely consumed.
+        => SecurityRuleDocument.Create(
+            createdAt: createdAt,
+            createdBy: actor,
+            etag: etag.Value ?? string.Empty,
+            expression: draft.Expression,
+            name: name,
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default);
 
     /// <summary>Checks the etag and serializes the carried-forward update to owned JSON bytes, for a byte[]-leaf driver.</summary>
     /// <param name="existing">The stored rule, already parsed by the backend leaf (read synchronously here).</param>
