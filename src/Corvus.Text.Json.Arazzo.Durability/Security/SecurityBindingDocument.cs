@@ -219,8 +219,41 @@ public readonly partial struct SecurityBindingDocument
             });
     }
 
+    /// <summary>Realises a brand-new binding as a self-contained pooled document in one pass — the
+    /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
+    /// parsed document. Same field mapping and absent-grant defaulting as the builder path below; keep the two in step.</summary>
+    /// <param name="id">The assigned binding id.</param>
+    /// <param name="draft">The draft binding carrying the operator-supplied content as JSON values (read bytes-to-bytes).</param>
+    /// <param name="actor">The actor creating the binding (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<SecurityBindingDocument> CreateNew(string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    {
+        VerbGrantInfo read = draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None;
+        VerbGrantInfo write = draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None;
+        VerbGrantInfo purge = draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None;
+        return Create(
+            claimType: draft.ClaimType,
+            createdAt: createdAt,
+            createdBy: actor,
+            etag: etag.Value ?? string.Empty,
+            id: id,
+            order: (int)draft.Order,
+            purge: purge,
+            read: read,
+            write: write,
+            claimValue: draft.ClaimValue.IsNotUndefined() ? (JsonString.Source)draft.ClaimValue : default,
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
+            expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
+            eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
+            additionalClauses: draft.AdditionalClauses.IsNotUndefined() ? (AdditionalClauseArray.Source)draft.AdditionalClauses : default,
+            scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
+    }
+
     // Realises a new binding into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
     // JSON values flow straight into the builder); id and the server-stamped audit/concurrency fields are added here.
+    // The field mapping and absent-grant defaulting mirror CreateNew above; keep the two in step.
     private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         // The draft may be a request body that omits verb grants / order; default an omitted grant to None — the semantics

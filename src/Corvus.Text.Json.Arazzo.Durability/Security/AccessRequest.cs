@@ -245,9 +245,34 @@ public readonly partial struct AccessRequest
         builder.RootElement.WriteTo(writer);
     }
 
+    /// <summary>Realises a brand-new Pending request as a self-contained pooled document in one pass — the
+    /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
+    /// parsed document. Same field mapping and Pending stamping as the builder path below; keep the two in step.</summary>
+    /// <param name="id">The assigned request id.</param>
+    /// <param name="draft">The draft request carrying the requester content as JSON values (read bytes-to-bytes).</param>
+    /// <param name="actor">The requesting identity (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<AccessRequest> CreateNew(string id, in AccessRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+        => Create(
+            baseWorkflowId: draft.BaseWorkflowId,
+            createdAt: createdAt,
+            createdBy: actor,
+            etag: etag.Value ?? string.Empty,
+            id: id,
+            requestedScopes: draft.RequestedScopes,
+            status: AccessRequestStatusNames.Pending,
+            subjectClaimType: draft.SubjectClaimType,
+            subjectClaimValue: draft.SubjectClaimValue,
+            reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default,
+            requesterLabel: draft.RequesterLabel.IsNotUndefined() ? (JsonString.Source)draft.RequesterLabel : default,
+            requestedDurationSeconds: draft.RequestedDurationSeconds.IsNotUndefined() ? (RequestedDurationSecondsEntity.Source)draft.RequestedDurationSeconds : default);
+
     // Realises a new Pending request into the pooled workspace arena: the draft's create-content is carried
     // bytes-to-bytes (its JSON values — including the requestedScopes array — flow straight into the builder); id, the
-    // initial Pending status, and the server-stamped audit/concurrency fields are added here.
+    // initial Pending status, and the server-stamped audit/concurrency fields are added here. The field mapping
+    // mirrors CreateNew above; keep the two in step.
     private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in AccessRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => CreateBuilder(
             workspace,

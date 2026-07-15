@@ -108,8 +108,27 @@ public readonly partial struct SecurityRuleDocument
             description: description is { } d ? (JsonString.Source)d : default);
     }
 
+    /// <summary>Realises a brand-new rule as a self-contained pooled document in one pass — the
+    /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
+    /// parsed document. Same field mapping as the builder path below; keep the two in step.</summary>
+    /// <param name="name">The rule name (the record key).</param>
+    /// <param name="draft">The draft rule carrying the operator-supplied content as JSON values (read bytes-to-bytes).</param>
+    /// <param name="actor">The actor creating the rule (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<SecurityRuleDocument> CreateNew(string name, in SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+        => Create(
+            createdAt: createdAt,
+            createdBy: actor,
+            etag: etag.Value ?? string.Empty,
+            expression: draft.Expression,
+            name: name,
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default);
+
     // Realises a new rule into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
     // JSON values flow straight into the builder); name and the server-stamped audit/concurrency fields are added here.
+    // The field mapping mirrors CreateNew above; keep the two in step.
     private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string name, in SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => CreateBuilder(
             workspace,

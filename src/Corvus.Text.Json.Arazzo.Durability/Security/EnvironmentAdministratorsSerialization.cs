@@ -38,10 +38,10 @@ public static class EnvironmentAdministratorsSerialization
     /// <param name="etag">The new record etag.</param>
     /// <returns>The pooled document that owns the persisted bytes.</returns>
     public static ParsedJsonDocument<EnvironmentAdministrators> SerializeNewDoc(string environmentName, IReadOnlyList<EnvironmentAdministrators.AdministratorIdentity> administrators, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-        => PersistedJson.ToPooledDocument<EnvironmentAdministrators, (string Name, IReadOnlyList<EnvironmentAdministrators.AdministratorIdentity> Administrators, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
-            (environmentName, administrators, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Name, IReadOnlyList<EnvironmentAdministrators.AdministratorIdentity> Administrators, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => EnvironmentAdministrators.WriteNew(writer, c.Name, c.Administrators, c.Actor, c.At, c.Tag));
+
+        // The generated Create() (via the entity's CreateNew) realises the stamped document in one pooled pass — the
+        // old route built the workspace trio, wrote it, and reparsed the bytes.
+        => EnvironmentAdministrators.CreateNew(environmentName, administrators, actor, createdAt, etag);
 
     /// <summary>Serializes the carried-forward update (new administrator set) to owned JSON bytes, for a byte[]-leaf driver.
     /// The backend has already parsed the existing record (and checked the etag via <c>existing.EtagValue</c>).</summary>

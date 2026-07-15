@@ -38,10 +38,10 @@ public static class AccessRequestSerialization
     /// <param name="etag">The new record etag.</param>
     /// <returns>The pooled document that owns the persisted bytes.</returns>
     public static ParsedJsonDocument<AccessRequest> SerializeNewDoc(string id, AccessRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-        => PersistedJson.ToPooledDocument<AccessRequest, (string Id, AccessRequest Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
-            (id, draft, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Id, AccessRequest Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => AccessRequest.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag));
+
+        // The generated Create() (via the entity's CreateNew) realises the stamped document in one pooled pass — the
+        // old route built the workspace trio, wrote it, and reparsed the bytes.
+        => AccessRequest.CreateNew(id, draft, actor, createdAt, etag);
 
     /// <summary>Checks the etag and serializes the decided record to owned JSON bytes, for a byte[]-leaf driver.</summary>
     /// <param name="existing">The stored request, already parsed by the backend leaf (read synchronously here).</param>

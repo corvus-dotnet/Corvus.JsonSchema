@@ -120,6 +120,30 @@ public readonly partial struct AvailabilityRequest
             reason: reason is { } r ? (JsonString.Source)r : default);
     }
 
+    /// <summary>Realises a brand-new Pending request as a self-contained pooled document in one pass — the
+    /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
+    /// parsed document. Same content requirement and field mapping as the writer path below; keep the two in step.</summary>
+    /// <param name="id">The assigned request id.</param>
+    /// <param name="draft">The draft request carrying the requester content as JSON values (read bytes-to-bytes).</param>
+    /// <param name="actor">The requesting identity (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<AvailabilityRequest> CreateNew(string id, in AvailabilityRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    {
+        RequireContent(draft);
+        return Create(
+            baseWorkflowId: draft.BaseWorkflowId,
+            createdAt: createdAt,
+            createdBy: actor,
+            environment: draft.Environment,
+            etag: etag.Value ?? string.Empty,
+            id: id,
+            status: AvailabilityRequestStatusNames.Pending,
+            versionNumber: draft.VersionNumber,
+            reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default);
+    }
+
     /// <summary>Realises a new (Pending) request into the caller's (pooled) writer in one pass — the draft's create-content
     /// is carried bytes-to-bytes and the id/status/server audit fields are stamped here.</summary>
     /// <param name="writer">The writer to serialize into (typically the pooled writer from <see cref="PersistedJson"/>).</param>
