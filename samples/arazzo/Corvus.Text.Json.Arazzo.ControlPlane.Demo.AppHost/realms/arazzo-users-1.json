@@ -20,6 +20,36 @@
       "lastName": "Payments",
       "credentials": [{ "type": "password", "value": "alice", "temporary": false }],
       "groups": ["/payments"]
+    },
+    {
+      "username": "oscar",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "oscar@arazzo.example",
+      "firstName": "Oscar",
+      "lastName": "Observer",
+      "credentials": [{ "type": "password", "value": "oscar", "temporary": false }],
+      "groups": ["/observers"]
+    },
+    {
+      "username": "erin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "erin@arazzo.example",
+      "firstName": "Erin",
+      "lastName": "Environments",
+      "credentials": [{ "type": "password", "value": "erin", "temporary": false }],
+      "groups": ["/env-admins"]
+    },
+    {
+      "username": "wanda",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "wanda@arazzo.example",
+      "firstName": "Wanda",
+      "lastName": "Reconcile",
+      "credentials": [{ "type": "password", "value": "wanda", "temporary": false }],
+      "groups": ["/reconcile-owners"]
     }
   ]
 }

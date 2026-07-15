@@ -8,7 +8,10 @@
   "groups": [
     { "name": "arazzo-admins" },
     { "name": "payments" },
-    { "name": "onboarding" }
+    { "name": "onboarding" },
+    { "name": "observers" },
+    { "name": "env-admins" },
+    { "name": "reconcile-owners" }
   ],
   "clients": [
     {

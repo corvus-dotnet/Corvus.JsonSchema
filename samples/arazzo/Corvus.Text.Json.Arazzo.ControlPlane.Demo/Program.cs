@@ -341,7 +341,11 @@ if (seedExampleData)
     string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
     await exampleSeed.SeedAsync(new ExampleSeedContext(
         catalog, sourceCredentials, environmentStore, environmentAdministratorStore, sourceStore,
-        availabilityStore, accessRequests, availabilityRequestStore, specsDir));
+        availabilityStore, accessRequests, availabilityRequestStore, securityPolicy, specsDir));
+
+    // The persona rules/bindings the seed just wrote must take effect for THIS process's resolver (capability scopes
+    // + row reach) without waiting for a write-triggered refresh.
+    await entitlements.RefreshAsync(default);
 
     // Seed the observed-identity ("seen") typeahead so the grant pickers are non-empty on a fresh boot: the realm groups
     // as Team grantees, each stamped the {sys:group=<name>, sys:iss} identity (DemoData) — a SUBSET of a live member's now
@@ -360,6 +364,9 @@ if (seedExampleData)
         ("arazzo-admins", "Arazzo administrators"),
         ("payments", "Payments team"),
         ("onboarding", "Onboarding team"),
+        ("observers", "Observers"),
+        ("env-admins", "Environment administrators"),
+        ("reconcile-owners", "Reconcile owners"),
     })
     {
         await observedIdentityStore.SeenAsync(
