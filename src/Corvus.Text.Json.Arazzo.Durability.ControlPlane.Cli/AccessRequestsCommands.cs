@@ -106,10 +106,11 @@ internal sealed class AccessRequestListCommand : AsyncCommand<AccessRequestListS
         await using (transport)
         {
             // Walk every keyset page (the store pages server-side) so the output is the complete queue, never the first
-            // page alone. Each view is materialised (ToString) while its page response is alive, then the accumulated set
-            // is rendered/printed once. The Source filter values are built inline per call (they are ref structs that
-            // cannot be held across the loop's await).
-            var items = new List<string>();
+            // page alone. Each view is cloned detached while its page response is alive, then the accumulated set folds
+            // into ONE pooled document via the generated contextful Create() (each clone blits in as an element) — no
+            // per-item JSON string, no join, no re-encode + reparse. The Source filter values are built inline per call
+            // (they are ref structs that cannot be held across the loop's await).
+            var items = new List<Models.AccessRequestView>();
             string? pageToken = null;
             do
             {
@@ -125,7 +126,7 @@ internal sealed class AccessRequestListCommand : AsyncCommand<AccessRequestListS
                         next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
                         foreach (Models.AccessRequestView view in list.AccessRequests.EnumerateArray())
                         {
-                            items.Add(view.ToString());
+                            items.Add(view.Clone());
                         }
 
                         return 0;
@@ -141,13 +142,22 @@ internal sealed class AccessRequestListCommand : AsyncCommand<AccessRequestListS
             }
             while (pageToken is not null);
 
-            string combined = $"{{\"accessRequests\":[{string.Join(",", items)}]}}";
+            using ParsedJsonDocument<Models.AccessRequestList> rendered = Models.AccessRequestList.Create(
+                context: items,
+                accessRequests: Models.AccessRequestList.AccessRequestViewArray.Build(
+                    items,
+                    static (in List<Models.AccessRequestView> views, ref Models.AccessRequestList.AccessRequestViewArray.Builder b) =>
+                    {
+                        foreach (Models.AccessRequestView view in views)
+                        {
+                            b.AddItem(view);
+                        }
+                    }));
             if (settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase))
             {
-                return Output.Print(combined);
+                return Output.Print(rendered.RootElement.ToString());
             }
 
-            using ParsedJsonDocument<Models.AccessRequestList> rendered = ParsedJsonDocument<Models.AccessRequestList>.Parse(System.Text.Encoding.UTF8.GetBytes(combined).AsMemory());
             return AccessRequestCommandHelpers.RenderTable(rendered.RootElement, settings.Workflow);
         }
     }
