@@ -50,6 +50,9 @@ class ArazzoDocumentInspector extends ArazzoElement {
   /** The union of stepIds across workflows — targets a reusable action may name. */
   set stepIds(ids) { this._stepIds = [...(ids || [])]; }
 
+  /** The working copy's jsonschema attachments (#94): attachment name → its $defs type names, for external $ref. */
+  set externalSchemas(value) { this._externalSchemas = value || null; }
+
   /** The document's workflowIds — cross-workflow targets a reusable action may name. */
   set workflowIds(ids) { this._workflowIds = [...(ids || [])]; }
 
@@ -351,6 +354,7 @@ class ArazzoDocumentInspector extends ArazzoElement {
       const ed = document.createElement('arazzo-schema-editor');
       ed.emptyDeletes = false;
       ed.library = this._doc.components?.inputs; // the sibling library schemas, for the $ref picker (§6)
+      ed.externalSchemas = this._externalSchemas; // jsonschema attachments for external $ref (#94)
       ed.value = value;
       ed.addEventListener('schema-changed', (e) => { this._doc.components[kind][key] = e.detail.schema; this._emit(); });
       // "New shared type…" adds a sibling components.inputs entry (§6).

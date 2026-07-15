@@ -3220,11 +3220,16 @@ export function createMockControlPlane(options = {}) {
     const findings = [];
     const declared = (doc.sourceDescriptions ?? []).map((s) => s.name).filter(Boolean);
     const attachedNames = new Set();
+    const schemaAttachments = new Set();
     const operations = new Set();
     const channels = new Set();
     let anySurface = false;
     for (const att of attachments) {
       if (!att.name) continue;
+      // A jsonschema attachment (#94) is deliberately NOT a sourceDescription (the Arazzo spec pins that enum) —
+      // exempt from the declaration cross-check, no operation surface; inputs schemas reference it by
+      // schemas/<name>#<pointer>, mirroring the server.
+      if (att.type === 'jsonschema') { schemaAttachments.add(att.name); continue; }
       attachedNames.add(att.name);
       if (!declared.includes(att.name)) {
         findings.push({ severity: 'info', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: `Attached source '${att.name}' is not declared in sourceDescriptions — the document cannot reference its operations.` });
@@ -3232,6 +3237,24 @@ export function createMockControlPlane(options = {}) {
       const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
       if (d) { collectOperationIdentities(d, operations, channels); anySurface = true; }
     }
+
+    // Dangling external schema references (#94): a schemas/<name> $ref in an inputs schema whose named
+    // jsonschema document is not attached, mirroring the server's pass-4 walk.
+    const checkExternalRefs = (node, basePath) => {
+      if (node && typeof node === 'object' && !Array.isArray(node)) {
+        if (typeof node.$ref === 'string' && node.$ref.startsWith('schemas/')) {
+          const name = node.$ref.slice('schemas/'.length).split('#')[0];
+          if (!schemaAttachments.has(name)) {
+            findings.push({ severity: 'error', category: 'schema', instancePath: basePath, message: `References the external schema '${name}', which is not attached — attach a jsonschema source under that name.` });
+          }
+        }
+        for (const v of Object.values(node)) checkExternalRefs(v, basePath);
+      } else if (Array.isArray(node)) {
+        for (const v of node) checkExternalRefs(v, basePath);
+      }
+    };
+    (doc.workflows ?? []).forEach((wf, wi) => { if (wf.inputs) checkExternalRefs(wf.inputs, `/workflows/${wi}/inputs`); });
+    Object.entries(doc.components?.inputs ?? {}).forEach(([key, schema]) => checkExternalRefs(schema, `/components/inputs/${key}`));
     declared.forEach((name, i) => {
       if (!attachedNames.has(name)) {
         findings.push({ severity: 'warning', category: 'workspace-sources', instancePath: `/sourceDescriptions/${i}`, message: `Declared source '${name}' has no attachment in this working copy — its operations cannot resolve here.` });

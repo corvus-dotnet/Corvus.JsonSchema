@@ -61,6 +61,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
     /** @private */ this._schema = { type: 'object' };
     /** @private */ this._mode = 'form';
     /** @private */ this._library = null;
+    /** @private */ this._externalSchemas = null;
     /** @private */ this._title = '';
     /** @private */ this._previewTimer = null;
     /** @private */ this._previewOpen = false;
@@ -75,6 +76,12 @@ class ArazzoSchemaEditor extends ArazzoElement {
 
   get library() { return this._library; }
   set library(v) { this._library = v || null; if (this._built) this._render(); }
+
+  /** External schema documents the working copy attaches (jsonschema attachments, #94): a map of attachment
+   *  name → its `$defs` type names (empty array = reference the document root). Drives the type menu's
+   *  "External schemas" group and the external reference row; the ref form is `schemas/<name>#<pointer>`. */
+  get externalSchemas() { return this._externalSchemas; }
+  set externalSchemas(v) { this._externalSchemas = v || null; if (this._built) this._render(); }
 
   /** JSON-tier blank behaviour (§3.4). When true, clearing the JSON buffer emits `schema-changed {schema:
    *  undefined}` so the host can delete the whole schema (workflow-inspector); when false (default) a blank
@@ -236,6 +243,16 @@ class ArazzoSchemaEditor extends ArazzoElement {
       + libNames.map((n) => `<option value="ref:${escapeHtml(n)}">${escapeHtml(n)} ↗</option>`).join('')
       + '<option value="new-ref">＋ New shared type…</option>'
       + '<option value="move-ref">→ Move to shared type…</option></optgroup>';
+    // External schema documents (jsonschema attachments, #94): one option per $defs entry, or the document
+    // root when a doc declares none. The value carries the full `schemas/<name>#<pointer>` reference.
+    const externals = this._externalSchemas ? Object.entries(this._externalSchemas) : [];
+    if (externals.length) {
+      html += '<optgroup label="External schemas">'
+        + externals.flatMap(([doc, defs]) => ((defs && defs.length)
+          ? defs.map((d) => `<option value="xref:schemas/${escapeHtml(doc)}#/$defs/${escapeHtml(d)}">${escapeHtml(doc)} → ${escapeHtml(d)} ⇗</option>`)
+          : [`<option value="xref:schemas/${escapeHtml(doc)}">${escapeHtml(doc)} (document) ⇗</option>`])).join('')
+        + '</optgroup>';
+    }
     html += '<optgroup label="Inline">' + RENDERABLE_TYPES.map((t) => `<option value="${t}">${TYPE_LABEL[t]}</option>`).join('') + '</optgroup>';
     html += '<optgroup label="Combiner">' + COMBINER_KINDS.map((k) => `<option value="${k}">${COMBINER_LABEL[k]}</option>`).join('') + '</optgroup>';
     sel.innerHTML = html;
@@ -245,6 +262,7 @@ class ArazzoSchemaEditor extends ArazzoElement {
       if (sel.value === 'new-ref') { this._createSharedType(schema, { blank: true }); return; } // a fresh, empty type
       if (sel.value === 'move-ref') { this._createSharedType(schema, { blank: false }); return; } // extract this node
       if (sel.value.startsWith('ref:')) { this._applyRef(schema, sel.value.slice(4)); return; }
+      if (sel.value.startsWith('xref:')) { this._applyExternalRef(schema, sel.value.slice(5)); return; }
       onChange(sel.value, sel);
     });
     return sel;
@@ -254,6 +272,14 @@ class ArazzoSchemaEditor extends ArazzoElement {
   _applyRef(schema, name) {
     for (const k of Object.keys(schema)) delete schema[k];
     schema.$ref = `#/components/inputs/${name}`;
+    this._renderForm();
+    this._commit();
+  }
+
+  /** Replace a node with an external schema reference (`schemas/<name>#<pointer>`, #94), in place. */
+  _applyExternalRef(schema, ref) {
+    for (const k of Object.keys(schema)) delete schema[k];
+    schema.$ref = ref;
     this._renderForm();
     this._commit();
   }
@@ -284,11 +310,24 @@ class ArazzoSchemaEditor extends ArazzoElement {
   }
 
   /** A reference row: the target, "open in library", and "detach" (inline-copy the target). A target absent
-   *  from `.library` renders as a problem row (the server's pass 4 flags it authoritatively). */
+   *  from `.library` renders as a problem row (the server's pass 4 flags it authoritatively). An external
+   *  reference (`schemas/<name>#<pointer>`, #94) renders its own row: the target plus a "not attached" marker
+   *  when no jsonschema attachment of that name exists — no detach (the target lives outside the document). */
   _renderReference(node, schema, ctx) {
     const line = document.createElement('div'); line.className = 'rowline';
     this._namedHead(line, ctx);
     node.appendChild(line);
+    const external = /^schemas\/([^#]+)(#.*)?$/.exec(schema.$ref);
+    if (external) {
+      const doc = external[1];
+      const missing = !(this._externalSchemas && doc in this._externalSchemas);
+      const xrow = document.createElement('div');
+      xrow.className = missing ? 'ghost' : 'advanced';
+      xrow.innerHTML = `<span>⇗ external schema <strong>${escapeHtml(schema.$ref)}</strong>${missing ? ' — not attached' : ''}</span>`;
+      node.appendChild(xrow);
+      return;
+    }
+
     const m = /^#\/components\/inputs\/(.+)$/.exec(schema.$ref);
     const name = m ? m[1] : null;
     const dangling = !name || !(this._library && name in this._library);

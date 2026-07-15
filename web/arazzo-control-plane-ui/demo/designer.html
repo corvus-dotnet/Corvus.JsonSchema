@@ -508,9 +508,34 @@
       switchSideTab('inspect'); // the finding is now the selection — show it
     }
 
+    // The working copy's jsonschema attachments (#94): attachment name → its $defs type names, feeding the
+    // schema editors' "External schemas" picker (the ref form is schemas/<name>#<pointer>). Inline attachments
+    // carry their document; a registry attachment resolves it from /sources. Best-effort — an unreadable
+    // document lists the attachment with no named types (the document-root option).
+    let externalSchemas = null;
+    async function refreshExternalSchemas() {
+      try {
+        const { sources = [] } = await client.listWorkingCopySources(shell.id);
+        const map = {};
+        for (const s of sources.filter((x) => x.type === 'jsonschema')) {
+          let schemaDoc = null;
+          try {
+            if (s.kind === 'inline') schemaDoc = (await client.getWorkingCopySource(shell.id, s.name))?.document;
+            else if (s.sourceName) schemaDoc = (await client.getSource(s.sourceName))?.document;
+          } catch { /* unreadable — list with no named types */ }
+          map[s.name] = schemaDoc && schemaDoc.$defs ? Object.keys(schemaDoc.$defs) : [];
+        }
+        externalSchemas = Object.keys(map).length ? map : null;
+      } catch {
+        externalSchemas = null;
+      }
+      if (!docMode) showSelection(surface.selection); // re-render so open editors pick up the fresh picker
+    }
+
     // The rail's surfaces feed the inspector templates; a re-render picks up fresh descriptors.
     opBrowser.addEventListener('loaded', () => {
       rebuildOperationIndex();
+      void refreshExternalSchemas();
       if (!docMode) showSelection(surface.selection); // don't stomp document mode on a rail refresh
     });
     opBrowser.addEventListener('add-source-requested', () => acqDialog.open({ workingCopyId: shell.id }));
@@ -634,6 +659,7 @@
       selectionPre.textContent = '(document)';
       const ed = document.createElement('arazzo-document-inspector');
       ed.setAttribute('sections', 'document'); // the reusable library lives in its own tab
+      ed.externalSchemas = externalSchemas; // jsonschema attachments for external $ref (#94)
       ed.stepIds = doc.workflows.flatMap((w) => (w.steps || []).map((st) => st.stepId));
       ed.workflowIds = doc.workflows.map((w) => w.workflowId);
       ed.completionContext = expr.completionContext;
@@ -862,6 +888,7 @@
         ed.stepIds = wf.steps.map((s) => s.stepId);
         ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
         ed.components = doc.components;
+        ed.externalSchemas = externalSchemas; // jsonschema attachments for external $ref (#94)
         ed.completionContext = expr.completionContext;
         ed.only = anchor.only;
         ed.value = wf;
@@ -1702,6 +1729,7 @@
     // whenever the model changes while it is showing). Persisting merges exactly like settings.
     const componentsPanel = document.getElementById('componentspanel');
     function refreshComponentsPanel() {
+      componentsPanel.externalSchemas = externalSchemas; // jsonschema attachments for external $ref (#94)
       componentsPanel.stepIds = doc.workflows.flatMap((w) => (w.steps || []).map((st) => st.stepId));
       componentsPanel.workflowIds = doc.workflows.map((w) => w.workflowId);
       componentsPanel.completionContext = expr.completionContext;

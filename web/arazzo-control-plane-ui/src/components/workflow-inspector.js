@@ -57,6 +57,9 @@ class ArazzoWorkflowInspector extends ArazzoElement {
 
   /** The document's components object — enables $components references in the defaults layer. */
   set components(value) { this._components = value || {}; }
+
+  /** The working copy's jsonschema attachments (#94): attachment name → its $defs type names, for external $ref. */
+  set externalSchemas(value) { this._externalSchemas = value || null; }
   set completionContext(ctx) { this._completionContext = ctx || {}; }
   get completionContext() { return this._completionContext; }
 
@@ -170,6 +173,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
     if (inputs) {
       inputs.emptyDeletes = true; // JSON-tier blank clears workflow.inputs (§3.4)
       inputs.library = this._components?.inputs; // the components.inputs library for the $ref picker (§6)
+      inputs.externalSchemas = this._externalSchemas; // jsonschema attachments for external $ref (#94)
       inputs.value = this._workflow.inputs ?? { type: 'object' };
       inputs.addEventListener('schema-changed', (e) => {
         const schema = e.detail.schema;

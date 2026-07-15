@@ -345,9 +345,16 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
 
     try {
       const document = JSON.parse(await file.text());
-      const type = document.openapi ? 'openapi' : document.asyncapi ? 'asyncapi' : document.arazzo ? 'arazzo' : null;
+      // A JSON Schema document declares no openapi/asyncapi/arazzo marker — sniff its own shape ($schema, or
+      // schema-ish keywords) and attach it as a jsonschema document (#94: referenced by schemas/<name>#<pointer>
+      // from inputs schemas, never by sourceDescriptions).
+      const looksLikeSchema = typeof document.$schema === 'string'
+        || (document && typeof document === 'object' && !Array.isArray(document)
+          && ('$defs' in document || 'properties' in document || 'type' in document));
+      const type = document.openapi ? 'openapi' : document.asyncapi ? 'asyncapi' : document.arazzo ? 'arazzo'
+        : looksLikeSchema ? 'jsonschema' : null;
       if (!type) {
-        throw new Error('The document declares neither openapi, asyncapi, nor arazzo.');
+        throw new Error('The document declares neither openapi, asyncapi, nor arazzo, and does not look like a JSON Schema.');
       }
 
       this._uploaded = { document, type };
