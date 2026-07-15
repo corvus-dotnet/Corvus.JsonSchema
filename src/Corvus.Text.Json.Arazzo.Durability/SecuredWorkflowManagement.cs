@@ -107,16 +107,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     // Re-presents an opaque page token (the store's pooled UTF-8) as the JSON string value the query seam carries, for
-    // an in-process paging loop (purge) that feeds a previous page's NextPageToken into the next query. The parsed
-    // document references the quoted buffer; dispose it once the query has consumed the token.
+    // an in-process paging loop (purge) that feeds a previous page's NextPageToken into the next query. The generated
+    // Create() escapes with the default encoder — byte-identical to a bare quote-wrap for our base64url tokens (the
+    // equivalence is pinned by PageTokenWrapEscapeEquivalenceTests) and, unlike the old hand wrap, still VALID JSON if a
+    // token ever carries an escapable byte. Dispose the document once the query has consumed the token.
     private static ParsedJsonDocument<JsonString> WrapContinuationToken(ReadOnlySpan<byte> tokenUtf8)
-    {
-        byte[] quoted = new byte[tokenUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        tokenUtf8.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(quoted);
-    }
+        => JsonString.Create(tokenUtf8);
 
     /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken)

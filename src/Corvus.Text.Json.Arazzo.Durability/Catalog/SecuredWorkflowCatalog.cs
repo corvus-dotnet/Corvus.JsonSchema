@@ -403,15 +403,11 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     // Wraps a continuation token's UTF-8 (a page's NextPageToken) as the JSON string value the store's paged read decodes
-    // it from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages.
+    // it from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages. The
+    // generated Create() escapes with the default encoder — byte-identical for our base64url tokens (pinned by
+    // PageTokenWrapEscapeEquivalenceTests) and still valid JSON if a token ever carries an escapable byte.
     private static ParsedJsonDocument<JsonString> WrapPageToken(ReadOnlyMemory<byte> tokenUtf8)
-    {
-        byte[] quoted = new byte[tokenUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        tokenUtf8.Span.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(quoted);
-    }
+        => JsonString.Create(tokenUtf8.Span);
 
     // Materializes the initial administrator record for a freshly published version 1 (§15.2): the creator's stamped
     // identity (the version's tags with sys:workflow removed) becomes the sole, explicit, removable administrator. The

@@ -407,6 +407,34 @@ public class DocumentMaterializationBenchmarks
             static (Utf8JsonWriter writer, in DraftRun d) => d.WriteTo(writer)).Length;
     }
 
+    private static readonly byte[] PageTokenFixture = "eyJvIjoxMCwiaWQiOiJibmQtMDEyMzQ1Njc4OWFiY2RlZiJ9"u8.ToArray();
+
+    /// <summary>Create() adoption row 1.11 "before": the replaced continuation-token wrap — a fresh GC array with the
+    /// token bytes spliced between bare quotes, parsed. Preserved inline so the delta stays measured.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind PageTokenWrap_QuoteSpliceParse()
+    {
+        ReadOnlySpan<byte> token = PageTokenFixture;
+        byte[] quoted = new byte[token.Length + 2];
+        quoted[0] = (byte)'"';
+        token.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        using ParsedJsonDocument<Durability.JsonString> doc = ParsedJsonDocument<Durability.JsonString>.Parse(quoted);
+        return doc.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 1.11 "after": the production wrappers' shape — the generated scalar
+    /// <c>Create()</c> (escaping with the default encoder; byte-identical for base64url tokens, pinned by
+    /// <c>PageTokenWrapEscapeEquivalenceTests</c>) over pooled buffers.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind PageTokenWrap_Create()
+    {
+        using ParsedJsonDocument<Durability.JsonString> doc = Durability.JsonString.Create(PageTokenFixture.AsSpan());
+        return doc.RootElement.ValueKind;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra
