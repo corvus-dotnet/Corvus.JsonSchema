@@ -325,6 +325,42 @@ public class DocumentMaterializationBenchmarks
         return result.Length;
     }
 
+    private static readonly string[] RuleNamesFixture = ["tenant-scoped", "region-scoped"];
+
+    /// <summary>Create() adoption row 1.8 "before": the replaced <c>VerbGrantInfo.Rules</c> — a workspace builder
+    /// cloned to the detached value. Preserved inline so the delta stays measured.</summary>
+    /// <returns>The grant's rule-name count (no leaf-string allocation).</returns>
+    [Benchmark]
+    public int VerbGrantRules_BuilderClone()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<SecurityBindingDocument.VerbGrantInfo.Mutable> builder = SecurityBindingDocument.VerbGrantInfo.CreateBuilder(
+            workspace,
+            RuleNamesFixture,
+            ruleNames: SecurityBindingDocument.VerbGrantInfo.JsonStringArray.Build(
+                RuleNamesFixture,
+                static (in string[] names, ref SecurityBindingDocument.VerbGrantInfo.JsonStringArray.Builder array) =>
+                {
+                    foreach (string ruleName in names)
+                    {
+                        array.AddItem(ruleName);
+                    }
+                }),
+            unrestricted: false);
+        SecurityBindingDocument.VerbGrantInfo grant = builder.RootElement.Clone();
+        return grant.RuleNameCount;
+    }
+
+    /// <summary>Create() adoption row 1.8 "after": the production <see cref="SecurityBindingDocument.VerbGrantInfo.Rules"/>,
+    /// now the generated contextful <c>Create()</c> + a detached clone of its root.</summary>
+    /// <returns>The grant's rule-name count (no leaf-string allocation).</returns>
+    [Benchmark]
+    public int VerbGrantRules_Create()
+    {
+        SecurityBindingDocument.VerbGrantInfo grant = SecurityBindingDocument.VerbGrantInfo.Rules("tenant-scoped", "region-scoped");
+        return grant.RuleNameCount;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra

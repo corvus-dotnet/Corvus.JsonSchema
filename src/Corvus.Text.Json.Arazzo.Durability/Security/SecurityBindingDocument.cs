@@ -396,10 +396,10 @@ public readonly partial struct SecurityBindingDocument
         /// <returns>The grant.</returns>
         public static VerbGrantInfo Rules(params string[] ruleNames)
         {
-            // Thread the names through as the build context so the array callback can be static — no closure allocation.
-            using JsonWorkspace workspace = JsonWorkspace.Create();
-            using JsonDocumentBuilder<Mutable> builder = CreateBuilder(
-                workspace,
+            // The generated contextful Create() realises the document (text + parse metadata) in one pooled pass — the
+            // names are the build context so the array callback stays static, no closure — and the caller-facing value
+            // is a detached clone of its root (every consumer wants the value, not a disposable document).
+            using ParsedJsonDocument<VerbGrantInfo> doc = Create(
                 ruleNames,
                 ruleNames: JsonStringArray.Build(
                     ruleNames,
@@ -411,7 +411,7 @@ public readonly partial struct SecurityBindingDocument
                         }
                     }),
                 unrestricted: false);
-            return builder.RootElement.Clone();
+            return doc.RootElement.Clone();
         }
     }
 }
