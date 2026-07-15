@@ -71,12 +71,13 @@ public static class MetadataTraceAssembler
         IReadOnlyList<RecordedApiExchange> exchanges,
         string? pausedBeforeStepId = null,
         IReadOnlyList<int>? stepBoundaries = null,
+        IReadOnlyList<RecordedStepRecord>? capturedSteps = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
         WorkflowCheckpoint checkpoint = await store.LoadAsync(id, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"No run '{id.Value}' exists to assemble a metadata trace for.");
-        WriteTrace(writer, checkpoint.Utf8, exchanges, pausedBeforeStepId, stepBoundaries);
+        WriteTrace(writer, checkpoint.Utf8, exchanges, pausedBeforeStepId, stepBoundaries, capturedSteps);
     }
 
     /// <summary>Writes the metadata trace for a run from its serialized checkpoint and recorded exchanges.</summary>
@@ -94,7 +95,8 @@ public static class MetadataTraceAssembler
         ReadOnlyMemory<byte> checkpointUtf8,
         IReadOnlyList<RecordedApiExchange> exchanges,
         string? pausedBeforeStepId = null,
-        IReadOnlyList<int>? stepBoundaries = null)
+        IReadOnlyList<int>? stepBoundaries = null,
+        IReadOnlyList<RecordedStepRecord>? capturedSteps = null)
     {
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(exchanges);
@@ -169,7 +171,160 @@ public static class MetadataTraceAssembler
             writer.WriteEndObject();
         }
 
-        WriteSteps(writer, root, status, exchanges, stepBoundaries);
+        if (capturedSteps is { Count: > 0 })
+        {
+            WriteCapturedSteps(writer, root, status, exchanges, capturedSteps);
+        }
+        else
+        {
+            WriteSteps(writer, root, status, exchanges, stepBoundaries);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    // §15-8a/§3.4: the at-source captured records are the step sequence when they exist — faithful per-step
+    // boundaries across loops and retries, plus sub-workflow nesting. The checkpoint still contributes per step:
+    // outputs enrich the LAST captured record per stepId; steps in the checkpoint the recording never saw (earlier
+    // segments on another runner instance) are emitted FIRST, checkpoint-derived, without requests (their
+    // exchanges predate this recording); and a step whose last captured record FAULTED but which the checkpoint
+    // shows with outputs was durably Skip-resumed — a synthetic skipped record (attempt 0, the provided outputs,
+    // no exchanges) follows the faulted one, the derivation design §10 F3 prescribes.
+    private static void WriteCapturedSteps(
+        Utf8JsonWriter writer,
+        in JsonElement root,
+        WorkflowRunStatus status,
+        IReadOnlyList<RecordedApiExchange> exchanges,
+        IReadOnlyList<RecordedStepRecord> captured)
+    {
+        _ = status;
+        var outputsByStep = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+        var attemptsByStep = new Dictionary<string, int>(StringComparer.Ordinal);
+        root.TryGetProperty("retryCounters"u8, out JsonElement retryCounters);
+        var spineOrder = new List<string>();
+        if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputs) && stepOutputs.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> step in stepOutputs.EnumerateObject())
+            {
+                string name = step.Name;
+                outputsByStep[name] = step.Value;
+                spineOrder.Add(name);
+                if (retryCounters.ValueKind == JsonValueKind.Object && retryCounters.TryGetProperty(name, out JsonElement count))
+                {
+                    attemptsByStep[name] = count.GetInt32();
+                }
+            }
+        }
+
+        // The last captured record per stepId (it gets the checkpoint outputs), and the captured id set
+        // (spine steps outside it were executed before this recording existed).
+        var lastRecordByStep = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (int i = 0; i < captured.Count; i++)
+        {
+            lastRecordByStep[captured[i].StepId] = i;
+        }
+
+        int emitted = 0;
+        writer.WriteStartArray("steps"u8);
+        foreach (string stepId in spineOrder)
+        {
+            if (lastRecordByStep.ContainsKey(stepId))
+            {
+                continue;
+            }
+
+            writer.WriteStartObject();
+            writer.WriteString("stepId"u8, stepId);
+            writer.WriteString("status"u8, "completed"u8);
+            writer.WriteNumber("attempt"u8, attemptsByStep.GetValueOrDefault(stepId));
+            if (outputsByStep.TryGetValue(stepId, out JsonElement priorOutputs) && priorOutputs.ValueKind != JsonValueKind.Undefined)
+            {
+                writer.WritePropertyName("outputs"u8);
+                priorOutputs.WriteTo(writer);
+            }
+
+            writer.WriteEndObject();
+            emitted++;
+        }
+
+        for (int i = 0; i < captured.Count; i++)
+        {
+            RecordedStepRecord record = captured[i];
+            bool isLastForStep = lastRecordByStep[record.StepId] == i;
+            bool skipResumed = record.Faulted && isLastForStep && outputsByStep.ContainsKey(record.StepId);
+            JsonElement recordOutputs = !record.Faulted && isLastForStep && outputsByStep.TryGetValue(record.StepId, out JsonElement o) ? o : default;
+            WriteCapturedRecord(writer, record, recordOutputs, exchanges);
+            emitted++;
+
+            if (skipResumed)
+            {
+                // The durable Skip protocol really did both: the attempt faulted (above), then the resume
+                // seeded the provided outputs and moved past the step.
+                writer.WriteStartObject();
+                writer.WriteString("stepId"u8, record.StepId);
+                writer.WriteString("status"u8, "completed"u8);
+                writer.WriteNumber("attempt"u8, 0);
+                writer.WriteBoolean("skipped"u8, true);
+                if (outputsByStep[record.StepId].ValueKind != JsonValueKind.Undefined)
+                {
+                    writer.WritePropertyName("outputs"u8);
+                    outputsByStep[record.StepId].WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
+                emitted++;
+            }
+        }
+
+        writer.WriteEndArray();
+        writer.WriteNumber("stepsExecuted"u8, emitted);
+    }
+
+    private static void WriteCapturedRecord(Utf8JsonWriter writer, RecordedStepRecord record, in JsonElement outputs, IReadOnlyList<RecordedApiExchange> exchanges)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("stepId"u8, record.StepId);
+        writer.WriteString("status"u8, record.Faulted ? "faulted"u8 : record.SubTrace?.Outcome == "suspended" ? "suspended"u8 : "completed"u8);
+        writer.WriteNumber("attempt"u8, record.Attempt);
+        if (outputs.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName("outputs"u8);
+            outputs.WriteTo(writer);
+        }
+
+        if (record.ExchangeCount > 0 && record.FirstExchange + record.ExchangeCount <= exchanges.Count)
+        {
+            writer.WriteStartArray("requests"u8);
+            for (int e = record.FirstExchange; e < record.FirstExchange + record.ExchangeCount; e++)
+            {
+                RecordedApiExchange exchange = exchanges[e];
+                writer.WriteStartObject();
+                writer.WriteString("method"u8, exchange.Method.ToString().ToLowerInvariant());
+                writer.WriteString("path"u8, exchange.Path);
+                writer.WriteNumber("status"u8, exchange.StatusCode);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
+        if (record.SubTrace is { } sub)
+        {
+            // The nested trace, metadata-only (no outputs — the checkpoint holds none for child steps by
+            // design; no bodies, no verdicts), in the kit's pinned {workflowId, ...trace} contract shape.
+            writer.WriteStartObject("subTrace"u8);
+            writer.WriteString("workflowId"u8, sub.WorkflowId);
+            writer.WriteString("outcome"u8, sub.Outcome);
+            writer.WriteStartArray("steps"u8);
+            foreach (RecordedStepRecord nested in sub.Steps)
+            {
+                WriteCapturedRecord(writer, nested, default, exchanges);
+            }
+
+            writer.WriteEndArray();
+            writer.WriteNumber("stepsExecuted"u8, sub.Steps.Count);
+            writer.WriteEndObject();
+        }
 
         writer.WriteEndObject();
     }

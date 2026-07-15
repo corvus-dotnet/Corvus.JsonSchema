@@ -348,12 +348,23 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// null-check on the checkpoint path — debug support has no allocation or write impact on non-debug runs.</summary>
     public Action? OnCheckpointed { get; set; }
 
+    /// <summary>Gets or sets the §18 at-source capture sink (design §15-8a/§3.4): when a debug runner attaches
+    /// one, the run reports its step boundaries, faults, timer suspensions, and sub-workflow invocations so the
+    /// runner captures faithful per-step records the checkpoint cannot express. It is <see langword="null"/> for
+    /// a non-debug run — production runs pay only a null-check, and their checkpoints and stored bytes are
+    /// untouched by construction.</summary>
+    public IWorkflowRunRecorder? Recorder { get; set; }
+
+    /// <inheritdoc/>
+    public IWorkflowRun? BeginSubWorkflow(string stepId, string subWorkflowId) => this.Recorder?.BeginSubWorkflow(stepId, subWorkflowId);
+
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
     {
         // §18: mark this step boundary for the (debug-only) exchange recorder before recording the checkpoint — the
         // exchanges recorded up to now are this step's, across its retries. Null (skipped) for a non-debug run.
         this.OnCheckpointed?.Invoke();
+        this.Recorder?.OnCheckpointed(cursor);
 
         this.Cursor = cursor;
         this.Status = WorkflowRunStatus.Running;
@@ -405,6 +416,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <inheritdoc/>
     public async ValueTask<WorkflowWait> SuspendForTimerAsync(int cursor, TimeSpan delay, CancellationToken cancellationToken)
     {
+        // §18 at-source capture: a retry timer completes the attempt, so it is a step boundary (the resumed
+        // segment re-enters the same state); a message suspend below is the step itself still waiting.
+        this.Recorder?.OnTimerSuspended();
         this.Cursor = cursor;
         this.Status = WorkflowRunStatus.Suspended;
         this.fault = null;
@@ -434,6 +448,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     {
         ArgumentNullException.ThrowIfNull(stepId);
         ArgumentNullException.ThrowIfNull(error);
+        this.Recorder?.OnFaulted(stepId, attempt);
         this.Status = WorkflowRunStatus.Faulted;
         this.wait = null;
         var f = new WorkflowFault(stepId, attempt, error, this.timeProvider.GetUtcNow());

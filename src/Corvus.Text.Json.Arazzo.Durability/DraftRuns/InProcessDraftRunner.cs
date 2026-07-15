@@ -65,6 +65,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     private static readonly string[] DraftHosting = [DraftRuns.RunWorkflowId];
 
     private readonly IWorkflowStateStore store;
+    private readonly IDraftRunStore drafts;
     private readonly IDraftRunTraceStore traceStore;
     private readonly WorkflowTransportBinder baseBinder;
     private readonly DraftWorkflowResumer resumer;
@@ -130,6 +131,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         this.store = store;
         this.traceStore = traceStore;
         this.baseBinder = binder;
+        this.drafts = drafts;
         this.resumer = new DraftWorkflowResumer(drafts, provider, this.RecordingBinder, inner, maxCachedExecutors);
         this.dispatcher = new WorkflowDispatcher(store, owner, timeProvider, runnerEnvironment: runnerEnvironment);
 
@@ -300,6 +302,14 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         // §18 R3: mark a step boundary at each durable checkpoint, so the assembler attributes exchanges to steps by
         // range (faithful across a step's retries and across resume segments). Always a debug run here, so it is wired.
         run.OnCheckpointed = recording.MarkStepBoundary;
+
+        // §15-8a/§3.4: at-source step capture. The captured package's cursor→stepId shape resolves once per run;
+        // when it does, the recorder turns the run's boundary hooks into faithful per-step records (attempt,
+        // exchange range, sub-workflow nesting) the checkpoint cannot express. A package that cannot be shaped
+        // (unreadable, no workflows) leaves capture off — the assembler's checkpoint derivation still stands.
+        recording.Shape ??= await this.TryShapeAsync(run.Id, cancellationToken).ConfigureAwait(false);
+        DraftRunStepRecorder? recorder = recording.Shape is { } shape ? new DraftRunStepRecorder(run, recording, shape) : null;
+        run.Recorder = recorder;
         try
         {
             WorkflowRunResultKind kind;
@@ -317,12 +327,19 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
                 kind = WorkflowRunResultKind.Faulted;
             }
 
+            // A suspended segment may leave sub-workflow scopes open (the invoking steps never reached their
+            // boundaries): snapshot them as partial sub-traces so the trace shows where the run stands (§3.5).
+            if (kind == WorkflowRunResultKind.Suspended)
+            {
+                recorder?.FinalizeInFlightScopes("suspended");
+            }
+
             // Assemble the trace for whatever state the run reached (executed, paused, or faulted-before-a-step).
             // Best-effort for a faulted run that produced no checkpoint — its persisted fault is the durable record,
             // and a trace-assembly hiccup must not re-throw and abort the pump's batch.
             try
             {
-                await this.AssembleTraceAsync(run.Id, recording, cancellationToken).ConfigureAwait(false);
+                await this.AssembleTraceAsync(run, recording, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception) when (kind == WorkflowRunResultKind.Faulted)
             {
@@ -340,8 +357,60 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         }
         finally
         {
+            run.Recorder = null;
             run.OnCheckpointed = null;
             this.currentRecording.Value = null;
+        }
+    }
+
+    // Parses the captured package's workflow document into the cursor→stepId shape (§15-8a): the chosen
+    // workflow is FIRST, so its declaration order IS the durable cursor space; every workflow's step ids are
+    // kept by workflowId for sub-workflow scopes. Null when the package cannot be shaped (capture stays off).
+    private async ValueTask<DraftRunWorkflowShape?> TryShapeAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (await this.drafts.GetPackageAsync(id, cancellationToken).ConfigureAwait(false) is not { } packageBytes)
+            {
+                return null;
+            }
+
+            WorkflowPackageContents contents = WorkflowPackage.Open(packageBytes);
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(contents.Workflow);
+            if (!document.RootElement.TryGetProperty("workflows"u8, out JsonElement workflows) || workflows.ValueKind != JsonValueKind.Array)
+            {
+                return null;
+            }
+
+            IReadOnlyList<string>? first = null;
+            var byId = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+            foreach (JsonElement workflow in workflows.EnumerateArray())
+            {
+                var stepIds = new List<string>();
+                if (workflow.TryGetProperty("steps"u8, out JsonElement steps) && steps.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement step in steps.EnumerateArray())
+                    {
+                        if (step.TryGetProperty("stepId"u8, out JsonElement stepId) && stepId.GetString() is { Length: > 0 } sid)
+                        {
+                            stepIds.Add(sid);
+                        }
+                    }
+                }
+
+                if (workflow.TryGetProperty("workflowId"u8, out JsonElement workflowId) && workflowId.GetString() is { Length: > 0 } wid)
+                {
+                    byId[wid] = stepIds;
+                }
+
+                first ??= stepIds;
+            }
+
+            return first is null ? null : new DraftRunWorkflowShape(first, byId);
+        }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException or FormatException)
+        {
+            return null; // an unshapeable capture: at-source capture stays off; checkpoint derivation stands
         }
     }
 
@@ -369,20 +438,32 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         return new WorkflowTransports(recordingTransports, bound.MessageTransport);
     }
 
-    private async ValueTask AssembleTraceAsync(WorkflowRunId id, DraftRunRecording recording, CancellationToken cancellationToken)
+    private async ValueTask AssembleTraceAsync(WorkflowRun run, DraftRunRecording recording, CancellationToken cancellationToken)
     {
         // Attribute the ordered exchanges to the executed steps by the per-step boundaries the checkpoint hook marked
         // (§18 R3), then persist the trace durably so a control plane in a different process reads it (§18 R4).
         IReadOnlyList<RecordedApiExchange> exchanges = recording.Exchanges;
         IReadOnlyList<int> stepBoundaries = recording.StepBoundaries;
 
+        // §15-8a: a paused run's trace carries the step it resumes at — the cursor names it through the captured
+        // package's shape (previously the stored trace omitted it and only the live handler could derive it).
+        string? pausedBefore = null;
+        if (run.Status == WorkflowRunStatus.Suspended
+            && run.Wait is { Kind: WorkflowWaitKind.Pause }
+            && recording.Shape is { } shape
+            && run.Cursor >= 0
+            && run.Cursor < shape.StepIds.Count)
+        {
+            pausedBefore = shape.StepIds[run.Cursor];
+        }
+
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
         {
-            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, id, exchanges, pausedBeforeStepId: null, stepBoundaries: stepBoundaries, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, run.Id, exchanges, pausedBeforeStepId: pausedBefore, stepBoundaries: stepBoundaries, capturedSteps: recording.StepRecords, cancellationToken: cancellationToken).ConfigureAwait(false);
             writer.Flush();
         }
 
-        await this.traceStore.PutAsync(id, buffer.WrittenMemory, cancellationToken).ConfigureAwait(false);
+        await this.traceStore.PutAsync(run.Id, buffer.WrittenMemory, cancellationToken).ConfigureAwait(false);
     }
 }

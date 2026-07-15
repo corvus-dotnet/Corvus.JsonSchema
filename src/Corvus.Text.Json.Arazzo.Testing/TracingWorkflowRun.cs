@@ -37,12 +37,8 @@ namespace Corvus.Text.Json.Arazzo.Testing;
 /// </remarks>
 internal sealed class TracingWorkflowRun : IWorkflowRun
 {
-    /// <summary>
-    /// The nesting depth cap (decision §8.2): a deliberate constant well past any legitimate
-    /// composition depth, so runaway mutual recursion between workflows exhausts predictably
-    /// instead of overflowing the stack. The demo mock aligns to this value (slice E).
-    /// </summary>
-    internal const int MaxSubWorkflowDepth = 8;
+    /// <summary>The nesting depth cap (decision §8.2) — the shared <see cref="IWorkflowRun"/> constant.</summary>
+    internal const int MaxSubWorkflowDepth = IWorkflowRun.MaxSubWorkflowDepth;
 
     private static readonly IReadOnlyDictionary<string, StepOutputOverride> EmptyOverrides = new Dictionary<string, StepOutputOverride>();
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> EmptyStepIdMap = new Dictionary<string, IReadOnlyList<string>>();

@@ -129,4 +129,12 @@ public interface IWorkflowRun
     /// <param name="subWorkflowId">The invoked workflow's id.</param>
     /// <returns>The child scope to thread into the sub-workflow, or <see langword="null"/> to run it untracked.</returns>
     IWorkflowRun? BeginSubWorkflow(string stepId, string subWorkflowId) => null;
+
+    /// <summary>
+    /// The sub-workflow nesting depth cap every tracking run surface honours (§15-8a decision §8.2):
+    /// a deliberate constant well past any legitimate composition depth, so runaway mutual recursion
+    /// between workflows exhausts predictably instead of overflowing the stack. The demo mock aligns
+    /// to this value.
+    /// </summary>
+    public const int MaxSubWorkflowDepth = 8;
 }

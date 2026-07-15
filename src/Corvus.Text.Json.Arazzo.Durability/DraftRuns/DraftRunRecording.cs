@@ -16,6 +16,7 @@ public sealed class DraftRunRecording
 {
     private readonly List<RecordedApiExchange> exchanges = [];
     private readonly List<int> stepBoundaries = [];
+    private readonly List<RecordedStepRecord> stepRecords = [];
     private readonly Lock gate = new();
 
     /// <summary>Gets a snapshot of the exchanges recorded so far, in global call order.</summary>
@@ -41,6 +42,47 @@ public sealed class DraftRunRecording
             {
                 return this.stepBoundaries.ToArray();
             }
+        }
+    }
+
+    /// <summary>Gets the exchanges recorded so far, without snapshotting.</summary>
+    public int ExchangeCount
+    {
+        get
+        {
+            lock (this.gate)
+            {
+                return this.exchanges.Count;
+            }
+        }
+    }
+
+    /// <summary>Gets a snapshot of the at-source step records captured so far (§15-8a/§3.4), in execution order,
+    /// accumulated across this runner's segments of the run. Empty for a run recorded before at-source capture
+    /// existed, or whose earlier segments ran on a different runner instance — the assembler merges per step.</summary>
+    public IReadOnlyList<RecordedStepRecord> StepRecords
+    {
+        get
+        {
+            lock (this.gate)
+            {
+                return this.stepRecords.ToArray();
+            }
+        }
+    }
+
+    /// <summary>Gets or sets the captured package's cursor→stepId shape, parsed once per run by the runner; the
+    /// step recorder needs it to attribute boundaries. Null until the first segment resolves it.</summary>
+    public DraftRunWorkflowShape? Shape { get; set; }
+
+    /// <summary>Records one at-source step record (the run's attached <see cref="DraftRunStepRecorder"/> calls this
+    /// at each boundary).</summary>
+    /// <param name="record">The captured record.</param>
+    public void RecordStep(RecordedStepRecord record)
+    {
+        lock (this.gate)
+        {
+            this.stepRecords.Add(record);
         }
     }
 
