@@ -66,4 +66,35 @@ public class DocumentMaterializationBenchmarks
         using ParsedJsonDocument<SecurityRuleDocument> document = PersistedJson.ToPooledDocument<SecurityRuleDocument>(this.ruleJson);
         return document.RootElement.NameValue;
     }
+
+    /// <summary>Create() adoption row 1.1 "before": the replaced draft construction — a writer callback serialized
+    /// through <see cref="PersistedJson.ToPooledDocument{T,TContext}"/> and reparsed into the pooled document. The old
+    /// shape is preserved inline here so the row's delta stays measured, not asserted.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind RunnerAuthorizationDraft_SerializeReparse()
+    {
+        var state = ("production", "runner-01");
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> draft =
+            PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization, (string Environment, string RunnerId)>(
+                in state,
+                static (Utf8JsonWriter writer, in (string Environment, string RunnerId) c) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("environment"u8, c.Environment);
+                    writer.WriteString("runnerId"u8, c.RunnerId);
+                    writer.WriteEndObject();
+                });
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 1.1 "after": the production <see cref="EnvironmentRunnerAuthorization.Draft"/>,
+    /// now the generated <c>Create()</c> — document text and parse metadata written in one pass, no reparse.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind RunnerAuthorizationDraft_Create()
+    {
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> draft = EnvironmentRunnerAuthorization.Draft("production", "runner-01");
+        return draft.RootElement.ValueKind;
+    }
 }
