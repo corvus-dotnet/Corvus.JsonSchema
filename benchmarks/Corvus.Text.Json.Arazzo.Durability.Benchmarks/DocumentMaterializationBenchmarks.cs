@@ -97,4 +97,44 @@ public class DocumentMaterializationBenchmarks
         using ParsedJsonDocument<EnvironmentRunnerAuthorization> draft = EnvironmentRunnerAuthorization.Draft("production", "runner-01");
         return draft.RootElement.ValueKind;
     }
+
+    private SecurityTagSet environmentTags;
+
+    [GlobalSetup(Targets = [nameof(EnvironmentDraft_WriterSplice), nameof(EnvironmentDraft_CreateEmbed_Rejected)])]
+    public void SetupEnvironmentDraft()
+        => this.environmentTags = SecurityTagSet.FromTags(
+            [new("sys:group", "arazzo-admins"), new("sys:iss", "arazzo-keycloak"), new("classification", "internal")]);
+
+    /// <summary>Create() adoption row 1.2, the KEPT shape: the production string-overload
+    /// <see cref="Environments.Environment.Draft(string, string?, string?, SecurityTagSet)"/> — a writer callback whose
+    /// raw <see cref="SecurityTagSet"/> splice (<c>WriteRawValue</c>) dominates the document.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind EnvironmentDraft_WriterSplice()
+    {
+        using ParsedJsonDocument<Environments.Environment> draft =
+            Environments.Environment.Draft("production", "Production", "The production environment.", this.environmentTags);
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
+    /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
+    /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra
+    /// parse + temp wrapper is a regression and the production path keeps the writer splice.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind EnvironmentDraft_CreateEmbed_Rejected()
+    {
+        using ParsedJsonDocument<Environments.Environment.SecurityTagInfoArray> tags =
+            PersistedJson.ToPooledDocument<Environments.Environment.SecurityTagInfoArray>(this.environmentTags.RawJson);
+        using ParsedJsonDocument<Environments.Environment> draft = Environments.Environment.Create(
+            createdAt: default,
+            createdBy: default,
+            etag: default,
+            name: "production",
+            description: "The production environment.",
+            displayName: "Production",
+            managementTags: tags.RootElement);
+        return draft.RootElement.ValueKind;
+    }
 }
