@@ -46,6 +46,14 @@ public readonly partial struct GetIdentityGranteesSource
         /// A constant for the <c>enum</c> keyword.
         /// </summary>
         public static readonly GetIdentityGranteesSource EnumJson2 = ParsedJsonDocument<GetIdentityGranteesSource>.StringConstant([.."\"directory\""u8]);
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly byte[] Enum3 = "merged"u8.ToArray();
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly GetIdentityGranteesSource EnumJson3 = ParsedJsonDocument<GetIdentityGranteesSource>.StringConstant([.."\"merged\""u8]);
     }
 
     /// <summary>
@@ -74,6 +82,17 @@ public readonly partial struct GetIdentityGranteesSource
         /// as a UTF8 byte array.
         /// </summary>
         public static ReadOnlySpan<byte> DirectoryUtf8 => Constants.Enum2;
+
+        /// <summary>
+        /// Gets the string "merged"
+        /// as a <see cref="GetIdentityGranteesSource"/>.
+        /// </summary>
+        public static GetIdentityGranteesSource Merged { get; } = Constants.EnumJson3;
+        /// <summary>
+        /// Gets the string "merged"
+        /// as a UTF8 byte array.
+        /// </summary>
+        public static ReadOnlySpan<byte> MergedUtf8 => Constants.Enum3;
     }
 
     public static partial class JsonSchema
@@ -129,6 +148,11 @@ public readonly partial struct GetIdentityGranteesSource
                 }
 
                 if (unescapedUtf8JsonString.Span.SequenceEqual("directory"u8))
+                {
+                    goto enumShortCircuitSuccess;
+                }
+
+                if (unescapedUtf8JsonString.Span.SequenceEqual("merged"u8))
                 {
                     goto enumShortCircuitSuccess;
                 }

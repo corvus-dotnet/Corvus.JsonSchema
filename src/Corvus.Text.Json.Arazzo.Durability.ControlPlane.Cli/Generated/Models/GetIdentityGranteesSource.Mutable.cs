@@ -394,12 +394,14 @@ public readonly partial struct GetIdentityGranteesSource
         /// <param name="context">The context to pass to the match function.</param>
         /// <param name="matchObserved">Match 1st item.</param>
         /// <param name="matchDirectory">Match 2nd item.</param>
+        /// <param name="matchMerged">Match 3rd item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
             in TContext context,
             Func<TContext, TResult> matchObserved,
             Func<TContext, TResult> matchDirectory,
+            Func<TContext, TResult> matchMerged,
             Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -415,6 +417,11 @@ public readonly partial struct GetIdentityGranteesSource
                 return matchDirectory(context);
             }
 
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchMerged(context);
+            }
+
             return defaultMatch(context);
         }
 
@@ -424,11 +431,13 @@ public readonly partial struct GetIdentityGranteesSource
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="matchObserved">Match 1st item.</param>
         /// <param name="matchDirectory">Match 2nd item.</param>
+        /// <param name="matchMerged">Match 3rd item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
             Func<TResult> matchObserved,
             Func<TResult> matchDirectory,
+            Func<TResult> matchMerged,
             Func<TResult> defaultMatch)
         {
             if (this.ValueEquals(Constants.Enum1))
@@ -439,6 +448,11 @@ public readonly partial struct GetIdentityGranteesSource
             if (this.ValueEquals(Constants.Enum2))
             {
                 return matchDirectory();
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchMerged();
             }
 
             return defaultMatch();

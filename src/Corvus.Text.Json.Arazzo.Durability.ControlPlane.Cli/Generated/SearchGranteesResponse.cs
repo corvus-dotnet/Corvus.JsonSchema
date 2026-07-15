@@ -33,6 +33,11 @@ public struct SearchGranteesResponse : IApiResponse<SearchGranteesResponse>
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeList OkBody { get; private set; }
 
+    /// <summary>
+    /// Gets the 502 response body.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails BadGatewayBody { get; private set; }
+
     /// <inheritdoc/>
     public static async ValueTask<SearchGranteesResponse> CreateAsync(
         int statusCode,
@@ -52,6 +57,14 @@ public struct SearchGranteesResponse : IApiResponse<SearchGranteesResponse>
             var okDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeList>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = okDoc;
             response.OkBody = okDoc.RootElement;
+            return response;
+        }
+
+        if (statusCode == 502)
+        {
+            var badGatewayDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            response.parsedDocument = badGatewayDoc;
+            response.BadGatewayBody = badGatewayDoc.RootElement;
             return response;
         }
 
@@ -76,20 +89,44 @@ public struct SearchGranteesResponse : IApiResponse<SearchGranteesResponse>
     }
 
     /// <summary>
+    /// Tries to get the 502 typed response body.
+    /// </summary>
+    /// <param name="result">The typed response body if the status matches.</param>
+    /// <returns><see langword="true"/> if the status code is 502.</returns>
+    public bool TryGetBadGateway(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails result)
+    {
+        if (this.StatusCode == 502)
+        {
+            result = this.BadGatewayBody;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
     /// Matches the response against each status code and content type,
     /// and calls the corresponding handler.
     /// </summary>
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
     /// <param name="matchOk">Handler for the 200 response.</param>
+    /// <param name="matchBadGateway">Handler for the 502 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeList, TResult> matchOk,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchBadGateway,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
         {
             return matchOk(this.OkBody);
+        }
+
+        if (this.StatusCode == 502)
+        {
+            return matchBadGateway(this.BadGatewayBody);
         }
 
         return matchDefault(this.StatusCode);
@@ -103,17 +140,24 @@ public struct SearchGranteesResponse : IApiResponse<SearchGranteesResponse>
     /// <typeparam name="TResult">The type of the result returned by the handler.</typeparam>
     /// <param name="context">The context to pass to the handler.</param>
     /// <param name="matchOk">Handler for the 200 response.</param>
+    /// <param name="matchBadGateway">Handler for the 502 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
         in TContext context,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeList, TContext, TResult> matchOk,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchBadGateway,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
         if (this.StatusCode == 200)
         {
             return matchOk(this.OkBody, context);
+        }
+
+        if (this.StatusCode == 502)
+        {
+            return matchBadGateway(this.BadGatewayBody, context);
         }
 
         return matchDefault(this.StatusCode, context);
@@ -136,6 +180,14 @@ public struct SearchGranteesResponse : IApiResponse<SearchGranteesResponse>
                     ThrowHelper.ThrowResponseBodyValidationFailed(200, SchemaValidationDetail.FormatResults(collector));
                 }
             }
+            else if (this.StatusCode == 502)
+            {
+                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.BadGatewayBody.EvaluateSchema(collector))
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(502, SchemaValidationDetail.FormatResults(collector));
+                }
+            }
         }
         else
         {
@@ -144,6 +196,13 @@ public struct SearchGranteesResponse : IApiResponse<SearchGranteesResponse>
                 if (!this.OkBody.EvaluateSchema())
                 {
                     ThrowHelper.ThrowResponseBodyValidationFailed(200);
+                }
+            }
+            else if (this.StatusCode == 502)
+            {
+                if (!this.BadGatewayBody.EvaluateSchema())
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(502);
                 }
             }
         }

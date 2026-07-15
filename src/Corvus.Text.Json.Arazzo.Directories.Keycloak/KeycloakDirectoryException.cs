@@ -10,7 +10,7 @@ namespace Corvus.Text.Json.Arazzo.Directories.Keycloak;
 /// message names only non-sensitive detail (status code / shape), never the admin credential or access token, so it is
 /// safe to log.
 /// </summary>
-public sealed class KeycloakDirectoryException : Exception
+public sealed class KeycloakDirectoryException : PrincipalDirectoryException
 {
     /// <summary>Initializes a new instance of the <see cref="KeycloakDirectoryException"/> class.</summary>
     /// <param name="reason">A non-sensitive description of the failure.</param>

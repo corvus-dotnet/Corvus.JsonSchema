@@ -24,6 +24,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
 {
     private const int DefaultLimit = 20;
+    private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
+
+    // The kinds a principal directory can search (people/teams/roles — the IPrincipalDirectory vocabulary); an
+    // unrestricted directory or merged search queries each. Workflow is a control-plane concept, never directory-resolved.
+    private static readonly GranteeKind[] DirectorySearchableKinds = [GranteeKind.Person, GranteeKind.Team, GranteeKind.Role];
 
     private readonly IObservedIdentityStore observed;
     private readonly IPrincipalDirectory? directory;
@@ -92,7 +97,11 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         // no reify, no token re-parse) — the observed store carries it through. An absent kind is undefined (= all kinds).
         ObservedIdentity.GranteeKind kind = ObservedIdentity.GranteeKind.From(parameters.Kind);
 
-        string source = parameters.Source.IsNotUndefined() ? (string)parameters.Source : "observed";
+        // An absent source defaults to `merged` when a directory is configured (a real person and a store-seen identity
+        // are both findable without the caller knowing which source holds them), `observed` otherwise.
+        string source = parameters.Source.IsNotUndefined()
+            ? (string)parameters.Source
+            : this.directory is not null ? "merged" : "observed";
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : DefaultLimit;
 
         // The opaque page token flows to the observed store as its JSON value (From() rewraps parameters.PageToken — free,
@@ -117,17 +126,49 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         // Ownership ledger above this method; proven by GranteeProjectionBenchmarks (~2.0 KB, the closure-free floor).
         if (string.Equals(source, "directory", StringComparison.Ordinal) && this.directory is not null)
         {
-            // The directory seam is domain-typed (IPrincipalDirectory takes the GranteeKind enum) and string-typed (an
-            // LDAP filter / an HTTP URI), so reify both at that genuine leaf: the store kind back to the domain enum
-            // (defaulting to Person when unspecified), and the prefix to a string.
-            GranteeKind directoryKind = kind.IsNotUndefined() ? kind.ToGranteeKind() : GranteeKind.Person;
-            IReadOnlyList<ResolvedPrincipal> found = await this.directory.SearchAsync(directoryKind, prefix.IsNotUndefined() ? (string)prefix : string.Empty, limit, cancellationToken).ConfigureAwait(false);
+            // An explicit directory search surfaces a directory failure (the caller asked for THAT source): the shared
+            // adapter failure type maps to a 502 problem instead of an unhandled 500.
+            IReadOnlyList<ResolvedPrincipal> found;
+            try
+            {
+                found = await this.SearchDirectoryAsync(kind, prefix, limit, cancellationToken).ConfigureAwait(false);
+            }
+            catch (PrincipalDirectoryException)
+            {
+                return SearchGranteesResult.BadGateway(
+                    Problem("directory-unavailable", "Directory unavailable", 502, "The external principal directory could not be reached."), workspace);
+            }
 
             var state = new RefTuple<IReadOnlyList<ResolvedPrincipal>, AccessContext, ControlPlaneAccess>(found, context, this.access);
             var body = Models.GranteeList.Build(
                 in state,
                 grantees: Models.GranteeList.ResolvedGranteeArray.Build(in state, BuildDirectoryGrantees));
             return SearchGranteesResult.Ok(body, workspace);
+        }
+
+        if (string.Equals(source, "merged", StringComparison.Ordinal) && this.directory is not null)
+        {
+            // The merged view: directory results (reach-filtered) ahead of the observed identities that do not collide
+            // with one on (kind, value) — directory-preferred, since a directory resolution is complete (§17.2). The
+            // directory leg is best-effort enrichment here, so its failure degrades to observed results rather than
+            // failing the search. One bounded result set: no page token (paging a union of a paged store and an
+            // unpaged directory would re-emit the directory head every page).
+            IReadOnlyList<ResolvedPrincipal> merged;
+            try
+            {
+                merged = await this.SearchDirectoryAsync(kind, prefix, limit, cancellationToken).ConfigureAwait(false);
+            }
+            catch (PrincipalDirectoryException)
+            {
+                merged = [];
+            }
+
+            using ObservedIdentityPage observedPage = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
+            var mergedState = new MergedGranteesState(merged, observedPage, context, this.access);
+            var mergedBody = Models.GranteeList.Build(
+                in mergedState,
+                grantees: Models.GranteeList.ResolvedGranteeArray.Build(in mergedState, BuildMergedGrantees));
+            return SearchGranteesResult.Ok(mergedBody, workspace);
         }
 
         using ObservedIdentityPage page = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
@@ -141,6 +182,37 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
             nextPageToken: page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span);
         return SearchGranteesResult.Ok(observedBody, workspace);
     }
+
+    // Searches the directory: one call when the request pins a kind (the seam is per-kind), otherwise one call per
+    // searchable kind (person/team/role), concatenated. The seam is domain-typed (the GranteeKind enum) and
+    // string-typed (an LDAP filter / an HTTP URI), so the store kind and the prefix reify at this genuine leaf.
+    private async ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchDirectoryAsync(ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, CancellationToken cancellationToken)
+    {
+        string query = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
+        if (kind.IsNotUndefined())
+        {
+            return await this.directory!.SearchAsync(kind.ToGranteeKind(), query, limit, cancellationToken).ConfigureAwait(false);
+        }
+
+        List<ResolvedPrincipal>? all = null;
+        foreach (GranteeKind searchable in DirectorySearchableKinds)
+        {
+            IReadOnlyList<ResolvedPrincipal> found = await this.directory!.SearchAsync(searchable, query, limit, cancellationToken).ConfigureAwait(false);
+            if (found.Count > 0)
+            {
+                (all ??= []).AddRange(found);
+            }
+        }
+
+        return (IReadOnlyList<ResolvedPrincipal>?)all ?? [];
+    }
+
+    private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
+        => new((ref Models.ProblemDetails.Builder b) => b.Create(
+            detail: detail,
+            status: status,
+            title: title,
+            type: ProblemBase + type));
 
     // A described usage grant written bytes-native from its (dimension, value) spans — shared by the whoami and grantee
     // identity sub-arrays (both hold AdministratorIdentity items). The spans are valid for the synchronous build.
@@ -221,6 +293,64 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         {
             grantee.Create(in item, complete: true, identity: Models.ResolvedGrantee.AdministratorIdentityArray.Build(in item, BuildGranteeIdentity), kind: principal.Kind.ToTokenUtf8(), source: "directory"u8, value: principal.ValueMemory.Span);
         }
+    }
+
+    // The merged view's projection state: the directory results, the observed page, and the caller's reach + access facade.
+    private readonly ref struct MergedGranteesState(IReadOnlyList<ResolvedPrincipal> found, ObservedIdentityPage page, AccessContext context, ControlPlaneAccess access)
+    {
+        public IReadOnlyList<ResolvedPrincipal> Found { get; } = found;
+
+        public ObservedIdentityPage Page { get; } = page;
+
+        public AccessContext Context { get; } = context;
+
+        public ControlPlaneAccess Access { get; } = access;
+    }
+
+    // Builds the merged grantees array: directory results first (reach-filtered here — the directory is external),
+    // then the observed identities that do not collide with an ADMITTED directory result on (kind, value) —
+    // directory-preferred, compared bytes-native off the stored CTJ strings against the principal's owned UTF-8.
+    private static void BuildMergedGrantees(in MergedGranteesState state, ref Models.GranteeList.ResolvedGranteeArray.Builder array)
+    {
+        foreach (ResolvedPrincipal principal in state.Found)
+        {
+            if (!state.Context.Admits(AccessVerb.Read, principal.Identity))
+            {
+                continue;
+            }
+
+            var item = new RefTuple<ResolvedPrincipal, SecurityTagSet, ControlPlaneAccess>(principal, principal.Identity, state.Access);
+            array.AddItem(Models.ResolvedGrantee.Build(in item, BuildDirectoryGrantee));
+        }
+
+        foreach (ObservedIdentity identity in state.Page.Identities)
+        {
+            if (CollidesWithDirectory(identity, state.Found, state.Context))
+            {
+                continue;
+            }
+
+            var item = new RefTuple<ObservedIdentity, SecurityTagSet, ControlPlaneAccess>(identity, identity.IdentityTagsValue, state.Access);
+            array.AddItem(Models.ResolvedGrantee.Build(in item, BuildObservedGrantee));
+        }
+    }
+
+    // Whether an observed identity names the same (kind, value) as a directory result the caller can see. A directory
+    // result the caller's reach filtered OUT must not suppress the observed entry (that would leak that a wider
+    // principal exists), so only admitted principals collide.
+    private static bool CollidesWithDirectory(ObservedIdentity identity, IReadOnlyList<ResolvedPrincipal> found, AccessContext context)
+    {
+        foreach (ResolvedPrincipal principal in found)
+        {
+            if (context.Admits(AccessVerb.Read, principal.Identity)
+                && identity.SubjectKind.ValueEquals(principal.Kind.ToTokenUtf8())
+                && identity.SubjectValue.ValueEquals(principal.ValueMemory.Span))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Builds the observed grantees array: the store already reach-filtered the page, so each identity is projected directly.

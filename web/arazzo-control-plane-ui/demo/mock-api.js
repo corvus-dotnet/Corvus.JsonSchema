@@ -4225,7 +4225,8 @@ export function createMockControlPlane(options = {}) {
     const limit = Math.max(1, Math.min(Number(params.get('limit')) || 20, 100));
     const matches = grantees.filter((g) => {
       if (kind && g.kind !== kind) return false;
-      if (source && g.source !== source) return false;
+      // `merged` (and an absent source — the server's merged default when a directory is configured) unions both sources.
+      if (source && source !== 'merged' && g.source !== source) return false;
       if (q && !`${g.value} ${g.label || ''}`.toLowerCase().includes(q)) return false;
       return true;
     });

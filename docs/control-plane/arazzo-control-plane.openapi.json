@@ -4353,13 +4353,13 @@
         ],
         "tags": ["identity"],
         "summary": "Search resolvable grantees",
-        "description": "Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` (default) is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured. Page with `limit` and the opaque `pageToken`.",
+        "description": "Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured (every searchable kind unless `kind` restricts); `merged` unions the two, directory-preferred (one bounded result set — no paging). An absent source defaults to `merged` when a directory is configured, `observed` otherwise. `observed` pages with `limit` and the opaque `pageToken`.",
         "parameters": [
           {
             "name": "kind",
             "in": "query",
             "required": false,
-            "description": "Restrict to one grantee kind.",
+            "description": "Restrict to one grantee kind (absent searches every kind the deployment supports).",
             "schema": { "$ref": "#/components/schemas/GranteeKind" }
           },
           {
@@ -4373,8 +4373,8 @@
             "name": "source",
             "in": "query",
             "required": false,
-            "description": "Where to resolve from: the store-indexed observed-identity typeahead (default) or the external directory.",
-            "schema": { "type": "string", "enum": ["observed", "directory"] }
+            "description": "Where to resolve from: the store-indexed observed-identity typeahead, the external directory, or the two merged (directory-preferred, unpaged). Absent defaults to merged when a directory is configured, observed otherwise.",
+            "schema": { "type": "string", "enum": ["observed", "directory", "merged"] }
           },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
@@ -4383,6 +4383,10 @@
           "200": {
             "description": "The matching grantees.",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GranteeList" } } }
+          },
+          "502": {
+            "description": "The external directory could not be reached (an explicit `directory` search only; a merged search degrades to observed results).",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
           }
         }
       }

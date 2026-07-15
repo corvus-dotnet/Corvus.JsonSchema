@@ -154,6 +154,74 @@ public sealed class ControlPlaneIdentityApiTests
     }
 
     [TestMethod]
+    public async Task Grantees_search_with_no_source_merges_directory_and_observed_when_a_directory_is_configured()
+    {
+        // Directory: a person and a team; observed: the SAME team (a (kind, value) collision — directory preferred)
+        // plus a distinct one. With no source parameter and a directory configured, the search defaults to `merged`.
+        var directory = new FakeDirectory(
+            new ResolvedPrincipal(GranteeKind.Person, "alice"u8, "Alice"u8, hasLabel: true, Tenant("acme")),
+            new ResolvedPrincipal(GranteeKind.Team, "acme-team"u8, "Acme Team"u8, hasLabel: true, Tenant("acme")));
+        var observed = new InMemoryObservedIdentityStore();
+        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("acme-team"), Str("Acme (seen)"), Tenant("acme"), true, "test", default);
+        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("acme-ops"), Str("Acme Ops"), Tenant("acme"), true, "test", default);
+
+        await using Scoped host = await StartAsync(observed, directory: directory);
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=a", AdminRead, "acme"));
+
+        string[] results = [.. doc.RootElement.GetProperty("grantees").EnumerateArray()
+            .Select(g => $"{g.GetProperty("kind").GetString()}:{g.GetProperty("value").GetString()}@{g.GetProperty("source").GetString()}")];
+        results.ShouldContain("person:alice@directory");
+        results.ShouldContain("team:acme-team@directory");
+        results.ShouldContain("team:acme-ops@observed");
+        results.ShouldNotContain("team:acme-team@observed"); // the collision resolves directory-preferred
+        doc.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse("merged is one bounded, unpaged result set");
+    }
+
+    [TestMethod]
+    public async Task Grantees_search_via_directory_with_no_kind_searches_every_searchable_kind()
+    {
+        // Previously an explicit directory search with no kind defaulted to Person only, hiding teams and roles.
+        var directory = new FakeDirectory(
+            new ResolvedPrincipal(GranteeKind.Person, "alice"u8, "Alice"u8, hasLabel: true, Tenant("acme")),
+            new ResolvedPrincipal(GranteeKind.Team, "acme-team"u8, "Acme Team"u8, hasLabel: true, Tenant("acme")),
+            new ResolvedPrincipal(GranteeKind.Role, "auditor"u8, "Auditor"u8, hasLabel: true, Tenant("acme")));
+
+        await using Scoped host = await StartAsync(directory: directory);
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=a&source=directory", AdminRead, "acme"));
+
+        doc.RootElement.GetProperty("grantees").EnumerateArray()
+            .Select(g => g.GetProperty("kind").GetString()).Order().ShouldBe(["person", "role", "team"]);
+    }
+
+    [TestMethod]
+    public async Task A_merged_search_degrades_to_observed_results_when_the_directory_fails()
+    {
+        var observed = new InMemoryObservedIdentityStore();
+        await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("acme-team"), Str("Acme"), Tenant("acme"), true, "test", default);
+
+        await using Scoped host = await StartAsync(observed, directory: new BrokenDirectory());
+        HttpResponseMessage response = await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=acme", AdminRead, "acme");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(response);
+        Stj.JsonElement g = doc.RootElement.GetProperty("grantees").EnumerateArray().Single();
+        g.GetProperty("value").GetString().ShouldBe("acme-team");
+        g.GetProperty("source").GetString().ShouldBe("observed");
+    }
+
+    [TestMethod]
+    public async Task An_explicit_directory_search_reports_a_directory_failure_as_a_bad_gateway_problem()
+    {
+        await using Scoped host = await StartAsync(directory: new BrokenDirectory());
+        HttpResponseMessage response = await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=acme&source=directory", AdminRead, "acme");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(response);
+        doc.RootElement.GetProperty("status").GetInt32().ShouldBe(502);
+        doc.RootElement.GetProperty("title").GetString().ShouldBe("Directory unavailable");
+    }
+
+    [TestMethod]
     public async Task Grantees_search_via_directory_omits_an_absent_label()
     {
         // A principal with no display label (hasLabel: false) must omit the label property, not emit an empty string.
@@ -258,6 +326,14 @@ public sealed class ControlPlaneIdentityApiTests
             IReadOnlyList<ResolvedPrincipal> matches = [.. principals.Where(p => p.Kind == kind && p.Value.StartsWith(query, StringComparison.Ordinal)).Take(limit)];
             return new ValueTask<IReadOnlyList<ResolvedPrincipal>>(matches);
         }
+    }
+
+    // A directory whose backend is unreachable: every search fails the way a real adapter does (the shared base type),
+    // so the handler's degrade (merged) / 502 (explicit) paths are exercised.
+    private sealed class BrokenDirectory : IPrincipalDirectory
+    {
+        public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
+            => throw new PrincipalDirectoryException("the directory returned 403 (Forbidden).");
     }
 
     private sealed class Scoped(WebApplication app, HttpClient client, SecuredWorkflowCatalog catalog) : IAsyncDisposable
