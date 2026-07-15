@@ -194,6 +194,23 @@ public sealed class ControlPlaneIdentityApiTests
     }
 
     [TestMethod]
+    public async Task An_all_kinds_directory_search_returns_the_kinds_that_resolve_when_one_kind_fails()
+    {
+        // The live-Keycloak shape: the service account may search users and groups but not realm roles, so the role
+        // leg fails. The kinds that DID resolve are returned — a partial directory is not "unreachable".
+        var directory = new KindFailingDirectory(
+            GranteeKind.Role,
+            new ResolvedPrincipal(GranteeKind.Person, "alice"u8, "Alice"u8, hasLabel: true, Tenant("acme")),
+            new ResolvedPrincipal(GranteeKind.Team, "acme-team"u8, "Acme Team"u8, hasLabel: true, Tenant("acme")));
+
+        await using Scoped host = await StartAsync(directory: directory);
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=a&source=directory", AdminRead, "acme"));
+
+        doc.RootElement.GetProperty("grantees").EnumerateArray()
+            .Select(g => g.GetProperty("kind").GetString()).Order().ShouldBe(["person", "team"]);
+    }
+
+    [TestMethod]
     public async Task A_merged_search_degrades_to_observed_results_when_the_directory_fails()
     {
         var observed = new InMemoryObservedIdentityStore();
@@ -334,6 +351,22 @@ public sealed class ControlPlaneIdentityApiTests
     {
         public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
             => throw new PrincipalDirectoryException("the directory returned 403 (Forbidden).");
+    }
+
+    // A directory where ONE kind's backing resource fails (the live-Keycloak service-account shape) while the others
+    // resolve, so the all-kinds sweep's per-kind degrade is exercised.
+    private sealed class KindFailingDirectory(GranteeKind failing, params ResolvedPrincipal[] principals) : IPrincipalDirectory
+    {
+        public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
+        {
+            if (kind == failing)
+            {
+                throw new PrincipalDirectoryException($"the directory returned 403 (Forbidden) searching {kind}.");
+            }
+
+            IReadOnlyList<ResolvedPrincipal> matches = [.. principals.Where(p => p.Kind == kind && p.Value.StartsWith(query, StringComparison.Ordinal)).Take(limit)];
+            return new ValueTask<IReadOnlyList<ResolvedPrincipal>>(matches);
+        }
     }
 
     private sealed class Scoped(WebApplication app, HttpClient client, SecuredWorkflowCatalog catalog) : IAsyncDisposable

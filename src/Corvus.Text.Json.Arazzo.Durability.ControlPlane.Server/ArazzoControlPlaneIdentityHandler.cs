@@ -186,6 +186,9 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     // Searches the directory: one call when the request pins a kind (the seam is per-kind), otherwise one call per
     // searchable kind (person/team/role), concatenated. The seam is domain-typed (the GranteeKind enum) and
     // string-typed (an LDAP filter / an HTTP URI), so the store kind and the prefix reify at this genuine leaf.
+    // In the all-kinds sweep a kind whose backing resource fails (e.g. a directory service account not permitted to
+    // list roles) contributes nothing rather than failing the kinds that DID resolve; the directory counts as
+    // unreachable — the propagated failure — only when every kind fails.
     private async ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchDirectoryAsync(ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, CancellationToken cancellationToken)
     {
         string query = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
@@ -195,13 +198,31 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         }
 
         List<ResolvedPrincipal>? all = null;
+        PrincipalDirectoryException? failure = null;
+        bool anySucceeded = false;
         foreach (GranteeKind searchable in DirectorySearchableKinds)
         {
-            IReadOnlyList<ResolvedPrincipal> found = await this.directory!.SearchAsync(searchable, query, limit, cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<ResolvedPrincipal> found;
+            try
+            {
+                found = await this.directory!.SearchAsync(searchable, query, limit, cancellationToken).ConfigureAwait(false);
+            }
+            catch (PrincipalDirectoryException exception)
+            {
+                failure = exception;
+                continue;
+            }
+
+            anySucceeded = true;
             if (found.Count > 0)
             {
                 (all ??= []).AddRange(found);
             }
+        }
+
+        if (!anySucceeded && failure is not null)
+        {
+            throw failure;
         }
 
         return (IReadOnlyList<ResolvedPrincipal>?)all ?? [];
