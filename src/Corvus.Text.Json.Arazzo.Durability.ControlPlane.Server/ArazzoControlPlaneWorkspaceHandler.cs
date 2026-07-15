@@ -1213,18 +1213,22 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     // schemas/<name> fallback form) and the absolute root $id each document declares (the preferred form).
     private sealed record SchemaAttachmentIndex(HashSet<string> Names, HashSet<string> Ids);
 
-    // Collects a schema document's absolute root $id, when it declares one (a relative $id resolves against
+    // Reads a schema document's absolute root $id, when it declares one (a relative $id resolves against
     // the virtual retrieval URI, which the fallback name registration already covers).
-    private static void AddSchemaRootId(JsonElement schemaDocument, HashSet<string> ids)
+    private static bool TryGetSchemaRootId(JsonElement schemaDocument, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? id)
     {
+        id = null;
         if (schemaDocument.ValueKind == JsonValueKind.Object
             && schemaDocument.TryGetProperty("$id"u8, out JsonElement idElement)
             && idElement.ValueKind == JsonValueKind.String
-            && idElement.GetString() is { Length: > 0 } id
-            && Uri.TryCreate(id, UriKind.Absolute, out _))
+            && idElement.GetString() is { Length: > 0 } value
+            && Uri.TryCreate(value, UriKind.Absolute, out _))
         {
-            ids.Add(id);
+            id = value;
+            return true;
         }
+
+        return false;
     }
 
     private static bool InputsLibraryHasEntry(in JsonElement document, string name)
@@ -2204,6 +2208,29 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         var attachedNames = new HashSet<string>(StringComparer.Ordinal);
         var schemaAttachments = new HashSet<string>(StringComparer.Ordinal);
         var schemaAttachmentIds = new HashSet<string>(StringComparer.Ordinal);
+        var schemaIdOwners = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        // A schema document's root $id is its canonical identity: two attachments claiming the same one make
+        // every reference to it ambiguous (the generation resolver's registration is last-wins), so the
+        // collision is an error — validation refuses it rather than letting publish compile against an
+        // arbitrary one of the two. The id still counts as attached (ambiguity is the one problem reported).
+        void RecordSchemaId(JsonElement schemaDocument, string attachmentName)
+        {
+            if (!TryGetSchemaRootId(schemaDocument, out string? schemaId))
+            {
+                return;
+            }
+
+            if (schemaIdOwners.TryGetValue(schemaId, out string? owner))
+            {
+                findings.Add(new("error", "workspace-sources", "/sourceDescriptions", $"Schema attachments '{owner}' and '{attachmentName}' both declare the root $id '{schemaId}' — references to it are ambiguous; give each document a distinct $id.", null));
+                return;
+            }
+
+            schemaIdOwners[schemaId] = attachmentName;
+            schemaAttachmentIds.Add(schemaId);
+        }
+
         var operations = new HashSet<string>(StringComparer.Ordinal);
         var channels = new HashSet<string>(StringComparer.Ordinal);
         var operationNodes = new Dictionary<string, (JsonElement Root, JsonElement Operation)>(StringComparer.Ordinal);
@@ -2229,7 +2256,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     schemaAttachments.Add(attachedName);
                     if (attachment.TryGetProperty("document"u8, out JsonElement inlineSchema))
                     {
-                        AddSchemaRootId(inlineSchema, schemaAttachmentIds);
+                        RecordSchemaId(inlineSchema, attachedName);
                     }
                     else if (this.sources is not null
                         && attachment.TryGetProperty("sourceName"u8, out JsonElement schemaSourceName)
@@ -2238,7 +2265,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                         using ParsedJsonDocument<RegisteredSource>? registeredSchema = await this.sources.GetAsync(registeredSchemaName, this.access.Current(), cancellationToken).ConfigureAwait(false);
                         if (registeredSchema is { } rs)
                         {
-                            AddSchemaRootId((JsonElement)rs.RootElement.Document, schemaAttachmentIds);
+                            RecordSchemaId((JsonElement)rs.RootElement.Document, attachedName);
                         }
                     }
 

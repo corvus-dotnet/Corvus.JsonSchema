@@ -483,7 +483,9 @@ and stay JSON-editable, so a round-trip never disturbs unrendered keywords or ke
   for a document that declares no `$id`. The validate pass's dangling-`$ref` walk errors on a
   `schemas/<name>` reference whose named document is not attached, and on ANY absolute http(s)
   reference matching no attached document's `$id` (the generator resolves only registered documents,
-  never the network, so such a reference could not resolve at publish). The type menu gains an
+  never the network, so such a reference could not resolve at publish). Two attachments declaring
+  the same root `$id` are also an error — the resolver's registration is last-wins, so every
+  reference to that `$id` would be ambiguous. The type menu gains an
   "External schemas" group (one option per `$defs` entry, or the document root) authoring the
   preferred form; an external reference renders its own row, flagged when unattached, with no detach
   (the target lives outside the document). At publish, the attachment rides the package like every

@@ -636,6 +636,54 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task Two_schema_attachments_declaring_the_same_root_id_are_flagged_as_ambiguous()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // Two attached schema documents claim the same root $id: a reference to it is ambiguous (the generation
+        // resolver's registration is last-wins), so validation refuses it rather than letting publish compile
+        // against an arbitrary one of the two. The reference itself is NOT also reported dangling — the id IS
+        // attached; ambiguity is the one problem.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Duplicate ids", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": "object", "properties": { "address": { "$ref": "https://schemas.acme.example/types#/$defs/Address" } } },
+            "steps": [{ "stepId": "a", "operationId": "listPets" }]
+          }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}/sources/acme-types",
+            """{"document":{"$id":"https://schemas.acme.example/types","$defs":{"Address":{"type":"object"}}},"type":"jsonschema"}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}/sources/acme-types-copy",
+            """{"document":{"$id":"https://schemas.acme.example/types","$defs":{"Address":{"type":"string"}}},"type":"jsonschema"}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+
+        Stj.JsonElement duplicate = outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Single(d => d.GetProperty("severity").GetString() == "error" && d.GetProperty("message").GetString()!.Contains("both declare the root $id"));
+        duplicate.GetProperty("message").GetString()!.ShouldContain("acme-types");
+        duplicate.GetProperty("message").GetString()!.ShouldContain("acme-types-copy");
+        duplicate.GetProperty("message").GetString()!.ShouldContain("https://schemas.acme.example/types");
+
+        // No dangling finding rides along: the id is attached, ambiguity is the single reported problem.
+        outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Count(d => d.GetProperty("message").GetString()!.Contains("which is not attached")).ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task An_attached_external_schema_resolves_the_reference_and_is_exempt_from_source_integrity()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());

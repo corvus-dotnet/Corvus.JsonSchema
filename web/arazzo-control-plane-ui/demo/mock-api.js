@@ -3225,16 +3225,25 @@ export function createMockControlPlane(options = {}) {
     const channels = new Set();
     let anySurface = false;
     const schemaAttachmentIds = new Set();
+    const schemaIdOwners = new Map();
     for (const att of attachments) {
       if (!att.name) continue;
       // A jsonschema attachment (#94) is deliberately NOT a sourceDescription (the Arazzo spec pins that enum) —
       // exempt from the declaration cross-check, no operation surface. Its resolvable identities are its
       // absolute root $id (the PREFERRED reference form) and the virtual schemas/<name> fallback, mirroring
-      // the server.
+      // the server. Two attachments claiming the same $id make references ambiguous — an error, like the server.
       if (att.type === 'jsonschema') {
         schemaAttachments.add(att.name);
         const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
-        if (typeof d?.$id === 'string' && /^https?:\/\//.test(d.$id)) schemaAttachmentIds.add(d.$id);
+        if (typeof d?.$id === 'string' && /^https?:\/\//.test(d.$id)) {
+          const owner = schemaIdOwners.get(d.$id);
+          if (owner) {
+            findings.push({ severity: 'error', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: `Schema attachments '${owner}' and '${att.name}' both declare the root $id '${d.$id}' — references to it are ambiguous; give each document a distinct $id.` });
+          } else {
+            schemaIdOwners.set(d.$id, att.name);
+            schemaAttachmentIds.add(d.$id);
+          }
+        }
         continue;
       }
       attachedNames.add(att.name);
