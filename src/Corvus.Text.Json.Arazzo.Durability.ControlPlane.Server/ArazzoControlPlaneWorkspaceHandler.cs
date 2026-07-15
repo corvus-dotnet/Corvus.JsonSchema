@@ -830,27 +830,24 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         if (invalid)
         {
+            // The generated contextful Create() builds the refusal in one pooled pass (the findings list is the build
+            // context, closure-free; the response pipeline consumes the parsed document for validation/serialization).
             ParsedJsonDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity> refusal =
-                PersistedJson.ToPooledDocument<Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity, List<Finding>>(
+                Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity.Create(
                     findings,
-                    static (Utf8JsonWriter writer, in List<Finding> all) =>
-                    {
-                        writer.WriteStartObject();
-                        writer.WriteString("reason"u8, "validation"u8);
-                        writer.WriteStartArray("diagnostics"u8);
-                        foreach (Finding f in all)
+                    reason: "validation",
+                    diagnostics: Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity.WorkflowDiagnosticArray.Build(
+                        findings,
+                        static (in List<Finding> all, ref Models.PostWorkspaceWorkflowsByIdPublishUnprocessableEntity.WorkflowDiagnosticArray.Builder b) =>
                         {
-                            writer.WriteStartObject();
-                            writer.WriteString("severity"u8, f.Severity);
-                            writer.WriteString("category"u8, f.Category);
-                            writer.WriteString("instancePath"u8, f.InstancePath);
-                            writer.WriteString("message"u8, f.Message);
-                            writer.WriteEndObject();
-                        }
-
-                        writer.WriteEndArray();
-                        writer.WriteEndObject();
-                    });
+                            foreach (Finding f in all)
+                            {
+                                b.AddItem(Models.WorkflowDiagnostic.Build(
+                                    f,
+                                    static (in Finding f, ref Models.WorkflowDiagnostic.Builder ib) =>
+                                        ib.Create(category: f.Category, instancePath: f.InstancePath, message: f.Message, severity: f.Severity)));
+                            }
+                        }));
             workspace.TakeOwnership(refusal);
             return PublishWorkingCopyResult.UnprocessableEntity(refusal.RootElement, workspace);
         }

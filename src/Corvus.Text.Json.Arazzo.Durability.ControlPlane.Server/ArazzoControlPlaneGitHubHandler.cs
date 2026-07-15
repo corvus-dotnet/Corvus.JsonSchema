@@ -345,19 +345,11 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
                     Problem("github-branch-exists", "Branch not created", 409, $"GitHub refused creating '{name}' — most often the name is already taken."), workspace);
         }
 
-        ParsedJsonDocument<Models.GitHubBranch> created = PersistedJson.ToPooledDocument<Models.GitHubBranch, (string Name, string? Sha)>(
-            (name, sha),
-            static (Utf8JsonWriter writer, in (string Name, string? Sha) s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("name"u8, s.Name);
-                if (s.Sha is not null)
-                {
-                    writer.WriteString("sha"u8, s.Sha);
-                }
-
-                writer.WriteEndObject();
-            });
+        // The generated Create() builds the response in one pooled pass (the response pipeline consumes the parsed
+        // document); an absent sha is omitted via the default Source.
+        ParsedJsonDocument<Models.GitHubBranch> created = Models.GitHubBranch.Create(
+            name: name,
+            sha: sha is { } shaValue ? (Models.JsonString.Source)shaValue : default);
         workspace.TakeOwnership(created);
         return CreateRepoBranchResult.Created(Models.GitHubBranch.From(created.RootElement), workspace);
     }
@@ -1014,38 +1006,32 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         return files;
     }
 
-    // The commit response: what was written, plus the pull request when one was opened.
+    // The commit response: what was written, plus the pull request when one was opened. The generated contextful
+    // Create() builds it in one pooled pass — the (files, pr) tuple is the shared build context, closure-free, and an
+    // absent pull request is omitted via the default Source.
     private static ParsedJsonDocument<Models.GitCommitResult> WriteCommitResult(List<(string Path, string? Sha)> written, (long Number, string Url)? pullRequest)
     {
-        return PersistedJson.ToPooledDocument<Models.GitCommitResult, (List<(string Path, string? Sha)> Files, (long Number, string Url)? Pr)>(
-            (written, pullRequest),
-            static (Utf8JsonWriter writer, in (List<(string Path, string? Sha)> Files, (long Number, string Url)? Pr) s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteStartArray("files"u8);
-                foreach ((string path, string? sha) in s.Files)
+        var context = (Files: written, Pr: pullRequest);
+        return Models.GitCommitResult.Create(
+            context,
+            files: Models.GitCommitResult.GitCommittedFileArray.Build(
+                context,
+                static (in (List<(string Path, string? Sha)> Files, (long Number, string Url)? Pr) c, ref Models.GitCommitResult.GitCommittedFileArray.Builder b) =>
                 {
-                    writer.WriteStartObject();
-                    writer.WriteString("path"u8, path);
-                    if (sha is not null)
+                    foreach ((string path, string? sha) in c.Files)
                     {
-                        writer.WriteString("sha"u8, sha);
+                        b.AddItem(Models.GitCommitResult.GitCommittedFileArray.GitCommittedFile.Build(
+                            (path, sha),
+                            static (in (string Path, string? Sha) f, ref Models.GitCommitResult.GitCommittedFileArray.GitCommittedFile.Builder ib) =>
+                                ib.Create(path: f.Path, sha: f.Sha is { } s ? (Models.JsonString.Source)s : default)));
                     }
-
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-                if (s.Pr is { } pr)
-                {
-                    writer.WriteStartObject("pullRequest"u8);
-                    writer.WriteNumber("number"u8, pr.Number);
-                    writer.WriteString("url"u8, pr.Url);
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndObject();
-            });
+                }),
+            pullRequest: context.Pr is not null
+                ? Models.GitCommitResult.GitPullRequest.Build(
+                    context,
+                    static (in (List<(string Path, string? Sha)> Files, (long Number, string Url)? Pr) c, ref Models.GitCommitResult.GitPullRequest.Builder pb) =>
+                        pb.Create(number: c.Pr!.Value.Number, url: c.Pr.Value.Url))
+                : default);
     }
 
     private static string? DetectType(in JsonElement document)
