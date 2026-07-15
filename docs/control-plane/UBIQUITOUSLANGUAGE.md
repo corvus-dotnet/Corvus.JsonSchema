@@ -99,6 +99,10 @@ design lands.
 | **Runner registry** | The store-backed table of runners and the versions they host; a runner missing heartbeats goes **Stale**, past TTL it is pruned and its runs become claimable. |
 | **Runner ↔ environment binding** | One environment per runner (many runners per environment): a runner is provisioned for exactly one environment's credentials/network and must be authorized by that environment's administrators before it is dispatchable. |
 | **Execution backend** | The pluggable isolation model a runner dispatches a run to: in-process collectible load context, per-run micro-guest, serverless function, or container — an isolation ↔ latency ↔ cost choice. |
+| **Sub-workflow step** | A step bound to another workflow (`workflowId` binding). Executes inline within the parent's run: no child run entity, no separate cursor, its result materialized on the parent step's record. |
+| **Nested trace record (`subTrace`)** | The complete trace of one sub-workflow execution, attached to its parent step's record: `{workflowId, outcome, steps, stepsExecuted, …}` — the same trace shape, recursively. The root trace carries no `workflowId`; sub-traces always do. |
+| **Step-into / step-over** | The debugger verbs over a sub-workflow step: step-over treats it as one unit (the parent record's status/outputs); step-into descends into its nested trace, the canvas following, breadcrumb back. Descent over a recorded prefix is client-side trace navigation; acquiring a deeper stop is a stateless replay with a scoped `until`. Resume verbs and the durable cursor stay parent-scoped. |
+| **Scoped step path** | The address of a step inside nested sub-workflows: `parentStepId/childStepId[/...]` (slash-delimited; safe because Arazzo stepIds match `^[A-Za-z0-9_\-]+$`). A bare stepId addresses a root step only. Used by breakpoints (`pause.beforeSteps`), run-to-here (`until.beforeStepId`), and the trace's `pausedBefore`. |
 
 ## Security and governance
 

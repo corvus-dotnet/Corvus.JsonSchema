@@ -891,7 +891,10 @@ compile; it serves recorded fixtures, clearly marked).
    DURABLE mode — the generated executor's per-step checkpoint (whose state indices are the
    step-array indices) is the trace seam, so `TracingWorkflowRun` records step boundaries, outputs,
    retries, waits, and faults, enforces the step budget, and throws the pause signal for
-   "before step X" stops with nothing half-executed; no code-generator changes. The §8.1
+   "before step X" stops with nothing half-executed. ("No code-generator changes" held only until
+   §15-8a: the sub-workflow trace pack changed the emitters — the durable sub-workflow call had
+   never compiled, and the corrected emission threads the child scope and time provider and
+   unwraps the child's result.) The §8.1
    content-hash compile cache now exists (bounded LRU over `WorkflowExecutorLoader`). Criterion
    truth tables and the action-taken inference are computed POST-HOC via `CompiledCriterion` over
    the captured deterministic context (operand-level values remain a deferral). Timer waits
@@ -1072,14 +1075,39 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    re-derive identically under the deterministic replay. Remaining: the ratified
    `SimulateRequest` carries no `overrides`, so the simulate endpoints deliberately do not accept
    them yet (the mock's `simulateDocument` honours them only as shared plumbing for its debug
-   runs); adding that, and declaring the trace record's `skipped` marker in `SimulationTrace`
-   (the kit already renders it), is an additive contract rev for when the what-if debugger needs
-   server-side simulate overrides.
-8a. **Sub-workflow trace records (engine)** — the mock previews `subTrace` on a workflowId-bound
-   step's record (the designer's step-into descends it, the canvas following); the REAL simulator
-   inlines sub-workflow execution without recording nested step records yet. The engine should
-   emit them so step-into works on server traces. (The §6.2 HTTP-trigger source — the Sources
-   panel's Catalog mode — needs nothing: a trigger step is a plain OpenAPI operation.)
+   runs); adding that is an additive contract rev for when the what-if debugger needs server-side
+   simulate overrides. The trace record's `skipped` marker was declared in `SimulationTrace` by
+   8a's contract rev (pack 3 slice A, 2026-07-15) — only the `overrides` half remains open.
+8a. **Sub-workflow trace records (engine)** — **resolved 2026-07-15 (pack 3).** The original
+   premise here ("the REAL simulator inlines sub-workflow execution without recording nested
+   records") was wrong in a sharper way the pack's antagonistic review proved by executing the
+   path: DURABLE sub-workflow codegen had never compiled at all (the emitted call dropped the
+   cancellation token into the `IWorkflowRun?` slot at both `ControlFlowEmitter` call sites; the
+   provider swallowed the CS1503 into a silent `NotExecutable`) — only the straight-line
+   non-durable form ran, as an untracked plain function. The pack fixed that first (repro-first),
+   then built the ratified design: a workflowId-bound step executes through a CHILD RECORDER SCOPE
+   (`IWorkflowRun.BeginSubWorkflow`) sharing ONE global step budget (sub-steps count against
+   `MaxSteps`; an explicit nesting depth cap, `IWorkflowRun.MaxSubWorkflowDepth = 8`, exhausts
+   runaway recursion predictably), ONE virtual clock (child timer waits auto-advance; suspensions
+   bubble and the child replays fresh per invocation), and per-record exchange attribution against
+   the one global exchange list. The child's records attach to the parent step's record as
+   `subTrace` — the same trace shape recursively, `workflowId` on every sub-trace and never on the
+   root (the tray's ascent depends on that) — with `AnalyzeTrace` recursing against each
+   sub-workflow's own compiled criteria/actions, and the §12 determinism byte-lock now pinning
+   repeated nested simulations byte-identical. Stops are SCOPED (`parent/child[/…]`; a bare id
+   addresses root steps only; occurrence counters are root-owned and cumulative across child
+   invocations); a stop inside a child leaves each ancestor a partial `subTrace` (`paused` /
+   `suspended` parent statuses — never a false green completed) with the root's `pausedBefore`
+   carrying the full scoped path. Durable debug runs capture the same records AT SOURCE through a
+   recording sink on the run (`WorkflowRun.Recorder`): recording-only child scopes never checkpoint
+   (cursor and resume verbs stay top-level — a deliberate invariant), the assembler prefers
+   captured records with per-step checkpoint merge (`skipped` derived from the Skip protocol's
+   checkpoint delta, never transported), and a run without a sink is untouched by construction.
+   Cross-source sub-workflows (`$sourceDescriptions.x.y` targets) are recorded but not analyzed or
+   scope-validated in v1 (their shape lives in another document); child-level `$inputs` criteria
+   evaluate against an undefined context (the child's built inputs document does not survive the
+   invocation) — both declared limits. (The §6.2 HTTP-trigger source — the Sources panel's Catalog
+   mode — needs nothing: a trigger step is a plain OpenAPI operation.)
 8. **Typed schema-authoring form** — **resolved 2026-07-13 (pack 2).** Built as
    `<arazzo-schema-editor>` (§5.3a), option (a): typed property rows, first-class
    `oneOf`/`anyOf`/`allOf` combiner nodes normalized identically by the client renderer and the

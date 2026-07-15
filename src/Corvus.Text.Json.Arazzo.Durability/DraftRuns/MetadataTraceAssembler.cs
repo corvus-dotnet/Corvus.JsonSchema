@@ -34,12 +34,15 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// steps by the runner's per-step exchange boundaries (§18 R3) when supplied — a step's exchanges are those
 /// recorded before its durable checkpoint, so a step's retries are grouped under it faithfully — or, without
 /// boundaries, by the legacy forward-only one-call-per-step position; either way any trailing surplus attaches
-/// to the last executed step so no exchange is dropped. The per-criterion
-/// <c>successCriteria</c> verdicts and the routing <c>actionTaken</c> are omitted: reconstructing
-/// them needs response bodies or at-source capture (a later increment), and the dock already renders a step
-/// without them. A step that neither produced outputs nor faulted leaves no checkpoint evidence and is not
-/// individually represented; faithful per-step boundaries across loops and branches likewise need at-source
-/// capture. No criterion verdict is ever fabricated.
+/// to the last executed step so no exchange is dropped. When the runner supplies AT-SOURCE captured records
+/// (§15-8a slice D — the increment this remark used to defer), they are preferred outright: faithful per-step
+/// boundaries across loops and retries, sub-workflow nesting as <c>subTrace</c>, and the <c>skipped</c> marker
+/// derived from the Skip protocol's checkpoint delta, merged per step with checkpoint-derived entries for
+/// segments the recording never saw. The per-criterion <c>successCriteria</c> verdicts and the routing
+/// <c>actionTaken</c> remain omitted: reconstructing them needs response bodies (still excluded by the §18
+/// body posture), and the dock already renders a step without them. Without captured records, a step that
+/// neither produced outputs nor faulted leaves no checkpoint evidence and is not individually represented.
+/// No criterion verdict is ever fabricated.
 /// </para>
 /// <para>
 /// A <see cref="WorkflowWaitKind.Pause"/> suspend is rendered as <c>outcome=paused</c> plus the caller-supplied
