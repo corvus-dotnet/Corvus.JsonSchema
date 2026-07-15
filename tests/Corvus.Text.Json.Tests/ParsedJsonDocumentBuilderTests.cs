@@ -477,6 +477,80 @@ public class ParsedJsonDocumentBuilderTests
     }
 
     [TestMethod]
+    public void Build_EmbeddingParsedScalarsAndEmptyContainers_BlitsContentIntoResult()
+    {
+        // Every simple token kind plus the degenerate containers, embedded from positions deep
+        // in the source text so the copied rows need a real location rebase.
+        using var external = ParsedJsonDocument<JsonElement>.Parse("""{"pad":"xxxxxxxxxx","n":-12.5e3,"t":true,"f":false,"z":null,"eo":{},"ea":[]}""");
+        JsonElement root = external.RootElement;
+        JsonElement number = root.GetProperty("n"u8);
+        JsonElement trueValue = root.GetProperty("t"u8);
+        JsonElement falseValue = root.GetProperty("f"u8);
+        JsonElement nullValue = root.GetProperty("z"u8);
+        JsonElement emptyObject = root.GetProperty("eo"u8);
+        JsonElement emptyArray = root.GetProperty("ea"u8);
+
+        using ParsedJsonDocument<JsonElement> doc = BuildDocument((ref cvb) =>
+        {
+            cvb.StartArray();
+            cvb.AddItem(in number);
+            cvb.AddItem(in trueValue);
+            cvb.AddItem(in falseValue);
+            cvb.AddItem(in nullValue);
+            cvb.AddItem(in emptyObject);
+            cvb.AddItem(in emptyArray);
+            cvb.EndArray();
+        });
+
+        Assert.AreEqual("""[-12.5e3,true,false,null,{},[]]""", doc.RootElement.ToString());
+        Assert.AreEqual(-12500d, doc.RootElement[0].GetDouble());
+        Assert.AreEqual(JsonValueKind.True, doc.RootElement[1].ValueKind);
+        Assert.AreEqual(JsonValueKind.False, doc.RootElement[2].ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, doc.RootElement[3].ValueKind);
+        Assert.AreEqual(0, doc.RootElement[4].GetPropertyCount());
+        Assert.AreEqual(0, doc.RootElement[5].GetArrayLength());
+
+        // The result must re-parse to an identical document.
+        string json = doc.RootElement.ToString();
+        using ParsedJsonDocument<JsonElement> reparsed = ParsedJsonDocument<JsonElement>.Parse(json);
+        Assert.AreEqual(json, reparsed.RootElement.ToString());
+    }
+
+    [TestMethod]
+    public void Build_EmbeddedComplexElement_SupportsNavigationOnResult()
+    {
+        // Navigation over the embedded rows (property lookup, indexing, enumeration) exercises
+        // the copied NumberOfRows/size metadata rather than just the raw text.
+        using var external = ParsedJsonDocument<JsonElement>.Parse("""{"skip":[0],"v":{"list":[{"id":1},{"id":2},{"id":3}],"name":"deep\tname","count":3}}""");
+        JsonElement embedded = external.RootElement.GetProperty("v"u8);
+
+        using ParsedJsonDocument<JsonElement> doc = BuildDocument((ref cvb) =>
+        {
+            cvb.StartObject();
+            cvb.AddProperty("before"u8, 0);
+            cvb.AddProperty("payload"u8, in embedded);
+            cvb.AddProperty("after"u8, "end"u8);
+            cvb.EndObject();
+        });
+
+        JsonElement payload = doc.RootElement.GetProperty("payload"u8);
+        Assert.AreEqual(3, payload.GetPropertyCount());
+        Assert.AreEqual(3, payload.GetProperty("count"u8).GetInt32());
+        Assert.IsTrue(payload.GetProperty("name"u8).ValueEquals("deep\tname"u8));
+
+        JsonElement list = payload.GetProperty("list"u8);
+        Assert.AreEqual(3, list.GetArrayLength());
+        int expectedId = 1;
+        foreach (JsonElement item in list.EnumerateArray())
+        {
+            Assert.AreEqual(expectedId++, item.GetProperty("id"u8).GetInt32());
+        }
+
+        // Siblings after the embed must still resolve (their rows follow the copied run).
+        Assert.IsTrue(doc.RootElement.GetProperty("after"u8).ValueEquals("end"u8));
+    }
+
+    [TestMethod]
     public void Build_AddItemFromJson_ParsesAndEmbedsContent()
     {
         using ParsedJsonDocument<JsonElement> doc = BuildDocument(static (ref cvb) =>

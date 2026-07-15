@@ -2089,6 +2089,20 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     }
 
     /// <inheritdoc />
+    bool IJsonDocument.TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset)
+    {
+        // A builder's element may span mutated segments and external references, so its text is not
+        // guaranteed contiguous; callers must take the token-by-token path.
+        utf8 = default;
+        sourceTextOffset = 0;
+        return false;
+    }
+
+    /// <inheritdoc />
+    int IJsonDocument.AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta)
+        => throw new NotSupportedException("Valid only after TryGetContiguousLocalElement returned true.");
+
+    /// <inheritdoc />
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {
         return CloneElement<TElement>(index);

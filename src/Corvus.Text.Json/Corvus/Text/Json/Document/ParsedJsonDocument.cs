@@ -1910,6 +1910,57 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     /// <inheritdoc />
     ReadOnlyMemory<byte> IJsonDocument.GetRawSimpleValueUnsafe(int index) => GetRawSimpleValueUnsafe(index);
 
+    /// <inheritdoc />
+    bool IJsonDocument.TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset)
+    {
+        CheckNotDisposed();
+
+        // A parsed document's rows are always fully local and an element's rows/text are contiguous,
+        // so the blit is always available. Mirror GetRawValueUnsafe's include-quotes segments.
+        DbRow row = _parsedData.Get(index);
+        if (row.IsSimpleValue)
+        {
+            if (row.TokenType == JsonTokenType.String)
+            {
+                sourceTextOffset = row.LocationOrIndex - 1;
+                utf8 = _utf8Json.Slice(sourceTextOffset, row.SizeOrLengthOrPropertyMapIndex + 2);
+            }
+            else
+            {
+                sourceTextOffset = row.LocationOrIndex;
+                utf8 = _utf8Json.Slice(sourceTextOffset, row.SizeOrLengthOrPropertyMapIndex);
+            }
+
+            return true;
+        }
+
+        int endElementIdx = index + GetDbSizeUnsafe(index, includeEndElement: false);
+        DbRow end = _parsedData.Get(endElementIdx);
+        sourceTextOffset = row.LocationOrIndex;
+        int endTokenLength = end.HasPropertyMap ? GetLengthOfEndToken(end.SizeOrLengthOrPropertyMapIndex) : end.SizeOrLengthOrPropertyMapIndex;
+        utf8 = _utf8Json.Slice(sourceTextOffset, end.LocationOrIndex - sourceTextOffset + endTokenLength);
+        return true;
+    }
+
+    /// <inheritdoc />
+    int IJsonDocument.AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta)
+    {
+        CheckNotDisposed();
+
+        int endExclusive = index + GetDbSizeUnsafe(index, includeEndElement: true);
+        int count = 0;
+        for (int i = index; i < endExclusive; i += DbRow.Size)
+        {
+            DbRow row = _parsedData.Get(i);
+            bool isEnd = row.TokenType is JsonTokenType.EndObject or JsonTokenType.EndArray;
+            int sizeOrLength = isEnd && row.HasPropertyMap ? GetLengthOfEndToken(row.SizeOrLengthOrPropertyMapIndex) : row.SizeOrLengthOrPropertyMapIndex;
+            db.Append(new DbRow(row.TokenType, row.LocationOrIndex + locationDelta, sizeOrLength, row.NumberOfRows, !isEnd && row.HasComplexChildren));
+            count++;
+        }
+
+        return count;
+    }
+
     private int AppendElement(int index, ref MetadataDb db, int workspaceDocumentIndex)
     {
         switch (_parsedData.GetJsonTokenType(index))

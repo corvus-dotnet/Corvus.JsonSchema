@@ -113,6 +113,16 @@ public sealed class ValuelessJsonDocument<T> : IJsonDocument
 
     JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace) => JsonDocumentCloning.CloneElementAsBuilderBySerialization(this, index, workspace);
 
+    bool IJsonDocument.TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset)
+    {
+        utf8 = default;
+        sourceTextOffset = 0;
+        return false;
+    }
+
+    int IJsonDocument.AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta)
+        => throw new NotSupportedException("Valid only after TryGetContiguousLocalElement returned true.");
+
     TElement IJsonDocument.CloneElement<TElement>(int index)
     {
 #pragma warning disable CS0618 // Type or member is obsolete

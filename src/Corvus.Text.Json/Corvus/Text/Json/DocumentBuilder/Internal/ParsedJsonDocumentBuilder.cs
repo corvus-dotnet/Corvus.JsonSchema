@@ -279,6 +279,29 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
     {
         CheckNotDisposed();
 
+        // Fast path: the element is a contiguous fully-local segment of an immutable parsed
+        // document, so its raw text can be copied wholesale and its rows rebased in place —
+        // no per-token re-tokenization.
+        if (sourceDocument.TryGetContiguousLocalElement(sourceIndex, out ReadOnlyMemory<byte> raw, out int sourceTextOffset))
+        {
+            BeginValueToken(raw.Length);
+            int start = _textPos;
+            raw.Span.CopyTo(_text.AsSpan(_textPos, raw.Length));
+            _textPos += raw.Length;
+
+            int firstRowByteIndex = db.Length;
+            int rows = sourceDocument.AppendLocalElementRowsRebased(sourceIndex, ref db, start - sourceTextOffset);
+            for (int i = 0; i < rows; i++)
+            {
+                DbRow row = db.Get(firstRowByteIndex + (i * DbRow.Size));
+                bool isContainerToken = row.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray or JsonTokenType.EndObject or JsonTokenType.EndArray;
+                PushPair(row.LocationOrIndex, isContainerToken ? PairKeepSize : row.SizeOrLengthOrPropertyMapIndex);
+            }
+
+            CompleteValueToken();
+            return;
+        }
+
         // Expand the element to external reference rows (the standard mechanism), then resolve
         // them immediately: content into the text backing, fully-local rows into the metadata.
         var scratch = MetadataDb.CreateRented(16 * DbRow.Size, convertToAlloc: false);
@@ -1619,6 +1642,12 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
 
     /// <inheritdoc />
     JsonDocumentBuilder<JsonElement.Mutable> IJsonDocument.CloneElementAsBuilder(int index, JsonWorkspace workspace) => throw ConstructionOnly();
+
+    /// <inheritdoc />
+    bool IJsonDocument.TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset) => throw ConstructionOnly();
+
+    /// <inheritdoc />
+    int IJsonDocument.AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta) => throw ConstructionOnly();
 
     /// <inheritdoc />
     int IJsonDocument.GetDbSize(int index, bool includeEndElement) => throw ConstructionOnly();
