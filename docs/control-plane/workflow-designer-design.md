@@ -474,19 +474,24 @@ and stay JSON-editable, so a round-trip never disturbs unrendered keywords or ke
   client renderer does not resolve `$ref`s (no document root at its seam), so the run dialog and
   expression completions consume the server's **baked** ref-resolved schemas.
 - **External schema references (#94, resolved 2026-07-15).** An inputs schema may reference an
-  external JSON Schema document as `schemas/<name>#<pointer>`. The document is a `/sources` registry
-  entry of the new `jsonschema` type, attached to the working copy under `<name>` — deliberately
-  **never** a `sourceDescription` (the Arazzo spec pins that enum to arazzo/openapi/asyncapi), so
-  the integrity pass exempts it from the declared-source cross-check and it carries no operation
-  surface. The validate pass's dangling-`$ref` walk errors on a `schemas/<name>` reference whose
-  named document is not attached. The type menu gains an "External schemas" group (one option per
-  `$defs` entry, or the document root); an external reference renders its own row, flagged when
-  unattached, with no detach (the target lives outside the document). At publish, the attachment
-  rides the package like every source (inside the content hash); the executor build threads the
-  undeclared package entries to the generator, which registers each with the inputs-model resolver
-  as a sibling of the Arazzo document (`…/arazzo/schemas/<name>`) so the **relative** reference
-  resolves with no rewriting. The baked path leaves an external `$ref` node raw (same degradation
-  as an unresolved library ref), so typed forms fall back to the JSON tier for that node.
+  external JSON Schema document. The document is a `/sources` registry entry of the new `jsonschema`
+  type, attached to the working copy under `<name>` — deliberately **never** a `sourceDescription`
+  (the Arazzo spec pins that enum to arazzo/openapi/asyncapi), so the integrity pass exempts it from
+  the declared-source cross-check and it carries no operation surface. **Reference form precedence:**
+  the PREFERRED base is the document's absolute root `$id` (its canonical identity per JSON Schema
+  2020-12) — `<$id>#<pointer>`; the virtual relative path `schemas/<name>#<pointer>` is the fallback
+  for a document that declares no `$id`. The validate pass's dangling-`$ref` walk errors on a
+  `schemas/<name>` reference whose named document is not attached, and on ANY absolute http(s)
+  reference matching no attached document's `$id` (the generator resolves only registered documents,
+  never the network, so such a reference could not resolve at publish). The type menu gains an
+  "External schemas" group (one option per `$defs` entry, or the document root) authoring the
+  preferred form; an external reference renders its own row, flagged when unattached, with no detach
+  (the target lives outside the document). At publish, the attachment rides the package like every
+  source (inside the content hash); the executor build threads the undeclared package entries to the
+  generator, which registers each under its `$id` (when declared) AND the virtual sibling URI
+  (`…/arazzo/schemas/<name>`), so either authored form resolves with no rewriting. The baked path
+  leaves an external `$ref` node raw (same degradation as an unresolved library ref), so typed forms
+  fall back to the JSON tier for that node.
 
 ### 5.4 Layer 2 — `<arazzo-workflow-designer>`
 

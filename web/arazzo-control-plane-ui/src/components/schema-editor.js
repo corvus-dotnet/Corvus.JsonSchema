@@ -78,10 +78,18 @@ class ArazzoSchemaEditor extends ArazzoElement {
   set library(v) { this._library = v || null; if (this._built) this._render(); }
 
   /** External schema documents the working copy attaches (jsonschema attachments, #94): a map of attachment
-   *  name → its `$defs` type names (empty array = reference the document root). Drives the type menu's
-   *  "External schemas" group and the external reference row; the ref form is `schemas/<name>#<pointer>`. */
+   *  name → `{ id, defs }` — the document's absolute root `$id` (or null) and its `$defs` type names (empty =
+   *  reference the document root). Drives the type menu's "External schemas" group and the external reference
+   *  row. The authored reference base is the `$id` when the document declares one (its canonical identity per
+   *  JSON Schema 2020-12 — the PREFERRED form), falling back to the virtual `schemas/<name>` path. A bare
+   *  string[] value is accepted as `{ id: null, defs }` for convenience. */
   get externalSchemas() { return this._externalSchemas; }
   set externalSchemas(v) { this._externalSchemas = v || null; if (this._built) this._render(); }
+
+  /** Normalizes one externalSchemas entry to `{ id, defs }` (a bare array means no declared $id). @private */
+  static _externalInfo(value) {
+    return Array.isArray(value) ? { id: null, defs: value } : { id: value?.id ?? null, defs: value?.defs ?? [] };
+  }
 
   /** JSON-tier blank behaviour (§3.4). When true, clearing the JSON buffer emits `schema-changed {schema:
    *  undefined}` so the host can delete the whole schema (workflow-inspector); when false (default) a blank
@@ -244,13 +252,18 @@ class ArazzoSchemaEditor extends ArazzoElement {
       + '<option value="new-ref">＋ New shared type…</option>'
       + '<option value="move-ref">→ Move to shared type…</option></optgroup>';
     // External schema documents (jsonschema attachments, #94): one option per $defs entry, or the document
-    // root when a doc declares none. The value carries the full `schemas/<name>#<pointer>` reference.
+    // root when a doc declares none. The reference base is the document's absolute root $id when it declares
+    // one (the PREFERRED form — its canonical identity), else the virtual `schemas/<name>` fallback.
     const externals = this._externalSchemas ? Object.entries(this._externalSchemas) : [];
     if (externals.length) {
       html += '<optgroup label="External schemas">'
-        + externals.flatMap(([doc, defs]) => ((defs && defs.length)
-          ? defs.map((d) => `<option value="xref:schemas/${escapeHtml(doc)}#/$defs/${escapeHtml(d)}">${escapeHtml(doc)} → ${escapeHtml(d)} ⇗</option>`)
-          : [`<option value="xref:schemas/${escapeHtml(doc)}">${escapeHtml(doc)} (document) ⇗</option>`])).join('')
+        + externals.flatMap(([doc, value]) => {
+          const info = ArazzoSchemaEditor._externalInfo(value);
+          const base = info.id || `schemas/${doc}`;
+          return info.defs.length
+            ? info.defs.map((d) => `<option value="xref:${escapeHtml(base)}#/$defs/${escapeHtml(d)}">${escapeHtml(doc)} → ${escapeHtml(d)} ⇗</option>`)
+            : [`<option value="xref:${escapeHtml(base)}">${escapeHtml(doc)} (document) ⇗</option>`];
+        }).join('')
         + '</optgroup>';
     }
     html += '<optgroup label="Inline">' + RENDERABLE_TYPES.map((t) => `<option value="${t}">${TYPE_LABEL[t]}</option>`).join('') + '</optgroup>';
@@ -317,10 +330,20 @@ class ArazzoSchemaEditor extends ArazzoElement {
     const line = document.createElement('div'); line.className = 'rowline';
     this._namedHead(line, ctx);
     node.appendChild(line);
-    const external = /^schemas\/([^#]+)(#.*)?$/.exec(schema.$ref);
-    if (external) {
-      const doc = external[1];
-      const missing = !(this._externalSchemas && doc in this._externalSchemas);
+    // schemas/<name> is the fallback form (matched by attachment name); an absolute http(s) reference is
+    // the preferred $id form (matched against the attached documents' declared root $ids).
+    const fallback = /^schemas\/([^#]+)(#.*)?$/.exec(schema.$ref);
+    const absolute = !fallback && /^https?:\/\//.test(schema.$ref);
+    if (fallback || absolute) {
+      let missing;
+      if (fallback) {
+        missing = !(this._externalSchemas && fallback[1] in this._externalSchemas);
+      } else {
+        const base = schema.$ref.split('#')[0];
+        missing = !Object.values(this._externalSchemas || {})
+          .some((v) => ArazzoSchemaEditor._externalInfo(v).id === base);
+      }
+
       const xrow = document.createElement('div');
       xrow.className = missing ? 'ghost' : 'advanced';
       xrow.innerHTML = `<span>⇗ external schema <strong>${escapeHtml(schema.$ref)}</strong>${missing ? ' — not attached' : ''}</span>`;

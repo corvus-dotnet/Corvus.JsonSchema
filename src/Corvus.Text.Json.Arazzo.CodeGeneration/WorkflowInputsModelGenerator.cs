@@ -55,9 +55,10 @@ public static class WorkflowInputsModelGenerator
         {
             resolver.AddDocument(DocumentUri, document);
 
-            // External schema documents (design §6, #94): each registers as a sibling of the Arazzo document,
-            // so an inputs schema's relative `schemas/<name>#<pointer>` reference resolves against the same
-            // base with no rewriting.
+            // External schema documents (design §6, #94). A document that declares an absolute root $id is
+            // canonically identified by it (JSON Schema 2020-12) — the PREFERRED authored reference form —
+            // so it registers under that $id. Every document ALSO registers under the virtual sibling URI
+            // (schemas/<name>), the fallback form for a document with no $id; either authored form resolves.
             if (schemaDocuments is not null)
             {
                 foreach ((string name, byte[] bytes) in schemaDocuments)
@@ -65,6 +66,10 @@ public static class WorkflowInputsModelGenerator
                     JsonDocument external = JsonDocument.Parse(bytes);
                     externalDocuments.Add(external);
                     resolver.AddDocument("https://corvus.local/arazzo/schemas/" + name, external);
+                    if (TryGetRootId(external, out string? id))
+                    {
+                        resolver.AddDocument(id, external);
+                    }
                 }
             }
 
@@ -116,6 +121,25 @@ public static class WorkflowInputsModelGenerator
                 external.Dispose();
             }
         }
+    }
+
+    // Reads a schema document's canonical identity: its root `$id` when it declares one that parses as an
+    // absolute URI (a relative root `$id` would resolve against the retrieval URI, which is virtual here —
+    // the fallback registration already covers that document).
+    private static bool TryGetRootId(JsonDocument document, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? id)
+    {
+        id = null;
+        if (document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+            && document.RootElement.TryGetProperty("$id", out System.Text.Json.JsonElement idElement)
+            && idElement.ValueKind == System.Text.Json.JsonValueKind.String
+            && idElement.GetString() is { Length: > 0 } value
+            && Uri.TryCreate(value, UriKind.Absolute, out _))
+        {
+            id = value;
+            return true;
+        }
+
+        return false;
     }
 }
 

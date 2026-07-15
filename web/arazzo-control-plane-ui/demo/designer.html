@@ -508,10 +508,11 @@
       switchSideTab('inspect'); // the finding is now the selection — show it
     }
 
-    // The working copy's jsonschema attachments (#94): attachment name → its $defs type names, feeding the
-    // schema editors' "External schemas" picker (the ref form is schemas/<name>#<pointer>). Inline attachments
-    // carry their document; a registry attachment resolves it from /sources. Best-effort — an unreadable
-    // document lists the attachment with no named types (the document-root option).
+    // The working copy's jsonschema attachments (#94): attachment name → { id, defs }, feeding the schema
+    // editors' "External schemas" picker. The PREFERRED reference base is the document's absolute root $id
+    // (its canonical identity per JSON Schema 2020-12); the virtual schemas/<name> path is the fallback for
+    // a document that declares none. Inline attachments carry their document; a registry attachment resolves
+    // it from /sources. Best-effort — an unreadable document lists with no id and no named types.
     let externalSchemas = null;
     async function refreshExternalSchemas() {
       try {
@@ -522,8 +523,11 @@
           try {
             if (s.kind === 'inline') schemaDoc = (await client.getWorkingCopySource(shell.id, s.name))?.document;
             else if (s.sourceName) schemaDoc = (await client.getSource(s.sourceName))?.document;
-          } catch { /* unreadable — list with no named types */ }
-          map[s.name] = schemaDoc && schemaDoc.$defs ? Object.keys(schemaDoc.$defs) : [];
+          } catch { /* unreadable — list with no id and no named types */ }
+          map[s.name] = {
+            id: typeof schemaDoc?.$id === 'string' && /^https?:\/\//.test(schemaDoc.$id) ? schemaDoc.$id : null,
+            defs: schemaDoc && schemaDoc.$defs ? Object.keys(schemaDoc.$defs) : [],
+          };
         }
         externalSchemas = Object.keys(map).length ? map : null;
       } catch {

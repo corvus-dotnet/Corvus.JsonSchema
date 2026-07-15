@@ -3224,12 +3224,19 @@ export function createMockControlPlane(options = {}) {
     const operations = new Set();
     const channels = new Set();
     let anySurface = false;
+    const schemaAttachmentIds = new Set();
     for (const att of attachments) {
       if (!att.name) continue;
       // A jsonschema attachment (#94) is deliberately NOT a sourceDescription (the Arazzo spec pins that enum) —
-      // exempt from the declaration cross-check, no operation surface; inputs schemas reference it by
-      // schemas/<name>#<pointer>, mirroring the server.
-      if (att.type === 'jsonschema') { schemaAttachments.add(att.name); continue; }
+      // exempt from the declaration cross-check, no operation surface. Its resolvable identities are its
+      // absolute root $id (the PREFERRED reference form) and the virtual schemas/<name> fallback, mirroring
+      // the server.
+      if (att.type === 'jsonschema') {
+        schemaAttachments.add(att.name);
+        const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+        if (typeof d?.$id === 'string' && /^https?:\/\//.test(d.$id)) schemaAttachmentIds.add(d.$id);
+        continue;
+      }
       attachedNames.add(att.name);
       if (!declared.includes(att.name)) {
         findings.push({ severity: 'info', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: `Attached source '${att.name}' is not declared in sourceDescriptions — the document cannot reference its operations.` });
@@ -3238,14 +3245,20 @@ export function createMockControlPlane(options = {}) {
       if (d) { collectOperationIdentities(d, operations, channels); anySurface = true; }
     }
 
-    // Dangling external schema references (#94): a schemas/<name> $ref in an inputs schema whose named
-    // jsonschema document is not attached, mirroring the server's pass-4 walk.
+    // Dangling external schema references (#94), mirroring the server's pass-4 walk: a schemas/<name>
+    // (fallback-form) $ref whose named jsonschema document is not attached, or an absolute http(s) $ref
+    // (the preferred $id form) matching no attached document's root $id — neither can resolve at publish.
     const checkExternalRefs = (node, basePath) => {
       if (node && typeof node === 'object' && !Array.isArray(node)) {
         if (typeof node.$ref === 'string' && node.$ref.startsWith('schemas/')) {
           const name = node.$ref.slice('schemas/'.length).split('#')[0];
           if (!schemaAttachments.has(name)) {
             findings.push({ severity: 'error', category: 'schema', instancePath: basePath, message: `References the external schema '${name}', which is not attached — attach a jsonschema source under that name.` });
+          }
+        } else if (typeof node.$ref === 'string' && /^https?:\/\//.test(node.$ref)) {
+          const identity = node.$ref.split('#')[0];
+          if (!schemaAttachmentIds.has(identity)) {
+            findings.push({ severity: 'error', category: 'schema', instancePath: basePath, message: `References the external schema '${identity}', which is not attached — attach the jsonschema source whose $id this is.` });
           }
         }
         for (const v of Object.values(node)) checkExternalRefs(v, basePath);

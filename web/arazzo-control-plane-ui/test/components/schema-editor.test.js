@@ -172,7 +172,7 @@ describe('<arazzo-schema-editor>', () => {
 
   it('references an external schema document from the type menu and renders its row (#94)', async () => {
     make({ type: 'object', properties: { addr: { type: 'string' } } });
-    el.externalSchemas = { 'acme-types': ['Address', 'Money'], 'raw-doc': [] };
+    el.externalSchemas = { 'acme-types': { id: null, defs: ['Address', 'Money'] }, 'raw-doc': { id: null, defs: [] } };
     const addrType = names().find((n) => n.value === 'addr').closest('.node').querySelector('select.type');
     const externals = [...addrType.querySelectorAll('optgroup[label="External schemas"] option')].map((o) => o.value);
     ok(externals.includes('xref:schemas/acme-types#/$defs/Address'), 'each $defs entry is an option');
@@ -185,11 +185,28 @@ describe('<arazzo-schema-editor>', () => {
     ok(!row.textContent.includes('not attached'), 'an attached document is not flagged');
   });
 
+  it('authors the preferred $id form when the external document declares one (#94)', async () => {
+    make({ type: 'object', properties: { addr: { type: 'string' } } });
+    el.externalSchemas = { 'acme-types': { id: 'https://schemas.acme.example/types', defs: ['Address'] } };
+    const addrType = names().find((n) => n.value === 'addr').closest('.node').querySelector('select.type');
+    const externals = [...addrType.querySelectorAll('optgroup[label="External schemas"] option')].map((o) => o.value);
+    ok(externals.includes('xref:https://schemas.acme.example/types#/$defs/Address'), 'the option carries the root $id, not the virtual path');
+    const changed = nextEvent(el, 'schema-changed');
+    addrType.value = 'xref:https://schemas.acme.example/types#/$defs/Address'; addrType.dispatchEvent(new Event('change'));
+    equal((await changed).detail.schema.properties.addr.$ref, 'https://schemas.acme.example/types#/$defs/Address');
+    const row = [...el.shadowRoot.querySelectorAll('.node')].find((n) => n.textContent.includes('https://schemas.acme.example/types'));
+    ok(row, 'renders an external reference row for the $id form');
+    ok(!row.textContent.includes('not attached'), 'a reference matching an attached $id is not flagged');
+  });
+
   it('flags an external reference whose document is not attached (#94)', async () => {
-    make({ type: 'object', properties: { addr: { $ref: 'schemas/missing-doc#/$defs/Address' } } });
+    make({ type: 'object', properties: { addr: { $ref: 'schemas/missing-doc#/$defs/Address' }, money: { $ref: 'https://schemas.acme.example/unattached#/$defs/Money' } } });
     const row = [...el.shadowRoot.querySelectorAll('.node')].find((n) => n.textContent.includes('schemas/missing-doc'));
-    ok(row, 'renders the external reference row');
+    ok(row, 'renders the fallback-form external reference row');
     ok(row.textContent.includes('not attached'), 'flags the missing attachment');
+    const idRow = [...el.shadowRoot.querySelectorAll('.node')].find((n) => n.textContent.includes('https://schemas.acme.example/unattached'));
+    ok(idRow, 'renders the $id-form external reference row');
+    ok(idRow.textContent.includes('not attached'), 'flags the unmatched $id');
   });
 
   it('Move to shared type… extracts the node into the library and references it (§6, #101)', async () => {

@@ -118,6 +118,53 @@ public class ArazzoCodeGenerationTests
     }
 
     [TestMethod]
+    public async Task Generates_an_inputs_model_resolving_an_external_schema_reference_by_its_root_id()
+    {
+        // The PREFERRED reference form: the external document declares an absolute root $id, and the inputs
+        // schema references it by that $id — the document's canonical identity per JSON Schema 2020-12. The
+        // generator registers the document under its $id (as well as the virtual fallback), so the reference
+        // resolves exactly as the spec reads it.
+        string document = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "inputs": {
+                "type": "object",
+                "properties": {
+                  "petId": { "type": "string" },
+                  "address": { "$ref": "https://schemas.acme.example/types#/$defs/Address" }
+                },
+                "required": [ "petId" ]
+              },
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+        byte[] schemaDocument = Encoding.UTF8.GetBytes(
+            """{"$id":"https://schemas.acme.example/types","$defs":{"Address":{"type":"object","properties":{"line1":{"type":"string"},"city":{"type":"string"}}}}}""");
+
+        IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(document),
+            Binder(),
+            new ArazzoGenerationOptions("Acme.Pets", SchemaDocuments: [new("acme-types", schemaDocument)]));
+
+        files.ShouldContain(f => f.FileName.StartsWith("Models/Adopt/", StringComparison.Ordinal) && f.Content.Contains("Line1"));
+        files.ShouldContain(f => f.FileName.StartsWith("Models/Adopt/", StringComparison.Ordinal) && f.Content.Contains("City"));
+    }
+
+    [TestMethod]
     public async Task Generates_an_inputs_model_resolving_an_external_schema_reference()
     {
         // The inputs schema references an attached external schema document (schemas/<name>#<pointer>, #94):

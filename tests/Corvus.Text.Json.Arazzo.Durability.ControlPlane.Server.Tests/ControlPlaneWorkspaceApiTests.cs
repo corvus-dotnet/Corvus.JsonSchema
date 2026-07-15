@@ -595,6 +595,47 @@ public sealed class ControlPlaneWorkspaceApiTests
     }
 
     [TestMethod]
+    public async Task An_external_schema_reference_by_root_id_resolves_against_the_attached_document()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // The PREFERRED reference form: the attached document declares an absolute root $id and the inputs
+        // schema references it by that $id. An absolute reference matching no attached $id is flagged — the
+        // generator resolves only registered documents (never the network), so it could not resolve at publish.
+        string id = await CreateWithDocumentAsync(host, """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "External id ref", "version": "1.0.0" },
+          "sourceDescriptions": [{ "name": "pets", "url": "./pets.json", "type": "openapi" }],
+          "workflows": [{
+            "workflowId": "w",
+            "inputs": { "type": "object", "properties": {
+              "address": { "$ref": "https://schemas.acme.example/types#/$defs/Address" },
+              "money": { "$ref": "https://schemas.acme.example/unattached#/$defs/Money" }
+            } },
+            "steps": [{ "stepId": "a", "operationId": "listPets" }]
+          }]
+        }
+        """);
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/pets", $$"""{"document":{{PetstoreDoc}}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(
+            HttpMethod.Put,
+            $"/workspace/workflows/{id}/sources/acme-types",
+            """{"document":{"$id":"https://schemas.acme.example/types","$defs":{"Address":{"type":"object"}}},"type":"jsonschema"}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument outcome = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/workspace/workflows/{id}/validate", Read));
+        outcome.RootElement.GetProperty("valid").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement[] schemaFindings = [.. outcome.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Where(d => d.GetProperty("category").GetString() == "schema")];
+
+        // The $id-matched reference passes; only the unattached absolute reference is flagged.
+        schemaFindings.Length.ShouldBe(1);
+        schemaFindings[0].GetProperty("message").GetString()!.ShouldContain("https://schemas.acme.example/unattached");
+    }
+
+    [TestMethod]
     public async Task An_attached_external_schema_resolves_the_reference_and_is_exempt_from_source_integrity()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());
