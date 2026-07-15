@@ -361,6 +361,52 @@ public class DocumentMaterializationBenchmarks
         return grant.RuleNameCount;
     }
 
+    /// <summary>Create() adoption row 1.9, the KEPT shape: the production draft-run capture — a from-properties
+    /// builder in an unrented (thread-affinity-free) workspace, then the store's serialize of the element (what
+    /// PutAsync does with the RootElement it is handed; a lazy builder pays its realisation here).</summary>
+    /// <returns>The serialized length.</returns>
+    [Benchmark]
+    public int DraftRunCapture_UnrentedBuilder()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        using JsonDocumentBuilder<DraftRun.Mutable> builder = DraftRun.CreateBuilder(
+            workspace,
+            runId: "0123456789abcdef0123456789abcdef",
+            workingCopyId: "wc-42",
+            workflowId: "orders-workflow",
+            documentEtag: "etag-7",
+            environment: "development",
+            startedBy: "alice",
+            startedAt: DateTimeOffset.UnixEpoch,
+            contentHash: "sha256:abcd");
+        return PersistedJson.ToArray(
+            builder.RootElement,
+            static (Utf8JsonWriter writer, in DraftRun.Mutable d) => d.WriteTo(writer)).Length;
+    }
+
+    /// <summary>Create() adoption row 1.9, the REJECTED shape (kept measurable): the generated <c>Create()</c> then
+    /// the store's serialize — measured 652.9→833.0 ns end-to-end against the unrented builder (alloc 488→432 B).
+    /// PutAsync only serializes the element (a bytes-only consumer, the 1.7 rule), so the metadata pass is wasted;
+    /// production keeps the unrented-builder path. Counter-case recorded in Part D: this shape is −56 B and deletes
+    /// the CreateUnrented thread-affinity trap.</summary>
+    /// <returns>The serialized length.</returns>
+    [Benchmark]
+    public int DraftRunCapture_CreateWrite_Rejected()
+    {
+        using ParsedJsonDocument<DraftRun> doc = DraftRun.Create(
+            contentHash: "sha256:abcd",
+            documentEtag: "etag-7",
+            environment: "development",
+            runId: "0123456789abcdef0123456789abcdef",
+            startedAt: DateTimeOffset.UnixEpoch,
+            startedBy: "alice",
+            workflowId: "orders-workflow",
+            workingCopyId: "wc-42");
+        return PersistedJson.ToArray(
+            doc.RootElement,
+            static (Utf8JsonWriter writer, in DraftRun d) => d.WriteTo(writer)).Length;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra
