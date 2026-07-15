@@ -34,21 +34,39 @@ public static class WorkflowInputsModelGenerator
     /// <param name="arazzoDocumentUtf8">The full Arazzo document, as UTF-8 JSON.</param>
     /// <param name="workflowIndex">The zero-based index of the workflow within the document's <c>workflows</c> array.</param>
     /// <param name="modelNamespace">The namespace for the generated model types.</param>
+    /// <param name="schemaDocuments">External JSON Schema documents (name → UTF-8) the inputs schema may reference
+    /// by <c>schemas/&lt;name&gt;#&lt;pointer&gt;</c> (design §6, #94); each registers as a sibling of the Arazzo
+    /// document so the relative reference resolves with no rewriting. <see langword="null"/> when there are none.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The generated model (type name, accessor map, and source files), or <see langword="null"/> if the workflow declares no inputs object with properties.</returns>
     public static async ValueTask<WorkflowInputsModel?> GenerateAsync(
         ReadOnlyMemory<byte> arazzoDocumentUtf8,
         int workflowIndex,
         string modelNamespace,
+        IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(modelNamespace);
 
         JsonDocument document = JsonDocument.Parse(arazzoDocumentUtf8);
+        var externalDocuments = new List<JsonDocument>();
         var resolver = new PrepopulatedDocumentResolver();
         try
         {
             resolver.AddDocument(DocumentUri, document);
+
+            // External schema documents (design §6, #94): each registers as a sibling of the Arazzo document,
+            // so an inputs schema's relative `schemas/<name>#<pointer>` reference resolves against the same
+            // base with no rewriting.
+            if (schemaDocuments is not null)
+            {
+                foreach ((string name, byte[] bytes) in schemaDocuments)
+                {
+                    JsonDocument external = JsonDocument.Parse(bytes);
+                    externalDocuments.Add(external);
+                    resolver.AddDocument("https://corvus.local/arazzo/schemas/" + name, external);
+                }
+            }
 
             var vocabularyRegistry = new VocabularyRegistry();
             VocabularyAnalyser.RegisterAnalyser(resolver, vocabularyRegistry);
@@ -93,6 +111,10 @@ public static class WorkflowInputsModelGenerator
         {
             resolver.Dispose();
             document.Dispose();
+            foreach (JsonDocument external in externalDocuments)
+            {
+                external.Dispose();
+            }
         }
     }
 }

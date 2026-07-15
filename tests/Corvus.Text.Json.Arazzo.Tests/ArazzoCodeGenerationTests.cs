@@ -117,6 +117,53 @@ public class ArazzoCodeGenerationTests
         files.ShouldNotContain(f => f.FileName.StartsWith("Models/Ping/", StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public async Task Generates_an_inputs_model_resolving_an_external_schema_reference()
+    {
+        // The inputs schema references an attached external schema document (schemas/<name>#<pointer>, #94):
+        // the generator registers the document as a sibling of the Arazzo document, so the relative reference
+        // resolves with no rewriting and the generated model carries the referenced shape.
+        string document = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "adopt",
+              "inputs": {
+                "type": "object",
+                "properties": {
+                  "petId": { "type": "string" },
+                  "address": { "$ref": "schemas/acme-types#/$defs/Address" }
+                },
+                "required": [ "petId" ]
+              },
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ]
+                }
+              ]
+            }
+          ]
+        }
+        """;
+        byte[] schemaDocument = Encoding.UTF8.GetBytes(
+            """{"$defs":{"Address":{"type":"object","properties":{"line1":{"type":"string"},"city":{"type":"string"}}}}}""");
+
+        IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(document),
+            Binder(),
+            new ArazzoGenerationOptions("Acme.Pets", SchemaDocuments: [new("acme-types", schemaDocument)]));
+
+        // The model resolved the external document: the referenced Address shape's properties generate typed accessors.
+        files.ShouldContain(f => f.FileName.StartsWith("Models/Adopt/", StringComparison.Ordinal) && f.Content.Contains("Line1"));
+        files.ShouldContain(f => f.FileName.StartsWith("Models/Adopt/", StringComparison.Ordinal) && f.Content.Contains("City"));
+    }
+
     private static WorkflowOperationBinder Binder()
     {
         OperationDescriptor[] operations =
