@@ -278,6 +278,53 @@ public class DocumentMaterializationBenchmarks
         return draft.RootElement.ValueKind;
     }
 
+    private byte[] ruleDraftJson = null!;
+
+    [GlobalSetup(Targets = [nameof(SecurityRuleWriteNew_BuilderTrio), nameof(SecurityRuleWriteNew_CreateWrite_Rejected)])]
+    public void SetupWriteNew()
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant", "Tenant isolation.");
+        this.ruleDraftJson = PersistedJson.ToArray(
+            draft.RootElement,
+            static (Utf8JsonWriter writer, in SecurityRuleDocument d) => d.WriteTo(writer));
+    }
+
+    /// <summary>Create() adoption row 1.7, the KEPT shape: the production <see cref="SecurityRuleDocument.WriteNew"/>
+    /// trio via <see cref="SecurityPolicySerialization.SerializeNewRule"/> — realise the stamped rule as a builder in a
+    /// per-call workspace, stream it once to the writer.</summary>
+    /// <returns>The serialized length.</returns>
+    [Benchmark]
+    public int SecurityRuleWriteNew_BuilderTrio()
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = PersistedJson.ToPooledDocument<SecurityRuleDocument>(this.ruleDraftJson);
+        return SecurityPolicySerialization.SerializeNewRule("tenant-scoped", draft.RootElement, "alice", DateTimeOffset.UnixEpoch, new WorkflowEtag("etag-1")).Length;
+    }
+
+    /// <summary>Create() adoption row 1.7, the REJECTED shape (kept measurable): the trio collapsed to the generated
+    /// <c>Create()</c> + a raw <c>WriteTo</c>. Measured 1.045→1.434 µs and 728→744 B against the trio — WriteNew's
+    /// product is bytes into the caller's writer, so Create()'s parse metadata is wasted work here (it pays off only
+    /// where the caller consumes the parsed document, as on the Draft rows). Production keeps the trio.</summary>
+    /// <returns>The serialized length.</returns>
+    [Benchmark]
+    public int SecurityRuleWriteNew_CreateWrite_Rejected()
+    {
+        using ParsedJsonDocument<SecurityRuleDocument> draft = PersistedJson.ToPooledDocument<SecurityRuleDocument>(this.ruleDraftJson);
+        byte[] result = PersistedJson.ToArray(
+            (Draft: draft.RootElement, Name: "tenant-scoped", Actor: "alice", At: DateTimeOffset.UnixEpoch, Tag: new WorkflowEtag("etag-1")),
+            static (Utf8JsonWriter writer, in (SecurityRuleDocument Draft, string Name, string Actor, DateTimeOffset At, WorkflowEtag Tag) c) =>
+            {
+                using ParsedJsonDocument<SecurityRuleDocument> doc = SecurityRuleDocument.Create(
+                    createdAt: c.At,
+                    createdBy: c.Actor,
+                    etag: c.Tag.Value!,
+                    expression: c.Draft.Expression,
+                    name: c.Name,
+                    description: c.Draft.Description.IsNotUndefined() ? (JsonString.Source)c.Draft.Description : default);
+                doc.RootElement.WriteTo(writer);
+            });
+        return result.Length;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra
