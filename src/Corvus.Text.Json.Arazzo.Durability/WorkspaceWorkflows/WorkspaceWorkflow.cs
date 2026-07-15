@@ -78,28 +78,22 @@ public readonly partial struct WorkspaceWorkflow
         in JsonElement scenarios = default,
         in JsonElement gitBinding = default)
     {
-        DraftElements state = new(name, baseWorkflowId, basedOnVersion, document, designerState, sources, scenarios, gitBinding, managementTags);
-        return PersistedJson.ToPooledDocument<WorkspaceWorkflow, DraftElements>(
-            state,
-            static (Utf8JsonWriter writer, in DraftElements s) =>
-            {
-                writer.WriteStartObject();
-                WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, s.Name);
-                WriteValueIfPresent(writer, JsonPropertyNames.BaseWorkflowIdUtf8, s.BaseWorkflowId);
-                WriteValueIfPresent(writer, JsonPropertyNames.BasedOnVersionUtf8, s.BasedOnVersion);
-                WriteValueIfPresent(writer, JsonPropertyNames.DocumentUtf8, s.Document);
-                WriteValueIfPresent(writer, JsonPropertyNames.DesignerStateUtf8, s.DesignerState);
-                WriteValueIfPresent(writer, JsonPropertyNames.SourcesUtf8, s.Sources);
-                WriteValueIfPresent(writer, JsonPropertyNames.ScenariosUtf8, s.Scenarios);
-                WriteValueIfPresent(writer, JsonPropertyNames.GitBindingUtf8, s.GitBinding);
-                if (!s.ManagementTags.IsEmpty)
-                {
-                    writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
-                    s.ManagementTags.WriteTo(writer);
-                }
-
-                writer.WriteEndObject();
-            });
+        using ParsedJsonDocument<SecurityTagInfoArray>? tags =
+            managementTags.IsEmpty ? null : PersistedJson.ToPooledDocument<SecurityTagInfoArray>(managementTags.RawJson);
+        return Create(
+            createdAt: default,
+            createdBy: default,
+            document: document.ValueKind != JsonValueKind.Undefined ? (DocumentEntity.Source)DocumentEntity.From(document) : default,
+            etag: default,
+            id: default,
+            name: name.ValueKind != JsonValueKind.Undefined ? (Durability.JsonString.Source)Durability.JsonString.From(name) : default,
+            basedOnVersion: basedOnVersion.ValueKind != JsonValueKind.Undefined ? (Durability.JsonInteger.Source)Durability.JsonInteger.From(basedOnVersion) : default,
+            baseWorkflowId: baseWorkflowId.ValueKind != JsonValueKind.Undefined ? (Durability.JsonString.Source)Durability.JsonString.From(baseWorkflowId) : default,
+            designerState: designerState.ValueKind != JsonValueKind.Undefined ? (DesignerStateEntity.Source)DesignerStateEntity.From(designerState) : default,
+            gitBinding: gitBinding.ValueKind != JsonValueKind.Undefined ? (RequiredBranchAndOwnerAndPathAndRepo.Source)RequiredBranchAndOwnerAndPathAndRepo.From(gitBinding) : default,
+            managementTags: tags is not null ? (SecurityTagInfoArray.Source)tags.RootElement : default,
+            scenarios: scenarios.ValueKind != JsonValueKind.Undefined ? (JsonObjectArray.Source)JsonObjectArray.From(scenarios) : default,
+            sources: sources.ValueKind != JsonValueKind.Undefined ? (AttachedSourceArray.Source)AttachedSourceArray.From(sources) : default);
     }
 
     /// <summary>Builds a draft working copy from primitive values — the cold-path / test convenience over the
@@ -278,37 +272,5 @@ public readonly partial struct WorkspaceWorkflow
         {
             throw new ArgumentException("A working copy requires a 'document'.", nameof(draft));
         }
-    }
-
-    // The bytes-to-bytes draft context: the request body's already-parsed JSON values (the document included) plus the
-    // resolved tag set.
-    private readonly struct DraftElements(
-        JsonElement name,
-        JsonElement baseWorkflowId,
-        JsonElement basedOnVersion,
-        JsonElement document,
-        JsonElement designerState,
-        JsonElement sources,
-        JsonElement scenarios,
-        JsonElement gitBinding,
-        SecurityTagSet managementTags)
-    {
-        public JsonElement Name { get; } = name;
-
-        public JsonElement BaseWorkflowId { get; } = baseWorkflowId;
-
-        public JsonElement BasedOnVersion { get; } = basedOnVersion;
-
-        public JsonElement Document { get; } = document;
-
-        public JsonElement DesignerState { get; } = designerState;
-
-        public JsonElement Sources { get; } = sources;
-
-        public JsonElement Scenarios { get; } = scenarios;
-
-        public JsonElement GitBinding { get; } = gitBinding;
-
-        public SecurityTagSet ManagementTags { get; } = managementTags;
     }
 }

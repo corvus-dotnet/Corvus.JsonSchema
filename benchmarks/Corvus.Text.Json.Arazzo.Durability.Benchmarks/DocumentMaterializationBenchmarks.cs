@@ -107,16 +107,19 @@ public class DocumentMaterializationBenchmarks
 
     private ParsedJsonDocument<JsonElement>? accessRequestBody;
 
-    [GlobalSetup(Targets = [nameof(AccessRequestElementDraft_WriterEmbed), nameof(AccessRequestElementDraft_CreateEmbed_Rejected)])]
+    [GlobalSetup(Targets = [nameof(AccessRequestElementDraft_WriterEmbed_Rejected), nameof(AccessRequestElementDraft_CreateEmbed)])]
     public void SetupAccessRequestBody()
         => this.accessRequestBody = ParsedJsonDocument<JsonElement>.Parse(
             """{"baseWorkflowId":"onboard-customer","requestedScopes":["runs:write","runs:read"],"reason":"On-call incident response."}"""u8.ToArray());
 
-    /// <summary>Create() adoption row 2.1, the KEPT shape: the production element-overload access-request draft (the
-    /// warm HTTP path) — the body's parsed elements written once through a writer callback and reparsed once.</summary>
+    /// <summary>Create() adoption row 2.1, the REPLACED shape (kept measurable): the original element-overload
+    /// access-request draft — the body's parsed elements written once through a writer callback and reparsed once.
+    /// Pre-blit this beat the Create() embeds (717 vs 845 ns); after the parsed-source blit fast path in
+    /// <c>ParsedJsonDocumentBuilder.AppendExternalElement</c> the verdict flipped (525.3 vs 499.9 ns, quiet box) and
+    /// the production draft moved to <c>Create()</c>.</summary>
     /// <returns>The parsed value kind (no leaf-string allocation).</returns>
     [Benchmark]
-    public JsonValueKind AccessRequestElementDraft_WriterEmbed()
+    public JsonValueKind AccessRequestElementDraft_WriterEmbed_Rejected()
     {
         JsonElement body = this.accessRequestBody!.RootElement;
         body.TryGetProperty("baseWorkflowId"u8, out JsonElement baseWorkflowId);
@@ -157,31 +160,104 @@ public class DocumentMaterializationBenchmarks
     }
 
     /// <summary>Create() adoption row 2.1, the REJECTED shape (kept measurable): the generated <c>Create()</c> with
-    /// the body's elements embedded as element-kind Sources. Measured 717→845 ns (alloc flat) against the writer embed —
-    /// per-element blits (bytes copy + metadata append per embed) cost more than one linear reparse of a small
-    /// document, so the element-overload drafts KEEP the writer path (and the pack's R2 "strictly better" note is
-    /// measured-wrong for small embeds).</summary>
+    /// the body's elements embedded as element-kind Sources — since the parsed-source blit fast path this is the
+    /// production <see cref="AccessRequest.Draft(in JsonElement, in JsonElement, string, string, string?, in JsonElement, long?)"/>.
+    /// Post-blit quiet-box pair: 499.9 ns vs the writer embed's 525.3 ns (alloc flat at 152 B).</summary>
     /// <returns>The parsed value kind (no leaf-string allocation).</returns>
     [Benchmark]
-    public JsonValueKind AccessRequestElementDraft_CreateEmbed_Rejected()
+    public JsonValueKind AccessRequestElementDraft_CreateEmbed()
     {
         JsonElement body = this.accessRequestBody!.RootElement;
         body.TryGetProperty("baseWorkflowId"u8, out JsonElement baseWorkflowId);
         body.TryGetProperty("requestedScopes"u8, out JsonElement scopes);
         body.TryGetProperty("reason"u8, out JsonElement reason);
-        using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Create(
-            baseWorkflowId: Corvus.Text.Json.Arazzo.Durability.JsonString.From(baseWorkflowId),
-            createdAt: default,
-            createdBy: default,
-            etag: default,
-            id: default,
-            requestedScopes: AccessRequest.JsonStringArray.From(scopes),
-            status: default,
-            subjectClaimType: "sub",
-            subjectClaimValue: "alice",
-            reason: (Corvus.Text.Json.Arazzo.Durability.JsonString.Source)Corvus.Text.Json.Arazzo.Durability.JsonString.From(reason),
-            requesterLabel: (Corvus.Text.Json.Arazzo.Durability.JsonString.Source)"Alice (Payments)",
-            requestedDurationSeconds: (AccessRequest.RequestedDurationSecondsEntity.Source)3600L);
+        using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Draft(
+            in baseWorkflowId,
+            in scopes,
+            "sub",
+            "alice",
+            "Alice (Payments)",
+            in reason,
+            3600);
+        return draft.RootElement.ValueKind;
+    }
+
+    private ParsedJsonDocument<JsonElement>? workspaceWorkflowBody;
+    private SecurityTagSet workspaceWorkflowTags;
+
+    [GlobalSetup(Targets = [nameof(WorkspaceWorkflowElementDraft_WriterEmbed_Rejected), nameof(WorkspaceWorkflowElementDraft_CreateEmbed)])]
+    public void SetupWorkspaceWorkflowBody()
+    {
+        this.workspaceWorkflowBody = ParsedJsonDocument<JsonElement>.Parse(
+            """
+            {"name":"Onboard customer (payments)","baseWorkflowId":"onboard-customer","document":{"arazzo":"1.0.1","info":{"title":"Onboard customer","summary":"KYC + account creation + funding source.","version":"1.4.0"},"sourceDescriptions":[{"name":"accounts","url":"https://api.example.com/openapi/accounts.json","type":"openapi"},{"name":"kyc","url":"https://api.example.com/openapi/kyc.json","type":"openapi"}],"workflows":[{"workflowId":"onboard-customer","summary":"Onboards a retail customer end to end.","inputs":{"type":"object","properties":{"fullName":{"type":"string"},"email":{"type":"string","format":"email"},"dateOfBirth":{"type":"string","format":"date"},"fundingIban":{"type":"string"}},"required":["fullName","email","dateOfBirth"]},"steps":[{"stepId":"startKyc","description":"Open a KYC case for the applicant.","operationId":"kyc.createCase","parameters":[{"name":"fullName","in":"body","value":"$inputs.fullName"},{"name":"dateOfBirth","in":"body","value":"$inputs.dateOfBirth"}],"successCriteria":[{"condition":"$statusCode == 201"}],"outputs":{"caseId":"$response.body#/id"}},{"stepId":"awaitVerdict","description":"Wait for the KYC verdict.","operationId":"kyc.getCase","parameters":[{"name":"caseId","in":"path","value":"$steps.startKyc.outputs.caseId"}],"successCriteria":[{"condition":"$response.body#/status == 'cleared'"}],"outputs":{"riskBand":"$response.body#/riskBand"}},{"stepId":"createAccount","description":"Create the current account.","operationId":"accounts.create","parameters":[{"name":"email","in":"body","value":"$inputs.email"},{"name":"riskBand","in":"body","value":"$steps.awaitVerdict.outputs.riskBand"}],"successCriteria":[{"condition":"$statusCode == 201"}],"outputs":{"accountId":"$response.body#/accountId"}},{"stepId":"attachFunding","description":"Attach the funding source when supplied.","operationId":"accounts.attachFunding","parameters":[{"name":"accountId","in":"path","value":"$steps.createAccount.outputs.accountId"},{"name":"iban","in":"body","value":"$inputs.fundingIban"}],"successCriteria":[{"condition":"$statusCode == 200"}],"outputs":{"fundingId":"$response.body#/fundingId"}}],"outputs":{"accountId":"$steps.createAccount.outputs.accountId","caseId":"$steps.startKyc.outputs.caseId"}}]},"designerState":{"zoom":0.85,"pan":{"x":-120,"y":40},"selection":["createAccount"],"collapsed":{"startKyc":false,"awaitVerdict":false,"createAccount":false,"attachFunding":true}}}
+            """u8.ToArray());
+        this.workspaceWorkflowTags = SecurityTagSet.FromTags([new("sys:group", "payments-team"), new("classification", "internal")]);
+    }
+
+    /// <summary>Create() adoption row 2.1 (document-dominating variant), the REPLACED shape (kept measurable): the
+    /// original working-copy save path — the body's large Arazzo document and designer state re-tokenized through a
+    /// writer callback plus a raw <see cref="SecurityTagSet"/> splice, then reparsed once. Post-blit quiet-box pair:
+    /// 4,725.7 ns / 152 B vs the Create() embeds' 2,864.9 ns / 304 B — the document embed dominates and the blit wins
+    /// on time (−39%) at the cost of the temp tag-document wrapper (+152 B), so the production draft moved to
+    /// <c>Create()</c>.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind WorkspaceWorkflowElementDraft_WriterEmbed_Rejected()
+    {
+        JsonElement body = this.workspaceWorkflowBody!.RootElement;
+        body.TryGetProperty("name"u8, out JsonElement name);
+        body.TryGetProperty("baseWorkflowId"u8, out JsonElement baseWorkflowId);
+        body.TryGetProperty("document"u8, out JsonElement document);
+        body.TryGetProperty("designerState"u8, out JsonElement designerState);
+        var state = (name, baseWorkflowId, document, designerState, this.workspaceWorkflowTags);
+        using ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> draft =
+            PersistedJson.ToPooledDocument<WorkspaceWorkflows.WorkspaceWorkflow, (JsonElement Name, JsonElement BaseWorkflowId, JsonElement Document, JsonElement DesignerState, SecurityTagSet Tags)>(
+                in state,
+                static (Utf8JsonWriter writer, in (JsonElement Name, JsonElement BaseWorkflowId, JsonElement Document, JsonElement DesignerState, SecurityTagSet Tags) s) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WritePropertyName("name"u8);
+                    s.Name.WriteTo(writer);
+                    writer.WritePropertyName("baseWorkflowId"u8);
+                    s.BaseWorkflowId.WriteTo(writer);
+                    writer.WritePropertyName("document"u8);
+                    s.Document.WriteTo(writer);
+                    writer.WritePropertyName("designerState"u8);
+                    s.DesignerState.WriteTo(writer);
+                    if (!s.Tags.IsEmpty)
+                    {
+                        writer.WritePropertyName("managementTags"u8);
+                        s.Tags.WriteTo(writer);
+                    }
+
+                    writer.WriteEndObject();
+                });
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 2.1 (document-dominating variant), the production shape: the element-overload
+    /// <see cref="WorkspaceWorkflows.WorkspaceWorkflow.Draft(in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in JsonElement, in SecurityTagSet, in JsonElement, in JsonElement)"/>,
+    /// now the generated <c>Create()</c> — the body's document/designer-state elements blitted in (the parsed-source
+    /// fast path) and the tag bytes parsed into a temp pooled document (the row-1.2 cost, small here relative to the
+    /// document).</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind WorkspaceWorkflowElementDraft_CreateEmbed()
+    {
+        JsonElement body = this.workspaceWorkflowBody!.RootElement;
+        body.TryGetProperty("name"u8, out JsonElement name);
+        body.TryGetProperty("baseWorkflowId"u8, out JsonElement baseWorkflowId);
+        body.TryGetProperty("document"u8, out JsonElement document);
+        body.TryGetProperty("designerState"u8, out JsonElement designerState);
+        using ParsedJsonDocument<WorkspaceWorkflows.WorkspaceWorkflow> draft = WorkspaceWorkflows.WorkspaceWorkflow.Draft(
+            in name,
+            in baseWorkflowId,
+            basedOnVersion: default,
+            in document,
+            in designerState,
+            sources: default,
+            this.workspaceWorkflowTags);
         return draft.RootElement.ValueKind;
     }
 

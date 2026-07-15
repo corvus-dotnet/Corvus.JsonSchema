@@ -216,36 +216,19 @@ public readonly partial struct AccessRequest
     {
         ArgumentNullException.ThrowIfNull(subjectClaimType);
         ArgumentNullException.ThrowIfNull(subjectClaimValue);
-        var state = new DraftElementState(baseWorkflowId, requestedScopes, subjectClaimType, subjectClaimValue, requesterLabel, reason, requestedDurationSeconds);
-        return PersistedJson.ToPooledDocument<AccessRequest, DraftElementState>(
-            in state,
-            static (Utf8JsonWriter writer, in DraftElementState c) =>
-            {
-                writer.WriteStartObject();
-                writer.WritePropertyName("baseWorkflowId"u8);
-                c.BaseWorkflowId.WriteTo(writer);
-                writer.WritePropertyName("requestedScopes"u8);
-                c.RequestedScopes.WriteTo(writer);
-                writer.WriteString("subjectClaimType"u8, c.SubjectClaimType);
-                writer.WriteString("subjectClaimValue"u8, c.SubjectClaimValue);
-                if (c.RequesterLabel is { } requesterLabel)
-                {
-                    writer.WriteString("requesterLabel"u8, requesterLabel);
-                }
-
-                if (c.Reason.ValueKind != JsonValueKind.Undefined)
-                {
-                    writer.WritePropertyName("reason"u8);
-                    c.Reason.WriteTo(writer);
-                }
-
-                if (c.RequestedDurationSeconds is { } duration)
-                {
-                    writer.WriteNumber("requestedDurationSeconds"u8, duration);
-                }
-
-                writer.WriteEndObject();
-            });
+        return Create(
+            baseWorkflowId: Durability.JsonString.From(baseWorkflowId),
+            createdAt: default,
+            createdBy: default,
+            etag: default,
+            id: default,
+            requestedScopes: JsonStringArray.From(requestedScopes),
+            status: default,
+            subjectClaimType: subjectClaimType,
+            subjectClaimValue: subjectClaimValue,
+            reason: reason.ValueKind != JsonValueKind.Undefined ? (Durability.JsonString.Source)Durability.JsonString.From(reason) : default,
+            requesterLabel: requesterLabel is { } l ? (Durability.JsonString.Source)l : default,
+            requestedDurationSeconds: requestedDurationSeconds is { } d ? (RequestedDurationSecondsEntity.Source)d : default);
     }
 
     /// <summary>Realises a decided copy of this request (status + decision fields set; everything else carried through)
@@ -280,32 +263,6 @@ public readonly partial struct AccessRequest
             reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default,
             requesterLabel: draft.RequesterLabel.IsNotUndefined() ? (JsonString.Source)draft.RequesterLabel : default,
             requestedDurationSeconds: draft.RequestedDurationSeconds.IsNotUndefined() ? (RequestedDurationSecondsEntity.Source)draft.RequestedDurationSeconds : default);
-
-    // The bytes-to-bytes draft context: the request body's already-parsed JSON values (baseWorkflowId/requestedScopes/
-    // reason) plus the principal-derived subject/label strings.
-    private readonly struct DraftElementState(
-        JsonElement baseWorkflowId,
-        JsonElement requestedScopes,
-        string subjectClaimType,
-        string subjectClaimValue,
-        string? requesterLabel,
-        JsonElement reason,
-        long? requestedDurationSeconds)
-    {
-        public JsonElement BaseWorkflowId { get; } = baseWorkflowId;
-
-        public JsonElement RequestedScopes { get; } = requestedScopes;
-
-        public string SubjectClaimType { get; } = subjectClaimType;
-
-        public string SubjectClaimValue { get; } = subjectClaimValue;
-
-        public string? RequesterLabel { get; } = requesterLabel;
-
-        public JsonElement Reason { get; } = reason;
-
-        public long? RequestedDurationSeconds { get; } = requestedDurationSeconds;
-    }
 
     // Realises a mutable builder over this document and applies the decision; id/created/request fields carry through.
     private JsonDocumentBuilder<Mutable> ApplyDecision(JsonWorkspace workspace, AccessRequestDecision decision, string actor, DateTimeOffset decidedAt, WorkflowEtag etag)
