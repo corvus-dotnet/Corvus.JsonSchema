@@ -1,6 +1,7 @@
 // <arazzo-access-overview> — the "who can do what, where" overview for one resolved grantee (design §6.1). Pick a
 // grantee with the shared picker, then see all of their access in one place: their reach GRANTS (a claim to per-verb
-// reach, with inline Revoke), the base workflows they ADMINISTER, and the source credentials their runs may USE. The
+// reach, with inline Revoke), the CAPABILITY scopes those grants confer (active vs PIM-eligible, server-resolved),
+// the base workflows and ENVIRONMENTS they ADMINISTER, and the source credentials their runs may USE. The
 // server aggregates it (GET /access/grants), so the client stays thin. Read-first; the only mutation is revoking a
 // grant (security:write), which deletes the underlying claim binding for every principal it matches.
 //
@@ -77,6 +78,10 @@ class ArazzoAccessOverview extends ArazzoElement {
         .row:last-child { border-bottom: none; }
         .row .grow { flex: 1; }
         .row .sub { color: var(--_muted); font-size: 12px; }
+        .caps { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
+        .cap { border: 1px solid var(--_border); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+        .cap.eligible { border-style: dashed; color: var(--_muted); }
+        .cap .until { color: var(--_muted); }
         button.link { background: transparent; border-color: transparent; color: var(--_accent); padding: 3px 8px; }
         button.link:hover { text-decoration: underline; }
         button.revoke { color: var(--_danger); font-size: 12px; padding: 3px 9px; }
@@ -120,7 +125,9 @@ class ArazzoAccessOverview extends ArazzoElement {
     const o = this._overview || {};
     const canWrite = this.hasScope('security:write');
     const bindings = Array.isArray(o.bindings) ? o.bindings : [];
+    const capabilities = Array.isArray(o.capabilities) ? o.capabilities : [];
     const administers = Array.isArray(o.administers) ? o.administers : [];
+    const environments = Array.isArray(o.administersEnvironments) ? o.administersEnvironments : [];
     const usage = Array.isArray(o.credentialUsage) ? o.credentialUsage : [];
 
     const reach = bindings.length
@@ -138,9 +145,22 @@ class ArazzoAccessOverview extends ArazzoElement {
       }).join('')
       : '<div class="empty">No reach grants match this grantee’s identity.</div>';
 
+    // Capability chips: the server resolves eligibility + expiry (runtime-resolver semantics), so the client only
+    // renders — a dashed chip is a PIM eligibility (self-elevation required), a solid one is held actively.
+    const caps = capabilities.length
+      ? `<div class="caps">${capabilities.map((c) => {
+        const until = c.expiresAt ? ` <span class="until">until ${escapeHtml(new Date(c.expiresAt).toLocaleString())}</span>` : '';
+        return `<span class="cap${c.eligible ? ' eligible' : ''}">${escapeHtml(c.scope)}${c.eligible ? ' (eligible)' : ''}${until}</span>`;
+      }).join('')}</div>`
+      : '<div class="empty">No capability scopes.</div>';
+
     const admin = administers.length
       ? administers.map((a) => `<div class="row"><span class="grow">${escapeHtml(a.baseWorkflowId)}</span><button class="link" type="button" data-workflow="${escapeHtml(a.baseWorkflowId)}">Open</button></div>`).join('')
       : '<div class="empty">Administers nothing.</div>';
+
+    const envAdmin = environments.length
+      ? environments.map((e) => `<div class="row"><span class="grow">${escapeHtml(e.environment)}</span></div>`).join('')
+      : '<div class="empty">Administers no environments.</div>';
 
     const creds = usage.length
       ? usage.map((u) => `<div class="row"><span class="grow">${escapeHtml(u.sourceName)} <span class="sub">/ ${escapeHtml(u.environment)}</span></span><button class="link" type="button" data-cred="${escapeHtml(u.sourceName)}@${escapeHtml(u.environment)}">Open</button></div>`).join('')
@@ -149,7 +169,9 @@ class ArazzoAccessOverview extends ArazzoElement {
     this.$('.body').innerHTML = `
       <div class="who">${granteeChip(o.grantee || this._grantee)}</div>
       <div class="section"><h4>Reach (grants)</h4>${reach}</div>
+      <div class="section"><h4>Capabilities</h4>${caps}</div>
       <div class="section"><h4>Administers</h4>${admin}</div>
+      <div class="section"><h4>Administers environments</h4>${envAdmin}</div>
       <div class="section"><h4>Credential usage</h4>${creds}</div>
     `;
     this.wire();

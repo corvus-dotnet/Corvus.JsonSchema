@@ -1130,11 +1130,14 @@ function seedSecurityOrderings() {
 function seedSecurityBindings() {
   const hr = 60 * 60 * 1000;
   const day = 24 * hr;
-  // Claim → per-verb reach bindings (§14.2): a group/role claim conferring read, and a tenant claim conferring full reach.
+  // Claim → per-verb reach bindings (§14.2): a group/role claim conferring read, and a tenant claim conferring full
+  // reach. Scope-bearing bindings are written only by the §16.5 approval flow (never the authoring endpoint), so the
+  // seed mimics its output: an active time-boxed grant on bind-2 and an eligible-only (PIM) assignment on bind-4.
   return [
     { id: 'bind-1', claimType: 'team', claimValue: 'payments', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 0, description: 'Payments team can read payments-domain rows.', createdBy: 'alice@example.com', createdAt: iso(-12 * day), etag: nextEtag() },
-    { id: 'bind-2', claimType: 'tenant', claimValue: 'acme', read: { unrestricted: true }, write: { unrestricted: true }, purge: { unrestricted: false }, order: 1, description: 'Acme tenant operators.', createdBy: 'alice@example.com', createdAt: iso(-5 * day), etag: nextEtag() },
+    { id: 'bind-2', claimType: 'tenant', claimValue: 'acme', read: { unrestricted: true }, write: { unrestricted: true }, purge: { unrestricted: false }, order: 1, description: 'Acme tenant operators.', scopes: ['runs:read', 'runs:write'], expiresAt: iso(5 * day), createdBy: 'alice@example.com', createdAt: iso(-5 * day), etag: nextEtag() },
     { id: 'bind-3', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 2, description: 'Ada Lovelace can read payments-domain rows.', createdBy: 'alice@example.com', createdAt: iso(-4 * day), etag: nextEtag() },
+    { id: 'bind-4', claimType: 'team', claimValue: 'payments', read: { unrestricted: false }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 3, description: 'Eligibility for access request req-7.', scopes: ['runs:purge'], expiresAt: iso(2 * day), eligibleOnly: true, createdBy: 'approval-service', createdAt: iso(-1 * day), etag: nextEtag() },
   ];
 }
 
@@ -2474,6 +2477,30 @@ export function createMockControlPlane(options = {}) {
         && (b.additionalClauses || []).every((c) => clauseSatisfied(c.dimension, c.value)))
       .map((b) => structuredClone(b));
 
+    // capabilities: the scopes the matched bindings confer, resolved as the server's runtime resolver does — an
+    // expired binding confers nothing; an eligibleOnly binding records §16.5.3 eligibility rather than an active
+    // scope. One entry per scope, active dominating eligible; within a class a never-expiring conferral clears the
+    // expiry, otherwise the later expiry stands. Sorted by scope, mirroring the server's deterministic order.
+    const nowMs = Date.now();
+    const mergeCap = (a, b) => {
+      if (a.eligible !== b.eligible) return a.eligible ? b : a;
+      const expiresAt = a.expiresAt && b.expiresAt ? (Date.parse(a.expiresAt) >= Date.parse(b.expiresAt) ? a.expiresAt : b.expiresAt) : null;
+      return { eligible: a.eligible, expiresAt };
+    };
+    const capMap = new Map();
+    for (const b of bindings) {
+      if (b.expiresAt && Date.parse(b.expiresAt) <= nowMs) continue;
+      for (const scope of (b.scopes || [])) {
+        const conferred = { eligible: !!b.eligibleOnly, expiresAt: b.expiresAt ?? null };
+        const existing = capMap.get(scope);
+        capMap.set(scope, existing ? mergeCap(existing, conferred) : conferred);
+      }
+    }
+    const capabilities = [...capMap.keys()].sort().map((scope) => {
+      const c = capMap.get(scope);
+      return { scope, eligible: c.eligible, ...(c.expiresAt ? { expiresAt: c.expiresAt } : {}) };
+    });
+
     // administers: a base workflow the grantee administers — its admin array holds a grant whose identity is a subset of
     // the grantee's identity (an identity-based grant the grantee satisfies).
     const administers = Object.keys(administrators)
@@ -2481,6 +2508,13 @@ export function createMockControlPlane(options = {}) {
         .some((g) => (g.identity || []).every((gt) => idents.some((t) => t.dimension === gt.dimension && t.value === gt.value))))
       .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
       .map((baseWorkflowId) => ({ baseWorkflowId }));
+
+    // administersEnvironments: the environment twin of administers, over the environment administrator sets.
+    const administersEnvironments = Object.keys(environmentAdministrators)
+      .filter((env) => (environmentAdministrators[env] || [])
+        .some((g) => (g.identity || []).every((gt) => idents.some((t) => t.dimension === gt.dimension && t.value === gt.value))))
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+      .map((environment) => ({ environment }));
 
     // credentialUsage: credentials scoped to THIS grantee's identity — a usage-restricted binding whose usageGrantee
     // identity is a subset of the grantee's identity. Shared bindings (no usageGrantee, usable by any run) are
@@ -2492,7 +2526,7 @@ export function createMockControlPlane(options = {}) {
       .sort((a, b) => (a.sourceName < b.sourceName ? -1 : a.sourceName > b.sourceName ? 1
         : a.environment < b.environment ? -1 : a.environment > b.environment ? 1 : 0));
 
-    return json({ grantee, bindings, administers, credentialUsage });
+    return json({ grantee, bindings, capabilities, administers, administersEnvironments, credentialUsage });
   }
 
   // Keyset pagination over `name` plus a case-insensitive q over name/expression — the same contract the durable store

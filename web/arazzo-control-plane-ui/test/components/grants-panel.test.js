@@ -46,7 +46,7 @@ describe('<arazzo-grants-panel>', () => {
   });
 
   it('pages the grants with Prev/Next (keyset), not append', async () => {
-    // Three grants are seeded (bind-1, bind-2, bind-3); page-size=1 splits them across three keyset pages.
+    // Four grants are seeded (bind-1..bind-4); page-size=1 splits them across four keyset pages.
     el = panelWithMock({ scopes: 'security:read', 'page-size': '1' });
     mount(el);
     await nextEvent(el, 'loaded');
@@ -68,13 +68,25 @@ describe('<arazzo-grants-panel>', () => {
     ok(!$(el, '.prev').disabled, 'Prev enabled on page 2');
     ok(!$(el, '.next').disabled, 'Next still enabled — a third page follows');
 
-    // Next → page 3 (the last page): Next now disabled.
+    // Next → page 3, then page 4 (the last page): Next now disabled.
     loaded = nextEvent(el, 'loaded');
     $(el, '.next').click();
     await loaded;
-    equal(rows(el).length, 1, 'page 3 holds the last grant');
+    equal(rows(el).length, 1, 'page 3 holds one grant');
     ok(!$(el, '.prev').disabled, 'Prev enabled on page 3');
+    ok(!$(el, '.next').disabled, 'Next still enabled — a fourth page follows');
+
+    loaded = nextEvent(el, 'loaded');
+    $(el, '.next').click();
+    await loaded;
+    equal(rows(el).length, 1, 'page 4 holds the last grant');
+    ok(!$(el, '.prev').disabled, 'Prev enabled on page 4');
     ok($(el, '.next').disabled, 'Next disabled on the last page');
+
+    // Prev → back to page 3 before returning to page 2.
+    loaded = nextEvent(el, 'loaded');
+    $(el, '.prev').click();
+    await loaded;
 
     // Prev → back to page 2.
     loaded = nextEvent(el, 'loaded');

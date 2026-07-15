@@ -127,6 +127,7 @@ Both must pass.
 | **Partial identity** | A grantee resolution that yields only some of the dimensions the deployment stamps; flagged because membership matches by exact set-equality, so a partial identity may match no one. |
 | **Digest** (identity digest) | The canonical digest over a stamped identity set — equal iff set-equal. The stable key administrators are indexed by and removed by. |
 | **Principal directory** | The pluggable directory seam (LDAP/AD, Keycloak, SCIM, Entra ID, Okta, Google) that searches people/teams/roles and returns resolved identities. It resolves *who*, never *what they may do*. |
+| **Resolved capability view** | The Access Overview's `capabilities` section: the capability scopes a grantee's matched bindings confer, resolved exactly as the runtime resolver does — expired bindings confer nothing; an eligible-only binding shows as *eligible*, not active. |
 | **Administrator** | A member of a workflow's or environment's governing set; the only third-party grant in the access model. |
 | **Registered source** | An entry in the control plane's `/sources` registry: a named source document registered once and referenced by workflows, with per-environment credentials. |
 | **Credential** | A per-source, per-environment binding of a **secretRef** plus non-secret configuration. Its **status** (`Valid`/`ExpiringSoon`/`Expired`) is derived on read; rotation is re-pointing the reference. |
