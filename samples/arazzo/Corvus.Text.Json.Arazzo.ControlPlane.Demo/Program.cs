@@ -349,8 +349,10 @@ if (seedExampleData)
     // group by MEMBERSHIP (§16.5.4), exactly like a directory pick. Provenance "seed" marks the origin.
     static Corvus.Text.Json.Arazzo.Durability.JsonString Observed(string v)
     {
+        // The generated scalar Create() replaces the interpolate + GetBytes + Parse round trip (and escapes correctly);
+        // the Clone stays — the value outlives the pooled document.
         using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> doc =
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(System.Text.Encoding.UTF8.GetBytes($"\"{v}\""));
+            Corvus.Text.Json.Arazzo.Durability.JsonString.Create(v);
         return doc.RootElement.Clone();
     }
     foreach ((string group, string label) in new[]
