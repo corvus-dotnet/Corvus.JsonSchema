@@ -187,6 +187,61 @@ public class DocumentMaterializationBenchmarks
         return draft.RootElement.ValueKind;
     }
 
+    /// <summary>Create() adoption row 1.5 "before": the replaced access-request draft — a writer callback (values + a
+    /// scopes array loop) serialized through <see cref="PersistedJson.ToPooledDocument{T,TContext}"/> and reparsed.
+    /// Preserved inline so the delta stays measured.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AccessRequestDraft_SerializeReparse()
+    {
+        var state = ("onboard-customer", (IReadOnlyList<string>)["runs:write", "runs:read"], "sub", "alice", (string?)"Alice (Payments)", (string?)"On-call incident response.", (long?)3600);
+        using ParsedJsonDocument<AccessRequest> draft =
+            PersistedJson.ToPooledDocument<AccessRequest, (string BaseWorkflowId, IReadOnlyList<string> Scopes, string ClaimType, string ClaimValue, string? Label, string? Reason, long? Duration)>(
+                in state,
+                static (Utf8JsonWriter writer, in (string BaseWorkflowId, IReadOnlyList<string> Scopes, string ClaimType, string ClaimValue, string? Label, string? Reason, long? Duration) c) =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("baseWorkflowId"u8, c.BaseWorkflowId);
+                    writer.WriteStartArray("requestedScopes"u8);
+                    foreach (string scope in c.Scopes)
+                    {
+                        writer.WriteStringValue(scope);
+                    }
+
+                    writer.WriteEndArray();
+                    writer.WriteString("subjectClaimType"u8, c.ClaimType);
+                    writer.WriteString("subjectClaimValue"u8, c.ClaimValue);
+                    if (c.Label is { } label)
+                    {
+                        writer.WriteString("requesterLabel"u8, label);
+                    }
+
+                    if (c.Reason is { } reason)
+                    {
+                        writer.WriteString("reason"u8, reason);
+                    }
+
+                    if (c.Duration is { } duration)
+                    {
+                        writer.WriteNumber("requestedDurationSeconds"u8, duration);
+                    }
+
+                    writer.WriteEndObject();
+                });
+        return draft.RootElement.ValueKind;
+    }
+
+    /// <summary>Create() adoption row 1.5 "after": the production string-overload <see cref="AccessRequest.Draft(string, IReadOnlyList{string}, string, string, string?, string?, long?)"/>,
+    /// now the generated <c>Create()</c> with the scopes folded in closure-free — one pass, no reparse.</summary>
+    /// <returns>The parsed value kind (no leaf-string allocation).</returns>
+    [Benchmark]
+    public JsonValueKind AccessRequestDraft_Create()
+    {
+        using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Draft(
+            "onboard-customer", ["runs:write", "runs:read"], "sub", "alice", "Alice (Payments)", "On-call incident response.", 3600);
+        return draft.RootElement.ValueKind;
+    }
+
     /// <summary>Create() adoption row 1.2, the REJECTED shape (kept measurable per the R4 judgment): the generated
     /// <c>Create()</c> with the tag bytes parsed into a temp pooled document and blitted in as an element. Measured
     /// 716→1,299 ns and 152→304 B against the writer splice — the raw tag bytes dominate this document, so the extra

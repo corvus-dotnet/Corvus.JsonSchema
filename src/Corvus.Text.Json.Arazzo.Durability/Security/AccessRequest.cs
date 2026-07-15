@@ -163,39 +163,33 @@ public readonly partial struct AccessRequest
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
         ArgumentNullException.ThrowIfNull(requestedScopes);
-        var state = new DraftState(baseWorkflowId, requestedScopes, subjectClaimType, subjectClaimValue, requesterLabel, reason, requestedDurationSeconds);
-        return PersistedJson.ToPooledDocument<AccessRequest, DraftState>(
-            in state,
-            static (Utf8JsonWriter writer, in DraftState c) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString("baseWorkflowId"u8, c.BaseWorkflowId);
-                writer.WriteStartArray("requestedScopes"u8);
-                foreach (string scope in c.RequestedScopes)
-                {
-                    writer.WriteStringValue(scope);
-                }
 
-                writer.WriteEndArray();
-                writer.WriteString("subjectClaimType"u8, c.SubjectClaimType);
-                writer.WriteString("subjectClaimValue"u8, c.SubjectClaimValue);
-                if (c.RequesterLabel is { } requesterLabel)
+        // The generated contextful Create() writes the document text and its parse metadata in one pass — no
+        // serialize-then-reparse round trip. The scopes list is folded in closure-free (the list is the Build context);
+        // a default Source is omitted, so the server-stamped fields (id/status/createdBy/createdAt/etag) stay absent
+        // for WriteNew to stamp.
+        return Create(
+            context: requestedScopes,
+            baseWorkflowId: baseWorkflowId,
+            createdAt: default,
+            createdBy: default,
+            etag: default,
+            id: default,
+            requestedScopes: JsonStringArray.Build(
+                requestedScopes,
+                static (in IReadOnlyList<string> scopes, ref JsonStringArray.Builder b) =>
                 {
-                    writer.WriteString("requesterLabel"u8, requesterLabel);
-                }
-
-                if (c.Reason is { } reason)
-                {
-                    writer.WriteString("reason"u8, reason);
-                }
-
-                if (c.RequestedDurationSeconds is { } duration)
-                {
-                    writer.WriteNumber("requestedDurationSeconds"u8, duration);
-                }
-
-                writer.WriteEndObject();
-            });
+                    foreach (string scope in scopes)
+                    {
+                        b.AddItem(scope);
+                    }
+                }),
+            status: default,
+            subjectClaimType: subjectClaimType,
+            subjectClaimValue: subjectClaimValue,
+            reason: reason is { } r ? (Durability.JsonString.Source)r : default,
+            requestedDurationSeconds: requestedDurationSeconds is { } d ? (RequestedDurationSecondsEntity.Source)d : default,
+            requesterLabel: requesterLabel is { } l ? (Durability.JsonString.Source)l : default);
     }
 
     /// <summary>Builds a draft Pending request carrying the request body's already-parsed JSON values bytes-to-bytes —
@@ -286,31 +280,6 @@ public readonly partial struct AccessRequest
             reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default,
             requesterLabel: draft.RequesterLabel.IsNotUndefined() ? (JsonString.Source)draft.RequesterLabel : default,
             requestedDurationSeconds: draft.RequestedDurationSeconds.IsNotUndefined() ? (RequestedDurationSecondsEntity.Source)draft.RequestedDurationSeconds : default);
-
-    // The create-content of a draft request, threaded through the pooled-writer callback (a static lambda, no closure).
-    private readonly struct DraftState(
-        string baseWorkflowId,
-        IReadOnlyList<string> requestedScopes,
-        string subjectClaimType,
-        string subjectClaimValue,
-        string? requesterLabel,
-        string? reason,
-        long? requestedDurationSeconds)
-    {
-        public string BaseWorkflowId { get; } = baseWorkflowId;
-
-        public IReadOnlyList<string> RequestedScopes { get; } = requestedScopes;
-
-        public string SubjectClaimType { get; } = subjectClaimType;
-
-        public string SubjectClaimValue { get; } = subjectClaimValue;
-
-        public string? RequesterLabel { get; } = requesterLabel;
-
-        public string? Reason { get; } = reason;
-
-        public long? RequestedDurationSeconds { get; } = requestedDurationSeconds;
-    }
 
     // The bytes-to-bytes draft context: the request body's already-parsed JSON values (baseWorkflowId/requestedScopes/
     // reason) plus the principal-derived subject/label strings.
