@@ -38,12 +38,7 @@ public sealed class LedgerService : IApiDefaultHandler
     {
         ReconciliationCounts counts = ReconciliationEngine.ComputeCounts(await this.store.GetAccountsAsync(cancellationToken).ConfigureAwait(false));
         int ledgerEntries = counts.LedgerEntries;
-        ParsedJsonDocument<Models.GetLedgerOk> doc = LedgerJson.ToPooledDocument<Models.GetLedgerOk, int>(in ledgerEntries, static (writer, in entries) =>
-        {
-            writer.WriteStartObject();
-            writer.WriteNumber("entries", entries);
-            writer.WriteEndObject();
-        });
+        ParsedJsonDocument<Models.GetLedgerOk> doc = Models.GetLedgerOk.Create(entries: ledgerEntries);
         workspace.TakeOwnership(doc);
         return LoadLedgerResult.Ok(doc.RootElement, workspace);
     }
@@ -53,12 +48,7 @@ public sealed class LedgerService : IApiDefaultHandler
     {
         ReconciliationCounts counts = ReconciliationEngine.ComputeCounts(await this.store.GetAccountsAsync(cancellationToken).ConfigureAwait(false));
         int bankTransactions = counts.BankTransactions;
-        ParsedJsonDocument<Models.GetTransactionsOk> doc = LedgerJson.ToPooledDocument<Models.GetTransactionsOk, int>(in bankTransactions, static (writer, in count) =>
-        {
-            writer.WriteStartObject();
-            writer.WriteNumber("count", count);
-            writer.WriteEndObject();
-        });
+        ParsedJsonDocument<Models.GetTransactionsOk> doc = Models.GetTransactionsOk.Create(count: bankTransactions);
         workspace.TakeOwnership(doc);
         return FetchTransactionsResult.Ok(doc.RootElement, workspace);
     }
@@ -67,14 +57,7 @@ public sealed class LedgerService : IApiDefaultHandler
     public async ValueTask<MatchEntriesResult> HandleMatchEntriesAsync(MatchEntriesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         ReconciliationCounts counts = ReconciliationEngine.ComputeCounts(await this.store.GetAccountsAsync(cancellationToken).ConfigureAwait(false));
-        var match = new MatchContext(counts.Matched, counts.Unmatched);
-        ParsedJsonDocument<Models.PostMatchOk> doc = LedgerJson.ToPooledDocument<Models.PostMatchOk, MatchContext>(in match, static (writer, in c) =>
-        {
-            writer.WriteStartObject();
-            writer.WriteNumber("matched", c.Matched);
-            writer.WriteNumber("unmatched", c.Unmatched);
-            writer.WriteEndObject();
-        });
+        ParsedJsonDocument<Models.PostMatchOk> doc = Models.PostMatchOk.Create(matched: counts.Matched, unmatched: counts.Unmatched);
         workspace.TakeOwnership(doc);
         return MatchEntriesResult.Ok(doc.RootElement, workspace);
     }
@@ -110,12 +93,7 @@ public sealed class LedgerService : IApiDefaultHandler
     public async ValueTask<PostCorrectionsResult> HandlePostCorrectionsAsync(PostCorrectionsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         int posted = await this.store.PostCorrectionsToLatestAsync(cancellationToken).ConfigureAwait(false);
-        ParsedJsonDocument<Models.PostCorrectionsOk> doc = LedgerJson.ToPooledDocument<Models.PostCorrectionsOk, int>(in posted, static (writer, in p) =>
-        {
-            writer.WriteStartObject();
-            writer.WriteNumber("posted", p);
-            writer.WriteEndObject();
-        });
+        ParsedJsonDocument<Models.PostCorrectionsOk> doc = Models.PostCorrectionsOk.Create(posted: posted);
         workspace.TakeOwnership(doc);
         return PostCorrectionsResult.Ok(doc.RootElement, workspace);
     }
@@ -125,12 +103,7 @@ public sealed class LedgerService : IApiDefaultHandler
     {
         string reportUrl = await this.store.PublishLatestAsync(this.timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false)
             ?? "https://reports.ledger.example/reconciliations/none";
-        ParsedJsonDocument<Models.PostReportOk> doc = LedgerJson.ToPooledDocument<Models.PostReportOk, string>(in reportUrl, static (writer, in url) =>
-        {
-            writer.WriteStartObject();
-            writer.WriteString("reportUrl", url);
-            writer.WriteEndObject();
-        });
+        ParsedJsonDocument<Models.PostReportOk> doc = Models.PostReportOk.Create(reportUrl: reportUrl);
         workspace.TakeOwnership(doc);
         return PublishReportResult.Ok(doc.RootElement, workspace);
     }
@@ -186,30 +159,34 @@ public sealed class LedgerService : IApiDefaultHandler
         (IReadOnlyList<LedgerAccountRecord> accounts, string? nextPageToken) = await this.store.ListAccountsAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
 
         var page = new LedgerAccountPageContext(accounts, nextPageToken);
-        ParsedJsonDocument<Models.LedgerAccountPage> doc = LedgerJson.ToPooledDocument<Models.LedgerAccountPage, LedgerAccountPageContext>(in page, static (writer, in ctx) =>
-        {
-            writer.WriteStartObject();
-            writer.WriteStartArray("accounts");
-            foreach (LedgerAccountRecord account in ctx.Accounts)
-            {
-                writer.WriteStartObject();
-                writer.WriteString("account", account.Account);
-                writer.WriteString("currency", account.Currency);
-                writer.WriteNumber("ledgerBalance", account.LedgerBalance);
-                writer.WriteNumber("bankBalance", account.BankBalance);
-                writer.WriteNumber("delta", account.Delta);
-                writer.WriteBoolean("inSync", account.InSync);
-                writer.WriteEndObject();
-            }
-
-            writer.WriteEndArray();
-            if (ctx.NextPageToken is not null)
-            {
-                writer.WriteString("nextPageToken", ctx.NextPageToken);
-            }
-
-            writer.WriteEndObject();
-        });
+        ParsedJsonDocument<Models.LedgerAccountPage> doc = Models.LedgerAccountPage.Create(
+            context: page,
+            accounts: Models.LedgerAccountPage.LedgerAccountArray.Build(
+                page,
+                static (in LedgerAccountPageContext ctx, ref Models.LedgerAccountPage.LedgerAccountArray.Builder b) =>
+                {
+                    // The balances are decimals; format them to UTF-8 and pass them as formatted numbers so the
+                    // persisted precision carries through (a double hop would round). The scratch is a small heap
+                    // array because the Sources capture the spans (stackalloc would not satisfy ref-safety).
+                    byte[] numberScratch = new byte[120];
+                    Span<byte> ledgerBuffer = numberScratch.AsSpan(0, 40);
+                    Span<byte> bankBuffer = numberScratch.AsSpan(40, 40);
+                    Span<byte> deltaBuffer = numberScratch.AsSpan(80, 40);
+                    foreach (LedgerAccountRecord account in ctx.Accounts)
+                    {
+                        System.Buffers.Text.Utf8Formatter.TryFormat(account.LedgerBalance, ledgerBuffer, out int ledgerWritten);
+                        System.Buffers.Text.Utf8Formatter.TryFormat(account.BankBalance, bankBuffer, out int bankWritten);
+                        System.Buffers.Text.Utf8Formatter.TryFormat(account.Delta, deltaBuffer, out int deltaWritten);
+                        b.AddItem(Models.LedgerAccount.Build(
+                            account: account.Account,
+                            bankBalance: Models.JsonNumber.Source.FormattedNumber(bankBuffer[..bankWritten]),
+                            currency: account.Currency,
+                            inSync: account.InSync,
+                            ledgerBalance: Models.JsonNumber.Source.FormattedNumber(ledgerBuffer[..ledgerWritten]),
+                            delta: Models.JsonNumber.Source.FormattedNumber(deltaBuffer[..deltaWritten])));
+                    }
+                }),
+            nextPageToken: page.NextPageToken is { } token ? (Models.JsonString.Source)token : default);
         workspace.TakeOwnership(doc);
         return ListLedgerAccountsResult.Ok(doc.RootElement, workspace);
     }

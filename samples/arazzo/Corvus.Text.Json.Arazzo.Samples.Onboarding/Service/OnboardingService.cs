@@ -44,15 +44,10 @@ public sealed class OnboardingService : IApiDefaultHandler
         (string? email, string? plan) = ReadSignup(parameters.Body);
         await this.store.CreateAsync(accountId, email, plan, this.timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
 
-        // Compose the body through the pooled writer + ownership model (no fresh writer/buffer, no re-parse). The
-        // response Body references this document, so the workspace owns it — disposed only after the endpoint
-        // middleware has validated and written the response.
-        ParsedJsonDocument<Models.Account> doc = OnboardingJson.ToPooledDocument<Models.Account, string>(in accountId, static (writer, in id) =>
-        {
-            writer.WriteStartObject();
-            writer.WriteString("accountId", id);
-            writer.WriteEndObject();
-        });
+        // The generated Create() realises the body (text + parse metadata) in one pooled pass. The response Body
+        // references this document, so the workspace owns it — disposed only after the endpoint middleware has
+        // validated and written the response.
+        ParsedJsonDocument<Models.Account> doc = Models.Account.Create(accountId: accountId);
         workspace.TakeOwnership(doc);
         return CreateAccountResult.Created(doc.RootElement, workspace);
     }
