@@ -8,8 +8,9 @@ workflow interactively against a mock transport and virtual clock, captures that
 scenarios, and publishes to the catalog with the evidence of successful validation. Terms are as
 defined in [`UBIQUITOUSLANGUAGE.md`](./UBIQUITOUSLANGUAGE.md).
 
-Status: **in delivery**. §14 sequences the slices and carries per-slice status; slice 1
-(workspace core: CRUD, validate, workspace table, designer shell) is built.
+Status: **delivered** (2026-07-16, PR #842). §14 sequences the slices and carries per-slice
+status; all slices are built. The only parked item is slice 8's GitHub Action wrapper, blocked
+on publishing the CLI as a dotnet tool (release engineering).
 
 ## 1. Goals & non-goals
 
@@ -747,9 +748,9 @@ errors underlined with the position from `ArazzoExpression`).
 
 ## 8. Simulation architecture (server)
 
-### 8.1 `WorkflowSimulator` (realizes the planned §3.2 facade)
+### 8.1 `WorkflowSimulator` (realizes the §3.2 facade)
 
-`Corvus.Text.Json.Arazzo.Testing` grows the planned simulator: build/compile the working copy in
+`Corvus.Text.Json.Arazzo.Testing` carries the simulator: build/compile the working copy in
 memory (the existing `IWorkflowExecutorProvider` — same path as catalog add), run the executor
 against `MockApiTransport` (scenario mocks compiled to its scripting surface) and a
 `FakeTimeProvider` driven by the scenario clock program, capture a structured **trace** (step
@@ -908,7 +909,7 @@ compile; it serves recorded fixtures, clearly marked).
 5. **Simulator + debug.** Server `WorkflowSimulator` + trace + stateless stepping; debug controls,
    context explorer, trace viewer, canvas overlay, expression console.
    *Status: server half BUILT. `WorkflowSimulator` lives in `Corvus.Text.Json.Arazzo.Testing` (the
-   planned §3.2 facade): compiles through the catalog's own `IWorkflowExecutorProvider` path in
+   §3.2 facade): compiles through the catalog's own `IWorkflowExecutorProvider` path in
    DURABLE mode — the generated executor's per-step checkpoint (whose state indices are the
    step-array indices) is the trace seam, so `TracingWorkflowRun` records step boundaries, outputs,
    retries, waits, and faults, enforces the step budget, and throws the pause signal for

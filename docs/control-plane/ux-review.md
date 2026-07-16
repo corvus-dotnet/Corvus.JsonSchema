@@ -313,8 +313,9 @@ It must follow through end to end:
   workflow detail shows it standing.
 - **Runs:** a run targets an environment and uses *that* environment's credential set; the runs UI should surface the
   run's environment (and a pre-run readiness check belongs here).
-- **Runners (not yet designed):** runners execute in/for an environment and must have the environment's credential set
-  reachable — the Runners UX, when built, is environment-scoped and consumes the same readiness model.
+- **Runners (design: `execution-host-design.md` §5.5; UX built):** runners execute in/for an environment and must have
+  the environment's credential set reachable — the Runners UX (`arazzo-runners-panel` + `arazzo-runner-authorizations-panel`)
+  is environment-scoped and consumes the same readiness model.
 
 **Every environment is a governed resource — creating one grants you its administration.** There is no "open"
 self-service tier. An environment has a **governance owner / administrator set and an audit trail, exactly like a

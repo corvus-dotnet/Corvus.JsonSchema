@@ -1,6 +1,8 @@
 # Control-plane allocation matrix (API → store)
 
-> **Status: Phase 1 — skeleton for review.** Single source of truth for the bytes-to-bytes
+> **Status: COMPLETE.** Every write / read / projection seam is converted or ruled, each with a
+> measured before→after in Part D (see the "Cumulative closeout" section; one deliberately-kept
+> residual is logged as the ☐ OPEN item at the end). Single source of truth for the bytes-to-bytes
 > allocation campaign (issue #803). It enumerates every control-plane API operation, its call
 > tree to the durable store, the ownership ledger, the one end-to-end baseline benchmark, the
 > target CTJ pattern (grounded in a named skill / § of the design doc), and the **measured**
@@ -268,7 +270,7 @@ handler, CLI. Slnx build **0 Warning(s), 0 Error(s)**.
 - **`samples/` (Aspire demo)** is not in the slnx and was not built; it uses only the record extension overload
   (same overload resolution as the green tests), so it compiles, but this was not independently verified here.
 
-### 🔬 `POST /catalog` → `IWorkflowCatalogStore.AddAsync` — package bind done; projection is the remaining lever (Part B)
+### ➖ `POST /catalog` → `IWorkflowCatalogStore.AddAsync` — package bind done; owner seam confirmed genuine (the projection lever landed separately — see its ✅ row)
 
 **Driver package write-realization DONE** (see the ✅ catalog row above): the two whole-package `.ToArray()` copies on the
 add path were eliminated across the driver backends (memory/stream bind / `TryGetArray` / Blob `BinaryData`). That win is
@@ -1404,9 +1406,9 @@ two **already-✅** write seams still **reify carried-forward stored fields** in
 parsing the stored token to a managed `string`/`DateTimeOffset` and reformatting it, instead of copying the original
 JSON token verbatim with `WriteValueIfPresent(writer, …Utf8, (JsonElement)this.X)`:
 
-- `Security/SourceCredentialBinding.cs:559` — `Id`; `:581` — `CreatedBy`; `:582` — `CreatedAt` (Part A row
+- `Security/SourceCredentialBinding.cs:584` — `Id`; `:607` — `CreatedBy`; `:608` — `CreatedAt` (Part A row
   `ISourceCredentialStore.Add/UpdateAsync`, marked ✅).
-- `Security/WorkflowAdministrators.cs:195` — `CreatedBy`; `:196` — `CreatedAt` (Part A row
+- `Security/WorkflowAdministrators.cs:224` — `CreatedBy`; `:225` — `CreatedAt` (Part A row
   `IWorkflowAdministratorStore.PutAsync`, marked ✅).
 
 These are the **immutable identity/audit fields carried forward on update** — pure copies, so they should never round-trip

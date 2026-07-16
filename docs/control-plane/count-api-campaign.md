@@ -46,13 +46,13 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
     green 2/2 on InMemory + Sqlite (in-process) and Postgres/MySql/SqlServer/Mongo/Redis/AzureStorage/NatsJetStream/Cosmos
     (real containers/emulator). Full `slnx` build was 0-warning (composition stopped to release DLL locks).
 - [x] `availabilityRequests` (scope=queue/environment, status) — `IAvailabilityRequestStore`. **DONE — all backends verified,
-  commit pending.** `/availabilityRequests/count` (op `countAvailabilityRequests`, filters status/environment/scope) + handler
+  committed (2026-07-16, PR #842).** `/availabilityRequests/count` (op `countAvailabilityRequests`, filters status/environment/scope) + handler
   `HandleCountAvailabilityRequestsAsync` (mirrors the list; env-admin 403) + interface default + native `CountAsync` on all 10
   backends. Availability backends already shared `AppendFilters`/`BuildFilter`/`Matches`, so count just reuses them (no
   extraction). Conformance (cap boundary + filter reach) green 2/2 on InMemory + Sqlite + Postgres/MySql/SqlServer/Mongo/Redis/
   AzureStorage/NatsJetStream/Cosmos.
 - [x] `runnerAuthorizations` (status/environment; the inbox `/runnerAuthorizations`, not the per-env `/environments/{name}/runners`)
-  — `IEnvironmentRunnerAuthorizationStore`. **DONE — all backends verified, commit pending.** `/runnerAuthorizations/count`
+  — `IEnvironmentRunnerAuthorizationStore`. **DONE — all backends verified, committed (2026-07-16, PR #842).** `/runnerAuthorizations/count`
   (op `countRunnerAuthorizations`, filters status/environment; status defaults to Pending like the inbox) + handler + interface
   default + native `CountAsync` on all 10 backends (backends already shared AppendFilters/BuildFilter/Matches/AppendConditions).
   Conformance green 2/2 on every backend (InMemory+Sqlite in-process; the other 8 incl. Cosmos via containers/emulator).
@@ -68,8 +68,8 @@ work badges (Approvals) and list-footer totals without fetching rows — and nev
 > subqueries` and `'TOP' is not supported in subqueries`. So the Cosmos count uses the outer `SELECT c.id … OFFSET 0 LIMIT @lim`
 > (allowed) counted client-side (≤ cap+1 tiny id rows). A code comment on both Cosmos stores records this — do not "fix" to COUNT.
 
-> **Composition is currently STOPPED** (SIGTERM'd to release DLL locks for the build). Leave it down through the availability +
-> runner verticals + badge rewire, then restart ONCE at Slice 1 completion and live-verify all three badges rendering `N+`.
+> **Slice 1 complete + live-verified** (2026-07-16, PR #842): the composition was restarted once at Slice 1 completion and
+> all three approval badges render `N+` off the `/count` endpoints.
 
 **Regen command** (from `…ControlPlane.Server/README.md`):
 `dotnet run --project src/Corvus.Json.Cli -f net10.0 -- openapi-server docs/control-plane/arazzo-control-plane.openapi.json --rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server/Generated`
@@ -205,10 +205,10 @@ Postgres):** the four `/count` endpoints returned EXACTLY their list length via 
 confirmed the footers render "3 environments" / "4 sources" / "8 bindings" with zero page errors. Composition SIGTERM-stopped after.
 
 **COUNT-API CAMPAIGN — METADATA FAMILIES COMPLETE end-to-end** (store push-down + bounded count · `/count` endpoints · Server/Cli/JS
-clients · UI footers), all container/live-verified. **NEXT (remaining families):** runs / catalog native counts — already
-reach-pushed-down, so thread `CountAsync` through `IWorkflowWaitIndex`/catalog (native push-down count like the metadata relational
-stores), + their `/count` endpoints + any list footers. Then the smaller lists (runners, securityBindings/Rules, administrators, etc.)
-per the Slice-2 worklist above; `securityOrderings` excluded.
+clients · UI footers), all container/live-verified. **DONE (2026-07-16, PR #842):** runs / catalog native counts (threaded
+`CountAsync` through `IWorkflowWaitIndex`/`IWorkflowCatalogStore` with native push-down like the metadata relational stores) +
+their `/count` endpoints + list footers, and the Slice-2 smaller lists (runners, securityBindings/Rules) all landed;
+`administrators`/`environmentAdministrators` excluded (not paged); `securityOrderings` excluded.
 
 **(prior fan-out notes)** MySql + SqlServer — mirror the Postgres push-down (Npgsql→MySqlConnector / SqlClient; SqlServer COUNT via
 `SELECT COUNT(*) FROM (SELECT TOP (@cap) 1 … WHERE <reach>) AS bounded`). **MySql wrinkle:** its `Environments` table discriminates rows
@@ -222,4 +222,4 @@ conformance on each to confirm the reach test passes (no leak) + count correct**
 Per-backend recipe (relational): `using System.Text` + `System.Globalization`; side table in `SchemaSql`; transaction+`SyncSecurityTagsAsync`
 on add (tags immutable → none on update); cascade delete; `AppendReachPredicate` (composite owner cols `["Name","Tags"]`, tag table
 `EnvironmentSecurityTags`, main `Environments`) shared by ListAsync (WHERE + `ORDER BY … LIMIT @limit`) and the native `CountAsync`.
-Composition STOPPED. Podman socket for container conformance: note at top of this file.
+Podman socket for container conformance: note at top of this file.

@@ -797,8 +797,9 @@ live *on the workflow*, not in standalone, deployment-wide tabs.
    `bearer` → none. Known fields render as labelled inputs/selects (validated on submit), unrecognised keys are
    preserved verbatim in a free-form extra-config list so nothing is silently dropped on edit.
 
-Still captured as a work item: **mTLS source credentials** (design §13.1) — the only auth kind the
-`SourceCredentialProviderFactory` does not yet implement; required before this security epic closes.
+**mTLS source credentials** (design §13.1) are now implemented: `SourceCredentialProviderFactory`
+routes `SourceCredentialKind.Mtls` to `MtlsClientCertificateAuthenticationProvider` (PKCS#12/PEM
+resolution, connection-level client certificate).
 
 ### Subsequent epic — sources / environments / promotion (§7.6–7.8) — DELIVERED
 

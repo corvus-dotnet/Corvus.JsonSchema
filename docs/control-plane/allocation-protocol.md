@@ -5,6 +5,10 @@
 being replaced, and claiming work "done" from memory instead of measuring it. The plan of record
 is [`allocation-matrix.md`](allocation-matrix.md) — read it before doing anything.
 
+> **Status: CLOSED.** The campaign completed — every inventoried seam is converted or ruled with a
+> measured before→after in Part D of the matrix (see its "Cumulative closeout" section). This
+> protocol is retained as the historical working method; the kickoff prompt below is archival.
+
 ## The clean-slate rule (non-negotiable)
 
 - **Prior commits, conversation summaries, and memory are NOT evidence of completion.** They

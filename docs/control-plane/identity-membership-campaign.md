@@ -1,7 +1,7 @@
 # Identity membership campaign — one identity, membership everywhere
 
-**Status: RATIFIED (design decision), IN PROGRESS (slice 1).** Branch `arazzo-workflow-designer`.
-Pre-ship, so no data migration.
+**Status: COMPLETE (2026-07-16, PR #842).** All slices S1–S7 landed and live-verified. Landed on
+`worktree-arazzo-workflow-engine-plan`. Pre-ship, so no data migration.
 
 ## The decision
 
@@ -89,7 +89,7 @@ administration under set-equality. Membership over a rich identity resolves both
   future-proofs a non-`sys:` deployment. H4: documented (design §16.5.5) that reach-rule evaluation reads the claim
   map, so every reach-relevant dimension must be ambient-provided or resolver-stamped, never a raw token claim — the
   review's stated remediation is documentation, and this is it.
-- **S5b — collision-probe broadening-overlap warning (H5) — store IN PROGRESS.** Decision taken (with the user): the
+- **S5b — collision-probe broadening-overlap warning (H5) — DONE.** Decision taken (with the user): the
   security-relevant direction is *broadening* — granting a narrow identity that is a strict **subset** of an existing
   broader grantee (`X ⊊ G`) silently confers administration on everyone containing `X`. Detecting it needs superset
   enumeration, so a per-kind/per-backend **scan** (the user accepted this over the no-scan norm, optimizing each
@@ -107,7 +107,7 @@ administration under set-equality. Membership over a rich identity resolves both
     (the full count goes to the ambient activity for audit), and build the advisory bytes-native only when overlaps
     exist — the add always succeeds. Server test proves a `{sys:tenant=acme}` grant naming the subsumed
     `{sys:tenant=acme, sys:sub=alice}` person and omitting the advisory when nothing is subsumed. This closes H5.
-- **S6 — demo resolver enrichment (H7) code DONE + container conformance DONE; only live-verify remains.** The demo's
+- **S6 — demo resolver enrichment (H7) — DONE + live-verified.** The demo's
   runtime `internalTagResolver` now stamps the principal's `sys:sub` alongside its `sys:group`(s) + `sys:iss`, so a
   live Keycloak member carries `{sys:group, sys:sub, sys:iss}` — a STRICT SUPERSET of a seeded group grant
   `{sys:group=arazzo-admins, sys:iss}`. The member therefore administers / reaches / may-use it by membership
@@ -119,8 +119,8 @@ administration under set-equality. Membership over a rich identity resolves both
     + S3 environment `SubsetDigests` reverse index) 30/30 each. Cosmos's `EXISTS`+`ARRAY_LENGTH` pushdown and
     SqlServer's `DISTINCT TOP` — the two I could not exercise locally — both verified. This closes the container debt
     S2/S3/S5b carried.
-  - **Remaining:** a live Aspire / Keycloak / podman relaunch to observe a member administering a group-founded
-    workflow through membership (the only unverified path left; the code is proven by unit + conformance tests).
+  - **Live-verified (2026-07-16, PR #842):** a live Aspire / Keycloak / podman relaunch observed a member
+    administering a group-founded workflow through membership.
 - **S7 — reach binding tag-set selector (H3) — DONE.** Make a reach binding's selector a tag
   **set** matched by **subset** against the caller's canonical identity, exactly like administration — so per-person
   reach can pin `{sub, iss}` and stop being cross-issuer. **Recommended shape: additive, not a big-bang rewrite.**
@@ -135,8 +135,8 @@ administration under set-equality. Membership over a rich identity resolves both
   demonstrating seed binding, and tests (a `{sub=alice, iss=keycloak}` binding matches a keycloak alice, not an ldap
   one). Suggested slices: **S7a** schema + regen; **S7b** the three match sites + subject-match; **S7c** store
   round-trip verification (+ conformance if any store shape changed); **S7d** CLI + UI authoring + seed; **S7e** tests.
-  S7 should land before per-person reach grants are offered in the UI (S6's `sys:sub` enrichment makes them
-  satisfiable). It is a full slice on the scale of S5b and is best executed as its own focused effort.
+  S7 landed before per-person reach grants were offered in the UI (S6's `sys:sub` enrichment makes them
+  satisfiable). It was a full slice on the scale of S5b, executed as its own focused effort.
   - **S7a DONE** (schema + regen): added an optional `additionalClauses[]` (`{dimension, value?}`) to the durable
     `SecurityBindingDocument.json` (source-gen) and the wire `SecurityBindingWrite`/`SecurityBindingSummary` (+ a shared
     `SecurityBindingClause` component) in the OpenAPI document; regenerated the server + CLI `Generated/`. Each clause
@@ -176,11 +176,11 @@ administration under set-equality. Membership over a rich identity resolves both
     resolver already stamps sys:iss). A bootstrap test proves the seeded genesis binding carries the issuer clause.
     Bootstrap 4/4, demo builds. NB: `BindingExists` dedupes by (claimType, claimValue) so an existing single-clause
     genesis grant is not re-issuer-qualified on re-run — the demo resets each run, so a fresh provision gets it; a live
-    upgrade would delete + re-seed. **Applies on the next control-plane rebuild + relaunch (a fresh Postgres provision).**
+    upgrade would delete + re-seed. **Applied on the 2026-07-16 relaunch (fresh Postgres provision, PR #842).**
 
 ## Current state — every identity-matching surface
 
-Verified by code audit after S1+S2. "Membership" = the caller's canonical identity **contains** the named
+Verified by code audit after S1–S7. "Membership" = the caller's canonical identity **contains** the named
 identity (subset). "Set-equality" = exact, order-independent. "Per-tag" = the identity contains one named
 `dimension=value`. Role is **authorization** ("may this caller do X") or an **identity operation** ("act on
 the entry whose identity is exactly X").
@@ -191,10 +191,10 @@ the entry whose identity is exactly X").
 | 2 | Reach rule evaluation (`ResolveReach`/`CollectClaims`) | rule over **raw claims** + ambient (ambient authoritative) | authz | see review |
 | 3 | Workflow admin — forward (`WorkflowAdministrators.IsAdministeredBy`) | subset | authz | membership ✓ |
 | 4 | Workflow admin — reverse index (`ListAdministeredAsync`) | subset-digest union | authz-support | membership ✓ |
-| 5 | Workflow admin — mutation gate (`SecuredWorkflowCatalog.IsMember`, L602) | **set-equality** | authz | **asymmetric** |
+| 5 | Workflow admin — mutation gate (`SecuredWorkflowCatalog.IsAdministeredByMember`) | subset | authz | membership ✓ (S4) |
 | 6 | Environment admin — forward (`EnvironmentAdministrators.IsAdministeredBy`) | subset | authz | membership ✓ |
-| 7 | Environment admin — reverse index (`SecuredEnvironmentAdministration`, L66) | **single exact digest** | authz-support | **asymmetric** |
-| 8 | Environment admin — mutation gate (`SecuredEnvironmentAdministration.IsMember`, L318) | **set-equality** | authz | **asymmetric** |
+| 7 | Environment admin — reverse index (`SecuredEnvironmentAdministration`, `SubsetDigests`) | subset-digest union | authz-support | membership ✓ (S3) |
+| 8 | Environment admin — mutation gate (`SecuredEnvironmentAdministration.IsAdministeredByMember`) | subset | authz | membership ✓ (S4) |
 | 9 | Credential usage (`SourceCredentialBinding.IsUsableBy`) | per-tag (`usageTags ⊆ runTags`) | authz | membership ✓ |
 | 10 | Self-elevation guard (`CallerMatches`) | per-tag over the stamped identity | authz | membership ✓ |
 | 11 | Identity collision probe (`FindIdentityConflictAsync`) | exact digest | uniqueness | by design; see review |
@@ -238,8 +238,8 @@ group-grained. **DECIDED (with the user): the full tag-set selector.** A reach b
 (`SecurityTagSet.IsSubsetOf`) — so a per-person binding can pin `{sub=alice, iss=keycloak}` and match only a
 keycloak alice, not an ldap one. This is the tidy conclusion of "membership everywhere". Scheduled as **S7**
 below (a full slice: pre-ship, but a large consumer surface). Note the irony: S6's `sys:sub` enrichment is
-exactly what makes a per-person reach binding satisfiable live, so S7 should land before per-person reach grants
-are offered in the UI.
+exactly what makes a per-person reach binding satisfiable live, so S7 landed before per-person reach grants
+were offered in the UI.
 
 **H4 — Reach rule evaluation trusts raw token claims (pre-existing, low-medium) — DOCUMENTED (S5a).** Binding
 *selection* (#1) is on the forgery-resistant stamped identity, but a matched binding's *rule*

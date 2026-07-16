@@ -65,5 +65,5 @@ term; it wins conflicts). The items below come from the 2026-07 sweep recorded i
 
 All boxes ticked, gates green, `UBIQUITOUSLANGUAGE.md` committed and its ⚠ markers in the
 "Normalization decisions" table cleared (the renames are then done). Note any term refinements you
-made in your commit messages — the `arazzo-workflow-designer` child branch re-syncs onto this
-branch afterwards and needs to pick them up.
+made in your commit messages — the renames were picked up when the `arazzo-workflow-designer`
+campaign merged (PR #842, 2026-07-16; that branch is now deleted).

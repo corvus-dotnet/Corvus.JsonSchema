@@ -70,6 +70,7 @@ do not pile up backgrounded builds (a prior session accumulated 77 MSBuild nodes
    `ISecurityPolicyStore` (rules + bindings — the campaign's trigger).
 2. **Persistent backends per store:** the paged keyset query + server search across each backend; container conformance.
 3. **Remaining stores:** administrator, access-request (priority — unbounded queue), runner registry.
+   *(Outcome: access-request + runner DONE; administrator EXEMPTED — see Part D.)*
 4. **UI:** panels → server-paged search + Load-more; grant scope-picker → paged scope search.
 
 ## Phase 0 — findings (audit complete)
@@ -94,9 +95,9 @@ interface seam + InMemory impl + OpenAPI params/response + regen + handler + cli
 backend-by-backend, per the protocol; `IAccessRequestStore` (the growing queue) is the highest-value store after the
 two `ISecurityPolicyStore` trigger endpoints.
 
-**Phase 0: DONE.** Next: Phase 1 foundation for `ISecurityPolicyStore` (`listSecurityRules` first) — ground the
-already-paged `listCredentials` sibling, baseline-benchmark the current unpaged projection, post the ownership ledger,
-then implement the paged seam + InMemory impl + OpenAPI + handler + client.
+**Phase 0: DONE.** Phase 1 (foundation seams) and Phase 2 (native per-backend keyset reads) are COMPLETE across all
+4 stores × 10 backends (2026-07-16, PR #842); `listAdministrators` exempted (bounded, digest-scoped). Phase 3 (UI)
+remains open — see the end of this file.
 
 ## Matrix — Part D (measured before→after)
 

@@ -56,7 +56,7 @@ design lands.
 | **Readiness** | The gate on promotion: every source the version references must have a usable credential in the target environment, and — where the environment sets `requireEvidence` — the version's publish evidence must attest a **green suite** (at least one scenario ran, none failed). Absent evidence, or an empty suite, counts as unevidenced and is refused there. Per-environment and default-off, so environments that never opt in keep the credential-only gate. |
 | **Availability matrix** | The version × environment grid showing each pair as available, promotable, or not ready, with direct make/withdraw or request-promotion actions. |
 
-## Design, test, and validation (proposed)
+## Design, test, and validation
 
 | Term | Definition |
 |------|------------|

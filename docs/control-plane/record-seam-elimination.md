@@ -51,27 +51,30 @@ exact, not statistical.)
 | # | Seam | Where | Frequency | Fix |
 |---|------|-------|-----------|-----|
 | 1 | `SecurityFilter.IsSatisfiedBy(IReadOnlyList<SecurityTag>)` → per-row `SecurityTagSet.ToList()` | `SecurityFilter.cs:49`, `SecurityRule.cs:82`, `SecurityTagSet.ToList()` at `SecurityTagSet.cs`; call sites in the **5 non-SQL** backends (Mongo/Cosmos/Redis/AzureStorage/NATS) catalog-search + run-list + observed-identity read-reach | **Per scanned row** | ✅ **DONE.** Bytes-native `IsSatisfiedBy(in SecurityTagSet)` / `SecurityRule.EvaluateAll` walks the persisted UTF-8 (operand strings pre-encoded at compile, claims at request via `Utf8ClaimSet`); the list overload delegates so the tests lock semantics; all 17 call sites pass the deferred holder. Benchmark: **25.78 KB → 1.56 KB (0.06×), 2.5× faster** per 50-row page. |
-| 3 | Credentials create: `ReadTags`/`ReadGrants` string-materialize while bytes-native `ResolveUsageGrantInto` sits unused | `ArazzoControlPlaneCredentialsHandler.cs` `ReadGrants` | **Per credential create** | ✅ **DONE.** Usage `SecurityTagSet` built via `SecurityTagSet.Build` + `ResolveUsageGrantInto(...GetUtf8String().Span…)`, exactly as the administrators handler's `BuildSingleGrantIdentity`; dead `ReadGrants` removed. Alloc win is the `Build`-vs-`FromTags` primitive proven by `IdentityBuildBenchmarks` (272 B → 96 B, 0.35×). (The remaining `SourceCredentialDefinition` secretRef/config string fields are the cold store-contract seam — Tier 2.) |
+| 3 | Credentials create: `ReadTags`/`ReadGrants` string-materialize while bytes-native `ResolveUsageGrantInto` sits unused | `ArazzoControlPlaneCredentialsHandler.cs` `ReadGrants` | **Per credential create** | ✅ **DONE.** Usage `SecurityTagSet` built via `SecurityTagSet.Build` + `ResolveUsageGrantInto(...GetUtf8String().Span…)`, exactly as the administrators handler's `BuildSingleGrantIdentity`; dead `ReadGrants` removed. Alloc win is the `Build`-vs-`FromTags` primitive proven by `IdentityBuildBenchmarks` (272 B → 96 B, 0.35×). (The `SourceCredentialDefinition` secretRef/config string fields were subsequently converted by the #803 campaign — see the Tier 2 note.) |
 | 4 | Mongo `TagSet.FromTags(AsBsonArray.Select(t => t.AsString))` | `MongoWorkflowCatalogStore.cs` `ReadTags`, `MongoWorkflowStateStore.cs` | Per Mongo row (small) | ✅ **DONE.** New `MongoTags.Read` mirrors the store's own `MongoSecurityTags.Read` (BSON → `Utf8JsonWriter` → `TagSet.CopyFromJsonArray`), dropping the LINQ `Select` + intermediate `List` + re-encode. **Small win**: the per-element `BsonValue.AsString` is the driver's already-materialised string (a genuine BSON-driver leaf), so this removes the LINQ/list overhead, not the strings — a consistency fix matching the sibling security-tags path. |
 
 ### Tier 2 — cold or contract-wide, tracked (not in this pass)
 
 Deferred on **measured frequency** plus **contract blast-radius**, not as an excuse — each is documented with its
-real frequency so the call is auditable:
+real frequency so the call is auditable. (Postscript: the #803 allocation campaign subsequently converted three of
+the four; only `DirectoryRecord` remains parked, deliberately.)
 
-- **`SourceCredentialDefinition` store write seam** (the `string` secretRef/config/sourceName fields beyond the
-  tags/grants handled in Tier 1 #3). `ISourceCredentialStore.AddAsync/UpdateAsync` is the **public** contract of
-  all nine backends; the credential **read** path (the §13.4 warm path) is already bytes-clean. Cold (admin
-  create/update). Its own piece: a `WriteNewFrom(Utf8JsonWriter, Models.CredentialBindingWrite)` seam.
+- **`SourceCredentialDefinition` store write seam** — ✅ **DELIVERED by the #803 allocation campaign** (matrix
+  Part D "POST /credentials → AddAsync", 2.35→1.64 KB). The store contract no longer takes
+  `SourceCredentialDefinition`: all nine backends expose `AddAsync(SourceCredentialBinding draft, string actor, …)`
+  and the write is built bytes-native via `SourceCredentialBinding.Draft(…)` (not the `WriteNewFrom` seam predicted
+  here). `SourceCredentialDefinition` survives only as a cold-caller convenience (`SourceCredentialStoreExtensions`).
 - **`DirectoryRecord`** (the string mapper). Already mitigated: the HTTP adapters have a bytes-native
   `DirectoryRecordView` / `IDirectoryIdentitySpanMapper` span path; `DirectoryRecord` is the *fallback* for a
   string mapper, and the genuine leaf for LDAP. Action: keep it as the opt-in extensibility surface and steer
   in-box/sample mappers to the span mapper. (Subsumed by Tier 1 #2, which removes the residual `ResolvedPrincipal`
   string cost on the span path.)
-- **Access-request submit scopes** (`HandleSubmitAccessRequestAsync` `List<string> scopes`): a tiny fixed array;
-  the approve path's scope strings are **load-bearing** (drive `Contains`/intersection authorization), not a pure
-  u-turn. Marginal.
-- **Security-binding rule-names** (`ArazzoControlPlaneSecurityHandler.ToGrant`): cold admin create/update.
+- **Access-request submit scopes** (`HandleSubmitAccessRequestAsync` `List<string> scopes`) — ✅ **DELIVERED by
+  the #803 campaign** (matrix FIX #5: the `List<string>` eliminated, 520→152 B). The approve path's load-bearing
+  scope strings noted here were preserved.
+- **Security-binding rule-names** (`ArazzoControlPlaneSecurityHandler.ToGrant`) — ✅ **DELIVERED by the #803
+  campaign** (matrix FIX #4: `ReadBinding` → `From(body)`, 1184→0 B).
 
 ### Verified clean (not the anti-pattern)
 

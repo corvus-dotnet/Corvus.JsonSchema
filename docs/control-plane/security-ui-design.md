@@ -32,7 +32,8 @@ The rest of this doc is the original design narrative and lags the code in place
   update) with a dedicated test; person elevation routed to the request flow.
 - **Slice 6 — Access overview (`GET /access/grants?grantee=…` server aggregation + Overview screen) — DONE (server + UI).**
   Server: the OpenAPI path + schemas (`AccessGrantsOverview` = grantee echo + matching bindings + administered workflows +
-  usable credentials), regen (server + CLI), and the bytes-native `HandleGetAccessGrantsAsync` (opaque base64url grantee
+  usable credentials + resolved capability scopes (`capabilities`, with eligible/expiry) + administered environments
+  (`administersEnvironments`) — the last two added by snag #96), regen (server + CLI), and the bytes-native `HandleGetAccessGrantsAsync` (opaque base64url grantee
   token → owned `ResolvedGrantee` doc echoed whole; bindings claim-matched **string-free** via
   `ValueEquals`/`GetUtf8String().Span`; `ListAdministeredWorkflowsAsync` reverse lookup; credentials `IsUsableBy`;
   closure-free context-threaded `From()` projection, transfer-matched-pages ownership) + 2 server tests. §803 proof: the
@@ -362,8 +363,9 @@ MemoryDiagnoser benchmark + container conformance gates. Web-only slices still g
 6. **[DONE — server + UI] Access overview** (server-side aggregation, per your call). The reach-scoped endpoint
    `GET /access/grants?grantee=…` aggregates a grantee's bindings + administered workflows + credential
    usage server-side (client stays thin). Handler + 2 tests built + green; §803 ledger + MemoryDiagnoser proof landed
-   (bytes-native projection 256 B vs naive 1376 B; end-to-end 4601 B). Container-conformance and the Web surface (the
-   Overview screen + inline revoke — delete the underlying binding/grant) remain.
+   (bytes-native projection 256 B vs naive 1376 B; end-to-end 4601 B). The Web surface shipped too —
+   `<arazzo-access-overview>` renders the grantee picker + reach grants with inline Revoke + administers +
+   credential usage (see §0).
 7. **[IN PROGRESS] Access-area reorg.** Fold Overview/Bindings/Reach/Requests under the Access tab nav; cross-link
    per-workflow Administrators from Catalog. *Started (decision taken): today an **Access** tab holds Requests and a
    **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: one Access sub-nav
@@ -372,7 +374,7 @@ MemoryDiagnoser benchmark + container conformance gates. Web-only slices still g
 
 Recommended order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (grantee primitive, then credentials, then the grammar the rules
 need, then the two missing editors, then the server-aggregated overview, then the reorg). Each is
-independently demoable. **Status (2026-07-02): 1–5 DONE, 6 not started, 7 in progress — see §0.** The recommended
+independently demoable. **Status (2026-07-16): 1–6 DONE, 7 in progress — see §0.** The recommended
 order also predates a parallel thread — the **security-tags / management-tags** work (settable + editable reach
 labels on catalog/environment/source/credential) — which is now **done end-to-end** (API/store/mock/web/CLI),
 bar the parked registered-source UI edit panel (§0).

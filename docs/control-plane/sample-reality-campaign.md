@@ -98,14 +98,14 @@ against the running composition): all tabs + sub-navs render the real seeded dat
 Grants 2), the Approvals badge shows **2** (1 access + 1 availability pending) with per-sub-tab counts, master-detail
 select/close works, no functional JS errors; 208 UI unit tests green.
 
-### W5 — Parity + doc truth (small)
+### W5 — Parity + doc truth (small) — **DONE**
 Debug-run CLI verb (`arazzo-runs debug-runs {start·get·resume·inject-message·cancel·delete}`) —
-**built**. Refresh stale docs: `ControlPlane.Demo/docs/live-execution.md` (SQLite→Postgres,
-`/svc`→real services, InMemory→NATS) and the `Program.cs:194` access-request comment.
+**built**. Refreshed the stale docs: `ControlPlane.Demo/docs/live-execution.md` (SQLite→Postgres,
+`/svc`→real services, InMemory→NATS) and the `Program.cs` access-request comment. (2026-07-16, PR #842.)
 
 ## W4 design — the bootstrap/seed split
 
-**Status / resume state (2026-07-10):**
+**Status: W4 COMPLETE (2026-07-16, PR #842).**
 - **W4a DONE** (commit `ada3327fc0`): new library `Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap`
   with `IDeploymentBootstrap` + `DefaultDeploymentBootstrap`; `DeploymentBootstrapOptions` is a
   JSON-Schema-generated CTJ type (`deployment-bootstrap-options.json`). `BootstrapSecurityAsync` seeds the

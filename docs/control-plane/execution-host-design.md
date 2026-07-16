@@ -580,8 +580,8 @@ descriptions** to real endpoints + credentials:
    `credentials-expired` fault refreshable from the catalog and resumable. **✅ Implemented** — binding store +
    resolvers + usage-security across all nine backends, the `/credentials` REST surface, lifecycle metadata with a
    derived `credentialStatus`, and a resumable `credentials-expired` fault (see §13.2 for what shipped vs. this
-   sketch), plus the §15 `/administrators` API and an `arazzo-runs credentials`/`administrators` CLI; a web UI for the
-   two surfaces is in progress.
+   sketch), plus the §15 `/administrators` API and an `arazzo-runs credentials`/`administrators` CLI, and the web UIs
+   for both surfaces (the Connections credentials table + the catalog-detail administrators panel).
 7. **Row security — security tags + rule engine (§14.2)** — security KVP labels on runs/catalog versions
    (separate from user tags; runs inherit the version's); tag rules in the `simple`-criterion grammar that
    claims resolve to; rules compiled to an in-memory evaluator **and** an indexed per-backend store predicate
@@ -1031,10 +1031,10 @@ trusted system layer the dispatcher, runner, and integrity checks use and which 
   **service operator** (`AccessContext.System`) purges across tenants. Run purge enumerates through the *same*
   reach-filtered query path `ListAsync` uses (so it is subsumed by query correctness); catalog purge filters its
   `ListObsoleteAsync` candidates by `PurgeReach`.
-- **Backend honoring is the planned pushdown slice.** Enforcement is correct against the InMemory reference
-  today; the non-InMemory stores currently *ignore* the reach filter in their queries, so the per-backend
-  predicate-pushdown slice must implement indexed filtering **and**, until a backend does, have it **fail loud**
-  (`NotSupportedException` on a non-null filter) rather than silently return/destroy unfiltered rows.
+- **Backend honoring landed with §17.6/§17.7.** Enforcement is correct across all backends: the relational
+  stores + Cosmos push the reach predicate server-side (`SqlSecurityRuleEmitter`/`CosmosSecurityRuleEmitter`);
+  InMemory/Mongo/Redis/NATS/AzureStorage stream-and-filter per row. The interim fail-loud fallback
+  (`NotSupportedException` on a non-null filter) this bullet originally mandated is retired.
 
 **Decision (§14):** operation authz = ASP.NET Core policies named after capability scopes, with the scheme +
 claim mapping supplied per deployment (sample-implemented). Row authz = **security tags (KVP labels) + tag
@@ -1105,8 +1105,8 @@ record** materialized at creation (§15.2) and the authoritative source thereaft
   `POST .../members` add, `DELETE .../members/{dimension}/{value}` remove), gated by `administrators:read`/
   `administrators:write` scopes — non-disclosing (unknown base id and not-an-administrator both `403`), `409` on the
   optimistic-concurrency race or a last-administrator removal. An `arazzo-runs administrators` CLI
-  (`list`/`add`/`remove`/`transfer`) drives it; a web UI is in progress. Administrators are named by the deployment-
-  mapped grant on the wire, never raw `sys:` tags.
+  (`list`/`add`/`remove`/`transfer`) drives it, as does the catalog-detail `<arazzo-administrators-panel>` web UI
+  (grantee-picker-driven). Administrators are named by the deployment-mapped grant on the wire, never raw `sys:` tags.
 - **Trust boundary.** The record holds only `sys:` identity tags — authorization metadata, never secrets — so it
   persists as plain JSON like every other entity. Administration is over unforgeable stamped identity end to end;
   the management surface cannot widen entitlement past what the shell stamps.
@@ -1487,10 +1487,10 @@ eligible-for-All`) remains step 6.
 > administering it. The §17.1 reach-scoping (the observed-identity store, and the `/identity/grantees` search, are now
 > reach-filtered like every other list surface) and §17.2 honest `complete` are **implemented**, as is §16.5.5 ambient
 > identity dimensions. NOT YET BUILT (design-intent below): the by-subject / by-workflow entitlement indexes
-> (self-elevation still cold-scans, §16.5.3); multi-tag **person** resolution (the default is a best-effort *single* tag,
-> and the admin-add records a single `{dimension, value}`); and the **resolved-grantee UI** — the UI still hand-assembles
-> `{dimension, value}` tuples via the interim `<arazzo-admin-grant-input>`, rather than driving the (built)
-> `GET /identity/{whoami,capabilities,grantees}` endpoints from a grantee picker.
+> (self-elevation still cold-scans, §16.5.3). The **resolved-grantee UI** shipped: `<arazzo-grantee-picker>` drives
+> `GET /identity/grantees` across the admin, bindings, credential-usage, overview, and catalog surfaces (retiring the
+> hand-assembled `{dimension, value}` tuples). Multi-tag **person** resolution also landed — the directory adapters
+> resolve a person to their full membership-expanded identity, and the grantee picker pins that full resolved identity.
 
 > **Superseded (2026-07, ratified membership model).** The exact set-equality rule below has been superseded by a
 > **membership (subset)** model: a principal administers / reaches / may-use a target iff the principal's whole stamped

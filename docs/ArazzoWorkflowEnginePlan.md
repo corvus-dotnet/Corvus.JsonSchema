@@ -1,7 +1,11 @@
 # Arazzo Workflow Execution Engine — Implementation Plan
 
-> Status: Proposal / design. Target: build an Arazzo 1.0.x / 1.1.0 workflow execution
-> engine on top of the existing Corvus OpenAPI and AsyncAPI code-generation stack.
+> Status: **Delivered.** Phases 0–6 shipped (models, runtime library, code generator, control
+> flow, bodies/selectors, AsyncAPI steps, durability Tiers 1 & 2, control plane, designer,
+> security model, live demo). Remaining: Phase 7's per-run-context elimination (the criteria
+> inlining half shipped) and the "optional / on demand" backends in §10. The document below is
+> the original plan, retained as the design record; phase text is written in the future tense
+> it was planned in.
 
 ## 1. What Arazzo is
 
@@ -383,6 +387,11 @@ Key points:
 
 ### Phase 7 — Fully-static executor (drop the interpreter from generated code)
 
+*(Status: the criteria half is delivered — `SimpleCriterionInliner`, `RegexCriterionInliner`
+(`[GeneratedRegex]`), and `JsonPathCriterionInliner`, selected per criterion by
+`StepBodyEmitter` with a `CompiledCriterion` fallback. The per-run-context elimination —
+no `WorkflowExecutionContext`/`ArazzoExpression` at run time — remains outstanding.)*
+
 A performance phase that removes the remaining interpreter indirection and per-run
 structural allocation from the **generated** executor. (This is "Option B" from the
 generated-executor allocation review; Phase 2 shipped "Option A", which already
@@ -729,7 +738,11 @@ trace already *is* the run history (9.2).
 
 The durability layer (§9) needs a pluggable
 `IWorkflowStateStore`. Beyond the in-memory default, which out-of-process
-backends should we ship? This section captures the research.
+backends should we ship? This section captures the research. *(Outcome: the
+entire recommended set shipped and is conformance-green — Postgres, SqlServer,
+MySql, Sqlite, Mongo, Cosmos, Redis, NATS JetStream, Azure Storage — plus
+per-backend `Deployment.*` packages and the control-plane server/CLI/bootstrap.
+Only the "optional / on demand" backends below remain unbuilt.)*
 
 ### What the engine actually needs from a store
 
@@ -866,7 +879,8 @@ DuckDB are not candidates there: SQLite is the embedded authoritative choice.)
 
 Each is a thin adapter over the same JSON checkpoint, so adding a backend is
 low cost; we ship the first wave with the durability feature and add the rest
-based on demand.
+based on demand. *(Outcome: all three waves shipped through MySQL/MongoDB and
+also NATS JetStream; DynamoDB / Firestore / Cassandra remain on-demand.)*
 
 ## 11. Faulting, resume, and workflow management (control plane)
 
