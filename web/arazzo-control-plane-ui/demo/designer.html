@@ -28,10 +28,12 @@
            gap: 6px; padding: 12px 14px; box-sizing: border-box; }
     #center { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 8px; }
     #center:has(> #debug-dock[hidden]) > .dock-split { display: none; }
-    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; max-height: var(--dock-h, 42vh); overflow: hidden; --arazzo-tray-body-max: calc(var(--dock-h, 42vh) - 48px); }
+    /* The dock is a FIXED height (drag the bar to change it), never content-hugging: a max-height
+       cap made it resize on every step selection and ignore drags past the content height. */
+    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; height: var(--dock-h, 42vh); overflow: hidden; --arazzo-tray-body-max: calc(var(--dock-h, 42vh) - 48px); }
     #debug-dock[hidden] { display: none !important; }
-    #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--dock-side-w, 300px); gap: 0; }
-    #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; max-height: var(--dock-h, 42vh); overflow-y: auto; }
+    #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--dock-side-w, 300px); gap: 0; height: 100%; box-sizing: border-box; }
+    #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; min-height: 0; overflow-y: auto; }
     #debug-dock .rail-h { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); border-top: 1px solid var(--arazzo-border, #e3e6ea); padding-top: 8px; }
     #debug-dock .rail-h:first-child { border-top: none; padding-top: 0; }
     .tabs { display: flex; gap: 4px; }
