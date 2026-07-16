@@ -168,3 +168,99 @@ test('authorization is enforced by the SERVER: the observer persona is refused a
   await expect(rules.locator('.detail .error-banner')).toBeVisible();
   await expect(rules.locator(`tr[data-name="${name}"]`)).toHaveCount(0);
 });
+
+test('every tab renders real data with a clean console (API-shape sweep)', async ({ page }) => {
+  // The cheapest way real infrastructure catches drift: every panel fetches the REAL API — a wire
+  // shape the mock got wrong surfaces here as an error banner or a console error.
+  await signIn(page, LIVE_USERS.admin);
+  const errors = watchLiveErrors(page);
+  const views = {
+    Runs: 'arazzo-control-plane', Catalog: 'arazzo-catalog', Environments: 'arazzo-environments',
+    Sources: 'arazzo-sources', Credentials: 'arazzo-credentials', Runners: 'arazzo-runners',
+    Security: 'arazzo-grants-panel', Approvals: 'arazzo-access-requests', Requests: 'arazzo-access-requests',
+  };
+  for (const [tab, root] of Object.entries(views)) {
+    await openLiveTab(page, tab);
+    const view = page.locator(`#view-${tab.toLowerCase()}`);
+    await expect(view.locator(root).first()).toBeVisible();
+    // Visible banners only: dialogs keep an empty, hidden .error-banner container structurally.
+    await expect(view.locator('.error-banner:visible')).toHaveCount(0);
+  }
+  assertLiveClean(errors);
+});
+
+test('the real runner is registered, online, and hosting the seeded workflow versions', async ({ page }) => {
+  // The Runners panel reads the live registry: the composition's runner heartbeats for real, so its
+  // row must wear the Online health chip (stale-after would flip it if the heartbeat loop died) and
+  // list the versions it has actually loaded.
+  await signIn(page, LIVE_USERS.admin);
+  const errors = watchLiveErrors(page);
+  await openLiveTab(page, 'Runners');
+
+  const runner = page.locator('arazzo-runners .runner').first();
+  await expect(runner).toBeVisible();
+  await expect(runner.locator('.health')).toHaveClass(/online/);
+  await expect(runner.locator('.renv')).toHaveText('development'); // the composition's runner serves dev
+  await expect(runner.locator('.hosted .hv').first()).toBeVisible(); // it loaded real workflow versions
+  await expect(runner.locator('.hosted .lstate', { hasText: /^loaded$/ }).first()).toBeVisible();
+  assertLiveClean(errors);
+});
+
+test('a REAL suspended run shows its durable wait, and the cancel confirm survives live auto-refresh (then Keep running leaves it suspended)', async ({ page }) => {
+  // The seeded async onboarding run is genuinely suspended in the store (waiting on a message the
+  // demo never sends). Its detail must narrate the durable wait — and with auto-refresh ON, the
+  // periodic repaint must not tear the cancel confirm out from under the user (the live variant of
+  // the poll-vs-modal defect the mock suite caught).
+  await signIn(page, LIVE_USERS.admin);
+  const errors = watchLiveErrors(page);
+
+  await page.locator('#view-runs .status-chip[data-status="Suspended"]').click();
+  const table = page.locator('arazzo-control-plane arazzo-runs-table');
+  await expect(table.locator('tbody tr[data-id]').first()).toBeVisible();
+  await page.locator('arazzo-control-plane #autorefresh').check(); // live polling ON for the modal window below
+  await table.locator('tbody tr[data-id]').first().click();
+
+  const detail = page.locator('arazzo-control-plane arazzo-run-detail');
+  await expect(detail.locator('[part="wait"]')).toContainText('Suspended — waiting');
+  await expect(detail.locator('arazzo-status-badge')).toHaveAttribute('status', 'Suspended');
+
+  // Open the cancel confirm and hold it across at least one full refresh interval.
+  await detail.locator('arazzo-cancel-button .trigger').click();
+  const dlg = detail.locator('arazzo-cancel-button dialog');
+  await expect(dlg).toBeVisible();
+  await page.waitForTimeout(6_000); // > the composite's poll interval — refresh activity happens under the modal
+  await expect(dlg).toBeVisible(); // still the SAME open dialog, not a rebuilt closed one
+
+  // Keep running: the decision stands and the run is untouched (re-runnable — nothing mutated).
+  await dlg.locator('button[value="dismiss"]').click();
+  await expect(dlg).not.toBeVisible();
+  await expect(detail.locator('arazzo-status-badge')).toHaveAttribute('status', 'Suspended');
+  assertLiveClean(errors);
+});
+
+test('environment metadata round-trips real persistence: edit the display name, verify, restore', async ({ page }) => {
+  // A full optimistic-concurrency loop against the real store (read → PATCH with etag → re-read),
+  // self-restoring so the suite stays re-runnable: whatever display name staging carries now is
+  // captured first and put back at the end.
+  await signIn(page, LIVE_USERS.admin);
+  const errors = watchLiveErrors(page);
+  await openLiveTab(page, 'Environments');
+
+  const envs = page.locator('arazzo-environments');
+  await envs.locator('tr.erow[data-name="staging"]').click();
+  const nameInput = envs.locator('.d-displayName');
+  await expect(nameInput).toBeVisible();
+  const original = await nameInput.inputValue();
+
+  const edited = uniq('Staging');
+  await nameInput.fill(edited);
+  await envs.locator('.d-save').click();
+  // The save round-trips the server and the list re-renders from the authoritative response.
+  await expect(envs.locator('tr.erow[data-name="staging"]')).toContainText(edited);
+
+  // Restore — the detail stays selected after a save, so edit again and put the original back.
+  await nameInput.fill(original);
+  await envs.locator('.d-save').click();
+  await expect(envs.locator('tr.erow[data-name="staging"]')).not.toContainText(edited);
+  assertLiveClean(errors);
+});

@@ -480,9 +480,16 @@ class ArazzoEnvironments extends ArazzoElement {
 
     const admins = pane.querySelector('.env-admins');
     if (admins) admins.client = this.buildClient();
-    // Seed the management-tags editor once it is in the DOM (its .tags setter re-renders the rows).
+    // Seed the management-tags editor once it is in the DOM (its .tags setter re-renders the rows) —
+    // with the USER-owned labels only. A deployed environment also carries deployment-internal
+    // sys:* tags (reach plumbing the server owns and preserves); echoing those back on save is a
+    // 400 (reserved prefix), so seeding them would make every subsequent save of that environment
+    // fail. They are not the operator's to edit.
     const mgmtEd = pane.querySelector('.d-mgmt-editor');
-    if (mgmtEd) mgmtEd.tags = Array.isArray(e.managementTags) ? e.managementTags : [];
+    if (mgmtEd) {
+      mgmtEd.tags = (Array.isArray(e.managementTags) ? e.managementTags : [])
+        .filter((t) => !String(t.key || '').startsWith('sys:'));
+    }
     const saveBtn = pane.querySelector('.d-save');
     if (saveBtn) saveBtn.addEventListener('click', () => this.saveMetadata());
     const delBtn = pane.querySelector('.d-delete');

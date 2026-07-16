@@ -222,3 +222,30 @@ describe('<arazzo-environments>', () => {
     ok(detail(el).textContent.includes('team=platform'), 'management tags shown read-only');
   });
 });
+describe('<arazzo-environments> deployment-internal tags', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  // Staging is seeded with a deployment-internal sys:group tag (as a really-deployed environment
+  // is). The editor must show only the USER-owned labels, and a metadata save must succeed by NOT
+  // echoing the internal tag back (the server rejects the reserved prefix — the live-only 400 the
+  // live suite caught) while the server preserves it.
+  it('hides sys:* tags from the editor and a save neither echoes nor drops them', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.erow[data-name="staging"]').click();
+    await nextEvent(el, 'environment-selected');
+    await waitFor(() => detail(el).querySelector('.d-mgmt-editor'));
+    const ed = detail(el).querySelector('.d-mgmt-editor');
+    ok(!ed.tags.some((t) => String(t.key).startsWith('sys:')), 'the internal tag is not offered for editing');
+
+    // Save the metadata unchanged: with the internal tag filtered the round trip succeeds…
+    const changed = nextEvent(el, 'environment-changed');
+    detail(el).querySelector('.d-save').click();
+    const e = await changed;
+    ok(!detail(el).querySelector('.error-banner'), 'the save round trip is clean');
+    // …and the server-side environment KEPT its internal tag (preserved, not dropped by the replace).
+    ok(e.detail.environment.managementTags.some((t) => t.key === 'sys:group'), 'the internal tag survives the save');
+  });
+});

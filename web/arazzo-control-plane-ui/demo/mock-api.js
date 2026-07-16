@@ -911,9 +911,14 @@ function seedEnvironments() {
     // Production is scoped by a management tag (§14.2) so its read-only display has something to show.
     e('production', 'Production', 'The live production environment.', [{ key: 'team', value: 'platform' }]),
     e('staging', 'Staging', 'Pre-production staging environment.'),
+    // Staging ALSO carries a deployment-internal sys:* tag, exactly like a really-deployed
+    // environment (reach plumbing the server owns): the environment editor must neither show it
+    // nor echo it back on save — echoing is a 400 (reserved prefix), the live-only defect the
+    // live suite caught. The tag is stitched on below (the e() factory takes user tags only).
     // Evidence-gated (§4.6): promotion here requires a green attested scenario suite.
     e('uat', 'UAT', 'User acceptance — promotion requires green attested scenario evidence.'),
   ];
+  environments[1].managementTags = [{ key: 'sys:group', value: 'env-admins' }];
   environments[2].requireEvidence = true;
   // Development-class (§18): drafts may execute here as debug runs.
   const dev = e('development', 'Development', 'Developer sandbox — working-copy drafts may run here as debug runs (§18).');
@@ -4274,7 +4279,10 @@ export function createMockControlPlane(options = {}) {
         return problem(400, 'Reserved management tag', `A management tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
       }
 
-      e.managementTags = body.managementTags;
+      // Server parity: the replace applies to the USER-owned labels; the deployment-internal
+      // sys:* tags are preserved (they are reach plumbing the deployment owns, not operator input).
+      const internal = (e.managementTags || []).filter((t) => String(t.key || '').startsWith(RESERVED_TAG_PREFIX));
+      e.managementTags = [...internal, ...body.managementTags];
     }
 
     if (body?.displayName !== undefined) e.displayName = body.displayName;
