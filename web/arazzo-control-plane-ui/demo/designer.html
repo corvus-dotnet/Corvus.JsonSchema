@@ -26,11 +26,17 @@
        resize, double-click to reset, sizes persisted per split). */
     main { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--inspector-w, 380px); grid-auto-rows: minmax(0, 1fr);
            gap: 6px; padding: 12px 14px; box-sizing: border-box; }
-    #center { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 8px; }
+    /* container-type lets the dock clamp against THIS pane's height (cqh below): the canvas keeps
+       its 320px minimum however far the bar is dragged or whatever height was persisted. */
+    #center { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 8px; container-type: size; }
     #center:has(> #debug-dock[hidden]) > .dock-split { display: none; }
     /* The dock is a FIXED height (drag the bar to change it), never content-hugging: a max-height
-       cap made it resize on every step selection and ignore drags past the content height. */
-    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; height: var(--dock-h, 42vh); overflow: hidden; --arazzo-tray-body-max: calc(var(--dock-h, 42vh) - 48px); }
+       cap made it resize on every step selection and ignore drags past the content height. The
+       height is CLAMPED against the centre pane (--dock-fit) so the canvas always keeps its
+       320px minimum — a persisted or over-dragged size can never overlap the designer view. */
+    #debug-dock { --dock-fit: clamp(160px, var(--dock-h, 42vh), calc(100cqh - 384px));
+                  border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; height: var(--dock-fit);
+                  overflow: hidden; background: var(--arazzo-bg, #fff); --arazzo-tray-body-max: calc(var(--dock-fit) - 48px); }
     #debug-dock[hidden] { display: none !important; }
     #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--dock-side-w, 300px); gap: 0; height: 100%; box-sizing: border-box; }
     #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; min-height: 0; overflow-y: auto; }

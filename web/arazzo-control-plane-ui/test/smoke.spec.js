@@ -636,3 +636,32 @@ test('§15-8a scoped stop: run-to-here inside a focused sub-workflow pauses at t
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+test('an over-persisted dock height can never overlap the canvas minimum (fixed-height dock clamp)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  // The pathological case: a large persisted splitbar size (from before the fixed-height dock, or
+  // from a taller window) on a SHORT window. The dock height is clamped against the centre pane
+  // (--dock-fit), so the canvas keeps its 320px minimum and the dock always sits fully below it.
+  await page.setViewportSize({ width: 1400, height: 640 });
+  await page.addInitScript(() => localStorage.setItem('arazzo.designer.split.dock', '640'));
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await dlg.locator('.ri-run').click();
+  await expect(page.locator('#debug-dock')).toBeVisible();
+
+  const rects = await page.evaluate(() => {
+    const s = document.getElementById('surface').getBoundingClientRect();
+    const d = document.getElementById('debug-dock').getBoundingClientRect();
+    return { surfaceBottom: s.bottom, surfaceHeight: s.height, dockTop: d.top, dockHeight: d.height };
+  });
+  expect(rects.dockTop, 'the dock starts below the canvas').toBeGreaterThanOrEqual(rects.surfaceBottom - 1);
+  expect(rects.surfaceHeight, 'the canvas keeps its minimum').toBeGreaterThanOrEqual(319);
+  expect(rects.dockHeight, 'the stored 640px was clamped to fit').toBeLessThan(400);
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
