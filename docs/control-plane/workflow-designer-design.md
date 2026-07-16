@@ -601,20 +601,29 @@ the chain. The fix is a second pure pass in `workflow-layout.js`, `routeEdges(gr
 mirroring `layoutGraph`'s doctrine (pure data, no dependency, injected-engine- and manual-move-safe
 because bands are re-derived by clustering actual y positions):
 
-- A downward edge spanning ≥2 rank bands gets one waypoint per crossed band, placed in an **edge
-  corridor** — the gap between adjacent nodes of that band (or just outside the row) nearest the
-  source→target straight line. Edges sharing a corridor take distinct **edge lanes**:
-  deterministic slots `LANE_PITCH` (16) apart, ghosts sorted after solid edges so a ghost lane
-  never coincides with a solid one (`buildGhostProjection` marks union ghost edges `ghost: true`).
-- An upward or same-band edge gets a right-side vertical lane clearing every row it spans, with
-  overlapping loops separated by greedy interval colouring (`UP_LANE_PITCH` 18) — replacing the
-  fixed bow.
+- A downward edge spanning ≥2 rank bands gets one waypoint per crossed band. **Straight wins:**
+  when the source→target chord already clears the band's nodes (`STRAIGHT_CLEARANCE` 18), the
+  waypoint sits ON the chord — an edge that can run straight does. Only a chord that would pierce
+  a node snaps to an **edge corridor** — the gap between adjacent nodes of that band (or just
+  outside the row) nearest the chord. Waypoints landing together in a band (corridor-sharers,
+  near-identical chords) cluster and spread into distinct **edge lanes**: deterministic slots
+  `LANE_PITCH` (16) apart, ghosts sorted after solid edges so a ghost lane never coincides with a
+  solid one (`buildGhostProjection` marks union ghost edges `ghost: true`).
+- An upward or same-band edge picks its anchors and side **geometrically**, never by fiat. An
+  adjacent-band, horizontally disjoint pair whose inter-border box is empty takes a **direct
+  lateral** — one facing-border-to-facing-border curve, no lane at all. Otherwise it takes a
+  vertical lane on the CHEAPER side: each side's cost is its two horizontal legs (source band and
+  target band) plus a heavy penalty per node a leg would cross — so a far-left target routes up
+  the left, never right-then-all-the-way-back. Same-side overlapping loops separate by greedy
+  interval colouring (`UP_LANE_PITCH` 18) — replacing the fixed right bow.
 - Departures spread along the source's bottom border (the mirror of the arrival spreading the
   renderer already did), ordered by where each edge is heading.
-- The renderer threads the waypoints as cubics with vertical tangents (no corners) and keeps
-  arrowhead landing arithmetic unchanged. Adjacent-rank downward edges keep the plain single
-  cubic — they never coincided. A node move recomputes the whole routing (lane groups shift),
-  still O(edges) and cheap at workflow scale.
+- The renderer threads the waypoints as cubics — vertical tangents at the ports, chord-following
+  (Catmull-style) tangents at interior waypoints, so collinear waypoints render as a genuinely
+  straight line and a corridor jog stays a smooth S. Arrowhead landing arithmetic mirrors the
+  route's side/border choice. Adjacent-rank downward edges keep the plain single cubic — they
+  never coincided. A node move recomputes the whole routing (lane groups shift), still O(edges)
+  and cheap at workflow scale.
 - **Labels place collision-free** (`_placeLabels`, after every render and move): each label
   prefers its edge's arc-length midpoint and slides along its OWN path (t stepping outward from
   0.5) until its box clears node cards, exit chips, the defaults card, and every label already

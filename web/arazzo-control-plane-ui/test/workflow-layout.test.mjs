@@ -230,3 +230,85 @@ test('routeEdges: bands derive from actual positions, so manual moves re-band in
     }
   }
 });
+
+test('routeEdges: a chord that clears the intermediate band stays perfectly straight (no corridor pull)', () => {
+  // Three columns at ranks 0 and 2, one lone node at rank 1: the a3→c3 chord passes well clear of
+  // b, so its waypoint must sit ON the chord (x = the shared column centre), not snap to a corridor.
+  const graph = {
+    nodes: [{ id: 'a' }, { id: 'a2' }, { id: 'a3' }, { id: 'b' }, { id: 'c' }, { id: 'c2' }, { id: 'c3' }],
+    edges: [
+      { id: 'e1', from: 'a', to: 'b', kind: 'seq' },
+      { id: 'e2', from: 'a2', to: 'b', kind: 'seq' },
+      { id: 'e3', from: 'a3', to: 'b', kind: 'seq' },
+      { id: 'e4', from: 'b', to: 'c', kind: 'seq' },
+      { id: 'e5', from: 'b', to: 'c2', kind: 'seq' },
+      { id: 'e6', from: 'b', to: 'c3', kind: 'seq' },
+      { id: 'vertical', from: 'a3', to: 'c3', kind: 'failure' },
+      { id: 'diagonal', from: 'a3', to: 'c2', kind: 'failure' },
+    ],
+  };
+  const positions = layoutGraph(graph);
+  const routes = routeEdges(graph, positions);
+  const cxOf = (id) => positions[id].x + NODE_WIDTH / 2;
+  // Same-column chord: the waypoint is exactly the column centre — dead straight.
+  assert.equal(routes.vertical.points.length, 1);
+  assert.equal(routes.vertical.points[0].x, cxOf('a3'));
+  assert.equal(cxOf('a3'), cxOf('c3'));
+  // Diagonal chord: the waypoint is the chord's own crossing point (midway between the centres).
+  assert.ok(Math.abs(routes.diagonal.points[0].x - (cxOf('a3') + cxOf('c2')) / 2) < 0.001,
+    `diagonal waypoint ${routes.diagonal.points[0].x} sits on the chord`);
+  // Neither was pulled to a corridor candidate beside b.
+  const bRight = positions.b.x + NODE_WIDTH + 36;
+  assert.notEqual(routes.vertical.points[0].x, bRight);
+  assert.notEqual(routes.diagonal.points[0].x, bRight);
+});
+
+test('routeEdges: an adjacent-band horizontally-disjoint pair takes ONE direct facing-border curve', () => {
+  // The screenshot case: provisionResources dragged up-left beside createAccount; the
+  // verifyIdentity→provisionResources edge must NOT climb a right lane and run back across
+  // the canvas — it goes directly from verifyIdentity's left border into provisionResources'
+  // right border.
+  const graph = {
+    nodes: [{ id: 'pR' }, { id: 'cA' }, { id: 'vI' }, { id: 'nA' }],
+    edges: [
+      { id: 'seq1', from: 'cA', to: 'vI', kind: 'seq' },
+      { id: 'back', from: 'vI', to: 'pR', kind: 'seq' },
+      { id: 'seq3', from: 'pR', to: 'nA', kind: 'seq' },
+    ],
+  };
+  const positions = { pR: { x: 0, y: 0 }, cA: { x: 560, y: 0 }, vI: { x: 560, y: 220 }, nA: { x: 560, y: 440 } };
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes.back.kind, 'up');
+  assert.equal(routes.back.direct, true, 'adjacent + disjoint + clear box → direct');
+  assert.equal(routes.back.side, 'left', 'the target is to the left');
+});
+
+test('routeEdges: a blocked bounding box falls back to a lane instead of cutting through', () => {
+  const graph = {
+    nodes: [{ id: 'target' }, { id: 'blocker' }, { id: 'source' }],
+    edges: [{ id: 'lat', from: 'source', to: 'target', kind: 'failure' }],
+  };
+  // target ← blocker ← source on one band: the direct curve would cross the blocker.
+  const positions = { target: { x: 0, y: 0 }, blocker: { x: 260, y: 0 }, source: { x: 520, y: 0 } };
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes.lat.kind, 'up');
+  assert.ok(!routes.lat.direct, 'blocked box → no direct curve');
+});
+
+test('routeEdges: a multi-band up-left target routes up the LEFT side (crossing penalty beats the fixed right lane)', () => {
+  const graph = {
+    nodes: [{ id: 'pR' }, { id: 'cA' }, { id: 'vI' }, { id: 'nA' }],
+    edges: [
+      { id: 'seq1', from: 'cA', to: 'vI', kind: 'seq' },
+      { id: 'seq2', from: 'vI', to: 'nA', kind: 'seq' },
+      { id: 'far', from: 'nA', to: 'pR', kind: 'failure' },
+    ],
+  };
+  // pR sits top-left beside cA; nA is two bands below — a right lane's horizontal leg into pR
+  // would cross cA, so the route must take the left side.
+  const positions = { pR: { x: 0, y: 0 }, cA: { x: 560, y: 0 }, vI: { x: 560, y: 220 }, nA: { x: 560, y: 440 } };
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes.far.kind, 'up');
+  assert.equal(routes.far.side, 'left');
+  assert.ok(routes.far.points[0].x < 0, `lane ${routes.far.points[0].x} sits left of the whole span`);
+});

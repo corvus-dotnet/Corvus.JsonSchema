@@ -118,16 +118,20 @@ export const LANE_PITCH = 16;
 export const UP_LANE_PITCH = 18;
 export const CORRIDOR_MARGIN = 36;
 const MIN_GAP_FOR_CORRIDOR = 24;
+const STRAIGHT_CLEARANCE = 18;
 
 /**
  * Route edges around the laid-out nodes (design: workflow-designer-design.md §6.3). Pure data in,
  * pure data out, like `layoutGraph`. Only the edges that NEED waypoints get a route:
  *
- * - A downward edge spanning ≥2 rank bands gets one waypoint per crossed band, placed in an **edge
- *   corridor** — the gap between adjacent nodes of that band (or just outside the row) nearest the
- *   source→target straight line — so a skip edge runs visibly beside the nodes and chain edges it
- *   used to cut through. Edges sharing a corridor take distinct **edge lanes** (deterministic
- *   slots, `LANE_PITCH` apart; ghost edges sort after solid ones so a ghost never coincides).
+ * - A downward edge spanning ≥2 rank bands gets one waypoint per crossed band. **Straight wins:**
+ *   when the source→target chord already clears the band's nodes (`STRAIGHT_CLEARANCE`), the
+ *   waypoint sits ON the chord, so an edge that can run straight does. Only a chord that would
+ *   pierce a node snaps to an **edge corridor** — the gap between adjacent nodes of that band (or
+ *   just outside the row) nearest the chord. Edges whose waypoints land together in a band
+ *   (corridor-sharers, or near-identical chords) take distinct **edge lanes**: deterministic slots
+ *   `LANE_PITCH` apart around the cluster, ghosts sorted after solid ones so a ghost never
+ *   coincides.
  * - An upward or same-band edge (retry / goto back up the flow) gets a right-side vertical lane,
  *   lane-separated by greedy interval colouring over overlapping vertical spans — replacing the
  *   old fixed-width bow that stacked concurrent loops onto one curve.
@@ -170,9 +174,13 @@ export function routeEdges(graph, positions, opts = {}) {
   const rowIntervals = bands.map((band) =>
     band.members.map((id) => positions[id].x).sort((p, q) => p - q).map((x) => [x, x + nodeWidth]));
 
-  // 2. The corridor candidates of one band: outside either end of the row, or the centre of any
-  //    wide-enough gap between adjacent nodes. Pick the candidate nearest `wantX`.
+  // 2. Straight wins: `wantX` (where the chord crosses the band) stands when it clears every node
+  //    interval by STRAIGHT_CLEARANCE. Otherwise snap to the nearest corridor candidate — outside
+  //    either end of the row, or the centre of any wide-enough gap between adjacent nodes.
+  const clearsRow = (b, x) =>
+    rowIntervals[b].every(([s, e]) => x <= s - STRAIGHT_CLEARANCE || x >= e + STRAIGHT_CLEARANCE);
   const corridorX = (b, wantX) => {
+    if (clearsRow(b, wantX)) return wantX;
     const row = rowIntervals[b];
     const candidates = [row[0][0] - CORRIDOR_MARGIN, row[row.length - 1][1] + CORRIDOR_MARGIN];
     for (let i = 1; i < row.length; i++) {
@@ -186,9 +194,11 @@ export function routeEdges(graph, positions, opts = {}) {
   const cy = (id) => positions[id].y + nodeHeight / 2;
   const routes = {};
 
-  // 3. Downward band-skipping edges: a waypoint per crossed band, grouped into lanes per
-  //    (band, corridor). Ghosts sort last so a ghost lane never coincides with a solid one.
-  const crossings = new Map(); // `${band}@${corridorX}` -> [{edge, want}]
+  // 3. Downward band-skipping edges: a waypoint per crossed band. Per band, crossings landing
+  //    within a lane pitch of one another cluster (corridor-sharers, near-identical chords) and
+  //    spread into lanes around the cluster's centre; a lone crossing keeps its exact x — a clear
+  //    chord stays perfectly straight. Ghosts sort last so a ghost lane never coincides.
+  const crossings = new Map(); // band -> [{edge, x}]
   const longEdges = [];
   for (const edge of graph.edges) {
     if (!positions[edge.from] || !positions[edge.to] || edge.from === edge.to) continue;
@@ -203,20 +213,30 @@ export function routeEdges(graph, positions, opts = {}) {
     const dy = cy(edge.to) - y1 || 1;
     for (let b = bf + 1; b < bt; b++) {
       const want = x1 + dx * ((bandCenter(b) - y1) / dy);
-      const corridor = corridorX(b, want);
-      const key = `${b}@${Math.round(corridor)}`;
-      if (!crossings.has(key)) crossings.set(key, []);
-      crossings.get(key).push({ edge, band: b, corridor, want });
+      if (!crossings.has(b)) crossings.set(b, []);
+      crossings.get(b).push({ edge, x: corridorX(b, want) });
     }
   }
   const slotted = new Map(); // `${edgeId}@${band}` -> x
-  for (const group of crossings.values()) {
-    group.sort((p, q) => (!!p.edge.ghost - !!q.edge.ghost)
-      || (cx(p.edge.from) - cx(q.edge.from)) || (cx(p.edge.to) - cx(q.edge.to))
-      || (p.edge.id < q.edge.id ? -1 : 1));
-    group.forEach((entry, i) => {
-      slotted.set(`${entry.edge.id}@${entry.band}`, entry.corridor + (i - (group.length - 1) / 2) * LANE_PITCH);
-    });
+  for (const [band, entries] of crossings) {
+    entries.sort((p, q) => (p.x - q.x) || (p.edge.id < q.edge.id ? -1 : 1));
+    let cluster = [];
+    const flush = () => {
+      cluster.sort((p, q) => (!!p.edge.ghost - !!q.edge.ghost)
+        || (cx(p.edge.from) - cx(q.edge.from)) || (cx(p.edge.to) - cx(q.edge.to))
+        || (p.edge.id < q.edge.id ? -1 : 1));
+      const centre = cluster.reduce((sum, e) => sum + e.x, 0) / cluster.length;
+      cluster.forEach((entry, i) => {
+        slotted.set(`${entry.edge.id}@${band}`,
+          cluster.length === 1 ? entry.x : centre + (i - (cluster.length - 1) / 2) * LANE_PITCH);
+      });
+      cluster = [];
+    };
+    for (const entry of entries) {
+      if (cluster.length && entry.x - cluster[cluster.length - 1].x > LANE_PITCH) flush();
+      cluster.push(entry);
+    }
+    if (cluster.length) flush();
   }
   for (const { edge, bf, bt } of longEdges) {
     const points = [];
@@ -226,25 +246,82 @@ export function routeEdges(graph, positions, opts = {}) {
     routes[edge.id] = { kind: 'down', points };
   }
 
-  // 4. Upward (loop) edges: one right-side vertical lane each, greedy interval colouring over
-  //    overlapping [yTop, yBottom] spans so concurrent loops never share a curve.
+  // 4. Upward and same-band edges. Anchors and side are chosen geometrically, not fixed:
+  //    - **Direct lateral**: adjacent/same band, horizontally disjoint, and nothing inside the
+  //      endpoints' bounding box → one facing-border-to-facing-border curve, no lane at all.
+  //    - Otherwise a vertical lane on the CHEAPER side: each side's cost is its two horizontal
+  //      legs (source band and target band), with a heavy penalty for every node a leg would
+  //      cross — so a far-left target routes up the left, never right-then-all-the-way-back.
+  //    Same-side lanes are separated by greedy interval colouring over overlapping y-spans.
+  const nodeRect = (id) => ({ x: positions[id].x, y: positions[id].y, w: nodeWidth, h: nodeHeight });
+  const legCost = (band, fromX, toX, ...exclude) => {
+    const lo = Math.min(fromX, toX);
+    const hi = Math.max(fromX, toX);
+    let crossed = 0;
+    for (const id of bands[band].members) {
+      if (exclude.includes(id)) continue;
+      const r = nodeRect(id);
+      if (lo < r.x + r.w && r.x < hi) crossed++;
+    }
+    return (hi - lo) + crossed * 10_000;
+  };
   const upward = graph.edges
     .filter((e) => positions[e.from] && positions[e.to] && e.from !== e.to && bandOf.get(e.to) <= bandOf.get(e.from))
     .map((e) => {
-      const lo = Math.min(bandOf.get(e.to), bandOf.get(e.from));
-      const hi = Math.max(bandOf.get(e.to), bandOf.get(e.from));
+      const a = positions[e.from];
+      const b = positions[e.to];
+      const bf = bandOf.get(e.from);
+      const bt = bandOf.get(e.to);
+      // Direct lateral: nothing between the facing borders, in either dimension.
+      if (bf - bt <= 1) {
+        const targetLeft = b.x + nodeWidth + MIN_GAP_FOR_CORRIDOR <= a.x;
+        const targetRight = b.x >= a.x + nodeWidth + MIN_GAP_FOR_CORRIDOR;
+        if (targetLeft || targetRight) {
+          // The curve occupies only the space BETWEEN the facing borders (horizontal tangents keep
+          // it inside [cyA, cyB] vertically) — the endpoints' own cards are not obstacles.
+          const box = targetLeft
+            ? { lo: b.x + nodeWidth, hi: a.x, top: Math.min(cy(e.from), cy(e.to)), bottom: Math.max(cy(e.from), cy(e.to)) }
+            : { lo: a.x + nodeWidth, hi: b.x, top: Math.min(cy(e.from), cy(e.to)), bottom: Math.max(cy(e.from), cy(e.to)) };
+          const blocked = placed.some((n) => {
+            if (n.id === e.from || n.id === e.to) return false;
+            const r = nodeRect(n.id);
+            return r.x < box.hi && box.lo < r.x + r.w && r.y < box.bottom && box.top < r.y + r.h;
+          });
+          if (!blocked) return { e, direct: true, side: targetLeft ? 'left' : 'right' };
+        }
+      }
+      const lo = Math.min(bt, bf);
+      const hi = Math.max(bt, bf);
+      let left = Infinity;
       let right = -Infinity;
-      for (let b = lo; b <= hi; b++) right = Math.max(right, rowIntervals[b][rowIntervals[b].length - 1][1]);
-      return { e, yTop: Math.min(cy(e.from), cy(e.to)), yBottom: Math.max(cy(e.from), cy(e.to)), right };
-    })
-    .sort((p, q) => (p.yTop - q.yTop) || (p.yBottom - q.yBottom) || (!!p.e.ghost - !!q.e.ghost) || (p.e.id < q.e.id ? -1 : 1));
-  const laneEnds = []; // per lane: the largest yBottom taken so far
-  for (const entry of upward) {
-    let lane = laneEnds.findIndex((end) => entry.yTop > end);
-    if (lane === -1) lane = laneEnds.push(-Infinity) - 1;
-    laneEnds[lane] = entry.yBottom;
-    const x = entry.right + CORRIDOR_MARGIN + lane * UP_LANE_PITCH;
-    routes[entry.e.id] = { kind: 'up', points: [{ x, y: cy(entry.e.from) }, { x, y: cy(entry.e.to) }] };
+      for (let b2 = lo; b2 <= hi; b2++) {
+        left = Math.min(left, rowIntervals[b2][0][0]);
+        right = Math.max(right, rowIntervals[b2][rowIntervals[b2].length - 1][1]);
+      }
+      const laneL = left - CORRIDOR_MARGIN;
+      const laneR = right + CORRIDOR_MARGIN;
+      const costL = legCost(bf, a.x, laneL, e.from) + legCost(bt, b.x, laneL, e.to);
+      const costR = legCost(bf, a.x + nodeWidth, laneR, e.from) + legCost(bt, b.x + nodeWidth, laneR, e.to);
+      const side = costL < costR ? 'left' : 'right';
+      return {
+        e, side, laneBase: side === 'left' ? laneL : laneR,
+        yTop: Math.min(cy(e.from), cy(e.to)), yBottom: Math.max(cy(e.from), cy(e.to)),
+      };
+    });
+  for (const entry of upward.filter((u) => u.direct)) {
+    routes[entry.e.id] = { kind: 'up', direct: true, side: entry.side, points: [] };
+  }
+  for (const side of ['left', 'right']) {
+    const laneEnds = []; // per lane: the largest yBottom taken so far
+    const group = upward.filter((u) => !u.direct && u.side === side)
+      .sort((p, q) => (p.yTop - q.yTop) || (p.yBottom - q.yBottom) || (!!p.e.ghost - !!q.e.ghost) || (p.e.id < q.e.id ? -1 : 1));
+    for (const entry of group) {
+      let lane = laneEnds.findIndex((end) => entry.yTop > end);
+      if (lane === -1) lane = laneEnds.push(-Infinity) - 1;
+      laneEnds[lane] = entry.yBottom;
+      const x = entry.laneBase + (side === 'left' ? -1 : 1) * lane * UP_LANE_PITCH;
+      routes[entry.e.id] = { kind: 'up', side, points: [{ x, y: cy(entry.e.from) }, { x, y: cy(entry.e.to) }] };
+    }
   }
 
   return routes;

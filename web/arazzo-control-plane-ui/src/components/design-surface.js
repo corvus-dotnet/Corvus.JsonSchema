@@ -621,12 +621,14 @@ class ArazzoDesignSurface extends ArazzoElement {
         top: { x: cx, y: cy - PSEUDO_R },
         bottom: { x: cx, y: cy + PSEUDO_R },
         right: { x: cx + PSEUDO_R, y: cy },
+        left: { x: cx - PSEUDO_R, y: cy },
       };
     }
     return {
       top: { x: pos.x + NODE_WIDTH / 2, y: pos.y },
       bottom: { x: pos.x + NODE_WIDTH / 2, y: pos.y + NODE_HEIGHT },
       right: { x: pos.x + NODE_WIDTH, y: pos.y + NODE_HEIGHT / 2 },
+      left: { x: pos.x, y: pos.y + NODE_HEIGHT / 2 },
     };
   }
 
@@ -654,34 +656,56 @@ class ArazzoDesignSurface extends ArazzoElement {
       const x2 = to.top.x + fan + arrive;
       const y2 = to.top.y;
       if (route?.kind === 'down' && route.points.length) {
-        // Vertical tangents at every waypoint: each corridor crossing is a smooth S, not a corner.
+        // Vertical tangents at the ports only; interior waypoints take chord-following
+        // (Catmull-style) tangents, so collinear waypoints render as a genuinely straight line
+        // and a corridor jog stays a smooth S, not a corner.
+        const pts = [{ x: x1, y: y1 }, ...route.points, { x: x2, y: y2 }];
+        const tangent = (i) => {
+          if (i === 0) return { x: 0, y: Math.max(20, (pts[1].y - pts[0].y) / 2) };
+          if (i === pts.length - 1) return { x: 0, y: Math.max(24, (pts[i].y - pts[i - 1].y) / 2) };
+          return { x: (pts[i + 1].x - pts[i - 1].x) / 6, y: (pts[i + 1].y - pts[i - 1].y) / 6 };
+        };
         let d = `M ${x1} ${y1}`;
-        let prev = { x: x1, y: y1 };
-        for (const wp of route.points) {
-          const c = Math.max(20, (wp.y - prev.y) / 2);
-          d += ` C ${prev.x} ${prev.y + c}, ${wp.x} ${wp.y - c}, ${wp.x} ${wp.y}`;
-          prev = wp;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const tOut = tangent(i);
+          const tIn = tangent(i + 1);
+          d += ` C ${pts[i].x + tOut.x} ${pts[i].y + tOut.y},`
+            + ` ${pts[i + 1].x - tIn.x} ${pts[i + 1].y - tIn.y},`
+            + ` ${pts[i + 1].x} ${pts[i + 1].y}`;
         }
-        const c = Math.max(24, (y2 - prev.y) / 2);
-        return `${d} C ${prev.x} ${prev.y + c}, ${x2} ${y2 - c}, ${x2} ${y2}`;
+        return d;
       }
       const c = Math.max(24, (y2 - y1) / 2);
       return `M ${x1} ${y1} C ${x1 + fan} ${y1 + c}, ${x2 + fan + arrive} ${y2 - c}, ${x2} ${y2}`;
     }
-    // Upward or same-rank: around the right side along the assigned lane (arrivals spread down the
-    // border); the legacy bow only remains as the no-route fallback.
-    const x1 = from.right.x;
-    const y1 = from.right.y;
-    const x2 = to.right.x;
-    const y2 = to.right.y + arrive * 0.6;
+    // Upward or same-rank: along the assigned side (route.side picks left/right geometrically;
+    // arrivals spread down the border). A direct lateral is one facing-border-to-facing-border
+    // curve; the legacy right bow only remains as the no-route fallback.
     if (route?.kind === 'up') {
-      const wx = route.points[0].x + Math.abs(fan);
+      const side = route.side ?? 'right';
+      const A = side === 'left' ? from.left : from.right;
+      if (route.direct) {
+        const B = side === 'left' ? to.right : to.left; // enter the border FACING the source
+        const y2d = B.y + arrive * 0.6;
+        const k = Math.max(24, Math.abs(B.x - A.x) * 0.4) * (side === 'left' ? -1 : 1);
+        return `M ${A.x} ${A.y} C ${A.x + k} ${A.y}, ${B.x - k} ${y2d}, ${B.x} ${y2d}`;
+      }
+      const B = side === 'left' ? to.left : to.right;
+      const x1 = A.x;
+      const y1 = A.y;
+      const x2 = B.x;
+      const y2 = B.y + arrive * 0.6;
+      const wx = route.points[0].x + (side === 'left' ? -1 : 1) * Math.abs(fan);
       const u = y2 < y1 ? -1 : 1;
       const k = Math.min(26, Math.abs(y2 - y1) / 2);
       return `M ${x1} ${y1} C ${x1 + (wx - x1) * 0.6} ${y1}, ${wx} ${y1}, ${wx} ${y1 + u * k}`
         + ` L ${wx} ${y2 - u * k}`
         + ` C ${wx} ${y2}, ${x2 + (wx - x2) * 0.6} ${y2}, ${x2} ${y2}`;
     }
+    const x1 = from.right.x;
+    const y1 = from.right.y;
+    const x2 = to.right.x;
+    const y2 = to.right.y + arrive * 0.6;
     const bow = 70 + Math.abs(y2 - y1) * 0.08 + Math.abs(fan);
     return `M ${x1} ${y1} C ${x1 + bow} ${y1}, ${x2 + bow} ${y2}, ${x2} ${y2}`;
   }
@@ -696,7 +720,7 @@ class ArazzoDesignSurface extends ArazzoElement {
     if (route?.kind === 'down' && route.points.length) {
       return route.points[Math.floor((route.points.length - 1) / 2)];
     }
-    if (route?.kind === 'up') {
+    if (route?.kind === 'up' && !route.direct) {
       return { x: route.points[0].x, y: (route.points[0].y + route.points[1].y) / 2 };
     }
     const fan = this._fan(edge);
@@ -752,9 +776,14 @@ class ArazzoDesignSurface extends ArazzoElement {
     const arrive = this._inbound?.get(edge.id) ?? 0;
     const to = this._anchors(edge.to);
     const down = b.y > a.y + NODE_HEIGHT / 2;
-    return down
-      ? { x: to.top.x + fan + arrive, y: to.top.y }
-      : { x: to.right.x, y: to.right.y + arrive * 0.6 };
+    if (down) return { x: to.top.x + fan + arrive, y: to.top.y };
+    const route = this._routes?.[edge.id];
+    if (route?.kind === 'up') {
+      const side = route.side ?? 'right';
+      const B = route.direct ? (side === 'left' ? to.right : to.left) : (side === 'left' ? to.left : to.right);
+      return { x: B.x, y: B.y + arrive * 0.6 };
+    }
+    return { x: to.right.x, y: to.right.y + arrive * 0.6 };
   }
 
   /** @private */
