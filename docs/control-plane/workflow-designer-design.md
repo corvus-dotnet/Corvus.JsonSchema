@@ -611,11 +611,15 @@ because bands are re-derived by clustering actual y positions):
   fixed bow.
 - Departures spread along the source's bottom border (the mirror of the arrival spreading the
   renderer already did), ordered by where each edge is heading.
-- The renderer threads the waypoints as cubics with vertical tangents (no corners), keeps
-  arrowhead landing arithmetic unchanged, and hangs each label on its route's middle waypoint so
-  labels follow their lane. Adjacent-rank downward edges keep the plain single cubic — they never
-  coincided. A node move recomputes the whole routing (lane groups shift), still O(edges) and
-  cheap at workflow scale.
+- The renderer threads the waypoints as cubics with vertical tangents (no corners) and keeps
+  arrowhead landing arithmetic unchanged. Adjacent-rank downward edges keep the plain single
+  cubic — they never coincided. A node move recomputes the whole routing (lane groups shift),
+  still O(edges) and cheap at workflow scale.
+- **Labels place collision-free** (`_placeLabels`, after every render and move): each label
+  prefers its edge's arc-length midpoint and slides along its OWN path (t stepping outward from
+  0.5) until its box clears node cards, exit chips, the defaults card, and every label already
+  placed — deterministic in edge order, midpoint as the graceful fallback. The parallel-edge +12
+  order stacking survives as the tie-break seed.
 
 ### 6.4 Comparison & the diff overlay (§15-8d — resolved 2026-07-13)
 
@@ -651,7 +655,10 @@ edges:{id:same}, defaults?:'changed', notes?:{id:text}, ghosts?:{nodes,edges}, o
 badge, a rename note chip, an edge halo beneath the line, all `pointer-events:none`), and a dim on
 unclassified elements. Debug wins order-independently (either setter reconciles). Adornments do not
 track a node drag (readonly hosts only). `diffState` and `debugState` are independent; compare never
-sets `debugState`, the designer never sets `diffState`.
+sets `debugState`, the designer never sets `diffState`. Compare surfaces set `readonly` and
+`no-breakpoints` (2026-07-16): breakpoints are a debugger affordance, so their adornments and toggle
+gesture are off wherever a comparison renders — `readonly` alone deliberately keeps them, because the
+debugger's own surface is readonly too.
 
 **Visual language — colour and a non-colour channel, never colour alone:**
 

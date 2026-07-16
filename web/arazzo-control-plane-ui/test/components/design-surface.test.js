@@ -38,18 +38,28 @@ describe('<arazzo-design-surface>', () => {
     mount(el);
     el.graph = projectWorkflow(doc, 'place-order');
 
-    // The second of two parallel edges carries order 2 → _buildEdge stacks its label +12 below the
-    // edge midpoint so the labels do not overlap. _moveNode must preserve that offset when it re-paths.
-    const order2 = el.graph.edges.find((e) => e.from === 'validate-order' && e.to === 'authorize-payment' && (e.order ?? 1) === 2);
-    ok(order2, 'the second parallel goto exists with order 2');
-    const offsetFromMid = () =>
-      Number(el.shadowRoot.querySelector(`.edge[data-id="${order2.id}"] .elabel`).getAttribute('y')) - el._edgeMid(order2).y;
-    ok(Math.abs(offsetFromMid() - 12) < 0.5, 'the order-2 label starts +12 below its edge midpoint (_buildEdge)');
+    // Two parallel gotos carry two labels; the original bug collapsed them onto one line after a
+    // node move. The lock is the anti-collapse property itself — the labels' boxes never overlap —
+    // rather than any particular placement mechanism (today _placeLabels dodges collisions by
+    // sliding labels along their own edge; the +12 order stacking is its tie-break seed).
+    const order1 = el.graph.edges.find((e) => e.from === 'validate-order' && e.to === 'authorize-payment' && e.kind === 'success' && (e.order ?? 1) === 1);
+    const order2 = el.graph.edges.find((e) => e.from === 'validate-order' && e.to === 'authorize-payment' && e.kind === 'success' && (e.order ?? 1) === 2);
+    ok(order1 && order2, 'both parallel gotos exist');
+    const labelBox = (edge) => {
+      const l = el.shadowRoot.querySelector(`.edge[data-id="${edge.id}"] .elabel`);
+      return { x: Number(l.getAttribute('x')), y: Number(l.getAttribute('y')) - 10, w: Math.max(28, l.textContent.length * 6.2), h: 12 };
+    };
+    const apart = () => {
+      const b1 = labelBox(order1);
+      const b2 = labelBox(order2);
+      return !(b1.x < b2.x + b2.w && b2.x < b1.x + b1.w && b1.y < b2.y + b2.h && b2.y < b1.y + b1.h);
+    };
+    ok(apart(), 'the two parallel labels do not overlap');
 
     // Dragging validate-order re-paths the touching edges through _moveNode.
     el._positions['validate-order'] = { ...el._positions['validate-order'], x: el._positions['validate-order'].x + 40, y: el._positions['validate-order'].y + 40 };
     el._moveNode('validate-order');
-    ok(Math.abs(offsetFromMid() - 12) < 0.5, 'the order-2 label keeps its +12 stacking offset after the move — not collapsed onto the midpoint');
+    ok(apart(), 'the labels stay apart after the move — not collapsed onto one line');
   });
 
   it('renders one node per step plus start/end pseudo-nodes, kind classes, chips, defaults card', () => {
@@ -433,7 +443,7 @@ describe('<arazzo-design-surface> edge routing (§6.3 corridor/lane pass)', () =
       { id: 'e-bc', from: 'b', to: 'c', kind: 'seq' },
       { id: 'e-cd', from: 'c', to: 'd', kind: 'seq' },
       { id: 'skip-ad', from: 'a', to: 'd', kind: 'failure' },
-      { id: 'ghost:skip-bd', from: 'b', to: 'd', kind: 'seq', ghost: true },
+      { id: 'ghost:skip-bd', from: 'b', to: 'd', kind: 'failure', ghost: true },
       { id: 'loop-ca', from: 'c', to: 'a', kind: 'failure' },
       { id: 'loop-db', from: 'd', to: 'b', kind: 'failure' },
     ],
@@ -487,5 +497,37 @@ describe('<arazzo-design-surface> edge routing (§6.3 corridor/lane pass)', () =
     el._positions.c = { ...el._positions.c, x: el._positions.c.x + 260 };
     el._moveNode('c');
     ok(path('skip-ad') !== before, 'the skip edge re-routed after the move');
+  });
+
+  it('no-breakpoints hides the breakpoint adornments (the compare surfaces set it)', () => {
+    make();
+    const bp = el.shadowRoot.querySelector('.node[data-id="a"] .bp');
+    ok(getComputedStyle(bp).display !== 'none', 'breakpoint adornments show by default');
+    el.setAttribute('no-breakpoints', '');
+    equal(getComputedStyle(bp).display, 'none', 'no-breakpoints hides every .bp circle');
+  });
+
+  it('edge labels overlap neither node cards nor each other (_placeLabels)', () => {
+    make();
+    const boxes = [];
+    for (const edge of routedGraph.edges) {
+      const label = el.shadowRoot.querySelector(`.edge[data-id="${edge.id}"] .elabel`);
+      if (!label) continue;
+      const x = Number(label.getAttribute('x'));
+      const y = Number(label.getAttribute('y'));
+      boxes.push({ id: edge.id, x, y: y - 10, w: Math.max(28, label.textContent.length * 6.2), h: 12 });
+    }
+    ok(boxes.length >= 3, 'the fixture renders several labels');
+    const hits = (b, o) => b.x < o.x + o.w && o.x < b.x + b.w && b.y < o.y + o.h && o.y < b.y + b.h;
+    for (const node of routedGraph.nodes) {
+      const p = el._positions[node.id];
+      const card = { x: p.x, y: p.y, w: 210, h: 74 };
+      for (const b of boxes) ok(!hits(b, card), `label ${b.id} clears node ${node.id}`);
+    }
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        ok(!hits(boxes[i], boxes[j]), `labels ${boxes[i].id} and ${boxes[j].id} do not overlap`);
+      }
+    }
   });
 });

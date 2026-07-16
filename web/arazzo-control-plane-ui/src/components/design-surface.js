@@ -20,7 +20,9 @@
 //              notes?: {id: text}}|null — the visual-diff overlay; debug wins if both set; its adornments
 //              (badges/notes/halos) do NOT track node drags, so readonly hosts only — §5),
 //              .view ({tx, ty, k} pan/zoom; get returns a copy, set is silent — no event)
-// Attributes : readonly (mutation gestures off; pan/zoom/select/breakpoints still work)
+// Attributes : readonly (mutation gestures off; pan/zoom/select/breakpoints still work),
+//              no-breakpoints (breakpoint adornments hidden and the toggle gesture off — for
+//              surfaces where breakpoints are meaningless, e.g. the §6.4 comparison)
 // Events     : selection-changed {selection}, layout-changed {overrides}, entry-changed
 //              {stepId} (a drag from the start node's entry port onto a step — the host reorders
 //              that step to the FRONT of the steps array, because in Arazzo the entry point IS
@@ -241,6 +243,7 @@ class ArazzoDesignSurface extends ArazzoElement {
 
         /* Breakpoint dot — solid card-coloured fill so edges never show through it */
         .bp { fill: var(--_bg); stroke: var(--_muted); stroke-width: 1; cursor: pointer; }
+        :host([no-breakpoints]) .bp { display: none; }
         .bp:hover { stroke: var(--_danger); }
         .node.bp-on .bp { fill: var(--_danger); stroke: var(--_danger); }
 
@@ -412,12 +415,56 @@ class ArazzoDesignSurface extends ArazzoElement {
       extrasG.append(this._buildDefaultsCard(g.defaults));
     }
 
+    this._placeLabels();
     this._applyView();
     this._applySelection();
     this._applyBreakpoints();
     this._applyDebug();
     this._applyDiff();
     if (!this._fitted) { this._fitted = true; requestAnimationFrame(() => this.fit()); }
+  }
+
+  /** @private — collision-free edge labels: each label prefers its path's arc-length midpoint and
+   *  slides along its OWN edge (t stepping outward from 0.5) until its box clears node cards, exit
+   *  chips, the defaults card, and every label already placed. Deterministic (graph edge order);
+   *  when nothing clears, the midpoint stands. Runs after render and after every node move. */
+  _placeLabels() {
+    const g = this._graph;
+    if (!g) return;
+    const obstacles = [];
+    for (const node of g.nodes) {
+      const p = this._positions[node.id];
+      if (p) obstacles.push({ x: p.x, y: p.y, w: NODE_WIDTH, h: NODE_HEIGHT });
+    }
+    for (const el of this.$$('.exit-chip, .defaults')) {
+      const m = /translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(el.getAttribute('transform') || '');
+      const rect = el.querySelector('rect');
+      if (m && rect) obstacles.push({ x: +m[1], y: +m[2], w: +rect.getAttribute('width'), h: +rect.getAttribute('height') });
+    }
+    const overlaps = (b, list) =>
+      list.some((o) => b.x < o.x + o.w && o.x < b.x + b.w && b.y < o.y + o.h && o.y < b.y + b.h);
+    const placed = [];
+    for (const edge of g.edges) {
+      const host = this.$(`.edge[data-id="${cssEscape(edge.id)}"]`);
+      const label = host?.querySelector('.elabel');
+      const line = host?.querySelector('.line');
+      if (!label || !line?.getAttribute('d')) continue;
+      const total = line.getTotalLength();
+      const stack = ((edge.order ?? 1) - 1) * 12;
+      const w = Math.max(28, label.textContent.length * 6.2);
+      let fallback = null;
+      let chosen = null;
+      for (const t of [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82]) {
+        const p = line.getPointAtLength(total * t);
+        const box = { x: p.x + 8, y: p.y + stack - 10, w, h: 12 };
+        fallback ??= { p, box };
+        if (!overlaps(box, obstacles) && !overlaps(box, placed)) { chosen = { p, box }; break; }
+      }
+      const { p, box } = chosen ?? fallback;
+      label.setAttribute('x', p.x + 8);
+      label.setAttribute('y', p.y + stack);
+      placed.push(box);
+    }
   }
 
   /** @private */
@@ -872,7 +919,7 @@ class ArazzoDesignSurface extends ArazzoElement {
           rubber.classList.remove('rubber-entry');
           rubber.removeAttribute('hidden');
         }
-      } else if (hit?.bp) {
+      } else if (hit?.bp && !this.hasAttribute('no-breakpoints')) {
         this._gesture = { type: 'bp', id: hit.id };
       } else if (hit?.type === 'node') {
         const pos = this._positions[hit.id];
@@ -1064,16 +1111,11 @@ class ArazzoDesignSurface extends ArazzoElement {
         const d = this._edgePath(edge);
         el.querySelector('.hit').setAttribute('d', d);
         el.querySelector('.line').setAttribute('d', d);
-        const label = el.querySelector('.elabel');
-        if (label) {
-          const mid = this._edgeMid(edge);
-          label.setAttribute('x', mid.x + 8);
-          // Keep the parallel-edge label stacking offset _buildEdge applies (line ~394), else
-          // labels on parallel edges collapse onto one line after a drag.
-          label.setAttribute('y', mid.y + ((edge.order ?? 1) - 1) * 12);
-        }
       }
     }
+    // Labels re-place as one pass over the new paths — it preserves the parallel-edge stacking
+    // offset (label-offset bug 4) AND keeps labels clear of nodes and each other after the move.
+    this._placeLabels();
   }
 
   /** @private */

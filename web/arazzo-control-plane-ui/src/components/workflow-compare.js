@@ -237,6 +237,7 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     host.querySelector('.side-head').title = side?.label ?? '';
     const surface = document.createElement('arazzo-design-surface');
     surface.setAttribute('readonly', '');
+    surface.setAttribute('no-breakpoints', ''); // §6.4: breakpoints are a debugger affordance, meaningless in a comparison
     if (this._diff) {
       surface.layoutEngine = () => this._diff.layout[which];
       surface.graph = which === 'left' ? this._diff.leftGraph : this._diff.rightGraph;
@@ -355,6 +356,7 @@ class ArazzoWorkflowCompare extends ArazzoElement {
     host.querySelector('.side-head').title = side?.label ?? '';
     const surface = document.createElement('arazzo-design-surface');
     surface.setAttribute('readonly', '');
+    surface.setAttribute('no-breakpoints', ''); // §6.4: breakpoints are a debugger affordance, meaningless in a comparison
     surface.layoutEngine = () => this._ghost.layout;
     surface.graph = this._ghost.graph;
     surface.diffState = this._highlight ? this._ghost.paint : null;
