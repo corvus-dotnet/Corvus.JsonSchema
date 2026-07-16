@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Arazzo\Corvus.Text.Json.Arazzo.csproj" />

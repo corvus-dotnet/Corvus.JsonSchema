@@ -2805,7 +2805,7 @@ export function createMockControlPlane(options = {}) {
       return json({ operations: projectOperationSurface(doc) });
     }
 
-    const dbg = fullPath.match(/\/workspace\/workflows\/([^/]+)\/debug-runs(?:\/([^/]+))?(?:\/(resume|cancel))?\/?$/);
+    const dbg = fullPath.match(/\/workspace\/workflows\/([^/]+)\/debug-runs(?:\/([^/]+))?(?:\/(resume|cancel|inject-message))?\/?$/);
     if (dbg) {
       const wc = workingCopies.find((x) => x.id === decodeURIComponent(dbg[1]));
       if (!wc) return problem(404, 'Working copy not found');
@@ -2856,7 +2856,9 @@ export function createMockControlPlane(options = {}) {
         }
         const request = {
           workflowId: run.workflowId,
-          scenario: { inputs: run.inputs ?? {}, mocks },
+          // Injected messages persist on the run: the stateless replay re-consumes the FULL trigger
+          // history every execute (clone — the simulator's queue consumption splices its copy).
+          scenario: { inputs: run.inputs ?? {}, mocks, ...(run.triggers?.length ? { triggers: structuredClone(run.triggers) } : {}) },
           ...(budget?.maxSteps ? { budget: { maxSteps: budget.maxSteps } } : {}),
           ...(budget?.breakBefore ? { until: { breakpoints: budget.breakBefore } } : {}),
           ...(Object.keys(run.overrides).length ? { overrides: { stepOutputs: structuredClone(run.overrides) } } : {}),
@@ -2936,6 +2938,26 @@ export function createMockControlPlane(options = {}) {
       if (dbg[3] === 'cancel' && method === 'POST') {
         run.status = 'cancelled';
         run.updatedAt = iso(0);
+        return view(run);
+      }
+      if (dbg[3] === 'inject-message' && method === 'POST') {
+        // §18 trigger injection — server parity: only a run suspended on a matching receive takes a
+        // message (409 otherwise), and delivery is SYNCHRONOUS (message waits are not pump-driven):
+        // the 200 response IS the resumed run, advanced through the receive to its next stop.
+        if (run.status !== 'suspended') {
+          return problem(409, 'Not awaiting a message', `The debug run is ${run.status}; a message can only be injected while it is suspended on an AsyncAPI receive.`);
+        }
+        const waiting = run.trace?.wait;
+        if (!waiting || waiting.kind !== 'message' || waiting.channel !== body?.channel) {
+          return problem(409, 'Not awaiting a message', `The debug run is not suspended on a receive for channel '${body?.channel}'.`);
+        }
+        (run.triggers ??= []).push({
+          channel: body.channel,
+          ...(body.payload !== undefined ? { payload: structuredClone(body.payload) } : {}),
+          ...(body.correlationId ? { correlationId: body.correlationId } : {}),
+        });
+        const fail = execute(run);
+        if (fail) return fail;
         return view(run);
       }
       if (dbg[3] === 'resume' && method === 'POST') {

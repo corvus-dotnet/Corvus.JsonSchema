@@ -1651,3 +1651,57 @@ test('debug runs (§18): gated start, single-step forward, step-over via Skip, c
     assert.notEqual((await pump(r.debugRunId)).status, 'faulted', `${action.mode} clears the transient fault`);
   }
 });
+
+test('debug runs (§18): a suspended receive takes an injected message and resumes — synchronously, not pump-driven', async () => {
+  const c = makeClient();
+  // The seeded 'development' environment already allows draft runs (§18).
+  const wc = await c.createWorkingCopy({
+    name: 'eventful-debug',
+    document: {
+      arazzo: '1.1.0', info: { title: 'e', version: '1' },
+      sourceDescriptions: [
+        { name: 'petstore', url: './p.json', type: 'openapi' },
+        { name: 'events', url: './e.json', type: 'asyncapi' },
+      ],
+      workflows: [{ workflowId: 'wf', steps: [
+        { stepId: 'list', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] },
+        { stepId: 'confirmed', operationId: 'onOrderEvent' },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+  await c.attachWorkingCopySource(wc.id, 'events', { sourceName: 'events' });
+  await c.createCredential({ sourceName: 'petstore', environment: 'development', authKind: 'httpBearer', secretRefs: [{ name: 'token', ref: 'vault://kv/dev/petstore#token' }] });
+  await c.createCredential({ sourceName: 'events', environment: 'development', authKind: 'httpBearer', secretRefs: [{ name: 'token', ref: 'vault://kv/dev/events#token' }] });
+
+  const SETTLED = new Set(['paused', 'suspended', 'completed', 'faulted', 'cancelled']);
+  const pump = async (runId) => {
+    let r;
+    for (let i = 0; i < 50; i++) { r = await c.getDebugRun(wc.id, runId); if (SETTLED.has(r.status)) return r; }
+    throw new Error(`debug run ${runId} did not settle (last: ${r?.status})`);
+  };
+
+  const started = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development' });
+
+  // Still running (un-advanced): a message cannot be injected yet.
+  await assert.rejects(() => c.injectDebugRunMessage(wc.id, started.debugRunId, { channel: 'orders/events', payload: { ok: true } }),
+    (err) => err.status === 409, 'a non-suspended run refuses a message');
+
+  const suspended = await pump(started.debugRunId);
+  assert.equal(suspended.status, 'suspended', 'the run suspends on the receive');
+  assert.equal(suspended.trace.wait?.channel, 'orders/events', 'the wait names its channel');
+
+  // The wrong channel is 409 — the run is not awaiting it, and stays suspended.
+  await assert.rejects(() => c.injectDebugRunMessage(wc.id, started.debugRunId, { channel: 'other/channel', payload: {} }),
+    (err) => err.status === 409, 'a mismatched channel refuses the message');
+
+  // The matching channel delivers straight to the awaiting run: the response IS the resumed run,
+  // advanced through the receive to completion (message waits are not pump-driven).
+  const resumed = await c.injectDebugRunMessage(wc.id, started.debugRunId, { channel: 'orders/events', payload: { orderId: 'o-1' } });
+  assert.equal(resumed.status, 'completed');
+  assert.equal(resumed.trace.steps.at(-1).stepId, 'confirmed', 'the receive step consumed the injected message');
+
+  // A terminal run cannot take a message.
+  await assert.rejects(() => c.injectDebugRunMessage(wc.id, started.debugRunId, { channel: 'orders/events', payload: {} }),
+    (err) => err.status === 409, 'a completed run refuses a message');
+});

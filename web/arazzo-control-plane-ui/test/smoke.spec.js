@@ -507,6 +507,16 @@ test('§18 debug run: starting against a dev environment pumps get-debug-run to 
   await expect(page.locator('#debug-dock')).toBeVisible();
   await expect(page.locator('#save-status')).toHaveText(/debug run suspended in development/i, { timeout: 5000 });
 
+  // §18 trigger injection completes the arc: the tray's inject form (channel prefilled from the
+  // wait) delivers the message STRAIGHT to the suspended run — nothing published to a broker —
+  // and the dock pumps the resumed run forward to completion.
+  const tray = page.locator('#debugtray');
+  await expect(tray.locator('.inj-channel')).not.toHaveValue('');
+  // The channel schema was fed, so the payload edits through the TYPED editor whose default is a
+  // valid message — inject as-is.
+  await tray.locator('.inj-go').click();
+  await expect(page.locator('#save-status')).toHaveText(/debug run completed in development/i, { timeout: 5000 });
+
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 

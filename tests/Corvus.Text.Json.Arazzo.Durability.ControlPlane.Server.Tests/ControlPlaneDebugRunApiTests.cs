@@ -88,6 +88,49 @@ public sealed class ControlPlaneDebugRunApiTests
         }
         """;
 
+    // A workflow that SUSPENDS on an AsyncAPI receive after one HTTP step — the §18 inject-message
+    // target: the endpoint is the debug stand-in for the real publisher, delivering the verdict
+    // straight to the awaiting run (nothing is published to a broker).
+    private const string ReceiveDoc = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "Await", "version": "1.0.0" },
+          "sourceDescriptions": [
+            { "name": "petstore", "url": "./petstore.openapi.json", "type": "openapi" },
+            { "name": "events", "url": "./events.asyncapi.json", "type": "asyncapi" }
+          ],
+          "workflows": [
+            {
+              "workflowId": "await-verdict",
+              "steps": [
+                { "stepId": "get-pet", "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" } },
+                { "stepId": "verdict", "channelPath": "kyc.verdict", "action": "receive",
+                  "outputs": { "approved": "$message.payload#/approved" } }
+              ]
+            }
+          ]
+        }
+        """;
+
+    private const string EventsDoc = """
+        {
+          "asyncapi": "3.0.0",
+          "info": { "title": "Events", "version": "1.0.0" },
+          "channels": {
+            "kycResults": {
+              "address": "kyc.verdict",
+              "messages": { "kycVerdict": { "payload": { "type": "object", "properties": { "approved": { "type": "boolean" } } } } }
+            }
+          },
+          "operations": {
+            "receiveKycVerdict": { "action": "receive", "channel": { "$ref": "#/channels/kycResults" }, "messages": [ { "$ref": "#/channels/kycResults/messages/kycVerdict" } ] }
+          }
+        }
+        """;
+
     private const string PetstoreDoc = """
         {
           "openapi": "3.1.0",
@@ -446,6 +489,64 @@ public sealed class ControlPlaneDebugRunApiTests
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    [TestMethod]
+    public async Task Injecting_a_message_resumes_a_run_suspended_on_a_receive()
+    {
+        await using var messageTransport = new Corvus.Text.Json.AsyncApi.Testing.InMemoryMessageTransport();
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock(), messageTransport);
+        string id = await host.CreateWorkingCopyAsync(ReceiveDoc, PetstoreDoc);
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/sources/events",
+            $$"""{"document":{{EventsDoc}}}""", "workspace:write")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        await host.CreateEnvironmentAsync("""{"name":"development","allowsDraftRuns":true}""");
+        await host.BindCredentialAsync("petstore", "development");
+        await host.BindCredentialAsync("events", "development");
+
+        HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
+            """{"workflowId":"await-verdict","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
+        started.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string debugRunId;
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
+        {
+            debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        // A message cannot be injected while the run is still pending/running: 409, not-awaiting.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/inject-message",
+            """{"channel":"kyc.verdict","payload":{"approved":true}}""", StartScopes))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // The pump executes the HTTP step, then the run SUSPENDS on the kyc.verdict receive.
+        using (Stj.JsonDocument run = await host.PumpAndGetAsync(id, debugRunId))
+        {
+            run.RootElement.GetProperty("status").GetString().ShouldBe("suspended");
+            run.RootElement.GetProperty("trace").GetProperty("steps")[0].GetProperty("stepId").GetString().ShouldBe("get-pet");
+        }
+
+        // A message on the WRONG channel is 409 — the run is not awaiting it, and stays suspended.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/inject-message",
+            """{"channel":"other.events","payload":{"approved":true}}""", StartScopes))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // The matching channel delivers straight to the awaiting run: the response IS the resumed run,
+        // advanced through the receive to completion, its verdict step carrying the message-derived outputs.
+        HttpResponseMessage injected = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/inject-message",
+            """{"channel":"kyc.verdict","payload":{"approved":true}}""", StartScopes);
+        injected.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await injected.Content.ReadAsStringAsync()))
+        {
+            run.RootElement.GetProperty("status").GetString().ShouldBe("completed");
+            Stj.JsonElement steps = run.RootElement.GetProperty("trace").GetProperty("steps");
+            steps.GetArrayLength().ShouldBe(2);
+            steps[1].GetProperty("stepId").GetString().ShouldBe("verdict");
+            AssertNoBodies(run.RootElement); // the §18 posture holds for message payloads too
+        }
+
+        // A terminal run cannot take a message: 409.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/inject-message",
+            """{"channel":"kyc.verdict","payload":{"approved":true}}""", StartScopes))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
     private static MockApiTransport HappyMock()
     {
         var mock = new MockApiTransport();
@@ -462,7 +563,7 @@ public sealed class ControlPlaneDebugRunApiTests
         return mock;
     }
 
-    private static async Task<Scoped> StartAsync(bool withRunner, MockApiTransport? transport)
+    private static async Task<Scoped> StartAsync(bool withRunner, MockApiTransport? transport, Corvus.Text.Json.AsyncApi.IMessageTransport? messageTransport = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -480,7 +581,7 @@ public sealed class ControlPlaneDebugRunApiTests
             WorkflowTransportBinder binder = (WorkflowDescriptor descriptor, SecurityTagSet runTags) =>
                 new WorkflowTransports(
                     descriptor.Sources.ToDictionary(s => s, _ => (IApiTransport)mock, StringComparer.Ordinal),
-                    null);
+                    messageTransport);
             runner = new InProcessDraftRunner(store, "runner-dev", "development", drafts, traceStore, SharedProvider, binder);
         }
 
