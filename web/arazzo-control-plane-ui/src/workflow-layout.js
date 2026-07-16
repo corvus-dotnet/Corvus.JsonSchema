@@ -119,6 +119,7 @@ export const UP_LANE_PITCH = 18;
 export const CORRIDOR_MARGIN = 36;
 const MIN_GAP_FOR_CORRIDOR = 24;
 const STRAIGHT_CLEARANCE = 18;
+const HOOK_RISE = 40;
 
 /**
  * Route edges around the laid-out nodes (design: workflow-designer-design.md §6.3). Pure data in,
@@ -291,6 +292,23 @@ export function routeEdges(graph, positions, opts = {}) {
         });
         if (!blocked) return { e, direct: true, side: targetLeft ? 'left' : 'right' };
       }
+      // Same band with overlapping x-ranges: left/right anchors degenerate (direct is impossible,
+      // a side lane must wrap), so hook over the top — top border to top border — or, when the
+      // space above is occupied, under the bottom. Only a pair boxed in on both rails falls
+      // through to a lane.
+      if (bf === bt) {
+        const xLo = Math.min(cx(e.from), cx(e.to)) - 20;
+        const xHi = Math.max(cx(e.from), cx(e.to)) + 20;
+        const clear = (top, bottom) => !placed.some((n) => {
+          if (n.id === e.from || n.id === e.to) return false;
+          const r = nodeRect(n.id);
+          return r.x < xHi && xLo < r.x + r.w && r.y < bottom && top < r.y + r.h;
+        });
+        const topRail = Math.min(a.y, b.y) - HOOK_RISE;
+        if (clear(topRail - 10, Math.min(a.y, b.y))) return { e, hook: 'top', railY: topRail };
+        const bottomRail = Math.max(a.y, b.y) + nodeHeight + HOOK_RISE;
+        if (clear(Math.max(a.y, b.y) + nodeHeight, bottomRail + 10)) return { e, hook: 'bottom', railY: bottomRail };
+      }
       const lo = Math.min(bt, bf);
       const hi = Math.max(bt, bf);
       let left = Infinity;
@@ -312,9 +330,15 @@ export function routeEdges(graph, positions, opts = {}) {
   for (const entry of upward.filter((u) => u.direct)) {
     routes[entry.e.id] = { kind: 'up', direct: true, side: entry.side, points: [] };
   }
+  for (const entry of upward.filter((u) => u.hook)) {
+    routes[entry.e.id] = {
+      kind: 'up', hook: entry.hook,
+      points: [{ x: cx(entry.e.from), y: entry.railY }, { x: cx(entry.e.to), y: entry.railY }],
+    };
+  }
   for (const side of ['left', 'right']) {
     const laneEnds = []; // per lane: the largest yBottom taken so far
-    const group = upward.filter((u) => !u.direct && u.side === side)
+    const group = upward.filter((u) => !u.direct && !u.hook && u.side === side)
       .sort((p, q) => (p.yTop - q.yTop) || (p.yBottom - q.yBottom) || (!!p.e.ghost - !!q.e.ghost) || (p.e.id < q.e.id ? -1 : 1));
     for (const entry of group) {
       let lane = laneEnds.findIndex((end) => entry.yTop > end);

@@ -334,3 +334,29 @@ test('routeEdges: a multi-band up-left target with a BLOCKED in-between takes th
   assert.equal(routes.far.side, 'left');
   assert.ok(routes.far.points[0].x < 0, `lane ${routes.far.points[0].x} sits left of the whole span`);
 });
+
+test('routeEdges: a same-band pair with overlapping x-ranges hooks top→top (never a wrapping side lane)', () => {
+  // The screenshot case: provisionResources dragged to overlap verifyIdentity side-by-side.
+  const graph = {
+    nodes: [{ id: 'vI' }, { id: 'pR' }],
+    edges: [{ id: 'back', from: 'vI', to: 'pR', kind: 'seq' }],
+  };
+  const positions = { vI: { x: 0, y: 100 }, pR: { x: 180, y: 100 } }; // 210-wide cards → 30px x-overlap
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes.back.kind, 'up');
+  assert.equal(routes.back.hook, 'top');
+  assert.ok(routes.back.points[0].y < 100, `rail ${routes.back.points[0].y} rises above both cards`);
+  assert.equal(routes.back.points[0].y, routes.back.points[1].y, 'one horizontal rail');
+});
+
+test('routeEdges: the hook drops to bottom→bottom when the space above is occupied', () => {
+  const graph = {
+    nodes: [{ id: 'above' }, { id: 'vI' }, { id: 'pR' }],
+    edges: [{ id: 'back', from: 'vI', to: 'pR', kind: 'seq' }],
+  };
+  // `above` sits directly over the pair, blocking the top rail; below is clear.
+  const positions = { above: { x: 60, y: 0 }, vI: { x: 0, y: 110 }, pR: { x: 180, y: 110 } };
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes.back.hook, 'bottom');
+  assert.ok(routes.back.points[0].y > 110 + NODE_HEIGHT, 'rail sits below both cards');
+});

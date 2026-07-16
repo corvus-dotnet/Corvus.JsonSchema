@@ -682,6 +682,21 @@ class ArazzoDesignSurface extends ArazzoElement {
     // arrivals spread down the border). A direct lateral is one facing-border-to-facing-border
     // curve; the legacy right bow only remains as the no-route fallback.
     if (route?.kind === 'up') {
+      if (route.hook) {
+        // Same-band overlapping pair: top→top (or bottom→bottom) over a hook rail. Departure
+        // biased toward the target so it stays clear of arrivals on the same border.
+        const top = route.hook === 'top';
+        const A = top ? from.top : from.bottom;
+        const B = top ? to.top : to.bottom;
+        const hy = route.points[0].y;
+        const s = B.x >= A.x ? 1 : -1;
+        const ax = A.x + 12 * s;
+        const bx = B.x + arrive;
+        const k = Math.min(26, Math.abs(bx - ax) / 2);
+        return `M ${ax} ${A.y} C ${ax} ${(A.y + hy) / 2}, ${ax} ${hy}, ${ax + s * k} ${hy}`
+          + ` L ${bx - s * k} ${hy}`
+          + ` C ${bx} ${hy}, ${bx} ${(B.y + hy) / 2}, ${bx} ${B.y}`;
+      }
       const side = route.side ?? 'right';
       const A = side === 'left' ? from.left : from.right;
       if (route.direct) {
@@ -719,6 +734,9 @@ class ArazzoDesignSurface extends ArazzoElement {
     const route = this._routes?.[edge.id];
     if (route?.kind === 'down' && route.points.length) {
       return route.points[Math.floor((route.points.length - 1) / 2)];
+    }
+    if (route?.kind === 'up' && route.hook) {
+      return { x: (route.points[0].x + route.points[1].x) / 2, y: route.points[0].y };
     }
     if (route?.kind === 'up' && !route.direct) {
       return { x: route.points[0].x, y: (route.points[0].y + route.points[1].y) / 2 };
@@ -779,6 +797,10 @@ class ArazzoDesignSurface extends ArazzoElement {
     if (down) return { x: to.top.x + fan + arrive, y: to.top.y };
     const route = this._routes?.[edge.id];
     if (route?.kind === 'up') {
+      if (route.hook) {
+        const B = route.hook === 'top' ? to.top : to.bottom;
+        return { x: B.x + arrive, y: B.y };
+      }
       const side = route.side ?? 'right';
       const B = route.direct ? (side === 'left' ? to.right : to.left) : (side === 'left' ? to.left : to.right);
       return { x: B.x, y: B.y + arrive * 0.6 };
