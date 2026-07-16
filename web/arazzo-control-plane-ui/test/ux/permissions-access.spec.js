@@ -10,19 +10,21 @@
 //   src/components/access-overview-panel.js, access-requests-panel.js, access-request-dialog.js
 //
 // Seeds: demo/index.html feeds the mock DEMO_SEED (demo/demo-seed.js) — example data that OVERRIDES the built-in
-// mock-api.js seeds for rules, bindings, grantees, administrators and access requests. Its header (demo-seed.js:1-3)
-// says the built-in seeds remain the set "the tests assert against", so where the example seed cannot reach a
-// behavior (no scope-bearing/eligibleOnly bindings; no persona administers any workflow with a pending access
-// request), those tests repoint the panel at a fresh built-in-seed mock in-page (see useBuiltinSeeds below).
+// mock-api.js seeds for rules, bindings, grantees, administrators and access requests. The example seed carries the
+// full §16.5 shape vocabulary — six bindings including a scope-conferring elevation (bind-5, sub=u-1042) and a PIM
+// eligibility (bind-6, team=growth) — and seats the administrator persona on every admin set. The built-in seeds
+// remain the set the COMPONENT tests assert against (demo-seed.js:1-3), so tests pinning built-in fixture shapes
+// (bind-2/bind-4 wording, the platform tenant, req-2004) repoint at a fresh built-in-seed mock in-page (see
+// useBuiltinSeeds below).
 import { test, expect } from '@playwright/test';
 import { watchErrors, assertClean, openApp, openTab } from './ux-helpers.js';
 
 /**
  * Point the named kit elements at a FRESH in-page mock running the mock-api.js BUILT-IN seeds — the seed set the
- * component tests assert against (demo-seed.js:1-3). The demo page's example seed deliberately differs: it has no
- * scope-bearing / eligibleOnly bindings (so the capability view resolves nothing) and no demo persona administers a
- * workflow with a pending access request (so the approver inbox is unreachable). Same panels, same client, same
- * mock implementation — only the seed data swaps.
+ * component tests assert against (demo-seed.js:1-3). The demo page's example seed deliberately differs (different
+ * bindings, grantees and requests), so tests that pin built-in fixture shapes — bind-2/bind-4's scope wording, the
+ * platform tenant's administration, the two-request approver inbox with req-2004 — swap the seed here. Same panels,
+ * same client, same mock implementation — only the seed data swaps.
  */
 async function useBuiltinSeeds(page, selectors) {
   await page.evaluate(async (sels) => {
@@ -132,8 +134,8 @@ test('the Grants panel lists the seeded bindings with per-verb reach summaries a
   await openTab(page, 'Permissions');
 
   const grants = page.locator('arazzo-grants-panel');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(4);
-  await expect(grants.locator('arazzo-pager .count')).toContainText(/4\+? grants/);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6);
+  await expect(grants.locator('arazzo-pager .count')).toContainText(/6\+? grants/);
 
   // bind-1: rule-scoped read+write, denied purge.
   const b1 = grants.locator('tr[data-id="bind-1"]');
@@ -150,6 +152,11 @@ test('the Grants panel lists the seeded bindings with per-verb reach summaries a
   // bind-4 is a direct person grant, keyed on the sub claim, with its description shown in the row.
   await expect(grants.locator('tr[data-id="bind-4"] .claim')).toContainText('sub=u-1042');
   await expect(grants.locator('tr[data-id="bind-4"] .gdesc')).toContainText('a direct person grant');
+
+  // The elevation shapes (§16.5.2/§16.5.3) wear their capability wording in the list: bind-5 is an
+  // approval-written ACTIVE conferral (time-boxed scopes), bind-6 a PIM eligibility (confers nothing active).
+  await expect(grants.locator('tr[data-id="bind-5"] .gscopes')).toContainText('confers runs:read, runs:write until');
+  await expect(grants.locator('tr[data-id="bind-6"] .gscopes')).toContainText('eligible for runs:write until');
   assertClean(errors);
 });
 
@@ -158,7 +165,7 @@ test('a grant is authored via the grantee picker with per-verb reach and identit
   await openTab(page, 'Permissions');
 
   const grants = page.locator('arazzo-grants-panel');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(4); // first load settled
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6); // first load settled
   await grants.locator('button.new').click();
   await expect(grants.locator('.detail .dtitle')).toHaveText('New grant');
   // The multi-IdP caveat is surfaced on create.
@@ -214,7 +221,7 @@ test('picking a person grantee steers to the access-request flow: the grant edit
   await openTab(page, 'Permissions');
 
   const grants = page.locator('arazzo-grants-panel');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(4);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6);
   await grants.locator('button.new').click();
   const pickerInput = grants.locator('arazzo-grantee-picker input.q');
   await pickerInput.click();
@@ -230,7 +237,7 @@ test('picking a person grantee steers to the access-request flow: the grant edit
   // Submitting anyway is refused client-side with the same steer.
   await grants.locator('.dfoot .confirm').click();
   await expect(grants.locator('.form-err .error-banner')).toContainText('Use the access-request flow for a person');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(4); // nothing was created
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6); // nothing was created
   assertClean(errors);
 });
 
@@ -246,7 +253,7 @@ test('deleting a grant is confirm-gated and removes the binding from the list', 
   await expect(confirm).toContainText("Delete the grant for 'team=growth'");
   await confirm.locator('button.ok').click();
   await expect(grants.locator('tr[data-id="bind-3"]')).toHaveCount(0);
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(3);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(5);
   assertClean(errors);
 });
 
@@ -303,15 +310,21 @@ test('the Access overview aggregates one grantee: reach grants with inline Revok
   await expect(overview.locator('.who .glabel')).toHaveText('Ada Lovelace');
   await expect(overview.locator('.who .gident')).toContainText('sys:sub=u-1042');
 
-  // Reach: her direct sub-keyed grant, with the inline Revoke (the demo persona holds security:write).
+  // Reach: her direct sub-keyed grants — the standing one (bind-4) and the approval-written elevation
+  // (bind-5) — each with the inline Revoke (the demo persona holds security:write).
   const grantBlocks = overview.locator('.grant');
-  await expect(grantBlocks).toHaveCount(1);
-  await expect(overview.locator('.grant .claim')).toHaveText('sub = u-1042');
-  await expect(overview.locator('.grant .verb', { hasText: 'read' })).toContainText('reach-payments');
-  await expect(overview.locator('.grant button.revoke')).toHaveCount(1);
+  await expect(grantBlocks).toHaveCount(2);
+  await expect(overview.locator('.grant .claim')).toHaveText(['sub = u-1042', 'sub = u-1042']);
+  await expect(overview.locator('.grant:has(button[data-revoke="bind-4"]) .verb', { hasText: 'read' })).toContainText('reach-payments');
+  await expect(overview.locator('.grant button.revoke')).toHaveCount(2);
 
-  // No demo binding carries capability scopes, so the resolved capability view is honestly empty.
-  await expect(overview.locator('.body')).toContainText('No capability scopes.');
+  // The elevation confers ACTIVE, time-boxed capability scopes — solid chips, each carrying its expiry.
+  const caps = overview.locator('.caps .cap');
+  await expect(caps).toHaveCount(2);
+  await expect(caps.first()).toContainText('runs:read');
+  await expect(caps.nth(1)).toContainText('runs:write');
+  await expect(overview.locator('.caps .cap.eligible')).toHaveCount(0); // conferred, not PIM-eligible
+  await expect(caps.first().locator('.until')).toContainText('until');
 
   // Administers: nightly-reconcile names her sys:sub in its administrator set; no environment does.
   await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow')).toHaveText('nightly-reconcile');
@@ -333,15 +346,17 @@ test('the overview inline Revoke deletes the underlying binding: the overview re
   await input.click();
   await input.fill('Ada');
   await overview.locator('arazzo-grantee-picker .results li[data-index]', { hasText: 'Ada Lovelace' }).click();
-  await expect(overview.locator('.grant')).toHaveCount(1);
+  await expect(overview.locator('.grant')).toHaveCount(2); // bind-4 (standing) + bind-5 (elevation)
 
   await overview.locator('button[data-revoke="bind-4"]').click();
   const confirm = overview.locator('dialog.arazzo-confirm');
   await expect(confirm).toContainText('every principal it matches'); // the blast radius is named before the act
   await confirm.locator('button.ok').click();
 
-  await expect(overview.locator('.grant')).toHaveCount(0);
-  await expect(overview.locator('.body')).toContainText('No reach grants match');
+  // The revoked binding leaves the overview; the elevation grant is untouched.
+  await expect(overview.locator('.grant')).toHaveCount(1);
+  await expect(overview.locator('button[data-revoke="bind-4"]')).toHaveCount(0);
+  await expect(overview.locator('button[data-revoke="bind-5"]')).toHaveCount(1);
 
   // The Permissions tab reflects the deletion (same backend; the tab refresh re-fetches).
   await page.getByRole('tab', { name: 'Permissions' }).click();
@@ -360,13 +375,19 @@ test('a team grantee resolves through its team-keyed binding and administered wo
   await input.fill('Growth');
   await overview.locator('arazzo-grantee-picker .results li[data-index]', { hasText: 'Growth' }).click();
 
-  // The team=growth binding matches the resolved identity.
-  await expect(overview.locator('.grant .claim')).toHaveText('team = growth');
-  await expect(overview.locator('.grant .verb', { hasText: 'read' })).toContainText('reach-onboarding');
+  // Both team=growth bindings match the resolved identity: the standing read grant (bind-3) and the
+  // PIM eligibility (bind-6).
+  await expect(overview.locator('.grant .claim')).toHaveText(['team = growth', 'team = growth']);
+  await expect(overview.locator('.grant:has(button[data-revoke="bind-3"]) .verb', { hasText: 'read' })).toContainText('reach-onboarding');
+
+  // The eligibility renders as a dashed ELIGIBLE chip — never an active scope.
+  const caps = overview.locator('.caps .cap');
+  await expect(caps).toHaveCount(1);
+  await expect(caps.first()).toHaveClass(/eligible/);
+  await expect(caps.first()).toContainText('runs:write (eligible)');
 
   // Growth administers onboard-customer; every other section is an explicit empty, never a blank.
   await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow')).toHaveText('onboard-customer');
-  await expect(overview.locator('.body')).toContainText('No capability scopes.');
   await expect(overview.locator('.body')).toContainText('Administers no environments.');
   await expect(overview.locator('.body')).toContainText('No usable source credentials.');
   assertClean(errors);
@@ -375,10 +396,11 @@ test('a team grantee resolves through its team-keyed binding and administered wo
 test('under the built-in seeds the capability view resolves conferred vs eligible vs nothing: list wording, the eligible chip, and admin resolution', async ({ page }) => {
   const errors = watchErrors(page);
   await openTab(page, 'Permissions');
-  await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(4); // demo seed settled
+  await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(6); // demo seed settled
 
-  // The demo example seed has no scope-bearing bindings, so this drives the same panels against the mock's
-  // BUILT-IN seeds (bind-2 confers scopes; bind-4 is an eligibleOnly PIM assignment) — see useBuiltinSeeds.
+  // This pins the BUILT-IN fixture shapes (bind-2 confers scopes; bind-4 is an eligibleOnly PIM assignment;
+  // the platform tenant administers workflows and an environment), so it drives the same panels against a
+  // fresh built-in-seed mock — see useBuiltinSeeds.
   await useBuiltinSeeds(page, ['arazzo-grants-panel', 'arazzo-access-overview']);
 
   // The grants list distinguishes an active, time-boxed conferral from a PIM eligibility.
@@ -465,8 +487,8 @@ test('the approver inbox offers approve / make-eligible / deny on each pending r
   const errors = watchErrors(page);
   await openTab(page, 'Access');
 
-  // The demo example seed gives no persona an actionable inbox (see the file-end notes), so drive the panel
-  // against the built-in seeds, where the administrator administers the workflows of both pending requests.
+  // The demo example seed's inbox holds a single pending request; this walkthrough needs the built-in seeds'
+  // TWO (req-2001 + req-2004) so approve and deny can each transition one on the way to inbox zero.
   await useBuiltinSeeds(page, ['arazzo-access-requests']);
   const panel = page.locator('arazzo-access-requests');
   await panel.locator('.tab-queue').click();
@@ -509,7 +531,7 @@ test('approve-as-eligible captures an eligibility window and lands the request i
   const errors = watchErrors(page);
   await openTab(page, 'Access');
 
-  await useBuiltinSeeds(page, ['arazzo-access-requests']); // the demo seed has no reachable pending request
+  await useBuiltinSeeds(page, ['arazzo-access-requests']); // req-2004 is a built-in fixture
   const panel = page.locator('arazzo-access-requests');
   await panel.locator('.tab-queue').click();
   await panel.locator('tr[data-id="req-2004"] .act[data-action="approve-as-eligible"]').click();

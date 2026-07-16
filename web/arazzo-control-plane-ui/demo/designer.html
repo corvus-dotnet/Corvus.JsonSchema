@@ -14,6 +14,10 @@
     /* Theme-correct native scrollbars (the designer sets data-theme on <html>); without this the dark theme
        rendered light OS scrollbars, unlike the rest of the app. */
     :root { color-scheme: light dark; }
+    /* The hidden attribute always wins: several elements carry inline display (flex/grid) for
+       their VISIBLE state, which would otherwise defeat the UA's [hidden] rule — the run dialog's
+       readiness row and fault checkbox rendered while hidden until this reset. */
+    [hidden] { display: none !important; }
     :root[data-theme="light"] { color-scheme: light; }
     :root[data-theme="dark"] { color-scheme: dark; }
     body { margin: 0; height: 100dvh; overflow: clip;
@@ -896,6 +900,14 @@
       inspector.replaceChildren();
       selectionPre.textContent = '';
       const wf = doc.workflows.find((w) => w.workflowId === select.value);
+      if (!wf) {
+        // The selected workflow left the document (a pull/rollback replaced it while a step was
+        // selected): clear the stale selection and land on the document inspector instead of
+        // dereferencing a workflow that no longer exists.
+        surface.selection = null;
+        showDocumentInspector();
+        return;
+      }
 
       // Canvas anchors open the MATCHING editor (§3.2): start = the workflow's inputs, end = its
       // outputs — nothing else (start "having outputs" read as a statement about start). The
@@ -1169,7 +1181,12 @@
         s[list] = [...(s[list] || []), action];
       }, { origin: 'canvas', label: `draw ${kind} edge from ${from}` });
       const created = surface.graph.edges.find((x) => x.from === from && x.actionName === name);
-      if (created) surface.selection = { type: 'edge', id: created.id };
+      if (created) {
+        // Select AND show the new action in the inspector (the documented draw → select →
+        // edit-criteria flow), exactly as dropping an operation does for its new step.
+        surface.selection = { type: 'edge', id: created.id };
+        showSelection(surface.selection);
+      }
     });
 
     // ── The debug session: STATELESS replays of the real simulate endpoint (§8.2). ▶ Run
@@ -1410,6 +1427,7 @@
       if (shell.debugRun) { void client.deleteDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); }
       tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k];
       document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi();
+      saveStatus.textContent = ''; // the purged run's narration must not outlive it
     });
     tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
     tray.addEventListener('trigger-injected', (e) => {

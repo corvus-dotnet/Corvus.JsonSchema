@@ -316,8 +316,10 @@ test('the detail\'s administrators panel lists the §15 set and adds a directory
   const panel = detail.locator('arazzo-administrators-panel');
   await expect(panel).toBeVisible();
 
-  // The demo-seeded set (demo-seed.js administratorsSeed): the Growth and Platform teams.
-  await expect(panel.locator('.arow')).toHaveCount(2);
+  // The demo-seeded set (demo-seed.js administratorsSeed): the administrator persona plus the Growth and
+  // Platform teams (alice@ops is seated on every set so the demo's approver inbox can light up).
+  await expect(panel.locator('.arow')).toHaveCount(3);
+  await expect(panel.locator('.arow', { hasText: 'Alice (Ops)' })).toHaveCount(1);
   await expect(panel.locator('.arow', { hasText: 'Growth' })).toHaveCount(1);
   await expect(panel.locator('.arow', { hasText: 'Platform' })).toHaveCount(1);
 
@@ -336,7 +338,7 @@ test('the detail\'s administrators panel lists the §15 set and adds a directory
   await expect(team).toBeVisible();
   await team.click();
   await panel.locator('.addbtn').click();
-  await expect(panel.locator('.arow')).toHaveCount(3);
+  await expect(panel.locator('.arow')).toHaveCount(4);
   await expect(panel.locator('.arow', { hasText: 'Payments' })).toHaveCount(1);
   assertClean(errors);
 });

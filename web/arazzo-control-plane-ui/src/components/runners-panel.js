@@ -52,7 +52,8 @@ class ArazzoRunners extends ArazzoElement {
     if (!this.isConnected) return;
     if (name === 'poll') this.startPolling();
     else if (name === 'stale-after' || name === 'scopes') this.renderBody(); // scopes is informational here; never reset the client
-    else { this._client = undefined; this.reload(); } // base-url, page-size
+    else if (name === 'page-size') this.reload(); // page size never invalidates an injected client
+    else { this._client = undefined; this.reload(); } // base-url
   }
 
   buildClient() {

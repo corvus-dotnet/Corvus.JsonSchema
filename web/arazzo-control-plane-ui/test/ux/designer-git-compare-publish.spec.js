@@ -258,11 +258,11 @@ test('commit writes the document and scenario files to the branch as the signed-
   await expect(result.locator('a', { hasText: '#42' })).toBeVisible();
   await expect(page.locator('#save-status')).toHaveText('committed to GitHub');
 
-  // ANOMALY (demo/mock-api.js ~1602-1616): the mock's commit writes the tree but never appends to
-  // its seeded gitHubCommits, so the history list does NOT gain a row — it reloads at 3 commits.
-  // The real broker's history would show the new commit; assert what holds in the mock.
-  await expect(page.locator('#gitpanel .hist-commit')).toHaveCount(3);
-  await expect(page.locator('#gitpanel .hist .count')).toContainText('3 commits');
+  // The commit lands in the branch history, newest first — the list reloads with the new commit at
+  // its head, as the real broker's history would show it.
+  await expect(page.locator('#gitpanel .hist-commit')).toHaveCount(4);
+  await expect(page.locator('#gitpanel .hist-commit').first().locator('.msg')).toHaveText('sync the order flow from the designer');
+  await expect(page.locator('#gitpanel .hist .count')).toContainText('4 commits');
   assertClean(errors);
 });
 
@@ -271,16 +271,11 @@ test('pull (Load from branch) is danger-confirmed and replaces the working copy 
   await openDesigner(page);
   await addStepFromRail(page); // a local edit that the pull will discard (etag bumped by the flush)
 
-  // ANOMALY (demo/designer.html:898 + :934): if a STEP NODE is still selected when the pull
-  // replaces the document with one that lacks the current workflow, showSelection re-renders
-  // against `doc.workflows.find(w => w.workflowId === select.value)` — undefined for the stale
-  // workflow id — and `wf.steps.findIndex` throws (three console TypeErrors). Clear the selection
-  // (back to the document settings page) before pulling so the replace itself is what's tested.
-  await page.evaluate(() => {
-    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
-      detail: { selection: null }, bubbles: true, composed: true,
-    }));
-  });
+  // Pull with a STEP NODE still selected — the replacement document lacks the current workflow, so
+  // the designer must clear the stale selection back to the document settings page instead of
+  // re-rendering an inspector against a workflow that no longer exists (this used to throw three
+  // console TypeErrors, which assertClean would catch).
+  await page.locator('#surface .node').first().click();
 
   await openGitTab(page);
   await connectGitHub(page);
@@ -296,6 +291,8 @@ test('pull (Load from branch) is danger-confirmed and replaces the working copy 
   await expect(page.locator('#workflow')).toHaveValue('adopt-pet-v1');
   await page.locator('#surface .node[data-id="findPet"]').waitFor({ state: 'attached' });
   await expect(page.locator('#save-status')).toHaveText('pulled from GitHub');
+  // The stale step selection was cleared to the document settings page, not re-rendered.
+  await expect(page.locator('#selection')).toHaveText('(document)');
   assertClean(errors);
 });
 
@@ -344,17 +341,12 @@ test('publish validates + re-runs the suite server-side and mints a draft catalo
   await expect(ask.locator('.in-field[data-key="email"]')).toHaveValue('you@example.com');
   await ask.locator('.confirm').click();
 
-  // Validated + suite re-run server-side; the new version starts as a draft and the toast points
+  // Validated + suite re-run server-side; the new version starts as a draft, the toast narrates
+  // the server-attested evidence counts (the publish response carries evidence.suite) and points
   // at the catalog promotion flow.
-  //
-  // ANOMALY (demo/designer.html:1882-1883 vs demo/mock-api.js:3063 + :811-830): the host reads
-  // `version.evidence?.suite` to narrate the passed/total evidence counts ("2/2 scenarios green"),
-  // but the mock's publish responds with toCatalogSummary(version), which STRIPS the evidence it
-  // just attached (`_evidence` never maps to `evidence`). So in mock mode the toast can never
-  // carry the counts — assert the publish outcome that holds and leave the counts to live mode.
   const toast = page.locator('#toast');
   await expect(toast).toBeVisible();
-  await expect(toast).toContainText('Published place-order v1 (draft)');
+  await expect(toast).toContainText('Published place-order v1 (draft) — 2/2 scenarios green');
   await expect(toast).toContainText('Promote it from the catalog when ready.');
   await expect(page.locator('#save-status')).toHaveText('published place-order v1 (draft)');
   assertClean(errors);

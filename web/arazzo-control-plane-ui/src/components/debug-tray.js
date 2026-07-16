@@ -296,7 +296,7 @@ class ArazzoDebugTray extends ArazzoElement {
     const parts = [];
     if (record.requests?.length) {
       parts.push('<h4>exchanges — as sent</h4><table>' + record.requests.map((x) =>
-        `<tr><td>${escapeHtml(x.method.toUpperCase())} ${escapeHtml(x.path)}</td><td class="v">${x.status}</td>
+        `<tr><td>${escapeHtml(x.method.toUpperCase())} ${escapeHtml(x.path)}</td><td class="v">${x.status ?? '<span class="muted">—</span>'}</td>
          <td>${x.responseBody !== undefined ? escapeHtml(JSON.stringify(x.responseBody)) : '<span class="muted">—</span>'}</td></tr>`
         + (x.requestBody !== undefined ? `<tr><td colspan="3" class="sent">→ ${escapeHtml(JSON.stringify(x.requestBody))}</td></tr>` : '')).join('') + '</table>');
     }

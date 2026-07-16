@@ -54,6 +54,7 @@ class ArazzoEnvironments extends ArazzoElement {
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
     if (name === 'scopes') this.renderBody();
+    else if (name === 'page-size') this.reload(); // page size never invalidates an injected client
     else { this._client = undefined; this.reload(); }
   }
 
@@ -199,10 +200,11 @@ class ArazzoEnvironments extends ArazzoElement {
     const managementTags = mgmtEd ? mgmtEd.tags : [];
     // The checkbox state IS the desired requirement — a present requireEvidence replaces the stored flag (§4.6).
     const requireEvidence = this.$('.d-requireEvidence')?.checked ?? false;
+    const allowsDraftRuns = this.$('.d-allowsDraftRuns')?.checked ?? false;
     const saveBtn = this.$('.d-save');
     if (saveBtn) saveBtn.disabled = true;
     try {
-      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags, requireEvidence });
+      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags, requireEvidence, allowsDraftRuns });
       this._detail = updated;
       const i = this._envs.findIndex((e) => e.name === updated.name);
       if (i >= 0) this._envs[i] = { ...this._envs[i], ...updated };
@@ -237,7 +239,7 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', displayName: '', description: '', managementTags: [], requireEvidence: false, formError: null };
+    this._form = { name: '', displayName: '', description: '', managementTags: [], requireEvidence: false, allowsDraftRuns: false, formError: null };
     this.renderEditor();
     this.$('dialog').showModal();
     this.$('.f-name')?.focus();
@@ -260,6 +262,7 @@ class ArazzoEnvironments extends ArazzoElement {
         displayName: (form.displayName || '').trim() || undefined,
         description: (form.description || '').trim() || undefined,
         requireEvidence: form.requireEvidence || undefined,
+        allowsDraftRuns: form.allowsDraftRuns || undefined,
         managementTags: managementTags.length ? managementTags : undefined,
       });
       this.closeEditor();
@@ -445,12 +448,15 @@ class ArazzoEnvironments extends ArazzoElement {
             <div class="field"><span>Description</span><textarea class="d-description" placeholder="(optional)">${escapeHtml(e.description || '')}</textarea></div>
             <label class="check"><input type="checkbox" class="d-requireEvidence"${e.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion</label>
             <div class="hint">When set, a workflow version may be made available here only if its server-attested scenario suite passed at publish (workflow-designer §4.6).</div>
+            <label class="check"><input type="checkbox" class="d-allowsDraftRuns"${e.allowsDraftRuns ? ' checked' : ''}> Allow draft debug runs (§18)</label>
+            <div class="hint">A development-class posture: the designer may run a working copy's draft here. Leave off for shared or production-class environments.</div>
             <div class="field"><span>Management tags</span><arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor></div>
             <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</div></div>
             ${e.requireEvidence ? '<div class="field"><span>Promotion</span><div>Requires green publish evidence (§4.6).</div></div>' : ''}
+            ${e.allowsDraftRuns ? '<div class="field"><span>Draft runs</span><div>Allows §18 draft debug runs.</div></div>' : ''}
             <div class="field"><span>Management tags</span><div>${Array.isArray(e.managementTags) && e.managementTags.length
               ? `<span class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</span>`
               : '<span class="muted">None — visible to everyone within reach.</span>'}</div></div>
@@ -503,6 +509,7 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
       <label class="check"><input type="checkbox" class="f-requireEvidence"${f.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion (§4.6)</label>
+      <label class="check"><input type="checkbox" class="f-allowsDraftRuns"${f.allowsDraftRuns ? ' checked' : ''}> Allow draft debug runs (§18 — development-class only)</label>
       <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
       <div class="hint">Scope who may manage and see this environment (§14.2); an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
@@ -511,6 +518,7 @@ class ArazzoEnvironments extends ArazzoElement {
     content.querySelector('.f-displayName').addEventListener('input', (ev) => { f.displayName = ev.target.value; });
     content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
     content.querySelector('.f-requireEvidence').addEventListener('change', (ev) => { f.requireEvidence = ev.target.checked; });
+    content.querySelector('.f-allowsDraftRuns').addEventListener('change', (ev) => { f.allowsDraftRuns = ev.target.checked; });
     const mgmtEd = content.querySelector('.f-mgmt-editor');
     mgmtEd.tags = Array.isArray(f.managementTags) ? f.managementTags : [];
     mgmtEd.addEventListener('tags-changed', () => { f.managementTags = mgmtEd.tags; });

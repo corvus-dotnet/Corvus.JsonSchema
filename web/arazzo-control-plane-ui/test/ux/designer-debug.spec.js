@@ -25,13 +25,11 @@ test('the run dialog offers only draft-run environments beside the mock target, 
   // Mock target selected: the §18 hint is hidden and the readiness row carries no content.
   await expect(page.locator('#run-inputs-env-hint')).toBeHidden();
   await expect(page.locator('#run-inputs-readiness')).toBeEmpty();
-  // ANOMALY (documented, not endorsed): the fault row and readiness row are MARKED hidden for the
-  // mock target, but their inline `display:flex` defeats the UA `[hidden]` rule, so the ⚡
-  // transient-fault checkbox still renders where it is meaningless. Assert the intent (the
-  // attribute) — a designer.html fix (e.g. `[hidden]{display:none!important}` in the dialog)
-  // would let these become toBeHidden.
-  await expect(page.locator('#run-inputs-fault')).toHaveAttribute('hidden', '');
-  await expect(page.locator('#run-inputs-readiness')).toHaveAttribute('hidden', '');
+  // The fault row and readiness row are hidden for the mock target — the ⚡ transient-fault
+  // opt-in is meaningless against the simulator (the page's [hidden]{display:none!important}
+  // reset keeps the attribute effective over the rows' inline display).
+  await expect(page.locator('#run-inputs-fault')).toBeHidden();
+  await expect(page.locator('#run-inputs-readiness')).toBeHidden();
 
   // Switching to the real environment surfaces the debug-run hint, the transient-fault opt-in,
   // and the per-source credential readiness for THAT environment (both sources bound ✓ in dev).
@@ -250,19 +248,22 @@ test('step over provides outputs in the context pane and the replay marks the st
   await expect(tray.locator('.chip')).toContainText(/suspended/);
 
   // The context pane offers step over on the frame's step (authorize-payment at the cursor); the
-  // inline editor opens seeded with the step's OBSERVED outputs. (The working-copy schemas
-  // endpoint types no step outputs, so the editor serves its raw-JSON tier — see the mock's
-  // workingCopySchemasFor, whose `outputs` map stays empty.)
+  // inline editor opens TYPED by the step's declared outputs (the working-copy schemas endpoint
+  // maps each declared output name to its schema, so authorize-payment gets one field:
+  // authorizationId). The document declares no shape for that output, so the field itself is a
+  // per-output JSON value editor — seeded with the step's OBSERVED output (the mock's
+  // schema-shaped body skeleton, the empty string).
   await tray.locator('.override').click();
   const form = tray.locator('.ovr-form');
   await expect(form).toBeVisible();
-  await expect(form.locator('.why')).toContainText(/provide an object|typed by/);
-  const jsonTier = form.locator('.ovr-editor textarea');
-  await expect(jsonTier).toBeVisible();
-  await expect(jsonTier).toHaveValue(/authorizationId/); // seeded from the observed outputs
+  await expect(form.locator('.why')).toContainText("typed by authorize-payment's declared outputs");
+  const field = form.locator('.ovr-editor .field', { hasText: 'authorizationId' });
+  await expect(field).toBeVisible();
+  const valueIn = field.locator('textarea');
+  await expect(valueIn).toHaveValue('""'); // seeded from the observed outputs
 
   // Provide outputs and replay: the step must NOT execute this time.
-  await jsonTier.fill('{"authorizationId":"auth-override-1","status":"authorized"}');
+  await valueIn.fill('"auth-override-1"');
   await form.locator('.ovr-apply').click();
 
   // The replay lands (suspended at the wait again) with authorize-payment SKIPPED: the row wears

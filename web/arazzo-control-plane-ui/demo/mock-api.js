@@ -1530,7 +1530,11 @@ export function createMockControlPlane(options = {}) {
       const steps = {};
       for (const step of wf.steps ?? []) {
         if (!step.stepId) continue;
-        const entry = { outputs: {} };
+        // Server parity: the baked schemas type each step's DECLARED outputs as a name → schema
+        // map (the real server resolves precise types; demo-grade = an open schema per declared
+        // name), so the tray's step-over editor gets a typed form instead of the raw-JSON tier.
+        const declaredOutputs = step.outputs && typeof step.outputs === 'object' ? Object.keys(step.outputs) : [];
+        const entry = { outputs: Object.fromEntries(declaredOutputs.map((name) => [name, {}])) };
         for (const [sourceName, doc] of Object.entries(attachedDocs)) {
           for (const [pathTemplate, methods] of Object.entries(doc.paths ?? {})) {
             for (const [method, op] of Object.entries(methods ?? {})) {
@@ -1611,7 +1615,15 @@ export function createMockControlPlane(options = {}) {
         write(specPath, doc);
       }
       if (dir) for (const scenario of wc.scenarios ?? []) write(`${dir}/${scenario.name}.scenario.json`, scenario);
-      const result = { files };
+      // Server parity: a commit lands on the branch history, newest first, authored by the
+      // signed-in identity — the history browser must gain the row it just made.
+      gitHubCommits.unshift({
+        sha: Array.from({ length: 40 }, (_, i) => 'abcdef0123456789'[(gitHubCommits.length * 7 + i * 3) % 16]).join(''),
+        message: body.message,
+        author: 'Octo Cat',
+        date: iso(0),
+      });
+      const result = { files, sha: gitHubCommits[0].sha };
       if (body.pullRequest) result.pullRequest = { number: 42, url: `https://github.example/${binding.owner}/${binding.repo}/pull/42` };
       return json(result);
     }
@@ -1730,6 +1742,22 @@ export function createMockControlPlane(options = {}) {
     const requiredScope = requiredScopeFor(method, path);
     if (requiredScope && !persona.scopes.has(requiredScope)) {
       return problem(403, 'Insufficient scope', `This action requires the '${requiredScope}' scope, which the current persona does not hold.`);
+    }
+
+    // Bounded counts (server parity): every paged family exposes GET <list-path>/count taking the
+    // SAME filters as its list. Parity by construction: re-enter the list route with a large page
+    // and count the first array in its payload — the count can never drift from the list. This
+    // also stops '/catalog/count' falling into the catalog route as a base-workflow id.
+    if (method === 'GET' && /\/count\/?$/.test(path)) {
+      const qs = new URLSearchParams(u.searchParams);
+      qs.set('limit', '1000');
+      qs.delete('pageToken');
+      const listResponse = await handle(`${u.origin}${path.replace(/\/count\/?$/, '')}?${qs}`, { method: 'GET' });
+      if (listResponse.status !== 200) return listResponse;
+      const payload = await listResponse.json();
+      const items = Object.values(payload).find(Array.isArray);
+      if (!items) return problem(404, 'Not countable');
+      return json({ count: items.length, capped: items.length >= 1000 });
     }
 
     const versionAvailabilityResponse = handleVersionAvailability(path, method, u.searchParams);
@@ -3060,7 +3088,9 @@ export function createMockControlPlane(options = {}) {
         },
       };
       catalog.push(version);
-      return json(toCatalogSummary(version), 201);
+      // Server parity: the publish response carries the attested evidence (the toast reads
+      // evidence.suite.passed/total) — the summary alone strips what publish just attested.
+      return json({ ...toCatalogSummary(version), evidence: version._evidence }, 201);
     }
 
     const scenarioRun = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/([^/]+)\/run\/?$/);
@@ -4225,6 +4255,8 @@ export function createMockControlPlane(options = {}) {
     };
     // Promotion readiness (workflow-designer §4.6): the environment may require green publish evidence.
     if (typeof body.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
+    // §18: a development-class environment may allow draft debug runs from creation.
+    if (typeof body.allowsDraftRuns === 'boolean') e.allowsDraftRuns = body.allowsDraftRuns;
     environments.push(e);
     // Creating an environment grants the creator administration of it (§7.7), mirroring catalog version creation.
     environmentAdministrators[e.name] = [adminGrant([{ dimension: 'sys:sub', value: actingSubject() }], 'person', 'You (creator)')];
@@ -4249,6 +4281,8 @@ export function createMockControlPlane(options = {}) {
     if (body?.description !== undefined) e.description = body.description;
     // A present requireEvidence replaces the promotion-readiness requirement (§4.6); absent leaves it unchanged.
     if (typeof body?.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
+    // Contract parity: EnvironmentUpdate carries allowsDraftRuns (§18 draft-run posture).
+    if (typeof body?.allowsDraftRuns === 'boolean') e.allowsDraftRuns = body.allowsDraftRuns;
     e.lastUpdatedBy = actingSubject(); e.lastUpdatedAt = iso(0); e.etag = nextEtag();
     return json(structuredClone(e));
   }

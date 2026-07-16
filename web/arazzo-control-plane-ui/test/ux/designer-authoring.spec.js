@@ -446,11 +446,13 @@ test('detaching a source that steps bind is confirm-gated with the consequence s
   const payments = browser.locator('.group-head[data-name="payments"]');
   await expect(payments).toBeVisible();
 
-  // The confirm names what breaks: steps bound to its operations lose their surface.
+  // The confirm names what breaks (steps bound to its operations lose their surface) AND what stays
+  // (the document's sourceDescriptions declaration — a detach never edits the document).
   await payments.locator('button.detach').click();
   const ask = browser.locator('arazzo-input-dialog');
   await expect(ask.locator('dialog')).toBeVisible();
-  await expect(ask.locator('.message')).toContainText('steps bound to its operations lose their surface');
+  await expect(ask.locator('.message')).toContainText('Steps bound to its operations lose their surface');
+  await expect(ask.locator('.message')).toContainText('the sourceDescriptions declaration stays in the document');
 
   // Cancelling keeps the attachment.
   await ask.locator('button.cancel').click();

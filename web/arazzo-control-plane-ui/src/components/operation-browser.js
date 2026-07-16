@@ -324,8 +324,8 @@ class ArazzoOperationBrowser extends ArazzoElement {
       const sure = await this.$('.ask').ask({
         title: `Detach '${name}'?`,
         message: inline
-          ? 'Its sourceDescriptions declaration goes with it and steps bound to its operations lose their surface. The stored document is kept for restore until you leave this working copy.'
-          : 'Its sourceDescriptions declaration goes with it. The source stays registered — it can be re-attached from the registry at any time.',
+          ? 'Steps bound to its operations lose their surface; the sourceDescriptions declaration stays in the document (remove it there if it is no longer wanted). The stored document is kept for restore until you leave this working copy.'
+          : 'Steps bound to its operations lose their surface; the sourceDescriptions declaration stays in the document. The source stays registered — it can be re-attached from the registry at any time.',
         confirmLabel: 'Detach',
         danger: true,
       });

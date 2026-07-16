@@ -131,6 +131,15 @@ class ArazzoCatalogDetail extends ArazzoElement {
       if (seq !== this._reqSeq) return;
       this._version = version;
       this._loading = false;
+      // The detail painted optimistically from the row summary; this authoritative repaint must
+      // not destroy an edit the operator already started in the gap (e.g. the tag editor). Defer
+      // the rebuild until focus leaves the editing element.
+      if (this.shadowRoot.activeElement) {
+        this.shadowRoot.activeElement.addEventListener(
+          'focusout', () => { if (seq === this._reqSeq) this.renderBody(); }, { once: true });
+        return;
+      }
+
       this.renderBody();
     } catch (err) {
       if (seq !== this._reqSeq) return;

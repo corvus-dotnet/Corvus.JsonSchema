@@ -32,6 +32,12 @@ const securityBindings = [
   { id: 'bind-2', claimType: 'role', claimValue: 'sre', read: { unrestricted: true }, write: { ruleNames: ['reach-payments', 'reach-onboarding'] }, purge: { unrestricted: false }, order: 1, description: 'SRE — read everything; write the payments and onboarding domains.', createdBy: 'priya@example.com', createdAt: ago(5 * day), etag: 'etag-b2' },
   { id: 'bind-3', claimType: 'team', claimValue: 'growth', read: { ruleNames: ['reach-onboarding'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 2, description: 'Growth team — read the onboarding domain.', createdBy: 'priya@example.com', createdAt: ago(4 * day), etag: 'etag-b3' },
   { id: 'bind-4', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 3, description: 'Ada Lovelace — read the payments domain (a direct person grant).', createdBy: 'priya@example.com', createdAt: ago(4 * day), etag: 'etag-b4' },
+  // §16.5.2/§16.5.3 — the elevation shapes, so the Access Overview's resolved capability view has
+  // something real to show on the demo page: an approval-written time-boxed ACTIVE grant (scopes
+  // confer until expiry) and an approver-granted ELIGIBILITY (confers nothing active; may
+  // self-elevate). Approval-service-authored — the UI's own grants editor never writes scopes.
+  { id: 'bind-5', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { ruleNames: ['reach-payments'] }, purge: { unrestricted: false }, order: 4, description: 'On-call elevation for Ada Lovelace (approved access request).', scopes: ['runs:read', 'runs:write'], expiresAt: ago(-6 * hr), createdBy: 'approval-service', createdAt: ago(2 * hr), etag: 'etag-b5' },
+  { id: 'bind-6', claimType: 'team', claimValue: 'growth', read: { unrestricted: false }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 5, description: 'Eligibility: Growth may self-elevate to re-run onboarding.', scopes: ['runs:write'], expiresAt: ago(-3 * day), eligibleOnly: true, createdBy: 'approval-service', createdAt: ago(1 * day), etag: 'etag-b6' },
 ];
 
 // Resolvable grantees for the pickers — people, teams, a role, a workflow. No tenant grantee.
@@ -45,14 +51,25 @@ const grantees = [
 ];
 
 // Workflow administrators — teams, never tenant. adminGrant stamps the same stable digest the picker/remove round-trip uses.
+// Administration admits by sys:sub (§15 membership against the persona's subject), so the
+// administrator persona (alice@ops) is seated on every set — without it no demo persona
+// administers anything and the approver inbox can never light up.
 const administrators = {
   'nightly-reconcile': [
+    adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'Alice (Ops)'),
     adminGrant([{ dimension: 'team', value: 'payments' }], 'team', 'Payments'),
     adminGrant([{ dimension: 'sys:sub', value: 'u-1042' }], 'person', 'Ada Lovelace'),
   ],
   'onboard-customer': [
+    adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'Alice (Ops)'),
     adminGrant([{ dimension: 'team', value: 'growth' }], 'team', 'Growth'),
     adminGrant([{ dimension: 'team', value: 'platform' }], 'team', 'Platform'),
+  ],
+  // The approver-inbox star (req-2001) targets this workflow — its admin set must exist and admit
+  // the administrator persona, or every persona's inbox is empty and the star is fiction.
+  'payments-reconcile': [
+    adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'Alice (Ops)'),
+    adminGrant([{ dimension: 'team', value: 'payments' }], 'team', 'Payments'),
   ],
 };
 

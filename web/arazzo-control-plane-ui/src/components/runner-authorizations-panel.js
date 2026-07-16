@@ -25,7 +25,9 @@ const STATUS_COLOR = {
   Revoked: 'var(--arazzo-status-faulted, #d4351c)',
 };
 
-const STATUS_FILTERS = ['', 'Pending', 'Authorized', 'Revoked'];
+// The API has no "all statuses" query — an absent status DEFAULTS to Pending (the inbox), so an
+// "all statuses" option would lie. The filter offers exactly the three real states.
+const STATUS_FILTERS = ['Pending', 'Authorized', 'Revoked'];
 
 class ArazzoRunnerAuthorizations extends ArazzoElement {
   static get observedAttributes() {
@@ -252,7 +254,7 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
     if (!toolbar) return;
     const current = this.effectiveStatus();
     const statusOptions = STATUS_FILTERS.map((s) =>
-      `<option value="${s}"${s === current ? ' selected' : ''}>${s || 'all statuses'}</option>`).join('');
+      `<option value="${s}"${s === current ? ' selected' : ''}>${s}</option>`).join('');
     // A single environment is an OPTIONAL filter (absent = every environment you administer).
     toolbar.innerHTML = `
       <input class="env" type="text" placeholder="All environments you administer" value="${escapeHtml(this.environment)}">
