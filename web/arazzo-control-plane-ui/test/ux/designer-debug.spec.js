@@ -19,7 +19,7 @@ test('the run dialog offers only draft-run environments beside the mock target, 
   const options = page.locator('#run-inputs-env option');
   await expect(options).toHaveCount(2);
   await expect(options.nth(0)).toHaveText('Mocks (simulated)');
-  await expect(options.nth(1)).toHaveText(/Development — debug run \(§18\)/);
+  await expect(options.nth(1)).toHaveText(/Development — debug run/);
   expect(await options.evaluateAll((os) => os.map((o) => o.value))).toEqual(['', 'development']);
 
   // Mock target selected: the §18 hint is hidden and the readiness row carries no content.

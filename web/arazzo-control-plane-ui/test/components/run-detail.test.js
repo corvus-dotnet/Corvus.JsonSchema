@@ -82,3 +82,50 @@ describe('<arazzo-run-detail> polling vs open modals', () => {
     ok(!el.hasOpenModal(), 'polling resumes once the modal closes');
   });
 });
+
+describe('<arazzo-run-detail> progress projection', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  // The operator's "what has this run done": the catalogued step list with the run's POSITION
+  // marked. Earlier entries are "dispatched", never "completed" (goto/retries can revisit), and
+  // the raw cursor/ETag internals no longer leak into the pane.
+  it('a running run shows the step list with its position marked, and no internals', async () => {
+    el = detailWithMock('run-33aa71f9'); // Running, onboard-customer-v1, position 3 of 4
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden ? p : null;
+    });
+    ok(/Position 3 of 4/.test(prog.textContent), 'a position line, not a raw cursor');
+    equal(prog.querySelectorAll('.prog-steps li').length, 4, 'the catalogued step list renders');
+    ok(prog.querySelector('.pos'), 'the next step is marked');
+    equal(prog.querySelectorAll('.prog-steps li.dispatched').length, 3, 'earlier steps read as dispatched');
+    const dl = el.shadowRoot.querySelector('dl');
+    ok(!dl.textContent.includes('ETag'), 'the concurrency token stays internal');
+    ok(!dl.textContent.includes('Cursor'), 'the raw cursor row is gone');
+  });
+
+  it('a suspended run whose steps all dispatched says so instead of inventing a next step', async () => {
+    el = detailWithMock('run-1b88de40'); // Suspended, adopt-pet-v1, cursor past the last step
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden ? p : null;
+    });
+    ok(prog.textContent.includes('All 4 steps dispatched'), 'the at-end suspension is stated plainly');
+    ok(prog.textContent.includes('waiting'), 'and points at the wait record');
+  });
+
+  it('a faulted run marks the faulted step in the list', async () => {
+    el = detailWithMock('run-dd44ee55'); // Faulted at provisionResources
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden ? p : null;
+    });
+    const fault = prog.querySelector('.pos.fault');
+    ok(fault, 'the faulted marker renders');
+    ok(fault.closest('li').textContent.includes('provisionResources'), 'on the step the fault record names');
+  });
+});

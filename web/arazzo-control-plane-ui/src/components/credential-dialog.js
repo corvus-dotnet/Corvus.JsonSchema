@@ -823,7 +823,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
             <fieldset class="mgmt-fieldset">
               <legend>Management tags</legend>
-              <div><label>Who may administer the binding (§14.2)</label><div class="mgmt-slot"></div></div>
+              <div><label>Who may administer the binding</label><div class="mgmt-slot"></div></div>
               <div class="usage-hint">An administrator may re-tag on update; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             </fieldset>
 

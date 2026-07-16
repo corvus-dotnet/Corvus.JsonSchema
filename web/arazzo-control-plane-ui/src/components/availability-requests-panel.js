@@ -329,12 +329,15 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
     if (!thead) return;
     thead.innerHTML = this.view === 'mine'
       ? '<tr><th>Workflow</th><th>Version</th><th>Environment</th><th>Status</th><th>Requested</th><th></th></tr>'
-      : '<tr><th>Workflow</th><th>Version</th><th>Environment</th><th>Requester</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>';
+      : (this.effectiveStatus() === 'Pending'
+        ? '<tr><th>Workflow</th><th>Version</th><th>Environment</th><th>Requester</th><th>Status</th><th>Requested</th><th></th></tr>'
+        : '<tr><th>Workflow</th><th>Version</th><th>Environment</th><th>Requester</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>');
   }
 
   /** The number of table columns for the current view (My requests: 6; the approver inbox adds Requester + Decision: 8). */
   columnCount() {
-    return this.view === 'mine' ? 6 : 8;
+    if (this.view === 'mine') return 6;
+    return this.effectiveStatus() === 'Pending' ? 7 : 8;
   }
 
   /** A contextual empty-state message for the current view + filters. */
@@ -421,7 +424,7 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
         <td><span class="who">${escapeHtml(r.requesterLabel || r.createdBy)}</span>${r.reason ? `<div class="reason">${escapeHtml(r.reason)}</div>` : ''}</td>
         <td>${this.statusBadge(r)}</td>
         <td><span title="${escapeHtml(absoluteTime(r.createdAt))}">${escapeHtml(relativeTime(r.createdAt))}</span></td>
-        <td>${decision}</td>
+        ${this.effectiveStatus() === 'Pending' ? '' : `<td>${decision}</td>`}
         <td><div class="actions">${actions}</div></td>
       </tr>`;
   }

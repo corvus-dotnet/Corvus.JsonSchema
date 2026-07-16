@@ -81,3 +81,29 @@ describe('<arazzo-credentials> (Connections master-detail)', () => {
     await waitFor(() => !row(el, 'petstore@production'), 'the revoked row is gone from the list');
   });
 });
+describe('<arazzo-credentials> creation lives on the page named after the job', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  it('New credential… opens the guided dialog in create mode', async () => {
+    el = panel();
+    mount(el);
+    await nextEvent(table(el), 'loaded');
+    const btn = el.shadowRoot.querySelector('.new');
+    ok(btn && !btn.hidden, 'the create entry point exists here');
+    btn.click();
+    const dlg = el.shadowRoot.querySelector('arazzo-credential-dialog');
+    const opened = await waitFor(() => dlg.shadowRoot.querySelector('dialog[open]'));
+    ok(opened, 'the dialog opened');
+    const src = dlg.shadowRoot.querySelector('#sourceName');
+    equal(src.value, '', 'create mode starts with a free source choice');
+    ok(!src.disabled, 'the source is not locked on the generic path');
+  });
+
+  it('a read-only caller gets no create entry point', async () => {
+    el = panel('credentials:read');
+    mount(el);
+    await nextEvent(table(el), 'loaded');
+    ok(el.shadowRoot.querySelector('.new').hidden, 'New credential… is hidden without credentials:write');
+  });
+});

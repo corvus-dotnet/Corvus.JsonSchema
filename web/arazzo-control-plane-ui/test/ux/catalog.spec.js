@@ -104,7 +104,8 @@ test('the detail shows the content hash and offers every download: package, work
   const detail = await openVersionDetail(page, 'onboard-customer');
 
   // The seeded hash is the base+version padded to 64 chars, with a copy affordance beside it.
-  await expect(detail.locator('[part="hash"]')).toContainText('onboard-customer1');
+  await expect(detail.locator('[part="hash"]')).toContainText('onboard-cust'); // truncated for reading…
+  await expect(detail.locator('[part="hash"] span').first()).toHaveAttribute('title', /^onboard-customer1/); // …full value one hover (and one copy) away
   await expect(detail.locator('.copy-hash')).toBeVisible();
 
   // Downloads: the package and the workflow document, plus one Download per referenced source.
@@ -137,7 +138,8 @@ test('the evidence badge attests the publish suite: green when all passed, red o
   // onboard-customer v1 predates evidence: no badge renders at all.
   await page.locator('arazzo-catalog-table tbody tr[data-key="onboard-customer"]').click();
   await expect(detail.locator('header .ver')).toHaveText('onboard-customer · v1');
-  await expect(detail.locator('[part="hash"]')).toContainText('onboard-customer1');
+  await expect(detail.locator('[part="hash"]')).toContainText('onboard-cust'); // truncated for reading…
+  await expect(detail.locator('[part="hash"] span').first()).toHaveAttribute('title', /^onboard-customer1/); // …full value one hover (and one copy) away
   await expect(detail.locator('[part="evidence"]')).toHaveCount(0);
   assertClean(errors);
 });

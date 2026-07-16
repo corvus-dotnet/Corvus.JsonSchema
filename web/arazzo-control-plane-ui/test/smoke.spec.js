@@ -57,6 +57,9 @@ test('the time-window filter narrows the list', async ({ page }) => {
   await expect(rows.first()).toBeVisible();
   const before = await rows.count();
 
+  // The date filters live behind a disclosure now (they are the rare filter); open it first.
+  await page.locator('arazzo-control-plane .timewindow summary').click();
+
   // "Created before" 30 days ago — only the older seeded runs remain.
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
   const local = new Date(thirtyDaysAgo.getTime() - thirtyDaysAgo.getTimezoneOffset() * 60000).toISOString().slice(0, 16);

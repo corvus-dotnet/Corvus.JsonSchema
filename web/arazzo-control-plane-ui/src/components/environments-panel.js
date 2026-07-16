@@ -15,7 +15,7 @@
 // never be left without an administrator. Mutating controls are gated by environments:write.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
+import { actorLabel, ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
 import './tag-editor.js';
 import './administrators-panel.js';
 import './pager.js';
@@ -282,6 +282,7 @@ class ArazzoEnvironments extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
+        .opt { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; margin: 6px 0; display: grid; gap: 4px; }
         :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
         .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
         .layout > * { min-height: 0; }
@@ -433,30 +434,34 @@ class ArazzoEnvironments extends ArazzoElement {
     const e = this._detail;
     const writable = this.canWrite;
     const auditUpdated = e.lastUpdatedAt
-      ? ` · updated ${escapeHtml(relativeTime(e.lastUpdatedAt))}${e.lastUpdatedBy ? ` by ${escapeHtml(e.lastUpdatedBy)}` : ''}`
+      ? ` · updated ${escapeHtml(relativeTime(e.lastUpdatedAt))}${e.lastUpdatedBy ? ` by ${actorLabel(e.lastUpdatedBy)}` : ''}`
       : '';
     pane.innerHTML = `
       <div class="panel detail" part="detail">
         <div class="section">
           <div class="dhead"><span class="dtitle">${escapeHtml(e.displayName || e.name)}</span><span class="dname">${escapeHtml(e.name)}</span><button class="d-close" type="button" title="Close" aria-label="Close">✕</button></div>
-          <div class="audit">Created ${escapeHtml(relativeTime(e.createdAt))}${e.createdBy ? ` by ${escapeHtml(e.createdBy)}` : ''}${auditUpdated}</div>
+          <div class="audit">Created ${escapeHtml(relativeTime(e.createdAt))}${e.createdBy ? ` by ${actorLabel(e.createdBy)}` : ''}${auditUpdated}</div>
         </div>
         <div class="section">
           <h4>Details</h4>
           ${writable ? `
             <div class="field"><span>Display name</span><input class="d-displayName" value="${escapeHtml(e.displayName || '')}" placeholder="${escapeHtml(e.name)}"></div>
             <div class="field"><span>Description</span><textarea class="d-description" placeholder="(optional)">${escapeHtml(e.description || '')}</textarea></div>
-            <label class="check"><input type="checkbox" class="d-requireEvidence"${e.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion</label>
-            <div class="hint">When set, a workflow version may be made available here only if its server-attested scenario suite passed at publish (workflow-designer §4.6).</div>
-            <label class="check"><input type="checkbox" class="d-allowsDraftRuns"${e.allowsDraftRuns ? ' checked' : ''}> Allow draft debug runs (§18)</label>
-            <div class="hint">A development-class posture: the designer may run a working copy's draft here. Leave off for shared or production-class environments.</div>
+            <div class="opt">
+              <label class="check"><input type="checkbox" class="d-requireEvidence"${e.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion</label>
+              <div class="hint">When set, a workflow version may be made available here only if its server-attested scenario suite passed at publish.</div>
+            </div>
+            <div class="opt">
+              <label class="check"><input type="checkbox" class="d-allowsDraftRuns"${e.allowsDraftRuns ? ' checked' : ''}> Allow draft debug runs</label>
+              <div class="hint">A development-class posture: the designer may run a working copy's draft here. Leave off for shared or production-class environments.</div>
+            </div>
             <div class="field"><span>Management tags</span><arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor></div>
-            <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
+            <div class="hint">Who may manage and see this environment. An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</div></div>
-            ${e.requireEvidence ? '<div class="field"><span>Promotion</span><div>Requires green publish evidence (§4.6).</div></div>' : ''}
-            ${e.allowsDraftRuns ? '<div class="field"><span>Draft runs</span><div>Allows §18 draft debug runs.</div></div>' : ''}
+            ${e.requireEvidence ? '<div class="field"><span>Promotion</span><div>Requires green publish evidence.</div></div>' : ''}
+            ${e.allowsDraftRuns ? '<div class="field"><span>Draft runs</span><div>Allows draft debug runs.</div></div>' : ''}
             <div class="field"><span>Management tags</span><div>${Array.isArray(e.managementTags) && e.managementTags.length
               ? `<span class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</span>`
               : '<span class="muted">None — visible to everyone within reach.</span>'}</div></div>
@@ -515,10 +520,10 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="field"><span>Name</span><input class="f-name" placeholder="qa" value="${escapeHtml(f.name)}"></div>
       <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
-      <label class="check"><input type="checkbox" class="f-requireEvidence"${f.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion (§4.6)</label>
-      <label class="check"><input type="checkbox" class="f-allowsDraftRuns"${f.allowsDraftRuns ? ' checked' : ''}> Allow draft debug runs (§18 — development-class only)</label>
+      <div class="opt"><label class="check"><input type="checkbox" class="f-requireEvidence"${f.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion</label></div>
+      <div class="opt"><label class="check"><input type="checkbox" class="f-allowsDraftRuns"${f.allowsDraftRuns ? ' checked' : ''}> Allow draft debug runs (development-class environments only)</label></div>
       <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
-      <div class="hint">Scope who may manage and see this environment (§14.2); an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
+      <div class="hint">Scope who may manage and see this environment; an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
     `;
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });

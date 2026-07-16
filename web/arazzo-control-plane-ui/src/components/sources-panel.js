@@ -17,6 +17,7 @@ import { ArazzoControlPlaneClient } from '../arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
 import './tag-editor.js';
 import './pager.js';
+import './credential-dialog.js';
 
 class ArazzoSources extends ArazzoElement {
   static get observedAttributes() {
@@ -340,7 +341,7 @@ class ArazzoSources extends ArazzoElement {
           <div class="err"></div>
           <div class="tablescroll">
             <table>
-              <thead><tr><th>Source</th><th>Type</th><th>Description</th><th>Created</th></tr></thead>
+              <thead><tr><th>Source</th><th>Type</th><th>Description</th><th>Created</th><th></th></tr></thead>
               <tbody class="list" part="rows"></tbody>
             </table>
           </div>
@@ -356,6 +357,7 @@ class ArazzoSources extends ArazzoElement {
           <button class="confirm primary" type="button">Register</button>
         </div>
       </dialog>
+      <arazzo-credential-dialog></arazzo-credential-dialog>
     `;
     this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('.new').addEventListener('click', () => this.openCreate());
@@ -365,6 +367,7 @@ class ArazzoSources extends ArazzoElement {
     this.$('.confirm').addEventListener('click', () => this.submitForm());
     this.$('dialog').addEventListener('close', () => { this._form = null; });
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.closeEditor(); });
+    this.$('arazzo-credential-dialog').addEventListener('credential-saved', (e) => this.emit('credential-saved', e.detail));
   }
 
   renderBody() {
@@ -389,8 +392,17 @@ class ArazzoSources extends ArazzoElement {
           <td part="cell"><span class="type-badge">${escapeHtml(s.type || '')}</span></td>
           <td part="cell" class="sdesc">${s.description ? escapeHtml(s.description) : '<span class="muted">—</span>'}</td>
           <td part="cell" class="stime" title="${escapeHtml(absoluteTime(s.createdAt))}">${escapeHtml(relativeTime(s.createdAt))}</td>
+          <td part="cell" class="sact"><button class="cred-add ghost" type="button" data-source="${escapeHtml(s.name)}" title="Add a credential binding for ${escapeHtml(s.name)} in an environment">＋ credential</button></td>
         </tr>`).join('');
       this.$$('.srow').forEach((b) => b.addEventListener('click', () => this.select(b.dataset.name)));
+      // The job a connections admin brings to this page: credential the source. The dialog opens
+      // pre-filled and source-locked; environment and references are the choices being made.
+      this.$$('.cred-add').forEach((btn) => btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dialog = this.$('arazzo-credential-dialog');
+        dialog.client = this.buildClient();
+        dialog.open(null, { sourceName: btn.dataset.source, lockSource: true });
+      }));
     }
 
     this.renderFoot();
@@ -437,7 +449,7 @@ class ArazzoSources extends ArazzoElement {
             <div class="field"><span>Display name</span><input class="d-displayName" value="${escapeHtml(s.displayName || '')}" placeholder="${escapeHtml(s.name)}"></div>
             <div class="field"><span>Description</span><textarea class="d-description" placeholder="(optional)">${escapeHtml(s.description || '')}</textarea></div>
             <div class="field"><span>Management tags</span><arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor></div>
-            <div class="hint">Who may manage and see this source (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
+            <div class="hint">Who may manage and see this source. An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${s.description ? escapeHtml(s.description) : '<span class="muted">—</span>'}</div></div>
@@ -480,7 +492,7 @@ class ArazzoSources extends ArazzoElement {
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
       <div class="field"><span>Document (JSON)</span><textarea class="f-document doc" placeholder='{"openapi":"3.1.0", …}'>${escapeHtml(f.document)}</textarea></div>
       <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
-      <div class="hint">Register the source's OpenAPI or AsyncAPI document so a workflow's <code>sourceDescriptions</code> entry resolves it (§7.6). Management tags scope who may manage and see it (§14.2); the reserved <code>sys:</code> prefix is not allowed.</div>
+      <div class="hint">Register the source's OpenAPI or AsyncAPI document so a workflow's <code>sourceDescriptions</code> entry resolves it. Management tags scope who may manage and see it; the reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
     `;
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });

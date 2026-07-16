@@ -60,6 +60,7 @@ class ArazzoAuthStatus extends HTMLElement {
       if (me.groups?.length) { who.title = me.groups.join(', '); }
       const out = document.createElement('button');
       out.className = 'linklike';
+      out.style.marginLeft = '10px';
       out.type = 'button';
       out.textContent = 'Sign out';
       out.addEventListener('click', () => this.signOut());

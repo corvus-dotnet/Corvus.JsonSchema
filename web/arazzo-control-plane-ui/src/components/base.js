@@ -114,6 +114,7 @@ export const SHARED_CSS = `
   /* A field subheading takes its top spacing from the preceding element's bottom margin — fine after a heading or an
      edit control, but a plain .hint paragraph has none, so a field right after a hint would touch it. Restore the gap. */
   .hint + .field { margin-top: 10px; }
+  .actor-system { color: var(--_muted); font-style: italic; }
   [hidden] { display: none !important; }
 `;
 
@@ -210,14 +211,24 @@ export function securityTagsToText(tags) {
  */
 export function granteeChip(grantee, { showIdentity = true } = {}) {
   const g = grantee || {};
+  const identity = g.identity || [];
+  // One identity presentation everywhere: a resolved label leads when we have one; otherwise the
+  // most human dimension pair stands in (never the raw full tuple as the headline). The issuer pin
+  // is plumbing that repeats on every identity in a single-IdP deployment, so it stays out of the
+  // visible line — the FULL tuple (issuer included) is always one hover away on the title.
+  const primary = identity.find((t) => !String(t.dimension).startsWith('sys:iss') && t.dimension !== 'iss');
+  const derived = primary ? `${primary.dimension.replace(/^sys:/, '')} ${primary.value}` : '';
   const kind = g.kind ? escapeHtml(g.kind) : '';
-  const label = escapeHtml(g.label || g.value || '');
-  const ident = (g.identity || []).map((t) => `${escapeHtml(t.dimension)}=${escapeHtml(t.value)}`).join(' · ');
+  const label = escapeHtml(g.label || g.value || derived);
+  const fullIdent = identity.map((t) => `${escapeHtml(t.dimension)}=${escapeHtml(t.value)}`).join(' · ');
+  const shownIdent = identity
+    .filter((t) => t.dimension !== 'sys:iss' && t.dimension !== 'iss')
+    .map((t) => `${escapeHtml(t.dimension)}=${escapeHtml(t.value)}`).join(' · ');
   const partial = g.complete === false;
-  return `<span class="gchip" part="grantee">`
+  return `<span class="gchip" part="grantee" title="${fullIdent}">`
     + (kind ? `<span class="gbadge${partial ? ' partial' : ''}">${kind}</span>` : '')
     + (label ? `<span class="glabel" title="${label}">${label}</span>` : '')
-    + (showIdentity && ident ? `<span class="gident">${ident}</span>` : '')
+    + (showIdentity && shownIdent && g.label ? `<span class="gident">${shownIdent}</span>` : '')
     + (partial ? `<span class="gpartial" title="A partial identity — a grant matches by exact identity, so it may match no one.">partial</span>` : '')
     + `</span>`;
 }
@@ -231,6 +242,20 @@ export const GRANTEE_CHIP_CSS = `
   .gchip .gident { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
   .gchip .gpartial { font-size: 11px; color: #b45309; }
 `;
+
+/**
+ * Render an audit actor for display: known SERVICE actors (the seed, the control plane itself,
+ * approval machinery) read as system agents, not people. Anything else renders verbatim.
+ * @param {string|null|undefined} actor
+ * @returns {string} Escaped HTML.
+ */
+export function actorLabel(actor) {
+  if (!actor) return '';
+  const system = /^(demo|seed|system|control-plane|bootstrap)$/.test(actor) || /-service$/.test(actor);
+  return system
+    ? `<span class="actor-system" title="a system actor, not a person">⚙ ${escapeHtml(actor)}</span>`
+    : escapeHtml(actor);
+}
 
 /** A compact relative-time string for a past timestamp, e.g. `3m ago`. */
 export function relativeTime(iso, now = Date.now()) {
@@ -266,7 +291,13 @@ export function absoluteTime(iso) {
  * @returns {Promise<boolean>}
  */
 export function confirmDialog(host, options = {}) {
-  const { title = 'Confirm', message = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false } = options;
+  const {
+    title = 'Confirm', message = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false,
+    // Severity-proportional friction: when `challenge` is set, the confirm button stays disabled
+    // until the user types it back. Reserve it for system-critical objects whose loss has a wide
+    // blast radius (a baseline grant, a founder grant) — everyday confirms must stay one click.
+    challenge = null, challengeLabel = 'Type it to confirm',
+  } = options;
   const root = host?.shadowRoot ?? document.body;
   return new Promise((resolve) => {
     const dlg = document.createElement('dialog');
@@ -287,12 +318,19 @@ export function confirmDialog(host, options = {}) {
         dialog.arazzo-confirm button.primary { background: var(--arazzo-accent, #3b6cf6); border-color: var(--arazzo-accent, #3b6cf6); color: #fff; }
         dialog.arazzo-confirm button.danger { background: var(--arazzo-danger, #d4351c); border-color: var(--arazzo-danger, #d4351c); color: #fff; }
         dialog.arazzo-confirm button.ghost { background: transparent; border-color: transparent; }
+        dialog.arazzo-confirm button:disabled { opacity: 0.45; cursor: not-allowed; }
+        dialog.arazzo-confirm .chal { display: block; margin-top: 12px; font-size: 12.5px; color: var(--arazzo-muted, #5f6672); }
+        dialog.arazzo-confirm .chal code { user-select: all; }
+        dialog.arazzo-confirm .chal-in { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; font: inherit; padding: 7px 9px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: var(--arazzo-radius, 8px); background: var(--arazzo-bg, #fff); color: inherit; }
       </style>
       <div class="head" part="confirm-title">${escapeHtml(title)}</div>
-      <div class="content">${escapeHtml(message)}</div>
+      <div class="content">${escapeHtml(message)}${challenge ? `
+        <label class="chal">${escapeHtml(challengeLabel)} <code>${escapeHtml(challenge)}</code>
+          <input class="chal-in" type="text" autocomplete="off" spellcheck="false" aria-label="${escapeHtml(challengeLabel)}">
+        </label>` : ''}</div>
       <div class="foot">
         <button class="cancel ghost" type="button">${escapeHtml(cancelLabel)}</button>
-        <button class="ok ${danger ? 'danger' : 'primary'}" type="button">${escapeHtml(confirmLabel)}</button>
+        <button class="ok ${danger ? 'danger' : 'primary'}" type="button" ${challenge ? 'disabled' : ''}>${escapeHtml(confirmLabel)}</button>
       </div>`;
 
     const done = (value) => {
@@ -302,10 +340,13 @@ export function confirmDialog(host, options = {}) {
     };
     dlg.querySelector('.cancel').addEventListener('click', () => done(false));
     dlg.querySelector('.ok').addEventListener('click', () => done(true));
+    dlg.querySelector('.chal-in')?.addEventListener('input', (e) => {
+      dlg.querySelector('.ok').disabled = e.target.value.trim() !== challenge;
+    });
     dlg.addEventListener('cancel', (e) => { e.preventDefault(); done(false); }); // Esc / backdrop
     root.appendChild(dlg);
     dlg.showModal();
-    dlg.querySelector('.ok').focus();
+    (dlg.querySelector('.chal-in') ?? dlg.querySelector('.ok')).focus();
   });
 }
 

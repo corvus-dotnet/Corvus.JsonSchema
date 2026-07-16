@@ -146,6 +146,13 @@ class ArazzoRunDetail extends ArazzoElement {
         .tags { display: flex; gap: 4px; flex-wrap: wrap; }
         .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
         .block { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
+        .prog-steps { margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; }
+        .prog-steps li { padding: 1px 0; }
+        .prog-steps li.dispatched { color: var(--_muted); }
+        .pos-line { font-size: 13px; }
+        .pos { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_accent); white-space: nowrap; }
+        .pos.wait { color: var(--arazzo-status-suspended, #b45309); }
+        .pos.fault { color: var(--_danger); }
         .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
         .fault { border-color: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 40%, var(--_border)); }
         .fault .err { color: var(--arazzo-status-faulted, #d4351c); font-family: ui-monospace, monospace; font-size: 12px; }
@@ -217,14 +224,13 @@ class ArazzoRunDetail extends ArazzoElement {
     body.innerHTML = `
       <dl>
         <dt>Run id</dt><dd class="mono" part="cursor">${escapeHtml(run.id)}</dd>
-        <dt>Cursor</dt><dd part="cursor">${run.cursor == null ? '<span class="muted">…</span>' : escapeHtml(String(run.cursor)) + ' <span class="muted">(next step index)</span>'}</dd>
         <dt>Created</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</dd>
-        <dt>Updated</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.updatedAt))}">${escapeHtml(relativeTime(run.updatedAt))}</dd>
+        ${run.updatedAt ? `<dt>Updated</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.updatedAt))}">${escapeHtml(relativeTime(run.updatedAt))}</dd>` : ''}
         ${run.environment ? `<dt>Environment</dt><dd part="environment"><div class="tags"><span class="tag">${escapeHtml(run.environment)}</span></div></dd>` : ''}
         ${run.correlationId ? `<dt>Correlation</dt><dd class="mono" part="correlation" title="telemetry trace id">${escapeHtml(run.correlationId)}<button class="copy ghost" type="button" part="copy-correlation" title="Copy correlation id" aria-label="Copy correlation id">⧉</button></dd>` : ''}
         ${Array.isArray(run.tags) && run.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${run.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
-        <dt>ETag</dt><dd class="mono muted">${escapeHtml(run.etag || '—')}</dd>
       </dl>
+      <div class="block progress" part="progress" hidden><h4>Progress</h4><div class="prog-body"></div></div>
       ${this.renderWait(run)}
       ${this.renderFault(run)}
       <div class="actions" part="actions"></div>
@@ -237,6 +243,62 @@ class ArazzoRunDetail extends ArazzoElement {
       }
     });
     this.renderActions(run);
+    this.renderProgress(run);
+  }
+
+  /**
+   * The run's place in its workflow (the operator's "what has this run done") — an honest
+   * projection of what the store attests: the catalogued step list with the run's POSITION marked
+   * (the compiled step order the cursor indexes; goto and retries can revisit earlier steps, so
+   * steps before the position are "dispatched", never claimed "completed"), plus the wait/fault
+   * step in context. Degrades to a plain position line when the document is unavailable.
+   */
+  async renderProgress(run) {
+    const host = this.$('.progress');
+    if (!host || run.cursor == null) return;
+    const bodyEl = host.querySelector('.prog-body');
+    const match = /^(.*)-v(\d+)$/.exec(run.workflowId || '');
+    let steps = null;
+    if (match && this.client) {
+      try {
+        if (this._progressFor !== run.workflowId) {
+          const doc = await this.client.getCatalogWorkflow(match[1], Number(match[2]));
+          const wf = (doc.workflows || []).find((w) => w.workflowId === run.workflowId) || (doc.workflows || [])[0];
+          this._progressSteps = wf ? (wf.steps || []).map((st) => st.stepId) : null;
+          this._progressFor = run.workflowId;
+        }
+        steps = this._progressSteps;
+      } catch {
+        steps = null;
+      }
+    }
+    if (this._run !== run && this._run?.id !== run.id) return; // superseded selection
+    if (!steps || !steps.length) {
+      bodyEl.innerHTML = `<div class="muted pos-line">Position: step index ${escapeHtml(String(run.cursor))} <span class="muted">(the step list could not be loaded)</span></div>`;
+      host.hidden = false;
+      return;
+    }
+    const atEnd = run.cursor >= steps.length;
+    const next = atEnd ? null : steps[run.cursor];
+    const waitStep = run.status === 'Suspended' && !atEnd ? next : null;
+    const faultStep = run.fault?.stepId || (run.status === 'Faulted' ? next : null);
+    const rows = steps.map((id, i) => {
+      const marks = [];
+      if (i === run.cursor && run.status !== 'Completed') marks.push('<span class="pos">▶ next</span>');
+      if (waitStep === id && i === run.cursor) marks.push('<span class="pos wait">waiting</span>');
+      if (faultStep === id) marks.push('<span class="pos fault">✗ faulted</span>');
+      const dispatched = i < run.cursor;
+      return `<li class="${dispatched ? 'dispatched' : ''}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')}</li>`;
+    }).join('');
+    const summary = run.status === 'Completed'
+      ? `All ${steps.length} steps dispatched.`
+      : (atEnd
+        ? `All ${steps.length} steps dispatched${run.status === 'Suspended' ? ' · waiting (see below)' : ''}.`
+        : `Position ${escapeHtml(String(run.cursor))} of ${steps.length}${next ? ` · next: <span class="mono">${escapeHtml(next)}</span>` : ''}`);
+    bodyEl.innerHTML = `
+      <div class="pos-line">${summary}</div>
+      <ol class="prog-steps" title="The compiled step order the run's position indexes. goto and retries can revisit earlier steps, so earlier entries mean dispatched, not completed.">${rows}</ol>`;
+    host.hidden = false;
   }
 
   renderWait(run) {

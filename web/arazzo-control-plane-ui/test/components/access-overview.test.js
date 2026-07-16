@@ -71,3 +71,40 @@ describe('<arazzo-access-overview>', () => {
     equal(el.shadowRoot.querySelector('[data-revoke]'), null, 'no revoke without security:write');
   });
 });
+
+describe('<arazzo-access-overview> presentation contracts', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  function make(scopesAttr) {
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    el = document.createElement('arazzo-access-overview');
+    if (scopesAttr !== undefined) el.setAttribute('scopes', scopesAttr);
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    return el;
+  }
+  const ada = { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }, { dimension: 'team', value: 'payments' }], source: 'directory', complete: true };
+  const pick = (grantee) => el.shadowRoot.querySelector('arazzo-grantee-picker').dispatchEvent(new CustomEvent('grantee-selected', { detail: { grantee } }));
+
+  // An eligible-only binding confers nothing yet: it must read as an ELIGIBILITY, never as an
+  // explicit all-denied reach record.
+  it('renders an eligible-only binding as a PIM eligibility card, not a deny list', async () => {
+    make('security:read security:write');
+    mount(el);
+    pick(ada);
+    await waitFor(() => el.shadowRoot.querySelector('.grant.eligible'));
+    const card = el.shadowRoot.querySelector('.grant.eligible');
+    ok(card.textContent.includes('PIM eligibility'), 'the card names what it is');
+    ok(!card.querySelector('.verb'), 'no denied-verbs table masquerading as policy');
+  });
+
+  // Kit-wide gating convention: an ABSENT scopes attribute defers to the server — the privileged
+  // affordances must not silently vanish (the live shell sets no scopes attributes by design).
+  it('shows inline Revoke when no scopes attribute gates the panel', async () => {
+    make(undefined);
+    mount(el);
+    pick(ada);
+    await waitFor(() => el.shadowRoot.querySelector('.grant'));
+    ok(el.shadowRoot.querySelector('button.revoke'), 'Revoke renders under server-authority gating');
+  });
+});

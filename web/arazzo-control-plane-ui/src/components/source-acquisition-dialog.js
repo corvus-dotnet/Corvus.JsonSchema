@@ -132,7 +132,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
             <div class="preview upload-preview" hidden></div>
           </div>
           <div class="mode mode-catalog" hidden>
-            <div class="hint">Trigger a published workflow over HTTP (§6.2): attaching adds the control plane's run-trigger operation for the picked version — request body typed by ITS inputs schema. Drag the operation onto the canvas like any other.</div>
+            <div class="hint">Trigger a published workflow over HTTP: attaching adds the control plane's run-trigger operation for the picked version — request body typed by ITS inputs schema. Drag the operation onto the canvas like any other.</div>
             <label>Search the catalog
               <input class="cat-q" type="text" placeholder="name, tag, owner…" spellcheck="false">
             </label>
@@ -246,7 +246,7 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
         info: { title: `Control plane — run ${version.title ?? version.baseWorkflowId} v${version.versionNumber}`, version: '1.0.0' },
         paths: { [path]: { post: {
           operationId: `start-${version.baseWorkflowId}-v${version.versionNumber}`,
-          summary: `Start a run of ${version.title ?? version.baseWorkflowId} v${version.versionNumber} (the §6.2 HTTP trigger; 202 = the run was created, it executes asynchronously)`,
+          summary: `Start a run of ${version.title ?? version.baseWorkflowId} v${version.versionNumber} (the control plane's HTTP trigger; 202 = the run was created, it executes asynchronously)`,
           requestBody: { content: { 'application/json': { schema: inputs } } },
           responses: {
             202: { description: 'run created', content: { 'application/json': { schema: { type: 'object', properties: { runId: { type: 'string' }, status: { type: 'string' } } } } } },

@@ -147,6 +147,7 @@ function toDetail(run) {
     status: run.status,
     cursor: run.cursor,
     createdAt: run.createdAt,
+    updatedAt: run.updatedAt ?? null,
     wait: run.wait ?? null,
     fault: run.fault ?? null,
     etag: run.etag,

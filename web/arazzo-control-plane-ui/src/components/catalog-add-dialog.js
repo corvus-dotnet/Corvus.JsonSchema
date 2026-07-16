@@ -557,7 +557,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         ? `<div class="readiness ok">✓ This workflow will be ready to run in ${ready.map((e) => `<span class="env-chip">${escapeHtml(e)}</span>`).join(' ')} — every source has a credential there.</div>`
         : `<div class="readiness warn">⚠ Not ready in any environment yet. Give <strong>every</strong> source a credential in the <strong>same</strong> environment so this workflow can run there — <strong>required</strong> before you can add it.</div>`;
     return `
-      <div class="hint">Each source is registered once (§7.6) and reused — a source already in the registry is resolved automatically; a new one needs its document. Set up each source's credential per environment: a workflow is ready in an environment when every source it references has a credential there.</div>
+      <div class="hint">Each source is registered once and reused — a source already in the registry is resolved automatically; a new one needs its document. Set up each source's credential per environment: a workflow is ready in an environment when every source it references has a credential there.</div>
       ${readiness}
       <div class="sources">${this._declaredSources.map((decl) => {
         const st = this._sourceState.get(decl.name);
@@ -586,7 +586,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
 
   render_admins() {
     return `
-      <div class="creator-note">✓ <strong>You (the creator)</strong> will administer this workflow — established automatically on its first version (§15). Add others below if you want; this is optional.</div>
+      <div class="creator-note">✓ <strong>You (the creator)</strong> will administer this workflow — established automatically on its first version. Add others below if you want; this is optional.</div>
       <fieldset>
         <legend>Additional administrators</legend>
         <label>Resolve a real person, team or role (a workflow can’t administer a workflow).</label>

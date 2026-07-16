@@ -92,7 +92,13 @@ class ArazzoCredentials extends ArazzoElement {
         .layout > * { min-height: 0; }
         .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         .detail-pane:empty { display: none; }
+        .bar { display: flex; margin-bottom: 10px; }
+        .bar .grow { flex: 1; }
       </style>
+      <div class="bar">
+        <span class="grow"></span>
+        <button class="new primary" type="button">New credential…</button>
+      </div>
       <div class="layout" part="layout">
         <arazzo-credentials-table selectable part="table"></arazzo-credentials-table>
         <div class="detail-pane"></div>
@@ -106,6 +112,13 @@ class ArazzoCredentials extends ArazzoElement {
   wire() {
     const table = this.$('arazzo-credentials-table');
     const dialog = this.$('arazzo-credential-dialog');
+
+    // Creation is available HERE as well as from a workflow's sources section: this page is where a
+    // connections admin looks for the job, so the job must exist on it. The dialog's source input
+    // stays free (no doc-derived auth shape, unlike the workflow-rooted path).
+    const newBtn = this.$('.new');
+    newBtn.hidden = !(this.scopeList.length === 0 || this.scopeList.includes('credentials:write'));
+    newBtn.addEventListener('click', () => this.openDialog(null));
 
     table.addEventListener('credential-selected', (e) => { this.showDetail(e.detail.binding); this.emit('credential-selected', e.detail); });
     table.addEventListener('error', (e) => this.emit('error', e.detail));

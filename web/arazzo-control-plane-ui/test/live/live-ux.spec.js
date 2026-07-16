@@ -224,6 +224,14 @@ test('a REAL suspended run shows its durable wait, and the cancel confirm surviv
   await expect(detail.locator('[part="wait"]')).toContainText('Suspended — waiting');
   await expect(detail.locator('arazzo-status-badge')).toHaveAttribute('status', 'Suspended');
 
+  // The progress projection against the REAL catalogued document: the step list renders with the
+  // run's position, and the raw internals (cursor index, ETag) stay out of the pane.
+  const progress = detail.locator('.progress');
+  await expect(progress).toBeVisible();
+  await expect(progress.locator('.prog-steps li').first()).toBeVisible();
+  await expect(progress.locator('.pos-line')).toContainText(/Position \d+ of \d+|All \d+ steps dispatched/);
+  await expect(detail.locator('dl')).not.toContainText('ETag');
+
   // Open the cancel confirm and hold it across at least one full refresh interval.
   await detail.locator('arazzo-cancel-button .trigger').click();
   const dlg = detail.locator('arazzo-cancel-button dialog');
@@ -250,6 +258,7 @@ test('environment metadata round-trips real persistence: edit the display name, 
   await envs.locator('tr.erow[data-name="staging"]').click();
   const nameInput = envs.locator('.d-displayName');
   await expect(nameInput).toBeVisible();
+  await expect(envs.locator('.detail-pane')).not.toContainText('§'); // design-doc refs stay in the design docs
   const original = await nameInput.inputValue();
 
   const edited = uniq('Staging');
@@ -342,6 +351,22 @@ test('the promotion loop crosses real identities: wanda requests staging availab
     await wandaCtx.close();
     await erinCtx.close();
   }
+});
+
+test('the Access overview offers inline Revoke in the live shell (server-authority gating)', async ({ page }) => {
+  // The live host sets no scopes attributes by design; an absent attribute must mean "the server
+  // is the authority", not "hide the privileged affordances". Regression for the hidden-Revoke
+  // defect the antagonistic review verified in this very shell.
+  await signIn(page, LIVE_USERS.admin);
+  await openLiveTab(page, 'Security');
+  await openLiveSubTab(page, 'sub-security-overview');
+  const overview = page.locator('arazzo-access-overview');
+  const q = overview.locator('arazzo-grantee-picker input.q');
+  await q.click();
+  await q.fill('observers');
+  await overview.locator('.results li[data-index]', { hasText: 'observers' }).first().click();
+  await expect(overview.locator('.grant').first()).toBeVisible();
+  await expect(overview.locator('button.revoke').first()).toBeVisible(); // present, and NOT clicked
 });
 
 test('widening vs narrowing FOR REAL: a second single-rule grant widens oscar\'s catalog reach; a two-rule conjunction grant does not', async ({ browser }) => {

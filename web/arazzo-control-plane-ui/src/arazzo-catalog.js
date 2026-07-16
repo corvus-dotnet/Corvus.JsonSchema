@@ -154,6 +154,10 @@ class ArazzoCatalog extends ArazzoElement {
     });
     table.addEventListener('error', (e) => this.emit('error', e.detail));
 
+    // A destructive control with no applicable target disables itself: Purge obsolete stays inert
+    // until at least one Obsolete version exists (re-checked whenever the table reloads).
+    table.addEventListener('loaded', () => this.refreshPurgeEnablement());
+
     this.$$('.status-chip').forEach((chip) => chip.addEventListener('click', () => {
       this.$$('.status-chip').forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
       const status = chip.dataset.status;
@@ -205,6 +209,19 @@ class ArazzoCatalog extends ArazzoElement {
       this.emit('purge-completed', result);
     } catch (err) {
       this.emit('error', { problem: err.problem || { title: err.message, status: err.status }, error: err });
+    }
+  }
+
+  /** Enable Purge obsolete only when the reach-visible catalog holds at least one Obsolete version. */
+  async refreshPurgeEnablement() {
+    const btn = this.$('.purge-btn');
+    if (!btn || btn.hidden) return;
+    try {
+      const { count } = await this.client.countCatalog({ status: 'Obsolete' });
+      btn.disabled = count === 0;
+      btn.title = count === 0 ? 'No obsolete versions to purge.' : `Purge ${count} obsolete version${count === 1 ? '' : 's'}…`;
+    } catch {
+      btn.disabled = false; // count is advisory; an unreadable count must not lock the action away
     }
   }
 

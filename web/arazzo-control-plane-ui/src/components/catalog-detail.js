@@ -14,7 +14,7 @@
 // When the base workflow has more than one version, the header also offers "Compare with version…", which opens
 // the shared read-only <arazzo-workflow-compare> dialog on two versions' documents (visual-diff design §9.11).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
+import { actorLabel, ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
 import './tag-editor.js';
 import './administrators-panel.js';
 import './access-request-dialog.js';
@@ -226,6 +226,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .pad { padding: 14px; }
+        .verbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--_border); }
+        .verbar:not(:has(.vswitch:not([hidden]))) { display: none; }
         .security { padding: 0 14px 14px; }
         .security h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
         .sectag-actions { margin-top: 10px; display: flex; gap: 8px; }
@@ -235,11 +237,13 @@ class ArazzoCatalogDetail extends ArazzoElement {
           <span class="badge" part="status"></span>
           <span class="wf"></span>
           <span class="ver"></span>
-          <label class="vswitch" part="version-switch" hidden>Version <select class="version-switch" aria-label="Switch version"></select></label>
-          <label class="vswitch vcompare" part="version-compare" hidden>Compare with <select class="compare-with" aria-label="Compare with another version"><option value="">version…</option></select></label>
           <span class="grow"></span>
           <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
         </header>
+        <div class="verbar" part="version-bar">
+          <label class="vswitch" part="version-switch" hidden>Version <select class="version-switch" aria-label="Switch version"></select></label>
+          <label class="vswitch vcompare" part="version-compare" hidden>Compare with <select class="compare-with" aria-label="Compare with another version"><option value="">version…</option></select></label>
+        </div>
         <div class="body"></div>
         <div class="security" part="security" hidden></div>
       </div>
@@ -360,15 +364,15 @@ class ArazzoCatalogDetail extends ArazzoElement {
       <dl>
         <dt>Workflow id</dt><dd class="mono">${escapeHtml(v.workflowId || `${v.baseWorkflowId}-v${v.versionNumber}`)}</dd>
         ${v.description ? `<dt>Description</dt><dd>${escapeHtml(v.description)}</dd>` : ''}
-        <dt>Content hash</dt><dd class="mono" part="hash">${escapeHtml(v.hash || '—')}<button class="copy ghost copy-hash" type="button" title="Copy content hash" aria-label="Copy content hash">⧉</button></dd>
+        <dt>Content hash</dt><dd class="mono" part="hash"><span title="${escapeHtml(v.hash || '')}">${escapeHtml(v.hash ? `${v.hash.slice(0, 12)}…` : '—')}</span><button class="copy ghost copy-hash" type="button" title="Copy the full content hash" aria-label="Copy the full content hash">⧉</button></dd>
         ${this.renderEvidence(v)}
         ${Array.isArray(v.tags) && v.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${v.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
       </dl>
-      ${this.renderManagementTags(v)}
       ${this.renderOwner(v)}
       ${this.renderGovernance(v)}
       ${this.renderAvailability(v)}
       ${this.renderSources(v)}
+      ${this.renderManagementTags(v)}
       ${this.renderDownloads(v)}
       <div class="actions" part="actions"></div>
     `;
@@ -441,9 +445,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
 
   renderGovernance(v) {
     const rows = [
-      v.createdBy || v.createdAt ? `<div>Created by <strong>${escapeHtml(v.createdBy || '—')}</strong>${v.createdAt ? ` · <span class="muted" title="${escapeHtml(absoluteTime(v.createdAt))}">${escapeHtml(relativeTime(v.createdAt))}</span>` : ''}</div>` : '',
-      v.lastUpdatedBy || v.lastUpdatedAt ? `<div>Updated by <strong>${escapeHtml(v.lastUpdatedBy || '—')}</strong>${v.lastUpdatedAt ? ` · <span class="muted" title="${escapeHtml(absoluteTime(v.lastUpdatedAt))}">${escapeHtml(relativeTime(v.lastUpdatedAt))}</span>` : ''}</div>` : '',
-      v.obsoletedBy || v.obsoletedAt ? `<div>Obsoleted by <strong>${escapeHtml(v.obsoletedBy || '—')}</strong>${v.obsoletedAt ? ` · <span class="muted" title="${escapeHtml(absoluteTime(v.obsoletedAt))}">${escapeHtml(relativeTime(v.obsoletedAt))}</span>` : ''}</div>` : '',
+      v.createdBy || v.createdAt ? `<div>Created by <strong>${v.createdBy ? actorLabel(v.createdBy) : '—'}</strong>${v.createdAt ? ` · <span class="muted" title="${escapeHtml(absoluteTime(v.createdAt))}">${escapeHtml(relativeTime(v.createdAt))}</span>` : ''}</div>` : '',
+      v.lastUpdatedBy || v.lastUpdatedAt ? `<div>Updated by <strong>${v.lastUpdatedBy ? actorLabel(v.lastUpdatedBy) : '—'}</strong>${v.lastUpdatedAt ? ` · <span class="muted" title="${escapeHtml(absoluteTime(v.lastUpdatedAt))}">${escapeHtml(relativeTime(v.lastUpdatedAt))}</span>` : ''}</div>` : '',
+      v.obsoletedBy || v.obsoletedAt ? `<div>Obsoleted by <strong>${v.obsoletedBy ? actorLabel(v.obsoletedBy) : '—'}</strong>${v.obsoletedAt ? ` · <span class="muted" title="${escapeHtml(absoluteTime(v.obsoletedAt))}">${escapeHtml(relativeTime(v.obsoletedAt))}</span>` : ''}</div>` : '',
     ].filter(Boolean).join('');
     if (!rows) return '';
     return `<div class="block" part="audit"><h4>Audit</h4>${rows}</div>`;
@@ -699,7 +703,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
     if (this.hasScope('catalog:write')) {
       return `<div class="block" part="security-tags"><h4>Management tags</h4>
         <arazzo-tag-editor id="sectag-editor"></arazzo-tag-editor>
-        <div class="hint">Who may manage and see this version (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
+        <div class="hint">Who may manage and see this version. An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
         <div class="sectag-actions"><button class="sectag-save primary" type="button">Save</button></div>
       </div>`;
     }

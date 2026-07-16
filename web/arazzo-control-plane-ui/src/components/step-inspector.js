@@ -271,7 +271,7 @@ class ArazzoStepInspector extends ArazzoElement {
       box.innerHTML = `
         <input class="bval" type="text" placeholder="${kind === 'operationId' ? 'e.g. authorizePayment' : '{$sourceDescriptions.payments.url}#/paths/…'}"
                value="${escapeHtml(s[kind] || '')}">
-        <div class="hint">the operation browser will fill this in the full designer</div>
+        <div class="hint">drop an operation from the Sources rail onto the step, or type the id</div>
       `;
       box.querySelector('.bval').addEventListener('input', (e) => {
         s[kind] = e.target.value;

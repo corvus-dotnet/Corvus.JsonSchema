@@ -161,7 +161,10 @@ class ArazzoControlPlane extends ArazzoElement {
         /* When no run is selected the pane is empty; drop it from the grid so the table fills the whole row (not half). */
         .detail-pane:empty { display: none; }
         .placeholder { border: 1px dashed var(--_border); border-radius: var(--_radius); color: var(--_muted); padding: 28px; text-align: center; }
-        .timewindow { flex: none; display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+        .timewindow { flex: none; display: block; margin-bottom: 12px; }
+        .timewindow summary { cursor: pointer; font-size: 13px; color: var(--_muted); padding: 2px 0; user-select: none; }
+        .timewindow[open] summary { margin-bottom: 6px; }
+        .timewindow .timefields { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
         .timewindow fieldset { display: flex; gap: 8px; flex-wrap: wrap; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; margin: 0; }
         .timewindow legend { font-size: 11px; color: var(--_muted); padding: 0 4px; }
         .timewindow label { font-size: 11px; color: var(--_muted); display: inline-flex; flex-direction: column; gap: 2px; }
@@ -179,19 +182,22 @@ class ArazzoControlPlane extends ArazzoElement {
         <button class="refresh ghost" type="button" title="Refresh">↻</button>
         <button class="purge-btn danger" type="button" ${this.hasScope('runs:purge') ? '' : 'hidden'}>Purge…</button>
       </div>
-      <div class="timewindow" part="time-filters">
-        <fieldset>
-          <legend>Created</legend>
-          <label>after<input type="datetime-local" data-attr="created-after"></label>
-          <label>before<input type="datetime-local" data-attr="created-before"></label>
-        </fieldset>
-        <fieldset>
-          <legend>Updated</legend>
-          <label>after<input type="datetime-local" data-attr="updated-after"></label>
-          <label>before<input type="datetime-local" data-attr="updated-before"></label>
-        </fieldset>
-        <button class="clear-time ghost" type="button">Clear dates</button>
-      </div>
+      <details class="timewindow" part="time-filters">
+        <summary>Date filters</summary>
+        <div class="timefields">
+          <fieldset>
+            <legend>Created</legend>
+            <label>after<input type="datetime-local" data-attr="created-after"></label>
+            <label>before<input type="datetime-local" data-attr="created-before"></label>
+          </fieldset>
+          <fieldset>
+            <legend>Updated</legend>
+            <label>after<input type="datetime-local" data-attr="updated-after"></label>
+            <label>before<input type="datetime-local" data-attr="updated-before"></label>
+          </fieldset>
+          <button class="clear-time ghost" type="button">Clear dates</button>
+        </div>
+      </details>
       <div class="layout" part="layout">
         <arazzo-runs-table selectable part="table"></arazzo-runs-table>
         <div class="detail-pane"></div>
@@ -244,6 +250,11 @@ class ArazzoControlPlane extends ArazzoElement {
 
     const purgeDialog = this.$('arazzo-purge-dialog');
     this.$('.purge-btn').addEventListener('click', () => { purgeDialog.client = this.buildClient(); purgeDialog.open(); });
+    // A danger control beside routine ones stays inert when there is nothing it could apply to.
+    table.addEventListener('loaded', (e) => {
+      const purge = this.$('.purge-btn');
+      if (purge && !purge.hidden) purge.disabled = (e.detail?.count ?? 0) === 0;
+    });
     purgeDialog.addEventListener('purge-completed', (e) => { table.reload(); this.emit('purge-completed', e.detail); });
     purgeDialog.addEventListener('error', (e) => this.emit('error', e.detail));
 

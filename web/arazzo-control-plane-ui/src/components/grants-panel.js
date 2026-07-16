@@ -46,6 +46,34 @@ const grantSummary = (g) => {
 // advisory can reason about. Anything richer is left to the server's evaluation.
 const EQ_RULE = /^\s*([A-Za-z_][\w.:-]*)\s*==\s*'([^']*)'\s*$/;
 
+// A grant whose loss has deployment-wide blast radius: the baseline ('*' matches every principal)
+// or any grant carrying an Unrestricted verb (a founder-style grant). These get system treatment —
+// a badge in the list and a type-to-confirm delete — everyday grants stay one click.
+const isSystemCritical = (g) => g.claimType === '*' || VERBS.some((v) => g[v]?.unrestricted === true);
+
+const systemBadge = (g) => (g.claimType === '*'
+  ? ' <span class="sysbadge" title="Applies to every authenticated principal — deleting it removes the floor for everyone.">baseline</span>'
+  : (isSystemCritical(g) ? ' <span class="sysbadge" title="Carries Unrestricted reach — treat as system-critical.">wide reach</span>' : ''));
+
+// The issuer pin repeats on nearly every row; at list level it is noise, so it collapses to one
+// small chip (full value on hover). Any OTHER additional clause stays spelled out — those are the
+// unusual, load-bearing ones.
+const clauseChips = (g) => (g.additionalClauses || []).map((c) => (c.dimension === 'iss'
+  ? ` <span class="claim-and pin" title="issuer-pinned: iss=${escapeHtml(c.value ?? '')}">issuer-pinned</span>`
+  : ` <span class="claim-and">+ ${escapeHtml(c.dimension)}${c.value ? '=' + escapeHtml(c.value) : ''}</span>`)).join('');
+
+// Long capability lists are summarized (the detail pane holds the full set); short ones stay verbatim.
+const scopesLine = (g) => {
+  const scopes = g.scopes || [];
+  if (!scopes.length) return '';
+  const verb = g.eligibleOnly ? 'eligible for' : 'confers';
+  const names = scopes.length > 6
+    ? `all ${scopes.length} capability scopes`
+    : escapeHtml(scopes.join(', '));
+  const until = g.expiresAt ? ` until ${escapeHtml(new Date(g.expiresAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }))}` : '';
+  return `<div class="gscopes" title="${escapeHtml(scopes.join(', '))}">${verb} ${names}${until}</div>`;
+};
+
 class ArazzoGrantsPanel extends ArazzoElement {
   static get observedAttributes() {
     return ['base-url', 'scopes', 'page-size'];
@@ -345,10 +373,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
   async deleteGrant(id) {
     const g = this._grants.find((x) => x.id === id);
     const describe = g ? `${g.claimType}${g.claimValue ? '=' + g.claimValue : ''}` : id;
+    const critical = g && isSystemCritical(g);
     const confirmed = await confirmDialog(this, {
-      title: 'Delete grant',
-      message: `Delete the grant for '${describe}'? The principals it matches will lose that access.`,
+      title: critical ? 'Delete a system-critical grant' : 'Delete grant',
+      message: critical
+        ? (g.claimType === '*'
+          ? `'${describe}' is the BASELINE grant: it applies to every authenticated principal. Deleting it removes that floor for everyone, which can lock users out of surfaces they rely on.`
+          : `'${describe}' carries Unrestricted reach. Deleting it can remove the administrators' own access — a step toward locking the deployment out.`)
+        : `Delete the grant for '${describe}'? The principals it matches will lose that access.`,
       confirmLabel: 'Delete', danger: true,
+      challenge: critical ? describe : null,
+      challengeLabel: 'Type the claim to confirm',
     });
     if (!confirmed) return;
     try {
@@ -402,6 +437,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
         .verbs b { color: var(--_text); font-weight: 600; text-transform: capitalize; }
         .gdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
+        .sysbadge { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); vertical-align: 1px; }
+        .claim-and.pin { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); }
         .gscopes { color: var(--_muted); font-size: 12px; margin-top: 2px; font-style: italic; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
@@ -512,7 +549,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     } else {
       list.innerHTML = this._grants.map((g) => `
         <tr class="grow-row selectable" part="row" data-id="${escapeHtml(g.id)}" aria-selected="${String(g.id === this._selectedId)}">
-          <td part="cell"><span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}${(g.additionalClauses || []).map((c) => ` <span class="claim-and">+ ${escapeHtml(c.dimension)}${c.value ? '=' + escapeHtml(c.value) : ''}</span>`).join('')}</span>${(g.scopes || []).length ? `<div class="gscopes">${g.eligibleOnly ? 'eligible for' : 'confers'} ${escapeHtml(g.scopes.join(', '))}${g.expiresAt ? ` until ${escapeHtml(new Date(g.expiresAt).toLocaleString())}` : ''}</div>` : ''}${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}</td>
+          <td part="cell"><span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}${systemBadge(g)}${clauseChips(g)}</span>${scopesLine(g)}${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}</td>
           <td part="cell"><div class="verbs">${VERBS.map((v) => `<span><b>${v}</b> ${escapeHtml(grantSummary(g[v]))}</span>`).join('')}</div></td>
         </tr>`).join('');
       this.$$('.grow-row').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.id)));

@@ -42,6 +42,13 @@
                   border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; height: var(--dock-fit);
                   overflow: hidden; background: var(--arazzo-bg, #fff); --arazzo-tray-body-max: calc(var(--dock-fit) - 48px); }
     #debug-dock[hidden] { display: none !important; }
+    /* While a session is active, the inspector says where edits land (they never mutate the
+       recorded session) — the ambiguity a debugging author would otherwise carry silently. */
+    main:has(#debug-dock:not([hidden])) #inspector::before {
+      content: "Debug session active — edits change the working copy, not the recorded session. Re-run to see them.";
+      display: block; font-size: 11.5px; color: var(--arazzo-muted, #6b7280);
+      border: 1px dashed var(--arazzo-border, #e3e6ea); border-radius: 6px; padding: 6px 8px;
+    }
     #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--dock-side-w, 300px); gap: 0; height: 100%; box-sizing: border-box; }
     #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; min-height: 0; overflow-y: auto; }
     #debug-dock .rail-h { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); border-top: 1px solid var(--arazzo-border, #e3e6ea); padding-top: 8px; }
@@ -71,6 +78,7 @@
     button, select { font: inherit; padding: 5px 10px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: inherit; cursor: pointer; }
     /* Toolbar icon buttons: compact, with UNMISTAKABLE hover/press/focus feedback. */
     header button.tb { width: 34px; height: 30px; padding: 0; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    header button.tb-labeled { width: auto; padding: 0 10px; font-size: 13px; gap: 5px; }
     header button.tb.labeled { width: auto; padding: 0 10px; font-size: 13px; gap: 5px; }
     /* Icon buttons carry b&w outline SVGs (the app's icon language), not colour emoji. */
     header button.tb svg { width: 16px; height: 16px; display: block; }
@@ -103,11 +111,11 @@
     <button id="fit" class="tb designer-only" title="Fit the diagram to the window">⛶</button>
     <button id="relayout" class="tb designer-only" title="Auto-layout (clears manual positions)">▦</button>
     <span class="tb-sep designer-only"></span>
-    <button id="simulate" class="tb designer-only" title="Simulate (canned trace)">▶</button>
-    <button id="step" class="tb designer-only" title="Step through the trace">⏭</button>
-    <button id="retry-faulted" class="tb" title="Retry the faulted step — the endpoint recovered; the debug run resumes forward (§18)" hidden>↻</button>
-    <button id="remediate" class="tb" title="Remediate the faulted step — Retry, Rewind, Skip, or State patch (the runs-view ResumeRequest verbs) (§18)" hidden>⚕</button>
-    <button id="stop" class="tb" title="Stop and clear the overlay" hidden>■</button>
+    <button id="simulate" class="tb tb-labeled designer-only" title="Simulate (canned trace)">▶ Run</button>
+    <button id="step" class="tb tb-labeled designer-only" title="Step through the trace">⏭ Step</button>
+    <button id="retry-faulted" class="tb" title="Retry the faulted step — the endpoint recovered; the debug run resumes forward" hidden>↻</button>
+    <button id="remediate" class="tb" title="Remediate the faulted step — Retry, Rewind, Skip, or State patch (the runs-view resume verbs)" hidden>⚕</button>
+    <button id="stop" class="tb tb-labeled" title="Stop and clear the overlay" hidden>■ Stop</button>
     <span class="spacer"></span>
     <span id="save-status" class="designer-only" style="font-size:12px; color: var(--arazzo-muted, #6b7280);"></span>
     <button id="publish" class="tb labeled designer-only" title="Publish as a new catalog version — validates and re-runs the scenario suite server-side (evidence is server-attested)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Publish</button>
@@ -127,6 +135,16 @@
         <button id="tab-text">Text</button>
       </div>
       <arazzo-design-surface id="surface"></arazzo-design-surface>
+      <button id="legend-btn" type="button" title="What the canvas notation means" aria-expanded="false"
+        style="position: absolute; left: 10px; bottom: 10px; z-index: 5; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--arazzo-border, #e3e6ea); background: var(--arazzo-bg, #fff); color: var(--arazzo-muted, #6b7280); font-size: 13px; cursor: pointer;">?</button>
+      <div id="canvas-legend" hidden
+        style="position: absolute; left: 10px; bottom: 44px; z-index: 5; max-width: 380px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); box-shadow: 0 6px 24px rgba(0,0,0,0.12); padding: 12px 14px; font-size: 12.5px; line-height: 1.5;">
+        <div style="font-weight: 700; margin-bottom: 6px;">Reading the canvas</div>
+        <div><b>OP</b> / <b>CH</b> badge — the step binds an API operation / a message channel.</div>
+        <div><code>✓ 2</code> success criteria count · <code>→ 1</code> outputs count · <code>↻ ×3/5s</code> retry policy (attempts / backoff) · <code>⌁ defaults</code> the step uses the workflow's failure defaults.</div>
+        <div style="margin-top: 6px;"><b>Edges</b>: solid = success path · dashed = sequential order · red = failure path (✗-labelled) · green = success action (✓-labelled).</div>
+        <div style="margin-top: 6px;"><b>Ports</b>: the small circles are edge handles — drag between them to connect steps. A filled dot on the left border is a breakpoint (debugger).</div>
+      </div>
       <div id="canvas-empty" hidden style="position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 8px; pointer-events: none; color: var(--arazzo-muted, #6b7280); font-size: 13px;">
         <div style="font-size: 15px; font-weight: 600;">An empty canvas</div>
         <div>Steps come from a source's operations:</div>
@@ -143,7 +161,7 @@
             </select>
           </label>
           <div id="run-inputs-env-hint" style="font-size:11px; color:var(--arazzo-muted,#6b7280);" hidden>
-            A DEBUG RUN (§18): durable and forward-only in that environment — the runner resolves the credentials; step over uses the runs Skip; capture the trace to replay with time travel.
+            A DEBUG RUN: durable and forward-only in that environment — the runner resolves the credentials; step over uses the runs Skip; capture the trace to replay with time travel.
           </div>
           <div id="run-inputs-readiness" style="font-size:11px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; color:var(--arazzo-muted,#6b7280);" hidden></div>
           <label id="run-inputs-fault" style="font-size:11px; color:var(--arazzo-muted,#6b7280); display:flex; gap:6px; align-items:flex-start; line-height:1.3;" hidden>
@@ -171,12 +189,12 @@
                            aria-label="Resize the session rail"></arazzo-splitbar>
           <div class="dock-side">
             <h4 class="rail-h">session</h4>
-            <button id="save-scenario" type="button" style="font-size:12px; justify-self:start;" disabled title="Capture this session — its mocks, inputs, and expectations promoted from the observed trace (§3.4)">💾 Save as scenario…</button>
+            <button id="save-scenario" type="button" style="font-size:12px; justify-self:start;" disabled title="Capture this session — its mocks, inputs, and expectations promoted from the observed trace">💾 Save as scenario…</button>
             <h4 class="rail-h">expression console</h4>
             <arazzo-expression-input id="expr" placeholder="$steps.authorize-payment.outputs.…"></arazzo-expression-input>
             <div id="expr-result" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 6px; padding: 6px 8px; display: none; gap: 4px; max-height: 120px; overflow-y: auto;"></div>
             <div style="font-size: 11px; color: var(--arazzo-muted, #6b7280);">
-              Expression console — ⏎ evaluates against the session's frame at the scrub cursor (§3.3).
+              Expression console — ⏎ evaluates against the session's frame at the scrub cursor.
             </div>
           </div>
         </div>
@@ -191,7 +209,7 @@
         <button data-tab="sources">Sources</button>
         <button data-tab="scenarios">Scenarios</button>
         <button data-tab="components" title="The document's reusable library — $components.<kind>.<name> references resolve here">Components</button>
-        <button data-tab="git" title="Bind this working copy to a branch; pull and commit as YOUR GitHub identity (§4.7)">Git</button>
+        <button data-tab="git" title="Bind this working copy to a branch; pull and commit as YOUR GitHub identity">Git</button>
         <button data-tab="problems">Problems<span class="badge" id="problems-badge" hidden></span></button>
         <button data-tab="events">Events</button>
       </div>
@@ -345,6 +363,14 @@
       refreshExpressionContext();
     }
     document.getElementById('canvas-empty-cta').addEventListener('click', () => switchSideTab('sources'));
+
+    // The canvas key: notation must be learnable in the UI itself, not the design doc.
+    const legendBtn = document.getElementById('legend-btn');
+    const legendPop = document.getElementById('canvas-legend');
+    legendBtn.addEventListener('click', () => {
+      legendPop.hidden = !legendPop.hidden;
+      legendBtn.setAttribute('aria-expanded', String(!legendPop.hidden));
+    });
     select.addEventListener('change', () => { project(); surface.fit(); });
     if ([...select.options].some((o) => o.value === 'place-order')) select.value = 'place-order';
     project();
@@ -1324,7 +1350,7 @@
       if (!trace || !shell.id) return;
       const name = await document.getElementById('ask').ask({
         title: 'Save as scenario',
-        message: 'Captures this session — its mocks, staged events, and expectations promoted from the observed trace (§3.4).',
+        message: 'Captures this session — its mocks, staged events, and expectations promoted from the observed trace.',
         field: { label: 'Scenario name', value: `session-${new Date().toISOString().slice(11, 19).replaceAll(':', '')}` },
         confirmLabel: 'Save',
       });
@@ -1559,7 +1585,7 @@
         const faultCb = document.getElementById('run-inputs-fault-cb');
         faultCb.checked = false;
         envSelect.innerHTML = '<option value="">Mocks (simulated)</option>'
-          + envs.map((e) => `<option value="${e.name}">${e.displayName ?? e.name} — debug run (§18)</option>`).join('');
+          + envs.map((e) => `<option value="${e.name}">${e.displayName ?? e.name} — debug run</option>`).join('');
         // The transient-fault toggle + hint only apply to a real (durable) debug run, not the canned simulator.
         const syncEnv = () => {
           const dbg = !!envSelect.value;

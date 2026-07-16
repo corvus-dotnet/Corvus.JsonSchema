@@ -41,7 +41,7 @@ function shortDate(iso) {
 
 class ArazzoCredentialsTable extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'status', 'source', 'selectable', 'scopes', 'page-size'];
+    return ['base-url', 'status', 'source', 'environment', 'selectable', 'scopes', 'page-size'];
   }
 
   constructor() {
@@ -82,6 +82,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const setOrRemove = (attr, v) => { if (v) this.setAttribute(attr, v); else this.removeAttribute(attr); };
     setOrRemove('status', value.status);
     setOrRemove('source', value.source);
+    setOrRemove('environment', value.environment);
   }
 
   requestRender() {
@@ -175,7 +176,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
         tbody tr.selectable:hover { background: var(--_surface); }
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .src-name { font-weight: 600; }
-        .ref { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); }
+        .ref { display: inline-block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
         .grants { display: flex; gap: 4px; flex-wrap: wrap; }
         .grant { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
@@ -195,6 +196,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
             </select>
           </label>
           <input class="src" type="text" placeholder="source…" aria-label="Filter by source">
+          <input class="env" type="text" placeholder="environment…" aria-label="Filter by environment">
           <span class="grow"></span>
           <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
@@ -215,6 +217,10 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const src = this.$('.src');
     src.value = this.getAttribute('source') || '';
     src.addEventListener('input', () => this.filters = { ...this.filters, source: src.value.trim() || undefined });
+    // Environment is the list's natural grouping axis, so it filters like source does.
+    const env = this.$('.env');
+    env.value = this.getAttribute('environment') || '';
+    env.addEventListener('input', () => this.filters = { ...this.filters, environment: env.value.trim() || undefined });
     this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
@@ -223,9 +229,11 @@ class ArazzoCredentialsTable extends ArazzoElement {
   visibleBindings() {
     const wantStatus = normalizeStatus(this.getAttribute('status'));
     const wantSource = (this.getAttribute('source') || '').toLowerCase();
+    const wantEnv = (this.getAttribute('environment') || '').toLowerCase();
     return this._bindings.filter((b) =>
       (!wantStatus || b.credentialStatus === wantStatus)
-      && (!wantSource || (b.sourceName || '').toLowerCase().includes(wantSource)));
+      && (!wantSource || (b.sourceName || '').toLowerCase().includes(wantSource))
+      && (!wantEnv || (b.environment || '').toLowerCase().includes(wantEnv)));
   }
 
   renderBody() {

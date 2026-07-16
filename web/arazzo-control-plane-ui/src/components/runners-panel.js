@@ -117,11 +117,23 @@ class ArazzoRunners extends ArazzoElement {
     try {
       // The page and the reach-scoped bounded total load together; a failed count degrades to the page length (below)
       // rather than failing the panel — the registry list still renders.
-      const [page, total] = await Promise.all([
+      const [page, total, roster] = await Promise.all([
         client.listRunners({ pageToken: this._currentToken, limit: this.pageSize }),
         client.countRunners().catch(() => null),
+        // The §5.5 roster decides whether a registered runner may actually be DISPATCHED; showing
+        // its status here closes the runner ↔ authorization gap (best-effort: a caller who
+        // administers no environments simply sees no chip). The endpoint defaults to Pending, so
+        // each interesting status is asked for explicitly.
+        Promise.all(['Authorized', 'Pending', 'Revoked'].map((status) =>
+          client.listRunnerAuthorizations({ status, limit: 200 }).catch(() => null))),
       ]);
       if (seq !== this._reqSeq) return;
+      this._auth = new Map();
+      for (const page2 of (roster || [])) {
+        for (const a of (page2?.authorizations || [])) {
+          this._auth.set(`${a.runnerId}@${a.environment}`, a.status);
+        }
+      }
       this._runners = page.runners;
       this._nextPageToken = page.nextPageToken;
       this._total = total ? total.count : null;
@@ -176,6 +188,9 @@ class ArazzoRunners extends ArazzoElement {
         .rhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
         .rid { font-weight: 600; }
         .renv { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); font-weight: 600; }
+        .rauth { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--_muted); }
+        .rauth.authorized { color: var(--arazzo-status-completed, #1a7f37); }
+        .rauth.pending, .rauth.revoked { color: var(--arazzo-status-suspended, #b45309); }
         .raddr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
         .health { flex: none; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 5px; }
         .health.online { color: #1a7f37; }
@@ -246,6 +261,16 @@ class ArazzoRunners extends ArazzoElement {
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info: parts.join(' · ') });
   }
 
+  /** The runner's §5.5 authorization status for its environment, when the caller can see the roster. */
+  authChip(r) {
+    const status = r.environment ? this._auth?.get(`${r.runnerId}@${r.environment}`) : null;
+    if (!status) return '';
+    const hint = status === 'Authorized'
+      ? 'Authorized to serve this environment.'
+      : 'Not currently dispatchable — decide under Approvals › Runners.';
+    return `<span class="rauth ${escapeHtml(status.toLowerCase())}" title="${escapeHtml(hint)}">${escapeHtml(status.toLowerCase())}</span>`;
+  }
+
   runnerHtml(r, now) {
     const stale = this.isStale(r, now);
     const transports = Array.isArray(r.transports) ? r.transports : [];
@@ -262,6 +287,7 @@ class ArazzoRunners extends ArazzoElement {
         <div class="rhead">
           <span class="rid">${escapeHtml(r.runnerId)}</span>
           ${r.environment ? `<span class="renv" title="Serves the ${escapeHtml(r.environment)} environment">${escapeHtml(r.environment)}</span>` : ''}
+          ${this.authChip(r)}
           ${r.address ? `<span class="raddr">${escapeHtml(r.address)}</span>` : ''}
           <span class="rgrow"></span>
           <span class="health ${stale ? 'stale' : 'online'}" title="Last heartbeat ${escapeHtml(absoluteTime(r.lastSeenAt))}"><span class="dot"></span>${stale ? 'Stale' : 'Online'}</span>

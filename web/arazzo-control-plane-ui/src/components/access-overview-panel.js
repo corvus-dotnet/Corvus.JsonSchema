@@ -44,7 +44,12 @@ class ArazzoAccessOverview extends ArazzoElement {
   }
 
   hasScope(scope) {
-    return (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean).includes(scope);
+    // Kit-wide convention (same as the grants/rules/environments panels): an ABSENT scopes
+    // attribute means "do not gate here — the server is the authority". Treating absent as
+    // nothing-held hid the inline Revoke from privileged callers in hosts that set no scopes
+    // attributes (the sample shell does this by design).
+    const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
+    return scopes.length === 0 || scopes.includes(scope);
   }
 
   /** Forward a late-set client to the nested grantee picker (the base .client setter calls this when it changes). */
@@ -91,6 +96,8 @@ class ArazzoAccessOverview extends ArazzoElement {
         .cap { border: 1px solid var(--_border); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
         .cap.eligible { border-style: dashed; color: var(--_muted); }
         .cap .until { color: var(--_muted); }
+        .grant.eligible { border-style: dashed; }
+        .pim { color: var(--_muted); font-size: 12px; padding: 2px 0; }
         button.link { background: transparent; border-color: transparent; color: var(--_accent); padding: 3px 8px; }
         button.link:hover { text-decoration: underline; }
         button.revoke { color: var(--_danger); font-size: 12px; padding: 3px 9px; }
@@ -144,13 +151,18 @@ class ArazzoAccessOverview extends ArazzoElement {
         const claim = b.claimType === '*'
           ? 'every principal (*)'
           : `${escapeHtml(b.claimType)}${b.claimValue ? ` = ${escapeHtml(b.claimValue)}` : ''}`;
-        const verbs = VERBS.map((v) => {
-          const denied = grantMode(b[v]) === 'denied';
-          return `<div class="verb"><span class="v">${v}</span><span class="${denied ? 'denied' : ''}">${escapeHtml(grantSummary(b[v]))}</span></div>`;
-        }).join('');
-        return `<div class="grant"><div class="grant-head"><span class="claim">${claim}</span><span class="grow"></span>`
+        // An eligible-only binding confers NOTHING until self-elevation — rendering its (all-denied)
+        // reach rows would read as an explicit deny record, which misstates its nature. Say what it
+        // is instead; the capabilities section below carries its dashed eligible chip.
+        const body = b.eligibleOnly
+          ? '<div class="pim">PIM eligibility — confers nothing until elevated (see Capabilities below).</div>'
+          : VERBS.map((v) => {
+            const denied = grantMode(b[v]) === 'denied';
+            return `<div class="verb"><span class="v">${v}</span><span class="${denied ? 'denied' : ''}">${escapeHtml(grantSummary(b[v]))}</span></div>`;
+          }).join('');
+        return `<div class="grant${b.eligibleOnly ? ' eligible' : ''}"><div class="grant-head"><span class="claim">${claim}</span><span class="grow"></span>`
           + (canWrite ? `<button class="revoke" type="button" data-revoke="${escapeHtml(b.id)}" title="Revoke this grant">Revoke</button>` : '')
-          + `</div>${verbs}</div>`;
+          + `</div>${body}</div>`;
       }).join('')
       : '<div class="empty">No reach grants match this grantee’s identity.</div>';
 
@@ -158,7 +170,7 @@ class ArazzoAccessOverview extends ArazzoElement {
     // renders — a dashed chip is a PIM eligibility (self-elevation required), a solid one is held actively.
     const caps = capabilities.length
       ? `<div class="caps">${capabilities.map((c) => {
-        const until = c.expiresAt ? ` <span class="until">until ${escapeHtml(new Date(c.expiresAt).toLocaleString())}</span>` : '';
+        const until = c.expiresAt ? ` <span class="until">until ${escapeHtml(new Date(c.expiresAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }))}</span>` : '';
         return `<span class="cap${c.eligible ? ' eligible' : ''}">${escapeHtml(c.scope)}${c.eligible ? ' (eligible)' : ''}${until}</span>`;
       }).join('')}</div>`
       : '<div class="empty">No capability scopes.</div>';

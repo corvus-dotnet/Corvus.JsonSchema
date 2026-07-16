@@ -98,7 +98,7 @@ class ArazzoGitHubConnect extends ArazzoElement {
       return;
     }
 
-    row.innerHTML = `<button class="connect" type="button" title="Sign in via the deployment's GitHub App (§4.7)">Connect GitHub…</button>`;
+    row.innerHTML = `<button class="connect" type="button" title="Sign in via the deployment's GitHub App">Connect GitHub…</button>`;
     this.$('.connect').addEventListener('click', () => this.connect());
   }
 

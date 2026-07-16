@@ -153,7 +153,7 @@ class ArazzoGitDialog extends ArazzoElement {
           <arazzo-github-connect class="gh-connect"></arazzo-github-connect>
           <div class="stage-hint connect-hint">Connect your GitHub identity to bind this working copy to a branch.</div>
           <fieldset class="binding-section" hidden>
-            <legend>Binding — branch-per-working-copy is the natural multi-author flow (§4.7)</legend>
+            <legend>Binding — one branch per working copy is the natural multi-author flow</legend>
             <div class="two">
               <label>Repository <select class="b-repo"></select></label>
               <label>Branch <select class="b-branch" disabled title="Pick a repository first"></select></label>
@@ -205,7 +205,7 @@ class ArazzoGitDialog extends ArazzoElement {
             <legend>Commit <a class="gh-link" target="_blank" rel="noopener" hidden style="margin-left:6px; font-size:11.5px;" title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
             <label>Commit message <input class="c-message" type="text" placeholder="what changed"></label>
             <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <select class="c-base" disabled title="Pick a repository first"></select></label>
-            <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity (§4.7)">⤒ Commit</button></div>
+            <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity">⤒ Commit</button></div>
             <div class="result" hidden></div>
           </fieldset>
           <fieldset class="history-section" hidden>
@@ -486,7 +486,7 @@ class ArazzoGitDialog extends ArazzoElement {
     commit.disabled = !connected || !bound || !this.$('.c-message').value.trim();
     commit.title = commit.disabled
       ? (!connected ? 'Connect GitHub first' : !bound ? 'Save a binding first — Commit writes to the bound branch' : 'Enter a commit message')
-      : 'Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity (§4.7)';
+      : 'Write the document, bound specs, and scenario files to the branch — authored as YOUR GitHub identity';
   }
 
   // The form's gitBinding value (specPaths parsed from `name = path` lines).

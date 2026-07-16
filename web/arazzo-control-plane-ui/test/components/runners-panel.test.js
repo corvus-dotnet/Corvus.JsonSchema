@@ -2,7 +2,7 @@
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/runners-panel.js';
-import { ok, equal, nextEvent, mount } from './helpers.js';
+import { ok, equal, nextEvent, mount, waitFor } from './helpers.js';
 
 function panelWithMock(attrs = { 'stale-after': '90' }) {
   const mock = createMockControlPlane({ latencyMs: 0 });
@@ -76,5 +76,26 @@ describe('<arazzo-runners>', () => {
     await back;
     equal($$(el, '.runner').length, 2, 'page 1 restored — rows replaced, not appended');
     ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev disabled again back on page 1');
+  });
+});
+describe('<arazzo-runners> authorization state', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  // The §5.5 roster decides dispatchability; the runner card wears its status so a stale or
+  // unauthorized runner comes with a next step instead of bare observability.
+  it('shows the roster status chip on a runner card', async () => {
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    el = document.createElement('arazzo-runners');
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const chip = await waitFor(() => {
+      const cards = [...el.shadowRoot.querySelectorAll('.runner')];
+      const card = cards.find((c) => c.textContent.includes('runner-eu-1'));
+      return card?.querySelector('.rauth') || null;
+    });
+    ok(chip.textContent.includes('authorized'), 'runner-eu-1 wears its Authorized roster status');
+    ok(chip.title.length > 0, 'the chip explains itself');
   });
 });

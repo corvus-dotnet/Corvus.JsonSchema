@@ -203,3 +203,34 @@ describe('<arazzo-scopes-panel>', () => {
     ok($(el, '.f-name').disabled, 'fields are read-only');
   });
 });
+
+describe('<arazzo-rules-panel> usage', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  // Usage is what makes deleting a rule a decision: the chip counts referencing grants, and a
+  // load-bearing rule's delete demands the typed challenge naming the strand-consequence.
+  it('shows in-use counts and guards the delete of a rule grants depend on', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const chip = await waitFor(() => {
+      const row = el.shadowRoot.querySelector('tr[data-name="reach-payments"] .usage');
+      return row && row.textContent.includes('in use') ? row : null;
+    });
+    ok(/in use by 2 grants?/.test(chip.textContent), 'reach-payments counts its two referencing grants');
+
+    el.shadowRoot.querySelector('tr[data-name="reach-payments"]').click();
+    await waitFor(() => el.shadowRoot.querySelector('.dfoot .del'));
+    el.shadowRoot.querySelector('.dfoot .del').click();
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('dialog.arazzo-confirm'));
+    ok(dlg.textContent.includes('grants depend on'), 'the confirm names the dependency');
+    ok(dlg.textContent.includes('silently becomes NOTHING'), 'the strand consequence is spelled out');
+    ok(dlg.querySelector('.ok').disabled, 'delete stays disabled until the name is typed');
+    const input = dlg.querySelector('.chal-in');
+    input.value = 'reach-payments';
+    input.dispatchEvent(new Event('input'));
+    ok(!dlg.querySelector('.ok').disabled, 'typing the rule name arms the delete');
+    dlg.querySelector('.cancel').click(); // leave the seed intact for the other tests
+  });
+});

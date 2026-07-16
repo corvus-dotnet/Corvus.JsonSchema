@@ -352,12 +352,17 @@ class ArazzoAccessRequests extends ArazzoElement {
     if (!thead) return;
     thead.innerHTML = this.view === 'mine'
       ? '<tr><th>Workflow</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Expires</th><th></th></tr>'
-      : '<tr><th>Workflow</th><th>Requester</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>';
+      : (this.effectiveStatus() === 'Pending'
+        // Under the Pending filter every Decision cell is a dash by definition — drop the column
+        // and give its width to Requester/Reason.
+        ? '<tr><th>Workflow</th><th>Requester</th><th>Scopes</th><th>Status</th><th>Requested</th><th></th></tr>'
+        : '<tr><th>Workflow</th><th>Requester</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>');
   }
 
   /** The number of table columns for the current view (My requests: 6; the approver inbox adds a Workflow column: 7). */
   columnCount() {
-    return this.view === 'mine' ? 6 : 7;
+    if (this.view === 'mine') return 6;
+    return this.effectiveStatus() === 'Pending' ? 6 : 7;
   }
 
   /** A contextual empty-state message for the current view + filters. */
@@ -449,7 +454,7 @@ class ArazzoAccessRequests extends ArazzoElement {
         <td>${this.scopeChips(r.requestedScopes)}</td>
         <td>${this.statusBadge(r)}</td>
         <td><span title="${escapeHtml(absoluteTime(r.createdAt))}">${escapeHtml(relativeTime(r.createdAt))}</span></td>
-        <td>${decision}</td>
+        ${this.effectiveStatus() === 'Pending' ? '' : `<td>${decision}</td>`}
         <td><div class="actions">${actions}</div></td>
       </tr>`;
   }

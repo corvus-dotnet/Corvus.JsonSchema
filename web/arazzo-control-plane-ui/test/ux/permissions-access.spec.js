@@ -205,7 +205,10 @@ test('a grant is authored via the grantee picker with per-verb reach and identit
   // The list shows the new binding: claim + ANDed clause + the verb summary.
   const row = grants.locator('tbody tr.grow-row', { hasText: 'UX test grant' });
   await expect(row.locator('.claim')).toContainText('team=payments');
-  await expect(row.locator('.claim .claim-and')).toContainText('+ iss=https://idp.example.com');
+  // The issuer pin collapses to one chip at list level (it repeats on nearly every row); the
+  // pinned value stays one hover away.
+  await expect(row.locator('.claim .claim-and.pin')).toHaveText('issuer-pinned');
+  await expect(row.locator('.claim .claim-and.pin')).toHaveAttribute('title', 'issuer-pinned: iss=https://idp.example.com');
   await expect(row.locator('.verbs')).toContainText('read reach-payments');
   await expect(row.locator('.verbs')).toContainText('write Unrestricted');
 

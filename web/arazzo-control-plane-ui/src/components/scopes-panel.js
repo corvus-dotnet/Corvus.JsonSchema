@@ -16,6 +16,14 @@
 // expression with a live preview; "Advanced" reveals the raw grammar. The name is the immutable key (read-only on edit).
 
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, confirmDialog, define } from './base.js';
+
+// "in use by N grants" — the consequence indicator that makes editing/deleting a rule a decision.
+// null usage (not yet computed / unreadable) renders nothing rather than a wrong claim.
+const usageChip = (used, capped) => {
+  if (used === null) return '';
+  if (used.length === 0) return ' <span class="usage unused">unused</span>';
+  return ` <span class="usage" title="${escapeHtml(used.join(', '))}">in use by ${used.length}${capped ? '+' : ''} grant${used.length === 1 && !capped ? '' : 's'}</span>`;
+};
 import './pager.js';
 
 // How long to wait after the last keystroke before issuing a server-side search (so typing doesn't fire a request per
@@ -133,6 +141,9 @@ class ArazzoScopesPanel extends ArazzoElement {
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._scopes.length, hasMore: !!this._nextPageToken });
+      // Usage is what makes deletion a decision instead of a gamble: count which grants reference
+      // each rule (bounded drain, best-effort) and re-render the rows with their usage chips.
+      this.refreshRuleUsage(seq);
     } catch (err) {
       if (seq !== this._reqSeq) return;
       this._loading = false;
@@ -221,11 +232,62 @@ class ArazzoScopesPanel extends ArazzoElement {
     }
   }
 
+  /**
+   * Recompute rule → referencing-grants from the bindings list (drained up to a cap; a deployment
+   * with more than the cap renders "N+"-style counts as approximate). Failures leave usage unknown,
+   * which renders as no chip rather than a wrong one.
+   */
+  async refreshRuleUsage(seq) {
+    const client = this.client;
+    if (!client) return;
+    try {
+      const usage = new Map(); // rule name → [claim descriptions]
+      let pageToken;
+      let drained = 0;
+      let capped = false;
+      for (let i = 0; i < 8; i++) {
+        const page = await client.searchSecurityBindings({ pageToken, limit: 50 });
+        for (const g of page.bindings) {
+          drained += 1;
+          const claim = `${g.claimType}${g.claimValue ? '=' + g.claimValue : ''}`;
+          for (const verb of ['read', 'write', 'purge']) {
+            for (const name of (g[verb]?.ruleNames || [])) {
+              if (!usage.has(name)) usage.set(name, []);
+              if (!usage.get(name).includes(claim)) usage.get(name).push(claim);
+            }
+          }
+        }
+        pageToken = page.nextPageToken;
+        if (!pageToken) break;
+        if (i === 7) capped = true;
+      }
+      if (seq !== this._reqSeq) return;
+      this._ruleUsage = usage;
+      this._ruleUsageCapped = capped;
+      void drained;
+      this.renderBody();
+    } catch {
+      /* usage is advisory; an unreadable bindings list just leaves the chips off */
+    }
+  }
+
+  /** The claims referencing a rule, or null when usage is unknown. */
+  usageOf(name) {
+    return this._ruleUsage ? (this._ruleUsage.get(name) || []) : null;
+  }
+
   async deleteScope(name) {
+    const used = this.usageOf(name);
+    const inUse = Array.isArray(used) && used.length > 0;
+    const naming = inUse
+      ? `'${name}' is referenced by ${used.length} grant${used.length === 1 ? '' : 's'} (${used.slice(0, 3).join(', ')}${used.length > 3 ? ', …' : ''}). Deleting it strands those grants pointing at a missing rule: the affected reach silently becomes NOTHING for the rows it admitted.`
+      : `Delete the rule '${name}'? Grants that reference it will lose that reach.`;
     const confirmed = await confirmDialog(this, {
-      title: 'Delete rule',
-      message: `Delete the rule '${name}'? Grants that reference it will lose that reach.`,
+      title: inUse ? 'Delete a rule that grants depend on' : 'Delete rule',
+      message: naming,
       confirmLabel: 'Delete', danger: true,
+      challenge: inUse ? name : null,
+      challengeLabel: 'Type the rule name to confirm',
     });
     if (!confirmed) return;
     try {
@@ -276,6 +338,8 @@ class ArazzoScopesPanel extends ArazzoElement {
         .sname { font-weight: 600; }
         .sexpr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); overflow-wrap: anywhere; }
         .sdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
+        .usage { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); white-space: nowrap; }
+        .usage.unused { border-style: dashed; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .pager { flex: none; }
@@ -352,7 +416,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     } else {
       list.innerHTML = this._scopes.map((s) => `
         <tr class="srow selectable" part="row" data-name="${escapeHtml(s.name)}" aria-selected="${String(s.name === this._selectedName)}">
-          <td part="cell"><span class="sname">${escapeHtml(s.name)}</span>${s.description ? `<div class="sdesc">${escapeHtml(s.description)}</div>` : ''}</td>
+          <td part="cell"><span class="sname">${escapeHtml(s.name)}</span>${usageChip(this.usageOf(s.name), this._ruleUsageCapped)}${s.description ? `<div class="sdesc">${escapeHtml(s.description)}</div>` : ''}</td>
           <td part="cell"><code class="sexpr">${escapeHtml(s.expression)}</code></td>
         </tr>`).join('');
       this.$$('.srow').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.name)));

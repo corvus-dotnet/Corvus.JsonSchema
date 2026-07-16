@@ -263,14 +263,23 @@ describe('<arazzo-grants-panel>', () => {
     equal(e.detail.grants.find((g) => g.id === 'bind-1').read.unrestricted, true, 'read access updated');
   });
 
-  it('deletes a grant from the detail pane and emits grants-changed', async () => {
+  it('deletes a grant from the detail pane and emits grants-changed — a system-critical grant demands the typed challenge', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
+    // bind-2 carries Unrestricted reach, so its delete is guarded: the confirm arrives with the
+    // button DISABLED until the claim is typed back (severity-proportional friction).
     $(el, '.grow-row[data-id="bind-2"]').click();
     const changed = nextEvent(el, 'grants-changed');
     $(el, '.del').click();
     const okBtn = await waitFor(() => $(el, 'dialog.arazzo-confirm .ok'));
+    ok(okBtn.disabled, 'a system-critical delete starts disabled');
+    okBtn.click(); // a click without the challenge must do nothing
+    ok($(el, 'dialog.arazzo-confirm'), 'the dialog survived the premature click');
+    const input = $(el, 'dialog.arazzo-confirm .chal-in');
+    input.value = 'tenant=acme';
+    input.dispatchEvent(new Event('input'));
+    ok(!okBtn.disabled, 'typing the claim arms the button');
     okBtn.click();
     const e = await changed;
     ok(!e.detail.grants.some((g) => g.id === 'bind-2'), 'grant removed');
