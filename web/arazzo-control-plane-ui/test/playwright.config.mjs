@@ -3,10 +3,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: '.',
-  // The smoke gate covers smoke.spec.js only; record.spec.js is the clip recorder (run on demand via record.config.mjs),
-  // not a smoke test — a hangover from clip generation that should not gate CI.
-  testMatch: '**/smoke.spec.js',
-  fullyParallel: true,
   reporter: process.env.CI ? 'github' : 'list',
   use: { baseURL: 'http://localhost:8138', trace: 'on-first-retry' },
   // Serve the project root so the demo (/demo) and the deliverable it imports (/src) both resolve; the
@@ -19,5 +15,12 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // smoke.spec.js is the fast cross-cutting gate (fully parallel); test/ux/*.spec.js is the
+  // comprehensive per-area UX suite — files run in parallel, tests WITHIN a file in order (the
+  // in-browser mock's simulated latency makes same-file parallelism flaky under CPU contention).
+  // record.spec.js is the clip recorder (run on demand via record.config.mjs) and never gates CI.
+  projects: [
+    { name: 'chromium', testMatch: '**/smoke.spec.js', fullyParallel: true, use: { ...devices['Desktop Chrome'] } },
+    { name: 'ux', testMatch: '**/ux/*.spec.js', fullyParallel: false, use: { ...devices['Desktop Chrome'] } },
+  ],
 });

@@ -44,12 +44,13 @@
     "access": "public"
   },
   "scripts": {
-    "build:vendor": "esbuild vendor/codemirror-entry.js --bundle --format=esm --minify --legal-comments=none --banner:js='/* Vendored CodeMirror 6 bundle for @corvus-dotnet/arazzo-control-plane-ui. MIT-licensed: CodeMirror (c) Marijn Haverbeke and others — https://codemirror.net/ ; @codemirror/state, view, language, autocomplete, commands, merge, lang-json and @lezer/highlight. Rebuild: npm run build:vendor (see vendor/codemirror-entry.js). */' --outfile=src/vendor/codemirror.mjs",
+    "build:vendor": "esbuild vendor/codemirror-entry.js --bundle --format=esm --minify --legal-comments=none --banner:js='/* Vendored CodeMirror 6 bundle for @corvus-dotnet/arazzo-control-plane-ui. MIT-licensed: CodeMirror (c) Marijn Haverbeke and others \u2014 https://codemirror.net/ ; @codemirror/state, view, language, autocomplete, commands, merge, lang-json and @lezer/highlight. Rebuild: npm run build:vendor (see vendor/codemirror-entry.js). */' --outfile=src/vendor/codemirror.mjs",
     "test": "node --test test/client.test.mjs test/conformance.test.mjs test/workflow-graph.test.mjs test/workflow-diff.test.mjs test/workflow-layout.test.mjs test/expression-language.test.mjs test/operation-templates.test.mjs test/workflow-document-model.test.mjs test/schema-descriptor.test.mjs test/schema-authoring.test.mjs test/seed-consistency.test.mjs",
     "test:components": "web-test-runner --config test/web-test-runner.config.mjs",
-    "test:smoke": "playwright test --config test/playwright.config.mjs",
-    "test:browser": "npm run test:components && npm run test:smoke",
-    "test:all": "npm test && npm run test:browser"
+    "test:smoke": "playwright test --config test/playwright.config.mjs test/smoke.spec.js",
+    "test:browser": "npm run test:components && npm run test:smoke && npm run test:ux",
+    "test:all": "npm test && npm run test:browser",
+    "test:ux": "playwright test --config test/playwright.config.mjs test/ux"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.3",
