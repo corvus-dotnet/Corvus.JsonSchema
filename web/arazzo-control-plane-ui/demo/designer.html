@@ -22,13 +22,16 @@
     header { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); flex-wrap: wrap; }
     header h1 { font-size: 15px; margin: 0 12px 0 0; }
     header .spacer { flex: 1; }
-    main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-auto-rows: minmax(0, 1fr);
-           gap: 12px; padding: 12px 14px; box-sizing: border-box; }
-    #center { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
-    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; max-height: 42vh; overflow: hidden; --arazzo-tray-body-max: calc(42vh - 48px); }
+    /* Pane sizes are custom properties so the arazzo-splitbar dividers can drive them (drag to
+       resize, double-click to reset, sizes persisted per split). */
+    main { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--inspector-w, 380px); grid-auto-rows: minmax(0, 1fr);
+           gap: 6px; padding: 12px 14px; box-sizing: border-box; }
+    #center { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 8px; }
+    #center:has(> #debug-dock[hidden]) > .dock-split { display: none; }
+    #debug-dock { border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; max-height: var(--dock-h, 42vh); overflow: hidden; --arazzo-tray-body-max: calc(var(--dock-h, 42vh) - 48px); }
     #debug-dock[hidden] { display: none !important; }
-    #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 0; }
-    #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; max-height: 42vh; overflow-y: auto; }
+    #debug-dock .dock-body { display: grid; grid-template-columns: minmax(0, 1fr) auto var(--dock-side-w, 300px); gap: 0; }
+    #debug-dock .dock-side { display: grid; gap: 8px; align-content: start; padding: 10px; border-left: 1px solid var(--arazzo-border, #e3e6ea); min-width: 0; max-height: var(--dock-h, 42vh); overflow-y: auto; }
     #debug-dock .rail-h { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--arazzo-muted, #6b7280); border-top: 1px solid var(--arazzo-border, #e3e6ea); padding-top: 8px; }
     #debug-dock .rail-h:first-child { border-top: none; padding-top: 0; }
     .tabs { display: flex; gap: 4px; }
@@ -145,9 +148,15 @@
       <arazzo-resume-dialog id="debug-remediate-dialog"></arazzo-resume-dialog>
       <!-- The debug session DOCKS across the bottom of the editor: it appears when a run starts
            and is removed by Stop/Clear — the trace gets the horizontal room a sidebar never had. -->
+      <arazzo-splitbar class="dock-split" orientation="horizontal" target="#center" prop="--dock-h" invert
+                       min="180" max="640" storage-key="arazzo.designer.split.dock"
+                       aria-label="Resize the debug dock"></arazzo-splitbar>
       <div id="debug-dock" hidden>
         <div class="dock-body">
           <arazzo-debug-tray id="debugtray"></arazzo-debug-tray>
+          <arazzo-splitbar orientation="vertical" target="#debug-dock" prop="--dock-side-w" invert
+                           min="220" max="520" storage-key="arazzo.designer.split.dock-side"
+                           aria-label="Resize the session rail"></arazzo-splitbar>
           <div class="dock-side">
             <h4 class="rail-h">session</h4>
             <button id="save-scenario" type="button" style="font-size:12px; justify-self:start;" disabled title="Capture this session — its mocks, inputs, and expectations promoted from the observed trace (§3.4)">💾 Save as scenario…</button>
@@ -161,6 +170,9 @@
         </div>
       </div>
     </div>
+    <arazzo-splitbar orientation="vertical" target="main" prop="--inspector-w" invert
+                     min="280" max="720" storage-key="arazzo.designer.split.inspector"
+                     aria-label="Resize the inspector"></arazzo-splitbar>
     <aside>
       <div class="side-tabs" role="tablist">
         <button data-tab="inspect" class="active">Inspect</button>
@@ -206,6 +218,7 @@
     import { templatesFromResponses, payloadSkeletonFromSchema } from '/ui/src/operation-templates.js';
     import { WorkflowDocumentModel } from '/ui/src/workflow-document-model.js';
     import '/ui/src/components/design-surface.js';
+    import '/ui/src/components/splitbar.js';
     import '/ui/src/components/expression-input.js';
     import '/ui/src/components/criteria-editor.js';
     import '/ui/src/components/action-editor.js';
