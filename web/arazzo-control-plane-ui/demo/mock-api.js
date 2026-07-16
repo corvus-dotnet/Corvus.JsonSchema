@@ -3636,8 +3636,11 @@ export function createMockControlPlane(options = {}) {
         pausedBefore = step.stepId;
         break;
       }
+      // Budget is a stop condition like a breakpoint (breakpoint first, budget second, override
+      // third): pause BEFORE the over-budget step, name it, and keep counts equal to records.
+      if (state.budget.executed >= state.maxSteps) { outcome = 'budgetExhausted'; pausedBefore = step.stepId; break; }
       executed += 1;
-      if (++state.budget.executed > state.maxSteps) { outcome = 'budgetExhausted'; break; }
+      state.budget.executed += 1;
 
       const op = bindingOf(step);
 
@@ -3878,7 +3881,10 @@ export function createMockControlPlane(options = {}) {
       ...(workflowOutputs !== undefined ? { outputs: workflowOutputs } : {}),
       steps,
       ...(depth === 0 && state.clockAdvances.length ? { clockAdvances: state.clockAdvances } : {}),
-      stepsExecuted: executed > state.maxSteps ? state.maxSteps : steps.length,
+      // Server parity: the root reports the GLOBAL count (children included, like the durable
+      // run's root counter); a sub-trace reports its own scope's count. Never exceeds the budget
+      // now that the budget pauses BEFORE the over-budget step.
+      stepsExecuted: depth === 0 ? state.budget.executed : executed,
     };
   }
 

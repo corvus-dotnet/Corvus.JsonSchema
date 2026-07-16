@@ -145,7 +145,7 @@ public sealed class WorkflowSimulator : IDisposable
         var result = new SimulationResult(new CompositeDisposable(owned))
         {
             Outcome = outcome,
-            PausedBefore = outcome == SimulationOutcome.Paused ? run.PausedBefore : null,
+            PausedBefore = outcome is SimulationOutcome.Paused or SimulationOutcome.BudgetExhausted ? run.PausedBefore : null,
             Outputs = run.WorkflowOutputs,
             Fault = run.RecordedFault,
             Wait = outcome == SimulationOutcome.Suspended ? run.RecordedWait : null,

@@ -965,7 +965,11 @@ compile; it serves recorded fixtures, clearly marked).
    DURABLE mode — the generated executor's per-step checkpoint (whose state indices are the
    step-array indices) is the trace seam, so `TracingWorkflowRun` records step boundaries, outputs,
    retries, waits, and faults, enforces the step budget, and throws the pause signal for
-   "before step X" stops with nothing half-executed. ("No code-generator changes" held only until
+   "before step X" stops with nothing half-executed. The budget is itself a stop condition with
+   the same guarantee (checked after breakpoints, before overrides): an exhausted budget pauses
+   BEFORE the over-budget step, names it in `pausedBefore`, and reports `stepsExecuted` equal to
+   the recorded steps — the debugger's single-step gesture (replay with `stepsExecuted + 1`)
+   depends on all three, and the tray haloes `pausedBefore` at every live pause. ("No code-generator changes" held only until
    §15-8a: the sub-workflow trace pack changed the emitters — the durable sub-workflow call had
    never compiled, and the corrected emission threads the child scope and time provider and
    unwraps the child's result.) The §8.1

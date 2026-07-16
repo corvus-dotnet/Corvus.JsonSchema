@@ -280,10 +280,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         {
             string stepId = this.stepIds[this.Cursor];
             this.localStepsExecuted++;
-            if (++this.root.stepsExecuted > this.maxSteps)
-            {
-                throw new SimulationBudgetException();
-            }
+            this.root.stepsExecuted++;
 
             if (stepOverride.Outputs.ValueKind is not JsonValueKind.Undefined)
             {
@@ -317,10 +314,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
 
         string stepId = faultedStepId ?? this.stepIds[this.currentState];
         this.localStepsExecuted++;
-        if (++this.root.stepsExecuted > this.maxSteps)
-        {
-            throw new SimulationBudgetException();
-        }
+        this.root.stepsExecuted++;
 
         // A workflowId-bound step's boundary attaches its sub-workflow's collected records as the
         // record's nested trace (§15-8a): terminal here, so the child either completed or faulted.
@@ -344,6 +338,14 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         });
         this.root.exchangeMark = this.transport.Exchanges.Count;
         this.currentState = -1; // consumed; the next boundary needs a fresh state (checkpoint/resume sets it)
+
+        // Backstop only: paths that reach a boundary without passing CheckStop (a retry loop that
+        // never checkpoints a new state). The step already executed, so it is recorded and counted
+        // FIRST — a budget-exhausted trace's counts always equal its records.
+        if (this.root.stepsExecuted > this.maxSteps)
+        {
+            throw new SimulationBudgetException();
+        }
     }
 
     /// <summary>
@@ -386,7 +388,7 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
         // The root's pausedBefore is the FULL scoped path; this scope's trace addresses steps
         // relative to itself, so its pausedBefore is the remainder below its own prefix.
         string? localPausedBefore = null;
-        if (outcome == SimulationOutcome.Paused
+        if (outcome is SimulationOutcome.Paused or SimulationOutcome.BudgetExhausted
             && this.root.pausedBefore is { } full
             && full.StartsWith(this.pathPrefix, StringComparison.Ordinal))
         {
@@ -414,24 +416,37 @@ internal sealed class TracingWorkflowRun : IWorkflowRun
     /// </summary>
     private void CheckStop(int nextState, bool throwBeforeAnything)
     {
-        if (this.stop.IsEmpty || nextState < 0 || nextState >= this.stepIds.Count)
+        if (nextState < 0 || nextState >= this.stepIds.Count)
         {
             return;
         }
 
         string next = this.pathPrefix.Length == 0 ? this.stepIds[nextState] : this.pathPrefix + this.stepIds[nextState];
-        int arrival = this.root.arrivals.GetValueOrDefault(next) + 1;
-        this.root.arrivals[next] = arrival;
+        if (!this.stop.IsEmpty)
+        {
+            int arrival = this.root.arrivals.GetValueOrDefault(next) + 1;
+            this.root.arrivals[next] = arrival;
 
-        bool hit = this.stop.Breakpoints.Contains(next)
-            || (this.stop.BeforeStepId == next && arrival == this.stop.Occurrence);
-        if (hit)
+            bool hit = this.stop.Breakpoints.Contains(next)
+                || (this.stop.BeforeStepId == next && arrival == this.stop.Occurrence);
+            if (hit)
+            {
+                this.root.pausedBefore = next;
+                if (throwBeforeAnything)
+                {
+                    throw new SimulationPauseException(next);
+                }
+            }
+        }
+
+        // The budget is a stop condition too, checked AFTER breakpoints (breakpoint first, budget
+        // second, override third): an exhausted budget pauses BEFORE the next step starts — it
+        // names the position exactly like a breakpoint and never executes an unrecorded step, so
+        // the debugger's single-step (replay with StepsExecuted + 1) advances exactly one step.
+        if (throwBeforeAnything && this.root.stepsExecuted >= this.maxSteps)
         {
             this.root.pausedBefore = next;
-            if (throwBeforeAnything)
-            {
-                throw new SimulationPauseException(next);
-            }
+            throw new SimulationBudgetException();
         }
     }
 }

@@ -296,3 +296,42 @@ describe('<arazzo-debug-tray>', () => {
     equal(frame.active, 'call-child', 'the suspended parent pulses as active');
   });
 });
+
+describe('<arazzo-debug-tray> live-pause halo (frameAt at the end of a paused trace)', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  function makeWith(trace) {
+    el = document.createElement('arazzo-debug-tray');
+    mount(el);
+    el.trace = trace;
+    return el;
+  }
+
+  const pausedTrace = (outcome) => ({
+    outcome,
+    stepsExecuted: 1,
+    pausedBefore: 'adopt-pet',
+    steps: [{
+      stepId: 'get-pet', status: 'completed', attempt: 0,
+      requests: [{ method: 'get', path: '/pets/42', status: 200 }],
+      actionTaken: { type: 'fallThrough' },
+    }],
+  });
+
+  it('a breakpoint pause pulses the step the run is paused BEFORE — live, not only when scrubbing back', () => {
+    makeWith(pausedTrace('paused'));
+    equal(el.cursor, el.length, 'a fresh trace lands at the end');
+    equal(el.frameAt(el.length).active, 'adopt-pet', 'active = trace.pausedBefore at the live pause');
+  });
+
+  it('a budget (single-step) pause pulses the paused-before step too', () => {
+    makeWith(pausedTrace('budgetExhausted'));
+    equal(el.frameAt(el.length).active, 'adopt-pet');
+  });
+
+  it('a scoped pausedBefore haloes its ROOT segment on the root canvas', () => {
+    makeWith({ ...pausedTrace('paused'), pausedBefore: 'call-child/get-pet' });
+    equal(el.frameAt(el.length).active, 'call-child', 'the sub-workflow step is the active node at root level');
+  });
+});

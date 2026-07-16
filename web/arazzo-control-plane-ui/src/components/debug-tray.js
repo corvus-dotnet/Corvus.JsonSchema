@@ -103,7 +103,12 @@ class ArazzoDebugTray extends ArazzoElement {
       }
     }
 
-    const active = k < this.length ? trace.steps[k].stepId : pausedParent;
+    // At the end of a live paused trace (breakpoint, run-to-here, or a step's budget pause) the
+    // active node is the step the run is paused BEFORE — trace.pausedBefore, whose first path
+    // segment addresses this level's node (deeper segments belong to a focused sub-workflow).
+    // Without it the halo only ever appeared when scrubbing BACK through a finished run.
+    const pausedBefore = trace.pausedBefore ? trace.pausedBefore.split('/')[0] : null;
+    const active = k < this.length ? trace.steps[k].stepId : (pausedParent ?? pausedBefore);
     if (active === null && trace.outcome === 'completed') steps['#end'] = 'done-success';
     return { active, steps, edges };
   }

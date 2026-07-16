@@ -440,6 +440,63 @@ public sealed class WorkflowSimulatorTests
     }
 
     [TestMethod]
+    public async Task The_step_budget_pauses_BEFORE_the_next_step_with_a_named_position_and_exact_counts()
+    {
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement), new("post", "/pets/{petId}/adopt", 200, default)],
+        };
+
+        using SimulationResult result = await simulator.SimulateAsync(
+            WorkflowUtf8, Sources, scenario, budget: new SimulationBudget { MaxSteps = 1 });
+
+        // The budget is a stop condition, exactly like a breakpoint: the run pauses BEFORE the
+        // over-budget step starts, names it, and the counts equal the recorded steps. The debugger's
+        // single-step (replay with stepsExecuted + 1) depends on all three.
+        result.Outcome.ShouldBe(SimulationOutcome.BudgetExhausted);
+        result.StepsExecuted.ShouldBe(1, "exactly the budgeted step ran");
+        result.Steps.Count.ShouldBe(1, "the recorded steps ARE the executed steps");
+        result.Steps[0].StepId.ShouldBe("get-pet");
+        result.PausedBefore.ShouldBe("adopt-pet", "a budget pause names the step it stopped before");
+        result.Exchanges.Count.ShouldBe(1, "the over-budget step must NOT have touched the transport");
+    }
+
+    [TestMethod]
+    public async Task Single_stepping_by_budget_advances_exactly_one_step_per_replay()
+    {
+        // The debugger's step gesture: paused at a breakpoint, then repeated replays with
+        // MaxSteps = previous StepsExecuted + 1. Each replay must advance exactly ONE step.
+        using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"petId":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> body = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Fido"}"""u8.ToArray());
+        var scenario = new SimulationScenario
+        {
+            Inputs = inputs.RootElement,
+            Mocks = [new("get", "/pets/{petId}", 200, body.RootElement), new("post", "/pets/{petId}/adopt", 200, default)],
+        };
+
+        using SimulationResult atBreakpoint = await simulator.SimulateAsync(
+            WorkflowUtf8, Sources, scenario, new SimulationStop { Breakpoints = new HashSet<string> { "get-pet" } });
+        atBreakpoint.Outcome.ShouldBe(SimulationOutcome.Paused);
+        atBreakpoint.StepsExecuted.ShouldBe(0);
+
+        using SimulationResult step1 = await simulator.SimulateAsync(
+            WorkflowUtf8, Sources, scenario, budget: new SimulationBudget { MaxSteps = atBreakpoint.StepsExecuted + 1 });
+        step1.Outcome.ShouldBe(SimulationOutcome.BudgetExhausted);
+        step1.StepsExecuted.ShouldBe(1, "one step gesture = one step");
+        step1.PausedBefore.ShouldBe("adopt-pet");
+
+        using SimulationResult step2 = await simulator.SimulateAsync(
+            WorkflowUtf8, Sources, scenario, budget: new SimulationBudget { MaxSteps = step1.StepsExecuted + 1 });
+        step2.Outcome.ShouldBe(SimulationOutcome.Completed, "the final step completes the run, not skips past it");
+        step2.StepsExecuted.ShouldBe(2);
+    }
+
+    [TestMethod]
     public async Task An_overridden_step_is_skipped_and_its_provided_outputs_stand()
     {
         using var simulator = new WorkflowSimulator(new WorkflowExecutorProvider(durable: true));
