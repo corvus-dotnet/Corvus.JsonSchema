@@ -71,7 +71,7 @@ test('a rule created in the Rules panel is immediately offered by the Grants edi
 test('approving an access request writes the approval-service binding into the Grants panel; revoking the approval removes it', async ({ page }) => {
   const errors = watchErrors(page);
   await openTab(page, 'Permissions');
-  await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(6); // demo seed settled
+  await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(7); // demo seed settled
 
   // Approve the seeded pending request (req-2001, Grace's on-call cover for payments-reconcile).
   await page.getByRole('tab', { name: 'Access' }).click();
@@ -88,8 +88,8 @@ test('approving an access request writes the approval-service binding into the G
   // the granted window. The tab activation re-fetches, so no manual refresh is involved.
   await page.getByRole('tab', { name: 'Permissions' }).click();
   const grants = page.locator('arazzo-grants-panel');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
-  await expect(grants.locator('arazzo-pager .count')).toContainText(/7\+? grants/);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(8);
+  await expect(grants.locator('arazzo-pager .count')).toContainText(/8\+? grants/);
   const granted = grants.locator('tbody tr.grow-row', { hasText: 'req-2001' });
   await expect(granted.locator('.claim')).toContainText('preferred_username=grace');
   await expect(granted.locator('.gscopes')).toContainText('confers runs:read, runs:write until');
@@ -101,7 +101,7 @@ test('approving an access request writes the approval-service binding into the G
   await panel.locator('dialog.arazzo-confirm button.ok').click();
   await expect(panel.locator('tr[data-id="req-2001"]')).toHaveCount(0);
   await page.getByRole('tab', { name: 'Permissions' }).click();
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
   await expect(grants.locator('tbody tr.grow-row', { hasText: 'req-2001' })).toHaveCount(0);
   assertClean(errors);
 });

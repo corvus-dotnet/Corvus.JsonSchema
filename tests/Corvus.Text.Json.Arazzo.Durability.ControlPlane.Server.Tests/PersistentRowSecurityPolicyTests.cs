@@ -170,6 +170,28 @@ public sealed class PersistentRowSecurityPolicyTests
     }
 
     [TestMethod]
+    public async Task Rules_within_one_grant_compose_as_and()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await SeedRuleAsync(store, "payments-domain", "domain == 'payments'", "admin");
+        await SeedRuleAsync(store, "confidential-only", "classification == 'confidential'", "admin");
+
+        // ONE grant naming BOTH rules — the ratified §14.2 composition: a grant's rule list is a
+        // CONJUNCTION (every rule must admit the row), so adding a rule can only ever narrow the
+        // grant. Either/or reach is a UNION of bindings (Grants_compose_as_or_across_matched_bindings),
+        // never a rule list. This test is the contract pin for that decision.
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "analyst", VerbGrant.Rules("payments-domain", "confidential-only"), VerbGrant.None, VerbGrant.None), "admin", default);
+
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
+        await policy.RefreshAsync();
+
+        AccessContext ctx = policy.Resolve(Principal(("role", "analyst")));
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("domain", "payments"), new("classification", "confidential")])).ShouldBeTrue(); // both rules admit
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("domain", "payments")])).ShouldBeFalse();             // the classification rule fails
+        ctx.Admits(AccessVerb.Read, SecurityTagSet.FromTags([new("classification", "confidential")])).ShouldBeFalse(); // the domain rule fails
+    }
+
+    [TestMethod]
     public async Task A_null_or_unauthenticated_principal_is_denied()
     {
         var store = new InMemorySecurityPolicyStore();

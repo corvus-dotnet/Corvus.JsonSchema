@@ -29,7 +29,7 @@ const securityRules = [
 // Claim → per-verb reach grants — keyed on team / role within the tenant; scoped via the reach-* rules above.
 const securityBindings = [
   { id: 'bind-1', claimType: 'team', claimValue: 'payments', read: { ruleNames: ['reach-payments'] }, write: { ruleNames: ['reach-payments'] }, purge: { unrestricted: false }, order: 0, description: 'Payments team — read and write the payments domain.', createdBy: 'priya@example.com', createdAt: ago(12 * day), etag: 'etag-b1' },
-  { id: 'bind-2', claimType: 'role', claimValue: 'sre', read: { unrestricted: true }, write: { ruleNames: ['reach-payments', 'reach-onboarding'] }, purge: { unrestricted: false }, order: 1, description: 'SRE — read everything; write the payments and onboarding domains.', createdBy: 'priya@example.com', createdAt: ago(5 * day), etag: 'etag-b2' },
+  { id: 'bind-2', claimType: 'role', claimValue: 'sre', read: { unrestricted: true }, write: { ruleNames: ['reach-payments'] }, purge: { unrestricted: false }, order: 1, description: 'SRE — read everything; write the payments domain.', createdBy: 'priya@example.com', createdAt: ago(5 * day), etag: 'etag-b2' },
   { id: 'bind-3', claimType: 'team', claimValue: 'growth', read: { ruleNames: ['reach-onboarding'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 2, description: 'Growth team — read the onboarding domain.', createdBy: 'priya@example.com', createdAt: ago(4 * day), etag: 'etag-b3' },
   { id: 'bind-4', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 3, description: 'Ada Lovelace — read the payments domain (a direct person grant).', createdBy: 'priya@example.com', createdAt: ago(4 * day), etag: 'etag-b4' },
   // §16.5.2/§16.5.3 — the elevation shapes, so the Access Overview's resolved capability view has
@@ -38,6 +38,11 @@ const securityBindings = [
   // self-elevate). Approval-service-authored — the UI's own grants editor never writes scopes.
   { id: 'bind-5', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { ruleNames: ['reach-payments'] }, purge: { unrestricted: false }, order: 4, description: 'On-call elevation for Ada Lovelace (approved access request).', scopes: ['runs:read', 'runs:write'], expiresAt: ago(-6 * hr), createdBy: 'approval-service', createdAt: ago(2 * hr), etag: 'etag-b5' },
   { id: 'bind-6', claimType: 'team', claimValue: 'growth', read: { unrestricted: false }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 5, description: 'Eligibility: Growth may self-elevate to re-run onboarding.', scopes: ['runs:write'], expiresAt: ago(-3 * day), eligibleOnly: true, createdBy: 'approval-service', createdAt: ago(1 * day), etag: 'etag-b6' },
+  // A grant's rules are a CONJUNCTION — every rule must admit the row (§14.2) — so SRE's second write
+  // domain is its OWN grant: two bindings union into either/or reach, where one binding carrying both
+  // rules would demand rows in BOTH domains at once (nothing is). This pair is the exemplar the grants
+  // editor's conjunction hint points at.
+  { id: 'bind-7', claimType: 'role', claimValue: 'sre', read: { unrestricted: false }, write: { ruleNames: ['reach-onboarding'] }, purge: { unrestricted: false }, order: 6, description: 'SRE — write the onboarding domain (a second grant: rules within one grant must ALL match).', createdBy: 'priya@example.com', createdAt: ago(5 * day), etag: 'etag-b7' },
 ];
 
 // Resolvable grantees for the pickers — people, teams, a role, a workflow. No tenant grantee.

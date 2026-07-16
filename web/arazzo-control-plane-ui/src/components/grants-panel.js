@@ -35,9 +35,16 @@ const grantMode = (g) => (g?.unrestricted ? 'unrestricted' : (Array.isArray(g?.r
 const grantSummary = (g) => {
   const mode = grantMode(g);
   if (mode === 'unrestricted') return 'Unrestricted';
-  if (mode === 'scopes') return g.ruleNames.join(', ');
+  // A grant's rules are a CONJUNCTION (§14.2 — every rule must admit the row), so the summary joins
+  // with '+' exactly like the claim column's ANDed identity clauses; a comma list would read as
+  // alternatives, which is the opposite of what the server enforces.
+  if (mode === 'scopes') return g.ruleNames.join(' + ');
   return 'Denied';
 };
+
+// A simple-grammar equality rule ("dim == 'value'") — the shape the provably-empty-conjunction
+// advisory can reason about. Anything richer is left to the server's evaluation.
+const EQ_RULE = /^\s*([A-Za-z_][\w.:-]*)\s*==\s*'([^']*)'\s*$/;
 
 class ArazzoGrantsPanel extends ArazzoElement {
   static get observedAttributes() {
@@ -61,6 +68,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     /** @private */ this._form = null;           // the detail-pane form state (null = nothing selected)
     /** @private */ this._selectedId = null;     // the selected grant id (null when creating / nothing selected)
     /** @private */ this._squelchFocusPop = false; // true only across addRule's programmatic refocus
+    /** @private */ this._ruleInfo = new Map();     // rule name → expression, from every typeahead page seen
   }
 
   connectedCallback() {
@@ -153,10 +161,31 @@ class ArazzoGrantsPanel extends ArazzoElement {
     try {
       const page = await client.searchSecurityRules({ q: q || undefined });
       this._scopes = page.rules;
+      // Remember every expression this session has seen (name → expression): the provably-empty
+      // conjunction advisory reasons over them best-effort.
+      for (const rule of page.rules) this._ruleInfo.set(rule.name, rule.expression || '');
       this.renderRuleDropdown();
     } catch {
       /* the picker is a convenience; a failed lookup just leaves the previous options */
     }
+  }
+
+  /**
+   * Best-effort detection of a conjunction that can NEVER admit a row: two selected simple
+   * equality rules pinning the SAME dimension to different values (a grant's rules all have to
+   * match — §14.2). Only rules whose expressions this session has seen are considered; anything
+   * richer than the simple grammar is left to the server.
+   */
+  conjunctionConflict(names) {
+    const byDim = new Map();
+    for (const name of names) {
+      const match = EQ_RULE.exec(this._ruleInfo.get(name) || '');
+      if (!match) continue;
+      const prior = byDim.get(match[1]);
+      if (prior && prior.value !== match[2]) return { dimension: match[1], first: prior.name, second: name };
+      byDim.set(match[1], { name, value: match[2] });
+    }
+    return null;
   }
 
   /** Render the open rule dropdown (the one for `_activeRuleVerb`) from the latest results, excluding already-added rules. */
@@ -394,7 +423,10 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .verb-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: start; }
         .verb-row > .vname { text-transform: capitalize; font-weight: 600; font-size: 13px; padding-top: 8px; }
         .scope-pick { display: grid; gap: 6px; margin-top: 6px; }
-        .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .conj { color: var(--_muted); font-weight: 700; }
+        .conj-hint { font-size: 11.5px; color: var(--_muted); margin-top: 4px; }
+        .conj-warn { font-size: 11.5px; color: var(--arazzo-status-suspended, #b45309); margin-top: 4px; }
         .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 999px; padding: 2px 8px; }
         .chip button { border: none; background: none; cursor: pointer; color: var(--_muted); font-size: 13px; line-height: 1; padding: 0; }
         .clauses { display: grid; gap: 6px; }
@@ -499,10 +531,21 @@ class ArazzoGrantsPanel extends ArazzoElement {
     const modes = [['denied', 'Denied'], ['unrestricted', 'Unrestricted'], ['scopes', 'Limited to rules']];
     let picker = '';
     if (v.mode === 'scopes') {
-      const chips = v.scopes.map((name) => `<span class="chip">${escapeHtml(name)}<button type="button" class="chip-rm" data-verb="${verb}" data-scope="${escapeHtml(name)}" aria-label="remove ${escapeHtml(name)}">×</button></span>`).join('');
+      // The '+' separators say what the server enforces: the rules are a conjunction, not
+      // alternatives. With 2+ rules the hint spells it out — and when two simple equality rules
+      // pin the same dimension to different values, the advisory names the impossible pair
+      // (non-blocking: the server remains the authority).
+      const chips = v.scopes.map((name) => `<span class="chip">${escapeHtml(name)}<button type="button" class="chip-rm" data-verb="${verb}" data-scope="${escapeHtml(name)}" aria-label="remove ${escapeHtml(name)}">×</button></span>`).join('<span class="conj">+</span>');
+      const conflict = v.scopes.length > 1 ? this.conjunctionConflict(v.scopes) : null;
+      const hint = conflict
+        ? `<div class="conj-warn">⚠ '${escapeHtml(conflict.first)}' and '${escapeHtml(conflict.second)}' both pin <code>${escapeHtml(conflict.dimension)}</code> to different values — together they can never admit a row. For either/or reach, add a second grant for the same claim.</div>`
+        : (v.scopes.length > 1
+          ? `<div class="conj-hint">All rules must match (their intersection). For either/or reach, add a second grant for the same claim.</div>`
+          : '');
       picker = `
         <div class="scope-pick">
           <div class="chips">${chips || '<span class="scope-empty">No rules yet — search to add.</span>'}</div>
+          ${hint}
           <div class="rule-search">
             <input class="scope-input" data-verb="${verb}" type="search" autocomplete="off" placeholder="Search rules to add…" aria-label="add a rule to ${verb}">
             <ul class="results" data-verb="${verb}" role="listbox" hidden></ul>

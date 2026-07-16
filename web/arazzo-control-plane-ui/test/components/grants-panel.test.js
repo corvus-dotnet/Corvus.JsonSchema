@@ -300,3 +300,43 @@ describe('<arazzo-grants-panel>', () => {
     ok($(el, '.f-claimType').disabled, 'fields are read-only');
   });
 });
+
+describe('<arazzo-grants-panel> conjunction semantics', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  // A grant's rules are a CONJUNCTION (§14.2): the editor separates the chips with '+', states the
+  // intersection semantics once two rules are chosen, and calls out a provably-empty pair (two
+  // simple equality rules pinning the same dimension to different values). Advisory only — the
+  // server remains the authority.
+  it("renders a multi-rule grant as 'all must match' and warns on a provably-empty pair", async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    // A second domain rule so a same-dimension pair exists (reach-payments is domain == 'payments').
+    await el.client.createSecurityRule({ name: 'reach-ops', expression: "domain == 'ops'", description: 'Ops rows.' });
+    $(el, '.new').click();
+    setVerbMode(el, 'read', 'scopes');
+    await el.loadScopeOptions(''); // populates the name → expression map the advisory reasons over
+
+    el.addRule('read', 'reach-payments');
+    ok(!detailText(el).includes('All rules must match'), 'one rule needs no conjunction hint');
+
+    // Different dimensions: the hint states the intersection; no impossibility warning.
+    el.addRule('read', 'tenant-scoped');
+    ok(detailText(el).includes('All rules must match'), 'two rules surface the conjunction hint');
+    ok(!el.shadowRoot.querySelector('.conj-warn'), 'no warning for a satisfiable pair');
+    ok([...el.shadowRoot.querySelectorAll('.conj')].length >= 1, "chips are separated by '+'");
+
+    // Same dimension, different values: provably empty — the advisory names the pair.
+    el.addRule('read', 'reach-ops');
+    const warn = el.shadowRoot.querySelector('.conj-warn');
+    ok(warn, 'the impossible pair raises the advisory');
+    ok(warn.textContent.includes('reach-payments') && warn.textContent.includes('reach-ops'), 'both rule names are called out');
+    ok(warn.textContent.includes('domain'), 'the pinned dimension is named');
+  });
+
+  function detailText(panel) {
+    return panel.shadowRoot.querySelector('.detail-pane')?.textContent ?? '';
+  }
+});

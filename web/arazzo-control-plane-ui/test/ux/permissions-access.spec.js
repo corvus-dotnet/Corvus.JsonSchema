@@ -11,8 +11,9 @@
 //
 // Seeds: demo/index.html feeds the mock DEMO_SEED (demo/demo-seed.js) — example data that OVERRIDES the built-in
 // mock-api.js seeds for rules, bindings, grantees, administrators and access requests. The example seed carries the
-// full §16.5 shape vocabulary — six bindings including a scope-conferring elevation (bind-5, sub=u-1042) and a PIM
-// eligibility (bind-6, team=growth) — and seats the administrator persona on every admin set. The built-in seeds
+// full §16.5 shape vocabulary — seven bindings including a scope-conferring elevation (bind-5, sub=u-1042), a PIM
+// eligibility (bind-6, team=growth), and the per-rule union pair (bind-2/bind-7: a grant's rules are a
+// conjunction, so SRE's two write domains are two grants) — and seats the administrator persona on every admin set. The built-in seeds
 // remain the set the COMPONENT tests assert against (demo-seed.js:1-3), so tests pinning built-in fixture shapes
 // (bind-2/bind-4 wording, the platform tenant, req-2004) repoint at a fresh built-in-seed mock in-page (see
 // useBuiltinSeeds below).
@@ -134,8 +135,8 @@ test('the Grants panel lists the seeded bindings with per-verb reach summaries a
   await openTab(page, 'Permissions');
 
   const grants = page.locator('arazzo-grants-panel');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6);
-  await expect(grants.locator('arazzo-pager .count')).toContainText(/6\+? grants/);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
+  await expect(grants.locator('arazzo-pager .count')).toContainText(/7\+? grants/);
 
   // bind-1: rule-scoped read+write, denied purge.
   const b1 = grants.locator('tr[data-id="bind-1"]');
@@ -143,11 +144,14 @@ test('the Grants panel lists the seeded bindings with per-verb reach summaries a
   await expect(b1.locator('.verbs')).toContainText('read reach-payments');
   await expect(b1.locator('.verbs')).toContainText('purge Denied');
 
-  // bind-2: unrestricted read; write limited to a two-rule set.
+  // bind-2/bind-7: SRE's two write domains are TWO grants (a grant's rules are a conjunction —
+  // §14.2 — so either/or reach is expressed as a union of bindings, one route per rule).
   const b2 = grants.locator('tr[data-id="bind-2"]');
   await expect(b2.locator('.claim')).toContainText('role=sre');
   await expect(b2.locator('.verbs')).toContainText('read Unrestricted');
-  await expect(b2.locator('.verbs')).toContainText('write reach-payments, reach-onboarding');
+  await expect(b2.locator('.verbs')).toContainText('write reach-payments');
+  await expect(grants.locator('tr[data-id="bind-7"] .verbs')).toContainText('write reach-onboarding');
+  await expect(grants.locator('tr[data-id="bind-7"] .gdesc')).toContainText('rules within one grant must ALL match');
 
   // bind-4 is a direct person grant, keyed on the sub claim, with its description shown in the row.
   await expect(grants.locator('tr[data-id="bind-4"] .claim')).toContainText('sub=u-1042');
@@ -165,7 +169,7 @@ test('a grant is authored via the grantee picker with per-verb reach and identit
   await openTab(page, 'Permissions');
 
   const grants = page.locator('arazzo-grants-panel');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6); // first load settled
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7); // first load settled
   await grants.locator('button.new').click();
   await expect(grants.locator('.detail .dtitle')).toHaveText('New grant');
   // The multi-IdP caveat is surfaced on create.
@@ -220,7 +224,7 @@ test('picking a person grantee steers to the access-request flow: the grant edit
   await openTab(page, 'Permissions');
 
   const grants = page.locator('arazzo-grants-panel');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
   await grants.locator('button.new').click();
   const pickerInput = grants.locator('arazzo-grantee-picker input.q');
   await pickerInput.click();
@@ -236,7 +240,7 @@ test('picking a person grantee steers to the access-request flow: the grant edit
   // Submitting anyway is refused client-side with the same steer.
   await grants.locator('.dfoot .confirm').click();
   await expect(grants.locator('.form-err .error-banner')).toContainText('Use the access-request flow for a person');
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6); // nothing was created
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7); // nothing was created
   assertClean(errors);
 });
 
@@ -252,7 +256,7 @@ test('deleting a grant is confirm-gated and removes the binding from the list', 
   await expect(confirm).toContainText("Delete the grant for 'team=growth'");
   await confirm.locator('button.ok').click();
   await expect(grants.locator('tr[data-id="bind-3"]')).toHaveCount(0);
-  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(5);
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(6);
   assertClean(errors);
 });
 
@@ -395,7 +399,7 @@ test('a team grantee resolves through its team-keyed binding and administered wo
 test('under the built-in seeds the capability view resolves conferred vs eligible vs nothing: list wording, the eligible chip, and admin resolution', async ({ page }) => {
   const errors = watchErrors(page);
   await openTab(page, 'Permissions');
-  await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(6); // demo seed settled
+  await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(7); // demo seed settled
 
   // This pins the BUILT-IN fixture shapes (bind-2 confers scopes; bind-4 is an eligibleOnly PIM assignment;
   // the platform tenant administers workflows and an environment), so it drives the same panels against a
