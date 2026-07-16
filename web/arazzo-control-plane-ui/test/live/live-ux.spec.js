@@ -264,3 +264,82 @@ test('environment metadata round-trips real persistence: edit the display name, 
   await expect(envs.locator('tr.erow[data-name="staging"]')).not.toContainText(edited);
   assertLiveClean(errors);
 });
+
+test('the environment registry is genuinely reach-scoped per identity: the admin sees all, erin and wanda see exactly the preprod zone', async ({ browser }) => {
+  // Three REAL identities, three cookie jars. erin (env-admins) and wanda (reconcile-owners) reach
+  // staging through the seeded zone-access:preprod rule — administration alone never confers reach,
+  // and their environment lists must show EXACTLY the one row the rule admits.
+  for (const [user, expected] of [
+    ['admin', ['development', 'production', 'staging']],
+    ['erin', ['staging']],
+    ['wanda', ['staging']],
+  ]) {
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
+    try {
+      const page = await ctx.newPage();
+      await signIn(page, LIVE_USERS[user]);
+      await openLiveTab(page, 'Environments');
+      const rows = page.locator('arazzo-environments tr.erow');
+      await expect(rows).toHaveCount(expected.length);
+      for (const name of expected) {
+        await expect(page.locator(`arazzo-environments tr.erow[data-name="${name}"]`)).toBeVisible();
+      }
+    } finally {
+      await ctx.close();
+    }
+  }
+});
+
+test('the promotion loop crosses real identities: wanda requests staging availability, erin decides it from her Approvals queue, wanda sees the decision', async ({ browser }) => {
+  // The §7.8 elevation path end to end on real infrastructure: the requester's dialog is constrained
+  // by REAL readiness (staging is credentialed for nightly-reconcile's sources, so it is offered;
+  // wanda's reach admits no other environment), and the approver's queue is the environments she
+  // administers. Deny (with a recorded reason) keeps the suite re-runnable — no availability lands.
+  const wandaCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  const erinCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  try {
+    const wandaPage = await wandaCtx.newPage();
+    await signIn(wandaPage, LIVE_USERS.wanda);
+
+    const reason = uniq('live-ux promotion');
+    await openLiveTab(wandaPage, 'Requests');
+    await openLiveSubTab(wandaPage, 'sub-requests-availability');
+    const minePanel = wandaPage.locator('#sub-requests-availability arazzo-availability-requests');
+    await minePanel.locator('button.new').click();
+    const dlg = wandaPage.locator('arazzo-availability-request-dialog');
+    const wfInput = dlg.locator('.sub-wf input.q');
+    await wfInput.click();
+    await wfInput.fill('nightly');
+    await dlg.locator('.sub-wf .results li[data-index]', { hasText: 'nightly-reconcile' }).first().click();
+    // The version dropdown preselects the newest real catalogued version; the environment dropdown
+    // offers ONLY ready targets within wanda's reach — exactly staging (its credential set carries
+    // the same preprod-zone tag her reach rule matches).
+    await expect(dlg.locator('.ver-in')).toBeEnabled();
+    await expect(dlg.locator('.env-in option[value="staging"]')).toHaveCount(1);
+    await dlg.locator('.env-in').selectOption('staging');
+    await dlg.locator('.reason-in').fill(reason);
+    await dlg.locator('button.ok').click();
+    const mineRow = minePanel.locator('tbody tr[data-id]', { hasText: reason });
+    await expect(mineRow.locator('.badge')).toHaveText('Pending');
+
+    // erin administers staging: the request is HER queue's to decide. Deny with a recorded reason.
+    const erinPage = await erinCtx.newPage();
+    await signIn(erinPage, LIVE_USERS.erin);
+    await openLiveTab(erinPage, 'Approvals');
+    await openLiveSubTab(erinPage, 'sub-approvals-availability');
+    const queue = erinPage.locator('#sub-approvals-availability arazzo-availability-requests');
+    const queued = queue.locator('tbody tr[data-id]', { hasText: reason });
+    await expect(queued).toHaveCount(1);
+    await queued.locator('.act[data-action="deny"]').click();
+    await queue.locator('dialog.decision-dialog .reason-in').fill('Live UX test cleanup: denied by design.');
+    await queue.locator('dialog.decision-dialog button.ok').click();
+    await expect(queue.locator('tbody tr[data-id]', { hasText: reason })).toHaveCount(0);
+
+    // The loop closes for the requester.
+    await minePanel.locator('button.refresh').click();
+    await expect(mineRow.locator('.badge')).toHaveText('Denied');
+  } finally {
+    await wandaCtx.close();
+    await erinCtx.close();
+  }
+});

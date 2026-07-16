@@ -99,9 +99,21 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // bindings are usage-scoped to the admin group (§13: only runs carrying the admin identity are entitled), so
         // the access overview shows the admin team's credential rights; development stays shared (empty usage tags) so
         // any debug run resolves its credentials.
-        foreach (string environment in new[] { "production", "development" })
+        // The preprod-zone label: staging's environment row AND its credential set both carry it, so the same
+        // zone-access:preprod rule that lets erin/wanda see the environment also lets them see its credentials —
+        // which is what makes the availability-request dialog's readiness computation work for them (it reads
+        // GET /credentials under the CALLER's reach; an untagged row is visible only to unrestricted readers,
+        // because a rule has no dimensions to match on an empty tag set).
+        SecurityTagSet preprodZone = SecurityTagSet.FromTags([new SecurityTag("zone", "preprod")]);
+
+        foreach (string environment in new[] { "production", "staging", "development" })
         {
+            // production is usage-scoped to the admin group; staging and development stay shared (empty usage
+            // tags). Credentialing STAGING keeps the promotion story real: the availability-request dialog offers
+            // only environments where the version is READY (every referenced source credentialed there), so
+            // wanda's request for staging is constructible end to end.
             SecurityTagSet usage = environment == "production" ? adminGroup : SecurityTagSet.Empty;
+            SecurityTagSet management = environment == "staging" ? preprodZone : SecurityTagSet.Empty;
 
             // 'notifications' is the AsyncAPI (NATS) source onboard-customer-async binds (kyc.requests / kyc.verdict). Its
             // transport is the message binder, not a per-source API key, but the debug-run readiness gate requires a binding
@@ -118,6 +130,7 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                         // The ApiKey provider resolves the key from the secret reference named "value" (default header
                         // X-API-Key); the reference target is the Vault path's #api-key field the provisioner seeds.
                         [new SecretReferenceDefinition("value", $"vault://secret/arazzo/{source}#api-key")],
+                        ManagementTags: management,
                         UsageTags: usage),
                     "demo",
                     cancellationToken);
@@ -135,6 +148,23 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             ("production", "Production", "Live production environment.", false),
         })
         {
+            // Reach stamps (§14.2): the deployment stamps who may SEE an environment at create — the HTTP create
+            // path does exactly this with the creator's internal identity, so the seed mirrors it with the founder
+            // group. Staging ADDITIONALLY carries the user tag the zone-access:preprod rule (seeded with the persona
+            // bindings below) matches: administration alone never confers reach, so erin (env-admins, administers
+            // staging) and wanda (reconcile-owners, names staging as a promotion target) route their staging
+            // visibility through that rule while development/production stay founder-only.
+            SecurityTagSet reach = name == "staging"
+                ? SecurityTagSet.FromTags(
+                    [
+                        new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins"),
+                        DemoData.IssuerTag,
+                        new SecurityTag("zone", "preprod"),
+                    ])
+                : adminGroup;
+            using ParsedJsonDocument<CpEnvironment.SecurityTagInfoArray> reachTags =
+                PersistedJson.ToPooledDocument<CpEnvironment.SecurityTagInfoArray>(reach.RawJson);
+
             // The generated Create() builds the draft in one pooled pass (and, unlike the interpolated-string parse it
             // replaces, cannot produce invalid JSON from a value containing a quote). The server-stamped fields are
             // omitted via default Sources for the store to stamp.
@@ -145,7 +175,8 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                 name: name,
                 allowsDraftRuns: allowsDraftRuns,
                 description: description,
-                displayName: displayName);
+                displayName: displayName,
+                managementTags: (CpEnvironment.SecurityTagInfoArray.Source)reachTags.RootElement);
             (await context.EnvironmentStore.AddAsync(environment.RootElement, "demo", cancellationToken)).Dispose();
         }
 
@@ -213,8 +244,17 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             (await context.SecurityPolicy.AddRuleAsync("workflow-access:" + baseWorkflowId, rule.RootElement, "demo", cancellationToken)).Dispose();
         }
 
+        // The preprod ZONE rule matches staging's user tag (stamped at environment create): the reach route for the
+        // two non-founder groups that must SEE staging — erin to operate it, wanda to promote into it.
+        using (ParsedJsonDocument<SecurityRuleDocument> zoneRule = SecurityRuleDocument.Draft(
+            "zone == 'preprod'", "The pre-production zone (staging)."))
+        {
+            (await context.SecurityPolicy.AddRuleAsync("zone-access:preprod", zoneRule.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
         VerbGrant onboardReach = VerbGrant.Rules("workflow-access:onboard-customer");
         VerbGrant reconcileReach = VerbGrant.Rules("workflow-access:nightly-reconcile");
+        VerbGrant preprodReach = VerbGrant.Rules("zone-access:preprod");
         (string Dimension, string? Value)[] issuerPin = [("iss", DemoData.KeycloakIssuer)];
 
         // observers: reach only (read, bounded to onboard-customer rows) — capability stays the membership baseline.
@@ -226,10 +266,11 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             (await context.SecurityPolicy.AddBindingAsync(observers.RootElement, "demo", cancellationToken)).Dispose();
         }
 
-        // env-admins: capability only (the environments/availability surfaces) — no row reach beyond the baseline.
+        // env-admins: the environments/availability capability scopes, plus read reach over the preprod zone —
+        // administration alone never confers reach, so seeing the staging row they administer routes through the rule.
         using (ParsedJsonDocument<SecurityBindingDocument> envAdmins = SecurityBindingDocument.Draft(
-            "group", "env-admins", VerbGrant.None, VerbGrant.None, VerbGrant.None, order: 21,
-            description: "Environment administrators hold the environments/availability capability scopes.",
+            "group", "env-admins", preprodReach, VerbGrant.None, VerbGrant.None, order: 21,
+            description: "Environment administrators hold the environments/availability capability scopes and see the preprod zone.",
             scopes: ["environments:read", "environments:write", "availability:read", "availability:write"],
             additionalClauses: issuerPin))
         {
@@ -237,14 +278,27 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         }
 
         // reconcile-owners: single-workflow administration — reach over nightly-reconcile rows plus the scopes to
-        // manage its administrator set and remediate its runs.
+        // manage its administrator set and remediate its runs. The environments/availability read scopes ride here
+        // too, so a reconcile owner can construct a promotion request naming staging as the target (§7.8).
         using (ParsedJsonDocument<SecurityBindingDocument> reconcileOwners = SecurityBindingDocument.Draft(
             "group", "reconcile-owners", reconcileReach, reconcileReach, VerbGrant.None, order: 22,
             description: "Reconcile owners administer nightly-reconcile: its rows, its administrator set, its runs.",
-            scopes: ["administrators:write", "runs:write"],
+            scopes: ["administrators:write", "runs:write", "environments:read", "availability:read"],
             additionalClauses: issuerPin))
         {
             (await context.SecurityPolicy.AddBindingAsync(reconcileOwners.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
+        // A verb grant's rules are a CONJUNCTION (every rule must admit the row), so the preprod-zone reach is its
+        // own binding — a second route, unioned with the one above: nightly rows through workflow-access, the
+        // staging environment row through zone-access. One binding with both rules would demand rows satisfying
+        // BOTH, which nothing does.
+        using (ParsedJsonDocument<SecurityBindingDocument> reconcileZone = SecurityBindingDocument.Draft(
+            "group", "reconcile-owners", preprodReach, VerbGrant.None, VerbGrant.None, order: 23,
+            description: "Reconcile owners see the preprod zone (staging) they promote into.",
+            additionalClauses: issuerPin))
+        {
+            (await context.SecurityPolicy.AddBindingAsync(reconcileZone.RootElement, "demo", cancellationToken)).Dispose();
         }
 
         // The administration split: erin's group co-administers staging (arazzo-admins established it above); wanda's
