@@ -343,3 +343,84 @@ test('the promotion loop crosses real identities: wanda requests staging availab
     await erinCtx.close();
   }
 });
+
+test('widening vs narrowing FOR REAL: a second single-rule grant widens oscar\'s catalog reach; a two-rule conjunction grant does not', async ({ browser }) => {
+  // The §14.2 composition doctrine proven on real row visibility, not just rendering: oscar
+  // (observers) starts reaching exactly onboard-customer. A SECOND grant for his group carrying
+  // ONE rule (workflow-access:nightly-reconcile) is the widening gesture — his catalog gains the
+  // workflow. A grant carrying TWO rules is a conjunction (nightly-reconcile ∧ preprod-zone —
+  // nothing satisfies both), so it must NOT widen anything. Both grants are cleaned up.
+  const adminCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  const oscarCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  try {
+    const oscarPage = await oscarCtx.newPage();
+    await signIn(oscarPage, LIVE_USERS.oscar);
+    const oscarCatalog = () => oscarPage.evaluate(async () => {
+      const res = await fetch('/arazzo/v1/catalog?distinctWorkflows=true&limit=50', { credentials: 'include', headers: { 'X-CSRF': '1' } });
+      return res.ok ? (await res.json()).versions.map((v) => v.baseWorkflowId).sort() : [`HTTP ${res.status}`];
+    });
+    expect(await oscarCatalog()).toEqual(['onboard-customer']); // the baseline reach
+
+    const adminPage = await adminCtx.newPage();
+    await signIn(adminPage, LIVE_USERS.admin);
+    await openLiveTab(adminPage, 'Security');
+    const grants = adminPage.locator('arazzo-grants-panel');
+    const widenDesc = uniq('live-widen');
+    const narrowDesc = uniq('live-narrow');
+
+    const author = async (description, ruleNames) => {
+      await grants.locator('button.new').click();
+      await grants.locator('input.f-claimType').fill('group');
+      await grants.locator('input.f-claimValue').fill('observers');
+      await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
+      const scopeInput = grants.locator('.scope-input[data-verb="read"]');
+      for (const name of ruleNames) {
+        await scopeInput.click();
+        await scopeInput.fill(name);
+        await grants.locator(`.results[data-verb="read"] li[data-name="${name}"]`).click();
+      }
+      await grants.locator('input.f-description').fill(description);
+      await grants.locator('.dfoot .confirm').click();
+      await expect(grants.locator('tbody tr.grow-row', { hasText: description })).toHaveCount(1);
+    };
+    const remove = async (description) => {
+      await grants.locator('tbody tr.grow-row', { hasText: description }).click();
+      await grants.locator('.dfoot .del').click();
+      await grants.locator('dialog.arazzo-confirm button.ok').click();
+      await expect(grants.locator('tbody tr.grow-row', { hasText: description })).toHaveCount(0);
+    };
+
+    // WIDEN: one rule per grant — oscar's reach gains nightly-reconcile (the policy refresh is
+    // write-triggered; poll absorbs its latency).
+    await author(widenDesc, ['workflow-access:nightly-reconcile']);
+    await expect.poll(oscarCatalog, { timeout: 15_000 }).toEqual(['nightly-reconcile', 'onboard-customer']);
+
+    // NOT-WIDEN: two rules in ONE grant intersect (the editor says so while authoring), and the
+    // conjunction admits no catalog row — oscar's reach must be unchanged by it.
+    await grants.locator('button.new').click();
+    await grants.locator('input.f-claimType').fill('group');
+    await grants.locator('input.f-claimValue').fill('observers');
+    await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
+    const scopeInput = grants.locator('.scope-input[data-verb="read"]');
+    await scopeInput.click();
+    await scopeInput.fill('workflow-access:nightly-reconcile');
+    await grants.locator('.results[data-verb="read"] li[data-name="workflow-access:nightly-reconcile"]').click();
+    await scopeInput.fill('zone-access:preprod');
+    await grants.locator('.results[data-verb="read"] li[data-name="zone-access:preprod"]').click();
+    await expect(grants.locator('.conj-hint')).toContainText('All rules must match');
+    await grants.locator('input.f-description').fill(narrowDesc);
+    await grants.locator('.dfoot .confirm').click();
+    await expect(grants.locator('tbody tr.grow-row', { hasText: narrowDesc })).toHaveCount(1);
+
+    // Remove the widening grant first: with only the conjunction grant left, oscar must be back to
+    // the baseline — direct proof the two-rule grant confers nothing here.
+    await remove(widenDesc);
+    await expect.poll(oscarCatalog, { timeout: 15_000 }).toEqual(['onboard-customer']);
+
+    await remove(narrowDesc);
+    expect(await oscarCatalog()).toEqual(['onboard-customer']);
+  } finally {
+    await adminCtx.close();
+    await oscarCtx.close();
+  }
+});

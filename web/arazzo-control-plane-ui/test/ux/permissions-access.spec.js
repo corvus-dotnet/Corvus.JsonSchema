@@ -589,3 +589,62 @@ test('personas re-gate Permissions: the security admin authors, the operator get
   await expect(page.locator('arazzo-grants-panel button.new')).toBeVisible();
   assertClean(errors);
 });
+
+// ---- Narrowing vs widening (§14.2 composition doctrine) -----------------------------------------
+
+test('the editor steers rule composition: an impossible pair is called out, a satisfiable pair NARROWS one grant, and a second grant for the same claim WIDENS', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openTab(page, 'Permissions');
+
+  const grants = page.locator('arazzo-grants-panel');
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7); // demo seed settled
+
+  // A user tries to grant billing read over TWO domains in one grant. Both rules are simple
+  // equality on `domain`, so the conjunction is provably empty — the advisory names the pair and
+  // the dimension, steering them to the widening gesture instead.
+  await grants.locator('button.new').click();
+  await grants.locator('input.f-claimType').fill('team');
+  await grants.locator('input.f-claimValue').fill('billing');
+  await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
+  const scopeInput = grants.locator('.scope-input[data-verb="read"]');
+  await scopeInput.click();
+  await grants.locator('.results[data-verb="read"] li[data-name="reach-payments"]').click();
+  await scopeInput.fill('reach-onboarding');
+  await grants.locator('.results[data-verb="read"] li[data-name="reach-onboarding"]').click();
+  const warn = grants.locator('.conj-warn');
+  await expect(warn).toContainText("'reach-payments' and 'reach-onboarding'");
+  await expect(warn).toContainText('can never admit a row');
+  await expect(warn).toContainText('add a second grant for the same claim');
+
+  // Following the steer: drop the second domain. NARROWING is a rule on a DIFFERENT dimension —
+  // payments rows that are also Confidential-or-below — and the hint states the intersection.
+  await grants.locator('.chip-rm[data-scope="reach-onboarding"]').click();
+  await expect(grants.locator('.conj-warn')).toHaveCount(0);
+  await scopeInput.fill('data-confidential');
+  await grants.locator('.results[data-verb="read"] li[data-name="data-confidential"]').click();
+  await expect(grants.locator('.conj-hint')).toContainText('All rules must match');
+  await grants.locator('input.f-description').fill('Billing — payments domain, Confidential or below.');
+  await grants.locator('.dfoot .confirm').click();
+
+  // The narrowed grant renders as a conjunction ('+', never a comma list).
+  const narrowed = grants.locator('tbody tr.grow-row', { hasText: 'team=billing' });
+  await expect(narrowed).toHaveCount(1);
+  await expect(narrowed.locator('.verbs')).toContainText('read reach-payments + data-confidential');
+
+  // WIDENING is the second grant for the SAME claim: billing also reads the onboarding domain.
+  await grants.locator('button.new').click();
+  await grants.locator('input.f-claimType').fill('team');
+  await grants.locator('input.f-claimValue').fill('billing');
+  await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
+  await scopeInput.click();
+  await grants.locator('.results[data-verb="read"] li[data-name="reach-onboarding"]').click();
+  await grants.locator('input.f-description').fill('Billing — onboarding domain (second route).');
+  await grants.locator('.dfoot .confirm').click();
+
+  // Two rows for team=billing: the union of routes, exactly like the seeded bind-2/bind-7 pair.
+  const billing = grants.locator('tbody tr.grow-row', { hasText: 'team=billing' });
+  await expect(billing).toHaveCount(2);
+  await expect(billing.filter({ hasText: 'reach-onboarding' }).locator('.verbs')).toContainText('read reach-onboarding');
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(9);
+  assertClean(errors);
+});
