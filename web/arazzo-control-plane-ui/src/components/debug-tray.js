@@ -17,8 +17,8 @@
 //              the host adds it to the session scenario and replays),
 //              workflow-focus {workflowId|null} (stepping into/out of a sub-workflow's nested trace —
 //              the host switches the canvas to that workflow; null = the run's own workflow),
-//              output-override-requested {stepId, outputs?} (step over: the host collects the
-//              provided outputs in a typed editor and replays with them forced)
+//              output-override {stepId, outputs} (step over: the provided outputs, collected in the
+//              typed inline editor; the host forces them — Skip on a debug run, replay otherwise)
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { actionEdgeId } from '../workflow-graph.js';

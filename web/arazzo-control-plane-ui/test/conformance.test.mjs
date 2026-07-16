@@ -486,3 +486,49 @@ test('runner authorizations: each client method emits the contract method + temp
     assert.ok(OPS.listRunnerAuthorizations.queryParams.has(key), `inbox query param '${key}' is declared in the contract`);
   }
 });
+
+test('the contract declares the debug-run (§18) and working-copy simulation operations', () => {
+  for (const id of ['startDebugRun', 'getDebugRun', 'resumeDebugRun', 'injectDebugRunMessage',
+                    'cancelDebugRun', 'deleteDebugRun', 'simulateWorkingCopy']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('debug runs: each client method emits the contract method + templated path + body', async () => {
+  const { client, calls } = capturing();
+  const at = (op, wc, run) => OPS[op].path.replace('{id}', wc).replace('{debugRunId}', run);
+
+  await client.startDebugRun('wc-1', { workflowId: 'wf', environment: 'development', inputs: { a: 1 }, pause: { afterEachStep: true } });
+  assert.equal(calls[0].method, OPS.startDebugRun.method);
+  assert.equal(calls[0].path, at('startDebugRun', 'wc-1'));
+  assert.equal(calls[0].body.environment, 'development');
+  assert.deepEqual(calls[0].body.pause, { afterEachStep: true });
+
+  await client.getDebugRun('wc-1', 'dbg-1');
+  assert.equal(calls[1].method, OPS.getDebugRun.method);
+  assert.equal(calls[1].path, at('getDebugRun', 'wc-1', 'dbg-1'));
+
+  await client.resumeDebugRun('wc-1', 'dbg-1', { action: { mode: 'Skip', skipOutputs: { forced: true } }, pause: { beforeSteps: ['s2'] } });
+  assert.equal(calls[2].method, OPS.resumeDebugRun.method);
+  assert.equal(calls[2].path, at('resumeDebugRun', 'wc-1', 'dbg-1'));
+  assert.equal(calls[2].body.action.mode, 'Skip');
+
+  await client.injectDebugRunMessage('wc-1', 'dbg-1', { channel: 'orders/events', payload: { ok: true }, correlationId: 'c-1' });
+  assert.equal(calls[3].method, OPS.injectDebugRunMessage.method);
+  assert.equal(calls[3].path, at('injectDebugRunMessage', 'wc-1', 'dbg-1'));
+  assert.equal(calls[3].body.channel, 'orders/events');
+  assert.deepEqual(calls[3].body.payload, { ok: true });
+
+  await client.cancelDebugRun('wc-1', 'dbg-1');
+  assert.equal(calls[4].method, OPS.cancelDebugRun.method);
+  assert.equal(calls[4].path, at('cancelDebugRun', 'wc-1', 'dbg-1'));
+
+  await client.deleteDebugRun('wc-1', 'dbg-1');
+  assert.equal(calls[5].method, OPS.deleteDebugRun.method);
+  assert.equal(calls[5].path, at('deleteDebugRun', 'wc-1', 'dbg-1'));
+
+  await client.simulateWorkingCopy('wc-1', { workflowId: 'wf', scenario: { mocks: [] } });
+  assert.equal(calls[6].method, OPS.simulateWorkingCopy.method);
+  assert.equal(calls[6].path, at('simulateWorkingCopy', 'wc-1'));
+  assert.equal(calls[6].body.workflowId, 'wf');
+});

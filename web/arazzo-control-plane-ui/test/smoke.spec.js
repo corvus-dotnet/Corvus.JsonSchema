@@ -675,3 +675,39 @@ test('an over-persisted dock height can never overlap the canvas minimum (fixed-
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('§3.4 save-as-scenario: an observed trace promotes to a saved scenario that re-runs green', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+
+  // Run against mocks (no environment): the trace settles (suspended on the AsyncAPI receive) and
+  // the session becomes capturable.
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await dlg.locator('.ri-run').click();
+  await expect(page.locator('#debug-dock')).toBeVisible();
+  const saveButton = page.locator('#save-scenario');
+  await expect(saveButton).toBeEnabled();
+
+  // Save the session: mocks + expectations promoted from the observed trace (§3.4).
+  saveButton.click();
+  const ask = page.locator('arazzo-input-dialog#ask, #ask').first();
+  await expect(ask.locator('dialog')).toBeVisible();
+  await ask.locator('input').fill('captured-session');
+  await ask.locator('.confirm').click();
+
+  // The scenario lands in the Scenarios panel, and re-running it judges the promoted
+  // expectations against a fresh replay — green, because the replay IS the captured session.
+  await page.locator('aside .side-tabs [data-tab="scenarios"]').click();
+  const panel = page.locator('#scpanel');
+  await expect(panel.getByText('captured-session')).toBeVisible();
+  await panel.locator('[data-run="captured-session"]').click();
+  await expect(panel.locator('.sc', { hasText: 'captured-session' })).toContainText(/pass/i, { timeout: 5000 });
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});

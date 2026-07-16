@@ -5,6 +5,7 @@
     <Project Path="Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.Tests/Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.Tests.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.Runner.Demo/Corvus.Text.Json.Arazzo.Runner.Demo.csproj" />
+    <Project Path="Corvus.Text.Json.Arazzo.Runner.Demo.Tests/Corvus.Text.Json.Arazzo.Runner.Demo.Tests.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults/Corvus.Text.Json.Arazzo.ControlPlane.Demo.ServiceDefaults.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.Samples.Onboarding/Corvus.Text.Json.Arazzo.Samples.Onboarding.csproj" />
     <Project Path="Corvus.Text.Json.Arazzo.Samples.Onboarding.Host/Corvus.Text.Json.Arazzo.Samples.Onboarding.Host.csproj" />
