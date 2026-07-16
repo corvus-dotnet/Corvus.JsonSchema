@@ -668,6 +668,11 @@ debugger's own surface is readonly too.
 | `df-removed` | `--arazzo-diff-removed` → `--arazzo-status-faulted` → `#d4351c` | **dashed** stroke + − badge; dashed halo |
 | `df-changed` | `--arazzo-diff-changed` → `--arazzo-status-suspended` → `#b07d18` | solid stroke + Δ badge + note chip; dotted halo |
 
+The same rule governs **edge kind** (2026-07-16): success/failure edges differ from sequence edges by
+stroke colour, so every action-edge label leads with the kind glyph — `✗` failure / `✓` success, the
+defaults card's glyph language — composed outermost of the precedence prefix (`✗ 2· $statusCode == 500`).
+Kind is therefore always readable from the label alone (colour-blind users, greyscale output).
+
 **The `--arazzo-diff-*` token contract.** Diff appearance gets its own custom properties, separately
 stylable from the status palette but defaulting to it through a **nested fallback at every point of use**
 (`var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a))`). We deliberately do **not** declare

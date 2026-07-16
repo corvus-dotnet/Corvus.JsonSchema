@@ -524,9 +524,13 @@ class ArazzoDesignSurface extends ArazzoElement {
     const mid = this._edgeMid(edge);
     // An explicit action edge with no criteria fires unconditionally — say so, visibly and
     // clickably, instead of leaving the missing conditions silent. Dispatch is first-match-wins,
-    // so when a step has several same-kind actions the label leads with its precedence.
+    // so when a step has several same-kind actions the label leads with its precedence. The label
+    // then leads with the kind glyph (✗ failure / ✓ success, the defaults card's glyph language):
+    // edge kind must never be carried by stroke colour alone (colour-blind users, greyscale).
     let label = edge.criteriaSummary ?? (edge.kind !== 'seq' ? 'always' : undefined);
     if (label && edge.orderCount > 1) label = `${edge.order}· ${label}`;
+    if (label && edge.kind === 'failure') label = `✗ ${label}`;
+    else if (label && edge.kind === 'success') label = `✓ ${label}`;
     el.innerHTML = `
       <path class="hit" d="${d}"></path>
       <path class="line" d="${d}" marker-end="url(#arr-${edge.kind === 'seq' ? 'seq' : edge.kind})"></path>

@@ -92,8 +92,13 @@ describe('<arazzo-design-surface>', () => {
     equal(failures.length, 2, 'decline goto + reusable escalate');
     ok(failures.some((e) => e.classList.contains('reusable')), 'reusable action edge is marked');
     ok(el.shadowRoot.textContent.includes('$statusCode == 402'), 'criteria summary on the edge label');
+    // Edge kind is never colour-alone: labels lead with the kind glyph (✗ failure / ✓ success).
+    for (const f of failures) {
+      const l = f.querySelector('.elabel');
+      if (l) ok(l.textContent.startsWith('✗ '), `failure label leads with ✗ (${l.textContent})`);
+    }
     const endEdge = el.shadowRoot.querySelector('.edge[data-id="end:capture-payment:done:success"]');
-    equal(endEdge.querySelector('.elabel').textContent, 'always', 'unconditional action edges say so');
+    equal(endEdge.querySelector('.elabel').textContent, '✓ always', 'unconditional action edges say so, glyph-prefixed');
     ok(endEdge.querySelector('.elabel').classList.contains('ghost'), '…in the ghost style');
     ok(!el.shadowRoot.querySelector('.edge-seq .elabel'), 'sequence edges stay unlabelled');
     // Both failure edges share from→to (decline + escalate): the parallel fan must separate them.
