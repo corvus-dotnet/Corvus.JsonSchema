@@ -8,29 +8,10 @@
   "groups": [
     { "name": "arazzo-admins" },
     { "name": "payments" },
-    { "name": "onboarding" }
-  ],
-  "users": [
-    {
-      "username": "arazzo-admin",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "admin@arazzo.example",
-      "firstName": "Arazzo",
-      "lastName": "Admin",
-      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
-      "groups": ["/arazzo-admins"]
-    },
-    {
-      "username": "alice",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "alice@arazzo.example",
-      "firstName": "Alice",
-      "lastName": "Payments",
-      "credentials": [{ "type": "password", "value": "alice", "temporary": false }],
-      "groups": ["/payments"]
-    }
+    { "name": "onboarding" },
+    { "name": "observers" },
+    { "name": "env-admins" },
+    { "name": "reconcile-owners" }
   ],
   "clients": [
     {
@@ -45,7 +26,7 @@
       "serviceAccountsEnabled": false,
       "redirectUris": ["http://localhost:*", "https://localhost:*"],
       "webOrigins": ["+"],
-      "attributes": { "pkce.code.challenge.method": "S256" },
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "+" },
       "protocolMappers": [
         {
           "name": "groups",
@@ -88,6 +69,17 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "arazzo-directory",
+      "name": "Arazzo grantee directory (service account)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "arazzo-directory-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
     }
   ]
 }

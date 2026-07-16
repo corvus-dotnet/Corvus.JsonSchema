@@ -26,6 +26,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
     private const string IndexPartition = "run";
     private const string LeasePartition = "lease";
     private const string RunsContainer = "arazzo-runs";
@@ -294,11 +295,14 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
         var hosted = new HashSet<string>(hostedWorkflowIds);
 
-        // Azure Tables $filter cannot express an IN list cheaply, so the server-side filter narrows to the two
-        // claimable statuses and the small candidate set is filtered by hosted workflow id client-side. The §5.5
+        // Azure Tables $filter cannot express an IN list cheaply, so the server-side filter narrows to the
+        // candidate statuses and the small candidate set is filtered by hosted workflow id client-side. The §5.5
         // environment predicate ("IS NULL OR eq") likewise cannot be expressed over a possibly-absent property in
         // OData, so it too is applied in process — matching how the hosted-workflow and tag predicates filter.
-        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus})");
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (ResumeRequestedAt present) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
+        // The marker presence is checked in process too (OData cannot test a possibly-absent property).
+        string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus} or Status eq {SuspendedStatus} or Status eq {FaultedStatus})");
         var candidates = new List<(string RowKey, string Status)>();
         bool anyRunning = false;
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
@@ -315,6 +319,13 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             }
 
             string status = entity.GetString("Status") ?? string.Empty;
+
+            // A Suspended/Faulted run is claimable only if the control plane marked it resume-claimable.
+            if ((status == SuspendedStatus || status == FaultedStatus) && entity.GetInt64("ResumeRequestedAt") is null)
+            {
+                continue;
+            }
+
             candidates.Add((entity.RowKey, status));
             if (status == RunningStatus)
             {
@@ -336,7 +347,12 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
         foreach ((string rowKey, string status) in candidates)
         {
-            if (status == PendingStatus || held?.Contains(rowKey) != true)
+            // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (gated
+            // above), so surface it unconditionally alongside Pending and orphaned-Running runs.
+            if (status == PendingStatus
+                || status == SuspendedStatus
+                || status == FaultedStatus
+                || held?.Contains(rowKey) != true)
             {
                 yield return new WorkflowRunId(rowKey);
             }
@@ -345,6 +361,72 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
+    {
+        string filter = BuildVisibilityFilter(query);
+
+        // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey
+        // within the single index partition — so results arrive in ascending run-id order and a RowKey keyset
+        // gives the continuation.
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
+        if (after is { })
+        {
+            filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
+        }
+
+        // Table OData cannot match inside the serialized TagsJson, so a contains-ALL tag predicate is applied
+        // client-side. It must run before the keyset "take Limit (plus one to detect a further page)" cut so
+        // paging stays correct: filter the materialised stream, then take.
+        var runs = new List<WorkflowRunListing>();
+        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            WorkflowRunIndexEntry entry = ReadIndexEntity(entity);
+            if (!MatchesClientSide(query, entry))
+            {
+                continue;
+            }
+
+            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), entry));
+            if (runs.Count > query.Limit)
+            {
+                break;
+            }
+        }
+
+        return WorkflowContinuationToken.Paginate(runs, query.Limit);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        string filter = BuildVisibilityFilter(query);
+
+        // Tags and the §14.2 reach are applied in process (Table OData cannot match inside the serialized tag JSON),
+        // so stream the server-filtered entities and bounded-count the rows the client-side filter admits, stopping
+        // one past the cap. Same filter as the list, so the reach cannot drift.
+        int count = 0;
+        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (MatchesClientSide(query, ReadIndexEntity(entity)) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    // Builds the shared server-side OData filter (partition / status / workflow / draft-exclusion / correlation /
+    // timestamps), WITHOUT the keyset cursor and WITHOUT the client-side tag + §14.2 reach filters (Table OData cannot
+    // match inside the serialized tag JSON). QueryAsync appends the cursor; CountAsync reuses this. Both share it so
+    // the server-side predicate cannot drift.
+    private static string BuildVisibilityFilter(in WorkflowQuery query)
     {
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition}");
         if (query.Status is { } status)
@@ -355,6 +437,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         if (query.WorkflowId is { } workflowId)
         {
             filter += TableClient.CreateQueryFilter($" and WorkflowId eq {workflowId}");
+        }
+        else
+        {
+            // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            filter += TableClient.CreateQueryFilter($" and WorkflowId ne {DraftRuns.RunWorkflowId}");
         }
 
         if (query.CorrelationId is { } cid)
@@ -382,55 +469,22 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             filter += TableClient.CreateQueryFilter($" and UpdatedAt lt {updatedBefore.ToUnixTimeMilliseconds()}");
         }
 
-        // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey
-        // within the single index partition — so results arrive in ascending run-id order and a RowKey keyset
-        // gives the continuation.
-        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
-        if (query.ContinuationToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
-        }
-
-        if (after is { })
-        {
-            filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
-        }
-
-        // Table OData cannot match inside the serialized TagsJson, so a contains-ALL tag predicate is applied
-        // client-side. It must run before the keyset "take Limit (plus one to detect a further page)" cut so
-        // paging stays correct: filter the materialised stream, then take.
-        var runs = new List<WorkflowRunListing>();
-        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
-        {
-            WorkflowRunIndexEntry entry = ReadIndexEntity(entity);
-            if (!query.Tags.AllContainedIn(entry.Tags))
-            {
-                continue;
-            }
-
-            // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply
-            // the reach filter in process over the persisted tags — the only correct option for this backend.
-            if (query.Security is { } security && !security.IsSatisfiedBy(entry.SecurityTags))
-            {
-                continue;
-            }
-
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), entry));
-            if (runs.Count > query.Limit)
-            {
-                break;
-            }
-        }
-
-        return WorkflowContinuationToken.Paginate(runs, query.Limit);
+        return filter;
     }
+
+    // The client-side portion of the visibility filter that Table OData cannot express: contains-ALL tags and the
+    // §14.2 security reach over the serialized tag JSON. Shared by QueryAsync and CountAsync.
+    private static bool MatchesClientSide(in WorkflowQuery query, in WorkflowRunIndexEntry entry)
+        => query.Tags.AllContainedIn(entry.Tags)
+            && (query.Security is not { } security || security.IsSatisfiedBy(entry.SecurityTags));
 
     // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null run environment) matches
     // anything; otherwise the run's pinned environment must equal the runner's.
+    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (an
+    // unpinned or differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload
+    // (list all claimable regardless of environment), never a runner.
     private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
+        => runnerEnvironment is null || (runEnvironment is not null && string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal));
 
     private static TableEntity BuildIndexEntity(WorkflowRunId id, in WorkflowRunIndexEntry index)
     {
@@ -470,6 +524,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         if (index.Environment is { } environment)
         {
             entity["Environment"] = environment;
+        }
+
+        if (index.ResumeRequestedAt is { } resume)
+        {
+            entity["ResumeRequestedAt"] = resume.ToUnixTimeMilliseconds();
         }
 
         if (index.Tags.ToJsonStringOrNull() is { } tagsJson)

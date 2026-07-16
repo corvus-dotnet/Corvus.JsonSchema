@@ -40,6 +40,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
     private readonly bool ownsHttpClient;
     private readonly TimeProvider timeProvider;
     private readonly SemaphoreSlim tokenGate = new(1, 1);
+    private readonly DirectoryMembershipExpander membershipExpander;
     private volatile CachedToken? cachedToken;
 
     /// <summary>Initializes a new instance of the <see cref="GooglePrincipalDirectory"/> class.</summary>
@@ -62,6 +63,7 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         this.ownsHttpClient = httpClient is null;
         this.httpClient = httpClient ?? new HttpClient();
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.membershipExpander = new DirectoryMembershipExpander(options.MembershipCacheTtl, this.timeProvider);
     }
 
     /// <inheritdoc/>
@@ -89,9 +91,81 @@ public sealed class GooglePrincipalDirectory : IPrincipalDirectory, IDisposable
         // bytes-to-bytes (only the per-principal value/label strings + the one identity byte[] escape); otherwise the string
         // path applies. The token path is cold (once per lifetime, single-flight) and the warm path is a volatile read.
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        return this.projector.SupportsSpanProjection
+        IReadOnlyList<ResolvedPrincipal> people = this.projector.SupportsSpanProjection
             ? ProjectResponseSpan(kind, resource, body, max, this.projector)
             : ProjectResponse(kind, resource, body, max, this.projector);
+
+        // A person resolves to its FULL membership-expanded identity (design §16.5.4): its grantee value IS its primary
+        // email, a valid groups.list userKey, so each person's membership key is its own value; the expander fetches its
+        // groups (cached per user) and folds a sys:group per group (the group's email) in through the same mapper. Teams /
+        // roles ARE the memberships, so they are not expanded.
+        if (kind != GranteeKind.Person || people.Count == 0)
+        {
+            return people;
+        }
+
+        var keys = new List<string>(people.Count);
+        foreach (ResolvedPrincipal person in people)
+        {
+            keys.Add(person.Value);
+        }
+
+        return await this.membershipExpander.ExpandAsync(people, keys, this.projector, (userKey, ct) => this.FetchGroupNamesAsync(userKey, token, ct), cancellationToken).ConfigureAwait(false);
+    }
+
+    // GET {DirectoryBaseUrl}/groups?userKey={email} → { groups: [{ email, name, id }, …] }; the group's identity value is its
+    // email (the Groups resource's value field). Throws on a non-success status so a misconfigured delegation/scope surfaces.
+    private async Task<IReadOnlyList<string>> FetchGroupNamesAsync(string userKey, string token, CancellationToken cancellationToken)
+    {
+        string root = this.options.DirectoryBaseUrl.AbsoluteUri.TrimEnd('/');
+        var uri = new Uri($"{root}/groups?userKey={Uri.EscapeDataString(userKey)}", UriKind.Absolute);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new GoogleDirectoryException($"the Directory API returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+        }
+
+        byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        return ParseGroupNames(body);
+    }
+
+    // Reads a Google groups.list response ({ groups: [{ email, name, id }, …] }) to the list of group `email`s in place — the
+    // one field the mapper keys on. Other members are skipped without materializing. `internal` only so it can be unit-tested.
+    internal static IReadOnlyList<string> ParseGroupNames(byte[] body)
+    {
+        var reader = new Utf8JsonReader(body);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject || !SeekResults(ref reader, "groups"u8.ToArray()))
+        {
+            return [];
+        }
+
+        List<string>? names = null;
+        while (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+        {
+            string? email = null;
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                if (reader.ValueTextEquals("email"u8))
+                {
+                    reader.Read();
+                    email = reader.GetString();
+                }
+                else
+                {
+                    reader.Read();
+                    reader.Skip();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                (names ??= []).Add(email);
+            }
+        }
+
+        return names ?? (IReadOnlyList<string>)[];
     }
 
     /// <inheritdoc/>

@@ -24,10 +24,10 @@ public interface ISecuredWorkflowManagement
     /// <param name="correlationId">An optional telemetry correlation id (a W3C trace id); a new one is captured when omitted.</param>
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
-    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — it selects the credential set and constrains dispatch to runners serving it; <see langword="null"/> leaves the run unpinned (dispatchable by any runner).</param>
+    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — <strong>required</strong>: it selects the credential set and constrains dispatch to runners serving it. A run cannot be started without one.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the newly created pending run.</returns>
-    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string? environment, CancellationToken cancellationToken);
+    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken);
 
     /// <summary>
     /// Starts a run idempotently: the run id is derived deterministically from
@@ -38,12 +38,13 @@ public interface ISecuredWorkflowManagement
     /// <param name="workflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
     /// <param name="inputs">The workflow inputs (used only when the run is first created).</param>
     /// <param name="idempotencyKey">A stable key identifying the logical start (e.g. a message id or a scheduled-slot timestamp).</param>
+    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — <strong>required</strong>: it selects the credential set and constrains dispatch to runners serving it. A run cannot be started without one.</param>
     /// <param name="correlationId">An optional telemetry correlation id; a new one is captured when omitted.</param>
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the run for this key (newly created, or the pre-existing one).</returns>
-    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
+    ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
 
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged), scoped to the
     /// caller's read reach (§14.2).</summary>
@@ -53,6 +54,16 @@ public interface ISecuredWorkflowManagement
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A page of matching runs the caller may read.</returns>
     ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken);
+
+    /// <summary>Counts the runs matching a visibility query, scoped to the caller's read reach (§14.2) and
+    /// <b>bounded</b> at <paramref name="cap"/> — the count-API contract: the exact number at or below the cap, or
+    /// <c>(cap, Capped: true)</c> beyond it, so a badge/footer renders "<c>N</c>"/"<c>N+</c>" without fetching rows.</summary>
+    /// <param name="query">The visibility query (its limit / page token are ignored; the count is over the whole matching set, bounded by <paramref name="cap"/>).</param>
+    /// <param name="context">The caller's access grant; the count is restricted to its read reach. Use <see cref="AccessContext.System"/> for the trusted system path.</param>
+    /// <param name="cap">The upper bound the count is capped at.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count of runs the caller may read, and whether it was capped.</returns>
+    ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, AccessContext context, int cap, CancellationToken cancellationToken);
 
     /// <summary>Gets a run's current detail (status, cursor, wait/fault, etag) from its authoritative checkpoint,
     /// if the caller's read reach admits it (§14.2).</summary>
@@ -71,6 +82,16 @@ public interface ISecuredWorkflowManagement
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns><see langword="true"/> if the run was resumed; <see langword="false"/> if it was not faulted, was outside the caller's write reach, was held by another owner, was changed concurrently, or no longer exists.</returns>
     ValueTask<bool> ResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken);
+
+    /// <summary>Applies a resume mutation to a faulted run then marks it resume-claimable instead of re-executing it
+    /// in-process (design §18 R5b) — the multi-process fault-remediation path, where a runner performs the
+    /// re-execution. Needs no <see cref="WorkflowResumer"/>: the control plane never executes.</summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="options">How to resume — retry the faulted step, rewind to an earlier cursor, skip the faulted step, or apply a state patch first.</param>
+    /// <param name="context">The caller's access grant; the run must be within its write reach (§14.2).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> if the run was marked resume-claimable; <see langword="false"/> if it was not faulted, was outside the caller's write reach, was held by another owner, or the mutation did not apply.</returns>
+    ValueTask<bool> RequestFaultedResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Cancels a non-terminal run, marking it <see cref="WorkflowRunStatus.Cancelled"/>.</summary>
     /// <param name="id">The run id.</param>

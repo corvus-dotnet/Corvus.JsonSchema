@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Frozen;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
@@ -42,6 +43,12 @@ public static class WorkflowCheckpointSerializer
     /// <param name="outputs">The final workflow <c>outputs</c>, if the run has completed (an undefined element omits the field).</param>
     /// <param name="wait">The wait describing why the run is suspended, if it is (Tier 2).</param>
     /// <param name="fault">The fault record if the run is faulted (Tier 2).</param>
+    /// <param name="correlationId">The run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</param>
+    /// <param name="tags">The free-form tags applied to the run at creation, if any.</param>
+    /// <param name="securityTags">The security tags (KVP labels) applied to the run at creation, if any (§14.2).</param>
+    /// <param name="environment">The deployment environment the run is pinned to (§5.5), if any.</param>
+    /// <param name="pause">The §18 debugger pause configuration to persist, if the run carries one; a claiming
+    /// runner reads it back on load and applies it. An ordinary run passes none, so nothing is written.</param>
     /// <returns>The serialized checkpoint document (UTF-8 JSON).</returns>
     public static byte[] Serialize(
         WorkflowRunId runId,
@@ -59,7 +66,9 @@ public static class WorkflowCheckpointSerializer
         string? correlationId = null,
         TagSet tags = default,
         SecurityTagSet securityTags = default,
-        string? environment = null)
+        string? environment = null,
+        WorkflowPauseConfig? pause = null,
+        DateTimeOffset? resumeRequestedAt = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -157,7 +166,7 @@ public static class WorkflowCheckpointSerializer
                 {
                     writer.WriteString("dueAt"u8, w.DueAt);
                 }
-                else
+                else if (w.Kind == WorkflowWaitKind.Message)
                 {
                     writer.WriteString("channel"u8, w.Channel);
                     if (w.CorrelationId is { } waitCorrelationId)
@@ -166,6 +175,7 @@ public static class WorkflowCheckpointSerializer
                     }
                 }
 
+                // A §18 Pause wait carries no wake trigger — the kind alone is the whole record.
                 writer.WriteEndObject();
             }
 
@@ -177,6 +187,34 @@ public static class WorkflowCheckpointSerializer
                 writer.WriteString("error"u8, f.Error);
                 writer.WriteString("at"u8, f.At);
                 writer.WriteEndObject();
+            }
+
+            // §18: the persisted debugger pause configuration, present only on a run a caller has configured to
+            // stop (SetPause / RequestResumeAsync). A claiming runner reads it back and applies the same stops
+            // without re-supplying them; an ordinary run writes nothing here and is unaffected.
+            if (pause is { } p)
+            {
+                writer.WriteStartObject("pause"u8);
+                writer.WriteBoolean("afterEachStep"u8, p.AfterEachStep);
+                writer.WriteStartArray("breakpoints"u8);
+                if (p.BreakpointCursors is { } breakpoints)
+                {
+                    foreach (int breakpoint in breakpoints)
+                    {
+                        writer.WriteNumberValue(breakpoint);
+                    }
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+
+            // §18: the resume-requested marker (the control plane marked the run claimable-for-resume). Persisted in
+            // the checkpoint so a dispatcher's loaded run can verify the run is still requested before advancing it; a
+            // runner clears it on its first checkpoint. Absent on an ordinary run.
+            if (resumeRequestedAt is { } requestedAt)
+            {
+                writer.WriteNumber("resumeRequestedAt"u8, requestedAt.ToUnixTimeMilliseconds());
             }
 
             writer.WriteEndObject();
@@ -282,11 +320,14 @@ public static class WorkflowCheckpointSerializer
             if (root.TryGetProperty("wait"u8, out JsonElement waitElement))
             {
                 WorkflowWaitKind kind = Enum.Parse<WorkflowWaitKind>(waitElement.GetProperty("kind"u8).GetString() ?? nameof(WorkflowWaitKind.Timer));
-                wait = kind == WorkflowWaitKind.Timer
-                    ? WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset())
-                    : WorkflowWait.Message(
+                wait = kind switch
+                {
+                    WorkflowWaitKind.Timer => WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset()),
+                    WorkflowWaitKind.Pause => WorkflowWait.Pause(),
+                    _ => WorkflowWait.Message(
                         waitElement.GetProperty("channel"u8).GetString() ?? string.Empty,
-                        waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null);
+                        waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null),
+                };
             }
 
             WorkflowFault? fault = null;
@@ -299,7 +340,38 @@ public static class WorkflowCheckpointSerializer
                     faultElement.GetProperty("at"u8).GetDateTimeOffset());
             }
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment);
+            // §18: restore the persisted debugger pause configuration so a claiming runner applies the same stops
+            // on its advance. Absent on an ordinary run (its next advance runs unpaused, as today).
+            WorkflowPauseConfig? pause = null;
+            if (root.TryGetProperty("pause"u8, out JsonElement pauseElement) && pauseElement.ValueKind == JsonValueKind.Object)
+            {
+                bool afterEachStep = pauseElement.TryGetProperty("afterEachStep"u8, out JsonElement afterEachStepElement) && afterEachStepElement.GetBoolean();
+
+                // Allocate the breakpoint set only when there are actually breakpoints. The common debug shape is a
+                // single-step (afterEachStep, no breakpoints), which shares the cached empty set — no per-resume-load
+                // HashSet. (A non-debug run has no pause object at all and never reaches this branch.)
+                IReadOnlySet<int> breakpoints = FrozenSet<int>.Empty;
+                if (pauseElement.TryGetProperty("breakpoints"u8, out JsonElement breakpointsElement)
+                    && breakpointsElement.ValueKind == JsonValueKind.Array
+                    && breakpointsElement.GetArrayLength() > 0)
+                {
+                    var cursors = new HashSet<int>();
+                    foreach (JsonElement breakpoint in breakpointsElement.EnumerateArray())
+                    {
+                        cursors.Add(breakpoint.GetInt32());
+                    }
+
+                    breakpoints = cursors;
+                }
+
+                pause = new WorkflowPauseConfig(afterEachStep, breakpoints);
+            }
+
+            DateTimeOffset? resumeRequestedAt = root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAtElement)
+                ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
+                : null;
+
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt);
         }
         catch
         {
@@ -394,6 +466,7 @@ public static class WorkflowCheckpointSerializer
     {
         WorkflowWaitKind.Timer => nameof(WorkflowWaitKind.Timer),
         WorkflowWaitKind.Message => nameof(WorkflowWaitKind.Message),
+        WorkflowWaitKind.Pause => nameof(WorkflowWaitKind.Pause),
         _ => kind.ToString(),
     };
 }

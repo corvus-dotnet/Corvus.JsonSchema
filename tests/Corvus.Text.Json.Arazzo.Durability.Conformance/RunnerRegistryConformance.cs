@@ -181,6 +181,43 @@ public abstract class RunnerRegistryConformance
     }
 
     [TestMethod]
+    public async Task IsDraftRunsHosted_is_true_only_for_a_draft_hosting_runner_serving_the_environment()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-dev", T0, T0, environment: "development", hostsDraftRuns: true), default);
+        await registry.RegisterAsync(Reg("runner-prod", T0, T0, environment: "production"), default);
+
+        // §18: the draft analogue of IsVersionHostedAsync — environment-scoped, because draft dispatch is pinned.
+        (await registry.IsDraftRunsHostedAsync("development", default)).ShouldBeTrue();
+        (await registry.IsDraftRunsHostedAsync("production", default)).ShouldBeFalse();   // serving runner does not host drafts
+        (await registry.IsDraftRunsHostedAsync("staging", default)).ShouldBeFalse();      // no runner serves it
+
+        // The declaration round-trips through the persisted registration.
+        RunnerRegistration dev = (await registry.ListAsync(default)).Single(r => r.RunnerIdValue == "runner-dev");
+        dev.HostsDraftRunsValue.ShouldBeTrue();
+        RunnerRegistration prod = (await registry.ListAsync(default)).Single(r => r.RunnerIdValue == "runner-prod");
+        prod.HostsDraftRunsValue.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task IsDraftRunsHosted_is_false_after_the_hosting_runner_is_pruned_or_re_registers_without_it()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-dev", T0, T0, environment: "development", hostsDraftRuns: true), default);
+        (await registry.IsDraftRunsHostedAsync("development", default)).ShouldBeTrue();
+
+        // Re-registration without the declaration withdraws it.
+        await registry.RegisterAsync(Reg("runner-dev", T0, T0.AddMinutes(1), environment: "development"), default);
+        (await registry.IsDraftRunsHostedAsync("development", default)).ShouldBeFalse();
+
+        // And a pruned runner no longer hosts anything.
+        await registry.RegisterAsync(Reg("runner-dev", T0, T0.AddMinutes(1), environment: "development", hostsDraftRuns: true), default);
+        (await registry.IsDraftRunsHostedAsync("development", default)).ShouldBeTrue();
+        await registry.PruneAsync(T0.AddMinutes(5), default);
+        (await registry.IsDraftRunsHostedAsync("development", default)).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public async Task Listing_keyset_pages_by_runner_id_without_gaps_or_duplicates()
     {
         IRunnerRegistry registry = await this.NewRegistryAsync();
@@ -255,6 +292,28 @@ public abstract class RunnerRegistryConformance
         }
     }
 
+    [TestMethod]
+    public async Task Counting_is_reach_scoped_and_bounded_by_the_cap()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-acme-1", T0, T0, reachTags: [("tenant", "acme")]), default);
+        await registry.RegisterAsync(Reg("runner-acme-2", T0, T0, reachTags: [("tenant", "acme")]), default);
+        await registry.RegisterAsync(Reg("runner-globex", T0, T0, reachTags: [("tenant", "globex")]), default);
+        await registry.RegisterAsync(Reg("runner-unscoped", T0, T0), default); // serves an unscoped environment
+
+        // Reach-scoped (§5.5/§14.2): the acme caller counts only its two runners; globex counts its one; the unscoped
+        // runner is fail-closed out of a scoped reach, exactly as the reach-filtered list it annotates.
+        (await registry.CountAsync(Scope("acme"), 100, default)).ShouldBe((2, false));
+        (await registry.CountAsync(Scope("globex"), 100, default)).ShouldBe((1, false));
+
+        // The trusted system path is unrestricted, so it counts every registered runner.
+        (await registry.CountAsync(AccessContext.System, 100, default)).ShouldBe((4, false));
+
+        // The count saturates at the cap and reports Capped once the true total meets or exceeds it (the "N+" footer).
+        (await registry.CountAsync(AccessContext.System, 2, default)).ShouldBe((2, true));
+        (await registry.CountAsync(AccessContext.System, 4, default)).ShouldBe((4, false));
+    }
+
     private static AccessContext Scope(string tenant) => AccessContext.Uniform(
         new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], new Dictionary<string, IReadOnlyList<string>> { ["tenant"] = [tenant] }));
 
@@ -267,7 +326,8 @@ public abstract class RunnerRegistryConformance
         (string BaseId, int Version, string Hash, bool Loaded)[]? hosted = null,
         string? address = null,
         string environment = "production",
-        (string Key, string Value)[]? reachTags = null)
+        (string Key, string Value)[]? reachTags = null,
+        bool hostsDraftRuns = false)
     {
         string[] runnerTransports = transports ?? ["http"];
         (string BaseId, int Version, string Hash, bool Loaded)[] hostedVersions = hosted ?? [];
@@ -321,6 +381,12 @@ public abstract class RunnerRegistryConformance
             }
 
             writer.WriteEndArray();
+
+            if (hostsDraftRuns)
+            {
+                writer.WriteBoolean("hostsDraftRuns", true);
+            }
+
             writer.WriteEndObject();
         }
 

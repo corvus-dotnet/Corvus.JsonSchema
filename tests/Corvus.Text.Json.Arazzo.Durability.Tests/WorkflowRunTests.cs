@@ -24,7 +24,7 @@ public sealed class WorkflowRunTests
         var store = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
-        using var run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time);
+        using var run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time);
 
         run.Cursor.ShouldBe(0);
         run.Status.ShouldBe(WorkflowRunStatus.Pending);
@@ -39,7 +39,7 @@ public sealed class WorkflowRunTests
     {
         var store = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
-        using var run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time);
+        using var run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time);
 
         run.SetStepOutputs("noop", default);
 
@@ -57,7 +57,7 @@ public sealed class WorkflowRunTests
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{ "inputs": { "petId": 7 }, "getPet": { "status": "available" } }"""u8.ToArray()))
         {
-            using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement.GetProperty("inputs"u8), Time);
+            using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement.GetProperty("inputs"u8), "development", Time);
             run.SetStepOutputs("getPet", doc.RootElement.GetProperty("getPet"u8));
             run.SetRetryCount("getPet", 1);
             run.CorrelationTokens["orderRef"] = token;
@@ -92,7 +92,7 @@ public sealed class WorkflowRunTests
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{ "inputs": {}, "stepA": { "a": 1 } }"""u8.ToArray()))
         {
-            using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement.GetProperty("inputs"u8), Time);
+            using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement.GetProperty("inputs"u8), "development", Time);
             run.SetStepOutputs("stepA", doc.RootElement.GetProperty("stepA"u8));
             await run.CheckpointAsync(cursor: 1, default);
         }
@@ -130,7 +130,7 @@ public sealed class WorkflowRunTests
 
         using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 1 }"""u8.ToArray()))
         {
-            using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, Time);
+            using var run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", Time);
             await run.CheckpointAsync(cursor: 1, default);
         }
 

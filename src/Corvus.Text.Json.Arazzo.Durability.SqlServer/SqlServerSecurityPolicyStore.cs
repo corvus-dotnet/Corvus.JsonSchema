@@ -457,6 +457,50 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
         }
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        // Bounded native COUNT over the same q-predicate as ListRulesAsync. SQL Server has no LIMIT, so TOP (@cap) inside the
+        // subquery caps the scan at cap+1. The predicate + param are added only when q is present.
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand count = connection.CreateCommand();
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        var inner = new StringBuilder("SELECT TOP (@cap) 1 AS x FROM SecurityRules");
+        if (like is not null)
+        {
+            inner.Append(" WHERE (Name COLLATE DATABASE_DEFAULT LIKE @q ESCAPE '\\' OR Expression LIKE @q ESCAPE '\\')");
+            count.Parameters.AddWithValue("@q", like);
+        }
+
+        count.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        int total = (int)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand count = connection.CreateCommand();
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        var inner = new StringBuilder("SELECT TOP (@cap) 1 AS x FROM SecurityBindings");
+        if (like is not null)
+        {
+            inner.Append(" WHERE (ClaimType LIKE @q ESCAPE '\\' OR ClaimValue LIKE @q ESCAPE '\\' OR Description LIKE @q ESCAPE '\\')");
+            count.Parameters.AddWithValue("@q", like);
+        }
+
+        count.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        int total = (int)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : (total, false);
+    }
+
     // Builds the case-insensitive substring LIKE pattern for the optional q filter ("%<escaped>%"), reifying q to a string
     // only at this LIKE-parameter leaf; null when q is undefined (no filter).
     private static string? BuildLike(JsonString q)

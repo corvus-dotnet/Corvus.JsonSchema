@@ -88,6 +88,20 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         _isImmutable = true;
     }
 
+    /// <summary>
+    /// Creates a document over UTF-8 text and parsed-format metadata built together by a
+    /// <see cref="ParsedJsonDocumentBuilder"/>, taking ownership of both.
+    /// </summary>
+    /// <param name="utf8Json">The UTF-8 JSON text.</param>
+    /// <param name="parsedData">The metadata database describing <paramref name="utf8Json"/>.</param>
+    /// <param name="extraRentedArrayPoolBytes">The rented array backing <paramref name="utf8Json"/>,
+    /// returned to the pool when the document is disposed.</param>
+    /// <returns>A disposable <see cref="ParsedJsonDocument{T}"/> owning the provided pooled memory.</returns>
+    internal static ParsedJsonDocument<T> CreateFromBuilder(ReadOnlyMemory<byte> utf8Json, MetadataDb parsedData, byte[] extraRentedArrayPoolBytes)
+    {
+        return new(utf8Json, parsedData, extraRentedArrayPoolBytes);
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
@@ -1895,6 +1909,57 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
 
     /// <inheritdoc />
     ReadOnlyMemory<byte> IJsonDocument.GetRawSimpleValueUnsafe(int index) => GetRawSimpleValueUnsafe(index);
+
+    /// <inheritdoc />
+    bool IJsonDocument.TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset)
+    {
+        CheckNotDisposed();
+
+        // A parsed document's rows are always fully local and an element's rows/text are contiguous,
+        // so the blit is always available. Mirror GetRawValueUnsafe's include-quotes segments.
+        DbRow row = _parsedData.Get(index);
+        if (row.IsSimpleValue)
+        {
+            if (row.TokenType == JsonTokenType.String)
+            {
+                sourceTextOffset = row.LocationOrIndex - 1;
+                utf8 = _utf8Json.Slice(sourceTextOffset, row.SizeOrLengthOrPropertyMapIndex + 2);
+            }
+            else
+            {
+                sourceTextOffset = row.LocationOrIndex;
+                utf8 = _utf8Json.Slice(sourceTextOffset, row.SizeOrLengthOrPropertyMapIndex);
+            }
+
+            return true;
+        }
+
+        int endElementIdx = index + GetDbSizeUnsafe(index, includeEndElement: false);
+        DbRow end = _parsedData.Get(endElementIdx);
+        sourceTextOffset = row.LocationOrIndex;
+        int endTokenLength = end.HasPropertyMap ? GetLengthOfEndToken(end.SizeOrLengthOrPropertyMapIndex) : end.SizeOrLengthOrPropertyMapIndex;
+        utf8 = _utf8Json.Slice(sourceTextOffset, end.LocationOrIndex - sourceTextOffset + endTokenLength);
+        return true;
+    }
+
+    /// <inheritdoc />
+    int IJsonDocument.AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta)
+    {
+        CheckNotDisposed();
+
+        int endExclusive = index + GetDbSizeUnsafe(index, includeEndElement: true);
+        int count = 0;
+        for (int i = index; i < endExclusive; i += DbRow.Size)
+        {
+            DbRow row = _parsedData.Get(i);
+            bool isEnd = row.TokenType is JsonTokenType.EndObject or JsonTokenType.EndArray;
+            int sizeOrLength = isEnd && row.HasPropertyMap ? GetLengthOfEndToken(row.SizeOrLengthOrPropertyMapIndex) : row.SizeOrLengthOrPropertyMapIndex;
+            db.Append(new DbRow(row.TokenType, row.LocationOrIndex + locationDelta, sizeOrLength, row.NumberOfRows, !isEnd && row.HasComplexChildren));
+            count++;
+        }
+
+        return count;
+    }
 
     private int AppendElement(int index, ref MetadataDb db, int workspaceDocumentIndex)
     {

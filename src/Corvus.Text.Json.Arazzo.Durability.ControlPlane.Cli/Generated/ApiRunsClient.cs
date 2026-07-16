@@ -217,6 +217,42 @@ public sealed class ApiRunsClient : IApiRunsClient
         return SendWithBodyAsyncCore<CancelRunRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CancelRequest, CancelRunResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Count runs
+    /// </summary>
+    /// <remarks>
+    /// Counts the runs matching the visibility query that the caller's read reach admits (§14.2), bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRuns. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="workflowId">The workflowId parameter.</param>
+    /// <param name="createdAfter">The createdAfter parameter.</param>
+    /// <param name="createdBefore">The createdBefore parameter.</param>
+    /// <param name="updatedAfter">The updatedAfter parameter.</param>
+    /// <param name="updatedBefore">The updatedBefore parameter.</param>
+    /// <param name="tag">The tag parameter.</param>
+    /// <param name="correlationId">The correlationId parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountRunsResponse> CountRunsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAfter = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedBefore = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.Source tag = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountRunsRequest request = new()
+        {
+            Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.CreateBuilder(workspace, status, 30).RootElement,
+            WorkflowId = workflowId.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, workflowId, 30).RootElement,
+            CreatedAfter = createdAfter.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, createdAfter, 30).RootElement,
+            CreatedBefore = createdBefore.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, createdBefore, 30).RootElement,
+            UpdatedAfter = updatedAfter.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, updatedAfter, 30).RootElement,
+            UpdatedBefore = updatedBefore.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.CreateBuilder(workspace, updatedBefore, 30).RootElement,
+            Tag = tag.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.TagList.CreateBuilder(workspace, tag, 30).RootElement,
+            CorrelationId = correlationId.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, correlationId, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountRunsRequest, CountRunsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

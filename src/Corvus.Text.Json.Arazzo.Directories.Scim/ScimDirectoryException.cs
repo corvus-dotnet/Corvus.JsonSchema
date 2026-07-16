@@ -9,7 +9,7 @@ namespace Corvus.Text.Json.Arazzo.Directories.Scim;
 /// endpoint returned a non-success status, or a response was missing / malformed. The message names only non-sensitive
 /// detail (status code / shape), never the bearer token, so it is safe to log.
 /// </summary>
-public sealed class ScimDirectoryException : Exception
+public sealed class ScimDirectoryException : PrincipalDirectoryException
 {
     /// <summary>Initializes a new instance of the <see cref="ScimDirectoryException"/> class.</summary>
     /// <param name="reason">A non-sensitive description of the failure.</param>

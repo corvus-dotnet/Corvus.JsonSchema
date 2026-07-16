@@ -152,6 +152,77 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing.
+        if (identity.IsEmpty)
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
+        string kindToken = kind.ToToken();
+        string valueKey = (string)value;
+
+        // The KV bucket has no queryable identity-tag index (reach is applied in memory), so the strict-superset overlap
+        // is a client-side scan: enumerate the grantee keys (unordered), read each document, parse its identity, and keep
+        // those whose tag set strictly contains the authored identity (skipping the authored (kind, value)); then order by
+        // the contract's (subjectValue, subjectKind) key and take the cap.
+        var matches = new List<(string SortKey, byte[] Json)>();
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal) || !TryParseKey(key, out (string SubjectValue, string SubjectKind) parts))
+            {
+                continue;
+            }
+
+            if (string.Equals(parts.SubjectKind, kindToken, StringComparison.Ordinal) && string.Equals(parts.SubjectValue, valueKey, StringComparison.Ordinal))
+            {
+                continue; // the authored grantee itself
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } bytes })
+            {
+                continue;
+            }
+
+            bool broadens;
+            using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(bytes))
+            {
+                SecurityTagSet candidateTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                    ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                    : SecurityTagSet.Empty;
+                broadens = identity.IsSubsetOf(candidateTags) && !candidateTags.IsSubsetOf(identity);
+            }
+
+            if (broadens)
+            {
+                matches.Add((SortKey(parts.SubjectValue, parts.SubjectKind), bytes));
+            }
+        }
+
+        matches.Sort(static (a, b) => string.CompareOrdinal(a.SortKey, b.SortKey));
+
+        var docs = new PooledDocumentList<ObservedIdentity>(Math.Min(cap, matches.Count));
+        try
+        {
+            for (int i = 0; i < matches.Count && i < cap; i++)
+            {
+                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(matches[i].Json));
+            }
+
+            return ObservedIdentityPage.Create(docs);
+        }
+        catch
+        {
+            docs.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);

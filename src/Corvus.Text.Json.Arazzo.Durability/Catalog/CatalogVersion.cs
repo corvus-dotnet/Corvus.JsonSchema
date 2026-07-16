@@ -16,7 +16,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <remarks>
 /// This is the persisted catalog entity. JSON/KV backends (Cosmos, Mongo, NATS, Redis) store it as its JSON
 /// document verbatim (see <see cref="ToJsonBytes"/> / <see cref="FromJson"/>); SQL and Azure backends keep
-/// queryable columns and reconstruct the value via <see cref="Create"/>.
+/// queryable columns and reconstruct the value via the hand-written from-columns <c>Create</c> factory (the generated
+/// type also carries the standard <c>Create()</c> overloads, so the name is overloaded).
 /// </remarks>
 [JsonSchemaTypeGenerator("../Schemas/CatalogVersion.json")]
 public readonly partial struct CatalogVersion

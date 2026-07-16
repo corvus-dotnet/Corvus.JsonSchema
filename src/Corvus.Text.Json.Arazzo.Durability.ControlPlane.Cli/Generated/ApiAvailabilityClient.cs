@@ -59,10 +59,31 @@ public sealed class ApiAvailabilityClient : IApiAvailabilityClient
     }
 
     /// <summary>
+    /// Count the environments a workflow version is available in
+    /// </summary>
+    /// <remarks>
+    /// Counts the environments this version has been made available in (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller who can read the workflow version (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountVersionAvailabilityResponse> CountVersionAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        CountVersionAvailabilityRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountVersionAvailabilityRequest, CountVersionAvailabilityResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Make a workflow version available in an environment
     /// </summary>
     /// <remarks>
-    /// Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources. Idempotent — making an already-available version available again returns the existing entry (200).
+    /// Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources; and where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite must be green, else 409 (evidence-required). Idempotent — making an already-available version available again returns the existing entry (200).
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
@@ -128,6 +149,25 @@ public sealed class ApiAvailabilityClient : IApiAvailabilityClient
         request.Validate(validationMode);
 
         return SendAsyncCore<ListEnvironmentAvailabilityRequest, ListEnvironmentAvailabilityResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Count the workflow versions available in an environment
+    /// </summary>
+    /// <remarks>
+    /// Counts the (workflow, version) pairs made available in this environment (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller whose reach admits the environment (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountEnvironmentAvailabilityResponse> CountEnvironmentAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        CountEnvironmentAvailabilityRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountEnvironmentAvailabilityRequest, CountEnvironmentAvailabilityResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

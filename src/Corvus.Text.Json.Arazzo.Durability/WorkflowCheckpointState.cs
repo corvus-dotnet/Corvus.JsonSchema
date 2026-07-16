@@ -32,7 +32,9 @@ public sealed class WorkflowCheckpointState : IDisposable
         string? correlationId = null,
         TagSet tags = default,
         SecurityTagSet securityTags = default,
-        string? environment = null)
+        string? environment = null,
+        WorkflowPauseConfig? pause = null,
+        DateTimeOffset? resumeRequestedAt = null)
     {
         this.document = document;
         this.RunId = runId;
@@ -51,6 +53,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Tags = tags;
         this.SecurityTags = securityTags;
         this.Environment = environment;
+        this.Pause = pause;
+        this.ResumeRequestedAt = resumeRequestedAt;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -101,6 +105,15 @@ public sealed class WorkflowCheckpointState : IDisposable
     /// <summary>Gets the deployment environment the run is pinned to (design §5.5), if any — its credential set and the
     /// runners it can be dispatched to. Absent on a run created before run→environment pinning.</summary>
     public string? Environment { get; }
+
+    /// <summary>Gets the persisted §18 debugger pause configuration, if the run carries one — the stop points a
+    /// claiming runner applies on the next advance (design §18). Absent on an ordinary run.</summary>
+    public WorkflowPauseConfig? Pause { get; }
+
+    /// <summary>Gets the instant the control plane marked this run resume-claimable (§18 <see cref="WorkflowRun.RequestResumeAsync"/>),
+    /// if it has; a runner clears it on the next checkpoint. Persisted in the checkpoint (not only the index) so a
+    /// dispatcher's loaded run reflects it and can verify the run is still resume-requested before advancing.</summary>
+    public DateTimeOffset? ResumeRequestedAt { get; }
 
     /// <inheritdoc/>
     public void Dispose()

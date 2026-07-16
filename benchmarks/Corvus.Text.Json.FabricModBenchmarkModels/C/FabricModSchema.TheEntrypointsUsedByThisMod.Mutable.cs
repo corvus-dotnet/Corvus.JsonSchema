@@ -2027,5 +2027,153 @@ public readonly partial struct FabricModSchema
         {
             return workspace.CreateBuilder<TheEntrypointsUsedByThisMod, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<TheEntrypointsUsedByThisMod> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<TheEntrypointsUsedByThisMod>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<TheEntrypointsUsedByThisMod> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<TheEntrypointsUsedByThisMod>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<TheEntrypointsUsedByThisMod> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<TheEntrypointsUsedByThisMod>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="client">The value of the property.</param>
+        /// <param name="fabricDatagen">The value of the property.</param>
+        /// <param name="fabricGametest">The value of the property.</param>
+        /// <param name="main">The value of the property.</param>
+        /// <param name="preLaunch">The value of the property.</param>
+        /// <param name="server">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<TheEntrypointsUsedByThisMod> Create(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source client = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source fabricDatagen = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source fabricGametest = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source main = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source preLaunch = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source server = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(client, fabricDatagen, fabricGametest, main, preLaunch, server);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<TheEntrypointsUsedByThisMod>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="client">The value of the property.</param>
+        /// <param name="fabricDatagen">The value of the property.</param>
+        /// <param name="fabricGametest">The value of the property.</param>
+        /// <param name="main">The value of the property.</param>
+        /// <param name="preLaunch">The value of the property.</param>
+        /// <param name="server">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<TheEntrypointsUsedByThisMod> Create<TContext>(in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source<TContext> client = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source<TContext> fabricDatagen = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source<TContext> fabricGametest = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source<TContext> main = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source<TContext> preLaunch = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source<TContext> server = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, client, fabricDatagen, fabricGametest, main, preLaunch, server);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<TheEntrypointsUsedByThisMod>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

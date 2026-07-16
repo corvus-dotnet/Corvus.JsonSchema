@@ -76,6 +76,7 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.7" />
     <!-- Third-party libraries -->
@@ -138,11 +139,14 @@
     <!-- Azure Identity (example recipes only) -->
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
-    <!-- .NET Aspire composition + OpenTelemetry (arazzo demo AppHost + ServiceDefaults; versions track aspire CLI 13.4.4).
+    <!-- .NET Aspire composition + OpenTelemetry (arazzo demo AppHost + ServiceDefaults; versions track aspire CLI 13.4.6.
+         The Keycloak hosting integration is preview-only on NuGet — there is no stable release — so it stays on the
+         latest 13.4.6 preview; the AppHost.Sdk (below) is on stable 13.4.6.
          Aspire.Hosting.AppHost is *not* listed here: the Aspire.AppHost.Sdk injects it already-versioned, and CPM
          forbids a PackageVersion for an implicitly-versioned reference (NU1009). -->
-    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.4.5-preview.1.26316.12" />
-    <PackageVersion Include="Aspire.Keycloak.Authentication" Version="13.4.5-preview.1.26316.12" />
+    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.4.6-preview.1.26319.6" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Keycloak.Authentication" Version="13.4.6-preview.1.26319.6" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />

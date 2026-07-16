@@ -115,6 +115,29 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * Bounded count of runs matching the visibility query, scoped to the caller's read reach. Same filters as
+   * `listRuns` (limit / pageToken are irrelevant to a count); returns `{ count, capped }` where `capped` means the
+   * true total meets or exceeds the server's cap, so the UI renders `count+`.
+   * @param {object} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countRuns(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.workflowId) search.set('workflowId', query.workflowId);
+    if (query.createdAfter) search.set('createdAfter', toInstant(query.createdAfter));
+    if (query.createdBefore) search.set('createdBefore', toInstant(query.createdBefore));
+    if (query.updatedAfter) search.set('updatedAfter', toInstant(query.updatedAfter));
+    if (query.updatedBefore) search.set('updatedBefore', toInstant(query.updatedBefore));
+    for (const tag of query.tags ?? []) {
+      if (tag) search.append('tag', tag);
+    }
+    if (query.correlationId) search.set('correlationId', query.correlationId);
+    const result = await this._request('GET', `/runs/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listRuns`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ status?: string, workflowId?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ runs: object[], nextPageToken: (string|null) }>}
@@ -219,6 +242,17 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countRunners` — the reach-scoped bounded total of registered runners (§5.5/§14.2), for the list footer. No rows
+   * are fetched; the server caps the count and reports `capped: true` once the true total meets or exceeds the cap.
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countRunners(query = {}) {
+    const result = await this._request('GET', '/runners/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listRunners`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ runners: object[], nextPageToken: (string|null) }>}
@@ -255,6 +289,23 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countEnvironmentRunnerAuthorizations` — the bounded total of one environment's runner roster (design §5.5), for a
+   * list footer; no rows are fetched. Same admin gate as {@link listEnvironmentRunnerAuthorizations} (`403`/`404`) and
+   * the same optional `status` filter (an omitted status counts every state). `capped: true` once the true total meets
+   * or exceeds the server cap.
+   * @param {string} name The environment.
+   * @param {{ status?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countEnvironmentRunnerAuthorizations(name, query = {}) {
+    if (!name) throw new TypeError('countEnvironmentRunnerAuthorizations requires a name.');
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    const result = await this._request('GET', `${this._environmentPath(name)}/runners/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listRunnerAuthorizations` — the approver inbox: runner authorizations across the environments the caller
    * administers, defaulting to `Pending` (the actionable to-do) when no `status` is given. With `environment`, that one
    * environment's queue (the caller must administer it, `403` otherwise). `limit`/`pageToken` page (keyset, status
@@ -270,6 +321,22 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/runnerAuthorizations${qs(search)}`, { signal: query.signal });
     return { authorizations: result.authorizations ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countRunnerAuthorizations` — a bounded count of the runner authorizations {@link listRunnerAuthorizations} would
+   * return (same `status`/`environment` filters; the inbox defaults to `Pending`), for work badges and list footers. No
+   * rows are fetched. `capped` is `true` when the true total meets or exceeds the server's cap, so `count` is the cap
+   * (render as e.g. `100+`).
+   * @param {{ status?: string, environment?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countRunnerAuthorizations(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.environment) search.set('environment', query.environment);
+    const result = await this._request('GET', `/runnerAuthorizations/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
@@ -349,6 +416,28 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * Bounded count of catalog entries matching a search, scoped to the caller's read reach. Same filters as
+   * `searchCatalog` (limit / pageToken are irrelevant to a count); counts matching versions, or distinct base
+   * workflows when `distinctWorkflows` is set (mirroring the search). Returns `{ count, capped }`.
+   * @param {object} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countCatalog(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    if (query.workflowIdPrefix) search.set('workflowIdPrefix', query.workflowIdPrefix);
+    for (const tag of query.tags ?? []) {
+      if (tag) search.append('tag', tag);
+    }
+    if (query.status) search.set('status', query.status);
+    if (query.owner) search.set('owner', query.owner);
+    if (query.distinctWorkflows) search.set('distinctWorkflows', 'true');
+    const result = await this._request('GET', `/catalog/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `searchCatalog`, as an async iterator walking every page via the keyset `nextPageToken`.
    * @param {{ q?: string, baseWorkflowId?: string, tags?: string[], status?: string, owner?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ versions: object[], nextPageToken: (string|null) }>}
@@ -401,6 +490,20 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/availability${qs(search)}`, { signal: query.signal });
     return { availability: result.availability ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countVersionAvailability` — the bounded count of environments this version is available in (§7.8), for a footer or
+   * badge; no rows are fetched. Visible to a caller who can read the version (`404` otherwise). `capped: true` once the
+   * true total meets or exceeds the server cap.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countVersionAvailability(baseWorkflowId, versionNumber, query = {}) {
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/availability/count`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
@@ -592,6 +695,18 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countCredentials` — a bounded count of the source credential bindings {@link listCredentials} would return (the
+   * caller's reach, §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or
+   * exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countCredentials(query = {}) {
+    const result = await this._request('GET', '/credentials/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listCredentials`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ credentials: object[], nextPageToken: (string|null) }>}
@@ -617,6 +732,18 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/environments${qs(search)}`, { signal: query.signal });
     return { environments: result.environments ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countEnvironments` — a bounded count of the deployment environments {@link listEnvironments} would return (the
+   * caller's reach, §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or
+   * exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countEnvironments(query = {}) {
+    const result = await this._request('GET', '/environments/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
@@ -647,7 +774,8 @@ export class ArazzoControlPlaneClient {
   /**
    * `createEnvironment` — create a governed, reach-scoped environment; the deployment grants the calling principal
    * administration of it (§7.7). Conflicts (`409`) if an environment with that name already exists in the caller's reach.
-   * @param {{ name: string, displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} body
+   * A `requireEvidence: true` opts the environment into evidence-gated promotion (workflow-designer §4.6).
+   * @param {{ name: string, displayName?: string, description?: string, requireEvidence?: boolean, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} body
    * @returns {Promise<object>} The created {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`409`.
    */
   createEnvironment(body) {
@@ -655,17 +783,19 @@ export class ArazzoControlPlaneClient {
     const payload = { name: body.name };
     if (body.displayName) payload.displayName = body.displayName;
     if (body.description) payload.description = body.description;
+    if (typeof body.requireEvidence === 'boolean') payload.requireEvidence = body.requireEvidence;
     if (body.managementTags) payload.managementTags = body.managementTags;
     return this._request('POST', '/environments', { body: payload, signal: body.signal });
   }
 
   /**
-   * `updateEnvironment` — replace an environment's mutable metadata (display name, description, and — for an
-   * administrator re-tag — the management-tags reach scope §14.2; a present `managementTags` replaces the caller's
-   * non-internal labels, absent leaves them unchanged, the reserved `sys:` prefix is rejected 400). The name and
-   * created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
+   * `updateEnvironment` — replace an environment's mutable metadata (display name, description, the §4.6
+   * `requireEvidence` promotion requirement, and — for an administrator re-tag — the management-tags reach scope
+   * §14.2; a present `managementTags` replaces the caller's non-internal labels, absent leaves them unchanged, the
+   * reserved `sys:` prefix is rejected 400; a present `requireEvidence` likewise replaces the stored flag). The name
+   * and created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
    * @param {string} name
-   * @param {{ displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}> }} patch
+   * @param {{ displayName?: string, description?: string, requireEvidence?: boolean, managementTags?: Array<{key: string, value: string}> }} patch
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The updated {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
    */
@@ -761,6 +891,20 @@ export class ArazzoControlPlaneClient {
     return { availability: result.availability ?? [], nextPageToken: result.nextPageToken ?? null };
   }
 
+  /**
+   * `countEnvironmentAvailability` — the bounded count of workflow versions available in this environment (§7.8), for a
+   * footer or badge; no rows are fetched. Visible to a caller whose reach admits the environment (`404` otherwise).
+   * `capped: true` once the true total meets or exceeds the server cap.
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countEnvironmentAvailability(name, query = {}) {
+    if (!name) throw new TypeError('countEnvironmentAvailability requires a name.');
+    const result = await this._request('GET', `${this._environmentPath(name)}/availability/count`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
   /** @private */
   _environmentPath(name) {
     return `/environments/${encodeURIComponent(name)}`;
@@ -783,6 +927,18 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/sources${qs(search)}`, { signal: query.signal });
     return { sources: result.sources ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countSources` — a bounded count of the registered sources {@link listSources} would return (the caller's reach,
+   * §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or exceeds the server's
+   * cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countSources(query = {}) {
+    const result = await this._request('GET', '/sources/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
@@ -824,6 +980,489 @@ export class ArazzoControlPlaneClient {
     if (source.description) body.description = source.description;
     if (source.managementTags) body.managementTags = source.managementTags;
     return this._request('POST', '/sources', { body, signal: source.signal });
+  }
+
+  /**
+   * `updateSource` — replace a registered source's mutable content (§7.6): its OpenAPI/AsyncAPI `document`, and — for
+   * an administrator re-tag — the management-tags reach scope (§14.2; a present `managementTags` replaces the caller's
+   * non-internal labels, the reserved `sys:` prefix is rejected 400), plus `displayName`/`description`. The `name` and
+   * `type` are immutable. The caller must be within the source's management reach (`403` otherwise).
+   * @param {string} name
+   * @param {{ document?: object, displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}> }} patch
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link Source}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   */
+  updateSource(name, patch, opts = {}) {
+    if (!name) throw new TypeError('updateSource requires a name.');
+    return this._request('PUT', `/sources/${encodeURIComponent(name)}`, { body: patch ?? {}, signal: opts.signal });
+  }
+
+  /**
+   * `deleteSource` — remove a registered source by name (§7.6). The caller must be within its management reach
+   * (`403` otherwise).
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `403`/`404`.
+   */
+  async deleteSource(name, opts = {}) {
+    if (!name) throw new TypeError('deleteSource requires a name.');
+    await this._request('DELETE', `/sources/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `listWorkingCopies` — one page of designer working copies (workflow-designer design §4.1; the list omits each
+   * working copy's `document` and `designerState`, returned only on a single read). Ordered by id. Page with `limit`
+   * and the opaque `pageToken`.
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ workingCopies: object[], nextPageToken: (string|null) }>} A {@link WorkingCopyList}.
+   */
+  async listWorkingCopies(query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/workspace/workflows${qs(search)}`, { signal: query.signal });
+    return { workingCopies: result.workingCopies ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countWorkingCopies` — a bounded count of the designer working copies {@link listWorkingCopies} would return (the
+   * caller's reach, §14.2), for list footers. No rows are fetched. `capped` is `true` when the true total meets or
+   * exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countWorkingCopies(query = {}) {
+    const result = await this._request('GET', '/workspace/workflows/count', { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
+   * `listWorkingCopies`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ workingCopies: object[], nextPageToken: (string|null) }>}
+   */
+  async *listWorkingCopiesPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listWorkingCopies({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `getWorkingCopy` — a single working copy WITH its Arazzo `document` and `designerState`.
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} A {@link WorkingCopy}. Throws {@link ProblemError} `404` if absent or out of reach.
+   */
+  getWorkingCopy(id, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `createWorkingCopy` — open a new working copy: from a supplied Arazzo `document`, from a published catalog version
+   * (`fromBaseWorkflowId` + `fromVersionNumber` — the carry-over), or blank (a minimal skeleton). The name defaults to
+   * the document's first `workflowId`, or `'untitled'`. Saving never mints a catalog version; publish does.
+   * @param {{ name?: string, document?: object, fromBaseWorkflowId?: string, fromVersionNumber?: number, designerState?: object, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} [workingCopy]
+   * @returns {Promise<object>} The created {@link WorkingCopy} (its server-minted `id` and `etag` included).
+   */
+  createWorkingCopy(workingCopy = {}) {
+    const body = {};
+    if (workingCopy.name) body.name = workingCopy.name;
+    if (workingCopy.document != null) body.document = workingCopy.document;
+    if (workingCopy.fromBaseWorkflowId) body.fromBaseWorkflowId = workingCopy.fromBaseWorkflowId;
+    if (workingCopy.fromVersionNumber != null) body.fromVersionNumber = workingCopy.fromVersionNumber;
+    if (workingCopy.designerState != null) body.designerState = workingCopy.designerState;
+    if (workingCopy.managementTags) body.managementTags = workingCopy.managementTags;
+    return this._request('POST', '/workspace/workflows', { body, signal: workingCopy.signal });
+  }
+
+  /**
+   * `saveWorkingCopy` — replace the working copy's `document` (and optionally its `name`/`designerState`/
+   * `gitBinding`, §4.7), presenting the `expectedEtag` the client read. A stale save throws
+   * {@link ProblemError} `409` rather than clobbering a collaborator's work — re-fetch and reconcile.
+   * Provenance, tags, and created-* audit fields are immutable.
+   * @param {string} id
+   * @param {{ document: object, expectedEtag: string, name?: string, designerState?: object, gitBinding?: object, signal?: AbortSignal }} save
+   * @returns {Promise<object>} The saved {@link WorkingCopy} (its new `etag` included).
+   */
+  saveWorkingCopy(id, save) {
+    if (!save || save.document == null || !save.expectedEtag) {
+      throw new TypeError('saveWorkingCopy requires the document and the expectedEtag it read.');
+    }
+    const body = { document: save.document, expectedEtag: save.expectedEtag };
+    if (save.name !== undefined) body.name = save.name;
+    if (save.designerState !== undefined) body.designerState = save.designerState;
+    if (save.gitBinding !== undefined) body.gitBinding = save.gitBinding;
+    return this._request('PUT', `/workspace/workflows/${encodeURIComponent(id)}`, { body, signal: save.signal });
+  }
+
+  /**
+   * `deleteWorkingCopy` — delete a working copy (development state; the catalog is the durable record).
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `404` if absent or out of reach.
+   */
+  async deleteWorkingCopy(id, opts = {}) {
+    await this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `validateWorkingCopy` — full diagnostics over the working copy's stored Arazzo document:
+   * JSON-Schema conformance plus document-local semantic checks (goto/retry targets, dependsOn,
+   * criterion syntax, runtime expressions, component references, duplicate ids, reachability),
+   * each positioned by a JSON Pointer. An invalid document is a successful validation run (`200`);
+   * `valid` means no error-severity findings (warnings/infos may still be present).
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ valid: boolean, diagnostics: Array<{severity: string, category: string, instancePath: string, message: string, schemaLocation?: string}> }>}
+   */
+  validateWorkingCopy(id, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/validate`, { signal: opts.signal });
+  }
+
+  /**
+   * `listWorkingCopySources` — the working copy's attachments (no documents; the operations
+   * endpoint projects them).
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ sources: object[] }>}
+   */
+  listWorkingCopySources(id, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/sources`, { signal: opts.signal });
+  }
+
+  /**
+   * `startDebugRun` — start a DEBUG RUN of the working copy's stored document in a development-class
+   * environment (§18): durable, forward-only, under the environment's credential bindings. 403 when
+   * the environment does not allow drafts; 409 when credential readiness is incomplete.
+   *
+   * @param {string} id - The working copy id.
+   * @param {object} command - `{workflowId, environment, inputs?, pause?: {afterEachStep?, beforeSteps?}}`.
+   * @returns {Promise<object>} The {@link DebugRun}.
+   */
+  startDebugRun(id, command, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs`, { body: command, signal: opts.signal });
+  }
+
+  /** `getDebugRun` — the debug run's status, cursor, trace-so-far, and any wait (§18). */
+  getDebugRun(id, debugRunId, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `resumeDebugRun` — advance the run: bare resume continues to the next pause point;
+   * `{action}` applies the runs ResumeRequest union (Skip with outputs = step over); `{pause}`
+   * replaces the pause points (afterEachStep = single-step).
+   */
+  resumeDebugRun(id, debugRunId, command = {}, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/resume`, { body: command, signal: opts.signal });
+  }
+
+  /**
+   * `injectDebugRunMessage` — DEBUG-ONLY (§18 / §3.3): deliver a message to a debug run suspended on an
+   * AsyncAPI receive, standing in for the real publisher so it advances. Body `{channel, payload, correlationId?}`.
+   * Delivered straight to the awaiting run; nothing is published to a real broker. 409 when it awaits no such message.
+   */
+  injectDebugRunMessage(id, debugRunId, message, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/inject-message`, { body: message, signal: opts.signal });
+  }
+
+  /** `cancelDebugRun` — terminal, idempotent (§18). */
+  cancelDebugRun(id, debugRunId, opts = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}/cancel`, { body: {}, signal: opts.signal });
+  }
+
+  /** `deleteDebugRun` — purge the run's captured draft, metadata trace, and durable run (§18 R5c); 204, idempotent. */
+  deleteDebugRun(id, debugRunId, opts = {}) {
+    return this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}/debug-runs/${encodeURIComponent(debugRunId)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `getWorkingCopySource` — one attachment WITH its stored inline document (or registry
+   * reference) — the full payload needed to re-attach it (restore after a detach).
+   *
+   * @param {string} id - The working copy id.
+   * @param {string} name - The sourceDescriptions name.
+   * @returns {Promise<object>} The attachment. Throws {@link ProblemError} `404` if not attached.
+   */
+  getWorkingCopySource(id, name, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `attachWorkingCopySource` — attach (or replace) the source for a `sourceDescriptions` name:
+   * EXACTLY ONE of `sourceName` (a registry reference, resolved reach-checked at read time) or
+   * `document` (an inline upload, stored on the working copy). The response carries the working
+   * copy's NEW `etag` — the attach bumped it; present the fresh token on the next save.
+   * @param {string} id
+   * @param {string} name The sourceDescriptions name.
+   * @param {{ sourceName?: string, document?: object, type?: string, signal?: AbortSignal }} attachment
+   * @returns {Promise<object>} The {@link AttachedSource} (with the fresh working-copy `etag`).
+   */
+  attachWorkingCopySource(id, name, attachment) {
+    if (!attachment || (attachment.sourceName ? attachment.document != null : attachment.document == null)) {
+      throw new TypeError('attachWorkingCopySource requires exactly one of sourceName or document.');
+    }
+    const body = {};
+    if (attachment.sourceName) body.sourceName = attachment.sourceName;
+    if (attachment.document != null) body.document = attachment.document;
+    if (attachment.type) body.type = attachment.type;
+    return this._request('PUT', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}`, { body, signal: attachment.signal });
+  }
+
+  /**
+   * `detachWorkingCopySource` — remove an attachment. The working copy's etag advances; re-fetch
+   * (or save-and-reconcile) before the next etag-guarded save.
+   * @param {string} id
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>}
+   */
+  async detachWorkingCopySource(id, name, opts = {}) {
+    await this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `listWorkingCopySourceOperations` — the attached source's operation surface: raw-JSON-Schema
+   * request/parameter/response shapes for the operation browser and the step inspector's templates.
+   * @param {string} id
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ operations: object[] }>}
+   */
+  listWorkingCopySourceOperations(id, name, opts = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/sources/${encodeURIComponent(name)}/operations`, { signal: opts.signal });
+  }
+
+  /**
+   * `listRegisteredSourceOperations` — a registered source's operation surface (browse before attaching).
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ operations: object[] }>}
+   */
+  listRegisteredSourceOperations(name, opts = {}) {
+    return this._request('GET', `/sources/${encodeURIComponent(name)}/operations`, { signal: opts.signal });
+  }
+
+  /**
+   * `simulateWorkingCopy` — one deterministic debug command (design §4.3/§8.2, STATELESS): the
+   * server compiles the working copy (content-hash cached), replays it against the request's
+   * scripted mocks and virtual clock to the stop condition, and returns the COMPLETE structured
+   * trace — run, step, run-to-here, and re-run-after-edit are all this call with a different
+   * `until`; time-travel scrubbing renders client-side from the one trace.
+   * @param {string} id The working copy id.
+   * @param {{ workflowId?: string, scenario?: object, until?: object, budget?: object, signal?: AbortSignal }} [command]
+   * @returns {Promise<object>} The simulation trace.
+   */
+  simulateWorkingCopy(id, { signal, ...command } = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/simulate`, { body: command, signal });
+  }
+
+  /**
+   * `simulateCatalogVersion` — the deterministic simulator over a published version's IMMUTABLE
+   * package (§4.3): the same request shape as {@link simulateWorkingCopy}, the same complete trace
+   * back. Re-verify evidence or explore a regression without a working copy; mutates nothing.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ workflowId?: string, scenario?: object, until?: object, budget?: object, signal?: AbortSignal }} [command]
+   * @returns {Promise<object>} The simulation trace.
+   */
+  simulateCatalogVersion(baseWorkflowId, versionNumber, { signal, ...command } = {}) {
+    return this._request('POST', `/catalog/${encodeURIComponent(baseWorkflowId)}/versions/${versionNumber}/simulate`, { body: command, signal });
+  }
+
+  /**
+   * `publishWorkingCopy` — the deliberate publish act (design §4.6): the server validates,
+   * re-runs the scenario suite (evidence is server-attested), and adds the new draft version
+   * with metadata/scenarios.json + metadata/evidence.json embedded. 422 carries the refusal
+   * (validation diagnostics or the failing suite report).
+   * @param {string} id
+   * @param {{ owner: {name: string, email: string}, tags?: string[], requireScenarios?: boolean, signal?: AbortSignal }} request
+   */
+  publishWorkingCopy(id, { signal, ...request }) {
+    if (!request?.owner?.name || !request?.owner?.email) throw new TypeError('publishWorkingCopy requires owner.name and owner.email.');
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/publish`, { body: request, signal });
+  }
+
+  /** `getCatalogEvidence` — a version's server-attested publish evidence (§4.6). */
+  getCatalogEvidence(baseWorkflowId, versionNumber, { signal } = {}) {
+    return this._request('GET', `/catalog/${encodeURIComponent(baseWorkflowId)}/versions/${versionNumber}/evidence`, { signal });
+  }
+
+  /**
+   * `beginGitHubAuth` — mint a single-use, principal-bound state and get the GitHub App authorize
+   * URL (workflow-designer §4.7). Open it in a POPUP; when GitHub redirects the popup to the
+   * control plane's callback, poll {@link getGitHubStatus} and close the popup. The kit never sees
+   * a GitHub credential — the token exchanges and stays server-side, keyed by the calling
+   * principal.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{authorizeUrl: string, state: string}>} Throws {@link ProblemError} `400` when the deployment brokers no App.
+   */
+  beginGitHubAuth(opts = {}) {
+    return this._request('POST', '/github/auth', { signal: opts.signal });
+  }
+
+  /**
+   * `getGitHubStatus` — the CALLER's GitHub session: connected flag, signed-in identity, App
+   * installations, and the repositories the user ∩ installation intersection can reach (§4.7).
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} `{connected:false}` when not signed in.
+   */
+  getGitHubStatus(opts = {}) {
+    return this._request('GET', '/github/session', { signal: opts.signal });
+  }
+
+  /** `deleteGitHubSession` — drop the caller's brokered GitHub token. Idempotent. */
+  async deleteGitHubSession(opts = {}) {
+    await this._request('DELETE', '/github/session', { signal: opts.signal });
+  }
+
+  /**
+   * `browseRepo` — a proxied contents read for the open/import dialogs (§4.7): a directory lists
+   * entries; a file returns base64 content. 409 (github-not-connected) without a session.
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ path?: string, ref?: string, signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} `{kind:'dir'|'file', entries?, file?}`.
+   */
+  /**
+   * `listRepoBranches` — the repository's branches plus its default branch, through the caller's
+   * brokered session. The Git dialog's branch picker browses these instead of free-form text.
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{defaultBranch?: string, branches: Array<{name: string, sha?: string, protected?: boolean}>}>}
+   */
+  listRepoBranches(owner, repo, { signal } = {}) {
+    return this._request('GET', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`, { signal });
+  }
+
+  /**
+   * `createRepoBranch` — creates a branch from a base branch's head (default: the repository's
+   * default branch). A ref only: no commit, no composed identity (§4.7).
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ name: string, from?: string, signal?: AbortSignal }} command
+   * @returns {Promise<{name: string, sha?: string}>}
+   */
+  createRepoBranch(owner, repo, { signal, ...command }) {
+    return this._request('POST', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`, { body: command, signal });
+  }
+
+  browseRepo(owner, repo, { path, ref, signal } = {}) {
+    const query = new URLSearchParams();
+    if (path) query.set('path', path);
+    if (ref) query.set('ref', ref);
+    const suffix = query.size > 0 ? `?${query}` : '';
+    return this._request('GET', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents${suffix}`, { signal });
+  }
+
+  /**
+   * `listRepoCommits` — one page of the commit history through the caller's brokered session,
+   * newest first (snag 9): scope with `sha` (the bound branch) and `path` (the bound document) to
+   * see the commits that touched the working copy. Each commit can then be compared side-by-side
+   * (`browseRepo` at its ref) or rolled back to (`pullWorkingCopy` with its ref).
+   * @param {string} owner
+   * @param {string} repo
+   * @param {{ sha?: string, path?: string, page?: number, perPage?: number, signal?: AbortSignal }} [opts]
+   * @returns {Promise<{commits: Array<{sha: string, message?: string, author?: string, date?: string}>, hasMore?: boolean}>}
+   */
+  listRepoCommits(owner, repo, { sha, path, page, perPage, signal } = {}) {
+    const query = new URLSearchParams();
+    if (sha) query.set('sha', sha);
+    if (path) query.set('path', path);
+    if (page) query.set('page', String(page));
+    if (perPage) query.set('perPage', String(perPage));
+    const suffix = query.size > 0 ? `?${query}` : '';
+    return this._request('GET', `/github/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits${suffix}`, { signal });
+  }
+
+  /**
+   * `pullWorkingCopy` — refresh a Git-bound working copy from its branch (§4.7): the document from
+   * gitBinding.path, each bound spec as an inline attachment, and — when scenariosDir is bound —
+   * the scenario set. An etag-guarded save: 409 when stale (or without a GitHub session); 400 when
+   * the working copy has no binding. An explicit `ref` pulls at that commit instead of the branch
+   * head — the git-history ROLLBACK (snag 9), which the UI danger-confirms.
+   * @param {string} id
+   * @param {{ expectedEtag: string, ref?: string, signal?: AbortSignal }} opts
+   * @returns {Promise<object>} The refreshed working copy.
+   */
+  pullWorkingCopy(id, { expectedEtag, ref, signal } = {}) {
+    if (!expectedEtag) throw new TypeError('pullWorkingCopy requires the expectedEtag.');
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/git/pull`, { body: ref ? { expectedEtag, ref } : { expectedEtag }, signal });
+  }
+
+  /**
+   * `commitWorkingCopy` — write the bound working copy to its branch (§4.7): the document, the
+   * bound specs, and one <name>.scenario.json per scenario; optionally opening a pull request FROM
+   * the bound branch (draft → the review flow). Commits are authored as the signed-in user's
+   * GitHub-held git identity — the control plane composes no author/committer.
+   * @param {string} id
+   * @param {{ message: string, pullRequest?: {base: string, title?: string, draft?: boolean}, signal?: AbortSignal }} opts
+   * @returns {Promise<object>} `{files, pullRequest?}`.
+   */
+  commitWorkingCopy(id, { message, pullRequest, signal } = {}) {
+    if (!message) throw new TypeError('commitWorkingCopy requires a message.');
+    const body = { message };
+    if (pullRequest) body.pullRequest = pullRequest;
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/git/commit`, { body, signal });
+  }
+
+  /**
+   * `getWorkingCopySchemas` — the schema-metadata document RECOMPUTED for the working copy (the
+   * same shape `getCatalogWorkflowSchemas` serves baked into a package): each workflow's typed
+   * inputs and each step's resolved operation, typed request/responses, and outputs. The
+   * designer's typed forms (scenario inputs, mock bodies by declared status) and expression
+   * completions read this.
+   * @param {string} id
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The metadata document ({formatVersion, workflows}).
+   */
+  getWorkingCopySchemas(id, { signal } = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/schemas`, { signal });
+  }
+
+  /** `listScenarios` — the working copy's scenario set (design §4.2). */
+  listScenarios(id, { signal } = {}) {
+    return this._request('GET', `/workspace/workflows/${encodeURIComponent(id)}/scenarios`, { signal });
+  }
+
+  /** `putScenario` — upsert one scenario by name (the body's name must match). */
+  putScenario(id, scenario, { signal } = {}) {
+    if (!scenario?.name) throw new TypeError('putScenario requires scenario.name.');
+    return this._request('PUT', `/workspace/workflows/${encodeURIComponent(id)}/scenarios/${encodeURIComponent(scenario.name)}`, { body: scenario, signal });
+  }
+
+  /** `deleteScenario`. */
+  deleteScenario(id, name, { signal } = {}) {
+    return this._request('DELETE', `/workspace/workflows/${encodeURIComponent(id)}/scenarios/${encodeURIComponent(name)}`, { signal });
+  }
+
+  /** `runScenario` — execute one scenario; returns {scenario, passed, outcome, expectations, trace}. */
+  runScenario(id, name, { signal } = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/scenarios/${encodeURIComponent(name)}/run`, { body: {}, signal });
+  }
+
+  /** `runAllScenarios` — the suite report {total, passed, failed, results}. */
+  runAllScenarios(id, { signal } = {}) {
+    return this._request('POST', `/workspace/workflows/${encodeURIComponent(id)}/scenarios`, { body: {}, signal });
+  }
+
+  /**
+   * `fetchSourceDocument` — server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web
+   * endpoint (no browser CORS), optionally authenticated with a registered source credential
+   * referenced by `(sourceName, environment)`. Returns the validated document plus its detected
+   * `type`/`version` and canonical `digest`; attach or register the result yourself.
+   * @param {{ url: string, credential?: { sourceName: string, environment: string }, signal?: AbortSignal }} fetchRequest
+   * @returns {Promise<{ url: string, type: string, version?: string, digest: string, contentType?: string, document: object }>}
+   */
+  fetchSourceDocument(fetchRequest) {
+    if (!fetchRequest || !fetchRequest.url) throw new TypeError('fetchSourceDocument requires a url.');
+    const body = { url: fetchRequest.url };
+    if (fetchRequest.credential) body.credential = fetchRequest.credential;
+    return this._request('POST', '/sources/fetch', { body, signal: fetchRequest.signal });
   }
 
   /**
@@ -976,6 +1615,20 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countSecurityRules` — the bounded total of rules matching `q` (`GET /security/rules/count`), for the list footer; no
+   * rows are fetched. Same `q` filter as {@link searchSecurityRules}. `capped: true` once the true total meets or exceeds
+   * the server cap. Requires `security:read`.
+   * @param {{ q?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countSecurityRules(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    const result = await this._request('GET', `/security/rules/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `searchSecurityRules`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ q?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ rules: object[], nextPageToken: (string|null) }>}
@@ -1018,6 +1671,20 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/security/bindings${qs(search)}`, { signal: query.signal });
     return { bindings: result.bindings ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countSecurityBindings` — the bounded total of bindings matching `q` (`GET /security/bindings/count`), for the list
+   * footer; no rows are fetched. Same `q` filter as {@link searchSecurityBindings}. `capped: true` once the true total
+   * meets or exceeds the server cap. Requires `security:read`.
+   * @param {{ q?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>}
+   */
+  async countSecurityBindings(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    const result = await this._request('GET', `/security/bindings/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**
@@ -1229,6 +1896,22 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `countAccessRequests` — a bounded count of the access requests {@link listAccessRequests} would return (same
+   * `status`/`baseWorkflowId`/`scope` filters), for work badges and list footers. No rows are fetched. `capped` is
+   * `true` when the true total meets or exceeds the server's cap, so `count` is the cap (render as e.g. `100+`).
+   * @param {{ status?: string, baseWorkflowId?: string, scope?: ('mine'|'queue'), signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countAccessRequests(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    if (query.scope) search.set('scope', query.scope);
+    const result = await this._request('GET', `/accessRequests/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
+  }
+
+  /**
    * `listAccessRequests`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ status?: string, baseWorkflowId?: string, scope?: ('mine'|'queue'), limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ accessRequests: object[], nextPageToken: (string|null) }>}
@@ -1353,6 +2036,22 @@ export class ArazzoControlPlaneClient {
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/availabilityRequests${qs(search)}`, { signal: query.signal });
     return { availabilityRequests: result.availabilityRequests ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `countAvailabilityRequests` — a bounded count of the availability requests {@link listAvailabilityRequests} would
+   * return (same `status`/`environment`/`scope` filters), for work badges and list footers. No rows are fetched.
+   * `capped` is `true` when the true total meets or exceeds the server's cap, so `count` is the cap (render as `100+`).
+   * @param {{ status?: string, environment?: string, scope?: ('mine'|'queue'), signal?: AbortSignal }} [query]
+   * @returns {Promise<{ count: number, capped: boolean }>} A {@link CountResult}.
+   */
+  async countAvailabilityRequests(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.environment) search.set('environment', query.environment);
+    if (query.scope) search.set('scope', query.scope);
+    const result = await this._request('GET', `/availabilityRequests/count${qs(search)}`, { signal: query.signal });
+    return { count: result.count ?? 0, capped: result.capped ?? false };
   }
 
   /**

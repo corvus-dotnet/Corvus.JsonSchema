@@ -29,12 +29,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestClass]
 public sealed class ControlPlaneAccessGrantsApiTests
 {
-    // A resolved person grantee whose identity is the internal sys: form the wire returns (design §16.5.4): sys:sub=u-1042.
-    // That sys: identity keys the administered-workflows reverse index and the credential IsUsableBy match directly; the
-    // binding match derives the operator-facing claim from it (sys:sub -> sub) to match a binding on claimType sub. (With
-    // the pre-revision handler, which compared the sys: dimension to the claim as-is, sys:sub != sub dropped the binding.)
+    // A resolved person grantee whose identity is the operator-facing (sys:-stripped) wire form every grantee endpoint
+    // returns (design §16.5.4 — an identity is described back over its sys: tags as {dimension,value} grants via
+    // DescribeUsageScope/TryDescribeUsageGrant, e.g. sub, NOT sys:sub). The handler resolves it back to the internal sys:
+    // tag set (ControlPlaneAccess.ResolveUsageGrantInto: sub -> sys:sub), so its digest keys the administered-workflows
+    // reverse index and the credential IsUsableBy match against the stored sys: identity; the binding match derives the
+    // operator-facing claim directly (sub matches claimType sub). (With the pre-revision handler, which added the wire
+    // dimension verbatim, the digest was over sub -> never matched the stored sys:sub -> administers/credentials empty.)
     private const string GranteeJson =
-        """{"kind":"person","value":"u-1042","identity":[{"dimension":"sys:sub","value":"u-1042"}],"source":"observed","complete":true}""";
+        """{"kind":"person","value":"u-1042","identity":[{"dimension":"sub","value":"u-1042"}],"source":"observed","complete":true}""";
 
     [TestMethod]
     public async Task Get_access_grants_projects_matching_bindings_administered_workflows_and_usable_credentials()
@@ -67,6 +70,110 @@ public sealed class ControlPlaneAccessGrantsApiTests
         usage.GetArrayLength().ShouldBe(1);
         usage[0].GetProperty("sourceName").GetString().ShouldBe("orders-api");
         usage[0].GetProperty("environment").GetString().ShouldBe("production");
+    }
+
+    // A resolved TEAM grantee — the live snag's shape (#96): the admin group's identity in the operator-facing wire
+    // form ({group,iss}; the internal form is {sys:group,sys:iss}).
+    private const string TeamGranteeJson =
+        """{"kind":"team","value":"arazzo-admins","identity":[{"dimension":"group","value":"arazzo-admins"},{"dimension":"iss","value":"arazzo-keycloak"}],"source":"observed","complete":true}""";
+
+    // The fixed instant the capability aggregation resolves expiry against.
+    private static readonly DateTimeOffset Now = new(2026, 7, 15, 12, 0, 0, TimeSpan.Zero);
+
+    [TestMethod]
+    public async Task Get_access_grants_surfaces_capabilities_administered_environments_and_scoped_credentials_for_a_team()
+    {
+        ArazzoControlPlaneSecurityHandler handler = await CreateAdminTeamHandlerAsync();
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var parameters = new GetAccessGrantsParams { Grantee = EncodeGranteeToken(TeamGranteeJson, workspace) };
+        GetAccessGrantsResult result = await handler.HandleGetAccessGrantsAsync(parameters, workspace);
+        result.StatusCode.ShouldBe(200);
+
+        using Stj.JsonDocument doc = ReadResultBody(result);
+
+        // capabilities: resolved exactly as the runtime resolver would — the genesis-like binding's scopes are active,
+        // the eligible-only binding's scope is eligible (with its expiry), and the expired binding confers nothing.
+        Stj.JsonElement capabilities = doc.RootElement.GetProperty("capabilities");
+        capabilities.EnumerateArray().Select(c => c.GetProperty("scope").GetString())
+            .ShouldBe(["runs:purge", "runs:read", "runs:write"]);
+        capabilities.EnumerateArray().Select(c => c.GetProperty("eligible").GetBoolean())
+            .ShouldBe([true, false, false]);
+        capabilities[0].TryGetProperty("expiresAt", out _).ShouldBeTrue("the eligible grant is time-boxed");
+        capabilities[1].TryGetProperty("expiresAt", out _).ShouldBeFalse("the genesis-like grant never expires");
+
+        // administersEnvironments: the environment reverse index keyed by the resolved identity (membership).
+        doc.RootElement.GetProperty("administersEnvironments").EnumerateArray()
+            .Select(e => e.GetProperty("environment").GetString()).ShouldBe(["production"]);
+
+        // credentialUsage: the production credential usage-scoped to the admin group.
+        Stj.JsonElement usage = doc.RootElement.GetProperty("credentialUsage");
+        usage.GetArrayLength().ShouldBe(1);
+        usage[0].GetProperty("sourceName").GetString().ShouldBe("onboarding");
+        usage[0].GetProperty("environment").GetString().ShouldBe("production");
+
+        // The binding summaries surface where the capabilities come from: scopes + eligibleOnly ride along.
+        Stj.JsonElement bindings = doc.RootElement.GetProperty("bindings");
+        bindings.EnumerateArray().Count(b => b.TryGetProperty("scopes", out _)).ShouldBe(3);
+        bindings.EnumerateArray().Count(b => b.TryGetProperty("eligibleOnly", out Stj.JsonElement e) && e.GetBoolean()).ShouldBe(1);
+    }
+
+    // Seeds the admin-team scenario (#96): a genesis-like scope-bearing binding, an eligible-only (PIM) binding, an
+    // expired binding, environment administration for the group identity, and a production credential usage-scoped to
+    // it. The clock is pinned so expiry resolution is deterministic.
+    private static async Task<ArazzoControlPlaneSecurityHandler> CreateAdminTeamHandlerAsync()
+    {
+        SecurityTagSet adminIdentity = SecurityTagSet.FromTags(
+            [new SecurityTag("sys:group", "arazzo-admins"), new SecurityTag("sys:iss", "arazzo-keycloak")]);
+
+        var policyStore = new InMemorySecurityPolicyStore();
+        using (ParsedJsonDocument<SecurityBindingDocument> genesis = SecurityBindingDocument.Draft(
+            "group", "arazzo-admins", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, order: 10,
+            scopes: ["runs:read", "runs:write"]))
+        {
+            (await policyStore.AddBindingAsync(genesis.RootElement, "ops", default)).Dispose();
+        }
+
+        using (ParsedJsonDocument<SecurityBindingDocument> eligible = SecurityBindingDocument.Draft(
+            "group", "arazzo-admins", VerbGrant.None, VerbGrant.None, VerbGrant.None, order: 20,
+            scopes: ["runs:purge"], expiresAt: Now.AddHours(1), eligibleOnly: true))
+        {
+            (await policyStore.AddBindingAsync(eligible.RootElement, "ops", default)).Dispose();
+        }
+
+        using (ParsedJsonDocument<SecurityBindingDocument> expired = SecurityBindingDocument.Draft(
+            "group", "arazzo-admins", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 30,
+            scopes: ["catalog:read"], expiresAt: Now.AddHours(-1)))
+        {
+            (await policyStore.AddBindingAsync(expired.RootElement, "ops", default)).Dispose();
+        }
+
+        var credentialStore = new InMemorySourceCredentialStore();
+        (await credentialStore.AddAsync(
+            new SourceCredentialDefinition(
+                "onboarding",
+                "production",
+                SourceCredentialKind.ApiKey,
+                [new SecretReferenceDefinition("value", "vault://secret/arazzo/onboarding#api-key")],
+                UsageTags: adminIdentity),
+            "ops",
+            default)).Dispose();
+
+        var envAdminStore = new InMemoryEnvironmentAdministratorStore();
+        var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
+        await environmentAdministration.EstablishAsync("production", adminIdentity, default, false, default, false, default);
+
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
+        var policy = new PersistentRowSecurityPolicy(policyStore);
+        var access = new ControlPlaneAccess(new HttpContextAccessor(), policy);
+        return new ArazzoControlPlaneSecurityHandler(
+            policyStore, policy, access, catalog, credentialStore, environmentAdministration, new FixedTimeProvider(Now));
+    }
+
+    // A TimeProvider pinned to one instant, so the expiry-sensitive aggregation is deterministic.
+    private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
     }
 
     [TestMethod]

@@ -286,6 +286,56 @@ public abstract class AvailabilityRequestStoreConformance
         return ParsedJsonDocument<JsonString>.Parse(quoted);
     }
 
+    [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_reporting_capped_only_beyond_it()
+    {
+        IAvailabilityRequestStore store = await this.NewStoreAsync();
+        await this.CreateAsync(store, "checkout", 3, "production", "alice");
+        await this.CreateAsync(store, "checkout", 3, "production", "bob");
+        await this.CreateAsync(store, "checkout", 3, "staging", "alice");
+
+        // Below the true total: the exact count, not capped (matches the list length).
+        (await store.CountAsync(default, 10, default)).ShouldBe((3, false));
+
+        // Exactly at the cap: the (cap+1)th row does not exist, so the count is exact and NOT capped.
+        (await store.CountAsync(default, 3, default)).ShouldBe((3, false));
+
+        // The true total exceeds the cap: the count is the cap and Capped is set (the console renders "N+").
+        (await store.CountAsync(default, 2, default)).ShouldBe((2, true));
+        (await store.CountAsync(default, 1, default)).ShouldBe((1, true));
+
+        // An empty store counts zero, never capped.
+        IAvailabilityRequestStore empty = await this.NewStoreAsync();
+        (await empty.CountAsync(default, 5, default)).ShouldBe((0, false));
+    }
+
+    [TestMethod]
+    public async Task Counting_honours_the_same_filters_as_the_list()
+    {
+        IAvailabilityRequestStore store = await this.NewStoreAsync();
+        await this.CreateAsync(store, "checkout", 3, "production", "alice");
+        string bobProd = await this.CreateAsync(store, "checkout", 3, "production", "bob");
+        await this.CreateAsync(store, "checkout", 3, "staging", "alice");
+        await this.CreateAsync(store, "checkout", 3, "qa", "carol");
+
+        // By environment.
+        (await store.CountAsync(new AvailabilityRequestQuery(Environment: "production"), 10, default)).ShouldBe((2, false));
+
+        // By creator ("mine", keyed on the audit actor createdBy).
+        (await store.CountAsync(new AvailabilityRequestQuery(CreatedBy: "alice"), 10, default)).ShouldBe((2, false));
+
+        // The approver inbox: every request across the administered environment set; staging is outside it.
+        (await store.CountAsync(new AvailabilityRequestQuery(AdministeredEnvironments: ["production", "qa"]), 10, default)).ShouldBe((3, false));
+
+        // By status (deny one, then count each state).
+        await store.DecideAsync(bobProd, new AvailabilityRequestDecision(AvailabilityRequestStatus.Denied), WorkflowEtag.None, "admin", default);
+        (await store.CountAsync(new AvailabilityRequestQuery(Status: AvailabilityRequestStatus.Pending), 10, default)).ShouldBe((3, false));
+        (await store.CountAsync(new AvailabilityRequestQuery(Status: AvailabilityRequestStatus.Denied), 10, default)).ShouldBe((1, false));
+
+        // Filter + cap compose: two Pending in the administered set, capped at 1.
+        (await store.CountAsync(new AvailabilityRequestQuery(Status: AvailabilityRequestStatus.Pending, AdministeredEnvironments: ["production", "qa"]), 1, default)).ShouldBe((1, true));
+    }
+
     private async ValueTask<IAvailabilityRequestStore> NewStoreAsync(TimeProvider? timeProvider = null)
     {
         IAvailabilityRequestStore store = await this.CreateStoreAsync(timeProvider ?? TimeProvider.System);

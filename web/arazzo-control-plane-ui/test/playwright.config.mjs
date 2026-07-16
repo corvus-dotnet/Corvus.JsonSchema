@@ -9,9 +9,11 @@ export default defineConfig({
   fullyParallel: true,
   reporter: process.env.CI ? 'github' : 'list',
   use: { baseURL: 'http://localhost:8138', trace: 'on-first-retry' },
-  // Serve the project root so the demo (/demo) and the deliverable it imports (/src) both resolve.
+  // Serve the project root so the demo (/demo) and the deliverable it imports (/src) both resolve; the
+  // portable Node server also maps /ui/... → root (designer.html's absolute imports) — see smoke-server.mjs.
+  // (A pure-Node server, not `python3 -m http.server`, so it runs on any OS runner without symlinks or python.)
   webServer: {
-    command: 'python3 -m http.server 8138',
+    command: 'node test/smoke-server.mjs',
     cwd: '..',
     url: 'http://localhost:8138/demo/index.html',
     reuseExistingServer: !process.env.CI,

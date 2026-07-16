@@ -31,7 +31,7 @@ public sealed class SecurityFilterTests
     private static async Task SeedAsync(InMemoryWorkflowStateStore store, string id, params SecurityTag[] security)
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "x": 1 }"""u8.ToArray());
-        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, Time, securityTags: SecurityTagSet.FromTags(security));
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, "wf", doc.RootElement, "development", Time, securityTags: SecurityTagSet.FromTags(security));
         await run.EnqueueAsync(default);
     }
 

@@ -131,6 +131,28 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
     }
 
     [TestMethod]
+    public async Task Approval_is_evidence_gated_where_the_environment_requires_it()
+    {
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production","requireEvidence":true}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // An unevidenced version: approval is refused (409, evidence-required) even with credentials ready (source-less).
+        await host.SeedVersionAsync("checkout", "acme");
+        string id = await host.SubmitAsync("checkout", 1, "production", "globex");
+        HttpResponseMessage refused = await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/approve", "acme");
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("evidence-required");
+        }
+
+        // A green-suite version approves — the same request flow, now evidence-ready.
+        await host.SeedEvidencedVersionAsync("payments", "acme");
+        string green = await host.SubmitAsync("payments", 1, "production", "globex");
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{green}/approve", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [TestMethod]
     public async Task Submitting_requires_authentication_and_an_existing_environment_and_version()
     {
         await using Scoped host = await StartAsync();
@@ -217,6 +239,16 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
             await catalog.AddAsync(Package(workflowId, sourceNames), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
         }
 
+        // Seeds a source-less version whose package embeds a green attested suite (§4.6 publish evidence).
+        public async Task SeedEvidencedVersionAsync(string workflowId, string tenant)
+        {
+            SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
+            byte[] scenarios = Encoding.UTF8.GetBytes("""[{"name":"happy","expect":{"outcome":"completed"}}]""");
+            byte[] evidence = Encoding.UTF8.GetBytes("""{"packageHash":"seed","engineVersion":"test","at":"2026-07-05T00:00:00Z","suite":{"total":1,"passed":1,"failed":0},"scenarios":[{"name":"happy","passed":true,"outcome":"completed"}]}""");
+            ReadOnlyMemory<byte> package = CatalogPackage.Build(Workflow(workflowId), [], scenarios, evidence);
+            await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+        }
+
         public async ValueTask DisposeAsync()
         {
             client.Dispose();
@@ -225,8 +257,17 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
 
         private static ReadOnlyMemory<byte> Package(string workflowId, string[] sourceNames)
         {
-            string descriptions = string.Join(",", sourceNames.Select(n => $$"""{ "name": "{{n}}", "url": "./{{n}}.json", "type": "openapi" }"""));
-            byte[] workflow = Encoding.UTF8.GetBytes($$"""
+            byte[] sourceDoc = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"Source","version":"1.0"},"paths":{}}""");
+            var sources = sourceNames
+                .Select(n => new KeyValuePair<string, byte[]>(n, sourceDoc))
+                .ToList();
+            return CatalogPackage.Build(Workflow(workflowId, sourceNames), sources);
+        }
+
+        private static byte[] Workflow(string workflowId, string[]? sourceNames = null)
+        {
+            string descriptions = string.Join(",", (sourceNames ?? []).Select(n => $$"""{ "name": "{{n}}", "url": "./{{n}}.json", "type": "openapi" }"""));
+            return Encoding.UTF8.GetBytes($$"""
             {
               "arazzo": "1.1.0",
               "info": { "title": "Flow", "description": "A flow." },
@@ -234,11 +275,6 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
               "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
             }
             """);
-            byte[] sourceDoc = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"Source","version":"1.0"},"paths":{}}""");
-            var sources = sourceNames
-                .Select(n => new KeyValuePair<string, byte[]>(n, sourceDoc))
-                .ToList();
-            return CatalogPackage.Build(workflow, sources);
         }
 
         private async Task<HttpResponseMessage> SendCoreAsync(HttpRequestMessage request, string tenant)

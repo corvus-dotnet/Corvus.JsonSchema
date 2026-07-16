@@ -35,6 +35,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     private readonly bool ownsHttpClient;
     private readonly TimeProvider timeProvider;
     private readonly SemaphoreSlim tokenGate = new(1, 1);
+    private readonly DirectoryMembershipExpander membershipExpander;
     private volatile CachedToken? cachedToken;
 
     /// <summary>Initializes a new instance of the <see cref="KeycloakPrincipalDirectory"/> class.</summary>
@@ -57,6 +58,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         this.ownsHttpClient = httpClient is null;
         this.httpClient = httpClient ?? new HttpClient();
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.membershipExpander = new DirectoryMembershipExpander(options.MembershipCacheTtl, this.timeProvider);
     }
 
     /// <inheritdoc/>
@@ -85,6 +87,21 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         // returned List + each ResolvedPrincipal (its Value/Label strings + stamped SecurityTagSet). Per-row DirectoryRecord
         // + attribute Dictionary + transient GetString scalars are short-lived scratch the mapper contract forces.
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+        // A person resolves to its FULL membership-expanded identity (design §16.5.4): capture each user's Keycloak uuid
+        // during the projection, then fetch its real group memberships (cached per user) and union a sys:group per group
+        // through the SAME mapper — so a directory-resolved person carries the exact identity the runtime login path stamps
+        // for that person, and the effective-access lookup surfaces the grants it inherits through its groups. Teams / roles
+        // ARE the memberships, so they are never themselves expanded.
+        if (kind == GranteeKind.Person)
+        {
+            var uuids = new List<string>(max);
+            IReadOnlyList<ResolvedPrincipal> people = this.projector.SupportsSpanProjection
+                ? ProjectResponseSpan(kind, resource, body, max, this.projector, uuids)
+                : ProjectResponse(kind, resource, body, max, this.projector, uuids);
+            return await this.membershipExpander.ExpandAsync(people, uuids, this.projector, (uuid, ct) => this.FetchGroupNamesAsync(uuid, token, ct), cancellationToken).ConfigureAwait(false);
+        }
+
         return this.projector.SupportsSpanProjection
             ? ProjectResponseSpan(kind, resource, body, max, this.projector)
             : ProjectResponse(kind, resource, body, max, this.projector);
@@ -118,21 +135,83 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         return new Uri(this.options.BaseUrl, $"/admin/realms/{realm}/{resourcePath}?max={max}{search}{brief}");
     }
 
+    // GET /admin/realms/{realm}/users/{id}/groups (briefRepresentation — only id/name/path). The response byte[] is the one
+    // driver-forced alloc; ParseGroupNames reads it in place with the Corvus reader, materializing only each group's `name`
+    // (the bare name the group-membership mapper emits, matching sys:group). Throws on a non-success status so a
+    // misconfigured grant surfaces rather than silently expanding to nothing.
+    private async Task<IReadOnlyList<string>> FetchGroupNamesAsync(string uuid, string token, CancellationToken cancellationToken)
+    {
+        string realm = Uri.EscapeDataString(this.options.Realm);
+        var uri = new Uri(this.options.BaseUrl, $"/admin/realms/{realm}/users/{Uri.EscapeDataString(uuid)}/groups?briefRepresentation=true");
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new KeycloakDirectoryException($"the Keycloak Admin API returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+        }
+
+        byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        return ParseGroupNames(body);
+    }
+
+    // Reads a Keycloak group-membership array ([{id,name,path,subGroups}, …]) to the list of group `name`s in place — the one
+    // field the mapper keys on. Other fields (id/path) and the nested subGroups array are skipped without materializing.
+    // `internal` only so the parse can be unit-tested without a network.
+    internal static IReadOnlyList<string> ParseGroupNames(byte[] body)
+    {
+        var reader = new Utf8JsonReader(body);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray)
+        {
+            return [];
+        }
+
+        List<string>? names = null;
+        while (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+        {
+            string? name = null;
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                if (reader.ValueTextEquals("name"u8))
+                {
+                    reader.Read();
+                    name = reader.GetString();
+                }
+                else
+                {
+                    reader.Read();
+                    reader.Skip();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                (names ??= []).Add(name);
+            }
+        }
+
+        return names ?? (IReadOnlyList<string>)[];
+    }
+
     // The bytes-to-bytes path (used when the mapper is a span mapper). Keycloak is the most bespoke shape: there is no
     // configurable value/label attribute — a user is keyed on its top-level `username` with a display computed from
     // `firstName`/`lastName`, a group/role on its top-level `name`; and a user's custom attributes are ARRAYS under an
     // `attributes` object. So this captures the value (+ firstName/lastName for users) from the top level and the mapper's
     // declared custom attributes from the `attributes` object's first array element — all as unescaped UTF-8 into a pooled
     // scratch, with no attribute string.
-    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, KeycloakResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, KeycloakResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector, List<string>? capturedIds = null)
     {
         var results = new List<ResolvedPrincipal>(limit);
         bool isUser = resource == KeycloakResource.Users;
 
+        // When the caller is going to expand a person's memberships it also needs the user's Keycloak uuid (the id the
+        // /users/{id}/groups endpoint keys on), captured in step with the principal so the two lists stay parallel.
+        bool captureId = capturedIds is not null && isUser;
+
         // Wanted UTF-8 names: the value (username / name), then firstName + lastName for a user's computed display, then
-        // the mapper's declared custom attributes (flat names, found in the `attributes` object).
+        // the mapper's declared custom attributes (flat names, found in the `attributes` object), then the uuid when captured.
         string[] required = [.. projector.RequiredAttributes];
-        int wantedCount = (isUser ? 3 : 1) + required.Length;
+        int wantedCount = (isUser ? 3 : 1) + required.Length + (captureId ? 1 : 0);
         byte[][] wanted = new byte[wantedCount][];
         int next = 0;
         int valueWanted = next;
@@ -150,6 +229,13 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
         foreach (string attribute in required)
         {
             wanted[next++] = Encoding.UTF8.GetBytes(attribute);
+        }
+
+        int idWanted = -1;
+        if (captureId)
+        {
+            idWanted = next;
+            wanted[next++] = "id"u8.ToArray();
         }
 
         var reader = new Utf8JsonReader(body);
@@ -173,6 +259,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
                 int valueSlice = -1;
                 int firstSlice = -1;
                 int lastSlice = -1;
+                int idSlice = -1;
                 while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
                 {
                     int which = MatchWanted(ref reader, wanted);
@@ -192,6 +279,10 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
                         else if (which == lastNameWanted)
                         {
                             lastSlice = index;
+                        }
+                        else if (which == idWanted)
+                        {
+                            idSlice = index;
                         }
                     }
                     else if (reader.TokenType == JsonTokenType.StartObject)
@@ -237,6 +328,10 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
                 if (projector.TryProjectIdentity(kind, valueSpan, labelSpan, hasLabel: true, view) is { } principal)
                 {
                     results.Add(principal);
+
+                    // Kept in step with results (only pushed when a principal is added) so the caller can pair each person
+                    // with its uuid for the membership fetch. A user with no id yields an empty entry (skipped downstream).
+                    capturedIds?.Add(idSlice >= 0 ? Encoding.UTF8.GetString(scratch, slices[idSlice].ValueOffset, slices[idSlice].ValueLength) : string.Empty);
                 }
             }
         }
@@ -334,7 +429,7 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
     // — the reader borrows `body` in place (no DOM, no copy); a dropped record (mapper returns null) does not consume the
     // limit, so a kind whose backing resource carries unrecognised entries (e.g. Keycloak's built-in realm roles) still
     // yields the recognised ones up to `limit`. `internal` only so the allocation benchmark can drive it without a network.
-    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, KeycloakResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, KeycloakResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector, List<string>? capturedIds = null)
     {
         var results = new List<ResolvedPrincipal>(limit);
 
@@ -361,6 +456,10 @@ public sealed class KeycloakPrincipalDirectory : IPrincipalDirectory, IDisposabl
             if (record is { } parsed && projector.Project(parsed) is { } principal)
             {
                 results.Add(principal);
+
+                // Kept in step with results so the caller can pair each person with its uuid (ReadUser flattens `id` in) for
+                // the membership fetch. A user with no id yields an empty entry (skipped downstream).
+                capturedIds?.Add(parsed.Attribute("id") ?? string.Empty);
             }
         }
 

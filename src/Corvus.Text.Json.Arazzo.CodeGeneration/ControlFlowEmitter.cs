@@ -560,21 +560,64 @@ internal static class ControlFlowEmitter
         string subToken = EmitTimeoutToken(step, camel, c);
 
         // The sub-workflow fails by throwing WorkflowStepFailedException; catch it so onFailure can act.
-        c.AppendLine("    try");
-        c.AppendLine("    {");
-        c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
-        c.Append("        ").Append(outputsLocal).Append(" = await ").Append(targetClass)
-            .Append(".ExecuteAsync(").Append(selection.SubWorkflowArgument).Append(", workspace, ").Append(builderVariable).Append(".RootElement, ").Append(subToken).AppendLine(").ConfigureAwait(false);");
+        if (options.Durable)
+        {
+            // A durable target returns the tri-state WorkflowRunResult (not a bare outputs element) and takes an
+            // IWorkflowRun? child scope before the cancellation token — so the unthreaded call would drop the token
+            // into the run slot (CS1503) and mis-assign the result. Begin a child scope (null today ⇒ the
+            // sub-workflow runs untracked, exactly as before the seam) and thread the time provider, then unwrap:
+            // Suspended ⇒ the parent bubbles the wait and itself suspends; Faulted ⇒ the onFailure path runs;
+            // Completed ⇒ the outputs flow on.
+            c.Append("    IWorkflowRun? ").Append(camel).Append("Scope = run?.BeginSubWorkflow(")
+                .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote(subWorkflowId)).AppendLine(");");
+            c.AppendLine("    try");
+            c.AppendLine("    {");
+            c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
+            c.Append("        var ").Append(camel).Append("Result = await ").Append(targetClass)
+                .Append(".ExecuteAsync(").Append(selection.SubWorkflowArgument).Append(", workspace, ").Append(builderVariable)
+                .Append(".RootElement, ").Append(camel).Append("Scope, ").Append(subToken).AppendLine(", timeProvider).ConfigureAwait(false);");
+            c.Append("        if (").Append(camel).AppendLine("Result.IsSuspended)");
+            c.AppendLine("        {");
+            c.Append("            return WorkflowRunResult<").Append(options.OutputsTypeName).Append(">.Suspended(").Append(camel).AppendLine("Result.Wait);");
+            c.AppendLine("        }");
+            c.Append("        if (").Append(camel).AppendLine("Result.IsFaulted)");
+            c.AppendLine("        {");
+            c.Append("            ").Append(completedLocal).AppendLine(" = false;");
+            c.AppendLine("        }");
+            c.AppendLine("        else");
+            c.AppendLine("        {");
+            c.Append("            ").Append(outputsLocal).Append(" = ").Append(camel).AppendLine("Result.Outputs;");
 
-        // Expose the sub-workflow's outputs for $workflows.<id>.outputs runtime expressions (plan §11) — so a
-        // later step's criteria/parameters or the workflow outputs can reference this invocation's results.
-        c.Append("        context.SetWorkflowOutputs(").Append(EmitText.Quote(subWorkflowId)).Append(", ").Append(outputsLocal).AppendLine(");");
-        c.Append("        ").Append(completedLocal).AppendLine(" = true;");
-        c.AppendLine("    }");
-        c.AppendLine("    catch (WorkflowStepFailedException)");
-        c.AppendLine("    {");
-        c.Append("        ").Append(completedLocal).AppendLine(" = false;");
-        c.AppendLine("    }");
+            // Expose the sub-workflow's outputs for $workflows.<id>.outputs runtime expressions (plan §11) — so a
+            // later step's criteria/parameters or the workflow outputs can reference this invocation's results.
+            c.Append("            context.SetWorkflowOutputs(").Append(EmitText.Quote(subWorkflowId)).Append(", ").Append(outputsLocal).AppendLine(");");
+            c.Append("            ").Append(completedLocal).AppendLine(" = true;");
+            c.AppendLine("        }");
+            c.AppendLine("    }");
+            c.AppendLine("    catch (WorkflowStepFailedException)");
+            c.AppendLine("    {");
+            c.Append("        ").Append(completedLocal).AppendLine(" = false;");
+            c.AppendLine("    }");
+        }
+        else
+        {
+            c.AppendLine("    try");
+            c.AppendLine("    {");
+            c.AppendLine("        ArazzoTelemetry.StepsExecuted.Add(1);");
+            c.Append("        ").Append(outputsLocal).Append(" = await ").Append(targetClass)
+                .Append(".ExecuteAsync(").Append(selection.SubWorkflowArgument).Append(", workspace, ").Append(builderVariable).Append(".RootElement, ").Append(subToken).AppendLine(").ConfigureAwait(false);");
+
+            // Expose the sub-workflow's outputs for $workflows.<id>.outputs runtime expressions (plan §11) — so a
+            // later step's criteria/parameters or the workflow outputs can reference this invocation's results.
+            c.Append("        context.SetWorkflowOutputs(").Append(EmitText.Quote(subWorkflowId)).Append(", ").Append(outputsLocal).AppendLine(");");
+            c.Append("        ").Append(completedLocal).AppendLine(" = true;");
+            c.AppendLine("    }");
+            c.AppendLine("    catch (WorkflowStepFailedException)");
+            c.AppendLine("    {");
+            c.Append("        ").Append(completedLocal).AppendLine(" = false;");
+            c.AppendLine("    }");
+        }
+
         if (step.TimeoutMs.HasValue)
         {
             // A step timeout (not the caller's cancellation) is a step failure, not a workflow cancellation.
@@ -1027,7 +1070,17 @@ internal static class ControlFlowEmitter
                     // to the target's inputs type via its implicit operator). A cross-document target
                     // ($sourceDescriptions.<name>.<workflowId>) resolves to its per-source namespace.
                     string targetNamespace = WorkflowExecutorEmitter.ResolveSubWorkflowNamespace(options, action.TargetWorkflowSource);
-                    return $"return await {SubWorkflowStepEmitter.TargetClass(targetNamespace, targetWorkflow)}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
+                    string gotoTarget = SubWorkflowStepEmitter.TargetClass(targetNamespace, targetWorkflow);
+                    if (options.Durable)
+                    {
+                        // A durable target returns a WorkflowRunResult (this executor's own return type) and takes an
+                        // IWorkflowRun? child scope before the token — so the unthreaded call drops the token into the
+                        // run slot (CS1503). Thread a child scope (null today ⇒ untracked) and the time provider; the
+                        // transferred run's tri-state result becomes this run's result directly.
+                        return $"return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, run?.BeginSubWorkflow({EmitText.Quote(targetWorkflow)}, {EmitText.Quote(targetWorkflow)}), cancellationToken, timeProvider).ConfigureAwait(false);\n";
+                    }
+
+                    return $"return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
                 }
 
                 if (action.TargetStepId is not { } targetStep || !stepIndex.TryGetValue(targetStep, out int target))

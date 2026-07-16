@@ -592,6 +592,32 @@ public interface IJsonDocument : IDisposable
     JsonDocumentBuilder<JsonElement.Mutable> CloneElementAsBuilder(int index, JsonWorkspace workspace);
 
     /// <summary>
+    /// Attempts to expose the element at the specified index as a contiguous, fully-local segment: its
+    /// complete raw UTF-8 (including any enclosing quotes or braces) and the document-text offset that
+    /// segment starts at. Succeeds only when the element's metadata rows are local to this document and
+    /// their locations all fall within the returned segment — an immutable parsed document qualifies;
+    /// builders and synthetic documents return <see langword="false"/>.
+    /// </summary>
+    /// <param name="index">The index of the element.</param>
+    /// <param name="utf8">The element's complete raw UTF-8.</param>
+    /// <param name="sourceTextOffset">The offset of <paramref name="utf8"/> within this document's text (the base the element's row locations are relative to).</param>
+    /// <returns><see langword="true"/> when the contiguous local segment is available (and a subsequent
+    /// <see cref="AppendLocalElementRowsRebased"/> is valid); otherwise <see langword="false"/>.</returns>
+    bool TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset);
+
+    /// <summary>
+    /// Appends the element's complete row run to the given metadata database with every row's location
+    /// rebased by <paramref name="locationDelta"/> (property-map indexes normalized to plain lengths) —
+    /// the row-copy half of the contiguous-element blit. Valid only after
+    /// <see cref="TryGetContiguousLocalElement"/> returned <see langword="true"/> for the same index.
+    /// </summary>
+    /// <param name="index">The index of the element.</param>
+    /// <param name="db">The destination metadata database.</param>
+    /// <param name="locationDelta">The delta to add to each row's text location (destination text position minus the source segment offset).</param>
+    /// <returns>The number of rows appended.</returns>
+    int AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta);
+
+    /// <summary>
     /// Clones the element at the specified index.
     /// </summary>
     /// <typeparam name="TElement">The type of the JSON element.</typeparam>

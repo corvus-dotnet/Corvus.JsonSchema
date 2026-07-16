@@ -34,6 +34,9 @@ public class OutputExtractionEmitterTests
 
         // Built via a closure-free ReadOnlySpan<JsonElement> context, assigning the pre-declared element.
         code.Statements.ShouldContain("Span<JsonElement> getPetOutputsValues = [getPetOutput0, getPetOutput1];");
+        // An unresolved output (default/Undefined JsonElement) is OMITTED, never a None-valued AddProperty —
+        // that trips the builder's assert and terminates the process in a Debug build.
+        code.Statements.ShouldContain("if (values[0].IsNotUndefined())");
         code.Statements.ShouldContain("builder.AddProperty(\"id\"u8, values[0]);");
         code.Statements.ShouldContain("getPetOutputsElement = getPetOutputs.RootElement;");
         code.Statements.ShouldNotContain("JsonElement getPetOutputsElement =");

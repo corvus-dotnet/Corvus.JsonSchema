@@ -5,6 +5,7 @@
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -33,8 +34,12 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The server-side bound on /count: the store stops one row past this, so a busy list renders "100+" (design §16.5).
+    private const int CountCap = 100;
+
     private readonly ISourceStore store;
     private readonly ControlPlaneAccess access;
+    private readonly SourceDocumentFetcher? fetcher;
     private readonly string actor;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
@@ -42,7 +47,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     /// <param name="store">The persistent source store the endpoints delegate to.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
     public ArazzoControlPlaneSourcesHandler(ISourceStore store, string actor = "control-plane")
-        : this(store, new ControlPlaneAccess(), actor)
+        : this(store, new ControlPlaneAccess(), null, actor)
     {
     }
 
@@ -50,14 +55,17 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     /// <param name="store">The persistent source store the endpoints delegate to.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request and the internal tenant tags
     /// stamped onto registered sources (§14.2). Unscoped (<see cref="AccessContext.System"/>) when no row security is configured.</param>
+    /// <param name="fetcher">The server-side document fetcher for <c>fetchSourceDocument</c> (§4.4);
+    /// fetching fails closed (400) when <see langword="null"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneSourcesHandler(ISourceStore store, ControlPlaneAccess access, string actor = "control-plane")
+    internal ArazzoControlPlaneSourcesHandler(ISourceStore store, ControlPlaneAccess access, SourceDocumentFetcher? fetcher = null, string actor = "control-plane")
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
         ArgumentNullException.ThrowIfNull(actor);
         this.store = store;
         this.access = access;
+        this.fetcher = fetcher;
         this.actor = actor;
     }
 
@@ -84,6 +92,15 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
             sources: Models.SourceList.SourceSummaryArray.Build(in sources, BuildSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListSourcesResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountSourcesResult> HandleCountSourcesAsync(CountSourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The same §14.2 read reach as HandleListSourcesAsync (this.access.Current()), but the store returns only a
+        // bounded total, never rows (design §16.5: list footers). CountCap bounds it so a busy list renders "100+".
+        (int count, bool capped) = await this.store.CountAsync(this.access.Current(), CountCap, cancellationToken).ConfigureAwait(false);
+        return CountSourcesResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>
@@ -233,6 +250,78 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         return deleted
             ? DeleteSourceResult.NoContent()
             : DeleteSourceResult.NotFound(NotFoundProblem(name), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<ListRegisteredSourceOperationsResult> HandleListRegisteredSourceOperationsAsync(ListRegisteredSourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string name = (string)parameters.Name;
+        using ParsedJsonDocument<RegisteredSource>? source = await this.store.GetAsync(name, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (source is not { } s)
+        {
+            return ListRegisteredSourceOperationsResult.NotFound(NotFoundProblem(name), workspace);
+        }
+
+        // The projection writes straight through into the pooled response body (schemas $ref-inlined in
+        // place) while the source is alive; the pooled source may then dispose.
+        ParsedJsonDocument<Models.OperationSurface> body = WorkspaceSourceJson.OperationSurfaceResponse((JsonElement)s.RootElement.Document);
+        workspace.TakeOwnership(body);
+        return ListRegisteredSourceOperationsResult.Ok(body.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<FetchSourceDocumentResult> HandleFetchSourceDocumentAsync(FetchSourceDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.fetcher is null)
+        {
+            return FetchSourceDocumentResult.BadRequest(
+                Problem("fetch-unavailable", "Fetch unavailable", 400, "This deployment does not offer server-side document fetching."), workspace);
+        }
+
+        Models.FetchSourceRequest body = parameters.Body;
+        if (!body.Url.IsNotUndefined())
+        {
+            return FetchSourceDocumentResult.BadRequest(Problem("invalid-fetch", "Invalid fetch", 400, "A 'url' is required."), workspace);
+        }
+
+        string? credentialSourceName = null;
+        string? credentialEnvironment = null;
+        if (body.Credential.IsNotUndefined())
+        {
+            credentialSourceName = (string)body.Credential.SourceName;
+            credentialEnvironment = (string)body.Credential.Environment;
+        }
+
+        (SourceDocumentFetcher.FetchOutcome outcome, string? detail, SourceDocumentFetcher.FetchedDocument? fetched) =
+            await this.fetcher.FetchAsync((string)body.Url, this.access.Current(), credentialSourceName, credentialEnvironment, cancellationToken).ConfigureAwait(false);
+        switch (outcome)
+        {
+            case SourceDocumentFetcher.FetchOutcome.Success:
+                break;
+            case SourceDocumentFetcher.FetchOutcome.CredentialNotFound:
+                return FetchSourceDocumentResult.NotFound(Problem("credential-not-found", "Credential not found", 404, detail!), workspace);
+            case SourceDocumentFetcher.FetchOutcome.UpstreamFailed:
+                return FetchSourceDocumentResult.BadGateway(Problem("fetch-upstream-failed", "Upstream fetch failed", 502, detail!), workspace);
+            default:
+                return FetchSourceDocumentResult.BadRequest(Problem("invalid-fetch", "Invalid fetch", 400, detail!), workspace);
+        }
+
+        // The generated Create() realises the response envelope (text + parse metadata) in one pooled pass with the
+        // fetched document blitted in as an element; the fetcher's pooled document then disposes (the body owns its
+        // own storage).
+        using (fetched)
+        {
+            SourceDocumentFetcher.FetchedDocument f = fetched!;
+            ParsedJsonDocument<Models.FetchedSourceDocument> response = Models.FetchedSourceDocument.Create(
+                digest: f.Digest,
+                document: Models.FetchedSourceDocument.TheDocumentAsJson.From((JsonElement)f.Document.RootElement),
+                type: f.Type,
+                url: f.Url,
+                contentType: f.ContentType is { } contentType ? (Models.JsonString.Source)contentType : default,
+                version: f.Version is { } version ? (Models.JsonString.Source)version : default);
+            workspace.TakeOwnership(response);
+            return FetchSourceDocumentResult.Ok(response.RootElement, workspace);
+        }
     }
 
     // ── source-summary list projection (field-select, closure-free Build<TContext>; the document is dropped) ──────────

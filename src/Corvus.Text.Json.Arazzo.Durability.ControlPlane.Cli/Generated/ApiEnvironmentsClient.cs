@@ -263,6 +263,23 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
         return SendAsyncCore<RemoveEnvironmentAdministratorRequest, RemoveEnvironmentAdministratorResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Count deployment environments
+    /// </summary>
+    /// <remarks>
+    /// Counts the deployment environments the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountEnvironmentsResponse> CountEnvironmentsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountEnvironmentsRequest request = new();
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountEnvironmentsRequest, CountEnvironmentsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

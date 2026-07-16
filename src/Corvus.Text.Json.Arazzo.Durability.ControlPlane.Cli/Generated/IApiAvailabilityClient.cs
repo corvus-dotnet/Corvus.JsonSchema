@@ -62,7 +62,7 @@ public interface IApiAvailabilityClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
 
         /// <summary>
@@ -108,6 +108,16 @@ public interface IApiAvailabilityClient : IAsyncDisposable
         public static readonly string[] ListVersionAvailabilityOpenIdConnectScopes = ["availability:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountVersionAvailability</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountVersionAvailabilityOauth2Scopes = ["availability:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountVersionAvailability</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountVersionAvailabilityOpenIdConnectScopes = ["availability:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>MakeVersionAvailable</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] MakeVersionAvailableOauth2Scopes = ["availability:write"];
@@ -138,6 +148,16 @@ public interface IApiAvailabilityClient : IAsyncDisposable
         public static readonly string[] ListEnvironmentAvailabilityOpenIdConnectScopes = ["availability:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountEnvironmentAvailability</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentAvailabilityOauth2Scopes = ["availability:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountEnvironmentAvailability</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentAvailabilityOpenIdConnectScopes = ["availability:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["availability:read", "availability:write"];
@@ -162,10 +182,21 @@ public interface IApiAvailabilityClient : IAsyncDisposable
     ValueTask<ListVersionAvailabilityResponse> ListVersionAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Count the environments a workflow version is available in
+    /// </summary>
+    /// <remarks>
+    /// Counts the environments this version has been made available in (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller who can read the workflow version (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountVersionAvailabilityResponse> CountVersionAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
     /// Make a workflow version available in an environment
     /// </summary>
     /// <remarks>
-    /// Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources. Idempotent — making an already-available version available again returns the existing entry (200).
+    /// Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources; and where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite must be green, else 409 (evidence-required). Idempotent — making an already-available version available again returns the existing entry (200).
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
@@ -196,4 +227,14 @@ public interface IApiAvailabilityClient : IAsyncDisposable
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListEnvironmentAvailabilityResponse> ListEnvironmentAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count the workflow versions available in an environment
+    /// </summary>
+    /// <remarks>
+    /// Counts the (workflow, version) pairs made available in this environment (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller whose reach admits the environment (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountEnvironmentAvailabilityResponse> CountEnvironmentAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

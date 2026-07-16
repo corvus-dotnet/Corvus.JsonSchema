@@ -278,6 +278,47 @@ public sealed class CosmosAvailabilityStore : IAvailabilityStore, IAsyncDisposab
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        // Cosmos has NO bounded server-side COUNT (a bare COUNT ignores the outer LIMIT; COUNT over a LIMIT/TOP subquery is
+        // rejected), so project only c.id under the same WHERE with OFFSET 0 LIMIT cap+1 and count the ids client-side.
+        var query = new QueryDefinition("SELECT c.id AS doc FROM c WHERE c.baseWorkflowId = @b AND c.versionNumber = @v ORDER BY c.environment OFFSET 0 LIMIT @lim")
+            .WithParameter("@b", baseWorkflowId)
+            .WithParameter("@v", versionNumber)
+            .WithParameter("@lim", bound + 1);
+        int total = 0;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryDocumentsAsync(query, bound + 1, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element; // id-only projection — only its presence counts toward the bounded total
+            total++;
+        }
+
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        var query = new QueryDefinition("SELECT c.id AS doc FROM c WHERE c.environment = @e ORDER BY c.sortKey OFFSET 0 LIMIT @lim")
+            .WithParameter("@e", environment)
+            .WithParameter("@lim", bound + 1);
+        int total = 0;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryDocumentsAsync(query, bound + 1, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element; // id-only projection — only its presence counts toward the bounded total
+            total++;
+        }
+
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient)

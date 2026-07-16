@@ -26,6 +26,9 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The count operation's bound: badges/footers need "is there work / roughly how much", not exact-beyond-99.
+    private const int CountCap = 100;
+
     private readonly IAccessRequestApprovalService approval;
     private readonly IAccessRequestStore requests;
     private readonly ISecuredWorkflowCatalog catalog;
@@ -161,6 +164,52 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             accessRequests: Models.AccessRequestList.AccessRequestViewArray.Build(in requestList, BuildAccessRequestViews),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListAccessRequestsResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountAccessRequestsResult> HandleCountAccessRequestsAsync(CountAccessRequestsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Mirrors HandleListAccessRequestsAsync's reach/query build exactly (so the count can't drift from the list it
+        // annotates), minus paging — the store returns only a bounded total (design §16.5: badges/footers), never rows.
+        AccessRequestStatus? status = ParseCountStatus(parameters.Status);
+        string? baseWorkflowId = parameters.BaseWorkflowId.IsNotUndefined() ? (string)parameters.BaseWorkflowId : null;
+
+        AccessRequestQuery query;
+        if (baseWorkflowId is not null)
+        {
+            // The approver queue for a workflow — only an administrator of it may count it (the list's 403).
+            if (!await this.IsAdministratorAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false))
+            {
+                return CountAccessRequestsResult.Forbidden(NotAdministratorProblem(baseWorkflowId), workspace);
+            }
+
+            query = new AccessRequestQuery(status, JsonString.From(parameters.BaseWorkflowId));
+        }
+        else if (IsCountQueueScope(parameters.Scope))
+        {
+            // The approver inbox (§16.5): a caller who administers nothing counts zero — the store never sees an empty set.
+            IReadOnlyList<string> administered = await this.catalog.ListAdministeredWorkflowsAsync(this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            if (administered.Count == 0)
+            {
+                return CountResult(0, false, workspace);
+            }
+
+            query = new AccessRequestQuery(status, AdministeredBaseWorkflowIds: administered);
+        }
+        else
+        {
+            // The caller's own requests.
+            string? subject = this.SubjectOf(this.access.CurrentPrincipal);
+            if (string.IsNullOrEmpty(subject))
+            {
+                return CountResult(0, false, workspace);
+            }
+
+            query = new AccessRequestQuery(status, default, this.subjectClaimType, subject);
+        }
+
+        (int count, bool capped) = await this.requests.CountAsync(query, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountResult(count, capped, workspace);
     }
 
     /// <inheritdoc/>
@@ -332,6 +381,17 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     // Whether the caller asked for the approver inbox (scope=queue) rather than their own requests (scope=mine/absent).
     private static bool IsQueueScope(Models.GetAccessRequestsScope scope)
         => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
+
+    // The count operation's own status/scope parameter types (distinct generated enums, same members as the list's).
+    private static AccessRequestStatus? ParseCountStatus(Models.GetAccessRequestsCountStatus status)
+        => status.IsNotUndefined() && Enum.TryParse((string)status, out AccessRequestStatus parsed) ? parsed : null;
+
+    private static bool IsCountQueueScope(Models.GetAccessRequestsCountScope scope)
+        => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
+
+    // A bounded count body: the store reports at most CountCap, and Capped tells the console to render e.g. "100+".
+    private static CountAccessRequestsResult CountResult(int count, bool capped, JsonWorkspace workspace)
+        => CountAccessRequestsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
 
     private static string? NoteReason(Models.AccessRequestDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;

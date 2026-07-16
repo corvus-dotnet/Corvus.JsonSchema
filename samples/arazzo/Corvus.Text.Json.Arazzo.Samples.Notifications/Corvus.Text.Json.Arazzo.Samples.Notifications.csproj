@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The application-owned KYC-verdict message exchange, presented through its generated AsyncAPI producer +
+       consumer. The KYC service publishes a verdict (PublishKycVerdictProducer); the workflow runner subscribes
+       (ReceiveKycVerdictConsumer + IReceiveKycVerdictHandler) and resumes the run that suspended awaiting it. The
+       transport itself (NATS JetStream) is wired in the hosts, not here — this library is transport-agnostic
+       (it depends only on the IMessageTransport abstraction). Regenerate with the Corvus.Json.Cli asyncapi-generate
+       command over specs/notifications.asyncapi.json (rootNamespace Corvus.Text.Json.Arazzo.Samples.Notifications,
+       outputPath the Generated folder, mode both). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="specs\**\*.json" />
+  </ItemGroup>
+
+</Project>

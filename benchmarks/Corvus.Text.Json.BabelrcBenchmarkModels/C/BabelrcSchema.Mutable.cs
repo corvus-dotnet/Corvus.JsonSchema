@@ -3738,4 +3738,190 @@ public readonly partial struct BabelrcSchema
     {
         return workspace.CreateBuilder<BabelrcSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<BabelrcSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<BabelrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<BabelrcSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<BabelrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<BabelrcSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<BabelrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="ast">The value of the property.</param>
+    /// <param name="auxiliaryCommentAfter">The value of the property.</param>
+    /// <param name="auxiliaryCommentBefore">The value of the property.</param>
+    /// <param name="code">The value of the property.</param>
+    /// <param name="comments">The value of the property.</param>
+    /// <param name="compact">The value of the property.</param>
+    /// <param name="env">The value of the property.</param>
+    /// <param name="extends">The value of the property.</param>
+    /// <param name="filename">The value of the property.</param>
+    /// <param name="filenameRelative">The value of the property.</param>
+    /// <param name="highlightCode">The value of the property.</param>
+    /// <param name="ignore">The value of the property.</param>
+    /// <param name="inputSourceMap">The value of the property.</param>
+    /// <param name="keepModuleIdExtensions">The value of the property.</param>
+    /// <param name="moduleId">The value of the property.</param>
+    /// <param name="moduleIds">The value of the property.</param>
+    /// <param name="moduleRoot">The value of the property.</param>
+    /// <param name="only">The value of the property.</param>
+    /// <param name="plugins">The value of the property.</param>
+    /// <param name="presets">The value of the property.</param>
+    /// <param name="retainLines">The value of the property.</param>
+    /// <param name="sourceFileName">The value of the property.</param>
+    /// <param name="sourceMaps">The value of the property.</param>
+    /// <param name="sourceMapTarget">The value of the property.</param>
+    /// <param name="sourceRoot">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<BabelrcSchema> Create(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source env = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source ignore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source inputSourceMap = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source only = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source plugins = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source presets = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(ast, auxiliaryCommentAfter, auxiliaryCommentBefore, code, comments, compact, env, extends, filename, filenameRelative, highlightCode, ignore, inputSourceMap, keepModuleIdExtensions, moduleId, moduleIds, moduleRoot, only, plugins, presets, retainLines, sourceFileName, sourceMaps, sourceMapTarget, sourceRoot);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<BabelrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="ast">The value of the property.</param>
+    /// <param name="auxiliaryCommentAfter">The value of the property.</param>
+    /// <param name="auxiliaryCommentBefore">The value of the property.</param>
+    /// <param name="code">The value of the property.</param>
+    /// <param name="comments">The value of the property.</param>
+    /// <param name="compact">The value of the property.</param>
+    /// <param name="env">The value of the property.</param>
+    /// <param name="extends">The value of the property.</param>
+    /// <param name="filename">The value of the property.</param>
+    /// <param name="filenameRelative">The value of the property.</param>
+    /// <param name="highlightCode">The value of the property.</param>
+    /// <param name="ignore">The value of the property.</param>
+    /// <param name="inputSourceMap">The value of the property.</param>
+    /// <param name="keepModuleIdExtensions">The value of the property.</param>
+    /// <param name="moduleId">The value of the property.</param>
+    /// <param name="moduleIds">The value of the property.</param>
+    /// <param name="moduleRoot">The value of the property.</param>
+    /// <param name="only">The value of the property.</param>
+    /// <param name="plugins">The value of the property.</param>
+    /// <param name="presets">The value of the property.</param>
+    /// <param name="retainLines">The value of the property.</param>
+    /// <param name="sourceFileName">The value of the property.</param>
+    /// <param name="sourceMaps">The value of the property.</param>
+    /// <param name="sourceMapTarget">The value of the property.</param>
+    /// <param name="sourceRoot">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<BabelrcSchema> Create<TContext>(in TContext context, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source<TContext> env = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> ignore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> inputSourceMap = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> only = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> plugins = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> presets = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, ast, auxiliaryCommentAfter, auxiliaryCommentBefore, code, comments, compact, env, extends, filename, filenameRelative, highlightCode, ignore, inputSourceMap, keepModuleIdExtensions, moduleId, moduleIds, moduleRoot, only, plugins, presets, retainLines, sourceFileName, sourceMaps, sourceMapTarget, sourceRoot);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<BabelrcSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

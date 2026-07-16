@@ -236,6 +236,30 @@ public sealed class PostgresEnvironmentRunnerAuthorizationStore : IEnvironmentRu
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(RunnerAuthorizationQuery query, int cap, CancellationToken cancellationToken)
+    {
+        await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(3);
+        AppendFilters(conditions, select, query);
+
+        // Bounded count: COUNT over a subquery capped at cap + 1, so the scan stops one row past the cap; the (cap+1)th
+        // row's existence trips Capped — never a full COUNT of the whole set. Same predicate as the list (AppendFilters).
+        var inner = new StringBuilder("SELECT 1 FROM EnvironmentRunnerAuthorizations");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        select.Parameters.AddWithValue("cap", cap + 1);
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        long total = result is long l ? l : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);

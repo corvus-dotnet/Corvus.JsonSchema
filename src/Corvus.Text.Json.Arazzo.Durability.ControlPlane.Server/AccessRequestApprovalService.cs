@@ -14,7 +14,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 /// <remarks>
 /// <para><b>§15 gate.</b> Only a §15 administrator of the target workflow may approve, deny, or revoke a request
-/// (<see cref="ISecuredWorkflowCatalog.GetAdministratorsAsync"/> + <see cref="WorkflowIdentity.SameAdministrator"/>).
+/// (<see cref="ISecuredWorkflowCatalog.GetAdministratorsAsync"/> + <see cref="WorkflowAdministrators.IsAdministeredBy"/>,
+/// membership per §16.5.4 — a caller whose identity contains a current administrator's identity qualifies).
 /// <b>Self-elevation</b> (an eligible requester) skips the human approver — eligibility <em>is</em> the
 /// authorization — but is otherwise identical.</para>
 /// <para><b>Platform cap.</b> An approval grants <em>at most</em> the requested scopes intersected with the
@@ -481,6 +482,15 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             if (!binding.EligibleOnlyValue
                 || !string.Equals(binding.ClaimTypeValue, draft.SubjectClaimTypeValue, StringComparison.Ordinal)
                 || !string.Equals(binding.ClaimValueOrNull, draft.SubjectClaimValueValue, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            // A tag-set eligibility binding (additional clauses beyond the primary) pins a richer identity than the
+            // single-clause access-request subject can demonstrate; it cannot be matched against this subject, so skip it
+            // fail-safe. This never widens self-elevation to a subject that has not shown the extra clauses (the whole
+            // point of the tag-set selector: a {sub, iss}-pinned eligibility must not match a bare-sub request).
+            if (binding.AdditionalClauses.IsNotUndefined() && binding.AdditionalClauses.GetArrayLength() > 0)
             {
                 continue;
             }

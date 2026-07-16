@@ -30,6 +30,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
+    private const int CountCap = 100;
 
     private readonly IAvailabilityStore availability;
     private readonly IEnvironmentStore environments;
@@ -138,6 +139,45 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     }
 
     /// <inheritdoc/>
+    public async ValueTask<CountVersionAvailabilityResult> HandleCountVersionAvailabilityAsync(CountVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+
+        // Same visibility gate as HandleListVersionAvailabilityAsync (readable by anyone who can read the version, 404
+        // otherwise), minus paging — the store returns only a bounded total (§7.8 footer), never entry rows.
+        using (ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false))
+        {
+            if (version is null)
+            {
+                return CountVersionAvailabilityResult.NotFound(VersionNotFoundProblem(baseWorkflowId, versionNumber), workspace);
+            }
+        }
+
+        (int count, bool capped) = await this.availability.CountByVersionAsync(baseWorkflowId, versionNumber, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountVersionAvailabilityResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountEnvironmentAvailabilityResult> HandleCountEnvironmentAvailabilityAsync(CountEnvironmentAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string environment = (string)parameters.Name;
+
+        // Same visibility gate as HandleListEnvironmentAvailabilityAsync (readable by anyone whose reach admits the
+        // environment, 404 otherwise), minus paging — the store returns only a bounded total, never entry rows.
+        using (ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false))
+        {
+            if (environmentDoc is null)
+            {
+                return CountEnvironmentAvailabilityResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+            }
+        }
+
+        (int count, bool capped) = await this.availability.CountByEnvironmentAsync(environment, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountEnvironmentAvailabilityResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<MakeVersionAvailableResult> HandleMakeVersionAvailableAsync(MakeVersionAvailableParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
@@ -171,6 +211,16 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
             {
                 return MakeVersionAvailableResult.Conflict(NotReadyProblem(baseWorkflowId, versionNumber, environment, missing), workspace);
             }
+        }
+
+        // Promotion readiness (workflow-designer design §4.6): readiness = credentials ∧ (suiteGreen ∨
+        // ¬requireEvidence). An environment that requires evidence admits only versions whose server-attested
+        // suite passed at publish; no evidence, or an empty suite, refuses (409). Default-off — environments
+        // without the flag keep the §7.7 behaviour exactly.
+        if (await this.RequiresEvidenceAsync(environment, cancellationToken).ConfigureAwait(false)
+            && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return MakeVersionAvailableResult.Conflict(EvidenceRequiredProblem(baseWorkflowId, versionNumber, environment), workspace);
         }
 
         (ParsedJsonDocument<AvailabilityEntry> entry, bool created) = await this.availability.MakeAvailableAsync(baseWorkflowId, versionNumber, environment, this.actor, cancellationToken).ConfigureAwait(false);
@@ -247,6 +297,35 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         return missing;
     }
 
+    // Whether the target environment requires green publish evidence for promotion (workflow-designer design §4.6).
+    private async ValueTask<bool> RequiresEvidenceAsync(string environment, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (environmentDoc is null)
+        {
+            return false;
+        }
+
+        Environment env = environmentDoc.RootElement;
+        return env.RequireEvidence.IsNotUndefined() && (bool)env.RequireEvidence;
+    }
+
+    // Whether the version's package carries publish evidence whose attested suite is green (it ran at least one
+    // scenario and none failed) — the evidence half of the §4.6 readiness formula.
+    private async ValueTask<bool> HasGreenEvidenceAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (package is not { } bytes || !WorkflowPackage.TryReadEntry(bytes, "metadata/evidence.json"u8, out ReadOnlyMemory<byte> entry))
+        {
+            return false;
+        }
+
+        using var evidence = ParsedJsonDocument<Models.PublishEvidence>.Parse(entry);
+        Models.EvidenceSuite suite = evidence.RootElement.Suite;
+        return suite.Total.IsNotUndefined() && (int)suite.Total > 0
+            && suite.Failed.IsNotUndefined() && (int)suite.Failed == 0;
+    }
+
     private SecurityTagSet CallerIdentity() => SecurityTagSet.FromTags(this.access.InternalTags());
 
     private static Models.ProblemDetails.Source EnvironmentNotFoundProblem(string environment)
@@ -260,6 +339,9 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
 
     private static Models.ProblemDetails.Source NotAdministratorProblem(string environment)
         => Problem("not-administrator", "Not an administrator", 403, $"You are not a current administrator of environment '{environment}'.");
+
+    private static Models.ProblemDetails.Source EvidenceRequiredProblem(string baseWorkflowId, int versionNumber, string environment)
+        => Problem("evidence-required", "Evidence required", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).");
 
     private static Models.ProblemDetails.Source NotReadyProblem(string baseWorkflowId, int versionNumber, string environment, IReadOnlyList<string> missing)
         => Problem("environment-not-ready", "Environment not ready", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': no credential for {string.Join(", ", missing)}.");

@@ -294,6 +294,59 @@ public abstract class AccessRequestStoreConformance
         seen.ShouldBe(expected);
     }
 
+    [TestMethod]
+    public async Task Counting_is_bounded_by_the_cap_reporting_capped_only_beyond_it()
+    {
+        IAccessRequestStore store = await this.NewStoreAsync();
+        await this.CreateAsync(store, "nightly-reconcile", "alice");
+        await this.CreateAsync(store, "nightly-reconcile", "bob");
+        await this.CreateAsync(store, "onboard-customer", "alice");
+
+        // Below the true total: the exact count, not capped (matches the list length).
+        (await store.CountAsync(default, 10, default)).ShouldBe((3, false));
+
+        // Exactly at the cap: the (cap+1)th row does not exist, so the count is exact and NOT capped.
+        (await store.CountAsync(default, 3, default)).ShouldBe((3, false));
+
+        // The true total exceeds the cap: the count is the cap and Capped is set (the console renders "N+").
+        (await store.CountAsync(default, 2, default)).ShouldBe((2, true));
+        (await store.CountAsync(default, 1, default)).ShouldBe((1, true));
+
+        // An empty store counts zero, never capped.
+        IAccessRequestStore empty = await this.NewStoreAsync();
+        (await empty.CountAsync(default, 5, default)).ShouldBe((0, false));
+    }
+
+    [TestMethod]
+    public async Task Counting_honours_the_same_filters_as_the_list()
+    {
+        IAccessRequestStore store = await this.NewStoreAsync();
+        await this.CreateAsync(store, "nightly-reconcile", "alice");
+        string bobReconcile = await this.CreateAsync(store, "nightly-reconcile", "bob");
+        await this.CreateAsync(store, "onboard-customer", "alice");
+        await this.CreateAsync(store, "daily-export", "carol");
+
+        // By subject (alice, across workflows).
+        (await store.CountAsync(new AccessRequestQuery(SubjectClaimType: "sub", SubjectClaimValue: "alice"), 10, default)).ShouldBe((2, false));
+
+        // By workflow (baseWorkflowId carried as its request JSON value, reified at the store's own leaf).
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> bw = AsJsonString("nightly-reconcile"))
+        {
+            (await store.CountAsync(new AccessRequestQuery(BaseWorkflowId: bw.RootElement), 10, default)).ShouldBe((2, false));
+        }
+
+        // The approver inbox: every request across the administered set; onboard-customer is outside it.
+        (await store.CountAsync(new AccessRequestQuery(AdministeredBaseWorkflowIds: ["nightly-reconcile", "daily-export"]), 10, default)).ShouldBe((3, false));
+
+        // By status (deny one, then count each state).
+        await store.DecideAsync(bobReconcile, new AccessRequestDecision(AccessRequestStatus.Denied), WorkflowEtag.None, "admin", default);
+        (await store.CountAsync(new AccessRequestQuery(Status: AccessRequestStatus.Pending), 10, default)).ShouldBe((3, false));
+        (await store.CountAsync(new AccessRequestQuery(Status: AccessRequestStatus.Denied), 10, default)).ShouldBe((1, false));
+
+        // Filter + cap compose: two Pending in the administered set, capped at 1.
+        (await store.CountAsync(new AccessRequestQuery(Status: AccessRequestStatus.Pending, AdministeredBaseWorkflowIds: ["nightly-reconcile", "daily-export"]), 1, default)).ShouldBe((1, true));
+    }
+
     // Wraps a value as the JSON string a request carries it as — the conformance carries a filter value as the request
     // JSON the store reifies at its own leaf, and round-trips a page token (the store's emitted bytes) the same way.
     private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(ReadOnlySpan<byte> valueUtf8)

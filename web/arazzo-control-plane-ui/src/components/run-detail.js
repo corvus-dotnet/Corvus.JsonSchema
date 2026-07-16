@@ -118,8 +118,9 @@ class ArazzoRunDetail extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: visible; }
+        /* Sticky header: it stays put while the body scrolls under it (the .detail-pane is the scroll container). */
+        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
         header .wf { font-weight: 700; font-size: 15px; }
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
@@ -204,6 +205,7 @@ class ArazzoRunDetail extends ArazzoElement {
         <dt>Run id</dt><dd class="mono" part="cursor">${escapeHtml(run.id)}</dd>
         <dt>Cursor</dt><dd part="cursor">${run.cursor == null ? '<span class="muted">…</span>' : escapeHtml(String(run.cursor)) + ' <span class="muted">(next step index)</span>'}</dd>
         <dt>Created</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</dd>
+        <dt>Updated</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.updatedAt))}">${escapeHtml(relativeTime(run.updatedAt))}</dd>
         ${run.environment ? `<dt>Environment</dt><dd part="environment"><div class="tags"><span class="tag">${escapeHtml(run.environment)}</span></div></dd>` : ''}
         ${run.correlationId ? `<dt>Correlation</dt><dd class="mono" part="correlation" title="telemetry trace id">${escapeHtml(run.correlationId)}<button class="copy ghost" type="button" part="copy-correlation" title="Copy correlation id" aria-label="Copy correlation id">⧉</button></dd>` : ''}
         ${Array.isArray(run.tags) && run.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${run.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}

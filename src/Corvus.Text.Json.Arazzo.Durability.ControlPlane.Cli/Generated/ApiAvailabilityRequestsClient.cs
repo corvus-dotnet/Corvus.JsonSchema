@@ -93,6 +93,32 @@ public sealed class ApiAvailabilityRequestsClient : IApiAvailabilityRequestsClie
     }
 
     /// <summary>
+    /// Count availability requests
+    /// </summary>
+    /// <remarks>
+    /// Counts availability requests visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listAvailabilityRequests: with environment, that environment's request queue (administrator required, 403 otherwise); otherwise scope selects 'mine' (default) or 'queue' (the approver inbox); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="scope">The scope parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountAvailabilityRequestsResponse> CountAvailabilityRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAvailabilityRequestsCountStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAvailabilityRequestsCountScope.Source scope = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountAvailabilityRequestsRequest request = new()
+        {
+            Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAvailabilityRequestsCountStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAvailabilityRequestsCountStatus.CreateBuilder(workspace, status, 30).RootElement,
+            Environment = environment.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, environment, 30).RootElement,
+            Scope = scope.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAvailabilityRequestsCountScope)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAvailabilityRequestsCountScope.CreateBuilder(workspace, scope, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountAvailabilityRequestsRequest, CountAvailabilityRequestsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get an availability request
     /// </summary>
     /// <remarks>
@@ -115,7 +141,7 @@ public sealed class ApiAvailabilityRequestsClient : IApiAvailabilityRequestsClie
     /// Approve an availability request
     /// </summary>
     /// <remarks>
-    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7) — is rejected (409).
+    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).
     /// </remarks>
     /// <param name="requestId">The requestId parameter.</param>
     /// <param name="body">The request body..</param>

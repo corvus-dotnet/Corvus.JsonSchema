@@ -116,6 +116,73 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
         return new ValueTask<ParsedJsonDocument<ObservedIdentity>?>((ParsedJsonDocument<ObservedIdentity>?)null);
     }
 
+    /// <inheritdoc/>
+    public ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing (mirrors
+        // the FindIdentityConflictAsync empty-identity guard: an identity with no digest never participates).
+        if (SecurityIdentityDigest.Compute(identity) is null)
+        {
+            return new ValueTask<ObservedIdentityPage>(ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0)));
+        }
+
+        // The reference scan a backend pushes into an indexed/queryable form: test each grantee's identity for a STRICT
+        // superset of the authored identity (identity ⊊ G) and collect up to `cap`. Full reach — the caller reach-filters
+        // what it surfaces (an out-of-reach broadening overlap is still a real broadening, so the probe does not hide it).
+        (string Kind, string Value) self = (kind.ToToken(), (string)value);
+        var matches = new List<byte[]>(Math.Min(cap, 4));
+        lock (this.gate)
+        {
+            foreach (KeyValuePair<(string Kind, string Value), byte[]> entry in this.identities)
+            {
+                if (entry.Key == self)
+                {
+                    continue;
+                }
+
+                bool broadens;
+                using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(entry.Value))
+                {
+                    SecurityTagSet candidateTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                        : SecurityTagSet.Empty;
+
+                    // Strict subset: identity ⊆ candidate AND candidate ⊄ identity (i.e. candidate has an extra tag). An
+                    // exact-equal identity is the FindIdentityConflictAsync collision, not a broadening overlap, so it is
+                    // excluded here.
+                    broadens = identity.IsSubsetOf(candidateTags) && !candidateTags.IsSubsetOf(identity);
+                }
+
+                if (broadens)
+                {
+                    matches.Add(entry.Value);
+                    if (matches.Count >= cap)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            var docs = new PooledDocumentList<ObservedIdentity>(matches.Count);
+            try
+            {
+                foreach (byte[] json in matches)
+                {
+                    docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(json));
+                }
+
+                return new ValueTask<ObservedIdentityPage>(ObservedIdentityPage.Create(docs));
+            }
+            catch
+            {
+                docs.Dispose();
+                throw;
+            }
+        }
+    }
+
     // Retract this key's previous digest (if the identity changed on a re-sighting) and index its new one. The empty
     // identity has no digest and is simply absent from the index (it never collides).
     private void ReindexDigest((string Kind, string Value) key, SecurityTagSet identity)

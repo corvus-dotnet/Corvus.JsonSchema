@@ -119,6 +119,48 @@ public sealed class InMemoryAvailabilityStore : IAvailabilityStore
         }
     }
 
+    /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+        lock (this.gate)
+        {
+            // Count the keys for this exact version, bounded at cap+1 — no entry document is parsed.
+            int n = 0;
+            foreach ((string BaseWorkflowId, int VersionNumber, string Environment) key in this.entries.Keys)
+            {
+                if (key.VersionNumber == versionNumber && string.Equals(key.BaseWorkflowId, baseWorkflowId, StringComparison.Ordinal) && ++n > bound)
+                {
+                    return new ValueTask<(int, bool)>((bound, true));
+                }
+            }
+
+            return new ValueTask<(int, bool)>((n, false));
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+        lock (this.gate)
+        {
+            // Count the keys in this environment, bounded at cap+1 — no entry document is parsed.
+            int n = 0;
+            foreach ((string BaseWorkflowId, int VersionNumber, string Environment) key in this.entries.Keys)
+            {
+                if (string.Equals(key.Environment, environment, StringComparison.Ordinal) && ++n > bound)
+                {
+                    return new ValueTask<(int, bool)>((bound, true));
+                }
+            }
+
+            return new ValueTask<(int, bool)>((n, false));
+        }
+    }
+
     // The by-environment total order: base workflow id (ordinal), then version number (numeric).
     private static int CompareWorkflowVersion(string b1, int v1, string b2, int v2)
     {

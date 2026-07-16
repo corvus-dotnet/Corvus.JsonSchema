@@ -33,6 +33,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
     private readonly DirectoryPrincipalProjector projector;
     private readonly HttpClient httpClient;
     private readonly bool ownsHttpClient;
+    private readonly DirectoryMembershipExpander membershipExpander;
 
     /// <summary>Initializes a new instance of the <see cref="OktaPrincipalDirectory"/> class.</summary>
     /// <param name="options">The non-secret endpoint + auth + resource configuration.</param>
@@ -52,6 +53,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
         this.projector = new DirectoryPrincipalProjector(mapper, options.Issuer);
         this.ownsHttpClient = httpClient is null;
         this.httpClient = httpClient ?? new HttpClient();
+        this.membershipExpander = new DirectoryMembershipExpander(options.MembershipCacheTtl);
     }
 
     /// <inheritdoc/>
@@ -81,6 +83,19 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
         // the mapper declares its RequiredAttributes the parse keeps only those (plus value/label) — skipping the value
         // list + dictionary entry for every profile attribute the mapper never reads.
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+        // A person resolves to its FULL membership-expanded identity (design §16.5.4): capture each user's Okta id during
+        // the projection, then fetch its group memberships (cached per user) and union a sys:group per group through the
+        // SAME mapper. Teams / roles ARE the memberships, so they are not themselves expanded.
+        if (kind == GranteeKind.Person)
+        {
+            var ids = new List<string>(pageLimit);
+            IReadOnlyList<ResolvedPrincipal> people = this.projector.SupportsSpanProjection
+                ? ProjectResponseSpan(kind, resource, body, pageLimit, this.projector, ids)
+                : ProjectResponse(kind, resource, body, pageLimit, this.projector, ids);
+            return await this.membershipExpander.ExpandAsync(people, ids, this.projector, (id, ct) => this.FetchGroupNamesAsync(id, token, ct), cancellationToken).ConfigureAwait(false);
+        }
+
         return this.projector.SupportsSpanProjection
             ? ProjectResponseSpan(kind, resource, body, pageLimit, this.projector)
             : ProjectResponse(kind, resource, body, pageLimit, this.projector);
@@ -115,17 +130,95 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
 
     private static string EscapeSearchLiteral(string value) => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
 
+    // GET /api/v1/users/{id}/groups → [{ id, profile:{ name } }, …]; the group's identity value is profile.name (the Group
+    // resource's value attribute). Throws on a non-success status so a misconfigured token/scope surfaces.
+    private async Task<IReadOnlyList<string>> FetchGroupNamesAsync(string id, string token, CancellationToken cancellationToken)
+    {
+        string root = this.options.BaseUrl.AbsoluteUri.TrimEnd('/');
+        var uri = new Uri($"{root}/api/v1/users/{Uri.EscapeDataString(id)}/groups", UriKind.Absolute);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.Authorization = new AuthenticationHeaderValue("SSWS", token);
+        using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new OktaDirectoryException($"the Management API returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+        }
+
+        byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        return ParseGroupNames(body);
+    }
+
+    // Reads an Okta group array ([{ id, profile:{ name } }, …]) to the list of group `profile.name`s in place — the one field
+    // the mapper keys on. Other members are skipped without materializing. `internal` only so the parse can be unit-tested.
+    internal static IReadOnlyList<string> ParseGroupNames(byte[] body)
+    {
+        var reader = new Utf8JsonReader(body);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray)
+        {
+            return [];
+        }
+
+        List<string>? names = null;
+        while (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+        {
+            string? name = null;
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                if (reader.ValueTextEquals("profile"u8))
+                {
+                    reader.Read();
+                    if (reader.TokenType == JsonTokenType.StartObject)
+                    {
+                        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                        {
+                            if (reader.ValueTextEquals("name"u8))
+                            {
+                                reader.Read();
+                                name = reader.GetString();
+                            }
+                            else
+                            {
+                                reader.Read();
+                                reader.Skip();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        reader.Skip();
+                    }
+                }
+                else
+                {
+                    reader.Read();
+                    reader.Skip();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                (names ??= []).Add(name);
+            }
+        }
+
+        return names ?? (IReadOnlyList<string>)[];
+    }
+
     // The bytes-to-bytes path (used when the mapper is a span mapper): capture the wanted attributes — value, label, and the
     // mapper's declared attributes — as unescaped UTF-8 into a pooled scratch, then project span-wise with no attribute
     // string. Okta nests its identity attributes under `profile`, so a wanted attribute is matched (and captured) by the
     // LEAF of its name — a top-level scalar by its name (a role's `label`) and one level into an object by its member name
     // (so `profile.login` / `profile.department` are captured under `login` / `department`, which the span mapper reads).
-    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, OktaResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, OktaResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector, List<string>? capturedIds = null)
     {
         var results = new List<ResolvedPrincipal>(limit);
 
+        // When the caller will expand a person's memberships it also needs the user's Okta id (the id /users/{id}/groups
+        // keys on), captured in step with the principal so the two lists stay parallel.
+        bool captureId = capturedIds is not null;
+
         string[] required = [.. projector.RequiredAttributes];
-        int wantedCount = 1 + (resource.DisplayAttribute is null ? 0 : 1) + required.Length;
+        int wantedCount = 1 + (resource.DisplayAttribute is null ? 0 : 1) + required.Length + (captureId ? 1 : 0);
         byte[][] wanted = new byte[wantedCount][];
         int next = 0;
         int valueWanted = next;
@@ -140,6 +233,13 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
         foreach (string attribute in required)
         {
             wanted[next++] = Encoding.UTF8.GetBytes(Leaf(attribute));
+        }
+
+        int idWanted = -1;
+        if (captureId)
+        {
+            idWanted = next;
+            wanted[next++] = "id"u8.ToArray();
         }
 
         var reader = new Utf8JsonReader(body);
@@ -170,6 +270,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
                 int position = 0;
                 int valueSlice = -1;
                 int displaySlice = -1;
+                int idSlice = -1;
                 while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
                 {
                     int which = MatchWanted(ref reader, wanted);
@@ -184,6 +285,10 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
                         else if (which == displayWanted)
                         {
                             displaySlice = captured - 1;
+                        }
+                        else if (which == idWanted)
+                        {
+                            idSlice = captured - 1;
                         }
                     }
                     else if (reader.TokenType == JsonTokenType.StartObject)
@@ -234,6 +339,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
                 if (projector.TryProjectIdentity(kind, valueSpan, labelSpan, hasLabel: true, view) is { } principal)
                 {
                     results.Add(principal);
+                    capturedIds?.Add(idSlice >= 0 ? Encoding.UTF8.GetString(scratch, slices[idSlice].ValueOffset, slices[idSlice].ValueLength) : string.Empty);
                 }
             }
         }
@@ -281,13 +387,13 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
     // borrows `body` in place (no DOM, no copy). Users / groups are a bare top-level array; a resource with a
     // ResultsProperty (e.g. custom roles) wraps its array in that property. A dropped record (mapper returns null, or one
     // missing its value attribute) does not consume the limit. `internal` only so the allocation benchmark can drive it.
-    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, OktaResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, OktaResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector, List<string>? capturedIds = null)
     {
         var results = new List<ResolvedPrincipal>(limit);
 
         // Parse-side projection (the §16.5.4 seam): Okta has no server-side $select, so when the mapper declares what it
-        // reads only those keys (plus the value/label paths the adapter needs) are materialised; an undeclared mapper
-        // surfaces every attribute (the safe, general default).
+        // reads only those keys (plus the value/label paths the adapter needs, and the top-level id when memberships are
+        // being expanded) are materialised; an undeclared mapper surfaces every attribute (the safe, general default).
         HashSet<string>? keep = null;
         if (projector.RequiredAttributes.Count > 0)
         {
@@ -295,6 +401,11 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
             if (resource.DisplayAttribute is { } display)
             {
                 keep.Add(display);
+            }
+
+            if (capturedIds is not null)
+            {
+                keep.Add("id");
             }
         }
 
@@ -322,6 +433,7 @@ public sealed class OktaPrincipalDirectory : IPrincipalDirectory, IDisposable
             if (Project(kind, resource, attributes, projector) is { } principal)
             {
                 results.Add(principal);
+                capturedIds?.Add(First(attributes, "id") ?? string.Empty);
             }
         }
 

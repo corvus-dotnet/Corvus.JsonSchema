@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Whether the identity is the principal&#39;s full stamped identity (true), or a best-effort single-tag mapping of a free-typed value that may not match if the deployment stamps finer (false).
+/// True for a binding that records eligibility only (a PIM assignment the principal may self-elevate to): it confers nothing active.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -532,5 +532,29 @@ public readonly partial struct JsonBoolean
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
         return workspace.CreateBuilder<JsonBoolean, Mutable>(this);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<JsonBoolean> Create(
+        scoped in Source value, int initialCapacity = 1)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<JsonBoolean>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
     }
 }

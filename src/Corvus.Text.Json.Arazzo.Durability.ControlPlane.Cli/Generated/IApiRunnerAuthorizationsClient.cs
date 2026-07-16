@@ -62,7 +62,7 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
 
         /// <summary>
@@ -106,6 +106,16 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
         /// Gets the scopes required by <c>ListEnvironmentRunnerAuthorizations</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] ListEnvironmentRunnerAuthorizationsOpenIdConnectScopes = ["environments:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountEnvironmentRunnerAuthorizations</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentRunnerAuthorizationsOauth2Scopes = ["environments:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountEnvironmentRunnerAuthorizations</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountEnvironmentRunnerAuthorizationsOpenIdConnectScopes = ["environments:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>AuthorizeRunner</c> for the <c>Oauth2</c> scheme.
@@ -152,6 +162,17 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
     ValueTask<ListEnvironmentRunnerAuthorizationsResponse> ListEnvironmentRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetEnvironmentsByNameRunnersStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Count the runners that serve an environment
+    /// </summary>
+    /// <remarks>
+    /// Counts this environment's runner authorizations (design §5.5), bounded by the server's cap — no rows are returned (for the list footer). Same filters as listEnvironmentRunnerAuthorizations: the caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountEnvironmentRunnerAuthorizationsResponse> CountEnvironmentRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetEnvironmentsByNameRunnersCountStatus.Source status = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
     /// Authorize a runner to serve an environment
     /// </summary>
     /// <remarks>
@@ -187,4 +208,15 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<ListRunnerAuthorizationsResponse> ListRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetRunnerAuthorizationsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count runner authorizations (the approver inbox)
+    /// </summary>
+    /// <remarks>
+    /// Counts runner authorizations visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRunnerAuthorizations: with environment, that environment's authorizations (administrator required, 403 otherwise); otherwise the inbox across every environment the caller administers; defaults to Pending when status is omitted. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountRunnerAuthorizationsResponse> CountRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetRunnerAuthorizationsCountStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

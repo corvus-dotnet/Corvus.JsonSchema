@@ -72,25 +72,18 @@ public readonly partial struct RegisteredSource
         in JsonElement description,
         in SecurityTagSet managementTags)
     {
-        DraftElements state = new(name, type, document, displayName, description, managementTags);
-        return PersistedJson.ToPooledDocument<RegisteredSource, DraftElements>(
-            state,
-            static (Utf8JsonWriter writer, in DraftElements s) =>
-            {
-                writer.WriteStartObject();
-                WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, s.Name);
-                WriteValueIfPresent(writer, JsonPropertyNames.TypeUtf8, s.Type);
-                WriteValueIfPresent(writer, JsonPropertyNames.DocumentUtf8, s.Document);
-                WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, s.DisplayName);
-                WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, s.Description);
-                if (!s.ManagementTags.IsEmpty)
-                {
-                    writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
-                    s.ManagementTags.WriteTo(writer);
-                }
-
-                writer.WriteEndObject();
-            });
+        using ParsedJsonDocument<SecurityTagInfoArray>? tags =
+            managementTags.IsEmpty ? null : PersistedJson.ToPooledDocument<SecurityTagInfoArray>(managementTags.RawJson);
+        return Create(
+            createdAt: default,
+            createdBy: default,
+            document: document.ValueKind != JsonValueKind.Undefined ? (DocumentEntity.Source)DocumentEntity.From(document) : default,
+            etag: default,
+            name: name.ValueKind != JsonValueKind.Undefined ? (Durability.JsonString.Source)Durability.JsonString.From(name) : default,
+            type: type.ValueKind != JsonValueKind.Undefined ? (TypeEntity.Source)TypeEntity.From(type) : default,
+            description: description.ValueKind != JsonValueKind.Undefined ? (Durability.JsonString.Source)Durability.JsonString.From(description) : default,
+            displayName: displayName.ValueKind != JsonValueKind.Undefined ? (Durability.JsonString.Source)Durability.JsonString.From(displayName) : default,
+            managementTags: tags is not null ? (SecurityTagInfoArray.Source)tags.RootElement : default);
     }
 
     /// <summary>Builds a draft source from primitive values — the cold-path / test convenience over the bytes-native
@@ -260,28 +253,5 @@ public readonly partial struct RegisteredSource
         {
             throw new ArgumentException("A source requires a 'document'.", nameof(draft));
         }
-    }
-
-    // The bytes-to-bytes draft context: the request body's already-parsed JSON values (the document included) plus the
-    // resolved tag set.
-    private readonly struct DraftElements(
-        JsonElement name,
-        JsonElement type,
-        JsonElement document,
-        JsonElement displayName,
-        JsonElement description,
-        SecurityTagSet managementTags)
-    {
-        public JsonElement Name { get; } = name;
-
-        public JsonElement Type { get; } = type;
-
-        public JsonElement Document { get; } = document;
-
-        public JsonElement DisplayName { get; } = displayName;
-
-        public JsonElement Description { get; } = description;
-
-        public SecurityTagSet ManagementTags { get; } = managementTags;
     }
 }

@@ -3428,4 +3428,196 @@ public readonly partial struct VercelSchema
     {
         return workspace.CreateBuilder<VercelSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<VercelSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<VercelSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<VercelSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<VercelSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<VercelSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<VercelSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="alias">The value of the property.</param>
+    /// <param name="build">The value of the property.</param>
+    /// <param name="buildCommand">The value of the property.</param>
+    /// <param name="builds">The value of the property.</param>
+    /// <param name="cleanUrls">The value of the property.</param>
+    /// <param name="crons">The value of the property.</param>
+    /// <param name="devCommand">The value of the property.</param>
+    /// <param name="env">The value of the property.</param>
+    /// <param name="framework">The value of the property.</param>
+    /// <param name="functions">The value of the property.</param>
+    /// <param name="git">The value of the property.</param>
+    /// <param name="github">The value of the property.</param>
+    /// <param name="headers">The value of the property.</param>
+    /// <param name="ignoreCommand">The value of the property.</param>
+    /// <param name="images">The value of the property.</param>
+    /// <param name="installCommand">The value of the property.</param>
+    /// <param name="name">The value of the property.</param>
+    /// <param name="outputDirectory">The value of the property.</param>
+    /// <param name="publicValue">The value of the property.</param>
+    /// <param name="redirects">The value of the property.</param>
+    /// <param name="regions">The value of the property.</param>
+    /// <param name="rewrites">The value of the property.</param>
+    /// <param name="routes">The value of the property.</param>
+    /// <param name="scope">The value of the property.</param>
+    /// <param name="trailingSlash">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="wildcard">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<VercelSchema> Create(in Corvus.VercelBenchmark.Current.JsonString.Source schema = default, in Corvus.VercelBenchmark.Current.VercelSchema.AliasEntity.Source alias = default, in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.Source build = default, in Corvus.VercelBenchmark.Current.VercelSchema.BuildCommandEntity.Source buildCommand = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.Source builds = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source cleanUrls = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredPathAndScheduleArray.Source crons = default, in Corvus.VercelBenchmark.Current.VercelSchema.DevCommandEntity.Source devCommand = default, in Corvus.VercelBenchmark.Current.VercelSchema.EnvEntity.Source env = default, in Corvus.VercelBenchmark.Current.VercelSchema.FrameworkEntity.Source framework = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Source functions = default, in Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.Source git = default, in Corvus.VercelBenchmark.Current.VercelSchema.GithubEntity.Source github = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.Source headers = default, in Corvus.VercelBenchmark.Current.VercelSchema.IgnoreCommandEntity.Source ignoreCommand = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Source images = default, in Corvus.VercelBenchmark.Current.VercelSchema.InstallCommandEntity.Source installCommand = default, in Corvus.VercelBenchmark.Current.JsonString.Source name = default, in Corvus.VercelBenchmark.Current.VercelSchema.OutputDirectoryEntity.Source outputDirectory = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source publicValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.Source redirects = default, in Corvus.VercelBenchmark.Current.VercelSchema.RegionsEntityArray.Source regions = default, in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.Source rewrites = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.Source routes = default, in Corvus.VercelBenchmark.Current.JsonString.Source scope = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source trailingSlash = default, in Corvus.VercelBenchmark.Current.VercelSchema.VersionEntity.Source version = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDomainAndValueArray.Source wildcard = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(schema, alias, build, buildCommand, builds, cleanUrls, crons, devCommand, env, framework, functions, git, github, headers, ignoreCommand, images, installCommand, name, outputDirectory, publicValue, redirects, regions, rewrites, routes, scope, trailingSlash, version, wildcard);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<VercelSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="alias">The value of the property.</param>
+    /// <param name="build">The value of the property.</param>
+    /// <param name="buildCommand">The value of the property.</param>
+    /// <param name="builds">The value of the property.</param>
+    /// <param name="cleanUrls">The value of the property.</param>
+    /// <param name="crons">The value of the property.</param>
+    /// <param name="devCommand">The value of the property.</param>
+    /// <param name="env">The value of the property.</param>
+    /// <param name="framework">The value of the property.</param>
+    /// <param name="functions">The value of the property.</param>
+    /// <param name="git">The value of the property.</param>
+    /// <param name="github">The value of the property.</param>
+    /// <param name="headers">The value of the property.</param>
+    /// <param name="ignoreCommand">The value of the property.</param>
+    /// <param name="images">The value of the property.</param>
+    /// <param name="installCommand">The value of the property.</param>
+    /// <param name="name">The value of the property.</param>
+    /// <param name="outputDirectory">The value of the property.</param>
+    /// <param name="publicValue">The value of the property.</param>
+    /// <param name="redirects">The value of the property.</param>
+    /// <param name="regions">The value of the property.</param>
+    /// <param name="rewrites">The value of the property.</param>
+    /// <param name="routes">The value of the property.</param>
+    /// <param name="scope">The value of the property.</param>
+    /// <param name="trailingSlash">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="wildcard">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<VercelSchema> Create<TContext>(in TContext context, in Corvus.VercelBenchmark.Current.JsonString.Source schema = default, in Corvus.VercelBenchmark.Current.VercelSchema.AliasEntity.Source<TContext> alias = default, in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.Source<TContext> build = default, in Corvus.VercelBenchmark.Current.VercelSchema.BuildCommandEntity.Source buildCommand = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.Source<TContext> builds = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source cleanUrls = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredPathAndScheduleArray.Source<TContext> crons = default, in Corvus.VercelBenchmark.Current.VercelSchema.DevCommandEntity.Source devCommand = default, in Corvus.VercelBenchmark.Current.VercelSchema.EnvEntity.Source<TContext> env = default, in Corvus.VercelBenchmark.Current.VercelSchema.FrameworkEntity.Source framework = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Source<TContext> functions = default, in Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.Source<TContext> git = default, in Corvus.VercelBenchmark.Current.VercelSchema.GithubEntity.Source<TContext> github = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.Source<TContext> headers = default, in Corvus.VercelBenchmark.Current.VercelSchema.IgnoreCommandEntity.Source ignoreCommand = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Source<TContext> images = default, in Corvus.VercelBenchmark.Current.VercelSchema.InstallCommandEntity.Source installCommand = default, in Corvus.VercelBenchmark.Current.JsonString.Source name = default, in Corvus.VercelBenchmark.Current.VercelSchema.OutputDirectoryEntity.Source outputDirectory = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source publicValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.Source<TContext> redirects = default, in Corvus.VercelBenchmark.Current.VercelSchema.RegionsEntityArray.Source<TContext> regions = default, in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.Source<TContext> rewrites = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.Source<TContext> routes = default, in Corvus.VercelBenchmark.Current.JsonString.Source scope = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source trailingSlash = default, in Corvus.VercelBenchmark.Current.VercelSchema.VersionEntity.Source version = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDomainAndValueArray.Source<TContext> wildcard = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, schema, alias, build, buildCommand, builds, cleanUrls, crons, devCommand, env, framework, functions, git, github, headers, ignoreCommand, images, installCommand, name, outputDirectory, publicValue, redirects, regions, rewrites, routes, scope, trailingSlash, version, wildcard);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<VercelSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

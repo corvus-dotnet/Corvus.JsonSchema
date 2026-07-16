@@ -93,6 +93,32 @@ public sealed class ApiAccessRequestsClient : IApiAccessRequestsClient
     }
 
     /// <summary>
+    /// Count access requests
+    /// </summary>
+    /// <remarks>
+    /// Counts access requests visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listAccessRequests: with baseWorkflowId, that workflow's request queue (administrator required, 403 otherwise); otherwise scope selects 'mine' (default) or 'queue' (the approver inbox); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="status">The status parameter.</param>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="scope">The scope parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountAccessRequestsResponse> CountAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountScope.Source scope = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountAccessRequestsRequest request = new()
+        {
+            Status = status.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountStatus)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountStatus.CreateBuilder(workspace, status, 30).RootElement,
+            BaseWorkflowId = baseWorkflowId.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement,
+            Scope = scope.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountScope)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsCountScope.CreateBuilder(workspace, scope, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountAccessRequestsRequest, CountAccessRequestsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Get an access request
     /// </summary>
     /// <remarks>

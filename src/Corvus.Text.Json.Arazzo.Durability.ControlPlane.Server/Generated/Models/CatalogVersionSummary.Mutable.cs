@@ -345,6 +345,30 @@ public readonly partial struct CatalogVersionSummary
         }
 
         /// <summary>
+        /// Gets the (optional) <c>evidence</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The publish-evidence summary (&#167;4.6), projected from the package&#39;s metadata/evidence.json. Present only on the single-version detail and only for versions published with scenario evidence; index pages omit it. The full per-scenario record is served by the evidence endpoint.
+        /// </para>
+        /// <para>
+        /// The evidence badge&#39;s data (design &#167;4.6): when the version was published and the suite verdict, without the per-scenario detail.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Mutable Evidence
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EvidenceUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>hash</c> property.
         /// </summary>
         /// <remarks>
@@ -809,6 +833,87 @@ public readonly partial struct CatalogVersionSummary
         {
             CheckValidInstance();
             bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DescriptionUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>evidence</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetEvidence(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.EvidenceUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EvidenceUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Evidence, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>evidence</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetEvidence<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.EvidenceUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EvidenceUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Evidence, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>evidence</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveEvidence()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.EvidenceUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -1798,11 +1903,12 @@ public readonly partial struct CatalogVersionSummary
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source _createArg11;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg12;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg13;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg14;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg15;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg16;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg17;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source _createArg18;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source _createArg14;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg15;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg16;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg17;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg18;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source _createArg19;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1817,7 +1923,7 @@ public readonly partial struct CatalogVersionSummary
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source arg18)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg18, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source arg19)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1837,6 +1943,7 @@ public readonly partial struct CatalogVersionSummary
             _createArg16 = arg16;
             _createArg17 = arg17;
             _createArg18 = arg18;
+            _createArg19 = arg19;
             _kind = Kind.Create;
         }
 
@@ -1857,7 +1964,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1882,7 +1989,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1907,7 +2014,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1932,7 +2039,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1957,7 +2064,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1998,11 +2105,12 @@ public readonly partial struct CatalogVersionSummary
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source _createArg11;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg12;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg13;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg14;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg15;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg16;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg17;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> _createArg18;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> _createArg14;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg15;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg16;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg17;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg18;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> _createArg19;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2015,7 +2123,7 @@ public readonly partial struct CatalogVersionSummary
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> arg18)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg18, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> arg19)
         {
             _context = context;
             _createArg1 = arg1;
@@ -2036,6 +2144,7 @@ public readonly partial struct CatalogVersionSummary
             _createArg16 = arg16;
             _createArg17 = arg17;
             _createArg18 = arg18;
+            _createArg19 = arg19;
             _kind = Kind.Create;
         }
 
@@ -2054,7 +2163,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -2079,7 +2188,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -2104,7 +2213,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -2129,7 +2238,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -2154,7 +2263,7 @@ public readonly partial struct CatalogVersionSummary
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -2201,6 +2310,7 @@ public readonly partial struct CatalogVersionSummary
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source evidence = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default,
@@ -2220,6 +2330,7 @@ public readonly partial struct CatalogVersionSummary
             versionNumber.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VersionNumber, ref builder);
             workflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WorkflowId, ref builder);
             description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+            evidence.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Evidence, ref builder);
             lastUpdatedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedAt, ref builder);
             lastUpdatedBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedBy, ref builder);
             obsoletedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObsoletedAt, ref builder);
@@ -2244,13 +2355,14 @@ public readonly partial struct CatalogVersionSummary
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source evidence = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source securityTags = default)
         {
-            Create(ref _builder, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+            Create(ref _builder, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
         }
 
         /// <summary>
@@ -2272,6 +2384,7 @@ public readonly partial struct CatalogVersionSummary
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> evidence = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default,
@@ -2294,6 +2407,7 @@ public readonly partial struct CatalogVersionSummary
             versionNumber.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VersionNumber, ref builder);
             workflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WorkflowId, ref builder);
             description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+            evidence.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Evidence, ref builder);
             lastUpdatedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedAt, ref builder);
             lastUpdatedBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastUpdatedBy, ref builder);
             obsoletedAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObsoletedAt, ref builder);
@@ -2319,6 +2433,7 @@ public readonly partial struct CatalogVersionSummary
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> evidence = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default,
@@ -2328,7 +2443,7 @@ public readonly partial struct CatalogVersionSummary
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+            Create(context, ref _builder, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
         }
 
         /// <summary>
@@ -2444,11 +2559,12 @@ public readonly partial struct CatalogVersionSummary
         /// <param name="arg16">The value of the property.</param>
         /// <param name="arg17">The value of the property.</param>
         /// <param name="arg18">The value of the property.</param>
+        /// <param name="arg19">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source arg18, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg18, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source arg19, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
             o.EndObject();
         }
 
@@ -2475,14 +2591,15 @@ public readonly partial struct CatalogVersionSummary
         /// <param name="arg16">The value of the property.</param>
         /// <param name="arg17">The value of the property.</param>
         /// <param name="arg18">The value of the property.</param>
+        /// <param name="arg19">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> arg18, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg17, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg18, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> arg19, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
             o.EndObject();
         }
     }
@@ -2532,15 +2649,16 @@ public readonly partial struct CatalogVersionSummary
     /// <param name="versionNumber">The value of the <c>"versionNumber"</c> property.</param>
     /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <param name="description">The value of the <c>"description"</c> property.</param>
+    /// <param name="evidence">The value of the <c>"evidence"</c> property.</param>
     /// <param name="lastUpdatedAt">The value of the <c>"lastUpdatedAt"</c> property.</param>
     /// <param name="lastUpdatedBy">The value of the <c>"lastUpdatedBy"</c> property.</param>
     /// <param name="obsoletedAt">The value of the <c>"obsoletedAt"</c> property.</param>
     /// <param name="obsoletedBy">The value of the <c>"obsoletedBy"</c> property.</param>
     /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source sources, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source tags, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source securityTags = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source sources, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source tags, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source evidence = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source securityTags = default)
     {
-        return new Source(baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+        return new Source(baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
     }
 
     /// <summary>
@@ -2561,18 +2679,19 @@ public readonly partial struct CatalogVersionSummary
     /// <param name="versionNumber">The value of the <c>"versionNumber"</c> property.</param>
     /// <param name="workflowId">The value of the <c>"workflowId"</c> property.</param>
     /// <param name="description">The value of the <c>"description"</c> property.</param>
+    /// <param name="evidence">The value of the <c>"evidence"</c> property.</param>
     /// <param name="lastUpdatedAt">The value of the <c>"lastUpdatedAt"</c> property.</param>
     /// <param name="lastUpdatedBy">The value of the <c>"lastUpdatedBy"</c> property.</param>
     /// <param name="obsoletedAt">The value of the <c>"obsoletedAt"</c> property.</param>
     /// <param name="obsoletedBy">The value of the <c>"obsoletedBy"</c> property.</param>
     /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> sources, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> tags, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> securityTags = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> sources, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> tags, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> evidence = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> securityTags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+        return new Source<TContext>(context, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
     }
 
     /// <summary>
@@ -2681,6 +2800,7 @@ public readonly partial struct CatalogVersionSummary
     /// <param name="versionNumber">The value of the property.</param>
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
+    /// <param name="evidence">The value of the property.</param>
     /// <param name="lastUpdatedAt">The value of the property.</param>
     /// <param name="lastUpdatedBy">The value of the property.</param>
     /// <param name="obsoletedAt">The value of the property.</param>
@@ -2688,13 +2808,13 @@ public readonly partial struct CatalogVersionSummary
     /// <param name="securityTags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source sources, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source tags, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source securityTags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source sources, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source tags, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source evidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source securityTags = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+        ovb.Create(baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2720,6 +2840,7 @@ public readonly partial struct CatalogVersionSummary
     /// <param name="versionNumber">The value of the property.</param>
     /// <param name="workflowId">The value of the property.</param>
     /// <param name="description">The value of the property.</param>
+    /// <param name="evidence">The value of the property.</param>
     /// <param name="lastUpdatedAt">The value of the property.</param>
     /// <param name="lastUpdatedBy">The value of the property.</param>
     /// <param name="obsoletedAt">The value of the property.</param>
@@ -2727,7 +2848,7 @@ public readonly partial struct CatalogVersionSummary
     /// <param name="securityTags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> sources, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> tags, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> securityTags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> sources, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> tags, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> evidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> securityTags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2736,7 +2857,7 @@ public readonly partial struct CatalogVersionSummary
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+        ovb.Create(context, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2751,5 +2872,179 @@ public readonly partial struct CatalogVersionSummary
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
         return workspace.CreateBuilder<CatalogVersionSummary, Mutable>(this);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CatalogVersionSummary> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CatalogVersionSummary>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CatalogVersionSummary> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CatalogVersionSummary>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CatalogVersionSummary> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CatalogVersionSummary>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="baseWorkflowId">The value of the property.</param>
+    /// <param name="createdAt">The value of the property.</param>
+    /// <param name="createdBy">The value of the property.</param>
+    /// <param name="hash">The value of the property.</param>
+    /// <param name="owner">The value of the property.</param>
+    /// <param name="runnable">The value of the property.</param>
+    /// <param name="sources">The value of the property.</param>
+    /// <param name="status">The value of the property.</param>
+    /// <param name="tags">The value of the property.</param>
+    /// <param name="title">The value of the property.</param>
+    /// <param name="versionNumber">The value of the property.</param>
+    /// <param name="workflowId">The value of the property.</param>
+    /// <param name="description">The value of the property.</param>
+    /// <param name="evidence">The value of the property.</param>
+    /// <param name="lastUpdatedAt">The value of the property.</param>
+    /// <param name="lastUpdatedBy">The value of the property.</param>
+    /// <param name="obsoletedAt">The value of the property.</param>
+    /// <param name="obsoletedBy">The value of the property.</param>
+    /// <param name="securityTags">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CatalogVersionSummary> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source sources, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source tags, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source evidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source securityTags = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CatalogVersionSummary>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="baseWorkflowId">The value of the property.</param>
+    /// <param name="createdAt">The value of the property.</param>
+    /// <param name="createdBy">The value of the property.</param>
+    /// <param name="hash">The value of the property.</param>
+    /// <param name="owner">The value of the property.</param>
+    /// <param name="runnable">The value of the property.</param>
+    /// <param name="sources">The value of the property.</param>
+    /// <param name="status">The value of the property.</param>
+    /// <param name="tags">The value of the property.</param>
+    /// <param name="title">The value of the property.</param>
+    /// <param name="versionNumber">The value of the property.</param>
+    /// <param name="workflowId">The value of the property.</param>
+    /// <param name="description">The value of the property.</param>
+    /// <param name="evidence">The value of the property.</param>
+    /// <param name="lastUpdatedAt">The value of the property.</param>
+    /// <param name="lastUpdatedBy">The value of the property.</param>
+    /// <param name="obsoletedAt">The value of the property.</param>
+    /// <param name="obsoletedBy">The value of the property.</param>
+    /// <param name="securityTags">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CatalogVersionSummary> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source hash, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source runnable, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSourceRefArray.Source<TContext> sources, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.JsonStringArray.Source<TContext> tags, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source title, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source description = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PublishEvidenceSummary.Source<TContext> evidence = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastUpdatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source lastUpdatedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source obsoletedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source obsoletedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogVersionSummary.CatalogSecurityTagArray.Source<TContext> securityTags = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, baseWorkflowId, createdAt, createdBy, hash, owner, runnable, sources, status, tags, title, versionNumber, workflowId, description, evidence, lastUpdatedAt, lastUpdatedBy, obsoletedAt, obsoletedBy, securityTags);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CatalogVersionSummary>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
     }
 }

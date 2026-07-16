@@ -11,7 +11,7 @@ health probe (`/health`, `/alive`) — used by the AppHost's health check and co
 
 ## What it does
 
-- **Registers + heartbeats** (`RunnerRegistrationService`, §5.4) in the shared `SqliteRunnerRegistry`, advertising
+- **Registers + heartbeats** (`RunnerRegistrationService`, §5.4) in the shared `PostgresRunnerRegistry`, advertising
   the catalog versions it hosts. This is the only thing a runner *pushes* to the control plane — it's what the
   control plane's `GET /runners` reports and what gates triggers on a live host.
 - **Dispatches + resumes** (`WorkflowDispatchService`, §7) from the store-as-queue: `WorkflowDispatcher` claims
@@ -25,25 +25,29 @@ health probe (`/health`, `/alive`) — used by the AppHost's health check and co
   write-capable token. (In production this resolution happens at transport-bind time during live execution, not
   on startup.)
 
-## Live execution is the paused phase
+## Live execution
 
-Loading a version's compiled `executor.dll` into a collectible ALC and re-entering it (the
-`HostedWorkflowResumer` path, design Phases 1–3) is **not wired yet** — it's the deliberately-banked
-[live-execution work](../Corvus.Text.Json.Arazzo.ControlPlane.Demo/docs/live-execution.md). Until then the runner
-uses a **stub resumer** that drives each claimed run to completion, so the dispatch / lease / orphan-reclaim /
-resume plumbing is exercised end-to-end against the shared store. One visible consequence: the seeded orphaned
-`Running` run is reclaimed and completed shortly after startup — orphan reclaim in action.
+The runner **executes catalogued runs for real** (design §11 Phase 2): `WorkflowDispatchService` drives each
+claimed run through `HostedWorkflowResumer`, which loads the version's compiled `executor.dll` into a collectible
+ALC (on first use, cached thereafter) and re-enters it against the runner's transports — the same live-execution
+path the control-plane host runs in-process. Trigger one with
+`POST /arazzo/v1/catalog/{id}/versions/{n}/runs?environment=development` and the runner claims it and drives it
+through its steps to `Completed` / `Faulted` / `Suspended` against the environment's real source services (the
+onboarding, ledger, and KYC services this sample composes).
+
+Before it can dispatch, a runner must be **authorized** for its environment (§5.5): it registers a `Pending`
+authorization and an administrator clears it — a runner never self-asserts. The open demo has no interactive
+administrator, so the control plane's `RunnerAutoAuthorizationService` stands in for the `development`
+environment's administrator and authorizes the runner on registration (production has a human admin do this via
+the UI/API). Also visible: the seeded orphaned `Running` run is reclaimed and re-executed shortly after startup —
+orphan reclaim in action.
 
 ## Run it
 
-Under the AppHost (the runner shares the store with the control plane and waits for it to seed):
-
-```bash
-cd samples/arazzo
-aspire run
-```
-
-The dashboard shows both `controlplane` and `runner`; the runner's traces/logs/metrics (including the
-`Corvus.Arazzo` workflow source/meter) flow there via the shared ServiceDefaults. Standalone
-(`dotnet run --project samples/arazzo/Corvus.Text.Json.Arazzo.Runner.Demo`) it connects to the temp-file fallback
-store and idles if nothing has seeded it.
+The runner is launched as part of the AppHost composition (it shares the store with the control plane and waits
+for it to seed) — see the
+[AppHost README](../Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost/README.md) for the `aspire start` command
+and prerequisites. The dashboard shows both `controlplane` and `runner`; the runner's traces/logs/metrics
+(including the `Corvus.Arazzo` workflow source/meter) flow there via the shared ServiceDefaults. It shares the
+control plane's Postgres database and its source-service endpoints, so it only runs under the AppHost — launched
+standalone it fails fast (`ConnectionStrings:workflowstore` is required), because there is no store to share.

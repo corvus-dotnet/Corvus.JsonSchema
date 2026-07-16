@@ -820,21 +820,6 @@ public static class WorkflowExecutorEmitter
     /// </summary>
     private static List<ControlFlowStep> TopologicallyOrder(List<ControlFlowStep> steps)
     {
-        bool anyDependencies = false;
-        foreach (ControlFlowStep step in steps)
-        {
-            if ((step.DependsOn?.Count ?? 0) > 0)
-            {
-                anyDependencies = true;
-                break;
-            }
-        }
-
-        if (!anyDependencies)
-        {
-            return steps;
-        }
-
         var indexById = new Dictionary<string, int>(StringComparer.Ordinal);
         for (int i = 0; i < steps.Count; i++)
         {
@@ -848,14 +833,49 @@ public static class WorkflowExecutorEmitter
             dependents[i] = [];
         }
 
+        // A dependency edge (from -> to) means `from` must execute before `to`. Deduplicate so an edge
+        // declared explicitly (dependsOn) and referenced implicitly ($steps.<from>.*) is counted once; keep
+        // a human-readable note for each implicit edge so a cycle error can point at the runtime expression.
+        var edges = new HashSet<(int From, int To)>();
+        var implicitEdges = new List<string>();
+
+        void AddEdge(int from, int to, string? implicitVia)
+        {
+            if (from == to || !edges.Add((from, to)))
+            {
+                return;
+            }
+
+            dependents[from].Add(to);
+            inDegree[to]++;
+            if (implicitVia is not null)
+            {
+                implicitEdges.Add(implicitVia);
+            }
+        }
+
+        var implicitReferences = new HashSet<string>(StringComparer.Ordinal);
         for (int i = 0; i < steps.Count; i++)
         {
             foreach (string dependency in steps[i].DependsOn ?? [])
             {
-                if (indexById.TryGetValue(dependency, out int dependencyIndex) && dependencyIndex != i)
+                if (indexById.TryGetValue(dependency, out int dependencyIndex))
                 {
-                    dependents[dependencyIndex].Add(i);
-                    inDegree[i]++;
+                    AddEdge(dependencyIndex, i, implicitVia: null);
+                }
+            }
+
+            // Arazzo 1.1 §5.8.5.2.4: a step that reads $steps.<id>.* in any runtime expression implicitly
+            // depends on <id>, whether or not it also declares dependsOn. Fold those edges in so the order
+            // respects them (and so a forward reference to a not-yet-executed step becomes a cycle, not a
+            // silent undefined value).
+            implicitReferences.Clear();
+            CollectImplicitStepReferences(steps[i], implicitReferences);
+            foreach (string reference in implicitReferences)
+            {
+                if (indexById.TryGetValue(reference, out int referenceIndex))
+                {
+                    AddEdge(referenceIndex, i, implicitVia: $"'{steps[i].StepId}' references $steps.{reference}");
                 }
             }
         }
@@ -888,11 +908,102 @@ public static class WorkflowExecutorEmitter
 
         if (ordered.Count != steps.Count)
         {
-            throw new InvalidOperationException("A cycle was detected in the steps' dependsOn relationships; the steps cannot be ordered.");
+            string implicitNote = implicitEdges.Count > 0
+                ? $" Implicit dependencies from runtime expressions contributed to the cycle: {string.Join("; ", implicitEdges)}."
+                : string.Empty;
+            throw new InvalidOperationException(
+                $"A cycle was detected in the steps' dependency relationships (dependsOn plus implicit $steps references); the steps cannot be ordered.{implicitNote}");
         }
 
         return ordered;
     }
+
+    /// <summary>
+    /// Collects the step ids that <paramref name="step"/> implicitly depends on by reading their data through a
+    /// runtime expression (<c>$steps.&lt;id&gt;.*</c>) on any of its expression-bearing surfaces.
+    /// </summary>
+    private static void CollectImplicitStepReferences(in ControlFlowStep step, HashSet<string> into)
+    {
+        foreach (StepArgument argument in step.Arguments)
+        {
+            CollectStepReferences(argument.Value, into);
+        }
+
+        foreach (StepCriterion criterion in step.SuccessCriteria)
+        {
+            CollectStepReferences(criterion.Condition, into);
+            CollectStepReferences(criterion.Context, into);
+        }
+
+        foreach (OutputMapping output in step.Outputs)
+        {
+            CollectStepReferences(output.Expression, into);
+        }
+
+        if (step.RequestBody is { } body)
+        {
+            CollectStepReferences(body.Value, into);
+            foreach (PayloadReplacement replacement in body.Replacements ?? [])
+            {
+                CollectStepReferences(replacement.Value, into);
+            }
+        }
+
+        foreach (StepActionInfo action in step.OnSuccess)
+        {
+            foreach (StepCriterion criterion in action.Criteria)
+            {
+                CollectStepReferences(criterion.Condition, into);
+                CollectStepReferences(criterion.Context, into);
+            }
+        }
+
+        foreach (StepActionInfo action in step.OnFailure)
+        {
+            foreach (StepCriterion criterion in action.Criteria)
+            {
+                CollectStepReferences(criterion.Condition, into);
+                CollectStepReferences(criterion.Context, into);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Adds every <c>$steps.&lt;id&gt;.</c> step id found in <paramref name="expression"/> to <paramref name="into"/>.
+    /// Handles both bare expressions (<c>$steps.a.outputs.x</c>) and interpolated ones (<c>{$steps.a.outputs.x}</c>),
+    /// and multiple references in one string. A step id is <c>[A-Za-z0-9_-]+</c> (Arazzo stepId charset) delimited
+    /// by the following <c>.</c>.
+    /// </summary>
+    private static void CollectStepReferences(string? expression, HashSet<string> into)
+    {
+        if (string.IsNullOrEmpty(expression))
+        {
+            return;
+        }
+
+        const string prefix = "$steps.";
+        int i = 0;
+        while ((i = expression!.IndexOf(prefix, i, StringComparison.Ordinal)) >= 0)
+        {
+            int idStart = i + prefix.Length;
+            int end = idStart;
+            while (end < expression.Length && IsStepIdChar(expression[end]))
+            {
+                end++;
+            }
+
+            // A well-formed reference is $steps.{stepId}.{...}: a non-empty id followed by a '.'.
+            if (end > idStart && end < expression.Length && expression[end] == '.')
+            {
+                into.Add(expression[idStart..end]);
+            }
+
+            i = idStart;
+        }
+    }
+
+    private static bool IsStepIdChar(char c)
+        => char.IsAsciiLetterOrDigit(c) || c == '_' || c == '-';
 
     private static List<OutputMapping> ReadOutputs(in ArazzoDocument.StepObject step)
     {
@@ -967,8 +1078,15 @@ public static class WorkflowExecutorEmitter
         statements.AppendLine("    {");
         for (int i = 0; i < names.Count; i++)
         {
-            statements.Append("        builder.AddProperty(").Append(EmitText.Quote(names[i]))
-                .Append("u8, values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+            // Omit a workflow output whose expression did not resolve (a default/Undefined JsonElement) — Arazzo
+            // treats it as absent. Adding a None-valued property trips the builder's assert (process-terminating
+            // in a Debug build). Mirrors the per-step guard in OutputExtractionEmitter; a resolved null is kept.
+            string index = i.ToString(CultureInfo.InvariantCulture);
+            statements.Append("        if (values[").Append(index).AppendLine("].IsNotUndefined())");
+            statements.AppendLine("        {");
+            statements.Append("            builder.AddProperty(").Append(EmitText.Quote(names[i]))
+                .Append("u8, values[").Append(index).AppendLine("]);");
+            statements.AppendLine("        }");
         }
 
         statements.AppendLine("    });");

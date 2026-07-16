@@ -213,6 +213,48 @@ public sealed class NatsJetStreamAvailabilityStore : IAvailabilityStore, IAsyncD
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByVersionAsync(string baseWorkflowId, int versionNumber, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        // Key-only bounded scan reusing the exact list predicate: keys are enumerated and decoded from the key alone (no
+        // entry body read), and the count saturates at cap+1.
+        int n = 0;
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (TryParseKey(key, out (string BaseWorkflowId, int VersionNumber, string Environment) parts)
+                && string.Equals(parts.BaseWorkflowId, baseWorkflowId, StringComparison.Ordinal) && parts.VersionNumber == versionNumber
+                && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountByEnvironmentAsync(string environment, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        int bound = cap > 0 ? cap : AvailabilityPage.DefaultPageSize;
+
+        int n = 0;
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (TryParseKey(key, out (string BaseWorkflowId, int VersionNumber, string Environment) parts)
+                && string.Equals(parts.Environment, environment, StringComparison.Ordinal)
+                && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.ownedConnection is not null)

@@ -28,7 +28,7 @@ describe('<arazzo-availability-matrix>', () => {
     el = await matrix({ 'base-workflow-id': 'nightly-reconcile', scopes: FULL }, (c) => c.createEnvironment({ name: 'qa' }));
     await nextEvent(el, 'loaded');
     equal(q(el, 'tbody tr').length, 3, 'one row per version');
-    equal(q(el, 'thead th').length, 4, 'Version + production + staging + qa');
+    equal(q(el, 'thead th').length, 6, 'Version + development + production + staging + uat + qa');
     ok(q(el, 'button[data-action="make"]').length > 0, 'a ready, not-available cell offers Make available');
     ok(q(el, 'button[data-action="withdraw"]').length > 0, 'a seeded available cell offers Withdraw');
     ok(q(el, '.badge.notready').length > 0, 'the credential-less qa column is not ready');
@@ -41,7 +41,7 @@ describe('<arazzo-availability-matrix>', () => {
     equal(q(el, 'tbody tr').length, 1, 'only the selected version row is shown');
     ok(el.shadowRoot.querySelector('td.ver').textContent.includes('v2'), 'and it is the selected version');
     // The environment columns are still all present (it is a single-version × all-environments row).
-    equal(q(el, 'thead th').length, 3, 'Version + production + staging');
+    equal(q(el, 'thead th').length, 5, 'Version + development + production + staging + uat');
   });
 
   it('makes a version available in a cell and emits availability-changed', async () => {

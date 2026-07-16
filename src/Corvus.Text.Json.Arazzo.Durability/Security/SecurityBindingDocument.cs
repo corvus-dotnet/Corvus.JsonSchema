@@ -30,7 +30,9 @@ public readonly partial struct SecurityBindingDocument
     /// <summary>Gets the required claim value, or <see langword="null"/> (matches any value).</summary>
     public string? ClaimValueOrNull => this.ClaimValue.IsNotUndefined() ? (string)this.ClaimValue : null;
 
-    /// <summary>Gets the resolution order (ascending).</summary>
+    /// <summary>Gets the resolution order (ascending). The schema declares <c>order</c> optional with a <c>default</c> of 0,
+    /// so the generated <see cref="Order"/> accessor materialises 0 when the property is absent (a create/update draft carried
+    /// from the write body, which supplies no order). A store that projects the order into a column reads that 0 safely.</summary>
     public int OrderValue => this.Order;
 
     /// <summary>Gets the optional human description, or <see langword="null"/>.</summary>
@@ -134,6 +136,7 @@ public readonly partial struct SecurityBindingDocument
     /// <param name="scopes">The capability scopes granted (design §14.1); <see langword="null"/>/empty is reach-only.</param>
     /// <param name="expiresAt">When the grant expires (design §16.5.2); <see langword="null"/> is a standing grant.</param>
     /// <param name="eligibleOnly">When <see langword="true"/>, an eligibility assignment (design §16.5.3/§16.5.4), not an active grant.</param>
+    /// <param name="additionalClauses">Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector (design §16.5.4); <see langword="null"/>/empty is a legacy single-clause binding.</param>
     /// <returns>A pooled, disposable draft document the caller must dispose once the store has read it.</returns>
     public static ParsedJsonDocument<SecurityBindingDocument> Draft(
         string claimType,
@@ -145,10 +148,11 @@ public readonly partial struct SecurityBindingDocument
         string? description = null,
         IReadOnlyList<string>? scopes = null,
         DateTimeOffset? expiresAt = null,
-        bool eligibleOnly = false)
+        bool eligibleOnly = false,
+        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses = null)
     {
         ArgumentNullException.ThrowIfNull(claimType);
-        var state = new DraftState(claimType, claimValue, read, write, purge, order, description, scopes, expiresAt, eligibleOnly);
+        var state = new DraftState(claimType, claimValue, read, write, purge, order, description, scopes, expiresAt, eligibleOnly, additionalClauses);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument, DraftState>(
             in state,
             static (Utf8JsonWriter writer, in DraftState c) =>
@@ -158,6 +162,24 @@ public readonly partial struct SecurityBindingDocument
                 if (c.ClaimValue is { } claimValue)
                 {
                     writer.WriteString("claimValue"u8, claimValue);
+                }
+
+                if (c.AdditionalClauses is { Count: > 0 } additionalClauses)
+                {
+                    writer.WriteStartArray("additionalClauses"u8);
+                    foreach ((string dimension, string? value) in additionalClauses)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("dimension"u8, dimension);
+                        if (value is { } clauseValue)
+                        {
+                            writer.WriteString("value"u8, clauseValue);
+                        }
+
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
                 }
 
                 writer.WritePropertyName("read"u8);
@@ -197,17 +219,51 @@ public readonly partial struct SecurityBindingDocument
             });
     }
 
-    // Realises a new binding into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
-    // JSON values flow straight into the builder); id and the server-stamped audit/concurrency fields are added here.
-    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    /// <summary>Realises a brand-new binding as a self-contained pooled document in one pass — the
+    /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
+    /// parsed document. Same field mapping and absent-grant defaulting as the builder path below; keep the two in step.</summary>
+    /// <param name="id">The assigned binding id.</param>
+    /// <param name="draft">The draft binding carrying the operator-supplied content as JSON values (read bytes-to-bytes).</param>
+    /// <param name="actor">The actor creating the binding (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<SecurityBindingDocument> CreateNew(string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
     {
-        // The draft may be a request body that omits verb grants / order (both optional on the write body but required on
-        // the stored document); default an omitted grant to None and an omitted order to 0 — the semantics the handler's
-        // Models.VerbGrant -> VerbGrantInfo conversion used to apply before the body was carried bytes-to-bytes.
         VerbGrantInfo read = draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None;
         VerbGrantInfo write = draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None;
         VerbGrantInfo purge = draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None;
-        int order = draft.Order.IsNotUndefined() ? (int)draft.Order : 0;
+        return Create(
+            claimType: draft.ClaimType,
+            createdAt: createdAt,
+            createdBy: actor,
+            etag: etag.Value ?? string.Empty,
+            id: id,
+            order: (int)draft.Order,
+            purge: purge,
+            read: read,
+            write: write,
+            claimValue: draft.ClaimValue.IsNotUndefined() ? (JsonString.Source)draft.ClaimValue : default,
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
+            expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
+            eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
+            additionalClauses: draft.AdditionalClauses.IsNotUndefined() ? (AdditionalClauseArray.Source)draft.AdditionalClauses : default,
+            scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
+    }
+
+    // Realises a new binding into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
+    // JSON values flow straight into the builder); id and the server-stamped audit/concurrency fields are added here.
+    // The field mapping and absent-grant defaulting mirror CreateNew above; keep the two in step.
+    private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string id, in SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    {
+        // The draft may be a request body that omits verb grants / order; default an omitted grant to None — the semantics
+        // the handler's Models.VerbGrant -> VerbGrantInfo conversion used to apply before the body was carried bytes-to-bytes.
+        // Order needs no such guard: the schema declares it optional with a default of 0, so draft.Order materialises 0 when
+        // absent (the write body carries none) and the persisted value comes straight from that.
+        VerbGrantInfo read = draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None;
+        VerbGrantInfo write = draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None;
+        VerbGrantInfo purge = draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None;
+        int order = (int)draft.Order;
         return CreateBuilder(
             workspace,
             claimType: draft.ClaimType,
@@ -223,6 +279,7 @@ public readonly partial struct SecurityBindingDocument
             description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
             expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
             eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
+            additionalClauses: draft.AdditionalClauses.IsNotUndefined() ? (AdditionalClauseArray.Source)draft.AdditionalClauses : default,
             scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
     }
 
@@ -233,9 +290,9 @@ public readonly partial struct SecurityBindingDocument
         JsonDocumentBuilder<Mutable> builder = this.CreateBuilder(workspace);
         builder.RootElement.SetClaimType(draft.ClaimType);
 
-        // As BuildNew: a draft carried from the (optional-field) write body may omit verb grants / order — default an
-        // omitted grant to None and an omitted order to 0 so the replaced binding stays valid (the PUT-replaces semantics).
-        builder.RootElement.SetOrder(draft.Order.IsNotUndefined() ? (int)draft.Order : 0);
+        // As BuildNew: a draft carried from the (optional-field) write body may omit verb grants — default an omitted grant
+        // to None so the replaced binding stays valid (the PUT-replaces semantics). Order carries its schema default (0).
+        builder.RootElement.SetOrder((int)draft.Order);
         builder.RootElement.SetRead(draft.Read.IsNotUndefined() ? draft.Read : VerbGrantInfo.None);
         builder.RootElement.SetWrite(draft.Write.IsNotUndefined() ? draft.Write : VerbGrantInfo.None);
         builder.RootElement.SetPurge(draft.Purge.IsNotUndefined() ? draft.Purge : VerbGrantInfo.None);
@@ -287,6 +344,15 @@ public readonly partial struct SecurityBindingDocument
             builder.RootElement.RemoveScopes();
         }
 
+        if (draft.AdditionalClauses.IsNotUndefined())
+        {
+            builder.RootElement.SetAdditionalClauses(draft.AdditionalClauses);
+        }
+        else
+        {
+            builder.RootElement.RemoveAdditionalClauses();
+        }
+
         return builder;
     }
 
@@ -302,7 +368,8 @@ public readonly partial struct SecurityBindingDocument
         string? description,
         IReadOnlyList<string>? scopes,
         DateTimeOffset? expiresAt,
-        bool eligibleOnly)
+        bool eligibleOnly,
+        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses)
     {
         public string ClaimType { get; } = claimType;
 
@@ -323,6 +390,8 @@ public readonly partial struct SecurityBindingDocument
         public DateTimeOffset? ExpiresAt { get; } = expiresAt;
 
         public bool EligibleOnly { get; } = eligibleOnly;
+
+        public IReadOnlyList<(string Dimension, string? Value)>? AdditionalClauses { get; } = additionalClauses;
     }
 
     /// <summary>
@@ -360,10 +429,10 @@ public readonly partial struct SecurityBindingDocument
         /// <returns>The grant.</returns>
         public static VerbGrantInfo Rules(params string[] ruleNames)
         {
-            // Thread the names through as the build context so the array callback can be static — no closure allocation.
-            using JsonWorkspace workspace = JsonWorkspace.Create();
-            using JsonDocumentBuilder<Mutable> builder = CreateBuilder(
-                workspace,
+            // The generated contextful Create() realises the document (text + parse metadata) in one pooled pass — the
+            // names are the build context so the array callback stays static, no closure — and the caller-facing value
+            // is a detached clone of its root (every consumer wants the value, not a disposable document).
+            using ParsedJsonDocument<VerbGrantInfo> doc = Create(
                 ruleNames,
                 ruleNames: JsonStringArray.Build(
                     ruleNames,
@@ -375,7 +444,7 @@ public readonly partial struct SecurityBindingDocument
                         }
                     }),
                 unrestricted: false);
-            return builder.RootElement.Clone();
+            return doc.RootElement.Clone();
         }
     }
 }

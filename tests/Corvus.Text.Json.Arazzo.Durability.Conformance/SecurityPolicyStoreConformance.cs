@@ -171,6 +171,55 @@ public abstract class SecurityPolicyStoreConformance
     }
 
     [TestMethod]
+    public async Task Counting_rules_and_bindings_is_bounded_and_q_filtered()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+        using (await AddRuleDraftAsync(store, "tenant-scoped", "tenant == $claim.tenant", null, "system"))
+        {
+        }
+
+        using (await AddRuleDraftAsync(store, "team-scoped", "team == $claim.team", null, "system"))
+        {
+        }
+
+        using (await AddRuleDraftAsync(store, "public", "true", "Everyone may read.", "system"))
+        {
+        }
+
+        // Rules: unfiltered counts all three; q counts the matching subset (over name or expression); the cap saturates.
+        (await store.CountRulesAsync(100, default, default)).ShouldBe((3, false));
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("SCOPED"u8))
+        {
+            (await store.CountRulesAsync(100, q.RootElement, default)).ShouldBe((2, false));
+        }
+
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("team =="u8))
+        {
+            (await store.CountRulesAsync(100, q.RootElement, default)).ShouldBe((1, false));
+        }
+
+        (await store.CountRulesAsync(2, default, default)).ShouldBe((2, true));
+        (await store.CountRulesAsync(3, default, default)).ShouldBe((3, false));
+
+        // Bindings: two distinct claim values; the count is bounded and q filters over claim type/value/description.
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "tenant-admin", VerbGrant.Rules("tenant-scoped"), VerbGrant.Rules("tenant-scoped"), VerbGrant.None, order: 10), "system", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full, order: 5), "system", default))
+        {
+        }
+
+        (await store.CountBindingsAsync(100, default, default)).ShouldBe((2, false));
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> q = AsJsonString("OPERATOR"u8))
+        {
+            (await store.CountBindingsAsync(100, q.RootElement, default)).ShouldBe((1, false));
+        }
+
+        (await store.CountBindingsAsync(1, default, default)).ShouldBe((1, true));
+    }
+
+    [TestMethod]
     public async Task Adding_a_duplicate_rule_name_fails()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();
@@ -269,6 +318,66 @@ public abstract class SecurityPolicyStoreConformance
         {
             operatorBinding!.RootElement.Read.IsUnrestrictedValue.ShouldBeTrue();
         }
+    }
+
+    [TestMethod]
+    public async Task A_tag_set_binding_round_trips_its_additional_clauses()
+    {
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+
+        // A per-person reach grant pinning a multi-dimension identity: {sub=alice} AND {iss=keycloak} AND {tenant=acme}
+        // (§16.5.4). The binding is stored verbatim, so the additional clauses must survive add -> get intact and in order.
+        string id;
+        using (ParsedJsonDocument<SecurityBindingDocument> draft = await AddBindingDraftAsync(
+            store,
+            SecurityBindingDocument.Draft("sub", "alice", VerbGrant.Full, VerbGrant.None, VerbGrant.None, additionalClauses: [("iss", "keycloak"), ("tenant", "acme")]),
+            "alice",
+            default))
+        {
+            id = draft.RootElement.IdValue;
+        }
+
+        using ParsedJsonDocument<SecurityBindingDocument>? fetched = await store.GetBindingAsync(id, default);
+        fetched.ShouldNotBeNull();
+        fetched!.RootElement.ClaimValueOrNull.ShouldBe("alice");
+
+        var dimensions = new List<string>();
+        var values = new List<string?>();
+        foreach (SecurityBindingDocument.AdditionalClause clause in fetched.RootElement.AdditionalClauses.EnumerateArray())
+        {
+            dimensions.Add((string)clause.DimensionValue);
+            values.Add(clause.Value.IsNotUndefined() ? (string)clause.Value : null);
+        }
+
+        dimensions.ShouldBe(["iss", "tenant"]);
+        values.ShouldBe(["keycloak", "acme"]);
+    }
+
+    [TestMethod]
+    public async Task A_binding_created_from_an_order_less_write_body_defaults_its_order_to_zero()
+    {
+        // The create request body (SecurityBindingWrite) carries no `order` — that is server metadata, like id/etag/created,
+        // defaulted to 0 when the document is written. The handler carries the body verbatim as the draft (a zero-copy
+        // SecurityBindingDocument view over a body that omits order), so a relational store that projects the resolution
+        // order into its sort column reads `draft.OrderValue` off a draft where `order` is ABSENT. That accessor must return
+        // the same 0 default the persisted document uses, not NRE on the missing value — otherwise every UI-authored grant
+        // (the picker sends no order) faults on create.
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+
+        byte[] writeBody = """{"claimType":"role","claimValue":"tenant-admin","read":{"unrestricted":true},"write":{"unrestricted":false},"purge":{"unrestricted":false}}"""u8.ToArray();
+
+        string id;
+        using (ParsedJsonDocument<SecurityBindingDocument> draft = ParsedJsonDocument<SecurityBindingDocument>.Parse(writeBody.AsMemory()))
+        using (ParsedJsonDocument<SecurityBindingDocument> created = await store.AddBindingAsync(draft.RootElement, "alice", default))
+        {
+            id = created.RootElement.IdValue;
+            created.RootElement.OrderValue.ShouldBe(0);
+        }
+
+        using ParsedJsonDocument<SecurityBindingDocument>? fetched = await store.GetBindingAsync(id, default);
+        fetched.ShouldNotBeNull();
+        fetched!.RootElement.OrderValue.ShouldBe(0);
+        fetched.RootElement.ClaimValueOrNull.ShouldBe("tenant-admin");
     }
 
     [TestMethod]

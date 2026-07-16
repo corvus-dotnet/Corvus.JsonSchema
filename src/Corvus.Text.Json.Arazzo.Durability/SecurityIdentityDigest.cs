@@ -34,6 +34,93 @@ public static class SecurityIdentityDigest
     /// <summary>The length, in UTF-8 bytes, of a formatted digest (the 32-byte SHA-256 as lower-case hex).</summary>
     public const int DigestUtf8Length = 64;
 
+    /// <summary>The upper bound on the number of subset digests <see cref="SubsetDigests"/> emits before it truncates. A
+    /// realistic identity (a few dimensions, one to a handful of values each) is far below this; the bound only guards a
+    /// pathological identity, and truncation is fail-safe (the membership reverse index then <em>under</em>-reports the
+    /// administered set, never over-grants).</summary>
+    public const int MaxSubsetDigests = 4096;
+
+    /// <summary>
+    /// Computes the distinct digests of every non-empty <strong>distinct-key subset</strong> of <paramref name="identity"/>
+    /// — the reverse-index lookup keys the membership model (design §16.5.4) queries. A principal administers / reaches a
+    /// target iff one of the target's named identities (a resolved grantee, which names at most one value per dimension) is
+    /// a <em>subset</em> of the principal's identity, i.e. its whole-set digest (the key the index is written under) is one
+    /// of these. Enumerating subsets that pick at most one value per key keeps this polynomial in the values-per-key, not
+    /// <c>2^tagCount</c>, so a caller in many groups stays bounded (~<c>groups+1</c> subsets, not <c>2^groups</c>). The
+    /// empty identity yields no digests (it administers nothing).
+    /// </summary>
+    /// <param name="identity">The caller's whole stamped <c>sys:</c> identity.</param>
+    /// <returns>The distinct subset digests, at most <see cref="MaxSubsetDigests"/>.</returns>
+    public static IReadOnlyList<string> SubsetDigests(SecurityTagSet identity)
+    {
+        if (identity.IsEmpty)
+        {
+            return [];
+        }
+
+        // Group the identity's tags by key. A founder names at most one value per dimension, so a matching subset picks at
+        // most one tag per key; the candidate subsets are the cartesian product of, per key, {absent} + each value.
+        var byKey = new Dictionary<string, List<SecurityTag>>(StringComparer.Ordinal);
+        var keys = new List<string>();
+        foreach (SecurityTag tag in identity)
+        {
+            if (!byKey.TryGetValue(tag.Key, out List<SecurityTag>? values))
+            {
+                values = [];
+                byKey[tag.Key] = values;
+                keys.Add(tag.Key);
+            }
+
+            values.Add(tag);
+        }
+
+        // Mixed-radix counter over the per-key choices: choice[k] == -1 means "key k absent"; 0..count-1 selects a value.
+        // Start all-absent and advance, so the empty subset is never emitted and enumeration ends when the counter wraps.
+        int keyCount = keys.Count;
+        int[] choice = new int[keyCount];
+        Array.Fill(choice, -1);
+
+        var digests = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var picked = new List<SecurityTag>(keyCount);
+        while (digests.Count < MaxSubsetDigests)
+        {
+            int k = 0;
+            while (k < keyCount)
+            {
+                choice[k]++;
+                if (choice[k] < byKey[keys[k]].Count)
+                {
+                    break;
+                }
+
+                choice[k] = -1;
+                k++;
+            }
+
+            if (k == keyCount)
+            {
+                break; // wrapped past the last combination
+            }
+
+            picked.Clear();
+            for (int i = 0; i < keyCount; i++)
+            {
+                if (choice[i] >= 0)
+                {
+                    picked.Add(byKey[keys[i]][choice[i]]);
+                }
+            }
+
+            if (picked.Count > 0 && Compute(SecurityTagSet.FromTags(picked)) is { } digest && seen.Add(digest))
+            {
+                digests.Add(digest);
+            }
+        }
+
+        return digests;
+    }
+
     /// <summary>Computes the collision-probe digest of an identity, or <see langword="null"/> for the empty identity.</summary>
     /// <param name="identity">The <c>sys:</c> identity to digest.</param>
     /// <returns>The 64-character lower-case hex SHA-256 of the canonical identity, or <see langword="null"/> when empty.</returns>

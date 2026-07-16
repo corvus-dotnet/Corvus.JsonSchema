@@ -169,25 +169,32 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(IReadOnlyList<string> adminDigests, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        ArgumentNullException.ThrowIfNull(adminDigests);
         int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
-        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
-
-        // The digest's partition (the workflows it administers) is bounded; fetch it projecting just the plain base id,
-        // order client-side (ordinal — the contract's order), then apply the keyset cursor + page (Azure has no ORDER BY).
-        var ids = new List<string>();
-        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(
-            e => e.PartitionKey == adminDigest, select: [BaseWorkflowIdColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        if (adminDigests.Count == 0)
         {
-            if (entity.GetString(BaseWorkflowIdColumn) is { } baseWorkflowId)
-            {
-                ids.Add(baseWorkflowId);
-            }
+            return WorkflowAdministeredPage.Create([]);
         }
 
-        ids.Sort(StringComparer.Ordinal);
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // Membership (§16.5.4): union each digest's partition (bounded), projecting just the plain base id. A base id
+        // administered via more than one matching digest appears once (the SortedSet dedupes + orders ordinally — the
+        // contract's order); then apply the keyset cursor + page (Azure has no ORDER BY).
+        var ids = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (string digest in adminDigests)
+        {
+            await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(
+                e => e.PartitionKey == digest, select: [BaseWorkflowIdColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                if (entity.GetString(BaseWorkflowIdColumn) is { } baseWorkflowId)
+                {
+                    ids.Add(baseWorkflowId);
+                }
+            }
+        }
 
         var rows = new List<string>(Math.Min(pageSize + 1, ids.Count));
         foreach (string id in ids)

@@ -2721,5 +2721,171 @@ public readonly partial struct OpenapiSchema
         {
             return workspace.CreateBuilder<ParameterOrReference, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ParameterOrReference> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ParameterOrReference>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ParameterOrReference> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ParameterOrReference>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ParameterOrReference> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ParameterOrReference>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="refValue">The value of the property.</param>
+        /// <param name="allowEmptyValue">The value of the property.</param>
+        /// <param name="allowReserved">The value of the property.</param>
+        /// <param name="content">The value of the property.</param>
+        /// <param name="deprecated">The value of the property.</param>
+        /// <param name="description">The value of the property.</param>
+        /// <param name="example">The value of the property.</param>
+        /// <param name="examples">The value of the property.</param>
+        /// <param name="explode">The value of the property.</param>
+        /// <param name="inValue">The value of the property.</param>
+        /// <param name="name">The value of the property.</param>
+        /// <param name="required">The value of the property.</param>
+        /// <param name="schema">The value of the property.</param>
+        /// <param name="style">The value of the property.</param>
+        /// <param name="summary">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ParameterOrReference> Create(in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source refValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source allowEmptyValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source content = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source deprecated = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.Text.Json.JsonElement.Source example = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source examples = default, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source explode = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source required = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source schema = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source style = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(refValue, allowEmptyValue, allowReserved, content, deprecated, description, example, examples, explode, inValue, name, required, schema, style, summary);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ParameterOrReference>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="refValue">The value of the property.</param>
+        /// <param name="allowEmptyValue">The value of the property.</param>
+        /// <param name="allowReserved">The value of the property.</param>
+        /// <param name="content">The value of the property.</param>
+        /// <param name="deprecated">The value of the property.</param>
+        /// <param name="description">The value of the property.</param>
+        /// <param name="example">The value of the property.</param>
+        /// <param name="examples">The value of the property.</param>
+        /// <param name="explode">The value of the property.</param>
+        /// <param name="inValue">The value of the property.</param>
+        /// <param name="name">The value of the property.</param>
+        /// <param name="required">The value of the property.</param>
+        /// <param name="schema">The value of the property.</param>
+        /// <param name="style">The value of the property.</param>
+        /// <param name="summary">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ParameterOrReference> Create<TContext>(in TContext context, in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source refValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source allowEmptyValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source<TContext> content = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source deprecated = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.Text.Json.JsonElement.Source<TContext> example = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source<TContext> examples = default, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source explode = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source required = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source<TContext> schema = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source style = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, refValue, allowEmptyValue, allowReserved, content, deprecated, description, example, examples, explode, inValue, name, required, schema, style, summary);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ParameterOrReference>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

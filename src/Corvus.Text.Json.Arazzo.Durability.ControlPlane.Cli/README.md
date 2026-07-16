@@ -39,6 +39,7 @@ The runs commands above sit at the top level; the other control-plane resources 
 | `credentials` | Manage source credential bindings — **references and non-secret metadata only, never secret material**. `list` is a status-first table (`--status`/`--source`); `update` is a merge (re-point a `--ref` to rotate; unspecified fields are preserved). |
 | `administrators` | Manage a workflow's administrator set (`list`/`add`/`remove`/`transfer`); administrators are named by the deployment-mapped grant `{dimension, value}`. |
 | `access-requests` | Request elevated capability on a workflow, and — as a §15 administrator — decide requests (§16.5): `submit`/`list`/`get`/`approve`/`approve-as-eligible`/`deny`/`withdraw`/`revoke`. |
+| `scenarios` | Run workflow scenario suites (workflow-designer design §4.5) — the CI story; see below. |
 
 ```bash
 arazzo-runs credentials list --status expiring --server https://host:8080
@@ -53,6 +54,41 @@ arazzo-runs list --status Faulted --server https://host:8080
 arazzo-runs resume run-42 --mode Rewind --target-cursor 2 --server https://host:8080
 arazzo-runs resume run-42 --mode StatePatch --patch-file fix.json --server https://host:8080
 arazzo-runs purge --older-than 2026-01-01T00:00:00Z --server https://host:8080
+```
+
+## Scenario suites (`scenarios run`)
+
+Runs a workflow's scenario suite (workflow-designer design §4.5) with CI-grade behaviour:
+deterministic ordering, a non-zero exit on any failed expectation (1) or when the suite cannot run
+(2), and console/JUnit/JSON reports — **the JSON report is the same suite-report shape `publish`
+embeds as evidence**, so a pipeline can finish with publish-with-evidence.
+
+**Standalone (default)** needs no control plane: the CLI hosts the deterministic simulator
+in-process — the workflow document and its source documents compile locally, and every matched
+scenario runs against the mock transport and virtual clock, exactly as the designer does
+interactively. Workflows, specs, and scenarios live in the repo as globbable files
+(`<name>.scenario.json`, one scenario per file):
+
+```bash
+arazzo-runs scenarios run \
+  --workflow ./workflows/nightly-reconcile.arazzo.json \
+  --sources ./specs \
+  --scenarios "./scenarios/nightly-reconcile/**/*.scenario.json" \
+  --filter "payment-*" \
+  --report junit=out/scenarios.xml --report json=out/suite.json \
+  --github-annotations
+```
+
+`--sources` is the directory the document's `sourceDescriptions` urls resolve against (default: the
+workflow file's directory); `http(s)` urls are fetched. `--github-annotations` emits `::error`
+annotations for failed expectations and appends a job-summary table when `GITHUB_STEP_SUMMARY` is
+set.
+
+**Remote** runs a working copy's stored suite on the control plane (the same run-all the designer's
+Scenarios tab uses) — e.g. re-verifying from a pipeline before publishing:
+
+```bash
+arazzo-runs scenarios run --working-copy <id> --server https://host/arazzo/v1
 ```
 
 ## Authentication

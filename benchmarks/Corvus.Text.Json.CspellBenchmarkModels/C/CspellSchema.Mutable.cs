@@ -5581,4 +5581,240 @@ public readonly partial struct CspellSchema
     {
         return workspace.CreateBuilder<CspellSchema, Mutable>(this);
     }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CspellSchema> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CspellSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CspellSchema> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CspellSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CspellSchema> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CspellSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="allowCompoundWords">The value of the property.</param>
+    /// <param name="cache">The value of the property.</param>
+    /// <param name="caseSensitive">The value of the property.</param>
+    /// <param name="description">The value of the property.</param>
+    /// <param name="dictionaries">The value of the property.</param>
+    /// <param name="dictionaryDefinitions">The value of the property.</param>
+    /// <param name="enabled">The value of the property.</param>
+    /// <param name="enabledLanguageIds">The value of the property.</param>
+    /// <param name="enableFiletypes">The value of the property.</param>
+    /// <param name="enableGlobDot">The value of the property.</param>
+    /// <param name="failFast">The value of the property.</param>
+    /// <param name="features">The value of the property.</param>
+    /// <param name="files">The value of the property.</param>
+    /// <param name="flagWords">The value of the property.</param>
+    /// <param name="gitignoreRoot">The value of the property.</param>
+    /// <param name="globRoot">The value of the property.</param>
+    /// <param name="id">The value of the property.</param>
+    /// <param name="ignorePaths">The value of the property.</param>
+    /// <param name="ignoreRegExpList">The value of the property.</param>
+    /// <param name="ignoreWords">The value of the property.</param>
+    /// <param name="import">The value of the property.</param>
+    /// <param name="includeRegExpList">The value of the property.</param>
+    /// <param name="language">The value of the property.</param>
+    /// <param name="languageId">The value of the property.</param>
+    /// <param name="languageSettings">The value of the property.</param>
+    /// <param name="loadDefaultConfiguration">The value of the property.</param>
+    /// <param name="maxDuplicateProblems">The value of the property.</param>
+    /// <param name="maxNumberOfProblems">The value of the property.</param>
+    /// <param name="minWordLength">The value of the property.</param>
+    /// <param name="name">The value of the property.</param>
+    /// <param name="noConfigSearch">The value of the property.</param>
+    /// <param name="noSuggestDictionaries">The value of the property.</param>
+    /// <param name="numSuggestions">The value of the property.</param>
+    /// <param name="overrides">The value of the property.</param>
+    /// <param name="patterns">The value of the property.</param>
+    /// <param name="pnpFiles">The value of the property.</param>
+    /// <param name="readonlyValue">The value of the property.</param>
+    /// <param name="reporters">The value of the property.</param>
+    /// <param name="showStatus">The value of the property.</param>
+    /// <param name="spellCheckDelayMs">The value of the property.</param>
+    /// <param name="suggestionNumChanges">The value of the property.</param>
+    /// <param name="suggestionsTimeout">The value of the property.</param>
+    /// <param name="suggestWords">The value of the property.</param>
+    /// <param name="useGitignore">The value of the property.</param>
+    /// <param name="usePnP">The value of the property.</param>
+    /// <param name="userWords">The value of the property.</param>
+    /// <param name="validateDirectives">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="words">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CspellSchema> Create(in Corvus.CspellBenchmark.Current.CspellSchema.UrlToJsonSchema.Source schema = default, in Corvus.CspellBenchmark.Current.CspellSchema.AllowCompoundWordsEntity.Source allowCompoundWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.Source cache = default, in Corvus.CspellBenchmark.Current.CspellSchema.CaseSensitiveEntity.Source caseSensitive = default, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryReferenceArray.Source dictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionArray.Source dictionaryDefinitions = default, in Corvus.CspellBenchmark.Current.CspellSchema.IsTheSpellCheckerEnabled.Source enabled = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdsForThArray.Source enabledLanguageIds = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingleArray.Source enableFiletypes = default, in Corvus.CspellBenchmark.Current.CspellSchema.EnableGlobDotEntity.Source enableGlobDot = default, in Corvus.CspellBenchmark.Current.CspellSchema.FailFastEntity.Source failFast = default, in Corvus.CspellBenchmark.Current.CspellSchema.Features.Source features = default, in Corvus.CspellBenchmark.Current.CspellSchema.JsonStringArray.Source files = default, in Corvus.CspellBenchmark.Current.CspellSchema.FlagWordsJArray.Source flagWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.GitignoreRootEntity.Source gitignoreRoot = default, in Corvus.CspellBenchmark.Current.JsonString.Source globRoot = default, in Corvus.CspellBenchmark.Current.JsonString.Source id = default, in Corvus.CspellBenchmark.Current.CspellSchema.IgnorePathArray.Source ignorePaths = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source ignoreRegExpList = default, in Corvus.CspellBenchmark.Current.CspellSchema.IgnoreWordArray.Source ignoreWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.ImportEntity.Source import = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source includeRegExpList = default, in Corvus.CspellBenchmark.Current.JsonString.Source language = default, in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source languageId = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSettingArray.Source languageSettings = default, in Corvus.CspellBenchmark.Current.CspellSchema.LoadDefaultConfigurationEntity.Source loadDefaultConfiguration = default, in Corvus.CspellBenchmark.Current.CspellSchema.MaxDuplicateProblemsEntity.Source maxDuplicateProblems = default, in Corvus.CspellBenchmark.Current.CspellSchema.TheMaximumNumberOfProblemsToReportInAFile.Source maxNumberOfProblems = default, in Corvus.CspellBenchmark.Current.CspellSchema.MinWordLengthEntity.Source minWordLength = default, in Corvus.CspellBenchmark.Current.JsonString.Source name = default, in Corvus.CspellBenchmark.Current.CspellSchema.NoConfigSearchEntity.Source noConfigSearch = default, in Corvus.CspellBenchmark.Current.CspellSchema.NoSuggestDictionariArray.Source noSuggestDictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.NumberOfSuggestionsToMake.Source numSuggestions = default, in Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettingsArray.Source overrides = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternDefinitionArray.Source patterns = default, in Corvus.CspellBenchmark.Current.CspellSchema.PnpFilesJsArray.Source pnpFiles = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReadonlyEntity.Source readonlyValue = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettingsArray.Source reporters = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source showStatus = default, in Corvus.CspellBenchmark.Current.JsonNumber.Source spellCheckDelayMs = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionNumChangesEntity.Source suggestionNumChanges = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionsTimeoutEntity.Source suggestionsTimeout = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestWorArray.Source suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.UseGitignoreEntity.Source useGitignore = default, in Corvus.CspellBenchmark.Current.CspellSchema.UsePnPEntity.Source usePnP = default, in Corvus.CspellBenchmark.Current.CspellSchema.UserWordsJArray.Source userWords = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source validateDirectives = default, in Corvus.CspellBenchmark.Current.CspellSchema.Version.Source version = default, in Corvus.CspellBenchmark.Current.CspellSchema.ListOfWordArray.Source words = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(schema, allowCompoundWords, cache, caseSensitive, description, dictionaries, dictionaryDefinitions, enabled, enabledLanguageIds, enableFiletypes, enableGlobDot, failFast, features, files, flagWords, gitignoreRoot, globRoot, id, ignorePaths, ignoreRegExpList, ignoreWords, import, includeRegExpList, language, languageId, languageSettings, loadDefaultConfiguration, maxDuplicateProblems, maxNumberOfProblems, minWordLength, name, noConfigSearch, noSuggestDictionaries, numSuggestions, overrides, patterns, pnpFiles, readonlyValue, reporters, showStatus, spellCheckDelayMs, suggestionNumChanges, suggestionsTimeout, suggestWords, useGitignore, usePnP, userWords, validateDirectives, version, words);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CspellSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="schema">The value of the property.</param>
+    /// <param name="allowCompoundWords">The value of the property.</param>
+    /// <param name="cache">The value of the property.</param>
+    /// <param name="caseSensitive">The value of the property.</param>
+    /// <param name="description">The value of the property.</param>
+    /// <param name="dictionaries">The value of the property.</param>
+    /// <param name="dictionaryDefinitions">The value of the property.</param>
+    /// <param name="enabled">The value of the property.</param>
+    /// <param name="enabledLanguageIds">The value of the property.</param>
+    /// <param name="enableFiletypes">The value of the property.</param>
+    /// <param name="enableGlobDot">The value of the property.</param>
+    /// <param name="failFast">The value of the property.</param>
+    /// <param name="features">The value of the property.</param>
+    /// <param name="files">The value of the property.</param>
+    /// <param name="flagWords">The value of the property.</param>
+    /// <param name="gitignoreRoot">The value of the property.</param>
+    /// <param name="globRoot">The value of the property.</param>
+    /// <param name="id">The value of the property.</param>
+    /// <param name="ignorePaths">The value of the property.</param>
+    /// <param name="ignoreRegExpList">The value of the property.</param>
+    /// <param name="ignoreWords">The value of the property.</param>
+    /// <param name="import">The value of the property.</param>
+    /// <param name="includeRegExpList">The value of the property.</param>
+    /// <param name="language">The value of the property.</param>
+    /// <param name="languageId">The value of the property.</param>
+    /// <param name="languageSettings">The value of the property.</param>
+    /// <param name="loadDefaultConfiguration">The value of the property.</param>
+    /// <param name="maxDuplicateProblems">The value of the property.</param>
+    /// <param name="maxNumberOfProblems">The value of the property.</param>
+    /// <param name="minWordLength">The value of the property.</param>
+    /// <param name="name">The value of the property.</param>
+    /// <param name="noConfigSearch">The value of the property.</param>
+    /// <param name="noSuggestDictionaries">The value of the property.</param>
+    /// <param name="numSuggestions">The value of the property.</param>
+    /// <param name="overrides">The value of the property.</param>
+    /// <param name="patterns">The value of the property.</param>
+    /// <param name="pnpFiles">The value of the property.</param>
+    /// <param name="readonlyValue">The value of the property.</param>
+    /// <param name="reporters">The value of the property.</param>
+    /// <param name="showStatus">The value of the property.</param>
+    /// <param name="spellCheckDelayMs">The value of the property.</param>
+    /// <param name="suggestionNumChanges">The value of the property.</param>
+    /// <param name="suggestionsTimeout">The value of the property.</param>
+    /// <param name="suggestWords">The value of the property.</param>
+    /// <param name="useGitignore">The value of the property.</param>
+    /// <param name="usePnP">The value of the property.</param>
+    /// <param name="userWords">The value of the property.</param>
+    /// <param name="validateDirectives">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
+    /// <param name="words">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<CspellSchema> Create<TContext>(in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.UrlToJsonSchema.Source schema = default, in Corvus.CspellBenchmark.Current.CspellSchema.AllowCompoundWordsEntity.Source allowCompoundWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.Source<TContext> cache = default, in Corvus.CspellBenchmark.Current.CspellSchema.CaseSensitiveEntity.Source caseSensitive = default, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryReferenceArray.Source<TContext> dictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionArray.Source<TContext> dictionaryDefinitions = default, in Corvus.CspellBenchmark.Current.CspellSchema.IsTheSpellCheckerEnabled.Source enabled = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdsForThArray.Source<TContext> enabledLanguageIds = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingleArray.Source<TContext> enableFiletypes = default, in Corvus.CspellBenchmark.Current.CspellSchema.EnableGlobDotEntity.Source enableGlobDot = default, in Corvus.CspellBenchmark.Current.CspellSchema.FailFastEntity.Source failFast = default, in Corvus.CspellBenchmark.Current.CspellSchema.Features.Source<TContext> features = default, in Corvus.CspellBenchmark.Current.CspellSchema.JsonStringArray.Source<TContext> files = default, in Corvus.CspellBenchmark.Current.CspellSchema.FlagWordsJArray.Source<TContext> flagWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.GitignoreRootEntity.Source<TContext> gitignoreRoot = default, in Corvus.CspellBenchmark.Current.JsonString.Source globRoot = default, in Corvus.CspellBenchmark.Current.JsonString.Source id = default, in Corvus.CspellBenchmark.Current.CspellSchema.IgnorePathArray.Source<TContext> ignorePaths = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> ignoreRegExpList = default, in Corvus.CspellBenchmark.Current.CspellSchema.IgnoreWordArray.Source<TContext> ignoreWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.ImportEntity.Source<TContext> import = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> includeRegExpList = default, in Corvus.CspellBenchmark.Current.JsonString.Source language = default, in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source<TContext> languageId = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSettingArray.Source<TContext> languageSettings = default, in Corvus.CspellBenchmark.Current.CspellSchema.LoadDefaultConfigurationEntity.Source loadDefaultConfiguration = default, in Corvus.CspellBenchmark.Current.CspellSchema.MaxDuplicateProblemsEntity.Source maxDuplicateProblems = default, in Corvus.CspellBenchmark.Current.CspellSchema.TheMaximumNumberOfProblemsToReportInAFile.Source maxNumberOfProblems = default, in Corvus.CspellBenchmark.Current.CspellSchema.MinWordLengthEntity.Source minWordLength = default, in Corvus.CspellBenchmark.Current.JsonString.Source name = default, in Corvus.CspellBenchmark.Current.CspellSchema.NoConfigSearchEntity.Source noConfigSearch = default, in Corvus.CspellBenchmark.Current.CspellSchema.NoSuggestDictionariArray.Source<TContext> noSuggestDictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.NumberOfSuggestionsToMake.Source numSuggestions = default, in Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettingsArray.Source<TContext> overrides = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternDefinitionArray.Source<TContext> patterns = default, in Corvus.CspellBenchmark.Current.CspellSchema.PnpFilesJsArray.Source<TContext> pnpFiles = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReadonlyEntity.Source readonlyValue = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettingsArray.Source<TContext> reporters = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source showStatus = default, in Corvus.CspellBenchmark.Current.JsonNumber.Source spellCheckDelayMs = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionNumChangesEntity.Source suggestionNumChanges = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionsTimeoutEntity.Source suggestionsTimeout = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestWorArray.Source<TContext> suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.UseGitignoreEntity.Source useGitignore = default, in Corvus.CspellBenchmark.Current.CspellSchema.UsePnPEntity.Source usePnP = default, in Corvus.CspellBenchmark.Current.CspellSchema.UserWordsJArray.Source<TContext> userWords = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source validateDirectives = default, in Corvus.CspellBenchmark.Current.CspellSchema.Version.Source version = default, in Corvus.CspellBenchmark.Current.CspellSchema.ListOfWordArray.Source<TContext> words = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, schema, allowCompoundWords, cache, caseSensitive, description, dictionaries, dictionaryDefinitions, enabled, enabledLanguageIds, enableFiletypes, enableGlobDot, failFast, features, files, flagWords, gitignoreRoot, globRoot, id, ignorePaths, ignoreRegExpList, ignoreWords, import, includeRegExpList, language, languageId, languageSettings, loadDefaultConfiguration, maxDuplicateProblems, maxNumberOfProblems, minWordLength, name, noConfigSearch, noSuggestDictionaries, numSuggestions, overrides, patterns, pnpFiles, readonlyValue, reporters, showStatus, spellCheckDelayMs, suggestionNumChanges, suggestionsTimeout, suggestWords, useGitignore, usePnP, userWords, validateDirectives, version, words);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<CspellSchema>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
 }

@@ -235,4 +235,44 @@ describe('<arazzo-value-editor>', () => {
     try { void el.value; } catch { threw = true; }
     ok(threw, 'invalid JSON throws');
   });
+
+  // ── slice C: boundary normalization of RAW combiner schemas (§3.2a) ─────────────────────────────
+  it('normalizes a RAW oneOf property into a union type chooser', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = { type: 'object', properties: { p: { oneOf: [{ type: 'string' }, { type: 'integer' }] } } };
+    mount(el);
+    const select = await waitFor(() => el.shadowRoot.querySelector('.union select'));
+    ok(select, 'a raw oneOf renders the union select (not the raw-JSON fallback)');
+  });
+
+  it('renders a RAW simple allOf as one merged form', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = {
+      allOf: [
+        { type: 'object', properties: { a: { type: 'string' } }, required: ['a'] },
+        { type: 'object', properties: { b: { type: 'integer' } } },
+      ],
+    };
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('input[type="text"]'));
+    ok(el.shadowRoot.querySelector('input[type="text"]'), 'property a renders');
+    ok(el.shadowRoot.querySelector('input[type="number"]'), 'property b renders (merged from both branches)');
+    ok(!el.shadowRoot.querySelector('textarea'), 'not the raw-JSON fallback');
+  });
+
+  it('renders {type:object, allOf:[…]} merged rather than swallowing it to raw (guard uses the normalized descriptor)', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = { type: 'object', allOf: [{ properties: { x: { type: 'string' } } }, { properties: { y: { type: 'string' } } }] };
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('input[type="text"]'));
+    equal(el.shadowRoot.querySelectorAll('input[type="text"]').length, 2, 'x and y both render');
+  });
+
+  it('falls back to raw JSON for a NON-simple allOf (never a guessed merge)', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = { allOf: [{ type: 'object', properties: { id: { type: 'string' } } }, { type: 'string' }] };
+    mount(el);
+    const ta = await waitFor(() => el.shadowRoot.querySelector('textarea'));
+    ok(ta, 'a non-object branch degrades to the raw-JSON editor');
+  });
 });

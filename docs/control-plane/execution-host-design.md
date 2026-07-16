@@ -1492,6 +1492,14 @@ eligible-for-All`) remains step 6.
 > `{dimension, value}` tuples via the interim `<arazzo-admin-grant-input>`, rather than driving the (built)
 > `GET /identity/{whoami,capabilities,grantees}` endpoints from a grantee picker.
 
+> **Superseded (2026-07, ratified membership model).** The exact set-equality rule below has been superseded by a
+> **membership (subset)** model: a principal administers / reaches / may-use a target iff the principal's whole stamped
+> `sys:` identity **contains** the target's named identity. See
+> [`identity-membership-campaign.md`](identity-membership-campaign.md) for the decision, the current-state map of every
+> matching surface, and an antagonistic review of the remaining asymmetries (the environment reverse-index and the
+> administration mutation gates are still exact and are tracked there). The paragraph below is retained as the original
+> resolved-grantee rationale; read "set-equality" as "subset" for the authorization surfaces.
+
 Administration (§15) and entitlement (§16.5) both **name a security identity**, and membership is **exact set-equality**
 on the caller's whole stamped `sys:` identity (`WorkflowAdministrators.IsAdministeredBy` — *"a superset or partial match
 is not an administrator"*). A hand-typed `{dimension, value}` is therefore a footgun: a value the deployment never stamps
@@ -1617,6 +1625,18 @@ gateway-inserted value. A vanity-host → tenant mapping must be an **authoritat
 context against configured mappings, fail closed on a miss) so the trust decision lives in one auditable component rather
 than scattered across handlers. None of `sys:`'s correct-by-construction guarantees hold if the dimension's *source* is
 spoofable.
+
+**Reach-rule evaluation reads the claim map — stamp every reach-relevant dimension as ambient.** Binding *selection*
+(which claim/identity a binding keys on, §16.5.4) is on the forgery-resistant stamped identity, but a matched binding's
+*rule* — e.g. `sys:tenant == $claim.tenant` — is evaluated against the request's **claim map**, resolved from the token
+except where an ambient dimension (or an internal-tag resolver) overrides the same name. Ambient closes the tenant case
+(the provider's `sys:tenant` shadows any token `tenant` claim). The general case is a **deployment responsibility**: any
+dimension a reach rule compares must be sourced from the ambient provider or the policy's internal-tag resolver, **not**
+taken from the raw token, or a forged claim for a non-ambient dimension flows straight into the reach predicate. Concretely:
+every dimension named on the right of a reach rule must be one the ambient provider governs (`GovernedKeys`) or one the
+policy stamps in `GetInternalTags`; a deployment that authors a reach rule over a token-only claim has re-opened the
+forgery surface `sys:` exists to close. The round-trip conformance test above is the regression lock for the dimensions
+that *are* stamped; a reach rule over an unstamped dimension is outside that guarantee by construction.
 
 **What was built (2026-06).** The checklist above, realised:
 

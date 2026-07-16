@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkspaceWorkflow",
+  "description": "The persisted form of a designer working copy (workflow-designer design §4.1): a mutable Arazzo document (plus its designer UI state) saved as many times as needed during development without ever minting a catalog version. Reach-scoped via management tags like a registered source; publish mints an immutable catalog version from it. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["id", "name", "document", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The server-assigned working-copy identity (opaque; stable for the working copy's lifetime)."
+    },
+    "name": {
+      "type": "string",
+      "description": "A human-friendly display name for the working copy (e.g. 'nightly-reconcile — retry tuning'). Mutable."
+    },
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "Provenance: the catalog base workflow this working copy was opened from, if any."
+    },
+    "basedOnVersion": {
+      "type": "integer",
+      "description": "Provenance: the catalog version number the document (and its scenarios) were copied from, if any."
+    },
+    "document": {
+      "type": "object",
+      "description": "The Arazzo document under edit, stored and returned verbatim. The control plane validates it on demand (validateWorkingCopy), never silently rewrites it.",
+      "additionalProperties": true
+    },
+    "designerState": {
+      "type": "object",
+      "description": "Designer UI state (node positions and similar) — a sibling of the document, never written into it and never packaged (design §5.2). Stored and returned verbatim.",
+      "additionalProperties": true
+    },
+    "sources": {
+      "type": "array",
+      "description": "The sources attached to this working copy, keyed by sourceDescriptions name (workflow-designer design §4.1): a registry reference (resolved at read time) or an inline document (stored verbatim so the working copy resolves like a package).",
+      "items": { "$ref": "#/$defs/AttachedSource" }
+    },
+    "scenarios": {
+      "type": "array",
+      "description": "The working copy's test scenarios (workflow-designer design §4.2), stored verbatim and published into the package as metadata/scenarios.json. Shape is validated at the API contract; the store carries the set like the designer state.",
+      "items": { "type": "object" }
+    },
+    "gitBinding": {
+      "type": "object",
+      "description": "Binds the working copy to a repository branch (workflow-designer design §4.7): the document (path), optionally its spec files (specPaths: sourceDescriptions name → repository path) and scenario files (scenariosDir, one <name>.scenario.json per scenario), round-trip with pull/commit on the caller's brokered token. Mutable: a save that includes it replaces it; one that omits it carries the stored binding forward.",
+      "required": ["owner", "repo", "branch", "path"],
+      "properties": {
+        "owner": { "type": "string" },
+        "repo": { "type": "string" },
+        "branch": { "type": "string" },
+        "path": { "type": "string" },
+        "specPaths": { "type": "object", "additionalProperties": { "type": "string" } },
+        "scenariosDir": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "managementTags": {
+      "type": "array",
+      "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this working copy (§14.2). Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update.",
+      "items": { "$ref": "#/$defs/SecurityTagInfo" }
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that created the working copy."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the working copy was created."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last saved the working copy, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the working copy was last saved, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token; a save presents the etag it read and conflicts (409) when stale."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "AttachedSource": {
+      "title": "AttachedSource",
+      "type": "object",
+      "description": "One attachment: the sourceDescriptions name it satisfies, plus a registry reference OR an inline document.",
+      "required": ["name", "kind", "attachedBy", "attachedAt"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The sourceDescriptions name this attachment satisfies."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["registry", "inline"],
+          "description": "registry = resolves a registered source by name at read time; inline = the document is stored here."
+        },
+        "sourceName": {
+          "type": "string",
+          "description": "registry only: the registered source's name."
+        },
+        "type": {
+          "type": "string",
+          "description": "The source type (openapi | asyncapi | arazzo)."
+        },
+        "document": {
+          "type": "object",
+          "description": "inline only: the source document, stored verbatim.",
+          "additionalProperties": true
+        },
+        "attachedBy": {
+          "type": "string"
+        },
+        "attachedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SecurityTagInfo": {
+      "title": "SecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) scoping the working copy for row authorization (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

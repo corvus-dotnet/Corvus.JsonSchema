@@ -1021,6 +1021,114 @@ public readonly partial struct CmakePresetsSchema
                     {
                         return workspace.CreateBuilder<AnyOf1Entity, Mutable>(this);
                     }
+
+                    /// <summary>
+                    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                    /// </summary>
+                    /// <param name="value">The value with which to initialize the document.</param>
+                    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                    public static ParsedJsonDocument<AnyOf1Entity> Create(
+                        scoped in Source value, int initialCapacity = 30)
+                    {
+                        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                        try
+                        {
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            value.AddAsItem(ref cvb);
+                            Debug.Assert(cvb.MemberCount == 1);
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder.ToParsedJsonDocument<AnyOf1Entity>();
+                        }
+                        finally
+                        {
+                            documentBuilder.Dispose();
+                        }
+                    }
+
+                    /// <summary>
+                    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                    /// </summary>
+                    /// <param name="value">The value with which to initialize the document.</param>
+                    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                    public static ParsedJsonDocument<AnyOf1Entity> Create(
+                        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                    {
+                        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                        try
+                        {
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            var source = new Source(value);
+                            source.AddAsItem(ref cvb);
+                            Debug.Assert(cvb.MemberCount == 1);
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder.ToParsedJsonDocument<AnyOf1Entity>();
+                        }
+                        finally
+                        {
+                            documentBuilder.Dispose();
+                        }
+                    }
+
+                    /// <summary>
+                    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                    /// </summary>
+                    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                    /// <param name="context">The context to pass to the builder.</param>
+                    /// <param name="value">The value with which to initialize the document.</param>
+                    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                    public static ParsedJsonDocument<AnyOf1Entity> Create<TContext>(
+                        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        #if NET9_0_OR_GREATER
+                        where TContext : allows ref struct
+                        #endif
+                    {
+                        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                        try
+                        {
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            var source = new Source<TContext>(context, value);
+                            source.AddAsItem(ref cvb);
+                            Debug.Assert(cvb.MemberCount == 1);
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder.ToParsedJsonDocument<AnyOf1Entity>();
+                        }
+                        finally
+                        {
+                            documentBuilder.Dispose();
+                        }
+                    }
+
+                    /// <summary>
+                    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+                    /// </summary>
+                    /// <param name="strategy">The value of the property.</param>
+                    /// <param name="value">The value of the property.</param>
+                    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+                    public static ParsedJsonDocument<AnyOf1Entity> Create(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.AnyOf1Entity.StrategyEntity.Source strategy = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value = default, int initialCapacity = 30)
+                    {
+                        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                        try
+                        {
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            cvb.StartObject();
+                            Builder ovb = new(cvb);
+                            ovb.Create(strategy, value);
+                            cvb = ovb._builder;
+                            cvb.EndObject();
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder.ToParsedJsonDocument<AnyOf1Entity>();
+                        }
+                        finally
+                        {
+                            documentBuilder.Dispose();
+                        }
+                    }
                 }
             }
         }

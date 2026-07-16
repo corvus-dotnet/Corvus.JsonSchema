@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Root",
+  "type": "object",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "format": "int32",
+      "title": "CountValue",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "total": {
+      "type": ["integer", "null"],
+      "title": "TotalValue"
+    },
+    "mixed": {
+      "type": ["integer", "string"],
+      "title": "MixedValue"
+    }
+  }
+}

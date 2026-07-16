@@ -108,16 +108,19 @@ class ArazzoCatalog extends ArazzoElement {
       <style>
         ${this.themeTokens()}
         ${SHARED_CSS}
-        :host { display: block; }
-        .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .toolbar { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
         .chips { display: flex; gap: 6px; flex-wrap: wrap; }
         .chip { font-size: 12px; padding: 4px 11px; border-radius: 999px; }
         .chip[aria-pressed="true"] { background: var(--_accent); border-color: var(--_accent); color: #fff; }
         .search { flex: 1; min-width: 150px; }
         .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
         .grow { flex: 1; }
-        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } }
+        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+        .layout > * { min-height: 0; }
+        .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+        .detail-pane:empty { display: none; }
       </style>
       <div class="toolbar" part="toolbar">
         <div class="chips" part="filters">

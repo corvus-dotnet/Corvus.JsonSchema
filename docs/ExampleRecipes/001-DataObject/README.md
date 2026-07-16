@@ -58,6 +58,21 @@ using var personDoc = Person.CreateBuilder(
     height: 1.52);
 ```
 
+### Creating an immutable `ParsedJsonDocument<Person>` directly
+
+`CreateBuilder` gives you a mutable, workspace-scoped document — the right tool when you are assembling a document you will keep modifying. When the goal is to build a document and hand it to a caller as an immutable `ParsedJsonDocument<T>` — a response you return, a value you cache, a document you store — use the generated `Create()` factory instead. It takes the same arguments as `CreateBuilder` minus the workspace, and writes the final document text and its parsed metadata directly in a single pass: no `JsonWorkspace` to manage, no serialize-and-reparse round trip, and the pooled builder behind it is rented from a thread-local cache so steady-state construction does not allocate. The caller owns the result and must dispose it.
+
+```csharp
+using ParsedJsonDocument<Person> createdDoc = Person.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: "Brontë",
+    givenName: "Anne",
+    height: 1.52);
+Console.WriteLine(createdDoc.RootElement);
+```
+
+Every `CreateBuilder` overload has a `Create()` counterpart: from per-property values (shown here), from a `Source`, from a `Builder.Build` delegate (with or without a flowed context), from positional tuple items or a numeric span, and parameterless `Create()`/`CreateArray()`/`CreateObject()` for an empty document.
+
 ### Serialization
 
 ```csharp

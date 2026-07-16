@@ -11,6 +11,8 @@
 //
 // Standalone-capable: it renders metadata + governance (obsolete / delete) itself and offers download links
 // for the package, workflow and each source document. Layer 2 listens to its events to keep the table in sync.
+// When the base workflow has more than one version, the header also offers "Compare with version…", which opens
+// the shared read-only <arazzo-workflow-compare> dialog on two versions' documents (visual-diff design §9.11).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
 import './tag-editor.js';
@@ -19,6 +21,7 @@ import './access-request-dialog.js';
 import './availability-request-dialog.js';
 import './availability-matrix.js';
 import './credential-dialog.js';
+import './workflow-compare.js';
 
 /**
  * Whether a credential binding is usable by a workflow's runs — a client-side approximation of the backend's §13
@@ -163,7 +166,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
         ${SHARED_CSS}
         /* overflow visible so the embedded administrators-panel's grantee-picker dropdown isn't clipped by the card. */
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; }
+        /* Sticky header: stays put while the body/security sections scroll under it (.detail-pane is the scroll container).
+           The panel stays overflow:visible so the source credential / grantee popovers aren't clipped. */
+        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
         header .wf { font-weight: 700; font-size: 15px; }
         header .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
         header .vswitch { font-size: 12px; color: var(--_muted); display: inline-flex; gap: 5px; align-items: center; }
@@ -171,6 +176,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+        .evd { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+        .evd-ok { background: var(--arazzo-status-completed, #2a8a4a); }
+        .evd-bad { background: var(--arazzo-status-faulted, #d4351c); }
         dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
         dt { color: var(--_muted); font-size: 12px; }
         dd { margin: 0; font-size: 13px; }
@@ -211,6 +219,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .pad { padding: 14px; }
         .security { padding: 0 14px 14px; }
         .security h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+        .sectag-actions { margin-top: 10px; display: flex; gap: 8px; }
       </style>
       <div class="panel" part="panel">
         <header part="header">
@@ -218,6 +227,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
           <span class="wf"></span>
           <span class="ver"></span>
           <label class="vswitch" part="version-switch" hidden>Version <select class="version-switch" aria-label="Switch version"></select></label>
+          <label class="vswitch vcompare" part="version-compare" hidden>Compare with <select class="compare-with" aria-label="Compare with another version"><option value="">version…</option></select></label>
           <span class="grow"></span>
           <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
         </header>
@@ -225,8 +235,16 @@ class ArazzoCatalogDetail extends ArazzoElement {
         <div class="security" part="security" hidden></div>
       </div>
       <arazzo-credential-dialog></arazzo-credential-dialog>
+      <arazzo-workflow-compare></arazzo-workflow-compare>
     `;
     this.$('.close').addEventListener('click', () => this.emit('close'));
+    // "Compare with version…" opens the shared read-only compare dialog for two versions of this base
+    // workflow (§9.11); the select resets to its placeholder so it reads as an action, not a mode.
+    this.$('.compare-with').addEventListener('change', (e) => {
+      const n = e.target.value;
+      e.target.value = '';
+      if (n !== '') this._openCompare(Number(n));
+    });
     // Credential setup is rooted here, where the source + its auth are known (§7.5). Re-list a source's bindings on save.
     this.$('arazzo-credential-dialog').addEventListener('credential-saved', () => {
       this._creds = null; // invalidate the cache so the new/changed binding shows
@@ -238,17 +256,54 @@ class ArazzoCatalogDetail extends ArazzoElement {
     });
   }
 
-  /** Populate the header version dropdown from {@link #versions} (hidden when there is only one version). */
+  /** Populate the header version dropdown + the "Compare with…" picker from {@link #versions}
+   *  (both hidden when there is only one version). */
   renderVersionSwitch() {
     const wrap = this.$('.vswitch');
     const sel = this.$('.version-switch');
+    const cmpWrap = this.$('.vcompare');
+    const cmp = this.$('.compare-with');
     if (!wrap || !sel) return;
     const versions = this._versions || [];
-    if (versions.length <= 1) { wrap.hidden = true; sel.innerHTML = ''; return; }
+    if (versions.length <= 1) {
+      wrap.hidden = true; sel.innerHTML = '';
+      if (cmpWrap) cmpWrap.hidden = true;
+      if (cmp) cmp.innerHTML = '<option value="">version…</option>';
+      return;
+    }
     wrap.hidden = false;
     const current = this.versionNumber;
     sel.innerHTML = versions.map((v) =>
       `<option value="${escapeHtml(String(v.versionNumber))}"${v.versionNumber === current ? ' selected' : ''}>v${escapeHtml(String(v.versionNumber))} · ${escapeHtml(v.status)}</option>`).join('');
+    if (cmpWrap && cmp) {
+      cmpWrap.hidden = false;
+      cmp.innerHTML = '<option value="">version…</option>' + versions.filter((v) => v.versionNumber !== current).map((v) =>
+        `<option value="${escapeHtml(String(v.versionNumber))}">v${escapeHtml(String(v.versionNumber))} · ${escapeHtml(v.status)}</option>`).join('');
+    }
+  }
+
+  /** @private — open the shared read-only compare dialog for this base workflow's current version against
+   *  another (§9.11). Sides read older→newer so the diff reads before→after; per-side ids are the explicit
+   *  `{base}-v{n}` (the diff model handles differing workflow ids). Documents come from `getCatalogWorkflow`. */
+  async _openCompare(otherN) {
+    const client = this.client;
+    const base = this.baseWorkflowId;
+    const current = this.versionNumber;
+    if (!client || !base || current == null || otherN == null || otherN === current) return;
+    const [lo, hi] = current < otherN ? [current, otherN] : [otherN, current];
+    try {
+      const [loDoc, hiDoc] = await Promise.all([
+        client.getCatalogWorkflow(base, lo),
+        client.getCatalogWorkflow(base, hi),
+      ]);
+      const label = (n) => `${base} · v${n}${n === current ? ' (current)' : ''}`;
+      this.$('arazzo-workflow-compare').open({
+        left: { label: label(lo), document: loDoc, workflowId: `${base}-v${lo}` },
+        right: { label: label(hi), document: hiDoc, workflowId: `${base}-v${hi}` },
+      });
+    } catch (err) {
+      this.emit('error', { problem: err.problem || { title: err.message, status: err.status }, error: err });
+    }
   }
 
   renderBody() {
@@ -297,9 +352,10 @@ class ArazzoCatalogDetail extends ArazzoElement {
         <dt>Workflow id</dt><dd class="mono">${escapeHtml(v.workflowId || `${v.baseWorkflowId}-v${v.versionNumber}`)}</dd>
         ${v.description ? `<dt>Description</dt><dd>${escapeHtml(v.description)}</dd>` : ''}
         <dt>Content hash</dt><dd class="mono" part="hash">${escapeHtml(v.hash || '—')}<button class="copy ghost copy-hash" type="button" title="Copy content hash" aria-label="Copy content hash">⧉</button></dd>
+        ${this.renderEvidence(v)}
         ${Array.isArray(v.tags) && v.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${v.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
-        ${this.renderSecurityTags(v)}
       </dl>
+      ${this.renderManagementTags(v)}
       ${this.renderOwner(v)}
       ${this.renderGovernance(v)}
       ${this.renderAvailability(v)}
@@ -314,9 +370,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         setTimeout(() => { button.textContent = '⧉'; }, 1200);
       }
     });
-    this.$('.sectag-edit')?.addEventListener('click', () => this.editSecurityTags());
     this.$('.sectag-save')?.addEventListener('click', () => this.saveSecurityTags(v));
-    this.$('.sectag-cancel')?.addEventListener('click', () => this.cancelSecurityTags());
     // Seed the tag editor once it is in the DOM (its .tags setter re-renders the rows).
     const sectagEditor = this.$('#sectag-editor');
     if (sectagEditor) sectagEditor.tags = Array.isArray(v.securityTags) ? v.securityTags : [];
@@ -360,6 +414,20 @@ class ArazzoCatalogDetail extends ArazzoElement {
       o.url ? `<div class="muted"><a href="${escapeHtml(o.url)}" target="_blank" rel="noopener">${escapeHtml(o.url)}</a></div>` : '',
     ].join('');
     return `<div class="block" part="owner"><h4>Owner (governance)</h4>${rows}</div>`;
+  }
+
+  /**
+   * The publish-evidence badge (workflow-designer design §4.6): the server-attested suite verdict at
+   * publish, from the detail's projected summary. Absent for versions published without scenarios or
+   * predating evidence; the full per-scenario record stays behind the evidence endpoint.
+   */
+  renderEvidence(v) {
+    const suite = v.evidence?.suite;
+    if (!suite || !(suite.total > 0)) return '';
+    const green = (suite.failed ?? 0) === 0;
+    const label = `${suite.passed}/${suite.total} scenario${suite.total === 1 ? '' : 's'} ${green ? '✓' : '✗'}`;
+    const at = v.evidence.at;
+    return `<dt>Evidence</dt><dd part="evidence"><span class="evd ${green ? 'evd-ok' : 'evd-bad'}" title="Server-attested scenario suite at publish">${escapeHtml(label)}</span>${at ? ` <span class="muted" title="${escapeHtml(absoluteTime(at))}">at publish · ${escapeHtml(relativeTime(at))}</span>` : ''}</dd>`;
   }
 
   renderGovernance(v) {
@@ -612,53 +680,42 @@ class ArazzoCatalogDetail extends ArazzoElement {
   }
 
   /**
-   * The version's security tags (§14.2 reach labels) as a `<dt>/<dd>` block: chips in display mode (with an Edit
-   * affordance when the caller has `catalog:write`), or a full add/edit/delete tag editor with Save/Cancel in edit mode
-   * (the editor is seeded in renderBody once it is in the DOM). The server preserves the deployment-internal tags and
-   * strips them from the response, so only the user labels appear.
+   * The version's management tags (§14.2 reach labels) as a prominent `.block` section, matching the Sources /
+   * Environments panels. With `catalog:write` it is an always-visible add/edit/delete tag editor plus a Save button
+   * (no Edit… toggle); otherwise it is a read-only chip list. The editor is seeded in renderBody once it is in the DOM.
+   * The server preserves the deployment-internal tags and strips them from the response, so only the user labels appear.
    */
-  renderSecurityTags(v) {
+  renderManagementTags(v) {
     const tags = Array.isArray(v.securityTags) ? v.securityTags : [];
-    if (this._editingSecurityTags) {
-      return `<dt>Security tags</dt><dd part="security-tags">
+    if (this.hasScope('catalog:write')) {
+      return `<div class="block" part="security-tags"><h4>Management tags</h4>
         <arazzo-tag-editor id="sectag-editor"></arazzo-tag-editor>
-        <div class="sectag-edit-actions">
-          <button class="sectag-save primary" type="button">Save</button>
-          <button class="sectag-cancel ghost" type="button">Cancel</button>
-        </div>
-        <div class="hint">Reach labels rules match on (§14.2). Add, edit, or remove rows. The reserved <code>sys:</code> prefix is deployment-owned.</div>
-      </dd>`;
+        <div class="hint">Who may manage and see this version (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
+        <div class="sectag-actions"><button class="sectag-save primary" type="button">Save</button></div>
+      </div>`;
     }
 
-    const chips = tags.length
+    const body = tags.length
       ? `<div class="tags">${tags.map((t) => `<span class="tag">${escapeHtml(t.key)}=${escapeHtml(t.value)}</span>`).join('')}</div>`
-      : '<span class="muted">none</span>';
-    const edit = this.hasScope('catalog:write') ? '<button class="sectag-edit ghost" type="button">Edit…</button>' : '';
-    return `<dt>Security tags</dt><dd part="security-tags"><div class="sectag-row">${chips}${edit}</div></dd>`;
-  }
-
-  editSecurityTags() {
-    this._editingSecurityTags = true;
-    this.renderBody();
-  }
-
-  cancelSecurityTags() {
-    this._editingSecurityTags = false;
-    this.renderBody();
+      : '<span class="muted">None — visible to everyone within reach.</span>';
+    return `<div class="block" part="security-tags"><h4>Management tags</h4>${body}</div>`;
   }
 
   async saveSecurityTags(v) {
     const editor = this.$('#sectag-editor');
     const securityTags = editor ? editor.tags : [];
+    const saveBtn = this.$('.sectag-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
     try {
       const updated = await this.client.updateCatalogVersion(v.baseWorkflowId, v.versionNumber, { securityTags });
+      // Re-render from the server's authoritative entity so the saved (normalised) tags show; if the response omits
+      // them, fall back to the just-saved value so the editor still reflects the save.
       this._version = updated;
-      this._editingSecurityTags = false;
+      if (!Array.isArray(updated.securityTags)) this._version.securityTags = securityTags;
       this.renderBody();
       this.emit('version-changed', { version: updated });
     } catch (err) {
       this._error = err.problem || { title: err.message, status: err.status };
-      this._editingSecurityTags = false;
       this.renderBody();
       this.emit('error', { problem: this._error, error: err });
     }

@@ -471,6 +471,12 @@
   <data name="CannotCreateBuilderFromMutableDocument" xml:space="preserve">
     <value>You cannot create a mutable copy of a mutable document. Consider calling Freeze() on the source document.</value>
   </data>
+  <data name="ParsedJsonDocumentBuilderIsConstructionOnly" xml:space="preserve">
+    <value>This operation is not supported on a ParsedJsonDocumentBuilder. The builder supports document construction only. Convert it to a ParsedJsonDocument via ToParsedJsonDocument() to work with the result.</value>
+  </data>
+  <data name="ParsedJsonDocumentBuilderHasNoValue" xml:space="preserve">
+    <value>The ParsedJsonDocumentBuilder does not contain a value. Build a value with a ComplexValueBuilder and call SetAndDispose before calling ToParsedJsonDocument().</value>
+  </data>
 
   <data name="CannotWriteBuilderToWriter" xml:space="preserve">
     <value>Cannot write an array or object builder source directly to a Utf8JsonWriter. Use a JsonElement or primitive value instead.</value>

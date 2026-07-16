@@ -31,6 +31,57 @@ public sealed class ApiSourcesClient : IApiSourcesClient
     }
 
     /// <summary>
+    /// List a registered source's operation surface
+    /// </summary>
+    /// <remarks>
+    /// Projects the registered source's operation surface (raw-JSON-Schema request/parameter/response shapes) — browse a source before attaching it. 404 when the source is absent or out of reach.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<ListRegisteredSourceOperationsResponse> ListRegisteredSourceOperationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, name, 30).RootElement;
+        ListRegisteredSourceOperationsRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ListRegisteredSourceOperationsRequest, ListRegisteredSourceOperationsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Fetch a source document from a web endpoint
+    /// </summary>
+    /// <remarks>
+    /// Fetches an OpenAPI/AsyncAPI/Arazzo document server-side (no browser CORS), optionally authenticating with a registered source credential referenced by (sourceName, environment). Returns the validated document with its detected type/version and content digest; the caller then attaches it to a working copy or registers it. 400 when the URL/scheme is not permitted, the payload is not a parseable JSON/YAML document, it declares no recognisable type, or fetching is not configured in this deployment; 404 when the referenced credential is absent or out of reach; 502 when the upstream endpoint fails.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<FetchSourceDocumentResponse> FetchSourceDocumentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.CreateBuilder(workspace, body, 30).RootElement;
+        FetchSourceDocumentRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<FetchSourceDocumentRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest, FetchSourceDocumentResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List registered sources
     /// </summary>
     /// <remarks>
@@ -156,6 +207,23 @@ public sealed class ApiSourcesClient : IApiSourcesClient
         request.Validate(validationMode);
 
         return SendAsyncCore<DeleteSourceRequest, DeleteSourceResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Count registered sources
+    /// </summary>
+    /// <remarks>
+    /// Counts the registered sources the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<CountSourcesResponse> CountSourcesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CountSourcesRequest request = new();
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<CountSourcesRequest, CountSourcesResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

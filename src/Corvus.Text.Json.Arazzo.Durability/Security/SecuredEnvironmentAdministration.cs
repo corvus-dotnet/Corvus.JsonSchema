@@ -62,8 +62,12 @@ public sealed class SecuredEnvironmentAdministration
     /// <returns>The environment names the caller administers (ordered by name), drained across the reverse index's keyset pages.</returns>
     public async ValueTask<IReadOnlyList<string>> ListAdministeredEnvironmentsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken)
     {
-        // The reverse administration index is keyed by the identity digest; the empty identity has no digest.
-        if (SecurityIdentityDigest.Compute(callerIdentity) is not { } digest)
+        // Membership model (§16.5.4): the caller administers an environment iff one of its administrator identities is a
+        // subset of the caller's identity, so the reverse-index query keys are the distinct-key SUBSET digests of the
+        // caller's identity (each administrator identity is indexed under its own whole-set digest). The empty identity
+        // has no subsets and administers nothing.
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(callerIdentity);
+        if (digests.Count == 0)
         {
             return [];
         }
@@ -78,7 +82,7 @@ public sealed class SecuredEnvironmentAdministration
         {
             while (true)
             {
-                using EnvironmentAdministeredPage page = await this.store.ListAdministeredAsync(digest, 0, token, cancellationToken).ConfigureAwait(false);
+                using EnvironmentAdministeredPage page = await this.store.ListAdministeredAsync(digests, 0, token, cancellationToken).ConfigureAwait(false);
                 administered.AddRange(page.EnvironmentNames);
 
                 tokenDocument?.Dispose();
@@ -101,15 +105,11 @@ public sealed class SecuredEnvironmentAdministration
     }
 
     // Wraps a continuation token's UTF-8 (a page's NextPageToken) as the JSON string value the store's paged read decodes it
-    // from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages.
+    // from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages. The generated
+    // Create() escapes with the default encoder — byte-identical for our base64url tokens (pinned by
+    // PageTokenWrapEscapeEquivalenceTests) and still valid JSON if a token ever carries an escapable byte.
     private static ParsedJsonDocument<JsonString> WrapPageToken(ReadOnlyMemory<byte> tokenUtf8)
-    {
-        byte[] quoted = new byte[tokenUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        tokenUtf8.Span.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(quoted);
-    }
+        => JsonString.Create(tokenUtf8.Span);
 
     /// <summary>Materializes the initial administration record for a freshly-created environment (§7.7): the creator's
     /// resolved identity becomes the sole, removable administrator. Idempotent — a concurrent establish (None-etag race)
@@ -230,12 +230,31 @@ public sealed class SecuredEnvironmentAdministration
             cancellationToken).ConfigureAwait(false);
     }
 
-    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags).
+    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags). This is the
+    // EXACT identity comparison used by the identity operations — add-idempotency (is this exact identity already present)
+    // and Dedupe (drop set-equal duplicates) — not the administration authorization gate; see IsAdministeredByMember.
     private static bool IsMember(List<AdministratorIdentity> admins, SecurityTagSet candidate)
     {
         foreach (AdministratorIdentity administrator in admins)
         {
             if (WorkflowIdentity.SameAdministrator(TagsOf(administrator), candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Whether a caller administers the set by MEMBERSHIP (§16.5.4): the caller's canonical identity CONTAINS (is a superset
+    // of) some administrator's identity. This is the mutation authorization gate, matching the forward check
+    // (EnvironmentAdministrators.IsAdministeredBy) and the reverse index. Contrast IsMember, which is exact set-equality for
+    // the identity operations. The exact-digest paths (IndexOfDigest removal, Dedupe) stay exact.
+    private static bool IsAdministeredByMember(List<AdministratorIdentity> admins, SecurityTagSet caller)
+    {
+        foreach (AdministratorIdentity administrator in admins)
+        {
+            if (TagsOf(administrator).IsSubsetOf(caller))
             {
                 return true;
             }
@@ -315,7 +334,7 @@ public sealed class SecuredEnvironmentAdministration
                     admins.AddRange(current.Administrators.EnumerateArray());
                 }
 
-                if (admins.Count == 0 || !IsMember(admins, callerIdentity))
+                if (admins.Count == 0 || !IsAdministeredByMember(admins, callerIdentity))
                 {
                     throw new EnvironmentAdministrationException(environmentName);
                 }

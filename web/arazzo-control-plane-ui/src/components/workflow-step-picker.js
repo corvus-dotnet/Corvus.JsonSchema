@@ -27,6 +27,8 @@ class ArazzoWorkflowStepPicker extends ArazzoElement {
     super();
     /** @private */ this._steps = null;
     /** @private */ this._stepsKey = null;
+    /** @private explicit steps were provided (a working-copy debug run) — do not resolve from the catalog. */ this._explicitSteps = false;
+    /** @private a catalog resolve is in flight — show a loading placeholder, not the not-in-catalog fallback. */ this._loading = false;
     /** @private */ this._reqSeq = 0;
   }
 
@@ -55,6 +57,23 @@ class ArazzoWorkflowStepPicker extends ArazzoElement {
   /** The resolved steps (`[{ index, stepId }]`), or `null` while loading / when unavailable. */
   get steps() { return this._steps; }
 
+  /**
+   * Provide the step list explicitly — for a WORKING-COPY debug run, whose workflow is not in the catalog, so the
+   * catalog resolution in `load()` cannot find it. Accepts `[{ stepId }]` or `[stepId]`; bypasses the catalog load.
+   */
+  set steps(list) {
+    if (Array.isArray(list) && list.length) {
+      this._steps = list.map((s, i) => ({ index: i, stepId: (typeof s === 'string' ? s : s?.stepId) || `step ${i}` }));
+      this._explicitSteps = true;
+      this._stepsKey = null;
+    } else {
+      this._explicitSteps = false;
+      this._steps = null;
+      this._loading = false;
+    }
+    this.renderBody();
+  }
+
   /** The steps selectable given `direction` relative to `cursor` (all steps when unconstrained). */
   visibleSteps() {
     if (!this._steps) return null;
@@ -81,12 +100,17 @@ class ArazzoWorkflowStepPicker extends ArazzoElement {
   // ---- loading ----------------------------------------------------------------------------------
 
   async load() {
+    if (this._explicitSteps) { this.renderBody(); return; } // steps supplied explicitly (working-copy debug run)
     const client = this.client;
     const workflowId = this.workflowId;
     const parsed = parseVersionedId(workflowId);
-    if (!client || !parsed) { this._steps = null; this._stepsKey = null; this.renderBody(); return; }
-    if (this._stepsKey === workflowId && this._steps) { this.renderBody(); return; }
+    if (!client || !parsed) { this._steps = null; this._stepsKey = null; this._loading = false; this.renderBody(); return; }
+    if (this._stepsKey === workflowId && this._steps) { this._loading = false; this.renderBody(); return; }
 
+    // A catalog round-trip is coming: render a loading placeholder now so the FIRST open does not flash the
+    // "not in the catalog" fallback while the fetch is in flight (the reason a reopen looked correct — cached).
+    this._loading = true;
+    this.renderBody();
     const seq = ++this._reqSeq;
     try {
       const doc = await client.getCatalogWorkflow(parsed.base, parsed.version);
@@ -96,10 +120,12 @@ class ArazzoWorkflowStepPicker extends ArazzoElement {
       const steps = Array.isArray(wf?.steps) ? wf.steps : [];
       this._steps = steps.length ? steps.map((s, i) => ({ index: i, stepId: s?.stepId || `step ${i}` })) : null;
       this._stepsKey = workflowId;
+      this._loading = false;
       this.renderBody();
     } catch {
       if (seq !== this._reqSeq) return;
       this._steps = null; // no catalog access / not catalogued → numeric fallback
+      this._loading = false;
       this.renderBody();
     }
   }
@@ -129,6 +155,13 @@ class ArazzoWorkflowStepPicker extends ArazzoElement {
     const cursor = this.cursor;
     const dir = this.direction;
     const visible = this.visibleSteps();
+
+    if (this._loading) {
+      // Resolving the catalog workflow — a disabled placeholder, not the misleading not-in-catalog fallback.
+      body.innerHTML = `<select part="select" disabled aria-label="Target step"><option>Resolving steps…</option></select>
+        <div class="hint">Resolving the workflow's steps from the catalog…</div>`;
+      return;
+    }
 
     if (this._steps && this._steps.length) {
       if (!visible.length) {

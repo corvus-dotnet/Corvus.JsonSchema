@@ -31,6 +31,9 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The count operation's bound: badges/footers need "is there work / roughly how much", not exact-beyond-99.
+    private const int CountCap = 100;
+
     private readonly IAvailabilityRequestStore requests;
     private readonly IAvailabilityStore availability;
     private readonly IEnvironmentStore environments;
@@ -164,6 +167,46 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
     }
 
     /// <inheritdoc/>
+    public async ValueTask<CountAvailabilityRequestsResult> HandleCountAvailabilityRequestsAsync(CountAvailabilityRequestsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Mirrors HandleListAvailabilityRequestsAsync's reach/query build exactly (so the count can't drift from the list it
+        // annotates), minus paging — the store returns only a bounded total (§7.8 badges/footers), never rows.
+        AvailabilityRequestStatus? status = ParseCountStatus(parameters.Status);
+        string? environment = parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null;
+
+        AvailabilityRequestQuery query;
+        if (environment is not null)
+        {
+            // The environment queue — only a current administrator of it may count it (the list's 403).
+            if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
+            {
+                return CountAvailabilityRequestsResult.Forbidden(NotAdministratorProblem(environment), workspace);
+            }
+
+            query = new AvailabilityRequestQuery(status, Environment: environment);
+        }
+        else if (IsCountQueueScope(parameters.Scope))
+        {
+            // The approver inbox (§7.8): a caller who administers nothing counts zero — the store never sees an empty set.
+            IReadOnlyList<string> administered = await this.administration.ListAdministeredEnvironmentsAsync(this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            if (administered.Count == 0)
+            {
+                return CountResult(0, false, workspace);
+            }
+
+            query = new AvailabilityRequestQuery(status, AdministeredEnvironments: administered);
+        }
+        else
+        {
+            // The caller's own requests ("mine"), keyed on the audit actor recorded as createdBy.
+            query = new AvailabilityRequestQuery(status, CreatedBy: this.CallerActor());
+        }
+
+        (int count, bool capped) = await this.requests.CountAsync(query, CountCap, cancellationToken).ConfigureAwait(false);
+        return CountResult(count, capped, workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<GetAvailabilityRequestResult> HandleGetAvailabilityRequestAsync(GetAvailabilityRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;
@@ -233,6 +276,15 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             {
                 return ApproveAvailabilityRequestResult.Conflict(NotReadyProblem(baseWorkflowId, versionNumber, environment, missing), workspace);
             }
+        }
+
+        // Promotion readiness (workflow-designer design §4.6): an environment that requires evidence admits only
+        // versions whose server-attested suite passed at publish — approval hits the same gate as a direct
+        // make-available. Default-off: environments without the flag keep the §7.7 behaviour exactly.
+        if (await this.RequiresEvidenceAsync(environment, cancellationToken).ConfigureAwait(false)
+            && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        {
+            return ApproveAvailabilityRequestResult.Conflict(EvidenceRequiredProblem(baseWorkflowId, versionNumber, environment), workspace);
         }
 
         // Make the version available (idempotent), then record the decision under optimistic concurrency so a second
@@ -360,6 +412,17 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
     private static bool IsQueueScope(Models.GetAvailabilityRequestsScope scope)
         => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
 
+    // The count operation's own status/scope parameter types (distinct generated enums, same members as the list's).
+    private static AvailabilityRequestStatus? ParseCountStatus(Models.GetAvailabilityRequestsCountStatus status)
+        => status.IsNotUndefined() && Enum.TryParse((string)status, out AvailabilityRequestStatus parsed) ? parsed : null;
+
+    private static bool IsCountQueueScope(Models.GetAvailabilityRequestsCountScope scope)
+        => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
+
+    // A bounded count body: the store reports at most CountCap, and Capped tells the console to render e.g. "100+".
+    private static CountAvailabilityRequestsResult CountResult(int count, bool capped, JsonWorkspace workspace)
+        => CountAvailabilityRequestsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
+
     private static string? NoteReason(Models.AvailabilityRequestDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
 
@@ -397,6 +460,35 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         }
 
         return missing;
+    }
+
+    // Whether the target environment requires green publish evidence for promotion (workflow-designer design §4.6).
+    private async ValueTask<bool> RequiresEvidenceAsync(string environment, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (environmentDoc is null)
+        {
+            return false;
+        }
+
+        Environment env = environmentDoc.RootElement;
+        return env.RequireEvidence.IsNotUndefined() && (bool)env.RequireEvidence;
+    }
+
+    // Whether the version's package carries publish evidence whose attested suite is green (it ran at least one
+    // scenario and none failed) — the evidence half of the §4.6 readiness formula.
+    private async ValueTask<bool> HasGreenEvidenceAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (package is not { } bytes || !WorkflowPackage.TryReadEntry(bytes, "metadata/evidence.json"u8, out ReadOnlyMemory<byte> entry))
+        {
+            return false;
+        }
+
+        using var evidence = ParsedJsonDocument<Models.PublishEvidence>.Parse(entry);
+        Models.EvidenceSuite suite = evidence.RootElement.Suite;
+        return suite.Total.IsNotUndefined() && (int)suite.Total > 0
+            && suite.Failed.IsNotUndefined() && (int)suite.Failed == 0;
     }
 
     // Visibility-then-membership gate on an environment (mirrors the availability handler): an environment outside reach is
@@ -455,6 +547,9 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 
     private static Models.ProblemDetails.Source NotReadyProblem(string baseWorkflowId, int versionNumber, string environment, IReadOnlyList<string> missing)
         => Problem("environment-not-ready", "Environment not ready", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': no credential for {string.Join(", ", missing)}.");
+
+    private static Models.ProblemDetails.Source EvidenceRequiredProblem(string baseWorkflowId, int versionNumber, string environment)
+        => Problem("evidence-required", "Evidence required", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(

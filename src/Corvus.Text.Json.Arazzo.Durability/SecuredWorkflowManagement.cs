@@ -53,26 +53,28 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string? environment, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
-        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags, environment);
+        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    public async ValueTask<WorkflowRunId> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(DeterministicRunId(workflowId, idempotencyKey));
         try
         {
-            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, this.timeProvider, correlationId, tags, securityTags);
+            using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (WorkflowConflictException)
@@ -105,16 +107,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     // Re-presents an opaque page token (the store's pooled UTF-8) as the JSON string value the query seam carries, for
-    // an in-process paging loop (purge) that feeds a previous page's NextPageToken into the next query. The parsed
-    // document references the quoted buffer; dispose it once the query has consumed the token.
+    // an in-process paging loop (purge) that feeds a previous page's NextPageToken into the next query. The generated
+    // Create() escapes with the default encoder — byte-identical to a bare quote-wrap for our base64url tokens (the
+    // equivalence is pinned by PageTokenWrapEscapeEquivalenceTests) and, unlike the old hand wrap, still VALID JSON if a
+    // token ever carries an escapable byte. Dispose the document once the query has consumed the token.
     private static ParsedJsonDocument<JsonString> WrapContinuationToken(ReadOnlySpan<byte> tokenUtf8)
-    {
-        byte[] quoted = new byte[tokenUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        tokenUtf8.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(quoted);
-    }
+        => JsonString.Create(tokenUtf8);
 
     /// <inheritdoc/>
     public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken)
@@ -127,6 +125,19 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         IWorkflowWaitIndex index = this.RequireIndex();
         RowSecurityPushdown.EnsureSupported(reach, index);
         return index.QueryAsync(query with { Security = reach }, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Same read-reach scoping and pushdown guard as ListAsync — the count reuses the store's list predicate, so
+        // it counts exactly the runs the caller could see (§14.2), never more.
+        SecurityFilter? reach = context.Reach(AccessVerb.Read);
+        IWorkflowWaitIndex index = this.RequireIndex();
+        RowSecurityPushdown.EnsureSupported(reach, index);
+        return index.CountAsync(query with { Security = reach }, cap, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -245,6 +256,71 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
     }
 
+    /// <summary>Marks a faulted run resume-claimable after applying a resume mutation (design §18 R5b), instead of
+    /// re-executing it in-process. The multi-process fault-remediation path: the control plane applies the mutation
+    /// (rewind / skip / patch) under optimistic concurrency, stamps the resume-requested marker, and returns; a runner
+    /// surfaces the run through its dispatch index, claims it, and re-enters the executor. Unlike <see cref="ResumeAsync"/>
+    /// it needs no <see cref="WorkflowResumer"/> — the control plane never executes.</summary>
+    /// <param name="id">The faulted run.</param>
+    /// <param name="options">The resume verb (retry / skip / rewind / patch).</param>
+    /// <param name="context">The caller's access context (must have write reach, §14.2).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns><see langword="true"/> when the run was marked resume-claimable; <see langword="false"/> when it is out
+    /// of reach, leased by another owner, not faulted, or the mutation did not apply.</returns>
+    public async ValueTask<bool> RequestFaultedResumeAsync(WorkflowRunId id, ResumeOptions options, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // A run outside the caller's write reach is not actionable (§14.2).
+        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
+        using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.resume.request");
+        if (activity is { IsAllDataRequested: true })
+        {
+            activity.SetTag(ArazzoTelemetry.RunIdTag, id.Value);
+            activity.SetTag(ArazzoTelemetry.ActorTag, this.owner);
+            activity.SetTag(ArazzoTelemetry.ResumeModeTag, options.Mode.ToString());
+        }
+
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        if (lease is null)
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
+            return false;
+        }
+
+        try
+        {
+            // For every mode but a plain retry, mutate the checkpoint (cursor/state) under optimistic concurrency
+            // before handing off: rewind the cursor, skip past the faulted step, or apply a state patch.
+            if (options.Mode != ResumeMode.RetryFaultedStep &&
+                !await this.TryApplyResumeMutationAsync(id, options, activity, cancellationToken).ConfigureAwait(false))
+            {
+                return false;
+            }
+
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            if (run is null || run.Status != WorkflowRunStatus.Faulted)
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-faulted");
+                return false;
+            }
+
+            // Hand the (possibly mutated) faulted run to a runner: stamp the resume-requested marker, preserving the
+            // run's pause. QueryClaimable surfaces it; a runner claims it and its first checkpoint clears the fault.
+            await run.RequestResumeKeepingPauseAsync(cancellationToken).ConfigureAwait(false);
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "resume-requested");
+            return true;
+        }
+        finally
+        {
+            await this.store.ReleaseLeaseAsync(lease.Value, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     /// <inheritdoc/>
     public async ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, AccessContext context, CancellationToken cancellationToken)
     {
@@ -301,6 +377,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 string? errorType = root.TryGetProperty("fault"u8, out JsonElement faultElement) && faultElement.TryGetProperty("error"u8, out JsonElement errorElement) ? errorElement.GetString() : null;
                 TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) ? TagSet.CopyFrom(tagsElement) : default;
                 SecurityTagSet securityTags = WorkflowCheckpointSerializer.ReadSecurityTags(root);
+                string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
 
                 // Mark cancelled and clear any wait by rewriting the document verbatim — the run-creation metadata and
                 // the working state (retry counters, correlation tokens, step outputs) are carried through as raw JSON,
@@ -315,7 +392,8 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     ErrorType: errorType,
                     CorrelationId: correlationId,
                     Tags: tags,
-                    SecurityTags: securityTags);
+                    SecurityTags: securityTags,
+                    Environment: environment);
 
                 if (activity is { IsAllDataRequested: true } && correlationId is { } cid)
                 {
@@ -533,7 +611,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                         throw new ArgumentOutOfRangeException(nameof(options), options.Mode, "Unknown resume mode.");
                 }
 
-                // Carry the immutable run-creation metadata (correlation id + tags) through the mutation.
+                // Carry the immutable run-creation metadata (correlation id, pinned environment, tags) through the
+                // mutation — the run does not change environment when it is remediated, and dropping it here would make
+                // the run unclaimable (§5.5: a runner claims only runs pinned to exactly its environment).
                 mutated = WorkflowCheckpointSerializer.Serialize(
                     state.RunId,
                     state.WorkflowId,
@@ -548,6 +628,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     wait: null,
                     fault: state.Fault,
                     correlationId: state.CorrelationId,
+                    environment: state.Environment,
                     tags: state.Tags,
                     securityTags: state.SecurityTags);
 
@@ -559,7 +640,8 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     ErrorType: state.Fault?.Error,
                     CorrelationId: state.CorrelationId,
                     Tags: state.Tags,
-                    SecurityTags: state.SecurityTags);
+                    SecurityTags: state.SecurityTags,
+                    Environment: state.Environment);
             }
         }
         finally

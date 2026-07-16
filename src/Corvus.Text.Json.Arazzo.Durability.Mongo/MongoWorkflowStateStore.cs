@@ -23,6 +23,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
 
     private readonly IMongoClient client;
     private readonly TimeProvider timeProvider;
@@ -284,18 +285,25 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.And(
+
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (resumeRequestedAt present) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
+        FilterDefinition<BsonDocument> claimableStatus = b.Or(
             b.In("status", new[] { PendingStatus, RunningStatus }),
+            b.And(
+                b.In("status", new[] { SuspendedStatus, FaultedStatus }),
+                b.Ne<BsonValue>("resumeRequestedAt", BsonNull.Value)));
+        FilterDefinition<BsonDocument> filter = b.And(
+            claimableStatus,
             b.In("workflowId", hostedWorkflowIds));
 
-        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
-        // unpinned run (environment absent/null) or an unscoped dispatcher (runnerEnvironment is null) matches anything.
+        // §5.5 environment-scoped dispatch: a real runner (non-null runnerEnvironment) claims a run only when pinned to
+        // EXACTLY its environment — b.Eq excludes an unpinned run (absent/null environment) and a differently-pinned run.
+        // A null runnerEnvironment is the env-agnostic base overload (no environment filter), never a runner — the
+        // WorkflowDispatcher rejects an unscoped runner, so dispatch is always strict.
         if (runnerEnvironment is not null)
         {
-            filter = b.And(filter, b.Or(
-                b.Eq<BsonValue>("environment", BsonNull.Value),
-                b.Exists("environment", false),
-                b.Eq("environment", runnerEnvironment)));
+            filter = b.And(filter, b.Eq("environment", runnerEnvironment));
         }
 
         // Buffer the candidates so we can run the leases query without yielding inside the cursor.
@@ -334,7 +342,12 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         foreach ((string id, string status) in candidates)
         {
-            if (status == PendingStatus || (status == RunningStatus && !heldRunIds.Contains(id)))
+            // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (the
+            // filter required it), so surface it unconditionally alongside Pending and orphaned-Running runs.
+            if (status == PendingStatus
+                || (status == RunningStatus && !heldRunIds.Contains(id))
+                || status == SuspendedStatus
+                || status == FaultedStatus)
             {
                 yield return new WorkflowRunId(id);
             }
@@ -344,49 +357,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
-        FilterDefinition<BsonDocument> filter = b.Empty;
-        if (query.Status is { } status)
-        {
-            filter = b.And(filter, b.Eq("status", status.ToString()));
-        }
-
-        if (query.WorkflowId is { } workflowId)
-        {
-            filter = b.And(filter, b.Eq("workflowId", workflowId));
-        }
-
-        if (query.CreatedAfter is { } createdAfter)
-        {
-            filter = b.And(filter, b.Gte("createdAt", createdAfter.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.CreatedBefore is { } createdBefore)
-        {
-            filter = b.And(filter, b.Lt("createdAt", createdBefore.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.UpdatedAfter is { } updatedAfter)
-        {
-            filter = b.And(filter, b.Gte("updatedAt", updatedAfter.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.UpdatedBefore is { } updatedBefore)
-        {
-            filter = b.And(filter, b.Lt("updatedAt", updatedBefore.ToUnixTimeMilliseconds()));
-        }
-
-        if (query.CorrelationId is { } cid)
-        {
-            filter = b.And(filter, b.Eq("correlationId", cid));
-        }
-
-        if (!query.Tags.IsEmpty)
-        {
-            // $all = contains every queried tag; the needle is materialized to strings only here, at the BSON
-            // filter-builder leaf the driver requires — the stored row tags are never materialized.
-            filter = b.And(filter, b.All("tags", query.Tags.ToList()));
-        }
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
 
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
         if (query.ContinuationToken.IsNotUndefined())
@@ -394,7 +365,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
             if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
             {
-                filter = b.And(filter, b.Gt("_id", after));
+                filter = Builders<BsonDocument>.Filter.And(filter, Builders<BsonDocument>.Filter.Gt("_id", after));
             }
         }
 
@@ -446,6 +417,101 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        FilterDefinition<BsonDocument> filter = BuildFilter(query);
+
+        // No reach filter → a native bounded count: CountDocuments with a Limit stops the server one past the cap.
+        if (query.Security is null)
+        {
+            long total = await this.runs.CountDocumentsAsync(filter, new CountOptions { Limit = cap + 1 }, cancellationToken).ConfigureAwait(false);
+            return total > cap ? (cap, true) : ((int)total, false);
+        }
+
+        // Reach is applied in process over the embedded securityTags array (see the class remarks), so stream the
+        // server-filtered set (projecting only the security tags) and bounded-count the rows the reach admits.
+        int count = 0;
+        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter)
+            .Project(Builders<BsonDocument>.Projection.Include("securityTags"))
+            .ToCursorAsync(cancellationToken).ConfigureAwait(false);
+        while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+        {
+            foreach (BsonDocument document in cursor.Current)
+            {
+                if (query.Security is { } security && !security.IsSatisfiedBy(ReadSecurityTags(document)))
+                {
+                    continue;
+                }
+
+                if (++count > cap)
+                {
+                    return (cap, true);
+                }
+            }
+        }
+
+        return (count, false);
+    }
+
+    // Builds the shared server-side visibility filter (status / workflow / draft-exclusion / timestamps / correlation /
+    // tags), WITHOUT the keyset cursor and WITHOUT the §14.2 reach (which Mongo applies in process over the embedded
+    // securityTags array). QueryAsync adds the cursor + client-side reach; CountAsync reuses this. Both share it so the
+    // server-side predicate cannot drift.
+    private static FilterDefinition<BsonDocument> BuildFilter(in WorkflowQuery query)
+    {
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (query.Status is { } status)
+        {
+            filter = b.And(filter, b.Eq("status", status.ToString()));
+        }
+
+        if (query.WorkflowId is { } workflowId)
+        {
+            filter = b.And(filter, b.Eq("workflowId", workflowId));
+        }
+        else
+        {
+            // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            filter = b.And(filter, b.Ne("workflowId", DraftRuns.RunWorkflowId));
+        }
+
+        if (query.CreatedAfter is { } createdAfter)
+        {
+            filter = b.And(filter, b.Gte("createdAt", createdAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CreatedBefore is { } createdBefore)
+        {
+            filter = b.And(filter, b.Lt("createdAt", createdBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedAfter is { } updatedAfter)
+        {
+            filter = b.And(filter, b.Gte("updatedAt", updatedAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedBefore is { } updatedBefore)
+        {
+            filter = b.And(filter, b.Lt("updatedAt", updatedBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CorrelationId is { } cid)
+        {
+            filter = b.And(filter, b.Eq("correlationId", cid));
+        }
+
+        if (!query.Tags.IsEmpty)
+        {
+            // $all = contains every queried tag; the needle is materialized to strings only here, at the BSON
+            // filter-builder leaf the driver requires — the stored row tags are never materialized.
+            filter = b.And(filter, b.All("tags", query.Tags.ToList()));
+        }
+
+        return filter;
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient && this.client is IDisposable disposable)
@@ -481,6 +547,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
             ["tags"] = index.Tags.IsEmpty ? BsonNull.Value : new BsonArray(index.Tags.ToList()),
             ["securityTags"] = MongoSecurityTags.ToBson(index.SecurityTags),
+            ["resumeRequestedAt"] = index.ResumeRequestedAt is { } resume ? resume.ToUnixTimeMilliseconds() : BsonNull.Value,
         };
 
         // §5.5 run→environment pinning: index the environment only when set, so the field is absent (matches anything)

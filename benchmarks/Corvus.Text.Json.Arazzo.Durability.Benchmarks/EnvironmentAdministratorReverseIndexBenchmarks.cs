@@ -33,8 +33,9 @@ public class EnvironmentAdministratorReverseIndexBenchmarks
     private JsonWorkspace workspace = null!;
     private InMemoryEnvironmentAdministratorStore store = null!;
 
-    // The digest of the identity that administers every seeded environment — the reverse-index key the page is keyed on.
-    private string adminDigest = null!;
+    // The subset digests of the identity that administers every seeded environment — the membership query (§16.5.4) the
+    // reverse-index page is read by.
+    private IReadOnlyList<string> adminDigests = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -46,7 +47,7 @@ public class EnvironmentAdministratorReverseIndexBenchmarks
         SecurityTagSet sharedTags = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "contoso"), new SecurityTag("sys:sub", "platform-sre")]);
         EnvironmentAdministrators.AdministratorIdentity shared =
             EnvironmentAdministrators.BuildIdentity(this.workspace, sharedTags, default, hasKind: false, default, hasLabel: false);
-        this.adminDigest = EnvironmentAdministeredPaging.DistinctDigests([shared])[0];
+        this.adminDigests = SecurityIdentityDigest.SubsetDigests(sharedTags);
 
         this.store = new InMemoryEnvironmentAdministratorStore();
         for (int i = 0; i < SeededCount; i++)
@@ -68,6 +69,6 @@ public class EnvironmentAdministratorReverseIndexBenchmarks
     public void List_AdministeredPage()
     {
         using EnvironmentAdministeredPage page =
-            this.store.ListAdministeredAsync(this.adminDigest, PageSize, default, default).AsTask().GetAwaiter().GetResult();
+            this.store.ListAdministeredAsync(this.adminDigests, PageSize, default, default).AsTask().GetAwaiter().GetResult();
     }
 }

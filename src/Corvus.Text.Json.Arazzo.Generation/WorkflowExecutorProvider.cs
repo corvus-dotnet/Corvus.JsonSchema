@@ -154,6 +154,19 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
             registered.Add(new RegisteredDocument(new Uri(baseUri, url), bytes));
         }
 
+        // Package entries NOT declared as sourceDescriptions are external schema documents (design §6, #94): a
+        // schema document is never a sourceDescription (the Arazzo spec pins that enum), so it rides the package
+        // as an extra sources entry and threads to the generator, which registers it so an inputs schema's
+        // `schemas/<name>#<pointer>` reference resolves.
+        List<KeyValuePair<string, byte[]>>? schemaDocuments = null;
+        foreach ((string name, byte[] bytes) in sources)
+        {
+            if (!sourceRefs.Any(r => string.Equals(r.Name, name, StringComparison.Ordinal)))
+            {
+                (schemaDocuments ??= []).Add(new(name, bytes));
+            }
+        }
+
         string outputPath = Path.Combine(Path.GetTempPath(), "corvus-executor-build", Guid.NewGuid().ToString("N"));
         try
         {
@@ -162,7 +175,7 @@ public sealed class WorkflowExecutorProvider : IWorkflowExecutorProvider
             this.progress?.Invoke($"Generating executor for '{workflowId}'...");
             ArazzoGenerationDriver.GenerateAsync(
                 retrievalUri, RootNamespace, outputPath, clientName: null, this.durable,
-                CancellationToken.None, registered, this.progress)
+                CancellationToken.None, registered, this.progress, schemaDocuments)
                 .GetAwaiter().GetResult();
 
             var generatedCode = new List<GeneratedCodeFile>();

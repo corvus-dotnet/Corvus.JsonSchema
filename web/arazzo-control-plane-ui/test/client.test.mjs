@@ -349,7 +349,7 @@ test('purgeCatalog reaps obsolete, unreferenced versions', async () => {
 
 test('listCredentials returns the seeded bindings with a derived credentialStatus', async () => {
   const { credentials } = await makeClient().listCredentials();
-  assert.equal(credentials.length, 5);
+  assert.equal(credentials.length, 8);
   const byKey = Object.fromEntries(credentials.map((c) => [`${c.sourceName}@${c.environment}`, c.credentialStatus]));
   assert.equal(byKey['petstore@production'], 'valid');      // 20 days out
   assert.equal(byKey['billing@production'], 'expiringSoon'); // 3 days out (inside the 7-day window)
@@ -371,8 +371,8 @@ test('listCredentials keyset-pages: limit + the opaque nextPageToken walk every 
     assert.ok(page.credentials.length <= 2, 'each page respects the limit');
     for (const b of page.credentials) seen.push(`${b.sourceName}@${b.environment}`);
   }
-  assert.equal(seen.length, 5, 'all five bindings, exactly once');
-  assert.equal(new Set(seen).size, 5, 'no duplicates across page boundaries');
+  assert.equal(seen.length, 8, 'all eight bindings, exactly once');
+  assert.equal(new Set(seen).size, 8, 'no duplicates across page boundaries');
   assert.deepEqual(seen, [...seen].sort(), 'ordered by sourceName then environment');
 });
 
@@ -563,6 +563,18 @@ test('getAccessGrants for the payments team projects the team binding', async ()
   assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'), 'the payments team binding (bind-1) is projected');
 });
 
+test('getAccessGrants surfaces a directory person’s grants inherited through group membership (§16.5.4)', async () => {
+  const c = makeClient();
+  // Ada resolved from the DIRECTORY carries her full membership-expanded identity (sys:team=payments), so "look yourself
+  // up" surfaces the payments team's reach binding she INHERITS through that membership, alongside her own sub-keyed grant.
+  const { grantees } = await c.searchGrantees({ q: 'ada', source: 'directory' });
+  const ada = grantees.find((g) => g.value === 'u-1042');
+  assert.ok(ada.identity.some((t) => t.dimension === 'sys:team' && t.value === 'payments'), 'the resolved person carries her team membership');
+  const { bindings } = await c.getAccessGrants(ada);
+  assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'), 'she inherits the payments team binding via her membership');
+  assert.ok(bindings.some((b) => b.claimType === 'sub' && b.claimValue === 'u-1042'), 'her own sub binding is also projected');
+});
+
 // ---- identity / grantee resolution (§16.5.4) ----------------------------------------------------
 
 test('searchGrantees returns the resolved grantees with their exact identity and complete flag', async () => {
@@ -574,7 +586,8 @@ test('searchGrantees returns the resolved grantees with their exact identity and
   assert.equal(ada.label, 'Ada Lovelace');
   assert.equal(ada.source, 'directory');
   assert.equal(ada.complete, true);
-  assert.deepEqual(ada.identity, [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }]);
+  // A directory person resolves to its full membership-expanded identity (§16.5.4): Ada carries her sys:team membership.
+  assert.deepEqual(ada.identity, [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }, { dimension: 'sys:team', value: 'payments' }]);
   const grace = grantees.find((g) => g.value === 'u-2099');
   assert.equal(grace.complete, false, 'an observed-only identity is reported as not complete');
 });
@@ -605,7 +618,7 @@ test('searchGrantees pages via the keyset nextPageToken', async () => {
 test('listEnvironments returns the seeded environments, ordered by name', async () => {
   const c = makeClient();
   const { environments, nextPageToken } = await c.listEnvironments();
-  assert.deepEqual(environments.map((e) => e.name), ['production', 'staging']);
+  assert.deepEqual(environments.map((e) => e.name), ['development', 'production', 'staging', 'uat']);
   assert.equal(nextPageToken, null);
 });
 
@@ -614,7 +627,7 @@ test('environments are reach-filtered — a reach-scoped caller sees only what i
   const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
   // Administrator (reach: all) sees every environment.
   mock.setPersona('administrator');
-  assert.deepEqual((await c.listEnvironments()).environments.map((e) => e.name), ['production', 'staging']);
+  assert.deepEqual((await c.listEnvironments()).environments.map((e) => e.name), ['development', 'production', 'staging', 'uat']);
   // The payments-reach persona: neither seeded environment is tagged domain=payments, so the list is empty and a
   // direct read is reported as absent (404), not forbidden (403) — non-disclosing, mirroring IEnvironmentStore (§7.7).
   mock.setPersona('team-reader');
@@ -715,6 +728,25 @@ test('makeVersionAvailable is readiness-gated (409) and 404s for an unknown envi
   // onboard-customer v1 references a source with no usable credential in the fresh 'qa' environment.
   await assert.rejects(() => c.makeVersionAvailable('onboard-customer', 1, 'qa'), (e) => e.status === 409);
   await assert.rejects(() => c.makeVersionAvailable('adopt-pet', 1, 'no-such-env'), (e) => e.status === 404);
+});
+
+test('makeVersionAvailable is evidence-gated where the environment requires it (§4.6)', async () => {
+  const c = makeClient();
+  await c.createEnvironment({ name: 'prod-eu', requireEvidence: true });
+  // Credential the sources first so the §7.7 credential gate passes and the evidence gate is what decides.
+  await c.createCredential({ sourceName: 'petstore', environment: 'prod-eu', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://pets-eu' }] });
+  await c.createCredential({ sourceName: 'billing', environment: 'prod-eu', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://billing-eu' }] });
+
+  // adopt-pet v1 carries a RED seeded suite (1/2 passed) → refused; nightly-reconcile v3 is GREEN → admitted.
+  await assert.rejects(
+    () => c.makeVersionAvailable('adopt-pet', 1, 'prod-eu'),
+    (e) => e.status === 409 && /evidence/i.test(e.problem?.title ?? e.message));
+  // nightly-reconcile v1 predates evidence entirely → refused the same way.
+  await assert.rejects(
+    () => c.makeVersionAvailable('nightly-reconcile', 1, 'prod-eu'),
+    (e) => e.status === 409 && /evidence/i.test(e.problem?.title ?? e.message));
+  const made = await c.makeVersionAvailable('nightly-reconcile', 3, 'prod-eu');
+  assert.equal(made.environment, 'prod-eu', 'a green attested suite promotes');
 });
 
 test('deleteVersionAvailability 404s when the version is not available in that environment', async () => {
@@ -899,4 +931,723 @@ test('persona enforcement: a non-administrator has an empty runner-authorization
   mock.setPersona('administrator');
   assert.ok((await c.listRunnerAuthorizations()).authorizations.some((a) => a.runnerId === 'runner-us-1'));
   assert.equal((await c.authorizeRunner('production', 'runner-us-1')).status, 'Authorized');
+});
+
+// ---- designer workspace (workflow-designer design §4.1) --------------------------------------------
+
+test('createWorkingCopy round-trips the document and designer state, and list omits them', async () => {
+  const c = makeClient();
+  const created = await c.createWorkingCopy({
+    name: 'retry tuning',
+    document: { arazzo: '1.1.0', info: { title: 'Nightly' }, workflows: [{ workflowId: 'nightly-reconcile', steps: [] }] },
+    designerState: { nodes: { 'step-1': { x: 40, y: 80 } } },
+  });
+  assert.ok(created.id);
+  assert.ok(created.etag);
+  assert.equal(created.name, 'retry tuning');
+  assert.equal(created.document.info.title, 'Nightly');
+  assert.equal(created.designerState.nodes['step-1'].x, 40);
+
+  const single = await c.getWorkingCopy(created.id);
+  assert.equal(single.document.info.title, 'Nightly');
+
+  const { workingCopies } = await c.listWorkingCopies();
+  const entry = workingCopies.find((w) => w.id === created.id);
+  assert.equal(entry.name, 'retry tuning');
+  assert.equal(entry.document, undefined);
+  assert.equal(entry.designerState, undefined);
+});
+
+test('createWorkingCopy derives the name from the first workflowId, or untitled with a skeleton', async () => {
+  const c = makeClient();
+  const derived = await c.createWorkingCopy({ document: { arazzo: '1.1.0', workflows: [{ workflowId: 'pay-invoice', steps: [] }] } });
+  assert.equal(derived.name, 'pay-invoice');
+
+  const blank = await c.createWorkingCopy();
+  assert.equal(blank.name, 'untitled');
+  assert.equal(blank.document.arazzo, '1.1.0');
+  assert.equal(blank.document.info.title, 'untitled');
+});
+
+test('saveWorkingCopy is etag-guarded: a stale save 409s and clobbers nothing', async () => {
+  const c = makeClient();
+  const created = await c.createWorkingCopy({ name: 'wc', document: { arazzo: '1.1.0', 'x-rev': 1 } });
+
+  const saved = await c.saveWorkingCopy(created.id, { document: { arazzo: '1.1.0', 'x-rev': 2 }, expectedEtag: created.etag });
+  assert.equal(saved.document['x-rev'], 2);
+  assert.notEqual(saved.etag, created.etag);
+  assert.ok(saved.lastUpdatedBy);
+
+  // A collaborator saving with the etag they read earlier conflicts.
+  await assert.rejects(
+    () => c.saveWorkingCopy(created.id, { document: { arazzo: '1.1.0', 'x-rev': 3 }, expectedEtag: created.etag }),
+    (e) => e instanceof ProblemError && e.status === 409);
+  assert.equal((await c.getWorkingCopy(created.id)).document['x-rev'], 2);
+
+  // The etag is not optional.
+  assert.throws(() => c.saveWorkingCopy(created.id, { document: { arazzo: '1.1.0' } }), TypeError);
+});
+
+test('deleteWorkingCopy removes it and a later get 404s', async () => {
+  const c = makeClient();
+  const created = await c.createWorkingCopy({ name: 'wc', document: { arazzo: '1.1.0' } });
+  await c.deleteWorkingCopy(created.id);
+  await assert.rejects(() => c.getWorkingCopy(created.id), (e) => e instanceof ProblemError && e.status === 404);
+});
+
+test('listWorkingCopiesPaged walks every page via the token', async () => {
+  const c = makeClient();
+  for (let i = 0; i < 5; i++) await c.createWorkingCopy({ name: `wc ${i}`, document: { arazzo: '1.1.0' } });
+  let total = 0; let pages = 0;
+  for await (const page of c.listWorkingCopiesPaged({ limit: 2 })) { total += page.workingCopies.length; pages++; }
+  assert.equal(total, 5);
+  assert.equal(pages, 3);
+});
+
+test('validateWorkingCopy reports positioned findings and 404s for an unknown id', async () => {
+  const c = makeClient();
+
+  // The blank skeleton is deliberately not yet valid Arazzo — findings, not an error response.
+  const blank = await c.createWorkingCopy();
+  const outcome = await c.validateWorkingCopy(blank.id);
+  assert.equal(outcome.valid, false);
+  assert.ok(outcome.diagnostics.every((d) => d.category === 'schema' && d.severity === 'error'));
+
+  // Semantically broken: a goto to a step that does not exist, positioned by JSON Pointer.
+  const broken = await c.createWorkingCopy({
+    document: {
+      arazzo: '1.1.0',
+      info: { title: 'T', version: '1.0.0' },
+      sourceDescriptions: [{ name: 'pets', url: './pets.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'w', steps: [{ stepId: 'a', operationId: 'x', onSuccess: [{ name: 'j', type: 'goto', stepId: 'ghost' }] }] }],
+    },
+  });
+  const semantic = await c.validateWorkingCopy(broken.id);
+  assert.equal(semantic.valid, false);
+  const finding = semantic.diagnostics.find((d) => d.category === 'goto-target');
+  assert.equal(finding.instancePath, '/workflows/0/steps/0/onSuccess/0');
+
+  await assert.rejects(() => c.validateWorkingCopy('nope'), (e) => e instanceof ProblemError && e.status === 404);
+});
+
+test('sources attach inline or by registry reference, list without documents, and project operations', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({ name: 'wc', document: { arazzo: '1.1.0' } });
+  const petstore = {
+    openapi: '3.1.0',
+    info: { title: 'Petstore', version: '1.0' },
+    paths: { '/pets': { get: { operationId: 'listPets', responses: { 200: { description: 'ok', content: { 'application/json': { schema: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' } } } } } } }, default: { description: 'unexpected' } } } } },
+  };
+
+  // Inline attach: type detected, document never echoed, the fresh etag flows back.
+  const attached = await c.attachWorkingCopySource(wc.id, 'pets', { document: petstore });
+  assert.equal(attached.kind, 'inline');
+  assert.equal(attached.type, 'openapi');
+  assert.equal(attached.document, undefined);
+  assert.notEqual(attached.etag, wc.etag);
+
+  const { sources } = await c.listWorkingCopySources(wc.id);
+  assert.equal(sources.length, 1);
+  assert.equal(sources[0].document, undefined);
+
+  const { operations } = await c.listWorkingCopySourceOperations(wc.id, 'pets');
+  assert.equal(operations[0].operationId, 'listPets');
+  assert.equal(operations[0].method, 'GET');
+  assert.deepEqual(Object.keys(operations[0].responses), ['200', 'default']);
+  assert.equal(operations[0].responses['200'].schema.items.properties.name.type, 'string');
+
+  // Registry attach: resolves at read time; the registry-side surface projects too.
+  await c.createSource({ name: 'petstore-testonly', type: 'openapi', document: petstore });
+  const viaRegistry = await c.attachWorkingCopySource(wc.id, 'pets2', { sourceName: 'petstore-testonly' });
+  assert.equal(viaRegistry.kind, 'registry');
+  assert.equal((await c.listWorkingCopySourceOperations(wc.id, 'pets2')).operations[0].operationId, 'listPets');
+  assert.equal((await c.listRegisteredSourceOperations('petstore-testonly')).operations[0].operationId, 'listPets');
+
+  // Detach removes; unknown names 404; ambiguity throws client-side.
+  await c.detachWorkingCopySource(wc.id, 'pets');
+  assert.equal((await c.listWorkingCopySources(wc.id)).sources.length, 1);
+  await assert.rejects(() => c.listWorkingCopySourceOperations(wc.id, 'pets'), (e) => e.status === 404);
+  assert.throws(() => c.attachWorkingCopySource(wc.id, 'x', {}), TypeError);
+  assert.throws(() => c.attachWorkingCopySource(wc.id, 'x', { sourceName: 'a', document: {} }), TypeError);
+});
+
+test('fetchSourceDocument returns the validated document with detected type and digest', async () => {
+  const c = makeClient();
+  const fetched = await c.fetchSourceDocument({ url: 'https://specs.example/petstore.json' });
+  assert.equal(fetched.url, 'https://specs.example/petstore.json');
+  assert.ok(['openapi', 'asyncapi', 'arazzo'].includes(fetched.type));
+  assert.ok(fetched.digest);
+  assert.ok(fetched.document);
+
+  await assert.rejects(() => c.fetchSourceDocument({ url: 'http://insecure.example/x.json' }), (e) => e.status === 400);
+  assert.throws(() => c.fetchSourceDocument({}), TypeError);
+});
+
+test('every seeded registry source projects a non-empty operation surface', async () => {
+  const c = makeClient();
+  const { sources } = await c.listSources({ limit: 50 });
+  assert.ok(sources.length >= 3, 'the registry seeds at least three sources');
+  for (const s of sources) {
+    const { operations } = await c.listRegisteredSourceOperations(s.name);
+    assert.ok(operations.length > 0, `seeded source '${s.name}' must list operations — an empty rail after attaching it reads as a bug`);
+  }
+});
+
+test('simulateWorkingCopy returns a structured trace from the mock synthesizer', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'sim',
+    document: {
+      arazzo: '1.1.0',
+      info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{
+        workflowId: 'wf',
+        steps: [
+          { stepId: 'a', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] },
+          { stepId: 'b', operationId: 'adoptPet' },
+        ],
+      }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    scenario: { mocks: [
+      { method: 'get', path: '/pets', status: 200, body: [] },
+      { method: 'post', path: '/pets/{petId}/adopt', status: 200 },
+    ] },
+  });
+  assert.equal(trace.outcome, 'completed');
+  assert.equal(trace.steps.length, 2);
+  assert.equal(trace.steps[0].successCriteria[0].satisfied, true);
+
+  // STATELESS stepping: every command re-supplies the whole scenario and replays from the start.
+  const paused = await c.simulateWorkingCopy(wc.id, {
+    scenario: { mocks: [{ method: 'get', path: '/pets', status: 200, body: [] }] },
+    until: { beforeStepId: 'b' },
+  });
+  assert.equal(paused.outcome, 'paused');
+  assert.equal(paused.pausedBefore, 'b');
+  assert.equal(paused.steps.length, 1);
+});
+
+test('validate flags source-integrity drift: undeclared attachment, missing attachment, unresolvable operation', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'drift',
+    document: {
+      arazzo: '1.1.0',
+      info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'ghost', url: './ghost.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [{ stepId: 'a', operationId: 'noSuchOp' }] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const report = await c.validateWorkingCopy(wc.id);
+  const cats = report.diagnostics.filter((d) => d.category === 'workspace-sources');
+  assert.ok(cats.some((d) => d.severity === 'warning' && d.message.includes("'ghost' has no attachment")), 'declared-but-unattached flagged');
+  assert.ok(cats.some((d) => d.severity === 'info' && d.message.includes("'petstore' is not declared")), 'attached-but-undeclared flagged');
+  assert.ok(cats.some((d) => d.severity === 'warning' && d.message.includes("'noSuchOp' is not found")), 'unresolvable operation flagged');
+
+  // No sourceDescriptions at all while steps bind operations → an ERROR.
+  const bare = await c.createWorkingCopy({
+    name: 'bare',
+    document: { arazzo: '1.1.0', info: { title: 't', version: '1' }, workflows: [{ workflowId: 'wf', steps: [{ stepId: 'a', operationId: 'x' }] }] },
+  });
+  const bareReport = await c.validateWorkingCopy(bare.id);
+  assert.equal(bareReport.valid, false);
+  assert.ok(bareReport.diagnostics.some((d) => d.category === 'workspace-sources' && d.severity === 'error'));
+});
+
+test('scenarios: lifecycle + judged runs through the mock', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'sc', document: {
+      arazzo: '1.1.0', info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [
+        { stepId: 'a', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  await c.putScenario(wc.id, {
+    name: 'ok', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 200 }] }],
+    expect: { outcome: 'completed', steps: { a: { attempts: 1 } } },
+  });
+  await c.putScenario(wc.id, {
+    name: 'sad', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 500 }] }],
+    expect: { outcome: 'completed' },
+  });
+  assert.equal((await c.listScenarios(wc.id)).scenarios.length, 2);
+
+  const one = await c.runScenario(wc.id, 'ok');
+  assert.equal(one.passed, true);
+  assert.equal(one.trace.steps.length, 1);
+
+  const suite = await c.runAllScenarios(wc.id);
+  assert.equal(suite.total, 2);
+  assert.equal(suite.failed, 1);
+
+  await c.deleteScenario(wc.id, 'sad');
+  assert.equal((await c.listScenarios(wc.id)).scenarios.length, 1);
+});
+
+test('publish attests the suite and serves evidence; failures refuse with 422', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'pub', document: {
+      arazzo: '1.1.0', info: { title: 'Pub', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'pub-flow', steps: [{ stepId: 'a', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] }] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+  await c.putScenario(wc.id, { name: 'ok', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 200 }] }], expect: { outcome: 'completed' } });
+
+  const version = await c.publishWorkingCopy(wc.id, { owner: { name: 'Team', email: 't@example.com' }, tags: ['designer'] });
+  assert.equal(version.baseWorkflowId, 'pub-flow');
+
+  const evidence = await c.getCatalogEvidence(version.baseWorkflowId, version.versionNumber);
+  assert.equal(evidence.suite.passed, 1);
+  assert.equal(evidence.scenarios[0].name, 'ok');
+  assert.ok(evidence.scenarios[0].pathSummary.includes('a'));
+
+  // A failing scenario refuses.
+  await c.putScenario(wc.id, { name: 'sad', mocks: [{ source: 'petstore', operationId: 'listPets', responses: [{ status: 500 }] }], expect: { outcome: 'completed' } });
+  await assert.rejects(() => c.publishWorkingCopy(wc.id, { owner: { name: 'T', email: 't@e.com' } }), (e) => e.status === 422);
+});
+
+// ---- brokered GitHub (workflow-designer design §4.7) ----------------------------------------------
+
+test('the brokered GitHub flow: begin → callback (single-use state) → session → browse → disconnect', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+  assert.equal((await c.getGitHubStatus()).connected, false, 'starts disconnected');
+
+  // Begin returns the authorize URL the kit opens in a POPUP; the mock's points at its own callback,
+  // so the "popup navigation" below completes the sign-in immediately.
+  const { authorizeUrl, state } = await c.beginGitHubAuth();
+  assert.ok(authorizeUrl.includes('/github/auth/callback'), 'the mock self-completes via its own callback');
+  assert.ok(authorizeUrl.includes(encodeURIComponent(state)), 'the state rides the authorize URL');
+  assert.equal((await mock.fetch(authorizeUrl)).status, 200, 'the callback signs in (state-authenticated, no bearer)');
+  assert.equal((await mock.fetch(authorizeUrl)).status, 400, 'the state is single-use: a replay refuses');
+
+  const session = await c.getGitHubStatus();
+  assert.equal(session.connected, true);
+  assert.equal(session.login, 'octo');
+  assert.equal(session.installations[0].account, 'acme-org');
+  assert.equal(session.installations[0].repositories[0].fullName, 'acme-org/specs');
+
+  const root = await c.browseRepo('acme-org', 'specs');
+  assert.equal(root.kind, 'dir');
+  assert.ok(root.entries.some((e) => e.name === 'petstore.openapi.json' && e.type === 'file'), 'the root lists the spec');
+  const file = await c.browseRepo('acme-org', 'specs', { path: 'petstore.openapi.json' });
+  assert.equal(file.kind, 'file');
+  assert.ok(JSON.parse(Buffer.from(file.file.content, 'base64').toString()).openapi, 'the file content decodes to the spec');
+  await assert.rejects(() => c.browseRepo('acme-org', 'elsewhere'), (e) => e.status === 404, 'an unreachable repo is not found');
+
+  await c.deleteGitHubSession();
+  assert.equal((await c.getGitHubStatus()).connected, false, 'disconnect drops the session');
+  await assert.rejects(() => c.browseRepo('acme-org', 'specs'), (e) => e.status === 409, 'browse without a session conflicts');
+});
+
+test('persona enforcement: a viewer cannot begin the GitHub sign-in (workspace:write)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  mock.setPersona('viewer');
+  await assert.rejects(() => c.beginGitHubAuth(), (e) => e.status === 403);
+});
+
+test('a Git-bound working copy commits to and pulls from its branch (§4.7)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+  // Connect, then bind a working copy (document + one scenario) to a branch.
+  const { authorizeUrl } = await c.beginGitHubAuth();
+  await mock.fetch(authorizeUrl);
+  const wc = await c.createWorkingCopy({ name: 'adopt', document: { arazzo: '1.1.0', info: { title: 'Adopt', version: '1' }, workflows: [{ workflowId: 'adopt', steps: [] }] } });
+  await c.putScenario(wc.id, { name: 'happy', expect: { outcome: 'completed' } });
+  // The branch must exist before anything writes to it (a ref, no commit; §4.7).
+  const branches = await c.listRepoBranches('acme-org', 'specs');
+  assert.equal(branches.defaultBranch, 'main');
+  const createdBranch = await c.createRepoBranch('acme-org', 'specs', { name: 'feature/adopt' });
+  assert.equal(createdBranch.name, 'feature/adopt');
+  await assert.rejects(() => c.createRepoBranch('acme-org', 'specs', { name: 'feature/adopt' }), (e) => e.status === 409);
+
+  const fresh = await c.getWorkingCopy(wc.id);
+  const bound = await c.saveWorkingCopy(wc.id, {
+    document: fresh.document,
+    expectedEtag: fresh.etag,
+    gitBinding: { owner: 'acme-org', repo: 'specs', branch: 'feature/adopt', path: 'flows/adopt.arazzo.json', scenariosDir: 'scenarios/adopt' },
+  });
+  assert.equal(bound.gitBinding.branch, 'feature/adopt', 'the binding persists on save');
+
+  // Commit: the document and the scenario file land in the repo; the draft PR opens from the branch.
+  const committed = await c.commitWorkingCopy(wc.id, { message: 'sync', pullRequest: { base: 'main', draft: true } });
+  assert.deepEqual(committed.files.map((f) => f.path), ['flows/adopt.arazzo.json', 'scenarios/adopt/happy.scenario.json']);
+  assert.ok(committed.pullRequest.url.includes('/pull/'), 'the pull request opened');
+  const committedDoc = await c.browseRepo('acme-org', 'specs', { path: 'flows/adopt.arazzo.json' });
+  assert.equal(JSON.parse(Buffer.from(committedDoc.file.content, 'base64').toString()).info.title, 'Adopt');
+
+  // A repo-side edit pulls back in under the etag guard.
+  const scenario = await c.browseRepo('acme-org', 'specs', { path: 'scenarios/adopt/happy.scenario.json' });
+  assert.ok(scenario.kind === 'file', 'the scenario file landed');
+  const pulled = await c.pullWorkingCopy(wc.id, { expectedEtag: bound.etag });
+  assert.equal(pulled.document.info.title, 'Adopt', 'pull round-trips the committed document');
+  await assert.rejects(() => c.pullWorkingCopy(wc.id, { expectedEtag: bound.etag }), (e) => e.status === 409, 'a stale etag conflicts');
+
+  // Unbound copies refuse; disconnected sessions conflict.
+  const unbound = await c.createWorkingCopy({ name: 'plain', document: { arazzo: '1.1.0', info: { title: 'x', version: '1' }, workflows: [] } });
+  await assert.rejects(() => c.commitWorkingCopy(unbound.id, { message: 'x' }), (e) => e.status === 400);
+  await c.deleteGitHubSession();
+  await assert.rejects(() => c.commitWorkingCopy(wc.id, { message: 'x' }), (e) => e.status === 409);
+});
+
+test('git history browses, compares at a ref, and rolls back via pull-at-ref (snag 9)', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  const { authorizeUrl } = await c.beginGitHubAuth();
+  await mock.fetch(authorizeUrl);
+
+  // History pages newest-first, scoped to the bound branch and document.
+  const first = await c.listRepoCommits('acme-org', 'specs', { sha: 'main', path: 'flows/adopt.arazzo.json', perPage: 2 });
+  assert.equal(first.commits.length, 2);
+  assert.equal(first.hasMore, true, 'a full page implies more history');
+  const second = await c.listRepoCommits('acme-org', 'specs', { sha: 'main', perPage: 2, page: 2 });
+  assert.equal(second.commits.length, 1);
+  assert.equal(second.hasMore, false);
+  const oldest = second.commits[0];
+  assert.ok(oldest.sha && oldest.message && oldest.author && oldest.date, 'a commit carries sha, message, author, and date');
+
+  // Contents at a commit's ref serve THAT commit's file — the side-by-side comparison's data.
+  const head = await c.browseRepo('acme-org', 'specs', { path: 'flows/adopt.arazzo.json' });
+  const historic = await c.browseRepo('acme-org', 'specs', { path: 'flows/adopt.arazzo.json', ref: oldest.sha });
+  const headSteps = JSON.parse(Buffer.from(head.file.content, 'base64').toString()).workflows[0].steps.length;
+  const historicSteps = JSON.parse(Buffer.from(historic.file.content, 'base64').toString()).workflows[0].steps.length;
+  assert.ok(historicSteps < headSteps, 'the historic document differs from the head');
+
+  // Rollback = pull at the commit: the working copy becomes that commit's state. The binding is
+  // unchanged — the next commit records the rollback as a new commit on the branch.
+  const wc = await c.createWorkingCopy({ name: 'adopt', document: { arazzo: '1.1.0', info: { title: 'Adopt', version: '1' }, workflows: [{ workflowId: 'adopt', steps: [] }] } });
+  const fresh = await c.getWorkingCopy(wc.id);
+  const bound = await c.saveWorkingCopy(wc.id, {
+    document: fresh.document,
+    expectedEtag: fresh.etag,
+    gitBinding: { owner: 'acme-org', repo: 'specs', branch: 'main', path: 'flows/adopt.arazzo.json' },
+  });
+  const rolledBack = await c.pullWorkingCopy(wc.id, { expectedEtag: bound.etag, ref: oldest.sha });
+  assert.equal(rolledBack.document.workflows[0].steps.length, historicSteps, 'the rollback pulled the commit state');
+  assert.equal(rolledBack.gitBinding.branch, 'main', 'the binding is unchanged by a rollback');
+});
+
+test('simulateCatalogVersion replays a published version verbatim (§4.3)', async () => {
+  const c = makeClient();
+  // The seeded adopt-pet v1 carries its packaged document; the simulator runs it with scripted mocks —
+  // same request and trace shapes as a working-copy simulate, without any working copy.
+  const trace = await c.simulateCatalogVersion('adopt-pet', 1, {
+    scenario: { mocks: [
+      { method: 'get', path: '/pets/{petId}', status: 200, body: { name: 'Fido' } },
+      { method: 'post', path: '/pets/{petId}/adopt', status: 200 },
+      { method: 'get', path: '/pets/{petId}/status', status: 200, body: { state: 'adopted' } },
+      { method: 'post', path: '/pets/{petId}/confirm', status: 200 },
+    ] },
+  });
+  assert.ok(['completed', 'faulted'].includes(trace.outcome), 'the packaged document simulated to a terminal trace');
+  assert.ok(trace.steps.length > 0, 'the trace carries the visited steps');
+
+  await assert.rejects(() => c.simulateCatalogVersion('adopt-pet', 1, { workflowId: 'ghost' }), (e) => e.status === 400);
+  await assert.rejects(() => c.simulateCatalogVersion('no-such', 1, {}), (e) => e.status === 404);
+});
+
+test('a message wait suspends the simulation; a staged trigger releases it (§3.3 injection)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'eventful',
+    document: {
+      arazzo: '1.1.0', info: { title: 'e', version: '1' },
+      sourceDescriptions: [
+        { name: 'petstore', url: './p.json', type: 'openapi' },
+        { name: 'events', url: './e.json', type: 'asyncapi' },
+      ],
+      workflows: [{ workflowId: 'wf', steps: [
+        { stepId: 'list', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }] },
+        { stepId: 'confirmed', operationId: 'onOrderEvent' },
+        { stepId: 'done', operationId: 'listPets' },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+  await c.attachWorkingCopySource(wc.id, 'events', { sourceName: 'events' });
+  const mocks = [{ method: 'get', path: '/pets', status: 200, body: [] }];
+
+  // No trigger staged: the run SUSPENDS on the channel, naming what it waits for.
+  const suspended = await c.simulateWorkingCopy(wc.id, { scenario: { mocks } });
+  assert.equal(suspended.outcome, 'suspended');
+  assert.equal(suspended.wait.kind, 'message');
+  assert.equal(suspended.wait.channel, 'orders/events');
+  assert.equal(suspended.steps.length, 1, 'only the step before the wait executed');
+
+  // The injected trigger joins the scenario; the stateless replay delivers it at the wait.
+  const released = await c.simulateWorkingCopy(wc.id, {
+    scenario: { mocks, triggers: [{ channel: 'orders/events', payload: { orderId: 'o-1', kind: 'confirmed' } }] },
+  });
+  assert.equal(released.outcome, 'completed');
+  assert.equal(released.steps.length, 3);
+  assert.equal(released.steps[1].requests[0].responseBody.orderId, 'o-1', 'the payload rides the trace');
+});
+
+test('validate flags payload literals that can never satisfy the operation schema (§5.3)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'typed-payloads',
+    document: {
+      arazzo: '1.1.0', info: { title: 't', version: '1' },
+      sourceDescriptions: [{ name: 'payments', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [{
+        stepId: 'authorize', operationId: 'authorize',
+        requestBody: { payload: { capture: 'tru', reference: '$inputs.orderId' } },
+      }] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'payments', { document: {
+    openapi: '3.1.0', info: { title: 'Payments', version: '1' },
+    paths: { '/authorize': { post: { operationId: 'authorize', requestBody: { content: { 'application/json': { schema: {
+      type: 'object', required: ['amount'],
+      properties: { capture: { type: 'boolean' }, amount: { type: 'number' }, reference: { type: 'string' } },
+    } } } }, responses: { 200: { description: 'ok' } } } } },
+  } });
+
+  const report = await c.validateWorkingCopy(wc.id);
+  assert.equal(report.valid, false, 'a boolean leaf holding "tru" cannot be valid');
+  const typing = report.diagnostics.filter((d) => d.category === 'payload-typing');
+  const bad = typing.find((d) => d.severity === 'error');
+  assert.match(bad.message, /'tru' is neither a boolean nor a runtime expression/);
+  assert.equal(bad.instancePath, '/workflows/0/steps/0/requestBody/payload/capture');
+  assert.ok(typing.some((d) => d.severity === 'warning' && d.message.includes("'amount' is missing")), 'missing required warns');
+
+  // A statically-typed expression must match too: $inputs.orderId is a STRING by the workflow's
+  // own inputs schema — placing it on the boolean leaf is an error, not a benefit of the doubt.
+  const fresh0 = await c.getWorkingCopy(wc.id);
+  fresh0.document.workflows[0].inputs = { type: 'object', properties: { orderId: { type: 'string' } } };
+  fresh0.document.workflows[0].steps[0].requestBody.payload = { capture: '$inputs.orderId', amount: 12 };
+  await c.saveWorkingCopy(wc.id, { document: fresh0.document, expectedEtag: fresh0.etag });
+  const mismatch = await c.validateWorkingCopy(wc.id);
+  const exprBad = mismatch.diagnostics.find((d) => d.category === 'payload-typing' && d.severity === 'error');
+  assert.match(exprBad.message, /resolves to a string — the operation's schema requires a boolean/);
+
+  // Expressions are exempt wherever they appear; fixing the literal clears the error.
+  const fresh = await c.getWorkingCopy(wc.id);
+  fresh.document.workflows[0].steps[0].requestBody.payload = { capture: '$inputs.capture', amount: 12 };
+  await c.saveWorkingCopy(wc.id, { document: fresh.document, expectedEtag: fresh.etag });
+  const clean = await c.validateWorkingCopy(wc.id);
+  assert.ok(!clean.diagnostics.some((d) => d.category === 'payload-typing'), 'expressions + literals of the right type pass');
+});
+
+test('a workflowId-bound step runs its sub-workflow inline and carries the nested trace (§3.3 step-into)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'nested',
+    document: {
+      arazzo: '1.1.0', info: { title: 'n', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [
+        { workflowId: 'outer', steps: [
+          { stepId: 'run-inner', workflowId: 'inner', onSuccess: [{ name: 'done', type: 'end' }] },
+        ] },
+        { workflowId: 'inner', outputs: { first: '$steps.list.outputs.first' }, steps: [
+          { stepId: 'list', operationId: 'listPets', successCriteria: [{ condition: '$statusCode == 200' }], outputs: { first: '$response.body#/0/name' } },
+        ] },
+      ],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    workflowId: 'outer',
+    scenario: { mocks: [{ method: 'get', path: '/pets', status: 200, body: [{ name: 'Biscuit' }] }] },
+  });
+  assert.equal(trace.outcome, 'completed');
+  const record = trace.steps[0];
+  assert.equal(record.stepId, 'run-inner');
+  assert.equal(record.subTrace.workflowId, 'inner', 'the nested trace names its workflow');
+  assert.equal(record.subTrace.steps[0].stepId, 'list', 'the sub-workflow steps ride the record');
+  assert.equal(record.outputs.first, 'Biscuit', 'the sub-workflow outputs become the step outputs');
+});
+
+test('the trace records what a step actually SENT: resolved path, query, and request body (§3.3)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'sent-view',
+    document: {
+      arazzo: '1.1.0', info: { title: 's', version: '1' },
+      sourceDescriptions: [{ name: 'orders', url: './o.json', type: 'openapi' }],
+      workflows: [{
+        workflowId: 'wf',
+        inputs: { type: 'object', properties: { orderId: { type: 'string' }, amount: { type: 'number' } } },
+        steps: [{
+          stepId: 'place', operationId: 'placeOrder',
+          parameters: [
+            { name: 'orderId', in: 'path', value: '$inputs.orderId' },
+            { name: 'dryRun', in: 'query', value: true },
+          ],
+          requestBody: { payload: { amount: '$inputs.amount', note: 'from-test' } },
+          successCriteria: [{ condition: '$statusCode == 201' }],
+        }],
+      }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'orders', { document: {
+    openapi: '3.1.0', info: { title: 'Orders', version: '1' },
+    paths: { '/orders/{orderId}': { post: { operationId: 'placeOrder',
+      parameters: [{ name: 'orderId', in: 'path', required: true, schema: { type: 'string' } }],
+      requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { amount: { type: 'number' }, note: { type: 'string' } } } } } },
+      responses: { 201: { description: 'placed' } } } } },
+  } });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    scenario: { inputs: { orderId: 'o-77', amount: 12.5 }, mocks: [{ method: 'post', path: '/orders/{orderId}', status: 201 }] },
+  });
+  const sent = trace.steps[0].requests[0];
+  assert.equal(sent.path, '/orders/o-77?dryRun=true', 'parameters resolve into the path and query');
+  assert.deepEqual(sent.requestBody, { amount: 12.5, note: 'from-test' }, 'the body records as sent, expressions resolved');
+});
+
+test('step over: overridden outputs replace execution — no exchange, downstream steps see them (§3.3)', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'what-if',
+    document: {
+      arazzo: '1.1.0', info: { title: 'w', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{ workflowId: 'wf', steps: [
+        { stepId: 'find', operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }],
+          successCriteria: [{ condition: '$statusCode == 200' }], outputs: { petName: '$response.body#/name' } },
+        { stepId: 'adopt', operationId: 'adoptPet', parameters: [{ name: 'petId', in: 'path', value: '$steps.find.outputs.petName' }],
+          successCriteria: [{ condition: '$statusCode == 200' }] },
+      ] }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  const trace = await c.simulateWorkingCopy(wc.id, {
+    scenario: { inputs: { petId: 'p-1' }, mocks: [{ method: 'post', path: '/pets/{petId}/adopt', status: 200 }] },
+    overrides: { stepOutputs: { find: { petName: 'Hypothetical' } } },
+  });
+  assert.equal(trace.outcome, 'completed');
+  const skipped = trace.steps[0];
+  assert.equal(skipped.skipped, true, 'the overridden step did not execute');
+  assert.equal(skipped.requests, undefined, 'no exchange happened');
+  assert.deepEqual(skipped.outputs, { petName: 'Hypothetical' }, 'the provided outputs stand');
+  assert.ok(trace.steps[1].requests[0].path.includes('Hypothetical'), 'downstream steps resolve against them');
+});
+
+test('an attachment reads back whole — the restore payload for undoing a detach', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({ name: 'detachable', document: {
+    arazzo: '1.1.0', info: { title: 'd', version: '1' },
+    sourceDescriptions: [{ name: 'inline-src', url: './s.json', type: 'openapi' }],
+    workflows: [{ workflowId: 'w', steps: [] }],
+  } });
+  const doc = { openapi: '3.1.0', info: { title: 'S', version: '1' }, paths: { '/x': { get: { operationId: 'x', responses: { 200: { description: 'ok' } } } } } };
+  await c.attachWorkingCopySource(wc.id, 'inline-src', { document: doc });
+
+  const attachment = await c.getWorkingCopySource(wc.id, 'inline-src');
+  assert.equal(attachment.name, 'inline-src');
+  assert.deepEqual(attachment.document.paths['/x'].get.operationId, 'x', 'the stored inline document comes back');
+
+  await c.detachWorkingCopySource(wc.id, 'inline-src');
+  await assert.rejects(() => c.getWorkingCopySource(wc.id, 'inline-src'), /404|not found/i);
+
+  // Re-attach the stash verbatim: the round trip restores the operations surface.
+  await c.attachWorkingCopySource(wc.id, 'inline-src', { document: attachment.document });
+  const ops = await c.listWorkingCopySourceOperations(wc.id, 'inline-src');
+  assert.ok(ops.operations.some((o) => o.operationId === 'x'), 'restored source projects its operations again');
+});
+
+test('debug runs (§18): gated start, single-step forward, step-over via Skip, cancel', async () => {
+  const c = makeClient();
+  const wc = await c.createWorkingCopy({
+    name: 'debuggable',
+    document: {
+      arazzo: '1.1.0', info: { title: 'dbg', version: '1' },
+      sourceDescriptions: [{ name: 'petstore', url: './p.json', type: 'openapi' }],
+      workflows: [{
+        workflowId: 'wf',
+        inputs: { type: 'object', properties: { petId: { type: 'string' } } },
+        steps: [
+          { stepId: 'find', operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }],
+            successCriteria: [{ condition: '$statusCode == 200' }], outputs: { petName: '$response.body#/name' } },
+          { stepId: 'adopt', operationId: 'adoptPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }],
+            successCriteria: [{ condition: '$statusCode == 200' }] },
+        ],
+      }],
+    },
+  });
+  await c.attachWorkingCopySource(wc.id, 'petstore', { sourceName: 'petstore' });
+
+  // Gate 1: an environment that does not allow drafts refuses with 403.
+  await assert.rejects(() => c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'production' }), (err) => err.status === 403);
+
+  // Gate 2: readiness — 'petstore' has no credential bound in development yet → 409 naming it.
+  await assert.rejects(() => c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development' }), (err) =>
+    err.status === 409 && /petstore/.test(err.problem?.detail ?? ''));
+  await c.createCredential({ sourceName: 'petstore', environment: 'development', authKind: 'httpBearer', secretRefs: [{ name: 'token', ref: 'vault://kv/dev/petstore#token' }] });
+
+  // §18 R5: advance is ASYNC — start/resume MARK the run and a runner advances it out-of-band, so the client PUMPS
+  // get-debug-run until it settles (it never trusts the mark response's un-advanced trace).
+  const SETTLED = new Set(['paused', 'suspended', 'completed', 'faulted', 'cancelled']);
+  const pump = async (runId) => {
+    let r;
+    for (let i = 0; i < 50; i++) { r = await c.getDebugRun(wc.id, runId); if (SETTLED.has(r.status)) return r; }
+    throw new Error(`debug run ${runId} did not settle (last: ${r?.status})`);
+  };
+
+  // Forward-only lifecycle: start enqueues (un-advanced 'running'); pumping observes paused-after-step-1.
+  const started = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', inputs: { petId: 'p-1' }, pause: { afterEachStep: true } });
+  assert.equal(started.status, 'running', 'the enqueue response is un-advanced — a runner advances it');
+  const run = await pump(started.debugRunId);
+  assert.equal(run.status, 'paused');
+  assert.equal(run.cursor, 1, 'paused after the first step');
+  assert.ok(run.trace.steps[0].requests?.length, 'the trace carries the as-sent exchange');
+
+  // Step over: the runs Skip verbatim — mark, then pump; the next step does not execute, its outputs are provided.
+  await c.resumeDebugRun(wc.id, started.debugRunId, { action: { mode: 'Skip', skipOutputs: { forced: true } }, pause: { afterEachStep: true } });
+  const over = await pump(started.debugRunId);
+  const skipped = over.trace.steps.find((s) => s.stepId === 'adopt');
+  assert.equal(skipped?.skipped, true, 'the stepped-over step did not execute');
+  assert.deepEqual(skipped?.outputs, { forced: true });
+  assert.equal(over.status, 'completed', 'skipping the final step completes the run');
+  await assert.rejects(() => c.resumeDebugRun(wc.id, started.debugRunId, {}), (err) => err.status === 409, 'terminal runs refuse resume');
+
+  const cancelled = await c.cancelDebugRun(wc.id, started.debugRunId);
+  assert.equal(cancelled.status, 'cancelled');
+
+  // §18 R5c: delete PURGES the run — its captured draft, metadata trace, and durable run — so it is then 404.
+  assert.equal(await c.deleteDebugRun(wc.id, started.debugRunId), undefined, 'delete returns 204 (no content)');
+  await assert.rejects(() => c.getDebugRun(wc.id, started.debugRunId), (err) => err.status === 404, 'a purged run is gone');
+
+  // §18 R-UI-3: a breakpoint rides pause.beforeSteps — the run advances to the named step and stops before it.
+  const bp = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', inputs: { petId: 'p-2' }, pause: { beforeSteps: ['adopt'] } });
+  assert.equal((await pump(bp.debugRunId)).status, 'paused', 'a breakpoint pauses the run before the named step');
+
+  // §18 R-UI-3b: the transient-fault illustration — the first HTTP step's endpoint is DOWN until retried, so the fault
+  // is transport-level (status-based onFailure never fires) and a RetryFaultedStep resume (endpoint recovered) clears it.
+  const tf = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', simulateTransientFault: true, pause: { afterEachStep: true } });
+  assert.equal((await pump(tf.debugRunId)).status, 'faulted', 'a down endpoint faults the step');
+  await c.resumeDebugRun(wc.id, tf.debugRunId, { action: { mode: 'RetryFaultedStep' }, pause: { afterEachStep: true } });
+  assert.notEqual((await pump(tf.debugRunId)).status, 'faulted', 'retrying the recovered endpoint clears the fault');
+
+  // §18 R-UI-3b2: the other ResumeRequest verbs also clear a transient fault (a remediation cycle passes) — Rewind
+  // (re-run from an earlier point) and StatePatch (correct the run context, then continue).
+  for (const action of [{ mode: 'Rewind', targetCursor: 0 }, { mode: 'StatePatch', patch: [{ op: 'replace', path: '/inputs/petId', value: 'p-9' }] }]) {
+    const r = await c.startDebugRun(wc.id, { workflowId: 'wf', environment: 'development', simulateTransientFault: true, pause: { afterEachStep: true } });
+    assert.equal((await pump(r.debugRunId)).status, 'faulted', `${action.mode}: the down endpoint faults first`);
+    await c.resumeDebugRun(wc.id, r.debugRunId, { action, pause: { afterEachStep: true } });
+    assert.notEqual((await pump(r.debugRunId)).status, 'faulted', `${action.mode} clears the transient fault`);
+  }
 });

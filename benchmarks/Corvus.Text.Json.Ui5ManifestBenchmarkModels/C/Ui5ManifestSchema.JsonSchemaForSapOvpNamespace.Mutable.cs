@@ -2964,5 +2964,185 @@ public readonly partial struct Ui5ManifestSchema
         {
             return workspace.CreateBuilder<JsonSchemaForSapOvpNamespace, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<JsonSchemaForSapOvpNamespace> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<JsonSchemaForSapOvpNamespace>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<JsonSchemaForSapOvpNamespace> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<JsonSchemaForSapOvpNamespace>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<JsonSchemaForSapOvpNamespace> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<JsonSchemaForSapOvpNamespace>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="cards">The value of the property.</param>
+        /// <param name="version">The value of the property.</param>
+        /// <param name="bHeaderExpanded">The value of the property.</param>
+        /// <param name="chartSettings">The value of the property.</param>
+        /// <param name="considerAnalyticalParameters">The value of the property.</param>
+        /// <param name="containerLayout">The value of the property.</param>
+        /// <param name="dataLoadSettings">The value of the property.</param>
+        /// <param name="disableErrorPage">The value of the property.</param>
+        /// <param name="disableTableCardFlexibility">The value of the property.</param>
+        /// <param name="enableLazyRendering">The value of the property.</param>
+        /// <param name="enableLiveFilter">The value of the property.</param>
+        /// <param name="filterSettings">The value of the property.</param>
+        /// <param name="globalFilterEntitySet">The value of the property.</param>
+        /// <param name="globalFilterEntityType">The value of the property.</param>
+        /// <param name="globalFilterModel">The value of the property.</param>
+        /// <param name="refreshIntervalInMinutes">The value of the property.</param>
+        /// <param name="refreshStrategyOnAppRestore">The value of the property.</param>
+        /// <param name="resizableLayout">The value of the property.</param>
+        /// <param name="showBasicSearch">The value of the property.</param>
+        /// <param name="showDateInRelativeFormat">The value of the property.</param>
+        /// <param name="smartVariantRequired">The value of the property.</param>
+        /// <param name="useDateRangeType">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<JsonSchemaForSapOvpNamespace> Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source cards, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source bHeaderExpanded = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source chartSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source considerAnalyticalParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source containerLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source dataLoadSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source disableErrorPage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source disableTableCardFlexibility = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source enableLazyRendering = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source enableLiveFilter = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source filterSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source globalFilterEntitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source globalFilterEntityType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source globalFilterModel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source refreshIntervalInMinutes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source refreshStrategyOnAppRestore = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source resizableLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source showBasicSearch = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source showDateInRelativeFormat = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source smartVariantRequired = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source useDateRangeType = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(cards, version, bHeaderExpanded, chartSettings, considerAnalyticalParameters, containerLayout, dataLoadSettings, disableErrorPage, disableTableCardFlexibility, enableLazyRendering, enableLiveFilter, filterSettings, globalFilterEntitySet, globalFilterEntityType, globalFilterModel, refreshIntervalInMinutes, refreshStrategyOnAppRestore, resizableLayout, showBasicSearch, showDateInRelativeFormat, smartVariantRequired, useDateRangeType);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<JsonSchemaForSapOvpNamespace>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="cards">The value of the property.</param>
+        /// <param name="version">The value of the property.</param>
+        /// <param name="bHeaderExpanded">The value of the property.</param>
+        /// <param name="chartSettings">The value of the property.</param>
+        /// <param name="considerAnalyticalParameters">The value of the property.</param>
+        /// <param name="containerLayout">The value of the property.</param>
+        /// <param name="dataLoadSettings">The value of the property.</param>
+        /// <param name="disableErrorPage">The value of the property.</param>
+        /// <param name="disableTableCardFlexibility">The value of the property.</param>
+        /// <param name="enableLazyRendering">The value of the property.</param>
+        /// <param name="enableLiveFilter">The value of the property.</param>
+        /// <param name="filterSettings">The value of the property.</param>
+        /// <param name="globalFilterEntitySet">The value of the property.</param>
+        /// <param name="globalFilterEntityType">The value of the property.</param>
+        /// <param name="globalFilterModel">The value of the property.</param>
+        /// <param name="refreshIntervalInMinutes">The value of the property.</param>
+        /// <param name="refreshStrategyOnAppRestore">The value of the property.</param>
+        /// <param name="resizableLayout">The value of the property.</param>
+        /// <param name="showBasicSearch">The value of the property.</param>
+        /// <param name="showDateInRelativeFormat">The value of the property.</param>
+        /// <param name="smartVariantRequired">The value of the property.</param>
+        /// <param name="useDateRangeType">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<JsonSchemaForSapOvpNamespace> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.CardsEntity.Source<TContext> cards, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Source bHeaderExpanded = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Source<TContext> chartSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Source considerAnalyticalParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Source containerLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Source<TContext> dataLoadSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Source disableErrorPage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Source disableTableCardFlexibility = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Source enableLazyRendering = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Source enableLiveFilter = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Source<TContext> filterSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntitySetEntity.Source globalFilterEntitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterEntityTypeEntity.Source globalFilterEntityType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.GlobalFilterModelEntity.Source globalFilterModel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Source refreshIntervalInMinutes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Source<TContext> refreshStrategyOnAppRestore = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ResizableLayoutEntity.Source<TContext> resizableLayout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Source showBasicSearch = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Source showDateInRelativeFormat = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source smartVariantRequired = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source useDateRangeType = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, cards, version, bHeaderExpanded, chartSettings, considerAnalyticalParameters, containerLayout, dataLoadSettings, disableErrorPage, disableTableCardFlexibility, enableLazyRendering, enableLiveFilter, filterSettings, globalFilterEntitySet, globalFilterEntityType, globalFilterModel, refreshIntervalInMinutes, refreshStrategyOnAppRestore, resizableLayout, showBasicSearch, showDateInRelativeFormat, smartVariantRequired, useDateRangeType);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<JsonSchemaForSapOvpNamespace>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

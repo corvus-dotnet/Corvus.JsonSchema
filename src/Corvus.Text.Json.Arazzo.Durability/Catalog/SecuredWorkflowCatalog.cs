@@ -148,6 +148,18 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // Same read-reach scoping and pushdown guard as SearchAsync — the count reuses the store's search predicate, so
+        // it counts exactly the catalog entries the caller could see (§14.2), never more.
+        SecurityFilter? reach = context.Reach(AccessVerb.Read);
+        RowSecurityPushdown.EnsureSupported(reach, this.catalog);
+        return this.catalog.CountAsync(query with { Security = reach }, cap, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<CatalogVersion>?> GetAsync(string baseWorkflowId, int versionNumber, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -348,9 +360,12 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<string>> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken)
     {
-        // The reverse administration index lives on the administrator store and is keyed by the identity digest. With no
-        // store configured (or the empty identity, which has no digest), the caller administers nothing.
-        if (this.administrators is not { } store || SecurityIdentityDigest.Compute(callerIdentity) is not { } digest)
+        // The reverse administration index lives on the administrator store, keyed by each administrator identity's digest.
+        // Under the membership model (§16.5.4) the caller administers a workflow iff one of its administrator identities is a
+        // subset of the caller's identity, so the query keys are the distinct-key SUBSET digests of the caller's identity.
+        // With no store configured (or the empty identity, whose subset set is empty), the caller administers nothing.
+        IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(callerIdentity);
+        if (this.administrators is not { } store || digests.Count == 0)
         {
             return [];
         }
@@ -365,7 +380,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         {
             while (true)
             {
-                using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 0, token, cancellationToken).ConfigureAwait(false);
+                using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digests, 0, token, cancellationToken).ConfigureAwait(false);
                 administered.AddRange(page.BaseWorkflowIds);
 
                 tokenDocument?.Dispose();
@@ -388,15 +403,11 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     // Wraps a continuation token's UTF-8 (a page's NextPageToken) as the JSON string value the store's paged read decodes
-    // it from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages.
+    // it from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages. The
+    // generated Create() escapes with the default encoder — byte-identical for our base64url tokens (pinned by
+    // PageTokenWrapEscapeEquivalenceTests) and still valid JSON if a token ever carries an escapable byte.
     private static ParsedJsonDocument<JsonString> WrapPageToken(ReadOnlyMemory<byte> tokenUtf8)
-    {
-        byte[] quoted = new byte[tokenUtf8.Length + 2];
-        quoted[0] = (byte)'"';
-        tokenUtf8.Span.CopyTo(quoted.AsSpan(1));
-        quoted[^1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(quoted);
-    }
+        => JsonString.Create(tokenUtf8.Span);
 
     // Materializes the initial administrator record for a freshly published version 1 (§15.2): the creator's stamped
     // identity (the version's tags with sys:workflow removed) becomes the sole, explicit, removable administrator. The
@@ -498,10 +509,11 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     // Read-only administration probe for the publish gate (§13/§14.2): whether the base id has an established administration
-    // and, if so, whether the candidate (the submitter's stamped identity) is one of its administrators — compared by tags
-    // set-equality, no identity-list materialization. An unknown base id (no explicit record and no version 1) is
-    // unestablished, so the submitter establishes administration by publishing version 1. Works whether or not an explicit
-    // administrator store is configured (the version-1 identity is the implicit default).
+    // and, if so, whether the candidate (the submitter's stamped identity) administers it by membership (§16.5.4) — the
+    // candidate CONTAINS a stored/derived administrator identity — no identity-list materialization. An unknown base id (no
+    // explicit record and no version 1) is unestablished, so the submitter establishes administration by publishing
+    // version 1. Works whether or not an explicit administrator store is configured (the version-1 identity is the implicit
+    // default).
     private async ValueTask<(bool Established, bool IsAdministrator)> CheckAdministrationAsync(string baseWorkflowId, SecurityTagSet candidate, CancellationToken cancellationToken)
     {
         if (this.administrators is { } store)
@@ -520,7 +532,11 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         }
 
         SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-        return (true, WorkflowIdentity.SameAdministrator(ownerIdentity, candidate));
+
+        // Membership (§16.5.4): the version-1 owner administers iff the candidate (submitter) identity CONTAINS the owner
+        // identity — the same rule the explicit-record path applies via IsAdministeredBy above, so the no-explicit-store /
+        // legacy fallback stays consistent with the stored-record deployment (S4).
+        return (true, ownerIdentity.IsSubsetOf(candidate));
     }
 
     // Loads the current administrators of a base id for a mutation: the explicit record (returned to keep its identities
@@ -584,7 +600,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
             try
             {
                 // An unknown base id, or a caller who is not a current administrator, is refused identically (non-disclosing).
-                if (admins.Count == 0 || !IsMember(admins, callerIdentity))
+                if (admins.Count == 0 || !IsAdministeredByMember(admins, callerIdentity))
                 {
                     activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-administered");
                     throw new WorkflowAdministrationException(baseWorkflowId);
@@ -627,12 +643,32 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         }
     }
 
-    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags).
+    // Whether a candidate identity is a member of a set (order-independent set equality on any entry's tags). This is the
+    // EXACT identity comparison used by the identity operations — add-idempotency (is this exact identity already present)
+    // and Dedupe (drop set-equal duplicates) — not the administration authorization gate; see IsAdministeredByMember.
     private static bool IsMember(List<AdministratorIdentity> admins, SecurityTagSet candidate)
     {
         foreach (AdministratorIdentity administrator in admins)
         {
             if (WorkflowIdentity.SameAdministrator(TagsOf(administrator), candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Whether a caller administers the set by MEMBERSHIP (§16.5.4): the caller's canonical identity CONTAINS (is a superset
+    // of) some administrator's identity. This is the mutation authorization gate, matching the forward publish check
+    // (WorkflowAdministrators.IsAdministeredBy) and the reverse index — a strict superset of a current administrator both
+    // administers and (post-S4) may manage the administrator set. Contrast IsMember, which is exact set-equality for the
+    // identity operations. The exact-digest paths (IndexOfDigest removal, Dedupe, the collision probe) stay exact.
+    private static bool IsAdministeredByMember(List<AdministratorIdentity> admins, SecurityTagSet caller)
+    {
+        foreach (AdministratorIdentity administrator in admins)
+        {
+            if (TagsOf(administrator).IsSubsetOf(caller))
             {
                 return true;
             }

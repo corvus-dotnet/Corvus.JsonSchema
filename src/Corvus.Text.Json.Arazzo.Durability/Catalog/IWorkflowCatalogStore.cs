@@ -62,6 +62,25 @@ public interface IWorkflowCatalogStore
     /// <returns>A page of matching versions.</returns>
     ValueTask<CatalogPage> QueryAsync(CatalogQuery query, CancellationToken cancellationToken);
 
+    /// <summary>Counts the catalog entries matching a search, <b>bounded</b> at <paramref name="cap"/> — the count-API
+    /// contract: the exact number at or below the cap, or <c>(cap, Capped: true)</c> beyond it, so a list footer renders
+    /// "<c>N</c>"/"<c>N+</c>" without materialising rows. Counts whatever the search returns: matching <em>versions</em>,
+    /// or (when <see cref="CatalogQuery.DistinctWorkflows"/> is set) distinct base workflows. Honours the query's
+    /// <see cref="CatalogQuery.Security"/> reach exactly as <see cref="QueryAsync"/> does.</summary>
+    /// <param name="query">The search; its <see cref="CatalogQuery.Limit"/> / <see cref="CatalogQuery.ContinuationToken"/> are ignored (the count is over the whole matching set, bounded by <paramref name="cap"/>).</param>
+    /// <param name="cap">The upper bound the count is capped at.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded count and whether it was capped.</returns>
+    /// <remarks>The default counts a single bounded page (<c>Limit = cap + 1</c>) — which already honours
+    /// <see cref="CatalogQuery.DistinctWorkflows"/> because <see cref="QueryAsync"/> collapses to one row per base
+    /// workflow in that mode; a backend that can count natively overrides it.</remarks>
+    async ValueTask<(int Count, bool Capped)> CountAsync(CatalogQuery query, int cap, CancellationToken cancellationToken)
+    {
+        using CatalogPage page = await this.QueryAsync(query with { Limit = cap + 1, ContinuationToken = default }, cancellationToken).ConfigureAwait(false);
+        int count = page.Versions.Count;
+        return count > cap ? (cap, true) : (count, false);
+    }
+
     /// <summary>Updates a version's mutable governance metadata (owner, tags, status), stamping the audit fields.</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
     /// <param name="versionNumber">The version number.</param>

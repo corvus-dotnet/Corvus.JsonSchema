@@ -1961,6 +1961,126 @@ public readonly partial struct LazygitSchema
             {
                 return workspace.CreateBuilder<Files, Mutable>(this);
             }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Files> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Files>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Files> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Files>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Files> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Files>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="amendLastCommit">The value of the property.</param>
+            /// <param name="commitChanges">The value of the property.</param>
+            /// <param name="commitChangesWithEditor">The value of the property.</param>
+            /// <param name="commitChangesWithoutHook">The value of the property.</param>
+            /// <param name="fetch">The value of the property.</param>
+            /// <param name="ignoreFile">The value of the property.</param>
+            /// <param name="openMergeTool">The value of the property.</param>
+            /// <param name="openStatusFilter">The value of the property.</param>
+            /// <param name="refreshFiles">The value of the property.</param>
+            /// <param name="stashAllChanges">The value of the property.</param>
+            /// <param name="toggleStagedAll">The value of the property.</param>
+            /// <param name="toggleTreeView">The value of the property.</param>
+            /// <param name="viewResetOptions">The value of the property.</param>
+            /// <param name="viewStashOptions">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<Files> Create(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source amendLastCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChanges = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChangesWithEditor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChangesWithoutHook = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source fetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source ignoreFile = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openMergeTool = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openStatusFilter = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source refreshFiles = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source stashAllChanges = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleStagedAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleTreeView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewResetOptions = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewStashOptions = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(amendLastCommit, commitChanges, commitChangesWithEditor, commitChangesWithoutHook, fetch, ignoreFile, openMergeTool, openStatusFilter, refreshFiles, stashAllChanges, toggleStagedAll, toggleTreeView, viewResetOptions, viewStashOptions);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<Files>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
         }
     }
 }

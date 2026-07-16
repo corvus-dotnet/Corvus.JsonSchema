@@ -33,6 +33,36 @@ describe('<arazzo-access-overview>', () => {
     ok(el.shadowRoot.querySelector('.who .gchip'), 'grantee chip shown');
   });
 
+  it('surfaces capability scopes (active vs eligible) and administered environments', async () => {
+    make();
+    mount(el);
+    // An operator whose identity matches the scope-bearing bindings (tenant=acme active, team=payments eligible)
+    // and the production/staging environment administrator grants (sys:sub=alice@ops).
+    selectGrantee({
+      kind: 'person',
+      value: 'alice@ops',
+      label: 'Alice (Ops)',
+      identity: [
+        { dimension: 'sys:sub', value: 'alice@ops' },
+        { dimension: 'tenant', value: 'acme' },
+        { dimension: 'team', value: 'payments' },
+      ],
+      source: 'directory',
+      complete: true,
+    });
+    await waitFor(() => el.shadowRoot.querySelector('.cap'));
+    const caps = [...el.shadowRoot.querySelectorAll('.cap')].map((c) => c.textContent.trim());
+    ok(caps.some((c) => c.startsWith('runs:read')), 'runs:read active capability shown');
+    ok(caps.some((c) => c.startsWith('runs:write')), 'runs:write active capability shown');
+    const eligible = [...el.shadowRoot.querySelectorAll('.cap.eligible')].map((c) => c.textContent);
+    equal(eligible.length, 1, 'one eligible-only capability');
+    ok(eligible[0].includes('runs:purge') && eligible[0].includes('(eligible)'), 'runs:purge marked eligible');
+    const sections = [...el.shadowRoot.querySelectorAll('.section')];
+    const envSection = sections.find((s) => s.querySelector('h4')?.textContent === 'Administers environments');
+    const envs = [...envSection.querySelectorAll('.row .grow')].map((r) => r.textContent.trim());
+    equal(envs.join(','), 'production,staging', 'administered environments listed');
+  });
+
   it('hides Revoke without security:write (scope honesty)', async () => {
     make('security:read');
     mount(el);

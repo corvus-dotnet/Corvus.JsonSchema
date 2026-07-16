@@ -3288,6 +3288,180 @@ public readonly partial struct Ui5ManifestSchema
             {
                 return workspace.CreateBuilder<RequiredContentDensitiesAndDependencies, Mutable>(this);
             }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredContentDensitiesAndDependencies> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredContentDensitiesAndDependencies>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredContentDensitiesAndDependencies> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredContentDensitiesAndDependencies>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredContentDensitiesAndDependencies> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredContentDensitiesAndDependencies>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="contentDensities">The value of the property.</param>
+            /// <param name="dependencies">The value of the property.</param>
+            /// <param name="version">The value of the property.</param>
+            /// <param name="appVariantId">The value of the property.</param>
+            /// <param name="appVariantIdHierarchy">The value of the property.</param>
+            /// <param name="autoPrefixId">The value of the property.</param>
+            /// <param name="commands">The value of the property.</param>
+            /// <param name="componentName">The value of the property.</param>
+            /// <param name="componentUsages">The value of the property.</param>
+            /// <param name="config">The value of the property.</param>
+            /// <param name="extends">The value of the property.</param>
+            /// <param name="flexExtensionPointEnabled">The value of the property.</param>
+            /// <param name="handleValidation">The value of the property.</param>
+            /// <param name="isCloudDevAdaptation">The value of the property.</param>
+            /// <param name="library">The value of the property.</param>
+            /// <param name="models">The value of the property.</param>
+            /// <param name="resourceRoots">The value of the property.</param>
+            /// <param name="resources">The value of the property.</param>
+            /// <param name="services">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredContentDensitiesAndDependencies> Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source contentDensities, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source dependencies, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source appVariantId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source appVariantIdHierarchy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source autoPrefixId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source commands = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source componentName = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source componentUsages = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source config = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source extends = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source flexExtensionPointEnabled = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source handleValidation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source isCloudDevAdaptation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source library = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source models = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source resourceRoots = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source services = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(contentDensities, dependencies, version, appVariantId, appVariantIdHierarchy, autoPrefixId, commands, componentName, componentUsages, config, extends, flexExtensionPointEnabled, handleValidation, isCloudDevAdaptation, library, models, resourceRoots, resources, services);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredContentDensitiesAndDependencies>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="contentDensities">The value of the property.</param>
+            /// <param name="dependencies">The value of the property.</param>
+            /// <param name="version">The value of the property.</param>
+            /// <param name="appVariantId">The value of the property.</param>
+            /// <param name="appVariantIdHierarchy">The value of the property.</param>
+            /// <param name="autoPrefixId">The value of the property.</param>
+            /// <param name="commands">The value of the property.</param>
+            /// <param name="componentName">The value of the property.</param>
+            /// <param name="componentUsages">The value of the property.</param>
+            /// <param name="config">The value of the property.</param>
+            /// <param name="extends">The value of the property.</param>
+            /// <param name="flexExtensionPointEnabled">The value of the property.</param>
+            /// <param name="handleValidation">The value of the property.</param>
+            /// <param name="isCloudDevAdaptation">The value of the property.</param>
+            /// <param name="library">The value of the property.</param>
+            /// <param name="models">The value of the property.</param>
+            /// <param name="resourceRoots">The value of the property.</param>
+            /// <param name="resources">The value of the property.</param>
+            /// <param name="services">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<RequiredContentDensitiesAndDependencies> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Source<TContext> contentDensities, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Source<TContext> dependencies, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source appVariantId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredAppVariantIdAndLayerAndVersionArray.Source<TContext> appVariantIdHierarchy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source autoPrefixId = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfUi5ShortcutCommands.Source<TContext> commands = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsANameOfTheUi5Component.Source componentName = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ComponentUsagesEntity.Source<TContext> componentUsages = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheStaticConfigurationForComponents.Source<TContext> config = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Source<TContext> extends = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Source flexExtensionPointEnabled = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Source handleValidation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Source isCloudDevAdaptation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Source<TContext> library = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ModelsEntity.Source<TContext> models = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.ResourceRootsEntity.Source<TContext> resourceRoots = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Source<TContext> resources = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsAListOfTheServices.Source<TContext> services = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, contentDensities, dependencies, version, appVariantId, appVariantIdHierarchy, autoPrefixId, commands, componentName, componentUsages, config, extends, flexExtensionPointEnabled, handleValidation, isCloudDevAdaptation, library, models, resourceRoots, resources, services);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<RequiredContentDensitiesAndDependencies>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
         }
     }
 }

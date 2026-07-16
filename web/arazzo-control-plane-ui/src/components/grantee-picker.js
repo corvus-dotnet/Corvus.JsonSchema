@@ -29,6 +29,24 @@ const DEBOUNCE_MS = 200;
 // /identity/capabilities' SupportedGranteeKinds.)
 const KINDS = ['person', 'team', 'role', 'workflow'];
 
+// The identity sources searched (§16.5.4): `directory` resolves REAL people/teams/roles from the configured IdP (fully
+// resolved, so `complete`); `observed` is the store-indexed typeahead of identities the control plane has seen. With no
+// pinned source the picker searches BOTH and merges, so "look yourself up" finds a directory person just as it finds a
+// store-observed one — the grantee search itself resolves one source per call.
+const SOURCES = ['directory', 'observed'];
+
+// Merges two grantee lists, de-duplicating by kind+value and preferring the first list's entry (the directory's fully
+// resolved identity over an observed partial for the same principal). Order-preserving: directory hits first.
+function mergeGrantees(primary, secondary) {
+  const byKey = new Map();
+  for (const g of primary) byKey.set(`${g.kind}:${g.value}`, g);
+  for (const g of secondary) {
+    const key = `${g.kind}:${g.value}`;
+    if (!byKey.has(key)) byKey.set(key, g);
+  }
+  return [...byKey.values()];
+}
+
 class ArazzoGranteePicker extends ArazzoElement {
   static get observedAttributes() {
     return ['placeholder', 'kind', 'kinds', 'source', 'base-url'];
@@ -120,11 +138,16 @@ class ArazzoGranteePicker extends ArazzoElement {
           <input class="q" type="search" part="input" autocomplete="off" role="combobox" aria-expanded="false"
                  aria-autocomplete="list" placeholder="${escapeHtml(placeholder)}" aria-label="${escapeHtml(placeholder)}">
         </div>
-        <ul class="results" role="listbox" hidden></ul>
+        <ul class="results" role="listbox" popover="manual" hidden></ul>
         <div class="selected" hidden></div>
         <div class="msg" hidden></div>
       </div>
     `;
+    // The results list is a top-layer popover so an overflow ancestor (a panel/dialog) can't clip it and it
+    // always paints above everything; JS anchors it to the input and flips it up when there's no room below.
+    // Where the Popover API is unavailable it stays an absolutely-positioned list (the prior behaviour).
+    this._popoverOk = typeof this.$('.results')?.showPopover === 'function';
+    if (this._popoverOk) this.$('.results').removeAttribute('hidden'); // the UA hides a popover until showPopover()
     this.renderKindFilter();
     const input = this.$('.q');
     input.addEventListener('input', () => {
@@ -142,6 +165,10 @@ class ArazzoGranteePicker extends ArazzoElement {
   disconnectedCallback() {
     clearTimeout(this._timer);
     if (this._onDocDown) document.removeEventListener('pointerdown', this._onDocDown);
+    if (this._reposition) {
+      window.removeEventListener('scroll', this._reposition, true);
+      window.removeEventListener('resize', this._reposition);
+    }
   }
 
   /** @private */
@@ -170,17 +197,25 @@ class ArazzoGranteePicker extends ArazzoElement {
     const selectedKind = this.kind;
     const allowed = this.allowedKinds;
     const restrict = !selectedKind && allowed.length < KINDS.length;
+    const limit = restrict ? SEARCH_LIMIT * 3 : SEARCH_LIMIT;
+    const opts = { q: q || undefined, kind: selectedKind || undefined, limit };
+    const pinned = this.getAttribute('source');
     try {
-      const { grantees } = await client.searchGrantees({
-        q: q || undefined,
-        kind: selectedKind || undefined,
-        source: this.getAttribute('source') || undefined,
-        limit: restrict ? SEARCH_LIMIT * 3 : SEARCH_LIMIT,
-      });
+      let grantees;
+      if (pinned) {
+        // A context that pins one source (e.g. an observed-only picker) searches just that.
+        ({ grantees } = await client.searchGrantees({ ...opts, source: pinned }));
+      } else {
+        // No pinned source: search the directory and the observed store together so a real person and a store-seen
+        // identity are both findable. Each source is independent — a failing / unconfigured source yields no results
+        // rather than starving the other; only when BOTH fail is it a real error.
+        const [directory, observed] = await Promise.all(SOURCES.map((source) => this.searchSource(client, opts, source)));
+        if (directory.error && observed.error) throw directory.error;
+        grantees = mergeGrantees(directory.grantees, observed.grantees);
+      }
       if (seq !== this._seq) return; // a newer keystroke superseded this response
-      this._results = restrict
-        ? grantees.filter((g) => allowed.includes(g.kind)).slice(0, SEARCH_LIMIT)
-        : grantees;
+      const filtered = restrict ? grantees.filter((g) => allowed.includes(g.kind)) : grantees;
+      this._results = filtered.slice(0, SEARCH_LIMIT);
       this.renderResults();
     } catch (problem) {
       if (seq !== this._seq) return;
@@ -188,6 +223,16 @@ class ArazzoGranteePicker extends ArazzoElement {
       this.hideResults();
       this.setMessage('Could not search grantees.', true);
       this.emit('error', { problem });
+    }
+  }
+
+  /** Searches one identity source, yielding its grantees (or an error to merge on) so one source can fail without starving the other. @private */
+  async searchSource(client, opts, source) {
+    try {
+      const { grantees } = await client.searchGrantees({ ...opts, source });
+      return { grantees: grantees || [] };
+    } catch (error) {
+      return { grantees: [], error };
     }
   }
 
@@ -292,13 +337,52 @@ class ArazzoGranteePicker extends ArazzoElement {
   /** @private */
   showResults() {
     const list = this.$('.results');
-    if (list) { list.hidden = false; this.$('.q')?.setAttribute('aria-expanded', 'true'); }
+    const input = this.$('.q');
+    if (!list || !input) return;
+    if (this._popoverOk) {
+      this.positionResults();
+      if (!list.matches(':popover-open')) list.showPopover();
+      // Keep it anchored while open (the panel scrolls / the window resizes underneath the top-layer list).
+      this._reposition ??= () => { if (list.matches(':popover-open')) this.positionResults(); };
+      window.addEventListener('scroll', this._reposition, true);
+      window.addEventListener('resize', this._reposition);
+    } else {
+      list.hidden = false;
+    }
+    input.setAttribute('aria-expanded', 'true');
+  }
+
+  /** @private — anchor the top-layer results to the input, flipping above when there is no room below. */
+  positionResults() {
+    const list = this.$('.results');
+    const input = this.$('.q');
+    if (!list || !input) return;
+    const r = input.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom;
+    const flipUp = below < 260 && r.top > below;
+    list.style.position = 'fixed';
+    list.style.margin = '0';
+    list.style.left = `${r.left}px`;
+    list.style.width = `${r.width}px`;
+    list.style.maxHeight = `${Math.max(160, (flipUp ? r.top : below) - 12)}px`;
+    if (flipUp) { list.style.top = 'auto'; list.style.bottom = `${window.innerHeight - r.top + 4}px`; }
+    else { list.style.bottom = 'auto'; list.style.top = `${r.bottom + 4}px`; }
   }
 
   /** @private */
   hideResults() {
     const list = this.$('.results');
-    if (list) { list.hidden = true; this.$('.q')?.setAttribute('aria-expanded', 'false'); }
+    if (!list) return;
+    if (this._popoverOk) {
+      if (list.matches(':popover-open')) list.hidePopover();
+      if (this._reposition) {
+        window.removeEventListener('scroll', this._reposition, true);
+        window.removeEventListener('resize', this._reposition);
+      }
+    } else {
+      list.hidden = true;
+    }
+    this.$('.q')?.setAttribute('aria-expanded', 'false');
   }
 
   /** @private */

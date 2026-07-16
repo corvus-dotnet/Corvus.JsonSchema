@@ -179,6 +179,87 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing.
+        if (identity.IsEmpty)
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
+        string kindToken = kind.ToToken();
+        string valueKey = (string)value;
+
+        // Table storage cannot match inside the serialized tags (reach is applied in memory), so the strict-superset
+        // overlap is a client-side scan: enumerate the primary entities (PartitionKey >= the primary floor, past the
+        // secondary digest-index partitions), read each Document, parse its identity, and keep those whose tag set
+        // strictly contains the authored identity (skipping the authored (kind, value)), up to the cap.
+        string primaryOnly = TableClient.CreateQueryFilter($"PartitionKey ge {PrimaryPartitionFloor}");
+        var keys = new List<EntityKey>();
+        await foreach (TableEntity keyEntity in this.identities.QueryAsync<TableEntity>(
+            primaryOnly, select: [SubjectKindColumn, SubjectValueColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (keyEntity.GetString(SubjectValueColumn) is { } subjectValue && keyEntity.GetString(SubjectKindColumn) is { } subjectKind)
+            {
+                keys.Add(new EntityKey(subjectValue, subjectKind));
+            }
+        }
+
+        keys.Sort(static (a, b) =>
+        {
+            int byValue = string.CompareOrdinal(a.SubjectValue, b.SubjectValue);
+            return byValue != 0 ? byValue : string.CompareOrdinal(a.SubjectKind, b.SubjectKind);
+        });
+
+        var docs = new PooledDocumentList<ObservedIdentity>(cap);
+        try
+        {
+            foreach (EntityKey key in keys)
+            {
+                if (docs.Count >= cap)
+                {
+                    break;
+                }
+
+                if (string.Equals(key.SubjectKind, kindToken, StringComparison.Ordinal) && string.Equals(key.SubjectValue, valueKey, StringComparison.Ordinal))
+                {
+                    continue; // the authored grantee itself
+                }
+
+                TableEntity entity = (await this.identities.GetEntityAsync<TableEntity>(
+                    PartitionKey(key.SubjectValue), RowKey(key.SubjectKind), [DocColumn], cancellationToken).ConfigureAwait(false)).Value;
+                if (entity.GetBinary(DocColumn) is not { } json)
+                {
+                    continue;
+                }
+
+                bool broadens;
+                using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json))
+                {
+                    SecurityTagSet candidateTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                        : SecurityTagSet.Empty;
+                    broadens = identity.IsSubsetOf(candidateTags) && !candidateTags.IsSubsetOf(identity);
+                }
+
+                if (broadens)
+                {
+                    docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(json));
+                }
+            }
+
+            return ObservedIdentityPage.Create(docs);
+        }
+        catch
+        {
+            docs.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ObservedIdentityPage> SearchAsync(AccessContext context, ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);

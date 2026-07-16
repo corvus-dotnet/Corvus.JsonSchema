@@ -62,7 +62,7 @@ public interface IApiSourcesClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
 
         /// <summary>
@@ -97,6 +97,26 @@ public interface IApiSourcesClient : IAsyncDisposable
     /// </summary>
     public static class SecurityRequirements
     {
+        /// <summary>
+        /// Gets the scopes required by <c>ListRegisteredSourceOperations</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRegisteredSourceOperationsOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ListRegisteredSourceOperations</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ListRegisteredSourceOperationsOpenIdConnectScopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>FetchSourceDocument</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] FetchSourceDocumentOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>FetchSourceDocument</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] FetchSourceDocumentOpenIdConnectScopes = ["sources:read"];
+
         /// <summary>
         /// Gets the scopes required by <c>ListSources</c> for the <c>Oauth2</c> scheme.
         /// </summary>
@@ -148,6 +168,16 @@ public interface IApiSourcesClient : IAsyncDisposable
         public static readonly string[] DeleteSourceOpenIdConnectScopes = ["sources:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountSources</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSourcesOauth2Scopes = ["sources:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountSources</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSourcesOpenIdConnectScopes = ["sources:read"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["sources:read", "sources:write"];
@@ -157,6 +187,26 @@ public interface IApiSourcesClient : IAsyncDisposable
         /// </summary>
         public static readonly string[] AllOpenIdConnectScopes = ["sources:read", "sources:write"];
     }
+
+    /// <summary>
+    /// List a registered source's operation surface
+    /// </summary>
+    /// <remarks>
+    /// Projects the registered source's operation surface (raw-JSON-Schema request/parameter/response shapes) — browse a source before attaching it. 404 when the source is absent or out of reach.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ListRegisteredSourceOperationsResponse> ListRegisteredSourceOperationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Fetch a source document from a web endpoint
+    /// </summary>
+    /// <remarks>
+    /// Fetches an OpenAPI/AsyncAPI/Arazzo document server-side (no browser CORS), optionally authenticating with a registered source credential referenced by (sourceName, environment). Returns the validated document with its detected type/version and content digest; the caller then attaches it to a working copy or registers it. 400 when the URL/scheme is not permitted, the payload is not a parseable JSON/YAML document, it declares no recognisable type, or fetching is not configured in this deployment; 404 when the referenced credential is absent or out of reach; 502 when the upstream endpoint fails.
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<FetchSourceDocumentResponse> FetchSourceDocumentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.FetchSourceRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List registered sources
@@ -209,4 +259,13 @@ public interface IApiSourcesClient : IAsyncDisposable
     /// <param name="name">The name parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<DeleteSourceResponse> DeleteSourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count registered sources
+    /// </summary>
+    /// <remarks>
+    /// Counts the registered sources the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountSourcesResponse> CountSourcesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

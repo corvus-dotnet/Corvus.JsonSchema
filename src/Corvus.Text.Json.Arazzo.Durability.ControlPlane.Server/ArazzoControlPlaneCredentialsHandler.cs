@@ -28,6 +28,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    // The server-side bound on /count: the store stops one row past this, so a busy list renders "100+" (design §16.5).
+    private const int CountCap = 100;
+
     private static readonly TimeSpan DefaultExpiringWindow = TimeSpan.FromDays(7);
 
     private readonly ISourceCredentialStore store;
@@ -91,6 +94,15 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             credentials: Models.CredentialBindingList.CredentialBindingSummaryArray.Build(in listContext, BuildSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return ListCredentialsResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountCredentialsResult> HandleCountCredentialsAsync(CountCredentialsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The same §14.2 read reach as HandleListCredentialsAsync (this.access.Current()), but the store returns only a
+        // bounded total, never rows (design §16.5: list footers). CountCap bounds it so a busy list renders "100+".
+        (int count, bool capped) = await this.store.CountAsync(this.access.Current(), CountCap, cancellationToken).ConfigureAwait(false);
+        return CountCredentialsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>

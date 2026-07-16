@@ -96,10 +96,10 @@ public readonly partial struct SecurityBindingWrite
             public static implicit operator int(Mutable value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static explicit operator long(Mutable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+            public static implicit operator long(Mutable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static explicit operator double(Mutable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+            public static implicit operator double(Mutable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator Corvus.Numerics.BigNumber(Mutable value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
@@ -582,6 +582,30 @@ public readonly partial struct SecurityBindingWrite
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
             return workspace.CreateBuilder<ResolutionOrderAscending, Mutable>(this);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ResolutionOrderAscending> Create(
+            scoped in Source value, int initialCapacity = 1)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ResolutionOrderAscending>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
         }
     }
 }

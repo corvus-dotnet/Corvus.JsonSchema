@@ -387,6 +387,14 @@ public sealed class DefaultValueJsonDocument(IJsonDocument inner) : IMutableJson
         => this.inner.CloneElementAsBuilder(index, workspace);
 
     /// <inheritdoc />
+    bool IJsonDocument.TryGetContiguousLocalElement(int index, out ReadOnlyMemory<byte> utf8, out int sourceTextOffset)
+        => this.inner.TryGetContiguousLocalElement(index, out utf8, out sourceTextOffset);
+
+    /// <inheritdoc />
+    int IJsonDocument.AppendLocalElementRowsRebased(int index, ref MetadataDb db, int locationDelta)
+        => this.inner.AppendLocalElementRowsRebased(index, ref db, locationDelta);
+
+    /// <inheritdoc />
     public int GetDbSize(int index, bool includeEndElement) => this.inner.GetDbSize(index, includeEndElement);
 
     /// <inheritdoc />

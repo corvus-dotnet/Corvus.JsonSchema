@@ -25,7 +25,7 @@ describe('<arazzo-environments>', () => {
     el = panelWithMock();
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rows(el).length, 2, 'production + staging');
+    equal(rows(el).length, 4, 'development + production + staging + uat');
     ok(el.shadowRoot.textContent.includes('Production'), 'shows the display name');
     ok(el.shadowRoot.textContent.includes('production'), 'shows the name');
   });
@@ -43,11 +43,24 @@ describe('<arazzo-environments>', () => {
     next.click();
     await page2;
     equal(rows(el).length, 1, 'page 2 holds the next environment');
+    ok(!el.shadowRoot.querySelector('.next').disabled, 'Next still enabled — uat follows');
+
+    const page3 = nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.next').click();
+    await page3;
+    equal(rows(el).length, 1, 'page 3 holds the next environment');
+    ok(!el.shadowRoot.querySelector('.next').disabled, 'Next still enabled — a fourth follows');
+
+    const page4 = nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.next').click();
+    await page4;
     ok(el.shadowRoot.querySelector('.next').disabled, 'Next disabled on the last page');
 
-    const back = nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.prev').click();
-    await back;
+    for (let back = 0; back < 3; back++) {
+      const landed = nextEvent(el, 'loaded');
+      el.shadowRoot.querySelector('.prev').click();
+      await landed;
+    }
     ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev disabled again back on page 1');
   });
 
@@ -110,6 +123,31 @@ describe('<arazzo-environments>', () => {
     const e = await created;
     equal(e.detail.environment.managementTags?.[0]?.key, 'team', 'management tag key persisted');
     equal(e.detail.environment.managementTags?.[0]?.value, 'qa', 'management tag value persisted');
+  });
+
+  it('creates an environment requiring evidence and toggles the flag in the detail (§4.6)', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    // Create with the promotion-readiness requirement checked.
+    el.shadowRoot.querySelector('.new').click();
+    const name = el.shadowRoot.querySelector('.f-name');
+    name.value = 'prod-eu'; name.dispatchEvent(new Event('input'));
+    const cb = el.shadowRoot.querySelector('.f-requireEvidence');
+    cb.checked = true; cb.dispatchEvent(new Event('change'));
+    const created = nextEvent(el, 'environment-created');
+    el.shadowRoot.querySelector('.confirm').click();
+    const e = await created;
+    equal(e.detail.environment.requireEvidence, true, 'the flag persisted on create');
+
+    // The detail shows it checked; unchecking + Save clears the requirement.
+    await waitFor(() => detail(el).querySelector('.d-requireEvidence'));
+    ok(detail(el).querySelector('.d-requireEvidence').checked, 'detail checkbox reflects the flag');
+    detail(el).querySelector('.d-requireEvidence').checked = false;
+    const changed = nextEvent(el, 'environment-changed');
+    detail(el).querySelector('.d-save').click();
+    const ch = await changed;
+    equal(ch.detail.environment.requireEvidence, false, 'unchecking clears the requirement');
   });
 
   it('re-tags management tags on update and the change is durable', async () => {

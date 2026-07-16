@@ -254,29 +254,29 @@ public readonly partial struct JsconfigSchema
                 }
             }
 
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf0_context);
-            context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
-
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf1_context);
-            context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
-
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf2_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf2_context);
-            context.CommitChildContext(hoistedAllOf2_context.IsMatch, ref hoistedAllOf2_context);
-
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf3_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf3_context);
-            context.CommitChildContext(hoistedAllOf3_context.IsMatch, ref hoistedAllOf3_context);
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf5_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf5_context);
+            context.CommitChildContext(hoistedAllOf5_context.IsMatch, ref hoistedAllOf5_context);
 
             allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf4_context.IsMatch;
             context.ApplyEvaluated(ref hoistedAllOf4_context);
             context.CommitChildContext(hoistedAllOf4_context.IsMatch, ref hoistedAllOf4_context);
 
-            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf5_context.IsMatch;
-            context.ApplyEvaluated(ref hoistedAllOf5_context);
-            context.CommitChildContext(hoistedAllOf5_context.IsMatch, ref hoistedAllOf5_context);
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf3_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf3_context);
+            context.CommitChildContext(hoistedAllOf3_context.IsMatch, ref hoistedAllOf3_context);
+
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf2_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf2_context);
+            context.CommitChildContext(hoistedAllOf2_context.IsMatch, ref hoistedAllOf2_context);
+
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf1_context);
+            context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
+
+            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
+            context.ApplyEvaluated(ref hoistedAllOf0_context);
+            context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
 
             context.EvaluatedKeyword(allOfComposedIsMatch, allOfComposedIsMatch  ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
         }

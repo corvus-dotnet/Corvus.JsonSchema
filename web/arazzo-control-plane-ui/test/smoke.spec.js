@@ -5,7 +5,9 @@ import { test, expect } from '@playwright/test';
 
 test('demo loads cleanly, lists runs, and opens the resume dialog for a faulted run', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -66,7 +68,9 @@ test('the time-window filter narrows the list', async ({ page }) => {
 
 test('the Catalog tab lists versions and opens a version detail with downloads', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -88,9 +92,48 @@ test('the Catalog tab lists versions and opens a version detail with downloads',
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('the Catalog detail compares two versions: overlay paints the diff, Text is disabled (§9.11)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Catalog' }).click();
+
+  // nightly-reconcile carries a real version history (v1 predates two steps v2/v3 add), so its detail offers
+  // "Compare with version…". Comparing the current version with v1 always yields added/removed steps.
+  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  const detail = page.locator('arazzo-catalog-detail');
+  await expect(detail).toBeVisible();
+  const compareWith = detail.locator('.compare-with');
+  await expect(compareWith).toBeVisible();
+  await compareWith.selectOption({ index: 1 }); // the first sibling version (whichever is current)
+
+  const compare = detail.locator('arazzo-workflow-compare');
+  await expect(compare.locator('dialog[open]')).toBeVisible();
+  await expect(compare.locator('.legend')).not.toHaveText('No differences in this workflow');
+  await expect(compare.locator('.legend')).toContainText(/added|changed|removed/);
+  // At least one classified node paints in side-by-side.
+  await expect(compare.locator('arazzo-design-surface .node.df-added, arazzo-design-surface .node.df-changed').first()).toBeVisible();
+
+  // Overlay mode: one union surface with the diff-overlay class.
+  await compare.locator('.mode[data-mode="overlay"]').click();
+  await expect(compare.locator('.side-overlay arazzo-design-surface')).toBeVisible();
+  await expect(compare.locator('.side-left arazzo-design-surface')).toHaveCount(0);
+
+  // Text mode: a CodeMirror MergeView over the two documents (loads the vendored bundle lazily).
+  await compare.locator('.mode[data-mode="text"]').click();
+  await expect(compare.locator('.textmerge .cm-mergeView')).toBeVisible();
+  await expect(compare.locator('.textmerge .cm-editor')).toHaveCount(2);
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('the Runners tab shows the registered execution hosts and their health', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -111,7 +154,9 @@ test('the Runners tab shows the registered execution hosts and their health', as
 
 test('the Catalog detail shows the promotion matrix and makes a version available', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -135,7 +180,9 @@ test('the Catalog detail shows the promotion matrix and makes a version availabl
 
 test('the persona toggle gates promotion: Operator must request, Administrator makes directly', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -172,7 +219,9 @@ test('the persona toggle gates promotion: Operator must request, Administrator m
 
 test('the Catalog Add wizard reuses a registered source and versions the workflow', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -218,7 +267,9 @@ test('the Catalog Add wizard reuses a registered source and versions the workflo
 
 test('the Environments tab lists environments and opens one to administer it', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -264,7 +315,9 @@ test('Grants and Rules live on the Permissions tab; Access holds the request inb
 
 test('the Promotions tab shows the requester’s own promotion requests and the approver inbox', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -289,7 +342,9 @@ test('the Promotions tab shows the requester’s own promotion requests and the 
 
 test('the Runner auth tab opens the approver inbox of runners awaiting authorization (§5.5)', async ({ page }) => {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
 
   await page.goto('/demo/index.html');
@@ -303,6 +358,281 @@ test('the Runner auth tab opens the approver inbox of runners awaiting authoriza
   await expect(rows.first()).toBeVisible();
   await expect(inbox.locator('.act[data-action="authorize"]').first()).toBeVisible();
   await expect(inbox.locator('.act[data-action="revoke"]').first()).toBeVisible();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('an operation dropped onto the designer starts templated from its documented responses', async ({ page }) => {
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('[data-tab="sources"]').click();
+
+  // Keyboard activation is the non-pointer path of drag-onto-canvas: it creates the bound step.
+  // sources list collapsed now — expand the first source group to reach its operations
+  await page.locator('arazzo-operation-browser .group-head.toggle').first().click();
+  const op = page.locator('arazzo-operation-browser button.op:not(.wfop)').first();
+  await op.focus();
+  await page.keyboard.press('Enter');
+
+  // The step arrives with its contract, not blank: criteria from the documented success code
+  // and a failure action per documented error — no template button involved. The new step is
+  // selected, so the inspector shows them (CodeMirror virtualises the text tab; assert here).
+  await page.locator('[data-tab="inspect"]').click();
+  await expect(page.locator('arazzo-step-inspector')).toContainText('on-400');
+  await expect(page.locator('arazzo-step-inspector')).toContainText('$statusCode == 200');
+  // The declared parameters arrive with the step too — nothing schema-derivable hides behind a button.
+  await expect(page.locator('arazzo-step-inspector .prow .pfixed').first()).toContainText('checks');
+});
+
+test('the workflow inputs are authored with the typed schema editor, not a textarea (§15-8)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#surface .node').first().waitFor({ state: 'attached' }); // canvas projected
+  // Selecting the workflow's START node scopes the inspector to the inputs schema (the node sits off-canvas
+  // until fit, so drive the surface's own selection event). The nested schema editor lives two shadow roots
+  // deep; traverse it directly in one evaluate rather than through Playwright's cross-shadow locator.
+  const seen = await page.evaluate(() => {
+    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
+      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
+    }));
+    const wi = document.querySelector('arazzo-workflow-inspector');
+    const se = wi?.shadowRoot?.querySelector('arazzo-schema-editor');
+    return {
+      hasEditor: !!se,
+      noTextarea: !wi?.shadowRoot?.querySelector('textarea.inputs'),
+      hasRow: !!se?.shadowRoot?.querySelector('.rowline .name'),
+      hasToggle: !!se?.shadowRoot?.querySelector('.t-json'),
+    };
+  });
+  expect(seen.hasEditor, 'the inputs are authored by the schema editor').toBe(true);
+  expect(seen.noTextarea, 'the old guarded textarea is gone').toBe(true);
+  expect(seen.hasRow && seen.hasToggle, 'the Form tier renders rows + the Form|JSON toggle').toBe(true);
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('the inputs schema editor offers the library $ref picker (§6)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#surface .node').first().waitFor({ state: 'attached' });
+  const seen = await page.evaluate(() => {
+    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
+      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
+    }));
+    const se = document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor');
+    if (!se) return { ok: false };
+    se.library = { Address: { type: 'object', properties: { city: { type: 'string' } } } }; // a library → shared types lead the type menu
+    const typeSel = se.shadowRoot.querySelector('select.type');
+    const opts = typeSel ? [...typeSel.querySelectorAll('optgroup[label="Shared types"] option')].map((o) => o.value) : [];
+    return { ok: true, hasShared: opts.length > 0, hasAddress: opts.includes('ref:Address') };
+  });
+  expect(seen.ok && seen.hasShared, 'shared library types lead the type menu when a library exists').toBe(true);
+  expect(seen.hasAddress, 'the library schema is offered').toBe(true);
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('a nonsense inputs schema authored in the JSON tier surfaces a positioned Problems finding (§8)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#surface .node').first().waitFor({ state: 'attached' });
+
+  // Scope the inspector to the workflow inputs (START node), then wait for the schema editor to mount.
+  await page.evaluate(() => {
+    document.querySelector('#surface').dispatchEvent(new CustomEvent('selection-changed', {
+      detail: { selection: { type: 'node', id: '#start' } }, bubbles: true, composed: true,
+    }));
+  });
+  await expect.poll(async () => page.evaluate(() =>
+    !!document.querySelector('arazzo-workflow-inspector')?.shadowRoot?.querySelector('arazzo-schema-editor'),
+  )).toBe(true);
+
+  // Author a nonsense schema ("type": 123 — type must be a string) in the JSON tier. The guarded-json
+  // textarea commits on input the moment it parses, so this emits schema-changed → autosave → validate.
+  await page.evaluate(() => {
+    const se = document.querySelector('arazzo-workflow-inspector').shadowRoot.querySelector('arazzo-schema-editor');
+    se.shadowRoot.querySelector('.t-json').click();
+    const ta = se.shadowRoot.querySelector('textarea.json');
+    ta.value = '{"type": 123}';
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  // The mock's inputs meta-validation (mirror of the server's pass 4) surfaces a positioned finding: the
+  // Problems badge lights and the tray lists it under the workflow's inputs, at the offending keyword.
+  const badge = page.locator('#problems-badge');
+  await expect.poll(async () => Number((await badge.textContent().catch(() => '0')) || '0'), { timeout: 8000 }).toBeGreaterThan(0);
+  await page.locator('[data-tab="problems"]').click();
+  await expect(page.locator('#problems')).toContainText('/workflows/0/inputs/type');
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('§18 debug run: starting against a dev environment pumps get-debug-run to a paused state (R5 async)', async ({ page }) => {
+  const errors = [];
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+
+  // ▶ Run offers the development debug-run environment (§18: allowsDraftRuns, its sources credentialed there).
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await page.locator('#run-inputs-env').selectOption('development');
+  // §18 R-UI-3c: the run dialog shows per-source credential readiness for the chosen environment BEFORE starting.
+  await expect(page.locator('#run-inputs-readiness')).toContainText(/payments ✓/);
+  await expect(page.locator('#run-inputs-readiness')).toContainText(/order-events ✓/);
+  await dlg.locator('.ri-run').click();
+
+  // §18 R5: the control plane MARKS the run and returns un-advanced; the dock must PUMP get-debug-run until a runner
+  // advances it. So the dock first shows "waiting for runner…", then settles at the run's natural stop — proving the
+  // browser poll loop drives progress rather than trusting the (now un-advanced) enqueue response. ▶ Run (no
+  // breakpoints) runs to the end or the first durable wait; this workflow's await-confirmation is an AsyncAPI receive,
+  // so with no message injected the run settles at SUSPENDED (a debug run that single-steps is ⏭ Step, not ▶ Run).
+  await expect(page.locator('#debug-dock')).toBeVisible();
+  await expect(page.locator('#save-status')).toHaveText(/debug run suspended in development/i, { timeout: 5000 });
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('§18 debug run: a transient fault surfaces ↻ Retry, which recovers the run (R-UI-3b)', async ({ page }) => {
+  const errors = [];
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await page.locator('#run-inputs-env').selectOption('development');
+  await page.locator('#run-inputs-fault-cb').check(); // opt into the transient-fault illustration
+  await dlg.locator('.ri-run').click();
+
+  // §18 R-UI-3b: validate-order's endpoint is DOWN on the first attempt → the durable run faults (transport-level, not
+  // caught by status-based onFailure) and the dock offers ↻ Retry.
+  await expect(page.locator('#debug-dock')).toBeVisible();
+  await expect(page.locator('#save-status')).toHaveText(/debug run faulted in development/i, { timeout: 5000 });
+  const retry = page.locator('#retry-faulted');
+  await expect(retry).toBeVisible();
+
+  // Retry — the endpoint recovered → the run advances past the fault (no longer faulted), faithfully to a real service.
+  await retry.click();
+  await expect(page.locator('#save-status')).not.toHaveText(/faulted/i, { timeout: 5000 });
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('§18 debug run: the ⚕ Remediate menu resolves working-copy steps and clears the fault (R-UI-3b2)', async ({ page }) => {
+  const errors = [];
+  // Ignore benign resource-load 404s (the standalone demo has no BFF, so <arazzo-auth-status>'s /me probe 404s by
+  // design and the element stays hidden); real failures surface as pageerrors or app console.error, not resource loads.
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#simulate').click();
+  await expect(page.locator('#run-inputs-dialog')).toBeVisible();
+  await page.locator('#run-inputs-env').selectOption('development');
+  await page.locator('#run-inputs-fault-cb').check();
+  await page.locator('#run-inputs-dialog .ri-run').click();
+  await expect(page.locator('#save-status')).toHaveText(/faulted in development/i, { timeout: 5000 });
+
+  // Open the full remediation menu — the runs-view resume-dialog, reused for the debug run.
+  await page.locator('#remediate').click();
+  const dlg = page.locator('#debug-remediate-dialog');
+  await expect(dlg.locator('dialog')).toBeVisible();
+
+  // §18 R-UI-3b2: the step picker resolves the WORKING-COPY steps (de-coupled from the catalog) — Skip lists the
+  // later steps by name, which only works if the picker took the supplied steps rather than a catalog lookup.
+  await dlg.locator('input[name="mode"][value="Skip"]').check();
+  await expect(dlg.locator('.skip-picker')).toContainText(/authorize-payment|await-confirmation|capture-payment/);
+
+  // Remediate via Retry (the endpoint recovered) through the dialog → resumeDebugRun clears the fault.
+  await dlg.locator('input[name="mode"][value="RetryFaultedStep"]').check();
+  await dlg.locator('.confirm').click();
+  await expect(page.locator('#save-status')).not.toHaveText(/faulted/i, { timeout: 5000 });
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('§15-8a step-into: the tray descends into a sub-workflow trace, the canvas follows, the breadcrumb returns', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#workflow').selectOption('order-with-compensation');
+
+  // Simulate against the mocks (the dialog's default target).
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await dlg.locator('.ri-run').click();
+
+  // The parent step offers ⤵; descending shows the child's steps, the breadcrumb, and the canvas follows.
+  const tray = page.locator('arazzo-debug-tray');
+  const into = tray.locator('[data-into]').first();
+  await expect(into).toBeVisible();
+  await into.click();
+  await expect(tray.locator('.crumb')).toBeVisible();
+  await expect(tray.getByText('validate-order').first()).toBeVisible();
+  await expect(page.locator('#workflow')).toHaveValue('place-order');
+
+  // Breadcrumb back: the parent trace and the parent canvas return.
+  await tray.locator('.crumb .up').click();
+  await expect(tray.locator('.crumb')).toHaveCount(0);
+  await expect(page.locator('#workflow')).toHaveValue('order-with-compensation');
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('§15-8a scoped stop: run-to-here inside a focused sub-workflow pauses at the scoped position', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/designer.html');
+  await page.locator('arazzo-workspace-table').getByText('Order processing').click();
+  await page.locator('#workflow').selectOption('order-with-compensation');
+
+  // Run once so a trace exists, then step INTO the sub-workflow (the canvas focuses place-order).
+  await page.locator('#simulate').click();
+  const dlg = page.locator('#run-inputs-dialog');
+  await expect(dlg).toBeVisible();
+  await dlg.locator('.ri-run').click();
+  const tray = page.locator('arazzo-debug-tray');
+  await tray.locator('[data-into]').first().click();
+  await expect(page.locator('#workflow')).toHaveValue('place-order');
+
+  // Run-to-here on a node of the FOCUSED child canvas: the designer composes the scoped path
+  // (run-order/authorize-payment — a step BEFORE the child's message wait, so the stop is reachable),
+  // the mock matches it inside the child, and the trace pauses there with the full scoped path on
+  // the outcome chip (§3.5).
+  const node = page.locator('arazzo-design-surface .node[data-id="authorize-payment"]');
+  await node.click(); // settle the selection (the side panel opening shifts layout) before the second tap
+  await node.dblclick();
+  await expect(tray.getByText(/paused before run-order\/authorize-payment/).first()).toBeVisible();
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });

@@ -5,6 +5,8 @@
 //   const value = b.value;   // the assembled value (throws a friendly Error on invalid input)
 //
 // Properties : .descriptor (a TypeDescriptor — usually an object whose `properties` are the fields), .value,
+//              .seed (an existing value the form prefills from — set BEFORE .descriptor so the render sees it;
+//              editing an existing value is seeding + reading, the same as creating),
 //              .validator (optional `async (value) => { valid, errors[] }` — when set, the editor validates on
 //              edit and shows each error next to the field its `instancePath` maps to, plus an unplaced summary)
 // Events     : (none; the host reads .value on submit)
@@ -13,8 +15,14 @@
 // inputs, number inputs with min/max/step, enum dropdowns, checkboxes, nested objects, unions, tuples, maps,
 // add/remove arrays), and falls back to a raw-JSON textarea for anything it can't type. Used as the output
 // editor for Skip's `skipOutputs`; a future state-patch builder can reuse it to edit each operation's value.
+//
+// It also accepts RAW (un-baked) schemas: every node is passed through `normalizeDescriptor` (schema-descriptor.js)
+// at the buildField boundary, so a raw `oneOf`/`anyOf` renders the union chooser and a simple `allOf` its merged
+// form — combiner-free schemas and already-baked descriptors are unchanged. It does NOT resolve `$ref` (that stays
+// the baked path's job), so a reference-rooted schema still degrades to the raw-JSON fallback.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { normalizeDescriptor } from '../schema-descriptor.js';
 
 const VALIDATE_DEBOUNCE_MS = 350;
 
@@ -40,6 +48,14 @@ class ArazzoValueEditor extends ArazzoElement {
   set descriptor(value) {
     this._descriptor = value;
     if (this.isConnected) { if (!this._built) this.renderShell(); this.renderForm(); }
+  }
+
+  /** An existing value the form prefills from (set before `descriptor`; the next render consumes it). */
+  get seed() { return this._seed; }
+
+  set seed(value) {
+    this._seed = value;
+    if (this.isConnected && this._descriptor !== null) { if (!this._built) this.renderShell(); this.renderForm(); }
   }
 
   /** An optional `async (value) => { valid, errors }` validator; when set, the editor validates live on edit. */
@@ -79,6 +95,8 @@ class ArazzoValueEditor extends ArazzoElement {
         select { padding-right: 30px; }
         textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
         fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; margin: 0; display: grid; gap: 10px; }
+        input[type="number"] { max-width: 18ch; }
+        input[type="date"], input[type="time"], input[type="datetime-local"] { max-width: 26ch; }
         legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
         .array-items { display: grid; gap: 6px; }
         .array-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }
@@ -122,7 +140,9 @@ class ArazzoValueEditor extends ArazzoElement {
     this._errorTargets = [];
     this._clearErrors();
 
-    const descriptor = this._descriptor;
+    // Evaluate the empty-schema guard against the NORMALIZED descriptor so a raw simple `allOf` (no top-level
+    // `properties`) renders its merged form instead of being swallowed to the raw-JSON fallback (§3.2a / slice C).
+    const descriptor = normalizeDescriptor(this._descriptor);
     const noFields = !descriptor || typeof descriptor !== 'object'
       || (descriptor.type === 'object'
         && (!descriptor.properties || Object.keys(descriptor.properties).length === 0)
@@ -133,13 +153,13 @@ class ArazzoValueEditor extends ArazzoElement {
       const hint = document.createElement('div');
       hint.className = 'empty';
       hint.textContent = 'No typed schema available — enter a JSON object.';
-      const built = unknownField({ type: 'unknown' }, { name: null, required: false, path: rootPath, editor: this });
+      const built = unknownField({ type: 'unknown' }, { name: null, required: false, path: rootPath, editor: this, seed: this._seed });
       root.append(hint, built.node);
       this._read = built.read;
       return;
     }
 
-    const built = buildField(descriptor, { name: null, required: false, path: rootPath, editor: this });
+    const built = buildField(descriptor, { name: null, required: false, path: rootPath, editor: this, seed: this._seed });
     root.appendChild(built.node);
     this._read = built.read;
   }
@@ -271,7 +291,12 @@ function attachError(container, ctx, pathFn) {
  * @param {{ name: (string|null), required: boolean }} ctx
  * @returns {{ node: HTMLElement, read: () => any }}
  */
-function buildField(d, ctx) {
+function buildField(rawD, ctx) {
+  // Normalize raw combiner schemas at the node boundary (schema-form §3.2a): raw oneOf/anyOf → a union
+  // descriptor, a simple allOf → a merged object. Baked descriptors and plain typed schemas pass through
+  // unchanged, so combiner-free inputs render identically. Recursion re-enters here, so nested combiners
+  // normalize as encountered. Refs are NOT resolved (that stays the baked path's job).
+  const d = normalizeDescriptor(rawD);
   const type = d?.type;
 
   if (d && d.const !== undefined) {
@@ -357,10 +382,11 @@ function objectField(d, ctx) {
     return { node: wrap, read: () => undefined };
   }
 
+  const seed = (ctx.seed && typeof ctx.seed === 'object' && !Array.isArray(ctx.seed)) ? ctx.seed : null;
   const readers = [];
   for (const name of names) {
     const childPath = () => { const p = ctx.path(); return p == null ? null : `${p}/${escapePointer(name)}`; };
-    const childCtx = { name, required: required.has(name), path: childPath, editor: ctx.editor };
+    const childCtx = { name, required: required.has(name), path: childPath, editor: ctx.editor, seed: seed?.[name] };
     const field = document.createElement('div');
     field.className = childCtx.required ? 'field required' : 'field';
     const built = buildField(props[name], childCtx);
@@ -391,7 +417,8 @@ function objectField(d, ctx) {
   // A free-form map (additionalProperties): arbitrary user-named keys whose values follow one schema.
   let readMap = () => ({});
   if (mapValue) {
-    const map = mapField(mapValue, ctx);
+    const leftover = seed ? Object.fromEntries(Object.entries(seed).filter(([k]) => !(k in props))) : undefined;
+    const map = mapField(mapValue, { ...ctx, seed: leftover });
     wrap.appendChild(map.node);
     readMap = map.read;
   }
@@ -424,16 +451,17 @@ function mapField(valueDesc, ctx) {
   add.textContent = '+ Add entry';
   const rows = [];
 
-  const addRow = () => {
+  const addRow = (seedKey, seedValue) => {
     const row = document.createElement('div');
     row.className = 'map-row';
     const key = document.createElement('input');
     key.type = 'text';
     key.placeholder = 'key';
     key.className = 'map-key';
+    if (typeof seedKey === 'string') key.value = seedKey;
     // The value's path follows the live key (a map entry is `<parent>/<key>`).
     const valuePath = () => { const p = ctx.path(); const k = key.value.trim(); return (p == null || !k) ? null : `${p}/${escapePointer(k)}`; };
-    const built = buildField(valueDesc, { name: null, required: false, path: valuePath, editor: ctx.editor });
+    const built = buildField(valueDesc, { name: null, required: false, path: valuePath, editor: ctx.editor, seed: seedValue });
     const rm = removeButton();
     const entry = { key, read: built.read, row };
     rm.addEventListener('click', () => { row.remove(); const i = rows.indexOf(entry); if (i >= 0) rows.splice(i, 1); ctx.editor?._scheduleValidation(); });
@@ -443,7 +471,11 @@ function mapField(valueDesc, ctx) {
     rows.push(entry);
   };
 
-  add.addEventListener('click', addRow);
+  add.addEventListener('click', () => addRow());
+  if (ctx.seed && typeof ctx.seed === 'object' && !Array.isArray(ctx.seed)) {
+    for (const [k, v] of Object.entries(ctx.seed)) addRow(k, v);
+  }
+
   wrap.append(head, items, add);
   return {
     node: wrap,
@@ -471,22 +503,43 @@ function unionField(d, ctx) {
   const slot = document.createElement('div');
   slot.className = 'union-slot';
   let current = null;
+  let pendingSeed = ctx.seed; // consumed by the FIRST build only; switching variants starts clean
 
   const rebuild = () => {
     slot.replaceChildren();
     current = null;
     if (select.value === '') return;
     const variant = variants[Number(select.value)];
+    const seed = pendingSeed;
+    pendingSeed = undefined;
     // A union adds no path segment — the chosen variant's value lives at the union's own path.
-    current = buildField(variant, { name: null, required: true, path: ctx.path, editor: ctx.editor });
+    current = buildField(variant, { name: null, required: true, path: ctx.path, editor: ctx.editor, seed });
     slot.appendChild(current.node);
   };
   select.addEventListener('change', rebuild);
   wrap.append(select, slot);
+  if (ctx.seed !== undefined) {
+    select.value = String(seedVariantIndex(variants, d.discriminator, ctx.seed));
+    rebuild();
+  }
   return {
     node: wrap,
     read: () => (current ? current.read() : undefined),
   };
+}
+
+/** The variant a seed value belongs to: the discriminator match when one names it, else the first. */
+function seedVariantIndex(variants, discriminator, seed) {
+  if (discriminator && seed && typeof seed === 'object') {
+    const tag = seed[discriminator];
+    const i = variants.findIndex((v) => {
+      const disc = v?.properties?.[discriminator];
+      return disc && (disc.const === tag || (Array.isArray(disc.enum) && disc.enum.includes(tag)));
+    });
+    if (i >= 0) return i;
+  }
+
+  return 0;
 }
 
 /** A label for a union variant: its title, else the discriminator's const value, else its type. */
@@ -506,11 +559,12 @@ function tupleField(d, ctx) {
   wrap.className = 'tuple fields';
   const slotReaders = [];
 
+  const seed = Array.isArray(ctx.seed) ? ctx.seed : null;
   prefix.forEach((pd, i) => {
     const field = document.createElement('div');
     field.className = 'field';
     const slotPath = () => { const p = ctx.path(); return p == null ? null : `${p}/${i}`; };
-    const childCtx = { name: pd?.title || `#${i + 1}`, required: false, path: slotPath, editor: ctx.editor };
+    const childCtx = { name: pd?.title || `#${i + 1}`, required: false, path: slotPath, editor: ctx.editor, seed: seed?.[i] };
     const built = buildField(pd, childCtx);
     if (pd?.type !== 'object') {
       const label = document.createElement('label');
@@ -527,7 +581,7 @@ function tupleField(d, ctx) {
 
   let readExtra = () => undefined;
   if (d.items && typeof d.items === 'object') {
-    const extra = arrayField({ type: 'array', items: d.items }, { name: null, required: false, path: ctx.path, editor: ctx.editor });
+    const extra = arrayField({ type: 'array', items: d.items }, { name: null, required: false, path: ctx.path, editor: ctx.editor, seed: seed?.slice(prefix.length) });
     const label = document.createElement('div');
     label.className = 'desc';
     label.textContent = 'Additional items';
@@ -563,6 +617,11 @@ function enumField(d, ctx) {
   const select = document.createElement('select');
   select.innerHTML = `<option value="">${ctx.required ? '— choose —' : '— none —'}</option>`
     + d.enum.map((v, i) => `<option value="${i}">${escapeHtml(String(v))}</option>`).join('');
+  if (ctx.seed !== undefined) {
+    const i = d.enum.findIndex((v) => v === ctx.seed || JSON.stringify(v) === JSON.stringify(ctx.seed));
+    if (i >= 0) select.value = String(i);
+  }
+
   return {
     node: select,
     read: () => (select.value === '' ? undefined : d.enum[Number(select.value)]),
@@ -570,9 +629,9 @@ function enumField(d, ctx) {
 }
 
 function booleanField(d, ctx) {
-  void ctx;
   const input = document.createElement('input');
   input.type = 'checkbox';
+  input.checked = ctx.seed === true;
   return { node: input, read: () => input.checked };
 }
 
@@ -584,6 +643,7 @@ function numberField(d, ctx) {
   else input.step = 'any';
   if (d.minimum != null) input.min = String(d.minimum);
   if (d.maximum != null) input.max = String(d.maximum);
+  if (typeof ctx.seed === 'number') input.value = String(ctx.seed);
   return {
     node: input,
     read: () => {
@@ -606,6 +666,13 @@ function stringField(d, ctx) {
   if (d.maxLength != null) input.maxLength = Number(d.maxLength);
   if (d.pattern) input.pattern = d.pattern;
   if (d.format && !STRING_FORMAT_INPUT[d.format]) input.placeholder = d.format;
+  if (typeof ctx.seed === 'string') {
+    // datetime-local rejects zoned instants; seed the control-shaped slice.
+    input.value = d.format === 'date-time' && !Number.isNaN(Date.parse(ctx.seed))
+      ? new Date(ctx.seed).toISOString().slice(0, 16)
+      : ctx.seed;
+  }
+
   return {
     node: input,
     read: () => {
@@ -646,11 +713,12 @@ function arrayField(d, ctx) {
     return null;
   };
 
-  const addInlineRow = () => {
+  const addInlineRow = (startEditing, seed) => {
+    void startEditing;
     const row = document.createElement('div');
     row.className = 'array-row';
     const entry = { read: null, row };
-    const built = buildField(itemDesc, { name: null, required: false, path: rowPath(entry), editor: ctx.editor });
+    const built = buildField(itemDesc, { name: null, required: false, path: rowPath(entry), editor: ctx.editor, seed });
     entry.read = built.read;
     const rm = removeButton();
     rm.addEventListener('click', () => { row.remove(); removeEntry(entry); });
@@ -660,7 +728,7 @@ function arrayField(d, ctx) {
     rowReaders.push(entry);
   };
 
-  const addCollapsibleRow = (startEditing) => {
+  const addCollapsibleRow = (startEditing, seed) => {
     const row = document.createElement('div');
     row.className = 'item';
     const head = document.createElement('div');
@@ -674,7 +742,7 @@ function arrayField(d, ctx) {
     const body = document.createElement('div');
     body.className = 'item-body';
     const entry = { read: null, row };
-    const built = buildField(itemDesc, { name: null, required: false, path: rowPath(entry), editor: ctx.editor });
+    const built = buildField(itemDesc, { name: null, required: false, path: rowPath(entry), editor: ctx.editor, seed });
     entry.read = built.read;
     body.appendChild(built.node);
     head.append(summary, edit, rm);
@@ -698,6 +766,10 @@ function arrayField(d, ctx) {
 
   const addRow = collapsible ? addCollapsibleRow : addInlineRow;
   add.addEventListener('click', () => addRow(true));
+  if (Array.isArray(ctx.seed)) {
+    for (const item of ctx.seed) addRow(false, item);
+  }
+
   wrap.append(items, add);
   return {
     node: wrap,
@@ -754,6 +826,7 @@ function unknownField(d, ctx) {
   const textarea = document.createElement('textarea');
   textarea.rows = 3;
   textarea.placeholder = 'JSON value';
+  if (ctx.seed !== undefined) textarea.value = JSON.stringify(ctx.seed, null, 2);
   return {
     node: textarea,
     read: () => {

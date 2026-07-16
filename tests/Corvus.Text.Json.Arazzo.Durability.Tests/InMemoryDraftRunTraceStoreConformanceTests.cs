@@ -1,0 +1,16 @@
+// <copyright file="InMemoryDraftRunTraceStoreConformanceTests.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using Corvus.Text.Json.Arazzo.Durability.Conformance;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Corvus.Text.Json.Arazzo.Durability.Tests;
+
+/// <summary>Runs the shared draft-run-trace-store conformance suite against the in-memory reference implementation.</summary>
+[TestClass]
+public sealed class InMemoryDraftRunTraceStoreConformanceTests : DraftRunTraceStoreConformance
+{
+    protected override ValueTask<IDraftRunTraceStore> CreateStoreAsync()
+        => ValueTask.FromResult<IDraftRunTraceStore>(new InMemoryDraftRunTraceStore());
+}

@@ -36,15 +36,42 @@ describe('<arazzo-catalog-detail>', () => {
     equal(el.shadowRoot.querySelector('header .badge').textContent, 'Obsolete', 'status badge reflects the version');
   });
 
+  it('renders the evidence badge from the detail projection (green suite)', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="evidence"]'));
+    equal(dd.querySelector('.evd').textContent, '3/3 scenarios ✓', 'green badge counts the attested suite');
+    ok(dd.querySelector('.evd').classList.contains('evd-ok'), 'a clean suite renders green');
+  });
+
+  it('renders a failing suite red', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="evidence"]'));
+    equal(dd.querySelector('.evd').textContent, '1/2 scenarios ✗', 'partial suite shows the failure');
+    ok(dd.querySelector('.evd').classList.contains('evd-bad'), 'a failing suite renders red');
+  });
+
+  it('omits the evidence row for versions without attested evidence', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('[part="hash"]'));
+    ok(!el.shadowRoot.querySelector('[part="evidence"]'), 'no badge without evidence');
+  });
+
+  // With catalog:write the management-tags block IS the inline editor, always open and seeded (W3 —
+  // consistent with the other panels); there is no read-only chip list or "Edit…" toggle in write mode.
+  const rowText = (row) => `${row.querySelector('.tk').value}=${row.querySelector('.tv').value}`;
+  const hasRow = (editor, text) => [...editor.shadowRoot.querySelectorAll('.tag-row')].some((r) => rowText(r) === text);
+
   it('adds a security tag via the editor (Add tag) with catalog:write', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
     mount(el);
-    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
-    ok([...dd.querySelectorAll('.tag')].some((t) => t.textContent === 'domain=pets'), 'seeded security tag shown');
-    dd.querySelector('.sectag-edit').click();
+    await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
     const editor = await waitFor(() => el.shadowRoot.querySelector('#sectag-editor'));
     // Seeded with the existing tag as an editable row.
     await waitFor(() => editor.shadowRoot.querySelectorAll('.tag-row').length === 1);
+    ok(hasRow(editor, 'domain=pets'), 'seeded security tag shown in the editor');
     // ADD a brand-new tag via the editor's Add button, then fill the new row.
     editor.shadowRoot.querySelector('.add').click();
     const rows = editor.shadowRoot.querySelectorAll('.tag-row');
@@ -52,29 +79,38 @@ describe('<arazzo-catalog-detail>', () => {
     rows[1].querySelector('.tk').value = 'team';
     rows[1].querySelector('.tv').value = 'shelter';
     el.shadowRoot.querySelector('.sectag-save').click();
-    await waitFor(() => [...el.shadowRoot.querySelectorAll('[part="security-tags"] .tag')].some((t) => t.textContent === 'team=shelter'));
-    ok([...el.shadowRoot.querySelectorAll('[part="security-tags"] .tag')].some((t) => t.textContent === 'domain=pets'), 'existing tag kept');
+    // After save the version is re-tagged and the editor re-seeds with both tags.
+    await waitFor(() => {
+      const ed = el.shadowRoot.querySelector('#sectag-editor');
+      return ed && hasRow(ed, 'team=shelter');
+    });
+    ok(hasRow(el.shadowRoot.querySelector('#sectag-editor'), 'domain=pets'), 'existing tag kept');
   });
 
   it('deletes a security tag via the editor (✕) with catalog:write', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
     mount(el);
-    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
-    dd.querySelector('.sectag-edit').click();
+    await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
     const editor = await waitFor(() => el.shadowRoot.querySelector('#sectag-editor'));
     await waitFor(() => editor.shadowRoot.querySelectorAll('.tag-row').length === 1);
     // Remove the only row, then save → the version ends up with no security tags.
     editor.shadowRoot.querySelector('.rm').click();
     equal(editor.shadowRoot.querySelectorAll('.tag-row').length, 0, 'row removed');
     el.shadowRoot.querySelector('.sectag-save').click();
-    await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"] .muted'));
-    ok(!el.shadowRoot.querySelector('[part="security-tags"] .tag'), 'no tags remain after delete');
+    // Write mode always shows the editor; after the delete-save it re-seeds with no rows.
+    await waitFor(() => {
+      const ed = el.shadowRoot.querySelector('#sectag-editor');
+      return ed && ed.shadowRoot.querySelectorAll('.tag-row').length === 0;
+    });
+    ok(true, 'no tags remain after delete');
   });
 
   it('shows security tags read-only without catalog:write', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
     mount(el);
     const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
+    ok([...dd.querySelectorAll('.tag')].some((t) => t.textContent === 'domain=pets'), 'the seeded tag renders as a read-only chip');
+    ok(!dd.querySelector('#sectag-editor'), 'no editor without catalog:write');
     ok(!dd.querySelector('.sectag-edit'), 'no edit affordance read-only');
   });
 
@@ -230,6 +266,49 @@ describe('<arazzo-catalog-detail>', () => {
     mount(el);
     await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"]'));
     equal(el.shadowRoot.querySelector('.setup-menu'), null, 'no + menu without credentials:write');
+  });
+
+  // ── "Compare with version…" catalog compare host (visual-diff §9.11) ──────────────────────────
+  it('offers "Compare with version…" listing the OTHER versions of a multi-version base', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    const cmp = await waitFor(() => {
+      const c = el.shadowRoot.querySelector('.compare-with');
+      return c && !el.shadowRoot.querySelector('.vcompare').hidden ? c : null;
+    });
+    const opts = [...cmp.options].map((o) => o.value);
+    ok(opts.includes('1') && opts.includes('2'), 'lists the sibling versions');
+    ok(!opts.includes('3'), 'excludes the current version');
+  });
+
+  it('hides the compare affordance for a single-version base', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'onboard-customer', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('[part="hash"]'));
+    await waitFor(() => el.versions); // versions list resolved
+    ok(el.shadowRoot.querySelector('.vcompare').hidden, 'no compare picker with one version');
+  });
+
+  it('selecting a version opens the read-only compare dialog with both documents diffed', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
+    mount(el);
+    const cmp = await waitFor(() => {
+      const c = el.shadowRoot.querySelector('.compare-with');
+      return c && [...c.options].some((o) => o.value === '1') ? c : null;
+    });
+    cmp.value = '1';
+    cmp.dispatchEvent(new Event('change'));
+    equal(cmp.value, '', 'the picker resets to its placeholder (acts as an action)');
+    const compare = el.shadowRoot.querySelector('arazzo-workflow-compare');
+    const dialog = await waitFor(() => compare.shadowRoot.querySelector('dialog[open]'));
+    ok(dialog, 'the shared compare dialog opened');
+    const legend = compare.shadowRoot.querySelector('.legend').textContent;
+    ok(legend && legend !== 'No differences in this workflow', `the legend reports differences (${legend})`);
+    // v1 (predates flagDiscrepancies + postCorrections) → v3 adds them: painted on the newer (right) side.
+    const right = compare.shadowRoot.querySelector('.side-right arazzo-design-surface');
+    await waitFor(() => right.shadowRoot.querySelector('.node.df-added'));
+    ok(right.shadowRoot.querySelector('.node.df-added'), 'an added step is painted on the newer side');
+    ok(right.hasAttribute('readonly'), 'the compared surface is read-only (no merge target)');
   });
 });
 

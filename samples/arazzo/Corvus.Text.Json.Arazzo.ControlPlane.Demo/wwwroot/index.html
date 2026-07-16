@@ -3,24 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Arazzo Control Plane — live demo</title>
+  <title>Arazzo Control Plane</title>
   <link rel="stylesheet" href="/ui/src/arazzo-kit.css">
   <style>
-    body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; }
-    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
-    header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+    html, body { height: 100%; }
+    /* Theme-correct native scrollbars + form controls (inherits into every shadow-DOM scroller). Matches the toggle:
+       auto = follow the OS, else the forced choice. Without this the dark theme showed light OS scrollbars. */
+    :root { color-scheme: light dark; }
+    :root[data-theme="light"] { color-scheme: light; }
+    :root[data-theme="dark"] { color-scheme: dark; }
+    body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; overflow: hidden; }
+    /* Application shell: fill the viewport, never scroll the page — the active view scrolls its own list/grid. */
+    .page { height: 100vh; display: flex; flex-direction: column; padding: 14px 18px; box-sizing: border-box; }
+    header.top { flex: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     h1 { font-size: 20px; margin: 0; }
     .sub { color: var(--arazzo-muted); font-size: 13px; }
-    .controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 16px 0 20px; padding: 12px 14px; border: 1px solid var(--arazzo-border); border-radius: var(--arazzo-radius); background: var(--arazzo-surface); }
-    .controls label { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
-    .controls select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--arazzo-border); background: var(--arazzo-bg); color: var(--arazzo-text); }
-    .note { font-size: 12px; color: var(--arazzo-muted); margin-top: 24px; }
+    .topbar-right { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
+    .designer-link { font-size: 13px; text-decoration: none; color: var(--arazzo-accent); border: 1px solid var(--arazzo-border); border-radius: 6px; padding: 5px 12px; white-space: nowrap; }
+    .designer-link:hover { border-color: var(--arazzo-accent); background: color-mix(in srgb, var(--arazzo-accent) 10%, transparent); }
+    /* Tri-state theme toggle: a single button cycling System → Light → Dark, showing the current mode's icon. */
+    .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--arazzo-border); border-radius: 6px; background: var(--arazzo-surface); color: var(--arazzo-text); cursor: pointer; }
+    .theme-toggle:hover { border-color: var(--arazzo-accent); color: var(--arazzo-accent); }
+    .theme-toggle:focus-visible { outline: 2px solid var(--arazzo-accent); outline-offset: 2px; }
+    .theme-toggle svg { display: block; width: 16px; height: 16px; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--arazzo-border); }
+    .tabs { flex: none; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--arazzo-border); }
     .tabs button { font: inherit; font-size: 14px; cursor: pointer; border: none; background: none; color: var(--arazzo-muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
     .tabs button[aria-selected="true"] { color: var(--arazzo-text); border-bottom-color: var(--arazzo-accent); font-weight: 600; }
-    .authbar { margin-left: auto; display: inline-flex; gap: 10px; align-items: baseline; font-size: 13px; }
-    .linklike { font: inherit; font-size: 13px; cursor: pointer; border: none; background: none; padding: 0; color: var(--arazzo-accent); text-decoration: underline; }
+    /* Secondary tab bar inside a grouped view (Runners / Security / Requests). */
+    .subtabs { flex: none; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+    .subtabs button { font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--arazzo-border); background: var(--arazzo-surface); color: var(--arazzo-muted); padding: 5px 12px; border-radius: 6px; }
+    .subtabs button[aria-selected="true"] { color: var(--arazzo-text); border-color: var(--arazzo-accent); background: color-mix(in srgb, var(--arazzo-accent) 12%, transparent); font-weight: 600; }
+    /* Outstanding-work badge on the Approvals tab + its sub-tabs (count of Pending items; auto-refreshed). */
+    .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--arazzo-accent); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; vertical-align: middle; }
+    .tab-badge[hidden] { display: none; }
+    .authbar { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; }
+    /* Each tab panel fills the remaining viewport and hands its component a bounded height (flex:1; min-height:0); the
+       panel then fills + scrolls its own list internally — the page/pane never scrolls (the Runs/Catalog model). */
+    [role="tabpanel"] { flex: 1; min-height: 0; }
+    [role="tabpanel"]:not([hidden]) { display: flex; flex-direction: column; }
+    /* A grouped view stacks its sub-tab bar above the active sub-view; both the plain and grouped panels fill. */
+    [role="tabpanel"]:not([hidden]) > :not(.subtabs) { flex: 1; min-height: 0; }
+    .subview { flex: 1; min-height: 0; }
+    .subview:not([hidden]) { display: flex; flex-direction: column; }
+    .subview:not([hidden]) > * { flex: 1; min-height: 0; }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -28,25 +54,23 @@
   <div class="page">
     <header class="top">
       <h1>Arazzo Control Plane</h1>
-      <span class="sub">Live demo — the real control-plane server over a fresh in-process SQLite store</span>
-      <div id="auth" class="authbar" hidden></div>
+      <div class="topbar-right">
+        <a class="designer-link" href="/designer" title="Open the workflow designer">✎ Designer</a>
+        <arazzo-auth-status class="authbar"></arazzo-auth-status>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Theme"></button>
+      </div>
     </header>
 
-    <div class="controls">
-      <label>Theme
-        <select id="theme">
-          <option value="auto" selected>auto</option>
-          <option value="light">light</option>
-          <option value="dark">dark</option>
-        </select>
-      </label>
-      <span class="sub">Open a faulted run’s <strong>Resume…</strong> → <strong>Skip</strong> → tick <strong>Record outputs</strong> to see the typed editor (unions, tuples, maps) validated by the server as you type.</span>
-    </div>
-
     <div class="tabs" role="tablist">
-      <button id="tab-runs" role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
-      <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
-      <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
+      <button role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
+      <button role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
+      <button role="tab" aria-selected="false" aria-controls="view-environments">Environments</button>
+      <button role="tab" aria-selected="false" aria-controls="view-sources">Sources</button>
+      <button role="tab" aria-selected="false" aria-controls="view-credentials">Credentials</button>
+      <button role="tab" aria-selected="false" aria-controls="view-runners">Runners</button>
+      <button role="tab" aria-selected="false" aria-controls="view-security">Security</button>
+      <button role="tab" aria-selected="false" aria-controls="view-approvals">Approvals <span class="tab-badge" data-badge="approvals" hidden></span></button>
+      <button role="tab" aria-selected="false" aria-controls="view-requests">Requests</button>
     </div>
 
     <div id="view-runs" role="tabpanel">
@@ -54,28 +78,91 @@
     </div>
 
     <div id="view-catalog" role="tabpanel" hidden>
-      <arazzo-catalog base-url="/arazzo/v1" scopes="catalog:read catalog:write catalog:purge" theme="auto"></arazzo-catalog>
+      <arazzo-catalog base-url="/arazzo/v1" scopes="catalog:read catalog:write catalog:purge administrators:read administrators:write" theme="auto"></arazzo-catalog>
     </div>
 
-    <div id="view-access" role="tabpanel" hidden>
-      <arazzo-access-requests base-url="/arazzo/v1" theme="auto"></arazzo-access-requests>
+    <div id="view-environments" role="tabpanel" hidden>
+      <arazzo-environments base-url="/arazzo/v1" theme="auto"></arazzo-environments>
     </div>
 
-    <p class="note">
-      This page talks to the genuine API under <code>/arazzo/v1</code> (no mock) — so the schema metadata and
-      the <code>/validate</code> round-trip are the real generator + validator. The SQLite store is recreated
-      and re-seeded every time the host starts.
-    </p>
+    <div id="view-sources" role="tabpanel" hidden>
+      <arazzo-sources base-url="/arazzo/v1" theme="auto"></arazzo-sources>
+    </div>
+
+    <div id="view-credentials" role="tabpanel" hidden>
+      <arazzo-credentials base-url="/arazzo/v1" theme="auto"></arazzo-credentials>
+    </div>
+
+    <div id="view-runners" role="tabpanel" hidden>
+      <arazzo-runners base-url="/arazzo/v1" theme="auto" poll="8000"></arazzo-runners>
+    </div>
+
+    <div id="view-security" role="tabpanel" hidden>
+      <div class="subtabs" role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="sub-security-grants">Grants</button>
+        <button role="tab" aria-selected="false" aria-controls="sub-security-rules">Rules</button>
+        <button role="tab" aria-selected="false" aria-controls="sub-security-overview">Access overview</button>
+      </div>
+      <div id="sub-security-grants" class="subview">
+        <arazzo-grants-panel base-url="/arazzo/v1" theme="auto"></arazzo-grants-panel>
+      </div>
+      <div id="sub-security-rules" class="subview" hidden>
+        <arazzo-rules-panel base-url="/arazzo/v1" theme="auto"></arazzo-rules-panel>
+      </div>
+      <div id="sub-security-overview" class="subview" hidden>
+        <arazzo-access-overview base-url="/arazzo/v1" theme="auto"></arazzo-access-overview>
+      </div>
+    </div>
+
+    <!-- Approvals: the approver queues — work the signed-in user must action. Each sub-tab (and the primary tab) carries
+         an auto-refreshing badge of outstanding Pending items so the user can see at a glance if there is work to do. -->
+    <div id="view-approvals" role="tabpanel" hidden>
+      <div class="subtabs" role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="sub-approvals-access">Access <span class="tab-badge" data-badge="approvals-access" hidden></span></button>
+        <button role="tab" aria-selected="false" aria-controls="sub-approvals-availability">Availability <span class="tab-badge" data-badge="approvals-availability" hidden></span></button>
+        <button role="tab" aria-selected="false" aria-controls="sub-approvals-runners">Runners <span class="tab-badge" data-badge="approvals-runners" hidden></span></button>
+      </div>
+      <div id="sub-approvals-access" class="subview">
+        <arazzo-access-requests base-url="/arazzo/v1" theme="auto" view="queue" hide-view-tabs></arazzo-access-requests>
+      </div>
+      <div id="sub-approvals-availability" class="subview" hidden>
+        <arazzo-availability-requests base-url="/arazzo/v1" theme="auto" view="queue" hide-view-tabs></arazzo-availability-requests>
+      </div>
+      <div id="sub-approvals-runners" class="subview" hidden>
+        <arazzo-runner-authorizations base-url="/arazzo/v1" theme="auto"></arazzo-runner-authorizations>
+      </div>
+    </div>
+
+    <!-- Requests: the signed-in user's OWN outstanding requests (a different goal from approving others' work). -->
+    <div id="view-requests" role="tabpanel" hidden>
+      <div class="subtabs" role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="sub-requests-access">Access</button>
+        <button role="tab" aria-selected="false" aria-controls="sub-requests-availability">Availability</button>
+      </div>
+      <div id="sub-requests-access" class="subview">
+        <arazzo-access-requests base-url="/arazzo/v1" theme="auto" view="mine" hide-view-tabs></arazzo-access-requests>
+      </div>
+      <div id="sub-requests-availability" class="subview" hidden>
+        <arazzo-availability-requests base-url="/arazzo/v1" theme="auto" view="mine" hide-view-tabs></arazzo-availability-requests>
+      </div>
+    </div>
   </div>
 
   <script type="module">
+    import { ArazzoControlPlaneClient } from '/ui/src/arazzo-client.js';
     import '/ui/src/arazzo-control-plane.js';
     import '/ui/src/arazzo-catalog.js';
+    import '/ui/src/components/environments-panel.js';
+    import '/ui/src/components/sources-panel.js';
+    import '/ui/src/components/credentials.js';
+    import '/ui/src/components/runners-panel.js';
+    import '/ui/src/components/runner-authorizations-panel.js';
+    import '/ui/src/components/grants-panel.js';
+    import '/ui/src/components/scopes-panel.js';
+    import '/ui/src/components/access-overview-panel.js';
     import '/ui/src/components/access-requests-panel.js';
-
-    const panel = document.querySelector('arazzo-control-plane');
-    const catalog = document.querySelector('arazzo-catalog');
-    const access = document.querySelector('arazzo-access-requests');
+    import '/ui/src/components/availability-requests-panel.js';
+    import '/ui/src/components/auth-status.js';
 
     // BFF auth (§16.3). When the host runs with authorization on, an API 401 means "not signed in" — bounce the
     // browser to /login (the OIDC challenge). When the host runs open (the default), the API returns 200 and
@@ -90,65 +177,87 @@
       if (res.status === 401) { location.assign(loginUrl()); return new Promise(() => {}); }
       return res;
     };
-    panel.fetch = authFetch;
-    catalog.fetch = authFetch;
-    access.fetch = authFetch;
 
-    // Sign-in bar: show who is signed in (from /me) with a sign-out, or a sign-in link; hidden when auth is off.
-    const authEl = document.getElementById('auth');
-    (async () => {
-      let me;
-      try {
-        const r = await fetch('/me', { credentials: 'include' });
-        if (r.status === 404) return;                 // authorization disabled — no BFF endpoints
-        me = r.ok ? await r.json() : null;
-      } catch { return; }
-      authEl.hidden = false;
-      if (me) {
-        const who = document.createElement('span');
-        who.className = 'sub';
-        who.textContent = 'Signed in as ' + me.name + (me.groups?.length ? ' (' + me.groups.join(', ') + ')' : '');
-        const out = document.createElement('button');
-        out.className = 'linklike';
-        out.textContent = 'Sign out';
-        out.addEventListener('click', () => {
-          const f = document.createElement('form'); f.method = 'post'; f.action = '/logout';
-          document.body.appendChild(f); f.submit();   // POST navigation so the OIDC sign-out redirect chain runs
-        });
-        authEl.replaceChildren(who, out);
-      } else {
-        const a = document.createElement('a');
-        a.className = 'linklike';
-        a.href = loginUrl();
-        a.textContent = 'Sign in';
-        authEl.replaceChildren(a);
-      }
-    })();
+    // Wire every mounted panel to the BFF fetch. Panels split into two families: the self-contained ones build their
+    // own client from a `fetch` property (Runs, Catalog, Environments, Sources, Credentials, Runners, Runner-auth,
+    // the two request inboxes); the security-authoring panels (Grants, Rules, Access overview) consume an injected
+    // `.client`. One shared client serves the latter. Both add the X-CSRF header + same-origin credentials.
+    const sharedClient = new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1', fetch: authFetch });
+    const FETCH_PANELS = [
+      'arazzo-control-plane', 'arazzo-catalog', 'arazzo-environments', 'arazzo-sources', 'arazzo-credentials',
+      'arazzo-runners', 'arazzo-runner-authorizations', 'arazzo-access-requests', 'arazzo-availability-requests',
+    ];
+    const CLIENT_PANELS = ['arazzo-grants-panel', 'arazzo-rules-panel', 'arazzo-access-overview'];
+    FETCH_PANELS.forEach((tag) => document.querySelectorAll(tag).forEach((el) => { el.fetch = authFetch; }));
+    CLIENT_PANELS.forEach((tag) => document.querySelectorAll(tag).forEach((el) => { el.client = sharedClient; }));
+    const allPanels = [...FETCH_PANELS, ...CLIENT_PANELS].flatMap((tag) => [...document.querySelectorAll(tag)]);
 
-    // Theme drives the panels (their `theme` attribute) and the page (arazzo-kit.css honours data-theme on <html>).
+    // Approvals badges: poll the three approver queues' bounded /count endpoints for outstanding (Pending) work and badge
+    // the Approvals tab + its sub-tabs, so the user sees at a glance whether there is anything to action. Auto-refreshes;
+    // a 403 (the user administers nothing) just yields 0 and hides the badge. The count is bounded by the server's cap —
+    // when it is hit the response's `capped` flag renders "N+" (rather than fetching rows just to count them).
+    const badges = {};
+    document.querySelectorAll('.tab-badge[data-badge]').forEach((b) => { badges[b.dataset.badge] = b; });
+    const setBadge = (b, count, capped) => { if (b) { b.textContent = capped ? `${count}+` : String(count); b.hidden = !(count > 0); } };
+    const countQueue = async (call) => { try { return await call(); } catch { return { count: 0, capped: false }; } };
+    const refreshApprovalBadges = async () => {
+      const [access, avail, runners] = await Promise.all([
+        countQueue(() => sharedClient.countAccessRequests({ scope: 'queue', status: 'Pending' })),
+        countQueue(() => sharedClient.countAvailabilityRequests({ scope: 'queue', status: 'Pending' })),
+        countQueue(() => sharedClient.countRunnerAuthorizations({ status: 'Pending' })),
+      ]);
+      setBadge(badges['approvals-access'], access.count, access.capped);
+      setBadge(badges['approvals-availability'], avail.count, avail.capped);
+      setBadge(badges['approvals-runners'], runners.count, runners.capped);
+      // The tab total sums the three; it is "N+" if the sum overflows or any queue was itself capped.
+      setBadge(badges['approvals'], access.count + avail.count + runners.count, access.capped || avail.capped || runners.capped);
+    };
+    refreshApprovalBadges();
+    setInterval(refreshApprovalBadges, 15000);
+
+    // Sign-in / sign-out chrome is the shared <arazzo-auth-status> element in the title bar (it self-discovers
+    // /me and stays invisible when authorization is off). The same element serves the designer (§16.3).
+
+    // Tri-state theme toggle: one title-bar button cycling System → Light → Dark, showing the current mode's icon.
+    // Theme drives the panels (their `theme` attribute) and the page (arazzo-kit.css honours data-theme on <html>);
+    // 'auto' clears data-theme so the kit follows the OS preference. The choice persists across reloads.
+    const THEME_ORDER = ['auto', 'light', 'dark'];
+    const THEME_META = {
+      auto: { label: 'System', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>' },
+      light: { label: 'Light', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>' },
+      dark: { label: 'Dark', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>' },
+    };
+    const themeToggle = document.getElementById('theme-toggle');
     const applyTheme = (v) => {
-      panel.setAttribute('theme', v);
-      catalog.setAttribute('theme', v);
-      access.setAttribute('theme', v);
+      allPanels.forEach((el) => el.setAttribute('theme', v));
       if (v === 'auto') document.documentElement.removeAttribute('data-theme');
       else document.documentElement.setAttribute('data-theme', v);
+      const meta = THEME_META[v];
+      themeToggle.innerHTML = meta.icon;
+      themeToggle.setAttribute('aria-label', `Theme: ${meta.label} (click to change)`);
+      themeToggle.title = `Theme: ${meta.label} — click to switch`;
     };
-    const themeSel = document.getElementById('theme');
-    themeSel.addEventListener('change', (e) => applyTheme(e.target.value));
-    applyTheme(themeSel.value);
+    let theme = localStorage.getItem('arazzo-theme');
+    if (!THEME_ORDER.includes(theme)) { theme = 'auto'; }
+    applyTheme(theme);
+    themeToggle.addEventListener('click', () => {
+      theme = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+      localStorage.setItem('arazzo-theme', theme);
+      applyTheme(theme);
+    });
 
-    // Tabs.
-    const tabs = { runs: document.getElementById('tab-runs'), catalog: document.getElementById('tab-catalog'), access: document.getElementById('tab-access') };
-    const views = { runs: document.getElementById('view-runs'), catalog: document.getElementById('view-catalog'), access: document.getElementById('view-access') };
-    const selectTab = (name) => {
-      for (const key of Object.keys(tabs)) {
-        tabs[key].setAttribute('aria-selected', String(key === name));
-        views[key].hidden = key !== name;
-      }
+    // Tabs. One helper drives both the primary tab bar and each grouped view's secondary bar: a tab's
+    // aria-controls names the view element it toggles; selecting a tab shows its view and hides its siblings.
+    const wireTabGroup = (tablist) => {
+      const buttons = [...tablist.querySelectorAll(':scope > [role="tab"]')];
+      const views = buttons.map((b) => document.getElementById(b.getAttribute('aria-controls')));
+      const select = (active) => buttons.forEach((b, i) => {
+        b.setAttribute('aria-selected', String(b === active));
+        if (views[i]) views[i].hidden = b !== active;
+      });
+      buttons.forEach((b) => b.addEventListener('click', () => select(b)));
     };
-    tabs.runs.addEventListener('click', () => selectTab('runs'));
-    tabs.catalog.addEventListener('click', () => selectTab('catalog'));
-    tabs.access.addEventListener('click', () => selectTab('access'));
+    document.querySelectorAll('[role="tablist"]').forEach(wireTabGroup);
   </script>
 </body>
 </html>

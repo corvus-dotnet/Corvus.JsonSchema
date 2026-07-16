@@ -62,7 +62,7 @@ public interface IApiSecurityClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
 
         /// <summary>
@@ -118,6 +118,16 @@ public interface IApiSecurityClient : IAsyncDisposable
         public static readonly string[] ListSecurityOrderingsOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
+        /// Gets the scopes required by <c>CountSecurityRules</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSecurityRulesOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountSecurityRules</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSecurityRulesOpenIdConnectScopes = ["security:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>SearchSecurityRules</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] SearchSecurityRulesOauth2Scopes = ["security:read"];
@@ -166,6 +176,16 @@ public interface IApiSecurityClient : IAsyncDisposable
         /// Gets the scopes required by <c>DeleteSecurityRule</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] DeleteSecurityRuleOpenIdConnectScopes = ["security:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountSecurityBindings</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSecurityBindingsOauth2Scopes = ["security:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>CountSecurityBindings</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] CountSecurityBindingsOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>SearchSecurityBindings</c> for the <c>Oauth2</c> scheme.
@@ -248,6 +268,16 @@ public interface IApiSecurityClient : IAsyncDisposable
     ValueTask<ListSecurityOrderingsResponse> ListSecurityOrderingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
+    /// Count security rules
+    /// </summary>
+    /// <remarks>
+    /// Counts the rules matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityRules (a case-insensitive substring of the name or expression). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="q">The q parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountSecurityRulesResponse> CountSecurityRulesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
     /// List security rules
     /// </summary>
     /// <remarks>
@@ -293,6 +323,16 @@ public interface IApiSecurityClient : IAsyncDisposable
     /// <param name="ruleName">The ruleName parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<DeleteSecurityRuleResponse> DeleteSecurityRuleAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source ruleName, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Count security bindings
+    /// </summary>
+    /// <remarks>
+    /// Counts the bindings matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityBindings (a case-insensitive substring of the claim type, claim value, or description). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.
+    /// </remarks>
+    /// <param name="q">The q parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<CountSecurityBindingsResponse> CountSecurityBindingsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List security bindings

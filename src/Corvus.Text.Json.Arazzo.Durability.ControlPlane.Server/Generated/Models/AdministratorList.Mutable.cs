@@ -287,6 +287,27 @@ public readonly partial struct AdministratorList
         }
 
         /// <summary>
+        /// Gets the (optional) <c>broadeningAdvisory</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A NON-BLOCKING advisory (&#167;16.5.4): the identity just granted is broader than one or more existing grantees, so it confers administration on every principal whose identity contains it, not only the named grantees. Present on an add-administrator response only when such an overlap exists (reach-filtered to what the caller may see); the grant itself still succeeds. Compare the hard-blocking identity-collision (409), which refuses an ambiguous set-equal grant.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Mutable BroadeningAdvisory
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BroadeningAdvisoryUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the number of properties in the object.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -388,6 +409,87 @@ public readonly partial struct AdministratorList
             }
 
             _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>broadeningAdvisory</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetBroadeningAdvisory(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.BroadeningAdvisoryUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BroadeningAdvisoryUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BroadeningAdvisory, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>broadeningAdvisory</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetBroadeningAdvisory<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> value)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.BroadeningAdvisoryUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BroadeningAdvisoryUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BroadeningAdvisory, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>broadeningAdvisory</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveBroadeningAdvisory()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.BroadeningAdvisoryUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <inheritdoc/>
@@ -721,6 +823,7 @@ public readonly partial struct AdministratorList
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -735,9 +838,10 @@ public readonly partial struct AdministratorList
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source arg1)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source arg2)
         {
             _createArg1 = arg1;
+            _createArg2 = arg2;
             _kind = Kind.Create;
         }
 
@@ -758,7 +862,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -783,7 +887,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -808,7 +912,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -833,7 +937,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -858,7 +962,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -887,6 +991,7 @@ public readonly partial struct AdministratorList
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -899,10 +1004,11 @@ public readonly partial struct AdministratorList
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> arg1)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> arg2)
         {
             _context = context;
             _createArg1 = arg1;
+            _createArg2 = arg2;
             _kind = Kind.Create;
         }
 
@@ -921,7 +1027,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -946,7 +1052,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -971,7 +1077,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -996,7 +1102,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1021,7 +1127,7 @@ public readonly partial struct AdministratorList
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1053,17 +1159,21 @@ public readonly partial struct AdministratorList
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorList"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators)
+        internal static void Create(
+            ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source broadeningAdvisory = default)
         {
             administrators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administrators, ref builder);
+            broadeningAdvisory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BroadeningAdvisory, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorList"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source broadeningAdvisory = default)
         {
-            Create(ref _builder, administrators);
+            Create(ref _builder, administrators, broadeningAdvisory);
         }
 
         /// <summary>
@@ -1072,23 +1182,28 @@ public readonly partial struct AdministratorList
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> broadeningAdvisory = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
             administrators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administrators, ref builder);
+            broadeningAdvisory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BroadeningAdvisory, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorList"/>.
         /// </summary>
-        public void Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators)
+        public void Create<TContext>(
+            in TContext context,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> broadeningAdvisory = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, administrators);
+            Create(context, ref _builder, administrators, broadeningAdvisory);
         }
 
         /// <summary>
@@ -1187,11 +1302,12 @@ public readonly partial struct AdministratorList
         /// Builds the object value directly from its captured property values into the given complex value builder.
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1);
+            Create(ref o, arg1, arg2);
             o.EndObject();
         }
 
@@ -1201,14 +1317,15 @@ public readonly partial struct AdministratorList
         /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="arg1">The value of the property.</param>
+        /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1);
+            Create(context, ref o, arg1, arg2);
             o.EndObject();
         }
     }
@@ -1246,10 +1363,11 @@ public readonly partial struct AdministratorList
     /// Build an instance of the value directly from its property values.
     /// </summary>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
+    /// <param name="broadeningAdvisory">The value of the <c>"broadeningAdvisory"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source broadeningAdvisory = default)
     {
-        return new Source(administrators);
+        return new Source(administrators, broadeningAdvisory);
     }
 
     /// <summary>
@@ -1258,13 +1376,14 @@ public readonly partial struct AdministratorList
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
+    /// <param name="broadeningAdvisory">The value of the <c>"broadeningAdvisory"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> broadeningAdvisory = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, administrators);
+        return new Source<TContext>(context, administrators, broadeningAdvisory);
     }
 
     /// <summary>
@@ -1361,15 +1480,16 @@ public readonly partial struct AdministratorList
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="administrators">The value of the property.</param>
+    /// <param name="broadeningAdvisory">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source broadeningAdvisory = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(administrators);
+        ovb.Create(administrators, broadeningAdvisory);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1383,9 +1503,10 @@ public readonly partial struct AdministratorList
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
     /// <param name="administrators">The value of the property.</param>
+    /// <param name="broadeningAdvisory">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> broadeningAdvisory = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1394,7 +1515,7 @@ public readonly partial struct AdministratorList
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, administrators);
+        ovb.Create(context, administrators, broadeningAdvisory);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1409,5 +1530,145 @@ public readonly partial struct AdministratorList
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
         return workspace.CreateBuilder<AdministratorList, Mutable>(this);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdministratorList> Create(
+        scoped in Source value, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdministratorList>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdministratorList> Create(
+        scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source(value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdministratorList>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="value">The value with which to initialize the document.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdministratorList> Create<TContext>(
+        scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            var source = new Source<TContext>(context, value);
+            source.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdministratorList>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <param name="administrators">The value of the property.</param>
+    /// <param name="broadeningAdvisory">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdministratorList> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source administrators, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source broadeningAdvisory = default, int initialCapacity = 30)
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(administrators, broadeningAdvisory);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdministratorList>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+    /// <param name="context">The value of the property.</param>
+    /// <param name="administrators">The value of the property.</param>
+    /// <param name="broadeningAdvisory">The value of the property.</param>
+    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<AdministratorList> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorList.AdministratorGrantArray.Source<TContext> administrators, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.BroadeningAdvisory.Source<TContext> broadeningAdvisory = default, int initialCapacity = 30)
+        #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+        #endif
+    {
+        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+        try
+        {
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            cvb.StartObject();
+            Builder ovb = new(cvb);
+            ovb.Create(context, administrators, broadeningAdvisory);
+            cvb = ovb._builder;
+            cvb.EndObject();
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder.ToParsedJsonDocument<AdministratorList>();
+        }
+        finally
+        {
+            documentBuilder.Dispose();
+        }
     }
 }

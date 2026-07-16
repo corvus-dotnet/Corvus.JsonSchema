@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The kind of document a source registers (design &#167;7.6): an OpenAPI description for an HTTP API source, or an AsyncAPI description for a messaging source.
+/// The kind of document a source registers (design &#167;7.6): an OpenAPI description for an HTTP API source, an AsyncAPI description for a messaging source, or a JSON Schema document that workflow inputs schemas reference by external $ref (schemas/&lt;name&gt;#&lt;pointer&gt;). A jsonschema source is never a sourceDescription (the Arazzo spec pins that enum) — it attaches to a working copy alongside the declared sources and resolves through the standard registered-document mechanism.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -51,6 +51,14 @@ public readonly partial struct SourceType
         /// A constant for the <c>enum</c> keyword.
         /// </summary>
         public static readonly SourceType EnumJson2 = ParsedJsonDocument<SourceType>.StringConstant([.."\"asyncapi\""u8]);
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly byte[] Enum3 = "jsonschema"u8.ToArray();
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly SourceType EnumJson3 = ParsedJsonDocument<SourceType>.StringConstant([.."\"jsonschema\""u8]);
     }
 
     /// <summary>
@@ -79,6 +87,17 @@ public readonly partial struct SourceType
         /// as a UTF8 byte array.
         /// </summary>
         public static ReadOnlySpan<byte> AsyncapiUtf8 => Constants.Enum2;
+
+        /// <summary>
+        /// Gets the string "jsonschema"
+        /// as a <see cref="SourceType"/>.
+        /// </summary>
+        public static SourceType Jsonschema { get; } = Constants.EnumJson3;
+        /// <summary>
+        /// Gets the string "jsonschema"
+        /// as a UTF8 byte array.
+        /// </summary>
+        public static ReadOnlySpan<byte> JsonschemaUtf8 => Constants.Enum3;
     }
 
     public static partial class JsonSchema
@@ -134,6 +153,11 @@ public readonly partial struct SourceType
                 }
 
                 if (unescapedUtf8JsonString.Span.SequenceEqual("asyncapi"u8))
+                {
+                    goto enumShortCircuitSuccess;
+                }
+
+                if (unescapedUtf8JsonString.Span.SequenceEqual("jsonschema"u8))
                 {
                     goto enumShortCircuitSuccess;
                 }

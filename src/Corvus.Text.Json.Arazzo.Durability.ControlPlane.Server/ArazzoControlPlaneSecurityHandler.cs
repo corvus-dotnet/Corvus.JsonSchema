@@ -4,7 +4,6 @@
 
 using System.Buffers;
 using System.Buffers.Text;
-using System.Security.Claims;
 using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
@@ -29,11 +28,16 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     // passed to avoid a page-per-row scan.
     private const int CredentialScanPageSize = 50;
 
+    // The inclusive upper bound the /count endpoints report; a busier list renders "100+".
+    private const int CountCap = 100;
+
     private readonly ISecurityPolicyStore store;
     private readonly PersistentRowSecurityPolicy? policy;
     private readonly ControlPlaneAccess? access;
     private readonly ISecuredWorkflowCatalog? catalog;
     private readonly ISourceCredentialStore? credentials;
+    private readonly SecuredEnvironmentAdministration? environments;
+    private readonly TimeProvider timeProvider;
     private readonly string actor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneSecurityHandler"/> class.</summary>
@@ -51,7 +55,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <param name="policy">An optional policy to refresh after a mutation.</param>
     /// <param name="access">The request-scoped access binding the guard reads the caller's claims from (<see langword="null"/> disables the guard — the unscoped posture).</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, string actor = "control-plane")
+    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, SecuredEnvironmentAdministration? environments = null, TimeProvider? timeProvider = null, string actor = "control-plane")
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(actor);
@@ -60,6 +64,8 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         this.access = access;
         this.catalog = catalog;
         this.credentials = credentials;
+        this.environments = environments;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
         this.actor = actor;
     }
 
@@ -88,6 +94,25 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             rules: Models.SecurityRuleList.SecurityRuleSummaryArray.Build(in ruleList, BuildRuleSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
         return SearchSecurityRulesResult.Ok(body, workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountSecurityRulesResult> HandleCountSecurityRulesAsync(CountSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Same q filter as HandleSearchSecurityRulesAsync, minus paging — the store returns only a bounded total (§14.2
+        // footer), never rows. Access is gated by the security:read capability scope, not row reach, so no AccessContext.
+        JsonString q = JsonString.From(parameters.Q);
+        (int count, bool capped) = await this.store.CountRulesAsync(CountCap, q, cancellationToken).ConfigureAwait(false);
+        return CountSecurityRulesResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<CountSecurityBindingsResult> HandleCountSecurityBindingsAsync(CountSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // Same q filter as HandleSearchSecurityBindingsAsync, minus paging; capability-scoped, no row reach.
+        JsonString q = JsonString.From(parameters.Q);
+        (int count, bool capped) = await this.store.CountBindingsAsync(CountCap, q, cancellationToken).ConfigureAwait(false);
+        return CountSecurityBindingsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>
@@ -346,14 +371,14 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         workspace.TakeOwnership(granteeDoc);
         Models.ResolvedGrantee grantee = granteeDoc.RootElement;
 
-        // The grantee's identity is already the resolved internal sys: form at the wire (design §16.5.4 — an identity is
-        // described back as {dimension,value} grants over its sys: tags, e.g. sys:sub). It is taken verbatim (no
-        // re-resolution) and keys the administered-workflows reverse index and the credential IsUsableBy match directly.
+        // The grantee's identity arrives in the operator-facing (sys:-stripped) wire form; resolve it back to the internal
+        // sys: tag set (via ControlPlaneAccess) so it keys the administered-workflows reverse index and the credential
+        // IsUsableBy match correctly (the digest is over the sys: tags).
         SecurityTagSet granteeIdentity = SecurityTagSet.Empty;
-        if (grantee.Identity.IsNotUndefined())
+        if (this.access is { } access && grantee.Identity.IsNotUndefined())
         {
-            Models.ResolvedGrantee.AdministratorIdentityArray identity = grantee.Identity;
-            granteeIdentity = SecurityTagSet.Build(in identity, WriteGranteeIdentity);
+            var identityState = new GranteeIdentityState(access, grantee.Identity);
+            granteeIdentity = SecurityTagSet.Build(in identityState, WriteGranteeIdentity);
         }
 
         // bindings: page the store keeping only the bindings whose claim the grantee satisfies. A contributing page's
@@ -368,7 +393,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             bool contributed = false;
             foreach (SecurityBindingDocument binding in page.Bindings)
             {
-                if (BindingAppliesToGrantee(binding, grantee))
+                if (BindingAppliesToGrantee(binding, grantee, this.access))
                 {
                     matchedBindings.Add(binding);
                     contributed = true;
@@ -388,9 +413,39 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             bindingPageToken = (JsonString)JsonString.CreateBuilder(workspace, (JsonString.Source)page.NextPageToken.Span).RootElement;
         }
 
+        // capabilities: the scopes the matched bindings confer, resolved exactly as the runtime resolver does
+        // (PersistentRowSecurityPolicy.ResolveGrantedScopes): an expired binding confers nothing, and an eligible-only
+        // binding records §16.5.3 eligibility (self-elevation) rather than an active scope. One entry per scope, active
+        // dominating eligible; the entry's expiry is the last conferring binding's, absent when one never expires.
+        SortedDictionary<string, CapabilityGrant>? capabilities = null;
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        foreach (SecurityBindingDocument binding in matchedBindings)
+        {
+            if (binding.ExpiresAtValue is { } bindingExpiry && now >= bindingExpiry)
+            {
+                continue;
+            }
+
+            bool eligible = binding.EligibleOnlyValue;
+            foreach (string scope in binding.ScopesArray())
+            {
+                capabilities ??= new SortedDictionary<string, CapabilityGrant>(StringComparer.Ordinal);
+                var conferred = new CapabilityGrant(eligible, binding.ExpiresAtValue);
+                capabilities[scope] = capabilities.TryGetValue(scope, out CapabilityGrant existing)
+                    ? existing.Merge(conferred)
+                    : conferred;
+            }
+        }
+
         // administers: a single reverse-index lookup keyed by the grantee's identity (bounded; materialised in full).
         IReadOnlyList<string> administered = this.catalog is { } catalog
             ? await catalog.ListAdministeredWorkflowsAsync(granteeIdentity, cancellationToken).ConfigureAwait(false)
+            : [];
+
+        // administersEnvironments: the environment twin of administers (the S3 reverse index, membership over the
+        // grantee's identity).
+        IReadOnlyList<string> administeredEnvironments = this.environments is { } environmentAdministration
+            ? await environmentAdministration.ListAdministeredEnvironmentsAsync(granteeIdentity, cancellationToken).ConfigureAwait(false)
             : [];
 
         // credentialUsage: page the credential store (System context — usage entitlement is not management-reach-scoped)
@@ -429,14 +484,16 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             }
         }
 
-        // Build the response closure-free: a single context carries the three matched collections, threaded through the
+        // Build the response closure-free: a single context carries the five matched collections, threaded through the
         // outer object build and each inner array build (no capturing lambda). The grantee is echoed as a congruent
         // whole-document From wrap over the workspace-owned grantee document.
-        var overviewContext = new AccessGrantsContext(administered, matchedBindings, matchedCredentials);
+        var overviewContext = new AccessGrantsContext(administered, administeredEnvironments, capabilities, matchedBindings, matchedCredentials);
         Models.AccessGrantsOverview.Source<AccessGrantsContext> body = Models.AccessGrantsOverview.Build(
             in overviewContext,
             administers: Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Build(in overviewContext, BuildAdministeredWorkflows),
+            administersEnvironments: Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Build(in overviewContext, BuildAdministeredEnvironments),
             bindings: Models.AccessGrantsOverview.SecurityBindingSummaryArray.Build(in overviewContext, BuildAccessBindings),
+            capabilities: Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Build(in overviewContext, BuildCapabilities),
             credentialUsage: Models.AccessGrantsOverview.AccessGrantsCredentialUsageArray.Build(in overviewContext, BuildCredentialUsages),
             grantee: (Models.ResolvedGrantee.Source)Models.ResolvedGrantee.From(grantee));
         return GetAccessGrantsResult.Ok(body, workspace);
@@ -481,8 +538,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private bool SelfElevates(SecurityBindingDocument draft, out Models.ProblemDetails.Source problem)
     {
         problem = default;
-        ClaimsPrincipal? principal = this.access?.CurrentPrincipal;
-        if (principal is null)
+        if (this.access is not { } access || access.CurrentPrincipal is null)
         {
             return false;
         }
@@ -492,7 +548,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return false;
         }
 
-        if (!CallerMatches(principal, draft.ClaimTypeValue, draft.ClaimValueOrNull))
+        if (!CallerMatches(access.InternalTags(), access.InternalTagPrefix, draft))
         {
             return false;
         }
@@ -511,20 +567,52 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private static bool GrantsElevatedReach(SecurityBindingDocument.VerbGrantInfo grant)
         => grant.ValueKind == JsonValueKind.Object && !grant.IsEmptyValue;
 
-    // Whether the caller holds the binding's claim: the wildcard '*' matches every authenticated caller; a claim-type-only
-    // binding matches any value of that type; otherwise the exact type+value must be present.
-    private static bool CallerMatches(ClaimsPrincipal principal, string claimType, string? claimValue)
+    // Whether the caller holds the binding's full selector by MEMBERSHIP over the caller's canonical sys: identity
+    // (§16.5.4): the caller's stamped identity must CONTAIN every clause — the primary claimType/claimValue clause AND
+    // every additional clause. The wildcard '*' primary matches every authenticated caller; a clause with no value
+    // matches any value of its dimension; otherwise the identity must carry a tag whose operator-facing dimension (the
+    // sys: prefix stripped) equals the clause dimension and value. Decided on the same identity the runtime reach matcher
+    // uses (not raw token claims), so the self-elevation guard fires exactly when the caller is in the set the binding
+    // grants to — a caller who satisfies the primary but not an additional clause is outside the grant and not elevating.
+    private static bool CallerMatches(IReadOnlyList<SecurityTag> identity, string prefix, SecurityBindingDocument draft)
     {
-        if (claimType == "*")
+        // Primary clause: the wildcard matches every authenticated caller; otherwise the identity must contain it.
+        if (!string.Equals(draft.ClaimTypeValue, "*", StringComparison.Ordinal)
+            && !IdentityContains(identity, prefix, draft.ClaimTypeValue, draft.ClaimValueOrNull))
         {
-            return true;
+            return false;
         }
 
-        // A claim-type-only binding matches any value of that type; the exact overloads take strings (no capturing
-        // predicate closure). HasClaim(type, value) is ordinal; FindFirst(type) avoids a lambda for the type-only case.
-        return claimValue is null
-            ? principal.FindFirst(claimType) is not null
-            : principal.HasClaim(claimType, claimValue);
+        // Every additional clause must also be contained (the tag-set selector is a conjunction).
+        if (draft.AdditionalClauses.IsNotUndefined())
+        {
+            foreach (SecurityBindingDocument.AdditionalClause clause in draft.AdditionalClauses.EnumerateArray())
+            {
+                if (!IdentityContains(identity, prefix, (string)clause.DimensionValue, clause.Value.IsNotUndefined() ? (string)clause.Value : null))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // Whether the caller's stamped identity contains a tag whose operator-facing dimension (the internal prefix stripped)
+    // equals the clause dimension, and whose value equals the clause value when one is pinned.
+    private static bool IdentityContains(IReadOnlyList<SecurityTag> identity, string prefix, string dimension, string? value)
+    {
+        foreach (SecurityTag tag in identity)
+        {
+            string tagDimension = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
+            if (string.Equals(tagDimension, dimension, StringComparison.Ordinal)
+                && (value is null || string.Equals(tag.Value, value, StringComparison.Ordinal)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // SecurityRuleSummary is congruent with the stored SecurityRuleDocument (identical fields — the single-document
@@ -585,10 +673,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private static void BuildBindingSummary(in SecurityBindingDocument binding, ref Models.SecurityBindingSummary.Builder b)
     {
         // Scalars carried bytes-native (Models.JsonString.From — zero-copy element wrap); the three verb grants are
-        // congruent with the stored VerbGrantInfo, so they wrap verbatim (Models.VerbGrant.From). The summary
-        // deliberately omits the stored scopes/expiresAt/eligibleOnly — per-field selection keeps them out. The optional
+        // congruent with the stored VerbGrantInfo, so they wrap verbatim (Models.VerbGrant.From). The optional
         // scalars carry the binding's raw CTJ value straight through From() — which propagates Undefined, so an absent
-        // field is omitted with no IsNotUndefined/XxxOrNull ternary (the "Undefined not null" convention).
+        // field is omitted with no IsNotUndefined/XxxOrNull ternary (the "Undefined not null" convention). The stored
+        // scopes/expiresAt/eligibleOnly ride along the same way, so the overview's capabilities are traceable to the
+        // bindings that confer them.
         b.Create(
             claimType: Models.JsonString.From(binding.ClaimType),
             createdAt: binding.CreatedAtValue,
@@ -600,9 +689,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             read: Models.VerbGrant.From(binding.Read),
             write: Models.VerbGrant.From(binding.Write),
             claimValue: Models.JsonString.From(binding.ClaimValue),
+            additionalClauses: Models.SecurityBindingSummary.SecurityBindingClauseArray.From(binding.AdditionalClauses),
             description: Models.JsonString.From(binding.Description),
+            eligibleOnly: Models.JsonBoolean.From(binding.EligibleOnly),
+            expiresAt: Models.JsonDateTime.From(binding.ExpiresAt),
             lastUpdatedAt: Models.JsonDateTime.From(binding.LastUpdatedAt),
-            lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy));
+            lastUpdatedBy: Models.JsonString.From(binding.LastUpdatedBy),
+            scopes: Models.SecurityBindingSummary.JsonStringArray.From(binding.Scopes));
     }
 
     private static void BuildBindingSummaries(in IReadOnlyList<SecurityBindingDocument> bindings, ref Models.SecurityBindingList.SecurityBindingSummaryArray.Builder array)
@@ -617,56 +710,102 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         => GetAccessGrantsResult.BadRequest(
             Problem("invalid-grantee", "Invalid grantee token", 400, "The 'grantee' query parameter is not a valid resolved-grantee token."), workspace);
 
-    // Writes the grantee's already-resolved sys: identity grants into the identity buffer verbatim: each dimension/value
-    // is read as unescaped UTF-8 straight off the grantee document (no managed string per grant) and added as a tag. The
-    // wire identity is the sys: form (§16.5.4), so no re-resolution is needed. An absent identity yields the empty set.
-    private static void WriteGranteeIdentity(ref IdentityBuilder builder, in Models.ResolvedGrantee.AdministratorIdentityArray identity)
+    // Reconstructs the grantee's INTERNAL identity from its wire grants. A grantee's identity is described back over the
+    // wire in the operator-facing form — the sys: prefix STRIPPED (design §16.5.4 / DescribeUsageScope), e.g. {group,iss}
+    // for a team — so it must be resolved back through ControlPlaneAccess.ResolveUsageGrantInto (which re-adds the
+    // reserved prefix: group -> sys:group), exactly as every peer handler does (AdministratorsHandler.BuildGranteeIdentity).
+    // Using the wire dimension verbatim yields {group,iss} whose digest never matches the stored {sys:group,sys:iss}
+    // founder/usage identity, so administers and usage-scoped credentials would resolve to nothing. An absent identity
+    // yields the empty set.
+    private static void WriteGranteeIdentity(ref IdentityBuilder builder, in GranteeIdentityState state)
     {
-        foreach (Models.AdministratorIdentity grant in identity.EnumerateArray())
+        foreach (Models.AdministratorIdentity grant in state.Identity.EnumerateArray())
         {
             using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
             using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
-            builder.Add(dimension.Span, value.Span);
+            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
         }
     }
 
-    // Whether a binding grants the grantee reach: the wildcard '*' claim matches every principal; otherwise the
-    // operator-facing claim derived from one of the grantee's sys: identity grants must match the binding's claim type
-    // (and value, when the binding pins one). Compared bytes-native off both documents' UTF-8 — the binding's raw
-    // ClaimType/ClaimValue vs each grantee identity item's sys:-stripped dimension / value read as unescaped spans — so
-    // nothing is materialised into a managed string or grant list.
-    private static bool BindingAppliesToGrantee(SecurityBindingDocument binding, Models.ResolvedGrantee grantee)
+    // The grantee identity + the access policy that maps its wire grants back to internal sys: tags, threaded into the
+    // closure-free SecurityTagSet.Build.
+    private readonly ref struct GranteeIdentityState(ControlPlaneAccess access, Models.ResolvedGrantee.AdministratorIdentityArray identity)
     {
-        if (binding.ClaimType.ValueEquals("*"u8))
+        public ControlPlaneAccess Access { get; } = access;
+
+        public Models.ResolvedGrantee.AdministratorIdentityArray Identity { get; } = identity;
+    }
+
+    // Whether a binding grants the grantee reach by MEMBERSHIP over the grantee's resolved identity: the binding's
+    // selector is a tag SET (its primary claimType/claimValue clause AND every additional clause), and it applies only
+    // when the grantee's identity CONTAINS every clause. The wildcard '*' primary matches every principal (and, with no
+    // additional clauses, even an identity-less grantee); an additional clause carries no wildcard. Compared bytes-native
+    // off both documents' UTF-8 — each clause's raw dimension/value vs each grantee identity item's sys:-stripped
+    // dimension / value read as unescaped spans — so nothing is materialised into a managed string or grant list.
+    private static bool BindingAppliesToGrantee(SecurityBindingDocument binding, Models.ResolvedGrantee grantee, ControlPlaneAccess? access)
+    {
+        bool wildcardPrimary = binding.ClaimType.ValueEquals("*"u8);
+        bool hasAdditional = binding.AdditionalClauses.IsNotUndefined() && binding.AdditionalClauses.GetArrayLength() > 0;
+
+        // A pure wildcard binding (no additional clauses) matches every principal, even one with no resolved identity.
+        if (wildcardPrimary && !hasAdditional)
         {
             return true;
         }
 
+        // Any non-wildcard clause needs a resolved identity to satisfy.
         if (!grantee.Identity.IsNotUndefined())
         {
             return false;
         }
 
-        bool claimValuePinned = !binding.ClaimValue.IsUndefined();
+        // Primary clause (skipped when wildcard: it already matches every principal).
+        if (!wildcardPrimary && !GranteeSatisfiesClause(binding.ClaimType, binding.ClaimValue, grantee, access))
+        {
+            return false;
+        }
+
+        // Every additional clause must also be satisfied (the tag-set selector is a conjunction).
+        if (hasAdditional)
+        {
+            foreach (SecurityBindingDocument.AdditionalClause clause in binding.AdditionalClauses.EnumerateArray())
+            {
+                if (!GranteeSatisfiesClause(clause.DimensionValue, clause.Value, grantee, access))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // Whether the grantee's resolved identity contains a tag satisfying one selector clause: the operator-facing claim
+    // derived from one of the grantee's sys: identity grants must equal the clause dimension (and value, when the clause
+    // pins one). The grantee identity is the resolved internal form; a clause keys on the operator-facing dimension it
+    // derives from (design §6.5, lossy), so strip the deployment-configured internal prefix before matching (sys:sub ->
+    // sub; a bare team/role dimension is unchanged). Using the configured prefix (via ControlPlaneAccess) keeps this
+    // overview match aligned with runtime enforcement on a deployment whose prefix is not the "sys:" default; with no
+    // access resolver at all, the default prefix is the correct fallback.
+    private static bool GranteeSatisfiesClause(JsonString clauseDimension, JsonString clauseValue, Models.ResolvedGrantee grantee, ControlPlaneAccess? access)
+    {
+        bool valuePinned = !clauseValue.IsUndefined();
         foreach (Models.AdministratorIdentity item in grantee.Identity.EnumerateArray())
         {
             using UnescapedUtf8JsonString dimension = item.DimensionValue.GetUtf8String();
-
-            // The grantee identity is the resolved sys: form; a binding keys on the operator-facing claim it derives
-            // from (design §6.5, lossy), so strip the sys: prefix before matching (sys:sub -> sub; a bare team/role
-            // dimension is unchanged).
-            if (!binding.ClaimType.ValueEquals(StripSysPrefix(dimension.Span)))
+            ReadOnlySpan<byte> claim = access is { } a ? a.StripInternalPrefix(dimension.Span) : StripDefaultInternalPrefix(dimension.Span);
+            if (!clauseDimension.ValueEquals(claim))
             {
                 continue;
             }
 
-            if (!claimValuePinned)
+            if (!valuePinned)
             {
                 return true;
             }
 
             using UnescapedUtf8JsonString value = item.Value.GetUtf8String();
-            if (binding.ClaimValue.ValueEquals(value.Span))
+            if (clauseValue.ValueEquals(value.Span))
             {
                 return true;
             }
@@ -675,9 +814,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         return false;
     }
 
-    // Strips the internal "sys:" namespace prefix from a resolved identity dimension to recover the operator-facing claim
-    // a binding keys on (sys:sub -> sub); a dimension without the prefix (a bare team/role) is returned unchanged.
-    private static ReadOnlySpan<byte> StripSysPrefix(ReadOnlySpan<byte> dimension)
+    // Strips the DEFAULT internal namespace prefix from a resolved identity dimension — the fallback used only when there
+    // is no ControlPlaneAccess resolver to supply the deployment-configured prefix (an unscoped host). The literal is the
+    // UTF-8 of SecurityShell.DefaultInternalPrefix ("sys:"). A dimension without the prefix (a bare team/role) is
+    // returned unchanged.
+    private static ReadOnlySpan<byte> StripDefaultInternalPrefix(ReadOnlySpan<byte> dimension)
         => dimension.StartsWith("sys:"u8) ? dimension["sys:"u8.Length..] : dimension;
 
     // The bindings array reuses the existing whole-summary projection (BuildBindingSummary) per matched binding — the
@@ -703,6 +844,32 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         }
     }
 
+    private static void BuildAdministeredEnvironments(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Builder array)
+    {
+        foreach (string environment in ctx.AdministeredEnvironments)
+        {
+            array.AddItem(Models.AccessGrantsAdministeredEnvironment.Build(environment: environment));
+        }
+    }
+
+    private static void BuildCapabilities(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Builder array)
+    {
+        if (ctx.Capabilities is not { } capabilities)
+        {
+            return;
+        }
+
+        // The dictionary is ordinal-sorted by scope, so the response order is deterministic. The optional expiry is
+        // omitted via default when no conferring binding expires.
+        foreach (KeyValuePair<string, CapabilityGrant> capability in capabilities)
+        {
+            array.AddItem(Models.AccessGrantsCapability.Build(
+                eligible: capability.Value.Eligible,
+                scope: capability.Key,
+                expiresAt: capability.Value.ExpiresAt is { } expiresAt ? (Models.JsonDateTime.Source)expiresAt : default));
+        }
+    }
+
     private static void BuildAdministeredWorkflow(in string baseWorkflowId, ref Models.AccessGrantsAdministeredWorkflow.Builder b)
         => b.Create(baseWorkflowId: baseWorkflowId);
 
@@ -720,13 +887,36 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
     // The matched aggregation sets, threaded as one context through the access-grants overview build (no closure). The
     // lists hold the matched documents (whose pages were handed to the workspace), so they live to serialization.
-    private readonly ref struct AccessGrantsContext(IReadOnlyList<string> administered, List<SecurityBindingDocument> bindings, List<SourceCredentialBinding> credentials)
+    private readonly ref struct AccessGrantsContext(IReadOnlyList<string> administered, IReadOnlyList<string> administeredEnvironments, SortedDictionary<string, CapabilityGrant>? capabilities, List<SecurityBindingDocument> bindings, List<SourceCredentialBinding> credentials)
     {
         public IReadOnlyList<string> Administered { get; } = administered;
+
+        public IReadOnlyList<string> AdministeredEnvironments { get; } = administeredEnvironments;
+
+        public SortedDictionary<string, CapabilityGrant>? Capabilities { get; } = capabilities;
 
         public List<SecurityBindingDocument> Bindings { get; } = bindings;
 
         public List<SourceCredentialBinding> Credentials { get; } = credentials;
+    }
+
+    // One resolved capability entry: eligible-only (a §16.5.3 eligibility) vs active, and the expiry to show. Merging
+    // two conferrals of the same scope: active dominates eligible (an eligibility adds nothing when the scope is held
+    // actively); within the same class a never-expiring conferral wins outright, otherwise the later expiry stands.
+    private readonly record struct CapabilityGrant(bool Eligible, DateTimeOffset? ExpiresAt)
+    {
+        public CapabilityGrant Merge(CapabilityGrant other)
+        {
+            if (this.Eligible != other.Eligible)
+            {
+                return this.Eligible ? other : this;
+            }
+
+            DateTimeOffset? expiresAt = this.ExpiresAt is { } mine && other.ExpiresAt is { } theirs
+                ? (mine >= theirs ? mine : theirs)
+                : null;
+            return new CapabilityGrant(this.Eligible, expiresAt);
+        }
     }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string kind, string id)

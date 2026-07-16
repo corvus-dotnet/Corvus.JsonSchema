@@ -104,22 +104,44 @@ public readonly partial struct AvailabilityRequest
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentException.ThrowIfNullOrEmpty(environment);
-        var state = (baseWorkflowId, versionNumber, environment, reason);
-        return PersistedJson.ToPooledDocument<AvailabilityRequest, (string BaseWorkflowId, int VersionNumber, string Environment, string? Reason)>(
-            in state,
-            static (Utf8JsonWriter writer, in (string BaseWorkflowId, int VersionNumber, string Environment, string? Reason) c) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, c.BaseWorkflowId);
-                writer.WriteNumber(JsonPropertyNames.VersionNumberUtf8, c.VersionNumber);
-                writer.WriteString(JsonPropertyNames.EnvironmentUtf8, c.Environment);
-                if (c.Reason is { } reason)
-                {
-                    writer.WriteString(JsonPropertyNames.ReasonUtf8, reason);
-                }
 
-                writer.WriteEndObject();
-            });
+        // The generated Create() writes the document text and its parse metadata in one pass — no serialize-then-reparse
+        // round trip. The draft carries only the create-content: a default Source is omitted from the document, so the
+        // server-stamped fields (id/status/createdBy/createdAt/etag) stay absent for WriteNew to stamp.
+        return Create(
+            baseWorkflowId: baseWorkflowId,
+            createdAt: default,
+            createdBy: default,
+            environment: environment,
+            etag: default,
+            id: default,
+            status: default,
+            versionNumber: versionNumber,
+            reason: reason is { } r ? (JsonString.Source)r : default);
+    }
+
+    /// <summary>Realises a brand-new Pending request as a self-contained pooled document in one pass — the
+    /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
+    /// parsed document. Same content requirement and field mapping as the writer path below; keep the two in step.</summary>
+    /// <param name="id">The assigned request id.</param>
+    /// <param name="draft">The draft request carrying the requester content as JSON values (read bytes-to-bytes).</param>
+    /// <param name="actor">The requesting identity (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<AvailabilityRequest> CreateNew(string id, in AvailabilityRequest draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    {
+        RequireContent(draft);
+        return Create(
+            baseWorkflowId: draft.BaseWorkflowId,
+            createdAt: createdAt,
+            createdBy: actor,
+            environment: draft.Environment,
+            etag: etag.Value ?? string.Empty,
+            id: id,
+            status: AvailabilityRequestStatusNames.Pending,
+            versionNumber: draft.VersionNumber,
+            reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default);
     }
 
     /// <summary>Realises a new (Pending) request into the caller's (pooled) writer in one pass — the draft's create-content

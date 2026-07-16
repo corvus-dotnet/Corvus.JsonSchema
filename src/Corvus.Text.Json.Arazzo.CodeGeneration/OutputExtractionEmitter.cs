@@ -122,8 +122,16 @@ public static class OutputExtractionEmitter
         statements.AppendLine("    {");
         for (int i = 0; i < outputs.Count; i++)
         {
-            statements.Append("        builder.AddProperty(").Append(EmitText.Quote(outputs[i].Name))
-                .Append("u8, values[").Append(i.ToString(CultureInfo.InvariantCulture)).AppendLine("]);");
+            // An output whose expression did not resolve — e.g. $response.body#/x when the body has no x —
+            // stays a default JsonElement (ValueKind.Undefined). Arazzo treats such an output as ABSENT, so
+            // omit it: adding a None-valued property trips the builder's invariant and, in a Debug build, the
+            // assertion terminates the process. A resolved JSON null is ValueKind.Null and IS kept.
+            string index = i.ToString(CultureInfo.InvariantCulture);
+            statements.Append("        if (values[").Append(index).AppendLine("].IsNotUndefined())");
+            statements.AppendLine("        {");
+            statements.Append("            builder.AddProperty(").Append(EmitText.Quote(outputs[i].Name))
+                .Append("u8, values[").Append(index).AppendLine("]);");
+            statements.AppendLine("        }");
         }
 
         statements.AppendLine("    });");

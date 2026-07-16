@@ -31,11 +31,14 @@
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Execution\Corvus.Text.Json.Arazzo.Execution.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
-    <!-- In-process AsyncAPI message transport: the async onboarding workflow's receive step needs an
-         IMessageTransport supplied to the executor (the durable suspend/resume itself flows through the worker). -->
-    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
+    <!-- The real broker: NATS JetStream transport. The async onboarding workflow's send step (requestKycReview)
+         publishes through it; the durable verdict receive suspends and is resumed by the runner's consumer (design §8). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Nats\Corvus.Text.Json.AsyncApi.Nats.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
-    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Sqlite\Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Postgres\Corvus.Text.Json.Arazzo.Durability.Postgres.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Directories.Keycloak\Corvus.Text.Json.Arazzo.Directories.Keycloak.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />
   </ItemGroup>
 

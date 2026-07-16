@@ -27,15 +27,22 @@ class ArazzoResumeDialog extends ArazzoElement {
   }
 
   /** Open the dialog for a run. */
-  open(run) {
+  open(run, opts = {}) {
     this._run = run;
+    // A debug run (§18 R-UI-3b2) drives resume via opts.resume (resumeDebugRun) and supplies its working-copy steps
+    // explicitly (they are not in the catalog); a catalogued run leaves both unset and resolves from the catalog.
+    this._resumeFn = opts.resume ?? null;
+    this._explicitSteps = opts.steps ?? null;
     if (!this._built) this.render();
     this.$('.error-banner').hidden = true;
-    // Point the step pickers at this run's workflow + current cursor (they resolve the step list from the catalog).
+    // Point the step pickers at this run's workflow + current cursor (they resolve the step list from the catalog),
+    // or feed the explicitly-supplied working-copy steps for a debug run. Cursor first, so the steps setter filters.
     for (const picker of this.$$('arazzo-workflow-step-picker')) {
       picker.client = this.client;
-      if (run?.workflowId) picker.setAttribute('workflow-id', run.workflowId); else picker.removeAttribute('workflow-id');
       if (run?.cursor != null) picker.setAttribute('cursor', String(run.cursor)); else picker.removeAttribute('cursor');
+      if (this._explicitSteps) { picker.removeAttribute('workflow-id'); picker.steps = this._explicitSteps; }
+      else if (run?.workflowId) { picker.steps = null; picker.setAttribute('workflow-id', run.workflowId); }
+      else { picker.steps = null; picker.removeAttribute('workflow-id'); }
     }
     this.loadSkipDescriptor(run);
     // Outputs are only recorded when explicitly opted into; reset the toggle + hide the builder each open.
@@ -262,7 +269,7 @@ class ArazzoResumeDialog extends ArazzoElement {
         }
       }
 
-      const run = await this.client.resumeRun(this._run.id, request);
+      const run = this._resumeFn ? await this._resumeFn(request) : await this.client.resumeRun(this._run.id, request);
       this.close();
       this.emit('resume-submitted', { run, mode: request.mode });
     } catch (err) {

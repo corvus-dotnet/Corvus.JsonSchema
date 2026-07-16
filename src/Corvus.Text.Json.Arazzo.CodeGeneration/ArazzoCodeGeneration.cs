@@ -99,7 +99,7 @@ public static class ArazzoCodeGeneration
             string modelNamespace = $"{options.RootNamespace}.{DefaultModelsNamespaceSuffix}.{workflowName}";
             WorkflowInputsModel? model = workflow.Inputs.IsNotUndefined()
                 ? await WorkflowInputsModelGenerator
-                    .GenerateAsync(arazzoDocumentUtf8, index, modelNamespace, cancellationToken)
+                    .GenerateAsync(arazzoDocumentUtf8, index, modelNamespace, options.SchemaDocuments, cancellationToken)
                     .ConfigureAwait(false)
                 : null;
 
@@ -233,8 +233,15 @@ public static class ArazzoCodeGeneration
 /// (<c>$sourceDescriptions.&lt;name&gt;.&lt;workflowId&gt;</c>). <see langword="null"/> when the document has
 /// no cross-document sub-workflow references.
 /// </param>
+/// <param name="SchemaDocuments">
+/// External JSON Schema documents (name → UTF-8 bytes) an inputs schema may reference by
+/// <c>schemas/&lt;name&gt;#&lt;pointer&gt;</c> (design §6, #94): each is registered with the inputs model
+/// generator's resolver as a sibling of the Arazzo document, so the relative reference resolves with no
+/// rewriting. <see langword="null"/> when the package carries none.
+/// </param>
 public readonly record struct ArazzoGenerationOptions(
     string RootNamespace,
     string OutputsTypeName = "Corvus.Text.Json.JsonElement",
     bool Durable = false,
-    IReadOnlyDictionary<string, string>? SubWorkflowSourceNamespaces = null);
+    IReadOnlyDictionary<string, string>? SubWorkflowSourceNamespaces = null,
+    IReadOnlyList<KeyValuePair<string, byte[]>>? SchemaDocuments = null);

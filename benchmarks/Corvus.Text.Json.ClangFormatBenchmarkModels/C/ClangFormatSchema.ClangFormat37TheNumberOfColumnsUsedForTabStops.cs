@@ -131,10 +131,10 @@ public readonly partial struct ClangFormatSchema
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(ClangFormat37TheNumberOfColumnsUsedForTabStops value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+        public static implicit operator long(ClangFormat37TheNumberOfColumnsUsedForTabStops value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator double(ClangFormat37TheNumberOfColumnsUsedForTabStops value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+        public static implicit operator double(ClangFormat37TheNumberOfColumnsUsedForTabStops value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Corvus.Numerics.BigNumber(ClangFormat37TheNumberOfColumnsUsedForTabStops value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();

@@ -279,6 +279,23 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
+    /// Appends a fully-formed row (used when copying an already-parsed row run whose structure is
+    /// already correct — the caller has rebased the location and normalized any property-map index).
+    /// </summary>
+    /// <param name="row">The row to append.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Append(in DbRow row)
+    {
+        if (Length >= (_data.Length - DbRow.Size))
+        {
+            Enlarge();
+        }
+
+        Unsafe.WriteUnaligned(ref _data[Length], row);
+        Length += DbRow.Size;
+    }
+
+    /// <summary>
     /// Appends a new token entry to the metadata database.
     /// </summary>
     /// <param name="tokenType">The JSON token type.</param>

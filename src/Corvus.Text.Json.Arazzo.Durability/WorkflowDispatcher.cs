@@ -35,15 +35,20 @@ public sealed class WorkflowDispatcher
     /// in-flight runs it already leased drain normally. Default (<see langword="null"/>) is "always dispatch".
     /// </param>
     /// <param name="runnerEnvironment">
-    /// The single deployment environment this runner serves (design §5.5): claims are constrained to runs pinned to it (an
-    /// unpinned/legacy run still matches). <see langword="null"/> (the default) claims regardless of a run's environment —
-    /// the pre-pinning behaviour.
+    /// The single deployment environment this runner serves (design §5.5): claims are constrained to runs pinned to
+    /// exactly it. <strong>Required</strong> — a runner must declare its environment; an unscoped dispatcher is
+    /// rejected, so no runner can claim a run that is not pinned to its own environment (the §5.5 credential boundary).
     /// </param>
-    /// <exception cref="ArgumentException">The store does not implement <see cref="IWorkflowDispatchIndex"/>.</exception>
+    /// <exception cref="ArgumentException">The store does not implement <see cref="IWorkflowDispatchIndex"/>, or <paramref name="runnerEnvironment"/> is null or empty.</exception>
     public WorkflowDispatcher(IWorkflowStateStore store, string owner, TimeProvider? timeProvider = null, TimeSpan? leaseTtl = null, Func<CancellationToken, ValueTask<bool>>? dispatchGate = null, string? runnerEnvironment = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(owner);
+
+        // A runner MUST declare the single environment it serves (design §5.5): dispatch is constrained to runs pinned
+        // to exactly this environment, so a runner never claims another environment's run (nor an unpinned one). An
+        // unscoped runner is rejected here rather than silently claiming nothing.
+        ArgumentException.ThrowIfNullOrEmpty(runnerEnvironment);
         this.store = store;
         this.index = store as IWorkflowDispatchIndex
             ?? throw new ArgumentException("The state store must implement IWorkflowDispatchIndex to drive a dispatcher.", nameof(store));
@@ -67,6 +72,10 @@ public sealed class WorkflowDispatcher
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         ArgumentNullException.ThrowIfNull(resume);
+
+        // The runner is environment-pinned (enforced at construction), so dispatch is constrained to runs pinned to
+        // exactly its environment — including the §18 draft runs, which are always environment-pinned. A runner never
+        // claims another environment's run, nor an unpinned one, so the §5.5 credential boundary cannot be crossed.
 
         // §5.5 authorization gate: a runner not currently authorized to serve its environment claims nothing — it stays
         // registered + heartbeating (visible, reclaimable) but takes no new or orphaned work until authorized.
@@ -102,8 +111,13 @@ public sealed class WorkflowDispatcher
             using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
 
             // Re-check under the lease: the run may have been claimed, completed, suspended, or deleted between
-            // the index query and the lease. Only fresh (Pending) and orphaned (Running) runs are dispatchable.
-            if (run is null || run.Status is not (WorkflowRunStatus.Pending or WorkflowRunStatus.Running))
+            // the index query and the lease. Dispatchable are fresh (Pending) runs, orphaned (Running) runs, and
+            // — §18 — a paused/faulted run the control plane marked resume-claimable (RequestResumeAsync), whose
+            // first checkpoint on advance clears the marker. A terminal run (Completed/Cancelled) is never claimed,
+            // even if a marker somehow lingered.
+            if (run is null
+                || !(run.Status is WorkflowRunStatus.Pending or WorkflowRunStatus.Running
+                     || (run.IsResumeRequested && run.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted)))
             {
                 return false;
             }

@@ -29,6 +29,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
+    private const string FaultedStatus = nameof(WorkflowRunStatus.Faulted);
     private const string RunsContainerId = "workflow_runs";
     private const string LeasesContainerId = "workflow_leases";
 
@@ -343,14 +344,18 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         // Candidate runs are Pending (always claimable) or Running (claimable only if no live lease holds them).
-        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
-        // unpinned run (c.environment absent) or an unscoped dispatcher (@runnerEnvironment is null) matches anything.
-        // (Cosmos SQL has no `@p IS NULL`; a null-valued parameter is tested with IS_NULL, and an absent doc field with
-        // NOT IS_DEFINED — mirroring this store's IS_DEFINED idiom for optional properties.)
+        // §18: a paused (or faulted) run the control plane marked resume-claimable (c.resumeRequestedAt defined) also
+        // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
+        // §5.5 environment-scoped dispatch: a real runner (non-null @runnerEnvironment) claims a run only when pinned to
+        // EXACTLY its environment — `c.environment = @runnerEnvironment` excludes an unpinned run (undefined = value →
+        // false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base overload (list all
+        // claimable): NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by hosted id only, never a runner.
         var candidateQuery = new QueryDefinition(
-            "SELECT c.id, c.status FROM c WHERE (c.status = @pending OR c.status = @running) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR NOT IS_DEFINED(c.environment) OR c.environment = @runnerEnvironment)")
+            "SELECT c.id, c.status FROM c WHERE ((c.status = @pending OR c.status = @running) OR ((c.status = @suspended OR c.status = @faulted) AND IS_DEFINED(c.resumeRequestedAt))) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@pending", PendingStatus)
             .WithParameter("@running", RunningStatus)
+            .WithParameter("@suspended", SuspendedStatus)
+            .WithParameter("@faulted", FaultedStatus)
             .WithParameter("@hosted", new List<string>(hostedWorkflowIds))
             .WithParameter("@runnerEnvironment", runnerEnvironment);
 
@@ -389,7 +394,13 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         foreach ((string id, string status) in candidates)
         {
-            if (status == PendingStatus || (status == RunningStatus && !heldRunIds.Contains(id)))
+            // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (the
+            // query required IS_DEFINED(c.resumeRequestedAt)), so surface it unconditionally alongside Pending and
+            // orphaned-Running runs.
+            if (status == PendingStatus
+                || (status == RunningStatus && !heldRunIds.Contains(id))
+                || status == SuspendedStatus
+                || status == FaultedStatus)
             {
                 yield return new WorkflowRunId(id);
             }
@@ -399,71 +410,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        var conditions = new List<string>();
-        if (query.Status is not null)
-        {
-            conditions.Add("c.status = @status");
-        }
-
-        if (query.WorkflowId is not null)
-        {
-            conditions.Add("c.workflowId = @workflowId");
-        }
-
-        if (query.CreatedAfter is not null)
-        {
-            conditions.Add("c.createdAt >= @createdAfter");
-        }
-
-        if (query.CreatedBefore is not null)
-        {
-            conditions.Add("c.createdAt < @createdBefore");
-        }
-
-        if (query.UpdatedAfter is not null)
-        {
-            conditions.Add("c.updatedAt >= @updatedAfter");
-        }
-
-        if (query.UpdatedBefore is not null)
-        {
-            conditions.Add("c.updatedAt < @updatedBefore");
-        }
-
-        if (query.CorrelationId is not null)
-        {
-            conditions.Add("c.correlationId = @correlationId");
-        }
-
-        var tagParameters = new List<(string Name, string Value)>();
-        if (!query.Tags.IsEmpty)
-        {
-            // The needle is materialized to strings only here, at the SQL parameter-binding leaf the Cosmos query
-            // requires; the stored row tags are matched server-side by ARRAY_CONTAINS and never materialized.
-            List<string> queryTags = query.Tags.ToList();
-            for (int i = 0; i < queryTags.Count; i++)
-            {
-                string name = $"@tag{i}";
-                conditions.Add($"ARRAY_CONTAINS(c.tags, {name})");
-                tagParameters.Add((name, queryTags[i]));
-            }
-        }
-
-        // Row-security reach (§14.2): translate the filter to a native EXISTS over the embedded securityTags
-        // array. Every value is bound as a query parameter (no concatenation); reached only for a store that
-        // declares ISupportsRowSecurityFilter.
-        var securityParameters = new List<(string Name, string Value)>();
-        if (query.Security is { } security)
-        {
-            int securityParam = 0;
-            var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
-            {
-                string name = "@sec" + securityParam++.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                securityParameters.Add((name, value));
-                return name;
-            });
-            conditions.Add(security.ToSqlPredicate(emitter));
-        }
+        (List<string> conditions, List<(string Name, object Value)> parameters) = BuildVisibilityFilter(query);
 
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
         string? after = null;
@@ -480,47 +427,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
         var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.id");
-        if (query.Status is { } s)
-        {
-            definition = definition.WithParameter("@status", s.ToString());
-        }
-
-        if (query.WorkflowId is { } w)
-        {
-            definition = definition.WithParameter("@workflowId", w);
-        }
-
-        if (query.CreatedAfter is { } createdAfter)
-        {
-            definition = definition.WithParameter("@createdAfter", createdAfter.ToUnixTimeMilliseconds());
-        }
-
-        if (query.CreatedBefore is { } createdBefore)
-        {
-            definition = definition.WithParameter("@createdBefore", createdBefore.ToUnixTimeMilliseconds());
-        }
-
-        if (query.UpdatedAfter is { } updatedAfter)
-        {
-            definition = definition.WithParameter("@updatedAfter", updatedAfter.ToUnixTimeMilliseconds());
-        }
-
-        if (query.UpdatedBefore is { } updatedBefore)
-        {
-            definition = definition.WithParameter("@updatedBefore", updatedBefore.ToUnixTimeMilliseconds());
-        }
-
-        if (query.CorrelationId is { } correlationId)
-        {
-            definition = definition.WithParameter("@correlationId", correlationId);
-        }
-
-        foreach ((string name, string value) in tagParameters)
-        {
-            definition = definition.WithParameter(name, value);
-        }
-
-        foreach ((string name, string value) in securityParameters)
+        foreach ((string name, object value) in parameters)
         {
             definition = definition.WithParameter(name, value);
         }
@@ -543,6 +450,125 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        (List<string> conditions, List<(string Name, object Value)> parameters) = BuildVisibilityFilter(query);
+        string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
+
+        // Cosmos has no bounded server-side COUNT (a bare COUNT ignores an outer LIMIT, and both OFFSET/LIMIT and TOP
+        // are rejected inside a COUNT subquery — emulator-verified). So project just the ids with an outer LIMIT
+        // (allowed) and count them client-side: at most cap+1 tiny id rows, never the whole set. Same filter as the
+        // list, so the §14.2 reach cannot drift.
+        var definition = new QueryDefinition($"SELECT c.id FROM c{where} ORDER BY c.id OFFSET 0 LIMIT @lim");
+        foreach ((string name, object value) in parameters)
+        {
+            definition = definition.WithParameter(name, value);
+        }
+
+        definition = definition.WithParameter("@lim", cap + 1);
+
+        int count = 0;
+        await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, definition, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element;
+            if (++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    // Builds the shared visibility conditions (status / workflow / draft-exclusion / timestamps / correlation / tags /
+    // §14.2 security reach) and their parameter bindings, WITHOUT the keyset cursor. QueryAsync appends the cursor +
+    // paging; CountAsync wraps it in a bounded id projection — both share this predicate so the reach filter cannot
+    // drift. The §14.2 reach is pushed to a native EXISTS over the embedded securityTags array.
+    private static (List<string> Conditions, List<(string Name, object Value)> Parameters) BuildVisibilityFilter(in WorkflowQuery query)
+    {
+        var conditions = new List<string>();
+        var parameters = new List<(string Name, object Value)>();
+
+        if (query.Status is { } status)
+        {
+            conditions.Add("c.status = @status");
+            parameters.Add(("@status", status.ToString()));
+        }
+
+        if (query.WorkflowId is { } workflowId)
+        {
+            conditions.Add("c.workflowId = @workflowId");
+            parameters.Add(("@workflowId", workflowId));
+        }
+        else
+        {
+            // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            conditions.Add("c.workflowId <> @draftId");
+            parameters.Add(("@draftId", DraftRuns.RunWorkflowId));
+        }
+
+        if (query.CreatedAfter is { } createdAfter)
+        {
+            conditions.Add("c.createdAt >= @createdAfter");
+            parameters.Add(("@createdAfter", createdAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CreatedBefore is { } createdBefore)
+        {
+            conditions.Add("c.createdAt < @createdBefore");
+            parameters.Add(("@createdBefore", createdBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedAfter is { } updatedAfter)
+        {
+            conditions.Add("c.updatedAt >= @updatedAfter");
+            parameters.Add(("@updatedAfter", updatedAfter.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.UpdatedBefore is { } updatedBefore)
+        {
+            conditions.Add("c.updatedAt < @updatedBefore");
+            parameters.Add(("@updatedBefore", updatedBefore.ToUnixTimeMilliseconds()));
+        }
+
+        if (query.CorrelationId is { } correlationId)
+        {
+            conditions.Add("c.correlationId = @correlationId");
+            parameters.Add(("@correlationId", correlationId));
+        }
+
+        if (!query.Tags.IsEmpty)
+        {
+            // The needle is materialized to strings only here, at the SQL parameter-binding leaf the Cosmos query
+            // requires; the stored row tags are matched server-side by ARRAY_CONTAINS and never materialized.
+            List<string> queryTags = query.Tags.ToList();
+            for (int i = 0; i < queryTags.Count; i++)
+            {
+                string name = $"@tag{i}";
+                conditions.Add($"ARRAY_CONTAINS(c.tags, {name})");
+                parameters.Add((name, queryTags[i]));
+            }
+        }
+
+        // Row-security reach (§14.2): translate the filter to a native EXISTS over the embedded securityTags array.
+        // Every value is bound as a query parameter (no concatenation); reached only for a store declaring
+        // ISupportsRowSecurityFilter.
+        if (query.Security is { } security)
+        {
+            int securityParam = 0;
+            var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
+            {
+                string name = "@sec" + securityParam++.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                parameters.Add((name, value));
+                return name;
+            });
+            conditions.Add(security.ToSqlPredicate(emitter));
+        }
+
+        return (conditions, parameters);
     }
 
     /// <inheritdoc/>

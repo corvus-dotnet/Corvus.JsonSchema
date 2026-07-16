@@ -31,6 +31,8 @@ Successful `resume`/`cancel` return the run's new `WorkflowRunDetail`. Errors us
 |-------|-----|-----------|----------------|
 | **Runners** | `runners` | `listRunners` | The execution hosts (runners) registered to claim and run work. |
 | **Catalog** | `catalog` | `searchCatalog`, `addCatalogVersion`, `listCatalogVersions`, `getCatalogVersion`, `updateCatalogVersion`, `deleteCatalogVersion`, `purgeCatalog` (`PURGE /catalog`), `getCatalogPackage`, `getCatalogWorkflow`, `getCatalogWorkflowSchemas`, `getCatalogSource`, `getCatalogExecutor`, `getCatalogExecutorManifest`, `validateCatalogValue`, `startCatalogWorkflowRun` | The immutable, content-hashed versioned workflow-package store (see [`catalog-design.md`](catalog-design.md)): upload/search/inspect versions, download the package and its addressable documents (workflow, sources, schemas, executor assembly + manifest), validate inputs, and trigger a run of a runnable version. |
+| **Workspace** | `workspace` | `listWorkspaceWorkflows`, `createWorkspaceWorkflow`, `getWorkspaceWorkflow`, `updateWorkspaceWorkflow`, `deleteWorkspaceWorkflow`, `validateWorkspaceWorkflow`, `listScenarios`, `putScenario`, `deleteScenario`, `runScenario`, `runAllScenarios`, `publishWorkingCopy`, `getWorkingCopySchemas`, `simulateWorkingCopy`, `listWorkingCopySources`, `getWorkingCopySource`, `attachWorkingCopySource`, `detachWorkingCopySource`, `listWorkingCopySourceOperations` | The workflow-designer working copies (see [`workflow-designer-design.md`](workflow-designer-design.md)): mutable documents under edit with their scenarios, durably saveable without minting a catalog version; `publishWorkingCopy` mints a catalog version, `simulateWorkingCopy` drives an in-designer simulation, and the source operations bind the working copy to OpenAPI descriptions. |
+| **Debug runs** | `debugRuns` | `startDebugRun`, `getDebugRun`, `resumeDebugRun`, `cancelDebugRun`, `injectDebugRunMessage`, `deleteDebugRun` | The §18 interactive debug runs launched from a working copy: durable, forward-only run/pause/step against a scenario's mock transport (or a live dev environment), with breakpoints, resume/step, trigger injection (`injectDebugRunMessage` delivers a message straight to a suspended message-wait), and cancel/delete. |
 | **Security** | `security` | `listSecurityRules`, `createSecurityRule`, `getSecurityRule`, `updateSecurityRule`, `deleteSecurityRule`, `listSecurityBindings`, `createSecurityBinding`, `getSecurityBinding`, `updateSecurityBinding`, `deleteSecurityBinding` | The row-security policy: rules and claim→rule bindings. |
 | **Credentials** | `credentials` | `listCredentials`, `createCredential`, `getCredential`, `updateCredential`, `deleteCredential` | Source credential bindings (references + metadata only — never secret material). |
 | **Administrators** | `administrators` | `listAdministrators`, `transferAdministration`, `addAdministrator`, `removeAdministrator` | A workflow's administrator set (add / remove / transfer). |
@@ -110,7 +112,8 @@ it becomes the CLI's basis:
 ```bash
 dotnet run --project src/Corvus.Json.Cli -f net10.0 -- \
   openapi-client docs/control-plane/arazzo-control-plane.openapi.json \
-  --rootNamespace Corvus.Arazzo.ControlPlane.Client --outputPath ./Generated
+  --rootNamespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client \
+  --outputPath src/Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli/Generated
 ```
 
 This emits an `IApiRunsClient`/`ApiRunsClient` with

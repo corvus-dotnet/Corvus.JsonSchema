@@ -242,17 +242,21 @@ class ArazzoAccessRequests extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        :host { display: block; }
-        .tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--_border); }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        [part="panel"] { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .tabs { flex: none; display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--_border); }
+        /* When a host locks the view (e.g. the console's Approvals/Requests tabs pick mine|queue), hide the internal toggle. */
+        :host([hide-view-tabs]) .tabs { display: none; }
         .tabs button { font: inherit; font-size: 14px; border: none; background: none; color: var(--_muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 0; }
         .tabs button[aria-selected="true"] { color: var(--_text); border-bottom-color: var(--_accent); font-weight: 600; }
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         .toolbar .grow { flex: 1; }
         .toolbar .wf { min-width: 220px; flex: 1; }
         select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
         tbody tr:last-child td { border-bottom: none; }
         .wf-id { font-weight: 600; }
@@ -266,8 +270,10 @@ class ArazzoAccessRequests extends ArazzoElement {
         .actions button { font-size: 12px; padding: 4px 9px; }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
-        .err { margin: 10px 12px; }
+        .err { flex: none; margin: 10px 12px; }
+        .err:empty { display: none; }
         ${PAGER_CSS}
+        .pager { flex: none; }
         dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
         dialog::backdrop { background: rgba(0,0,0,0.4); }
         dialog .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
@@ -289,10 +295,12 @@ class ArazzoAccessRequests extends ArazzoElement {
         <div class="wrap" part="table">
           <div class="toolbar" part="toolbar"></div>
           <div class="err"></div>
-          <table>
-            <thead></thead>
-            <tbody part="rows"></tbody>
-          </table>
+          <div class="tablescroll">
+            <table>
+              <thead></thead>
+              <tbody part="rows"></tbody>
+            </table>
+          </div>
           <arazzo-pager class="pager" part="foot"></arazzo-pager>
         </div>
       </div>

@@ -15,6 +15,20 @@ using var personDoc = Person.CreateBuilder(
     height: 1.52);
 
 // ------------------------------------------------------------------
+// Creating an immutable ParsedJsonDocument<Person> directly
+// Use this when you are building a document to hand to a caller,
+// rather than to keep mutating it: there is no workspace to manage,
+// and the document text is written once, directly — no serialization
+// round trip. The caller owns (and must dispose) the document.
+// ------------------------------------------------------------------
+using ParsedJsonDocument<Person> createdDoc = Person.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: "Brontë",
+    givenName: "Anne",
+    height: 1.52);
+Console.WriteLine(createdDoc.RootElement);
+
+// ------------------------------------------------------------------
 // Serialization — convert to JSON string (allocates)
 // ------------------------------------------------------------------
 string jsonString = personDoc.RootElement.ToString();

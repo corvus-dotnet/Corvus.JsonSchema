@@ -173,15 +173,8 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             foreach (KeyValuePair<string, Entry> kvp in this.entries)
             {
                 WorkflowRunIndexEntry index = kvp.Value.Index;
-                if ((query.Status is { } status && index.Status != status)
-                    || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
-                    || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
-                    || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
-                    || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)
-                    || (query.UpdatedBefore is { } updatedBefore && index.UpdatedAt >= updatedBefore)
-                    || (query.CorrelationId is { } correlationId && index.CorrelationId != correlationId)
-                    || !query.Tags.AllContainedIn(index.Tags)
-                    || !(query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true)
+
+                if (!Matches(query, index)
                     || (after is not null && string.CompareOrdinal(kvp.Key, after) <= 0))
                 {
                     continue;
@@ -202,6 +195,45 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
         return ValueTask.FromResult(WorkflowContinuationToken.Paginate(top, query.Limit));
     }
+
+    /// <inheritdoc/>
+    public ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Bounded scan: count matches with the SAME filter the list applies (so the §14.4 reach cannot drift) and
+        // stop the moment the cap is exceeded — never materialising listings, no sort.
+        int count = 0;
+        lock (this.gate)
+        {
+            foreach (KeyValuePair<string, Entry> kvp in this.entries)
+            {
+                if (Matches(query, kvp.Value.Index) && ++count > cap)
+                {
+                    return ValueTask.FromResult((cap, true));
+                }
+            }
+        }
+
+        return ValueTask.FromResult((count, false));
+    }
+
+    // The shared visibility filter (status / workflow / draft-exclusion / timestamps / correlation / tags / §14.4
+    // security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor for paging, CountAsync scans with just
+    // this. Both share the one predicate so the reach filter cannot drift between list and count.
+    // §18: draft runs never surface on an unfiltered visibility query — a caller must name the reserved $draft
+    // workflow id explicitly (the debug-run surface does; the runs listing never does).
+    private static bool Matches(in WorkflowQuery query, in WorkflowRunIndexEntry index)
+        => !((query.Status is { } status && index.Status != status)
+            || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
+            || (query.WorkflowId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+            || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
+            || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
+            || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)
+            || (query.UpdatedBefore is { } updatedBefore && index.UpdatedAt >= updatedBefore)
+            || (query.CorrelationId is { } correlationId && index.CorrelationId != correlationId)
+            || !query.Tags.AllContainedIn(index.Tags)
+            || !(query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true));
 
     // Inserts a listing into the capped buffer at its ascending-run-id position (linear from the end — the buffer is
     // Limit+1 small and stays within its preallocated capacity, so no backing array reallocates).
@@ -233,7 +265,15 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
                 .Where(kvp => hostedWorkflowIds.Contains(kvp.Value.Index.WorkflowId)
                     && MatchesEnvironment(kvp.Value.Index.Environment, runnerEnvironment)
                     && (kvp.Value.Index.Status == WorkflowRunStatus.Pending
-                        || (kvp.Value.Index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))))
+                        || (kvp.Value.Index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))
+
+                        // §18: a paused (or faulted) run the control plane marked resume-claimable via
+                        // RequestResumeAsync. It stays Suspended/Faulted (never re-labelled Pending), and its marker
+                        // is cleared on the claiming runner's first checkpoint. Gated on the stopped status so a
+                        // terminal run that somehow retained the marker is never surfaced (nor perpetually re-loaded
+                        // and rejected by the dispatcher).
+                        || (kvp.Value.Index.ResumeRequestedAt is not null
+                            && kvp.Value.Index.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted)))
                 .Select(kvp => new WorkflowRunId(kvp.Key))
                 .ToList();
         }
@@ -245,10 +285,13 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         }
     }
 
-    // §5.5 dispatch env-match: a run pinned to an environment is claimable only by a runner serving it; an unpinned run
-    // (null environment) or an unscoped/legacy dispatcher (null runnerEnvironment) matches anything (backward-compatible).
+    // §5.5 dispatch env-match: a real runner (non-null runnerEnvironment) claims a run only when it is pinned to EXACTLY
+    // its environment — an unpinned run, or a run pinned elsewhere, is never claimed (the credential boundary). A runner
+    // always declares its environment (the WorkflowDispatcher rejects an unscoped one), so this is the dispatch rule.
+    // A null runnerEnvironment is the env-agnostic base overload (list all claimable regardless of environment) — a
+    // diagnostics / pre-pinning primitive, never a runner.
     private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
+        => runnerEnvironment is null || (runEnvironment is not null && string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal));
 
     // Must be called while holding the gate.
     private bool HasLiveLease(string id, DateTimeOffset now)

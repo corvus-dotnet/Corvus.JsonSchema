@@ -1,72 +1,67 @@
-# Live workflow execution — resume notes
+# Live workflow execution — current state
 
-The demo currently **seeds** runs in fixed states (see `DemoData.cs`). The next phase is to make the demo
-*execute* the workflows live: the control plane's `WorkflowResumer` re-enters a generated Arazzo executor that
-calls the real backend services (the `/svc/onboarding` + `/svc/ledger` APIs already hosted by this sample, plus
-an AsyncAPI messaging service), checkpointing/suspending/faulting against the SQLite store.
+The demo **executes workflows live** against the real external services this sample composes (the onboarding,
+ledger, and KYC services — each its own process + database — plus a real NATS JetStream message bus). It runs
+both catalogued workflows and §18 working-copy debug runs, checkpointing, suspending, faulting, and resuming
+against the shared Postgres store. These notes describe how it is wired (an earlier version of this file was a
+plan for a paused spike; that work is done).
 
-This was scoped and assessed as **feasible**, then paused at the spike. These notes capture the approach so it
-can be resumed without re-discovery.
+## Catalogued runs
 
-## What already exists (done)
+A resumed run re-enters the executor baked into its catalogued version at add time.
 
-- Backend services generated + hosted: `Generated/Onboarding`, `Generated/Ledger`, implemented by
-  `Services/OnboardingService.cs` / `Services/LedgerService.cs`, mapped under `/svc/...` in `Program.cs`.
-- The control-plane host, SQLite stores, catalog/run seeding, and the web UI.
-- `PreserveCompilationContext=true` is already set (needed if executors are compiled at runtime).
+- `PostgresWorkflowCatalogStore.ConnectAsync(..., executorProvider: new WorkflowExecutorProvider())` compiles a
+  runnable executor into each version when it is added (alongside the typed metadata). No CLI verb, no
+  hand-built binder. The code generator does the emit through the provider.
+- `DemoData.CreateLiveResumer` builds a `HostedWorkflowResumer` over the catalog and a `WorkflowExecutorLoader`,
+  bound to transports rooted at the sample's real services (`DemoData.CreateLiveBinder`). It returns a
+  `WorkflowResumer` the run machinery drives.
+- `DemoData.RunLiveOnboardingAsync` executes fresh runs at startup so the browsable demo shows genuinely-executed
+  runs, not hand-seeded states: a completing run, an intentionally-faulting run (a success criterion evaluated
+  against the real backend response), the resilient v2 that handles the same failure, an async run that suspends
+  on an AsyncAPI message wait and resumes when the verdict is delivered, and a retry run that suspends on a
+  durable timer between attempts and resumes when the backoff elapses (`WorkflowWorker.ResumeDueTimersAsync` /
+  `DeliverMessageAsync`).
 
-## The executor pipeline (the thorny part)
+`PreserveCompilationContext=true` is set on both the control-plane host and the runner: the runtime compile of a
+captured draft (below) needs the reference assemblies preserved.
 
-`WorkflowExecutorEmitter.Emit(workflow, binder, options)` returns the executor **source string**. It does NOT
-take an OpenAPI document — it takes a `WorkflowOperationBinder` built from `OperationDescriptor[]` that name the
-**generated client types** per operation. There is no CLI verb for this; it is invoked programmatically.
+## §18 debug runs
 
-Reference implementations in the test suite:
-- `tests/Corvus.Text.Json.Arazzo.Tests/WorkflowExecutorEndToEndTests.cs` — `EmitGetPetExecutor(...)` and the
-  durable run → crash → resume → complete cycle (the pattern to copy for the resumer).
-- `tests/Corvus.Text.Json.Arazzo.Tests/Coverage_GeneratorInlinerTests.cs` (~line 100) — concrete
-  `OperationDescriptor[]` + `WorkflowOperationBinder` + `OperationResolver.Create(source, operations)` +
-  `WorkflowExecutorEmitter.Emit(workflow, binder, new WorkflowExecutorOptions(ns, className, inputsType, outputsType))`.
+A debug run is a durable run of a working copy's captured document, not a published version (workflow-designer
+design §18). The control plane never executes it. It writes the capture to the draft-run store, marks the run
+claimable, and a runner advances it. See the R1–R5 commits and the debug-run UI for the full loop.
 
-Generated executor entry point (`WorkflowExecutorEmitter.cs`):
+- `InProcessDraftRunner` claims the `$draft` runs pinned to its environment, resolves each captured draft,
+  compiles it in durable mode (`WorkflowExecutorProvider`, content-hash cached), runs it forward-only, records
+  the metadata-only exchanges (`RecordingApiTransport`), and persists a `SimulationTrace`-shaped trace to the
+  trace store. A failing or uncompilable run is faulted, never allowed to abort the pump's batch.
+- **Single-process** (the default standalone host): the control plane pumps the runner in-process
+  (`ControlPlane:HostDraftRunnerInProcess`, default on). The runner is architecturally a runner, just co-located.
+- **Multi-process** (the AppHost composition): a separate `Runner.Demo` process hosts `$draft`
+  (`Runner:HostDraftRuns`) and the control plane's in-process pump is off, so the two planes are physically
+  split. Both share the Postgres draft/state/trace stores.
 
-```csharp
-public static async ValueTask<WorkflowRunResult<TOutputs>> ExecuteAsync(
-    IApiTransport transport,
-    IMessageTransport messageTransport,   // only when the workflow has AsyncAPI steps
-    JsonWorkspace workspace,
-    TInputs inputs,
-    IWorkflowRun? run = null,             // durable mode (checkpoint/resume) when non-null
-    CancellationToken cancellationToken = default,
-    TimeProvider? timeProvider = null)
-```
+## Transports and credentials
 
-`WorkflowRunResult<T>` is tri-state (Completed / Faulted / Suspended) → map to `WorkflowRunResultKind` in the
-`WorkflowResumer`.
-
-## Stages to do
-
-1. **Clients** — `corvusjson openapi-client` for `specs/onboarding.openapi.json` + `specs/ledger.openapi.json`
-   (gives `*Request`/`*Response`/`*Client`/`*Async`). `corvusjson asyncapi-generate` for a new
-   `specs/notifications.asyncapi.json` (a `kyc.results` channel a step `receive`s).
-2. **Binders** — for each workflow, build `OperationDescriptor[]` mapping each Arazzo `operationId` to the
-   generated client request/response/client/method type names; build the `WorkflowOperationBinder`; call
-   `WorkflowExecutorEmitter.Emit`. Decide build-time (write the `.cs` into the project, commit) vs runtime
-   (`DynamicCompiler`, like the validator). Build-time is simpler to debug.
-3. **Transports** — an `IApiTransport` over `HttpClient` (see `Corvus.Text.Json.OpenApi` / a HttpTransport)
-   with a per-source base URL of `http://localhost:<port>/svc/<source>`; an `IMessageTransport` =
-   `Corvus.Text.Json.AsyncApi.Testing.InMemoryMessageTransport`.
-4. **Live resumer + seeding** — wire a `WorkflowResumer` that calls `ExecuteAsync(...)`; replace the hand-built
-   seed states with actually-run workflows (some complete; one faults on a success-criterion against the
-   backend data; one suspends on the awaited message). Use `WorkflowWorker` (`ResumeDueTimersAsync` /
-   `DeliverMessageAsync`) for timer/message resume.
+- The demo routes each source's generated client directly at its real service (onboarding, ledger, kyc — each
+  its own host); there is no control-plane `/svc` mock left (`DemoData.CreateLiveBinder` on the control-plane
+  path, `DraftRunHost.CreateBinder` on the runner path). In production these are the environment's real endpoints
+  and the credentialed `SourceCredentialTransports.CreateBinder` applies each source's Vault-resolved secret.
+- **§13.5 credentials.** When Vault is configured (`VAULT_ADDR`/`VAULT_TOKEN`, which the AppHost injects as the
+  runner's read-only token), the runner resolves each source's secret **as its own read-only Vault identity** at
+  bind time and applies it to the request (`SourceCredentialTransports.CreateBinder` over a
+  `SourceCredentialCache` and the Vault secret resolver). The secret never reaches the control plane, the
+  designer, or the developer. The control plane holds only the reference (`vault://secret/arazzo/<source>#…`).
 
 ## Key types
 
 | Purpose | Type / location |
 |---|---|
-| Executor emitter | `Corvus.Text.Json.Arazzo.CodeGeneration.WorkflowExecutorEmitter.Emit` |
-| Binder | `WorkflowOperationBinder`, `OperationResolver`, `OperationDescriptor`, `WorkflowExecutorOptions` |
-| HTTP transport | `Corvus.Text.Json.OpenApi.IApiTransport` |
-| Message transport | `Corvus.Text.Json.AsyncApi.IMessageTransport` + `…AsyncApi.Testing.InMemoryMessageTransport` |
+| Executor at add time | `Corvus.Text.Json.Arazzo.Generation.WorkflowExecutorProvider` |
+| Catalog resumer | `HostedWorkflowResumer` + `WorkflowExecutorLoader` (`DemoData.CreateLiveResumer`) |
+| §18 draft runner | `Corvus.Text.Json.Arazzo.Durability.InProcessDraftRunner` |
+| HTTP transport | `Corvus.Text.Json.OpenApi.IApiTransport` + `HttpClientApiTransportFactory` |
+| Message transport | `Corvus.Text.Json.AsyncApi.Nats.NatsMessageTransport` (JetStream) |
+| Credentialed binder | `Corvus.Text.Json.Arazzo.SourceCredentials.Http.SourceCredentialTransports.CreateBinder` |
 | Resumer seam | `Corvus.Text.Json.Arazzo.Durability.WorkflowResumer` / `WorkflowWorker` |

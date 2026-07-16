@@ -62,11 +62,13 @@ public readonly partial struct WorkflowAdministrators
         }
     }
 
-    /// <summary>Whether <paramref name="candidate"/> is one of this workflow's administrator identities (design §14.2): true
-    /// iff <paramref name="candidate"/> equals one of the administrator sets exactly (order-independent set equality), so a
-    /// caller presenting a superset or a partial match is <em>not</em> an administrator.</summary>
-    /// <param name="candidate">The candidate administrator identity (the caller's stamped administrator tags).</param>
-    /// <returns><see langword="true"/> if the candidate is an administrator.</returns>
+    /// <summary>Whether <paramref name="candidate"/> administers this workflow (design §16.5.4, membership model): true iff
+    /// one of the administrator identities is a <strong>subset</strong> of <paramref name="candidate"/> — the caller's whole
+    /// stamped identity <em>contains</em> a named administrator identity. Membership supersedes the earlier exact
+    /// set-equality (a richer caller identity still administers a group/team founder); the resolved-grantee model keeps a
+    /// named founder at the exact grain, so a coarse founder cannot over-grant.</summary>
+    /// <param name="candidate">The candidate administrator identity (the caller's whole stamped identity tags).</param>
+    /// <returns><see langword="true"/> if the candidate administers this workflow.</returns>
     public bool IsAdministeredBy(SecurityTagSet candidate)
     {
         if (this.Administrators.IsUndefined())
@@ -76,7 +78,7 @@ public readonly partial struct WorkflowAdministrators
 
         foreach (AdministratorIdentity administrator in this.Administrators.EnumerateArray())
         {
-            if (WorkflowIdentity.SameAdministrator(SecurityTagSet.CopyFrom(administrator.Tags), candidate))
+            if (SecurityTagSet.CopyFrom(administrator.Tags).IsSubsetOf(candidate))
             {
                 return true;
             }
@@ -162,6 +164,33 @@ public readonly partial struct WorkflowAdministrators
     /// <returns>The UTF-8 JSON document.</returns>
     public byte[] ToJsonBytes()
         => PersistedJson.ToArray(this, static (Utf8JsonWriter writer, in WorkflowAdministrators v) => v.WriteTo(writer));
+
+    /// <summary>Realises a brand-new administration record as a self-contained pooled document in one pass — the
+    /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
+    /// parsed document. The administrator list folds in closure-free (the list is the Build context). Same field mapping
+    /// as the writer path below; keep the two in step.</summary>
+    /// <param name="baseWorkflowId">The base workflow the record administers.</param>
+    /// <param name="administrators">The administrator identities (at least one); each carries its own tags and optional kind/label.</param>
+    /// <param name="actor">The actor creating the record (audit).</param>
+    /// <param name="createdAt">The creation instant.</param>
+    /// <param name="etag">The optimistic-concurrency token to assign.</param>
+    /// <returns>The pooled document that owns the persisted bytes.</returns>
+    public static ParsedJsonDocument<WorkflowAdministrators> CreateNew(string baseWorkflowId, IReadOnlyList<AdministratorIdentity> administrators, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+        => Create(
+            context: administrators,
+            administrators: AdministratorIdentityArray.Build(
+                administrators,
+                static (in IReadOnlyList<AdministratorIdentity> list, ref AdministratorIdentityArray.Builder b) =>
+                {
+                    foreach (AdministratorIdentity administrator in list)
+                    {
+                        b.AddItem(administrator);
+                    }
+                }),
+            baseWorkflowId: baseWorkflowId,
+            createdAt: createdAt,
+            createdBy: actor,
+            etag: etag.Value ?? string.Empty);
 
     /// <summary>Writes a brand-new administration record into the caller's (pooled) writer in one pass.</summary>
     /// <param name="writer">The writer to serialize into.</param>

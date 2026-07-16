@@ -24,7 +24,7 @@ public sealed class WorkflowSecurityTagTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
         SecurityTag[] security = [new("tenant", "acme"), new("team", "payments"), new("team", "billing")];
-        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, tags: TagSet.FromTags(["nightly"]), securityTags: SecurityTagSet.FromTags(security)))
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time,tags: TagSet.FromTags(["nightly"]), securityTags: SecurityTagSet.FromTags(security)))
         {
             run.SecurityTags.ToList().ShouldBe(security);
             await run.EnqueueAsync(default);
@@ -44,7 +44,7 @@ public sealed class WorkflowSecurityTagTests
         var management = new SecuredWorkflowManagement(store, owner: "ops");
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
-        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time, securityTags: SecurityTagSet.FromTags([new("tenant", "acme")])))
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time,securityTags: SecurityTagSet.FromTags([new("tenant", "acme")])))
         {
             await run.EnqueueAsync(default);
         }
@@ -52,7 +52,7 @@ public sealed class WorkflowSecurityTagTests
         WorkflowRunDetail? detail = await management.GetAsync("run-1", AccessContext.System, default);
 
         detail.ShouldNotBeNull();
-        detail.Value.SecurityTags.ToList().ShouldBe([new SecurityTag("tenant", "acme")]);
+        detail.Value.SecurityTags.ToList().ShouldBe([new("tenant", "acme")]);
     }
 
     [TestMethod]
@@ -61,8 +61,48 @@ public sealed class WorkflowSecurityTagTests
         var store = new InMemoryWorkflowStateStore();
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "petId": 1 }"""u8.ToArray());
 
-        using WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, Time);
+        using WorkflowRun run = WorkflowRun.CreateNew(store, "run-1", "wf", doc.RootElement, "development", Time);
 
         run.SecurityTags.IsEmpty.ShouldBeTrue();
+    }
+
+    // ── identity-membership model (§16.5.4): a named identity is a SUBSET of the caller's whole stamped identity ──────
+
+    [TestMethod]
+    public void IsSubsetOf_is_membership_not_set_equality()
+    {
+        SecurityTagSet founder = SecurityTagSet.FromTags([new("sys:group", "arazzo-admins"), new("sys:iss", "arazzo-keycloak")]);
+
+        // A richer caller identity that CONTAINS the founder (the admin who is also a subject and in another group).
+        SecurityTagSet richCaller = SecurityTagSet.FromTags([
+            new("sys:group", "arazzo-admins"),
+            new("sys:group", "payments"),
+            new("sys:sub", "u-1042"),
+            new("sys:iss", "arazzo-keycloak")]);
+
+        // Membership: the founder is a subset of the richer caller, so the caller administers/reaches it. (Under the
+        // superseded exact set-equality this was FALSE — the richer caller did not equal the founder.)
+        founder.IsSubsetOf(richCaller).ShouldBeTrue();
+
+        // The reverse is not a subset (the caller is not contained in the founder).
+        richCaller.IsSubsetOf(founder).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void IsSubsetOf_rejects_a_partial_or_disjoint_identity()
+    {
+        SecurityTagSet founder = SecurityTagSet.FromTags([new("sys:group", "arazzo-admins"), new("sys:iss", "arazzo-keycloak")]);
+
+        // A different issuer: same group value, wrong issuer — the founder is NOT a subset (disjoint on one tag).
+        SecurityTagSet otherIssuer = SecurityTagSet.FromTags([new("sys:group", "arazzo-admins"), new("sys:iss", "other-idp")]);
+        founder.IsSubsetOf(otherIssuer).ShouldBeFalse();
+
+        // A partial identity that carries only one of the founder's tags does not contain it.
+        SecurityTagSet partial = SecurityTagSet.FromTags([new("sys:group", "arazzo-admins")]);
+        founder.IsSubsetOf(partial).ShouldBeFalse();
+
+        // The empty set is a subset of any identity; nothing non-empty is a subset of the empty set.
+        SecurityTagSet.FromTags([]).IsSubsetOf(founder).ShouldBeTrue();
+        founder.IsSubsetOf(SecurityTagSet.FromTags([])).ShouldBeFalse();
     }
 }

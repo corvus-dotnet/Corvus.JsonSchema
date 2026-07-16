@@ -250,6 +250,26 @@ public sealed class AzureStorageAvailabilityRequestStore : IAvailabilityRequestS
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AvailabilityRequestQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Server-side filter (the same BuildFilter as the list) over a RowKey-only projection — no Doc is read. Table
+        // Storage has no COUNT, so bound the first page to cap + 1 and stop there; the (cap+1)th row trips Capped.
+        string? filter = BuildFilter(query);
+        int count = 0;
+        await foreach (TableEntity entity in this.requests
+            .QueryAsync<TableEntity>(filter, maxPerPage: cap + 1, select: ["RowKey"], cancellationToken: cancellationToken)
+            .ConfigureAwait(false))
+        {
+            if (++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AvailabilityRequest>?> DecideAsync(string id, AvailabilityRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);

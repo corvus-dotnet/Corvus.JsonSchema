@@ -168,6 +168,7 @@ For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complet
 - **Serialization** via `WriteTo(Utf8JsonWriter)` and `ToString()`
 - **Implicit conversions** to and from .NET primitive types
 - **Mutable builder** via `CreateBuilder(JsonWorkspace)` for in-place modification
+- **Immutable document factory** via `Create(...)`, returning a self-contained `ParsedJsonDocument<T>` built in a single pass — the create-but-don't-modify counterpart to `CreateBuilder`
 - **Pattern matching** via `Match()` for `oneOf`/`anyOf` discriminated unions
 - **Equality** operators and `GetHashCode()`
 

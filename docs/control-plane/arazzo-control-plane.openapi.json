@@ -57,9 +57,21 @@
     "name": "sources",
     "description": "Manage first-class, reach-scoped source registrations (design §7.6): register/list/read/update/delete the OpenAPI/AsyncAPI documents a workflow references by name in its sourceDescriptions. A source is registered once and resolved immutably by the catalog; its per-environment credentials are managed separately (the credentials surface). Reach-scoped management — there is no administrator set; reach membership is the gate (capability scopes sources:read / sources:write). The registered document is returned only on read of a single source, never in the list."
   },
+{
+    "name": "workspace",
+    "description": "Designer working copies (workflow-designer design §4.1): mutable Arazzo documents saved during development without minting catalog versions. Reach-scoped, etag-guarded; publish mints an immutable catalog version."
+  },
+  {
+    "name": "debugRuns",
+    "description": "DEBUG a working copy (workflow-designer design §18): start, step/resume, inspect, inject a message into, cancel, and purge a durable debug run in a development-class environment. These are debugging affordances — a driven, forward-only run under governed dev credentials with no production analogue; message injection stands in for the real publisher (capability scopes workspace:write + runs:write; read is workspace:read)."
+  },
+  {
+    "name": "github",
+    "description": "Brokered GitHub integration (workflow-designer design §4.7): the control plane holds a GitHub App's credentials and each principal's short-lived user-to-server token — the kit never sees a GitHub credential. Authorship is the signed-in user's GitHub-held git identity, stamped by GitHub rather than composed by the control plane; reach is the user ∩ installation ∩ App-permission intersection; token custody is server-side, keyed by control-plane principal; unattended actions use the App's bot identity or don't happen. Deployment-configured (a deployment that brokers no App refuses these operations)."
+  },
   {
     "name": "availability",
-    "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7). Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
+    "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7), and, where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite is green. Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
   },
   {
     "name": "accessRequests",
@@ -340,6 +352,25 @@
         }
       }
     },
+    "/runners/count": {
+      "get": {
+        "operationId": "countRunners",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runners"],
+        "summary": "Count runners",
+        "description": "Counts the registered runners the caller's read reach admits (§5.5/§14.2), bounded by the server's cap — no runner rows are returned (for the list footer). Reach here is a per-row predicate over each runner's reach tags, so the count matches the reach-filtered listRunners exactly. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible runners.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          }
+        }
+      }
+    },
     "/catalog": {
       "post": {
         "operationId": "addCatalogVersion",
@@ -464,7 +495,7 @@
         ],
         "tags": ["catalog"],
         "summary": "Get a workflow version",
-        "description": "Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package. The package and its individual documents are fetched via the links.",
+        "description": "Returns the version's metadata — content hash, governance metadata, audit fields and the list of documents in the package — plus, for versions published with scenario evidence, the publish-evidence summary (the badge's data; the full per-scenario record is the evidence endpoint's). The package and its individual documents are fetched via the links.",
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" }
@@ -554,6 +585,63 @@
           "200": {
             "description": "The package envelope, streamed.",
             "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/simulate": {
+      "post": {
+        "operationId": "simulateCatalogVersion",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Simulate a published version",
+        "description": "Runs the deterministic simulator over the version's IMMUTABLE stored package — the workflow document and its embedded sources, exactly as published — with the same request shape as simulateWorkingCopy (scenario, stop condition, budget) and the same complete trace back (workflow-designer design §4.3/§8). Re-verify evidence, or explore a regression, without a working copy. Mutates nothing.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulateRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The structured trace, complete up to the stop condition.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SimulationTrace" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": {
+            "description": "The version's document does not compile to an executable workflow (e.g. it references another Arazzo document as a source).",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+          }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/evidence": {
+      "get": {
+        "operationId": "getCatalogEvidence",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "A version's publish evidence",
+        "description": "The server-attested evidence recorded at publish (workflow-designer design \u00a74.6): engine version, package hash, the scenario suite's verdicts. 404 when the version predates evidence or was published without scenarios.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The evidence document.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublishEvidence" } } }
           },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
@@ -765,6 +853,27 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/count": {
+      "get": {
+        "operationId": "countVersionAvailability",
+        "security": [
+          { "oauth2": ["availability:read"] },
+          { "openIdConnect": ["availability:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "Count the environments a workflow version is available in",
+        "description": "Counts the environments this version has been made available in (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller who can read the workflow version (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of environments the version is available in.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/{environment}": {
       "put": {
         "operationId": "makeVersionAvailable",
@@ -775,7 +884,7 @@
         ],
         "tags": ["availability"],
         "summary": "Make a workflow version available in an environment",
-        "description": "Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources. Idempotent — making an already-available version available again returns the existing entry (200).",
+        "description": "Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources; and where the environment requires evidence (workflow-designer design §4.6), the version's server-attested scenario suite must be green, else 409 (evidence-required). Idempotent — making an already-available version available again returns the existing entry (200).",
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" },
@@ -845,6 +954,25 @@
               }
             }
           }
+        }
+      }
+    },
+    "/security/rules/count": {
+      "get": {
+        "operationId": "countSecurityRules",
+        "security": [
+          { "oauth2": ["security:read"] },
+          { "openIdConnect": ["security:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["security"],
+        "summary": "Count security rules",
+        "description": "Counts the rules matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityRules (a case-insensitive substring of the name or expression). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "name": "q", "in": "query", "required": false, "description": "Free-text filter matched against each rule's name and expression (case-insensitive contains).", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of matching rules.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } }
         }
       }
     },
@@ -1103,6 +1231,25 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
+        }
+      }
+    },
+    "/security/bindings/count": {
+      "get": {
+        "operationId": "countSecurityBindings",
+        "security": [
+          { "oauth2": ["security:read"] },
+          { "openIdConnect": ["security:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["security"],
+        "summary": "Count security bindings",
+        "description": "Counts the bindings matching q, bounded by the server's cap — no rows are returned (for the list footer). Same q filter as searchSecurityBindings (a case-insensitive substring of the claim type, claim value, or description). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "name": "q", "in": "query", "required": false, "description": "Free-text filter matched against each binding's claim type, claim value, and description (case-insensitive contains).", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of matching bindings.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } }
         }
       }
     },
@@ -1504,6 +1651,1245 @@
         }
       }
     },
+    "/workspace/workflows": {
+      "get": {
+        "operationId": "listWorkspaceWorkflows",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List working copies",
+        "description": "Lists the working copies in the caller's reach, keyset-paged and ordered by id. Entries omit the document and designer state.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitQuery"
+          },
+          {
+            "$ref": "#/components/parameters/PageTokenQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of working copies.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopyList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Create a working copy",
+        "description": "Creates a working copy from a supplied Arazzo document, from a catalog version (the carry-over: fromBaseWorkflowId + fromVersionNumber), or blank. The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkingCopyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created working copy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopy"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}": {
+      "get": {
+        "operationId": "getWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Get a working copy",
+        "description": "Returns one working copy including its document and designer state. The working copy must be in the caller's reach (404 otherwise).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The working copy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopy"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Save a working copy",
+        "description": "Saves the working copy: replaces the document (and optionally the name/designer state). The save presents the etag it read (expectedEtag) and conflicts (409) when stale — a collaborator saved first; re-fetch and reconcile. Never mints a catalog version.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkingCopyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The saved working copy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopy"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Delete a working copy",
+        "description": "Deletes a working copy. Unconditional (a working copy is development state; the catalog is the durable record). 404 when absent or out of reach.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/validate": {
+      "post": {
+        "operationId": "validateWorkspaceWorkflow",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Validate a working copy",
+        "description": "Runs full diagnostics over the working copy's stored Arazzo document: JSON-Schema conformance (positioned schema findings) plus document-local semantic checks mirroring the workflow compiler's rules. Always 200 with the findings (an invalid document is a successful validation run); 404 when the working copy is absent or out of reach. The document is never modified.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The validation outcome (valid flag + every positioned finding).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkingCopyDiagnostics"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/scenarios": {
+      "get": {
+        "operationId": "listScenarios",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List the working copy's scenarios",
+        "description": "The scenario set travels WITH the working copy (design \u00a74.2/\u00a79) and is published into the package as metadata/scenarios.json.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The scenario set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "ScenarioList",
+                  "properties": {
+                    "scenarios": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Scenario"
+                      }
+                    }
+                  },
+                  "required": [
+                    "scenarios"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "runAllScenarios",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Run every scenario as a suite",
+        "description": "Executes each scenario against the deterministic simulator (\u00a78) and returns the suite report. POST on the collection is run-all; POST on a member's /run is run-one. 400 when this deployment offers no simulation.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The suite report.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioSuiteReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/scenarios/{scenarioName}": {
+      "put": {
+        "operationId": "putScenario",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Create or replace a scenario",
+        "description": "Upserts one scenario by name (the body's name must match the path). The working copy's etag advances; the response carries the fresh etag.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/ScenarioNamePath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Scenario"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The stored scenario plus the working copy's new etag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "StoredScenario",
+                  "properties": {
+                    "scenario": {
+                      "$ref": "#/components/schemas/Scenario"
+                    },
+                    "etag": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "scenario",
+                    "etag"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteScenario",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Delete a scenario",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/ScenarioNamePath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/scenarios/{scenarioName}/run": {
+      "post": {
+        "operationId": "runScenario",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Run one scenario",
+        "description": "Executes the named scenario against the deterministic simulator and returns its result: the outcome, every expectation's verdict, and the full trace (the debug tray renders it directly). 400 when this deployment offers no simulation.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/ScenarioNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The scenario's run result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioRunResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/publish": {
+      "post": {
+        "operationId": "publishWorkingCopy",
+        "security": [
+          { "oauth2": ["catalog:write"] },
+          { "openIdConnect": ["catalog:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["workspace"],
+        "summary": "Publish the working copy as a new catalog version",
+        "description": "The deliberate publish act (design \u00a74.6): validates the document, re-runs the FULL scenario suite server-side (evidence is server-attested, never client-submitted), builds the package embedding metadata/scenarios.json + metadata/evidence.json, and adds the new version to the catalog. Fails 422 with the diagnostics when the document is invalid, or with the suite report when a scenario fails and requireScenarios is not disabled. The new version starts as a draft until promoted.",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "PublishRequest",
+                "properties": {
+                  "owner": { "$ref": "#/components/schemas/CatalogOwner" },
+                  "tags": { "type": "array", "items": { "type": "string" } },
+                  "requireScenarios": { "type": "boolean", "default": true, "description": "Refuse to publish when any scenario fails (or when validation reports errors)." }
+                },
+                "required": ["owner"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new catalog version (a draft until promoted).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogVersionSummary" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": {
+            "description": "Not publishable: validation errors, or the scenario suite failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "PublishRefusal",
+                  "properties": {
+                    "reason": { "type": "string", "enum": ["validation", "scenarios"] },
+                    "diagnostics": { "type": "array", "items": { "$ref": "#/components/schemas/WorkflowDiagnostic" } },
+                    "suite": { "$ref": "#/components/schemas/ScenarioSuiteReport" }
+                  },
+                  "required": ["reason"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/schemas": {
+      "get": {
+        "operationId": "getWorkingCopySchemas",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["workspace"],
+        "summary": "The working copy's schema metadata",
+        "description": "The schema-metadata document RECOMPUTED for the working copy's current document and attached sources (the same shape getCatalogWorkflowSchemas serves baked into a package): each workflow's typed inputs and each step's resolved operation, typed request/responses (or message), and outputs — powering the designer's typed forms (scenario inputs, mock bodies by declared status, expectations) and expression completions.",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The schema-metadata document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/git/pull": {
+      "post": {
+        "operationId": "pullWorkingCopy",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Pull the working copy from its bound branch",
+        "description": "Refreshes the Git-bound working copy from its branch (workflow-designer design §4.7): the document from gitBinding.path, each specPaths entry as an inline source attachment, and — when scenariosDir is bound — the scenario set from its <name>.scenario.json files. The pull is an etag-guarded save (409 when stale). Reads run on the CALLER's brokered token (409 github-not-connected without a session); 400 when the working copy has no binding or the deployment brokers no App; 404 when a bound file is missing (nothing is partially applied).",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "GitPullRequestBody",
+                "properties": {
+                  "expectedEtag": { "type": "string", "description": "The etag the client read (409 when stale)." },
+                  "ref": { "type": "string", "description": "The branch, tag, or commit to pull from (default: the bound branch's head). Pulling at a commit is the git-history ROLLBACK — it replaces the working copy with that commit's state, so the UI danger-confirms it." }
+                },
+                "required": ["expectedEtag"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The refreshed working copy.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkingCopy" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/git/commit": {
+      "post": {
+        "operationId": "commitWorkingCopy",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Commit the working copy to its bound branch",
+        "description": "Writes the Git-bound working copy to its branch (workflow-designer design §4.7): the document to gitBinding.path, each bound spec (specPaths) from its inline attachment, and — when scenariosDir is bound — one <name>.scenario.json per scenario. Commits run on the CALLER's brokered token and are authored as their GitHub-held git identity — the control plane composes no author/committer. Optionally opens a pull request FROM the bound branch (draft → the review flow). 400 unbound/not-brokered; 409 github-not-connected.",
+        "parameters": [
+          { "$ref": "#/components/parameters/WorkingCopyIdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "GitCommitRequestBody",
+                "properties": {
+                  "message": { "type": "string", "description": "The commit message (each written file carries it)." },
+                  "pullRequest": {
+                    "type": "object",
+                    "title": "GitCommitPullRequest",
+                    "description": "Open a pull request from the bound branch after the commit.",
+                    "properties": {
+                      "base": { "type": "string", "description": "The base branch the pull request targets." },
+                      "title": { "type": "string", "description": "The pull request title (default: the commit message)." },
+                      "draft": { "type": "boolean", "description": "Open as a draft (the review flow for workflow development)." }
+                    },
+                    "required": ["base"]
+                  }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was written (and the pull request, when opened).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitCommitResult" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs": {
+      "post": {
+        "tags": ["debugRuns"],
+        "operationId": "startDebugRun",
+        "summary": "Start a DEBUG RUN of the working copy's stored document in a development-class environment (workflow-designer design \u00a718): a durable run under the environment's credential bindings \u2014 the runner resolves secrets as its own identity; nothing reaches the browser. Forward-only; gated by the environment's allowsDraftRuns flag, the caller's entitlement, and per-source credential readiness. Every start is audited.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [{"$ref": "#/components/parameters/WorkingCopyIdPath"}],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRunStart"}}}
+        },
+        "responses": {
+          "201": {"description": "The debug run, started (possibly already paused before its first step).", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"description": "The environment does not allow draft runs, or the caller lacks entitlement to run there.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "409": {"description": "Credential readiness is incomplete \u2014 the problem detail lists each declared source without a credential binding in the target environment.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}": {
+      "get": {
+        "tags": ["debugRuns"],
+        "operationId": "getDebugRun",
+        "summary": "The debug run's current state: status, cursor, the trace so far (the same shape simulation emits \u2014 exchanges as sent), and any wait it is suspended on.",
+        "security": [{"bearer": ["workspace:read"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "The debug run.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "delete": {
+        "tags": ["debugRuns"],
+        "operationId": "deleteDebugRun",
+        "summary": "Delete the debug run and purge its captured draft and metadata trace; idempotent.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "204": {"description": "The debug run was deleted (or did not exist)."},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}/resume": {
+      "post": {
+        "tags": ["debugRuns"],
+        "operationId": "resumeDebugRun",
+        "summary": "Advance the debug run: plain resume continues to the next pause point (pause.afterEachStep = single-step; pause.beforeSteps = breakpoints); an optional action applies the SAME ResumeRequest union the runs view uses \u2014 Skip with outputs is 'step over', Rewind deliberately re-executes.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRunResume"}}}
+        },
+        "responses": {
+          "200": {"description": "The debug run after the advance.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "409": {"description": "The run is not in a resumable state.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}/cancel": {
+      "post": {
+        "tags": ["debugRuns"],
+        "operationId": "cancelDebugRun",
+        "summary": "Cancel the debug run; a terminal state, idempotent.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "The debug run, cancelled.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/debug-runs/{debugRunId}/inject-message": {
+      "post": {
+        "tags": ["debugRuns"],
+        "operationId": "injectDebugRunMessage",
+        "summary": "Debug-only: deliver a message to a debug run that is suspended on an AsyncAPI receive, standing in for the real publisher so the run advances. The payload is delivered STRAIGHT to the awaiting run (matched by channel and, when set, correlationId) — nothing is published to a real broker, and there is no production analogue (a live workflow's message arrives from its real source). Answers the 'what if the webhook arrives now / late / malformed?' question.",
+        "security": [{"bearer": ["workspace:write", "runs:write"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "debugRunId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRunMessageInjection"}}}
+        },
+        "responses": {
+          "200": {"description": "The debug run after the injected message was delivered and it advanced.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DebugRun"}}}},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "409": {"description": "The run is not suspended on a message wait for that channel.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}}}
+        }
+      }
+    },
+    "/workspace/workflows/{id}/simulate": {
+      "post": {
+        "operationId": "simulateWorkingCopy",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Simulate a working copy deterministically",
+        "description": "Compiles the working copy's document (with its attached sources) and executes it against the scripted mock transport and a virtual clock, returning the structured trace up to the stop condition. Stateless interactive stepping: there is no debug-session resource — every command replays from the start (determinism makes the replay exact), so 'step' is this call with `until` one step further and time-travel scrubbing needs no further calls. Simulation never touches real credentials or endpoints; the mock transport is the only I/O surface. 200 with the trace (a faulted workflow is a successful simulation); 400 when this deployment offers no simulation or the scenario is unusable; 404 when the working copy is absent or out of reach; 422 when the document does not compile to an executable workflow.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The structured trace up to the stop condition.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationTrace"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "The document does not compile to an executable workflow (e.g. it references another Arazzo document as a source).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/sources": {
+      "get": {
+        "operationId": "listWorkingCopySources",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List a working copy's attached sources",
+        "description": "Lists the working copy's attachments (no documents — the operations endpoint projects them). 404 when the working copy is absent or out of reach.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedSourceList"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/sources/{name}": {
+      "get": {
+        "tags": ["workspace"],
+        "operationId": "getWorkingCopySource",
+        "summary": "One attachment WITH its stored document (inline) or registry reference \u2014 the full payload needed to re-attach it (restore after a detach).",
+        "security": [{"bearer": ["workspace:read"]}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkingCopyIdPath"},
+          {"name": "name", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "The attachment, including the inline document when the working copy stores one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {"$ref": "#/components/schemas/AttachedSource"},
+                    {
+                      "type": "object",
+                      "properties": {
+                        "document": {
+                          "description": "The stored source document (inline attachments only)."
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "operationId": "attachWorkingCopySource",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Attach a source to a working copy",
+        "description": "Attaches (or replaces) the source for a sourceDescriptions name: a registry reference or an inline document — exactly one. The attachment is saved onto the working copy under optimistic concurrency; a concurrent save conflicts (409) and the client retries against the fresh state. A registry reference must name a source in the caller's reach (404 otherwise).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/AttachedSourceNamePath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachSourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The attachment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedSource"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "detachWorkingCopySource",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:write"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:write"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Detach a source from a working copy",
+        "description": "Removes the attachment for a sourceDescriptions name. 404 when the working copy or the attachment is absent.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/AttachedSourceNamePath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Detached."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/workspace/workflows/{id}/sources/{name}/operations": {
+      "get": {
+        "operationId": "listWorkingCopySourceOperations",
+        "security": [
+          {
+            "oauth2": [
+              "workspace:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "workspace:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "List an attached source's operation surface",
+        "description": "Projects the attached source's operation surface (raw-JSON-Schema request/parameter/response shapes) for the operation browser and the step inspector's templates. A registry attachment resolves the registered source at read time (reach-checked). 404 when the working copy, the attachment, or the referenced registered source is absent.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkingCopyIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/AttachedSourceNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation surface.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationSurface"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sources/{name}/operations": {
+      "get": {
+        "operationId": "listRegisteredSourceOperations",
+        "security": [
+          {
+            "oauth2": [
+              "sources:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "sources:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "sources"
+        ],
+        "summary": "List a registered source's operation surface",
+        "description": "Projects the registered source's operation surface (raw-JSON-Schema request/parameter/response shapes) — browse a source before attaching it. 404 when the source is absent or out of reach.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SourceNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation surface.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationSurface"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/sources/fetch": {
+      "post": {
+        "operationId": "fetchSourceDocument",
+        "security": [
+          {
+            "oauth2": [
+              "sources:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "sources:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "sources"
+        ],
+        "summary": "Fetch a source document from a web endpoint",
+        "description": "Fetches an OpenAPI/AsyncAPI/Arazzo document server-side (no browser CORS), optionally authenticating with a registered source credential referenced by (sourceName, environment). Returns the validated document with its detected type/version and content digest; the caller then attaches it to a working copy or registers it. 400 when the URL/scheme is not permitted, the payload is not a parseable JSON/YAML document, it declares no recognisable type, or fetching is not configured in this deployment; 404 when the referenced credential is absent or out of reach; 502 when the upstream endpoint fails.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchSourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The fetched, validated document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchedSourceDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "description": "The upstream endpoint failed (unreachable, error status, or over the size cap).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/environments": {
       "get": {
         "operationId": "listEnvironments",
@@ -1749,6 +3135,26 @@
         }
       }
     },
+    "/environments/{name}/availability/count": {
+      "get": {
+        "operationId": "countEnvironmentAvailability",
+        "security": [
+          { "oauth2": ["availability:read"] },
+          { "openIdConnect": ["availability:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "Count the workflow versions available in an environment",
+        "description": "Counts the (workflow, version) pairs made available in this environment (design §7.8), bounded by the server's cap — no rows are returned (for the list footer). Visible to a caller whose reach admits the environment (404 otherwise). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of versions available in the environment.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/environments/{name}/runners": {
       "get": {
         "operationId": "listEnvironmentRunnerAuthorizations",
@@ -1768,6 +3174,28 @@
         ],
         "responses": {
           "200": { "description": "The environment's runner authorizations.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentRunnerAuthorizationList" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/environments/{name}/runners/count": {
+      "get": {
+        "operationId": "countEnvironmentRunnerAuthorizations",
+        "security": [
+          { "oauth2": ["environments:read"] },
+          { "openIdConnect": ["environments:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runnerAuthorizations"],
+        "summary": "Count the runners that serve an environment",
+        "description": "Counts this environment's runner authorizations (design §5.5), bounded by the server's cap — no rows are returned (for the list footer). Same filters as listEnvironmentRunnerAuthorizations: the caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Revoked"] }, "description": "Only authorizations in this state." }
+        ],
+        "responses": {
+          "200": { "description": "The bounded count of the environment's runner authorizations.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
@@ -2042,6 +3470,190 @@
         }
       }
     },
+    "/github/auth": {
+      "post": {
+        "operationId": "beginGitHubAuth",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Begin the GitHub sign-in",
+        "description": "Mints a single-use, principal-bound state and returns the GitHub App authorize URL (workflow-designer design §4.7). The response is JSON rather than a redirect because a bearer-authenticated SPA cannot carry its token on a top-level navigation: the kit opens authorizeUrl in a popup, and when GitHub redirects the popup to the callback, the opener polls the session and closes it. 400 when this deployment brokers no GitHub App.",
+        "responses": {
+          "200": {
+            "description": "Navigate the browser to authorizeUrl to continue at GitHub.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubAuthStart" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/github/auth/callback": {
+      "get": {
+        "operationId": "completeGitHubAuth",
+        "security": [{}],
+        "tags": ["github"],
+        "summary": "Complete the GitHub sign-in (browser callback)",
+        "description": "GitHub redirects the browser (the kit's popup) here with ?code&state. The state — single-use, short-lived, minted by beginGitHubAuth — identifies and authenticates the principal (a top-level navigation carries no bearer token), and the code exchanges server-side; the user token never reaches the browser (workflow-designer design §4.7).",
+        "parameters": [
+          { "name": "code", "in": "query", "required": true, "schema": { "type": "string" }, "description": "The authorization code from GitHub." },
+          { "name": "state", "in": "query", "required": true, "schema": { "type": "string" }, "description": "The single-use state minted by beginGitHubAuth." }
+        ],
+        "responses": {
+          "200": { "description": "Signed in — the popup may close (the opener polls the session)." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/github/session": {
+      "get": {
+        "operationId": "getGitHubStatus",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "The caller's GitHub session",
+        "description": "The signed-in GitHub identity, App installations, and accessible repositories for the CALLING control-plane principal — connected:false when the caller has not signed in (each principal's session is private; workflow-designer design §4.7). 400 when this deployment brokers no GitHub App.",
+        "responses": {
+          "200": {
+            "description": "The session status.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubStatus" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteGitHubSession",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Disconnect GitHub",
+        "description": "Drops the calling principal's brokered GitHub token. Idempotent.",
+        "responses": {
+          "204": { "description": "Disconnected (or never connected)." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/github/repos/{owner}/{repo}/branches": {
+      "get": {
+        "operationId": "listRepoBranches",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "List a repository's branches",
+        "description": "The repository's branches and its default branch, through the calling principal's brokered token — the Git dialog's branch picker browses these instead of asking for free-form text. Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The branch list.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBranchList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "post": {
+        "operationId": "createRepoBranch",
+        "security": [
+          { "oauth2": ["workspace:write"] },
+          { "openIdConnect": ["workspace:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Create a branch",
+        "description": "Creates a branch from a base branch's head (default: the repository's default branch), through the calling principal's brokered token — the branch-per-working-copy flow (§4.7) starts here. Creating a ref makes no commit and composes no identity. 409 (github-branch-exists) when the name is taken; 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBranchCreate" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The created branch.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBranch" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/github/repos/{owner}/{repo}/contents": {
+      "get": {
+        "operationId": "browseRepo",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "Browse a repository's contents",
+        "description": "Proxies a contents read through the calling principal's brokered token for the open/import dialogs: a directory lists its entries; a file returns its (base64) content. Reach is the user ∩ installation ∩ App-permission intersection — a repo the App is not installed on, or the user cannot read, is not found. 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." },
+          { "name": "path", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The path to browse (default: the repository root)." },
+          { "name": "ref", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The branch, tag, or commit (default: the default branch)." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The directory listing or file content.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubBrowseResult" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/github/repos/{owner}/{repo}/commits": {
+      "get": {
+        "operationId": "listRepoCommits",
+        "security": [
+          { "oauth2": ["workspace:read"] },
+          { "openIdConnect": ["workspace:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["github"],
+        "summary": "List a repository's commit history",
+        "description": "One page of the commit history reachable through the calling principal's brokered token, newest first — the Git pane's history browser. Scope with sha (the bound branch) and path (the bound document) to see the commits that touched the working copy; each commit can then be compared side-by-side (contents at ref) or rolled back to (pull at ref). Reach is the user ∩ installation ∩ App-permission intersection. 409 (github-not-connected) when the caller has no GitHub session.",
+        "parameters": [
+          { "name": "owner", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository owner (user or organisation)." },
+          { "name": "repo", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The repository name." },
+          { "name": "sha", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The branch, tag, or commit to start from (default: the default branch)." },
+          { "name": "path", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Only commits touching this path (the bound document, typically)." },
+          { "name": "page", "in": "query", "required": false, "schema": { "type": "integer", "format": "int32", "minimum": 1 }, "description": "The 1-based page (default 1)." },
+          { "name": "perPage", "in": "query", "required": false, "schema": { "type": "integer", "format": "int32", "minimum": 1, "maximum": 100 }, "description": "The page size (default 30, max 100)." }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of commits, newest first.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GitHubCommitList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/accessRequests": {
       "post": {
         "operationId": "submitAccessRequest",
@@ -2078,6 +3690,238 @@
           "200": {
             "description": "The visible access requests.",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestList" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/environments/count": {
+      "get": {
+        "operationId": "countEnvironments",
+        "security": [
+          { "oauth2": [ "environments:read" ] },
+          { "openIdConnect": [ "environments:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "environments"
+        ],
+        "summary": "Count deployment environments",
+        "description": "Counts the deployment environments the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible deployment environments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources/count": {
+      "get": {
+        "operationId": "countSources",
+        "security": [
+          { "oauth2": [ "sources:read" ] },
+          { "openIdConnect": [ "sources:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "sources"
+        ],
+        "summary": "Count registered sources",
+        "description": "Counts the registered sources the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible registered sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/credentials/count": {
+      "get": {
+        "operationId": "countCredentials",
+        "security": [
+          { "oauth2": [ "credentials:read" ] },
+          { "openIdConnect": [ "credentials:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "credentials"
+        ],
+        "summary": "Count source credential bindings",
+        "description": "Counts the source credential bindings the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible source credential bindings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspace/workflows/count": {
+      "get": {
+        "operationId": "countWorkspaceWorkflows",
+        "security": [
+          { "oauth2": [ "workspace:read" ] },
+          { "openIdConnect": [ "workspace:read" ] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "workspace"
+        ],
+        "summary": "Count designer working copies",
+        "description": "Counts the designer working copies the caller's reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible designer working copies.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog/count": {
+      "get": {
+        "operationId": "countCatalog",
+        "security": [
+          { "oauth2": ["catalog:read"] },
+          { "openIdConnect": ["catalog:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["catalog"],
+        "summary": "Count catalog entries",
+        "description": "Counts the catalog entries matching the search that the caller's read reach admits (§14.2), bounded by the server's cap — no rows are returned (for list footers). Same filters as searchCatalog: counts matching versions, or distinct base workflows when distinctWorkflows is set. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/CatalogSearchQuery" },
+          { "$ref": "#/components/parameters/CatalogBaseWorkflowIdQuery" },
+          { "$ref": "#/components/parameters/CatalogWorkflowIdPrefixQuery" },
+          { "$ref": "#/components/parameters/CatalogTagQuery" },
+          { "$ref": "#/components/parameters/CatalogStatusQuery" },
+          { "$ref": "#/components/parameters/CatalogOwnerQuery" },
+          { "$ref": "#/components/parameters/CatalogDistinctWorkflowsQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible matching catalog entries.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          }
+        }
+      }
+    },
+    "/runs/count": {
+      "get": {
+        "operationId": "countRuns",
+        "security": [
+          { "oauth2": ["runs:read"] },
+          { "openIdConnect": ["runs:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runs"],
+        "summary": "Count runs",
+        "description": "Counts the runs matching the visibility query that the caller's read reach admits (§14.2), bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRuns. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          { "$ref": "#/components/parameters/StatusQuery" },
+          { "$ref": "#/components/parameters/WorkflowIdQuery" },
+          { "$ref": "#/components/parameters/CreatedAfterQuery" },
+          { "$ref": "#/components/parameters/CreatedBeforeQuery" },
+          { "$ref": "#/components/parameters/UpdatedAfterQuery" },
+          { "$ref": "#/components/parameters/UpdatedBeforeQuery" },
+          { "$ref": "#/components/parameters/TagQuery" },
+          { "$ref": "#/components/parameters/CorrelationIdQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible matching runs.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CountResult" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/accessRequests/count": {
+      "get": {
+        "operationId": "countAccessRequests",
+        "security": [
+          { "oauth2": [] },
+          { "openIdConnect": [] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "accessRequests"
+        ],
+        "summary": "Count access requests",
+        "description": "Counts access requests visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listAccessRequests: with baseWorkflowId, that workflow's request queue (administrator required, 403 otherwise); otherwise scope selects 'mine' (default) or 'queue' (the approver inbox); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Pending",
+                "Approved",
+                "Denied",
+                "Withdrawn",
+                "Revoked"
+              ]
+            },
+            "description": "Only requests in this state."
+          },
+          {
+            "name": "baseWorkflowId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The target workflow whose request queue to count (requires administrator of it); absent counts per scope."
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mine",
+                "queue"
+              ]
+            },
+            "description": "When baseWorkflowId is absent, which requests to count: 'mine' (default) the caller's own; 'queue' the approver inbox. Ignored when baseWorkflowId is present."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible access requests.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
           },
           "403": { "$ref": "#/components/responses/Forbidden" }
         }
@@ -2256,6 +4100,67 @@
         }
       }
     },
+    "/availabilityRequests/count": {
+      "get": {
+        "operationId": "countAvailabilityRequests",
+        "security": [
+          { "oauth2": [] },
+          { "openIdConnect": [] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "availabilityRequests"
+        ],
+        "summary": "Count availability requests",
+        "description": "Counts availability requests visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listAvailabilityRequests: with environment, that environment's request queue (administrator required, 403 otherwise); otherwise scope selects 'mine' (default) or 'queue' (the approver inbox); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Pending",
+                "Approved",
+                "Denied",
+                "Withdrawn"
+              ]
+            },
+            "description": "Only requests in this state."
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The target environment whose request queue to count (requires administrator of it); absent counts per scope."
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mine",
+                "queue"
+              ]
+            },
+            "description": "When environment is absent, which requests to count: 'mine' (default) the caller's own; 'queue' the approver inbox. Ignored when environment is present."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible availability requests.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
     "/availabilityRequests/{requestId}": {
       "parameters": [
         { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The availability request id." }
@@ -2285,7 +4190,7 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["availabilityRequests"],
         "summary": "Approve an availability request",
-        "description": "Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7) — is rejected (409).",
+        "description": "Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).",
         "requestBody": {
           "required": false,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestDecisionNote" } } }
@@ -2361,6 +4266,53 @@
         }
       }
     },
+    "/runnerAuthorizations/count": {
+      "get": {
+        "operationId": "countRunnerAuthorizations",
+        "security": [
+          { "oauth2": [] },
+          { "openIdConnect": [] },
+          { "mtls": [] }
+        ],
+        "tags": [
+          "runnerAuthorizations"
+        ],
+        "summary": "Count runner authorizations (the approver inbox)",
+        "description": "Counts runner authorizations visible to the caller, bounded by the server's cap — no rows are returned (for work badges and list footers). Same filters as listRunnerAuthorizations: with environment, that environment's authorizations (administrator required, 403 otherwise); otherwise the inbox across every environment the caller administers; defaults to Pending when status is omitted. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Pending",
+                "Authorized",
+                "Revoked"
+              ]
+            },
+            "description": "Only authorizations in this state (defaults to Pending when omitted)."
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A single environment whose authorizations to count (requires administrator of it); absent counts the inbox across every administered environment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bounded count of visible runner authorizations.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
     "/identity/whoami": {
       "get": {
         "operationId": "getWhoami",
@@ -2401,13 +4353,13 @@
         ],
         "tags": ["identity"],
         "summary": "Search resolvable grantees",
-        "description": "Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` (default) is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured. Page with `limit` and the opaque `pageToken`.",
+        "description": "Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured (every searchable kind unless `kind` restricts); `merged` unions the two, directory-preferred (one bounded result set — no paging). An absent source defaults to `merged` when a directory is configured, `observed` otherwise. `observed` pages with `limit` and the opaque `pageToken`.",
         "parameters": [
           {
             "name": "kind",
             "in": "query",
             "required": false,
-            "description": "Restrict to one grantee kind.",
+            "description": "Restrict to one grantee kind (absent searches every kind the deployment supports).",
             "schema": { "$ref": "#/components/schemas/GranteeKind" }
           },
           {
@@ -2421,8 +4373,8 @@
             "name": "source",
             "in": "query",
             "required": false,
-            "description": "Where to resolve from: the store-indexed observed-identity typeahead (default) or the external directory.",
-            "schema": { "type": "string", "enum": ["observed", "directory"] }
+            "description": "Where to resolve from: the store-indexed observed-identity typeahead, the external directory, or the two merged (directory-preferred, unpaged). Absent defaults to merged when a directory is configured, observed otherwise.",
+            "schema": { "type": "string", "enum": ["observed", "directory", "merged"] }
           },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
@@ -2431,6 +4383,10 @@
           "200": {
             "description": "The matching grantees.",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GranteeList" } } }
+          },
+          "502": {
+            "description": "The external directory could not be reached (an explicit `directory` search only; a merged search degrades to observed results).",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
           }
         }
       }
@@ -2463,6 +4419,8 @@
               "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
               "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
               "sources:write": "Register, update, and delete sources (reach-scoped).",
+              "workspace:read": "List and read designer working copies.",
+              "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
               "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
             }
@@ -2486,6 +4444,8 @@
               "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
               "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
               "sources:write": "Register, update, and delete sources (reach-scoped).",
+              "workspace:read": "List and read designer working copies.",
+              "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
               "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
             }
@@ -2630,6 +4590,33 @@
         "required": true,
         "description": "The runner's stable identifier.",
         "schema": { "type": "string" }
+      },
+      "WorkingCopyIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The server-assigned working-copy id.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "AttachedSourceNamePath": {
+        "name": "name",
+        "in": "path",
+        "required": true,
+        "description": "The sourceDescriptions name the attachment satisfies.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ScenarioNamePath": {
+        "name": "scenarioName",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "The scenario's name (unique within the working copy)."
       },
       "SourceNamePath": {
         "name": "name",
@@ -2841,9 +4828,29 @@
       }
     },
     "schemas": {
+      "CountResult": {
+        "type": "object",
+        "description": "A bounded count of matching items for a list, returned by the '/count' endpoints — no rows are materialised (for work badges and list footers). When 'capped' is true, 'count' is the server's cap rather than the true total, so it should be rendered as e.g. '100+'.",
+        "required": [
+          "count",
+          "capped"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "description": "The number of matching items, bounded by the server's cap."
+          },
+          "capped": {
+            "type": "boolean",
+            "description": "True when the true total meets or exceeds the cap, so 'count' is the cap, not the true total."
+          }
+        }
+      },
       "AccessGrantsOverview": {
         "type": "object",
-        "description": "The who-can-do-what aggregation for one grantee (design §6.1): the security bindings that grant it reach, the workflows it administers, and the credentials its runs may use.",
+        "description": "The who-can-do-what aggregation for one grantee (design §6.1): the security bindings that grant it reach, the capability scopes those bindings confer, the workflows and environments it administers, and the credentials its runs may use.",
         "properties": {
           "grantee": {
             "$ref": "#/components/schemas/ResolvedGrantee"
@@ -2855,11 +4862,25 @@
               "$ref": "#/components/schemas/SecurityBindingSummary"
             }
           },
+          "capabilities": {
+            "type": "array",
+            "description": "The capability scopes the matched bindings confer, resolved exactly as the runtime resolves them (unexpired bindings only; an eligible-only binding confers eligibility, not an active scope). One entry per scope; active dominates eligible.",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsCapability"
+            }
+          },
           "administers": {
             "type": "array",
-            "description": "The base workflows the grantee administers (exact identity set-equality).",
+            "description": "The base workflows the grantee administers (membership: an administrator identity contained in the grantee's identity).",
             "items": {
               "$ref": "#/components/schemas/AccessGrantsAdministeredWorkflow"
+            }
+          },
+          "administersEnvironments": {
+            "type": "array",
+            "description": "The environments the grantee administers (membership, mirroring administers).",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsAdministeredEnvironment"
             }
           },
           "credentialUsage": {
@@ -2873,8 +4894,46 @@
         "required": [
           "grantee",
           "bindings",
+          "capabilities",
           "administers",
+          "administersEnvironments",
           "credentialUsage"
+        ]
+      },
+      "AccessGrantsCapability": {
+        "type": "object",
+        "description": "One capability scope a grantee's matched bindings confer (design §16.5): active (held now) or eligible-only (a PIM eligibility the grantee may self-elevate to).",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "description": "The capability scope (e.g. runs:write)."
+          },
+          "eligible": {
+            "type": "boolean",
+            "description": "True when the scope is eligible-only (self-elevation required); false when it is held actively."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the last conferring binding expires; absent when a conferring binding never expires."
+          }
+        },
+        "required": [
+          "scope",
+          "eligible"
+        ]
+      },
+      "AccessGrantsAdministeredEnvironment": {
+        "type": "object",
+        "description": "An environment a grantee administers (a link target for the environments panel).",
+        "properties": {
+          "environment": {
+            "type": "string",
+            "description": "The environment name."
+          }
+        },
+        "required": [
+          "environment"
         ]
       },
       "AccessGrantsAdministeredWorkflow": {
@@ -3264,6 +5323,7 @@
           "sources": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSourceRef" }, "description": "The source documents in this version's package, addressable individually via the source endpoint." },
           "runnable": { "type": "boolean", "description": "Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run." },
           "hash": { "type": "string", "description": "The SHA-256 of the canonical package, hex-encoded." },
+          "evidence": { "$ref": "#/components/schemas/PublishEvidenceSummary", "description": "The publish-evidence summary (§4.6), projected from the package's metadata/evidence.json. Present only on the single-version detail and only for versions published with scenario evidence; index pages omit it. The full per-scenario record is served by the evidence endpoint." },
           "createdBy": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" },
           "lastUpdatedBy": { "type": "string" },
@@ -3536,6 +5596,13 @@
             "type": "string",
             "description": "The required claim value; omit to match any value of claimType."
           },
+          "additionalClauses": {
+            "type": "array",
+            "description": "Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector: the binding applies only to a caller whose canonical identity contains every clause (the primary and each of these), so a per-person reach grant can pin {sub, iss} and match one issuer's principal rather than any. Omit or empty for a legacy single-clause binding.",
+            "items": {
+              "$ref": "#/components/schemas/SecurityBindingClause"
+            }
+          },
           "read": {
             "$ref": "#/components/schemas/VerbGrant"
           },
@@ -3559,6 +5626,23 @@
           "claimType"
         ]
       },
+      "SecurityBindingClause": {
+        "type": "object",
+        "description": "One identity-dimension clause of a binding's tag-set selector: the caller's canonical identity must carry this dimension (and value, when pinned).",
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "description": "The operator-facing identity dimension (the sys: prefix stripped) the caller's identity must carry."
+          },
+          "value": {
+            "type": "string",
+            "description": "The value the dimension must equal; omit to match any value of the dimension."
+          }
+        },
+        "required": [
+          "dimension"
+        ]
+      },
       "SecurityBindingSummary": {
         "type": "object",
         "description": "A persisted claim→rule binding.",
@@ -3572,6 +5656,13 @@
           "claimValue": {
             "type": "string"
           },
+          "additionalClauses": {
+            "type": "array",
+            "description": "Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector: the binding applies only to a caller whose canonical identity contains every clause. Absent or empty for a legacy single-clause binding.",
+            "items": {
+              "$ref": "#/components/schemas/SecurityBindingClause"
+            }
+          },
           "read": {
             "$ref": "#/components/schemas/VerbGrant"
           },
@@ -3580,6 +5671,22 @@
           },
           "purge": {
             "$ref": "#/components/schemas/VerbGrant"
+          },
+          "scopes": {
+            "type": "array",
+            "description": "The capability scopes the binding confers on matching principals (design §16.5), if any.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the binding expires (a §16.5.2 time-boxed grant); absent for a non-expiring binding."
+          },
+          "eligibleOnly": {
+            "type": "boolean",
+            "description": "True for a binding that records eligibility only (a PIM assignment the principal may self-elevate to): it confers nothing active."
           },
           "order": {
             "type": "integer",
@@ -3635,6 +5742,1409 @@
         },
         "required": [
           "bindings"
+        ]
+      },
+      "WorkspaceSecurityTag": {
+        "type": "object",
+        "description": "A security label (KVP) scoping a working copy for row authorization (§14.2).",
+        "required": [
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The label key (e.g. tenant)."
+          },
+          "value": {
+            "type": "string",
+            "description": "The label value (e.g. acme)."
+          }
+        }
+      },
+      "WorkingCopyDocument": {
+        "type": "object",
+        "description": "The Arazzo document under edit, stored and returned verbatim. The control plane validates it on demand, never silently rewrites it.",
+        "additionalProperties": true
+      },
+      "WorkingCopyDesignerState": {
+        "type": "object",
+        "description": "Designer UI state (node positions and similar) — a sibling of the document, never written into it and never packaged (workflow-designer design §5.2).",
+        "additionalProperties": true
+      },
+      "WorkingCopy": {
+        "type": "object",
+        "description": "A designer working copy: the mutable Arazzo document (plus designer UI state) under development. Saving never mints a catalog version; publish does.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The server-assigned working-copy id."
+          },
+          "name": {
+            "type": "string",
+            "description": "A human-friendly display name."
+          },
+          "baseWorkflowId": {
+            "type": "string",
+            "description": "Provenance: the catalog base workflow this working copy was opened from, if any."
+          },
+          "basedOnVersion": {
+            "type": "integer",
+            "description": "Provenance: the catalog version the document was copied from, if any."
+          },
+          "document": {
+            "$ref": "#/components/schemas/WorkingCopyDocument"
+          },
+          "designerState": {
+            "$ref": "#/components/schemas/WorkingCopyDesignerState"
+          },
+          "gitBinding": {
+            "$ref": "#/components/schemas/GitBinding"
+          },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags scoping who may MANAGE and SEE this working copy (§14.2).",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceSecurityTag"
+            }
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUpdatedBy": {
+            "type": "string"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string",
+            "description": "The optimistic-concurrency token; saves present the etag they read and conflict (409) when stale."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "document",
+          "createdBy",
+          "createdAt",
+          "etag"
+        ]
+      },
+      "WorkingCopySummary": {
+        "type": "object",
+        "description": "A working copy without its document/designer state: the list projection.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "baseWorkflowId": {
+            "type": "string"
+          },
+          "basedOnVersion": {
+            "type": "integer"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUpdatedBy": {
+            "type": "string"
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string",
+            "description": "The optimistic-concurrency token; saves present the etag they read and conflict (409) when stale."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdBy",
+          "createdAt",
+          "etag"
+        ]
+      },
+      "WorkingCopyCreate": {
+        "type": "object",
+        "description": "Creates a working copy: from a supplied document, from a catalog version (fromBaseWorkflowId + fromVersionNumber — copies that version's workflow document; the carry-over), or blank (a minimal Arazzo skeleton). Supplying both a document and a from-version is rejected (400).",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "A display name; defaults to the document's first workflowId, or 'untitled'."
+          },
+          "document": {
+            "$ref": "#/components/schemas/WorkingCopyDocument"
+          },
+          "fromBaseWorkflowId": {
+            "type": "string",
+            "description": "Open from this catalog base workflow…"
+          },
+          "fromVersionNumber": {
+            "type": "integer",
+            "description": "…at this version. Required when fromBaseWorkflowId is supplied (latest-version defaulting arrives with scenario carry-over)."
+          },
+          "designerState": {
+            "$ref": "#/components/schemas/WorkingCopyDesignerState"
+          },
+          "managementTags": {
+            "type": "array",
+            "description": "Non-internal reach labels; the deployment stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit.",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceSecurityTag"
+            }
+          }
+        }
+      },
+      "WorkingCopyUpdate": {
+        "type": "object",
+        "description": "A save: replaces the document (and optionally the name/designer state) of an existing working copy. expectedEtag is the etag the client read; a stale save conflicts (409) rather than clobbering a collaborator's work. Provenance, managementTags, and created-* audit fields are immutable.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "A replacement display name; absent leaves it unchanged."
+          },
+          "document": {
+            "$ref": "#/components/schemas/WorkingCopyDocument"
+          },
+          "designerState": {
+            "$ref": "#/components/schemas/WorkingCopyDesignerState"
+          },
+          "gitBinding": {
+            "$ref": "#/components/schemas/GitBinding",
+            "description": "A replacement Git binding (§4.7); absent leaves the stored binding unchanged."
+          },
+          "expectedEtag": {
+            "type": "string",
+            "description": "The etag the client read (409 when stale)."
+          }
+        },
+        "required": [
+          "document",
+          "expectedEtag"
+        ]
+      },
+      "WorkingCopyList": {
+        "type": "object",
+        "description": "A page of working copies, ordered by id. Entries omit the document and designer state.",
+        "properties": {
+          "workingCopies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkingCopySummary"
+            }
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "An opaque token to fetch the next page, or null/absent if this is the last page."
+          }
+        },
+        "required": [
+          "workingCopies"
+        ]
+      },
+      "WorkflowDiagnostic": {
+        "type": "object",
+        "description": "One positioned validation finding over a working copy's Arazzo document: where (a JSON Pointer), how bad (severity), what family of problem (category — 'schema' for JSON-Schema conformance findings; semantic slugs like 'goto-target', 'depends-on', 'criterion-syntax', 'criterion-type', 'expression-syntax', 'component-reference', 'duplicate-id', 'reachability'), and a human-readable message.",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ],
+            "description": "error = cannot run correctly as written; warning = suspect but runnable; info = advisory."
+          },
+          "category": {
+            "type": "string",
+            "description": "The stable finding family (kebab-case slug) the UI groups and filters by."
+          },
+          "instancePath": {
+            "type": "string",
+            "description": "A JSON Pointer to the finding's location within the document."
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable description of the finding."
+          },
+          "schemaLocation": {
+            "type": "string",
+            "description": "For schema-conformance findings: the evaluation location within the Arazzo schema that produced the failure."
+          }
+        },
+        "required": [
+          "severity",
+          "category",
+          "instancePath",
+          "message"
+        ]
+      },
+      "GitBinding": {
+        "type": "object",
+        "title": "GitBinding",
+        "description": "Binds a working copy to a repository branch (workflow-designer design §4.7): the document — and optionally its spec files and scenario files — round-trips with pull/commit. Branch-per-working-copy is the natural multi-author flow.",
+        "properties": {
+          "owner": { "type": "string" },
+          "repo": { "type": "string" },
+          "branch": { "type": "string", "description": "The working branch; a pull request opens FROM this branch." },
+          "path": { "type": "string", "description": "The Arazzo document's path in the repository." },
+          "specPaths": { "type": "object", "description": "sourceDescriptions name → repository path, for the spec files that round-trip with the document (each pulls in as an inline attachment).", "additionalProperties": { "type": "string" } },
+          "scenariosDir": { "type": "string", "description": "The directory holding one <name>.scenario.json per scenario (the §4.5 CI layout)." }
+        },
+        "required": ["owner", "repo", "branch", "path"]
+      },
+      "GitCommitResult": {
+        "type": "object",
+        "title": "GitCommitResult",
+        "description": "What a commit wrote: one entry per file, plus the pull request when one was opened. The commits are authored as the signed-in user's GitHub-held git identity — the control plane composes no author/committer (§4.7).",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "GitCommittedFile",
+              "properties": {
+                "path": { "type": "string" },
+                "sha": { "type": "string", "description": "The written blob's sha." }
+              },
+              "required": ["path"]
+            }
+          },
+          "pullRequest": {
+            "type": "object",
+            "title": "GitPullRequest",
+            "properties": {
+              "number": { "type": "integer", "format": "int64" },
+              "url": { "type": "string" }
+            },
+            "required": ["number", "url"]
+          }
+        },
+        "required": ["files"]
+      },
+      "GitHubAuthStart": {
+        "type": "object",
+        "title": "GitHubAuthStart",
+        "description": "The begin-auth handshake: navigate the browser to authorizeUrl; the state round-trips through GitHub to the callback, where it identifies the principal (workflow-designer design §4.7).",
+        "properties": {
+          "authorizeUrl": { "type": "string", "description": "The GitHub App authorize URL to navigate to." },
+          "state": { "type": "string", "description": "The single-use, principal-bound state embedded in authorizeUrl." }
+        },
+        "required": ["authorizeUrl", "state"]
+      },
+      "GitHubStatus": {
+        "type": "object",
+        "title": "GitHubStatus",
+        "description": "The calling principal's GitHub session: the signed-in identity and, when connected, the App installations and repositories the user ∩ installation intersection can reach.",
+        "properties": {
+          "connected": { "type": "boolean" },
+          "login": { "type": "string", "description": "The signed-in GitHub login." },
+          "name": { "type": "string", "description": "The signed-in account's display name." },
+          "avatarUrl": { "type": "string" },
+          "installations": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubInstallation" } }
+        },
+        "required": ["connected"]
+      },
+      "GitHubInstallation": {
+        "type": "object",
+        "title": "GitHubInstallation",
+        "description": "One App installation the signed-in user can act through, with the repositories it grants that the user can also reach.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "account": { "type": "string", "description": "The user or organisation the App is installed on." },
+          "repositories": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubRepository" } }
+        },
+        "required": ["id", "account"]
+      },
+      "GitHubRepository": {
+        "type": "object",
+        "title": "GitHubRepository",
+        "description": "A repository reachable through the brokered session.",
+        "properties": {
+          "owner": { "type": "string" },
+          "name": { "type": "string" },
+          "fullName": { "type": "string" },
+          "defaultBranch": { "type": "string" },
+          "private": { "type": "boolean" }
+        },
+        "required": ["owner", "name", "fullName"]
+      },
+      "GitHubBranch": {
+        "type": "object",
+        "title": "GitHubBranch",
+        "description": "A branch head reachable through the brokered session.",
+        "properties": {
+          "name": { "type": "string" },
+          "sha": { "type": "string", "description": "The head commit SHA." },
+          "protected": { "type": "boolean" }
+        },
+        "required": ["name"]
+      },
+      "GitHubBranchList": {
+        "type": "object",
+        "title": "GitHubBranchList",
+        "description": "A repository's branches plus its default branch — the Git dialog's branch picker.",
+        "properties": {
+          "defaultBranch": { "type": "string" },
+          "branches": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubBranch" } }
+        },
+        "required": ["branches"]
+      },
+      "GitHubCommit": {
+        "type": "object",
+        "title": "GitHubCommit",
+        "description": "One commit in the brokered history — enough to browse, compare, and roll back.",
+        "properties": {
+          "sha": { "type": "string" },
+          "message": { "type": "string", "description": "The commit message's first line." },
+          "author": { "type": "string", "description": "The author's display name." },
+          "date": { "type": "string", "format": "date-time", "description": "The author date." }
+        },
+        "required": ["sha"]
+      },
+      "GitHubCommitList": {
+        "type": "object",
+        "title": "GitHubCommitList",
+        "description": "One page of a repository's commit history, newest first — the Git pane's history browser.",
+        "properties": {
+          "commits": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubCommit" } },
+          "hasMore": { "type": "boolean", "description": "Whether another page follows." }
+        },
+        "required": ["commits"]
+      },
+      "GitHubBranchCreate": {
+        "type": "object",
+        "title": "GitHubBranchCreate",
+        "description": "Creates a branch from a base branch's head (default: the repository's default branch).",
+        "properties": {
+          "name": { "type": "string", "description": "The new branch name (without refs/heads/)." },
+          "from": { "type": "string", "description": "The base branch (default: the default branch)." }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      },
+      "GitHubBrowseResult": {
+        "type": "object",
+        "title": "GitHubBrowseResult",
+        "description": "A proxied contents read: a directory lists its entries; a file carries its content.",
+        "properties": {
+          "kind": { "type": "string", "enum": ["dir", "file"] },
+          "entries": { "type": "array", "items": { "$ref": "#/components/schemas/GitHubContentEntry" }, "description": "The directory's entries (kind: dir)." },
+          "file": { "$ref": "#/components/schemas/GitHubFile", "description": "The file (kind: file)." }
+        },
+        "required": ["kind"]
+      },
+      "GitHubContentEntry": {
+        "type": "object",
+        "title": "GitHubContentEntry",
+        "description": "One directory entry.",
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "type": { "type": "string", "enum": ["file", "dir"] },
+          "size": { "type": "integer", "format": "int64" },
+          "sha": { "type": "string" }
+        },
+        "required": ["name", "path", "type"]
+      },
+      "GitHubFile": {
+        "type": "object",
+        "title": "GitHubFile",
+        "description": "A file's content, base64-encoded (the GitHub contents shape).",
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "sha": { "type": "string" },
+          "size": { "type": "integer", "format": "int64" },
+          "encoding": { "type": "string", "description": "The content encoding (base64)." },
+          "content": { "type": "string", "description": "The base64-encoded file content." }
+        },
+        "required": ["name", "path", "content"]
+      },
+      "EvidenceSuite": {
+        "type": "object",
+        "title": "EvidenceSuite",
+        "description": "The suite verdict: how many scenarios ran at publish and how many passed.",
+        "properties": {
+          "total": { "type": "integer" },
+          "passed": { "type": "integer" },
+          "failed": { "type": "integer" }
+        },
+        "required": ["total", "passed", "failed"]
+      },
+      "PublishEvidenceSummary": {
+        "type": "object",
+        "title": "PublishEvidenceSummary",
+        "description": "The evidence badge's data (design \u00a74.6): when the version was published and the suite verdict, without the per-scenario detail.",
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "suite": { "$ref": "#/components/schemas/EvidenceSuite" }
+        },
+        "required": ["at", "suite"]
+      },
+      "PublishEvidence": {
+        "type": "object",
+        "title": "PublishEvidence",
+        "description": "The server-attested record written into the package at publish (design \u00a74.6).",
+        "properties": {
+          "packageHash": { "type": "string" },
+          "engineVersion": { "type": "string" },
+          "at": { "type": "string", "format": "date-time" },
+          "suite": { "$ref": "#/components/schemas/EvidenceSuite" },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "EvidenceScenario",
+              "properties": {
+                "name": { "type": "string" },
+                "passed": { "type": "boolean" },
+                "outcome": { "type": "string" },
+                "pathSummary": { "type": "string", "description": "The visited steps, in order." }
+              },
+              "required": ["name", "passed", "outcome"]
+            }
+          }
+        },
+        "required": ["at", "suite", "scenarios"]
+      },
+      "Scenario": {
+        "type": "object",
+        "title": "Scenario",
+        "description": "One deterministic test scenario (design \u00a74.2), stored with the working copy and published into the package. v1 deferrals, deliberate: per-request match criteria on mocks and response delays (the mock transport scripts sequences per route), and trigger scheduling (`at`) \u2014 triggers deliver when the run suspends on their channel.",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "inputs": {
+            "description": "The workflow inputs value."
+          },
+          "mocks": {
+            "type": "array",
+            "description": "Per source-operation scripting; a run resolves each (source, operationId) to its route through the working copy's attached surfaces.",
+            "items": {
+              "type": "object",
+              "title": "ScenarioMock",
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "operationId": {
+                  "type": "string"
+                },
+                "responses": {
+                  "type": "array",
+                  "description": "Sequence semantics; the last repeats.",
+                  "items": {
+                    "type": "object",
+                    "title": "ScenarioMockResponse",
+                    "properties": {
+                      "status": {
+                        "type": "integer"
+                      },
+                      "body": {
+                        "description": "The response body value."
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "source",
+                "operationId",
+                "responses"
+              ]
+            }
+          },
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "ScenarioTrigger",
+              "properties": {
+                "channel": {
+                  "type": "string"
+                },
+                "payload": {
+                  "description": "The message payload value."
+                },
+                "correlationId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "channel"
+              ]
+            }
+          },
+          "clock": {
+            "type": "object",
+            "title": "ScenarioClock",
+            "properties": {
+              "autoAdvance": {
+                "type": "boolean",
+                "default": true
+              }
+            }
+          },
+          "expect": {
+            "type": "object",
+            "title": "ScenarioExpectations",
+            "description": "Assertions over the run, in the criterion grammar where a condition applies.",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "completed",
+                  "faulted",
+                  "suspended"
+                ]
+              },
+              "path": {
+                "type": "array",
+                "description": "Expected step visits, in order.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "pathMode": {
+                "type": "string",
+                "enum": [
+                  "exact",
+                  "subsequence"
+                ],
+                "default": "subsequence"
+              },
+              "outputs": {
+                "type": "array",
+                "description": "Criteria evaluated against the completed run's workflow outputs ($outputs).",
+                "items": {
+                  "type": "object",
+                  "title": "OutputExpectation",
+                  "properties": {
+                    "condition": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "condition"
+                  ]
+                }
+              },
+              "steps": {
+                "type": "object",
+                "title": "StepExpectations",
+                "description": "Per-step assertions keyed by stepId.",
+                "additionalProperties": {
+                  "type": "object",
+                  "title": "StepExpectation",
+                  "properties": {
+                    "reached": {
+                      "type": "boolean"
+                    },
+                    "attempts": {
+                      "type": "integer",
+                      "description": "The exact number of executions (retries and revisits included)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ScenarioRunResult": {
+        "type": "object",
+        "title": "ScenarioRunResult",
+        "properties": {
+          "scenario": {
+            "type": "string"
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Every expectation held (a scenario with no expectations passes when the run completes)."
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "expectations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "ExpectationVerdict",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "outcome | path | output | step"
+                },
+                "passed": {
+                  "type": "boolean"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "passed"
+              ]
+            }
+          },
+          "trace": {
+            "$ref": "#/components/schemas/SimulationTrace"
+          }
+        },
+        "required": [
+          "scenario",
+          "passed",
+          "outcome",
+          "expectations"
+        ]
+      },
+      "ScenarioSuiteReport": {
+        "type": "object",
+        "title": "ScenarioSuiteReport",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "passed": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioRunResult"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "passed",
+          "failed",
+          "results"
+        ]
+      },
+      "SimulateRequest": {
+        "type": "object",
+        "title": "SimulateRequest",
+        "description": "One deterministic simulation command: the scenario setup (inline in v1; named stored scenarios arrive with the scenario store), an optional stop condition, and an optional budget. The same request shape backs run, step, run-to-here, and re-run-after-edit — only `until` differs.",
+        "properties": {
+          "workflowId": {
+            "type": "string",
+            "description": "Which of the document's workflows to simulate (default: the first)."
+          },
+          "scenario": {
+            "type": "object",
+            "title": "InlineScenario",
+            "description": "The deterministic setup: workflow inputs, scripted mock responses, message triggers, and the virtual-clock policy.",
+            "properties": {
+              "inputs": {
+                "description": "The workflow inputs value."
+              },
+              "mocks": {
+                "type": "array",
+                "description": "Scripted responses for the mock API transport, keyed by method + path template. Repeated entries for one route form a sequence (the last repeats). Unmocked routes return 404.",
+                "items": {
+                  "type": "object",
+                  "title": "MockRoute",
+                  "properties": {
+                    "method": {
+                      "type": "string",
+                      "description": "The HTTP method (e.g. get, post)."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "The OpenAPI path template (e.g. /pets/{petId})."
+                    },
+                    "status": {
+                      "type": "integer",
+                      "description": "The response status code."
+                    },
+                    "body": {
+                      "description": "The response body value, if any."
+                    }
+                  },
+                  "required": [
+                    "method",
+                    "path",
+                    "status"
+                  ]
+                }
+              },
+              "triggers": {
+                "type": "array",
+                "description": "Messages delivered when the run suspends waiting on a channel, in order.",
+                "items": {
+                  "type": "object",
+                  "title": "MessageTrigger",
+                  "properties": {
+                    "channel": {
+                      "type": "string",
+                      "description": "The channel the waiting step listens on."
+                    },
+                    "payload": {
+                      "description": "The message payload value."
+                    },
+                    "correlationId": {
+                      "type": "string",
+                      "description": "The correlation id, when the wait is correlated."
+                    }
+                  },
+                  "required": [
+                    "channel"
+                  ]
+                }
+              },
+              "clock": {
+                "type": "object",
+                "title": "ClockPolicy",
+                "description": "The virtual-clock policy. Nothing ever waits in real time.",
+                "properties": {
+                  "autoAdvance": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Advance the virtual clock to each timer's due moment and resume automatically. When false the trace ends suspended at the first timer with its due time."
+                  }
+                }
+              }
+            }
+          },
+          "until": {
+            "type": "object",
+            "title": "StopCondition",
+            "description": "Where to stop the replay. Omitted: run to completion (or fault/suspend/budget).",
+            "properties": {
+              "beforeStepId": {
+                "type": "string",
+                "description": "Pause before this step executes (the paused context is the state the step will see). A **scoped step path**: a bare `stepId` targets a root step; a slash-joined `parent/child/...` path (each segment a `stepId`, outermost first) targets a step inside a sub-workflow. A bare id never matches a sub-workflow's step."
+              },
+              "occurrence": {
+                "type": "integer",
+                "default": 1,
+                "description": "Which arrival at `beforeStepId` pauses, for steps reached repeatedly (goto/retry loops). Occurrences are counted cumulatively by the root run."
+              },
+              "breakpoints": {
+                "type": "array",
+                "description": "Pause before ANY of these steps executes (first arrival wins over `beforeStepId` when both match).",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "budget": {
+            "type": "object",
+            "title": "SimulationBudget",
+            "description": "Safety limits (§8.3). The server clamps to its own maxima.",
+            "properties": {
+              "maxSteps": {
+                "type": "integer",
+                "description": "The step-execution budget (default 256)."
+              },
+              "wallClockMs": {
+                "type": "integer",
+                "description": "The real-time execution cap in milliseconds (default 10000)."
+              }
+            }
+          }
+        }
+      },
+      "DebugRunPause": {
+      "type": "object",
+      "description": "Where a debug run pauses (workflow-designer design \u00a718): after every step (single-stepping) and/or before named steps (breakpoints). Absent \u2014 the run proceeds to completion, a wait, or a fault.",
+      "properties": {
+        "afterEachStep": { "type": "boolean", "description": "Pause after every executed step \u2014 the dock's single-step." },
+        "beforeSteps": { "type": "array", "description": "Pause before these steps execute \u2014 breakpoints. Each entry is a **scoped step path**: a bare `stepId` for a root step, or a slash-joined `parent/child/...` path for a step inside a sub-workflow (a bare id never matches a sub-workflow's step).", "items": { "type": "string" } }
+      }
+    },
+    "DebugRunStart": {
+      "type": "object",
+      "description": "Start a debug run of the working copy's stored document in an environment that allows drafts (workflow-designer design \u00a718).",
+      "required": ["workflowId", "environment"],
+      "properties": {
+        "workflowId": { "type": "string", "description": "The workflow within the document to run." },
+        "environment": { "type": "string", "description": "The target environment; it must set allowsDraftRuns and the caller must be entitled to run there." },
+        "inputs": { "type": "object", "description": "The workflow's inputs, validated against its own inputs schema.", "additionalProperties": true },
+        "pause": { "$ref": "#/components/schemas/DebugRunPause" }
+      }
+    },
+    "DebugRunResume": {
+      "type": "object",
+      "description": "Advance a paused, suspended, or faulted debug run. A bare resume continues to the next pause point; `action` applies the SAME resume union the runs view uses (Skip with outputs = the dock's step-over; Rewind deliberately re-executes real side effects).",
+      "properties": {
+        "action": { "$ref": "#/components/schemas/ResumeRequest" },
+        "pause": { "$ref": "#/components/schemas/DebugRunPause" }
+      }
+    },
+    "DebugRunMessageInjection": {
+      "type": "object",
+      "description": "A message injected into a debug run suspended on an AsyncAPI receive (workflow-designer design §18 / §3.3). Debug-only: the payload is delivered straight to the awaiting run, standing in for the real publisher.",
+      "required": ["channel", "payload"],
+      "properties": {
+        "channel": { "type": "string", "description": "The AsyncAPI channel the run awaits (from the suspended run's wait descriptor)." },
+        "correlationId": { "type": "string", "description": "The correlation the receive step matches on, when the channel carries several conversations; omit to match the channel alone." },
+        "payload": { "description": "The message payload delivered to the awaiting receive step. Any JSON value; typed from the channel's message schema in the designer's inject form." }
+      }
+    },
+    "DebugRun": {
+      "type": "object",
+      "description": "A debug run: a durable, forward-only run of a working-copy draft in a development-class environment (workflow-designer design \u00a718). The trace grows as the run advances and uses the same shape simulation emits \u2014 capture-to-scenario replays it offline with full time travel.",
+      "required": ["debugRunId", "workflowId", "environment", "status"],
+      "properties": {
+        "debugRunId": { "type": "string" },
+        "workflowId": { "type": "string" },
+        "environment": { "type": "string" },
+        "status": { "type": "string", "enum": ["running", "paused", "suspended", "completed", "faulted", "cancelled"], "description": "paused = at a pause point (the dock's controls apply); suspended = a real wait (message/time); the rest are terminal except running." },
+        "cursor": { "type": "integer", "format": "int32", "description": "The number of steps executed so far \u2014 the position the dock scrubs to." },
+        "trace": { "$ref": "#/components/schemas/SimulationTrace" },
+        "documentEtag": { "type": "string", "description": "The working-copy etag the run started from \u2014 the audited draft identity." },
+        "startedBy": { "type": "string" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SimulationTrace": {
+        "type": "object",
+        "title": "SimulationTrace",
+        "description": "The complete structured trace up to the stop condition — the canvas overlay, context explorer, trace viewer, and time-travel scrubber all render from this one payload with no further calls. Recursive: a sub-workflow step's `subTrace` is itself a SimulationTrace.",
+        "properties": {
+          "workflowId": {
+            "type": "string",
+            "description": "The sub-workflow's `workflowId`, present only on a nested `subTrace` and absent on the root trace. Marks this trace as one sub-workflow invocation's records within its parent; the client's step-into ascent stops where it becomes absent."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "faulted",
+              "paused",
+              "suspended",
+              "budgetExhausted"
+            ],
+            "description": "How the replay ended: ran to completion; faulted; paused at the stop condition; suspended awaiting a timer (autoAdvance false) or an undelivered message; or the step budget ran out."
+          },
+          "pausedBefore": {
+            "type": "string",
+            "description": "The step the replay paused before, when `outcome` is `paused`. A **scoped step path**: a bare `stepId` for a root step, or a slash-joined `parent/child/...` path (each segment a `stepId`, outermost first) when the stop fired inside a sub-workflow."
+          },
+          "outputs": {
+            "description": "The workflow outputs value, when `outcome` is `completed`."
+          },
+          "fault": {
+            "type": "object",
+            "title": "SimulationFault",
+            "description": "The fault record, when `outcome` is `faulted`.",
+            "properties": {
+              "stepId": {
+                "type": "string"
+              },
+              "attempt": {
+                "type": "integer"
+              },
+              "error": {
+                "type": "string"
+              }
+            }
+          },
+          "wait": {
+            "type": "object",
+            "title": "SimulationWait",
+            "description": "What the run is waiting on, when `outcome` is `suspended`.",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "timer",
+                  "message"
+                ]
+              },
+              "dueAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The virtual-clock due moment, for a timer wait."
+              },
+              "channel": {
+                "type": "string",
+                "description": "The awaited channel, for a message wait."
+              },
+              "correlationId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "description": "One record per executed step, in execution order — a step reached repeatedly appears repeatedly.",
+            "items": {
+              "type": "object",
+              "title": "SimulatedStep",
+              "properties": {
+                "stepId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "completed",
+                    "faulted",
+                    "paused",
+                    "suspended"
+                  ],
+                  "description": "The step's terminal status, or — on a sub-workflow parent step whose child did not finish — `paused` (a scoped stop fired inside the child) or `suspended` (the child is awaiting a timer or message)."
+                },
+                "attempt": {
+                  "type": "integer",
+                  "description": "The retry attempt this record describes (0 = first try)."
+                },
+                "outputs": {
+                  "description": "The step's extracted outputs value, if any."
+                },
+                "requests": {
+                  "type": "array",
+                  "description": "The request/response pairs this step exchanged with the mock transport, in order.",
+                  "items": {
+                    "type": "object",
+                    "title": "SimulatedExchange",
+                    "properties": {
+                      "method": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "The resolved path (parameters substituted, query included)."
+                      },
+                      "status": {
+                        "type": "integer"
+                      },
+                      "requestBody": {
+                        "description": "The request payload value, if one was sent."
+                      },
+                      "responseBody": {
+                        "description": "The mock's response body value, if any."
+                      }
+                    },
+                    "required": [
+                      "method",
+                      "path",
+                      "status"
+                    ]
+                  }
+                },
+                "successCriteria": {
+                  "type": "array",
+                  "description": "The step's success-criterion truth table, re-evaluated against the captured deterministic context (operand-level detail is a documented deferral).",
+                  "items": {
+                    "type": "object",
+                    "title": "CriterionVerdict",
+                    "properties": {
+                      "condition": {
+                        "type": "string"
+                      },
+                      "satisfied": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "condition",
+                      "satisfied"
+                    ]
+                  }
+                },
+                "actionTaken": {
+                  "type": "object",
+                  "title": "ActionTaken",
+                  "description": "The routing decision inferred for this step: the first action whose criteria all passed, or the implicit fall-through/completion.",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "end",
+                        "goto",
+                        "retry",
+                        "fallThrough",
+                        "fault"
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The action's name, for an explicit action."
+                    },
+                    "target": {
+                      "type": "string",
+                      "description": "The goto/retry-from target stepId, when one applies."
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "skipped": {
+                  "type": "boolean",
+                  "description": "True when a Skip resume skipped this step rather than executing it (the durable debug-run Skip protocol). Absent or false for an executed step."
+                },
+                "subTrace": {
+                  "$ref": "#/components/schemas/SimulationTrace",
+                  "description": "For a step bound to another workflow (`workflowId`), the nested trace of that sub-workflow's execution — the same shape as the root trace, carrying its own `workflowId`. Powers step-into; absent for non-sub-workflow steps."
+                }
+              },
+              "required": [
+                "stepId",
+                "status",
+                "attempt"
+              ]
+            }
+          },
+          "clockAdvances": {
+            "type": "array",
+            "description": "Every virtual-clock advance, in order (timer auto-advances).",
+            "items": {
+              "type": "object",
+              "title": "ClockAdvance",
+              "properties": {
+                "to": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "to"
+              ]
+            }
+          },
+          "stepsExecuted": {
+            "type": "integer",
+            "description": "The total step executions (retries and revisits included) — what the budget counts."
+          }
+        },
+        "required": [
+          "outcome",
+          "steps",
+          "stepsExecuted"
+        ]
+      },
+      "WorkingCopyDiagnostics": {
+        "type": "object",
+        "description": "The outcome of validating a working copy's Arazzo document: JSON-Schema conformance against the Arazzo schema for the document's declared version, plus document-local semantic checks (goto/retry targets, dependsOn references, criterion syntax via the runtime's own compiler, runtime-expression syntax, reusable component references, duplicate ids, reachability). Source-dependent checks (unresolved operationId/operationPath/channelPath) arrive with attached sources. Warnings do not fail validation — valid means no errors.",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "Whether the document is free of error-severity findings (warnings/infos may still be present)."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowDiagnostic"
+            },
+            "description": "Every finding, in document order (empty when clean)."
+          }
+        },
+        "required": [
+          "valid",
+          "diagnostics"
+        ]
+      },
+      "AttachedSource": {
+        "type": "object",
+        "description": "One source attached to a working copy under a sourceDescriptions name (workflow-designer design §4.1): a registry reference (resolved at read time against the caller-reachable registered source) or an inline document (upload/fetch result, stored on the working copy so it resolves like a package). The list never returns documents; the operations endpoint projects them.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The sourceDescriptions name this attachment satisfies."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "registry",
+              "inline"
+            ],
+            "description": "registry = resolves a registered source by name at read time; inline = the document is stored on the working copy."
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "registry only: the registered source's name."
+          },
+          "type": {
+            "type": "string",
+            "description": "The source type (openapi | asyncapi | arazzo | jsonschema), recorded for inline attachments and echoed from the registry otherwise. A jsonschema attachment is referenced by inputs-schema external $ref (schemas/<name>#<pointer>), not by sourceDescriptions."
+          },
+          "attachedBy": {
+            "type": "string"
+          },
+          "attachedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etag": {
+            "type": "string",
+            "description": "On an attach response: the working copy's NEW concurrency token (the attach bumped it; present the fresh etag on the next save). List entries omit it."
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "attachedBy",
+          "attachedAt"
+        ]
+      },
+      "AttachedSourceList": {
+        "type": "object",
+        "description": "A working copy's attachments (unpaged — a workflow references few sources).",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachedSource"
+            }
+          }
+        },
+        "required": [
+          "sources"
+        ]
+      },
+      "AttachSourceRequest": {
+        "type": "object",
+        "description": "Attach (or replace) the source for a sourceDescriptions name: EXACTLY ONE of sourceName (a registry reference) or document (an inline upload/fetch result) — both or neither is rejected (400).",
+        "properties": {
+          "sourceName": {
+            "type": "string",
+            "description": "Attach the registered source with this name (resolved at read time, reach-checked)."
+          },
+          "document": {
+            "type": "object",
+            "description": "Attach this document inline (stored on the working copy verbatim).",
+            "additionalProperties": true
+          },
+          "type": {
+            "type": "string",
+            "description": "The inline document's type (openapi | asyncapi | arazzo | jsonschema); detected from the document's own top-level field when omitted (a JSON Schema document declares none, so pass jsonschema explicitly)."
+          }
+        }
+      },
+      "SourceOperationDescriptor": {
+        "type": "object",
+        "description": "One entry in a source's operation surface: an OpenAPI operation (operationId / path+method) or an AsyncAPI operation (channelPath+action), with RAW JSON Schema request/parameter/response shapes — exactly what the designer's typed editors and operation templates consume.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "openapi",
+              "asyncapi"
+            ]
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "OpenAPI: the path template."
+          },
+          "method": {
+            "type": "string",
+            "description": "OpenAPI: the upper-case HTTP method."
+          },
+          "channelPath": {
+            "type": "string",
+            "description": "AsyncAPI: the channel address (or key)."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "send",
+              "receive"
+            ],
+            "description": "AsyncAPI: 2.x publish/subscribe map to receive/send exactly as the code generator maps them."
+          },
+          "summary": {
+            "type": "string"
+          },
+          "deprecated": {
+            "type": "boolean"
+          },
+          "request": {
+            "type": "object",
+            "description": "The request body (OpenAPI, the JSON content type preferred) or message payload (AsyncAPI).",
+            "properties": {
+              "contentType": {
+                "type": "string"
+              },
+              "schema": {
+                "type": "object",
+                "description": "Raw JSON Schema, local $refs inlined to a bounded depth.",
+                "additionalProperties": true,
+                "title": "RawSchema"
+              }
+            },
+            "title": "SourceOperationRequestDescriptor"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "in": {
+                  "type": "string",
+                  "description": "path | query | header | cookie | querystring."
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "RawSchema"
+                }
+              },
+              "required": [
+                "name",
+                "in"
+              ],
+              "title": "SourceOperationParameterDescriptor"
+            }
+          },
+          "responses": {
+            "type": "object",
+            "description": "The documented responses, keyed by status code (200, 4XX, default, …) — the key set drives the designer's criteria/failure-action templates.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "RawSchema"
+                }
+              },
+              "title": "SourceOperationResponseDescriptor"
+            },
+            "title": "SourceOperationResponses"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "OperationSurface": {
+        "type": "object",
+        "description": "A source document's full operation surface, in document order.",
+        "properties": {
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceOperationDescriptor"
+            }
+          }
+        },
+        "required": [
+          "operations"
+        ]
+      },
+      "FetchSourceRequest": {
+        "type": "object",
+        "description": "A server-side fetch of an OpenAPI/AsyncAPI/Arazzo document from a web endpoint (workflow-designer design §4.4): avoids browser CORS entirely, and an optional credential REFERENCE reuses the source-credential machinery for authenticated spec endpoints (the control plane resolves the reference; secret material never rides this API). The fetch validates and returns the document — it does not register or attach it; the caller does that with the result. Deployments restrict the scheme to https (an explicit deployment opt-in permits http) and should fence outbound destinations per their network policy.",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The document URL (https; http only when the deployment opts in)."
+          },
+          "credential": {
+            "type": "object",
+            "title": "FetchCredentialReference",
+            "description": "Authenticate the fetch with a registered source credential, referenced by its (sourceName, environment) key — reach-checked, non-disclosing (404 when absent or outside the caller's reach).",
+            "properties": {
+              "sourceName": {
+                "type": "string"
+              },
+              "environment": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sourceName",
+              "environment"
+            ]
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "FetchedSourceDocument": {
+        "type": "object",
+        "description": "The fetched, validated document plus what the control plane detected about it. JSON and YAML endpoints both work — YAML parses to the JSON form returned here.",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The fetched URL, echoed."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "openapi",
+              "asyncapi",
+              "arazzo"
+            ],
+            "description": "Detected from the document's own top-level field."
+          },
+          "version": {
+            "type": "string",
+            "description": "The declared spec version (the value of that top-level field)."
+          },
+          "digest": {
+            "type": "string",
+            "description": "SHA-256 (lower-hex) over the document's RFC 8785 canonical form — the same convention as catalog package hashes; compare digests to detect drift between fetches."
+          },
+          "contentType": {
+            "type": "string",
+            "description": "The upstream response's content type, when it sent one."
+          },
+          "document": {
+            "type": "object",
+            "description": "The document, as JSON.",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "url",
+          "type",
+          "digest",
+          "document"
         ]
       },
       "SourceCredentialKind": {
@@ -3899,9 +7409,33 @@
           "administrators": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/AdministratorGrant" }
-          }
+          },
+          "broadeningAdvisory": { "$ref": "#/components/schemas/BroadeningAdvisory" }
         },
         "required": ["administrators"]
+      },
+      "BroadeningOverlapGrantee": {
+        "type": "object",
+        "description": "An existing grantee whose resolved identity the just-granted (narrower) identity STRICTLY contains (§16.5.4 membership) — the grant broadens administration to also admit this grantee, and everyone whose identity contains the grant. Reach-filtered to grantees the caller may see.",
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/GranteeKind" },
+          "value": { "type": "string", "description": "The grantee's subject value (e.g. the person/team/role name)." },
+          "label": { "type": "string", "description": "An optional human-friendly display label for the grantee." }
+        },
+        "required": ["kind", "value"]
+      },
+      "BroadeningAdvisory": {
+        "type": "object",
+        "description": "A NON-BLOCKING advisory (§16.5.4): the identity just granted is broader than one or more existing grantees, so it confers administration on every principal whose identity contains it, not only the named grantees. Present on an add-administrator response only when such an overlap exists (reach-filtered to what the caller may see); the grant itself still succeeds. Compare the hard-blocking identity-collision (409), which refuses an ambiguous set-equal grant.",
+        "properties": {
+          "message": { "type": "string", "description": "A human-readable explanation that the granted identity is broader than the listed existing grantees." },
+          "subsumesGrantees": {
+            "type": "array",
+            "description": "The existing grantees the granted identity strictly contains (reach-visible to the caller); the grant broadens administration to also admit each of them.",
+            "items": { "$ref": "#/components/schemas/BroadeningOverlapGrantee" }
+          }
+        },
+        "required": ["message", "subsumesGrantees"]
       },
       "AdministratorSetWrite": {
         "type": "object",
@@ -3931,6 +7465,8 @@
           "name": { "type": "string", "description": "The environment's stable name and identity (e.g. production, staging, DEV-MWA-1); credentials and runs key on it." },
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
           "description": { "type": "string", "description": "An optional human description." },
+          "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6): when true, a version may be made available here only if its server-attested scenario suite passed at publish. Absent/false preserves the default behaviour — unevidenced versions may be promoted." },
+          "allowsDraftRuns": { "type": "boolean", "description": "Development-class flag (workflow-designer design \u00a718): when true, working-copy DRAFTS may execute here as debug runs, using this environment's credential bindings. Absent/false \u2014 only published, availability-granted versions run here." },
           "managementTags": {
             "type": "array",
             "description": "Security tags (§14.2) scoping who may MANAGE and SEE this environment. The reserved internal-tag prefix is not allowed here.",
@@ -3945,6 +7481,8 @@
         "properties": {
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
           "description": { "type": "string", "description": "An optional human description." },
+          "requireEvidence": { "type": "boolean", "description": "Replacement promotion-readiness requirement (workflow-designer design §4.6); absent leaves the environment's requirement unchanged." },
+          "allowsDraftRuns": { "type": "boolean", "description": "Replacement draft-run permission (workflow-designer design \u00a718); absent leaves the environment's setting unchanged." },
           "managementTags": { "type": "array", "description": "Replacement non-internal security tags (§14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.", "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" } }
         }
       },
@@ -3955,6 +7493,8 @@
           "name": { "type": "string" },
           "displayName": { "type": "string" },
           "description": { "type": "string" },
+          "requireEvidence": { "type": "boolean", "description": "Whether promotion into this environment requires green publish evidence (workflow-designer design §4.6). Absent means false — unevidenced versions may be promoted." },
+          "allowsDraftRuns": { "type": "boolean", "description": "Whether working-copy drafts may execute here as debug runs (workflow-designer design \u00a718). Absent means false." },
           "managementTags": {
             "type": "array",
             "description": "Security tags scoping who may MANAGE and SEE this environment (§14.2).",
@@ -3991,8 +7531,8 @@
       },
       "SourceType": {
         "type": "string",
-        "description": "The kind of document a source registers (design §7.6): an OpenAPI description for an HTTP API source, or an AsyncAPI description for a messaging source.",
-        "enum": ["openapi", "asyncapi"]
+        "description": "The kind of document a source registers (design §7.6): an OpenAPI description for an HTTP API source, an AsyncAPI description for a messaging source, or a JSON Schema document that workflow inputs schemas reference by external $ref (schemas/<name>#<pointer>). A jsonschema source is never a sourceDescription (the Arazzo spec pins that enum) — it attaches to a working copy alongside the declared sources and resolves through the standard registered-document mechanism.",
+        "enum": ["openapi", "asyncapi", "jsonschema"]
       },
       "SourceDocument": {
         "type": "object",

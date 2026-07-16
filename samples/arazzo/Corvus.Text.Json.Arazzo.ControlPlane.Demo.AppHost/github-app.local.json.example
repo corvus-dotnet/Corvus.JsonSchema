@@ -1,0 +1,10 @@
+{
+  "//": "Copy this file to 'github-app.local.json' (gitignored) and fill in your own GitHub App's credentials to",
+  "//1": "enable the designer's Git integration. See the AppHost README ('GitHub App') for how to register the App.",
+  "//2": "ClientSecret is a real secret — it stays in the local (uncommitted) copy only; the AppHost injects it into",
+  "//3": "the control plane as an environment variable the broker resolves via env://GITHUB_APP_CLIENT_SECRET.",
+  "GitHubApp": {
+    "ClientId": "Iv23liXXXXXXXXXXXXXX",
+    "ClientSecret": "your-github-app-client-secret"
+  }
+}

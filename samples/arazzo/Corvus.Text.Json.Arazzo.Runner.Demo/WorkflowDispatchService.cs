@@ -15,16 +15,17 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 /// timer is now due. Both take a per-run lease (CAS) so exactly one runner advances a run.
 /// </summary>
 /// <remarks>
-/// Execution itself is the explicitly-paused phase: loading the version's compiled <c>executor.dll</c> into a
-/// collectible ALC and re-entering it (the <see cref="HostedWorkflowResumer"/> path) is not wired yet. Until it
-/// is, <see cref="ResumeAsync"/> is a stub that drives each claimed run to completion — so the dispatch, lease,
-/// orphan-reclaim and resume plumbing is exercised end-to-end against the shared store. Note this means the
-/// seeded orphaned <c>Running</c> run is reclaimed and completed on start-up (orphan reclaim in action).
+/// Both dispatch and timer-resume drive each claimed run through the injected <see cref="WorkflowResumer"/> — the
+/// real <see cref="HostedWorkflowResumer"/> that loads the version's compiled <c>executor.dll</c> into a collectible
+/// ALC (on first use, cached thereafter) and re-enters it against the runner's transports, the same live-execution
+/// path the control-plane host runs in-process. So the runner genuinely executes catalogued runs: the seeded orphaned
+/// <c>Running</c> run is reclaimed and re-executed on start-up (orphan reclaim in action).
 /// </remarks>
 public sealed class WorkflowDispatchService(
     IWorkflowStateStore store,
     IEnvironmentRunnerAuthorizationStore runnerAuthorizations,
     SecuredWorkflowCatalog catalog,
+    WorkflowResumer resumer,
     RunnerOptions options,
     ILogger<WorkflowDispatchService> logger) : BackgroundService
 {
@@ -50,8 +51,8 @@ public sealed class WorkflowDispatchService(
                 string[] hostedIds = await this.HostedWorkflowIdsAsync(stoppingToken).ConfigureAwait(false);
                 if (hostedIds.Length > 0)
                 {
-                    int dispatched = await dispatcher.DispatchClaimableAsync(hostedIds, ResumeAsync, stoppingToken).ConfigureAwait(false);
-                    int resumed = await worker.ResumeDueTimersAsync(ResumeAsync, stoppingToken).ConfigureAwait(false);
+                    int dispatched = await dispatcher.DispatchClaimableAsync(hostedIds, resumer, stoppingToken).ConfigureAwait(false);
+                    int resumed = await worker.ResumeDueTimersAsync(resumer, stoppingToken).ConfigureAwait(false);
                     if (dispatched + resumed > 0)
                     {
                         logger.LogInformation("Dispatched {Dispatched} new/orphaned run(s); resumed {Resumed} due run(s).", dispatched, resumed);
@@ -102,13 +103,6 @@ public sealed class WorkflowDispatchService(
         }
 
         return authorized;
-    }
-
-    // The stub resumer (see remarks): live execution re-enters the compiled executor; until then, complete the run.
-    private static async ValueTask<WorkflowRunResultKind> ResumeAsync(WorkflowRun run, CancellationToken cancellationToken)
-    {
-        await run.CompleteAsync(default, cancellationToken).ConfigureAwait(false);
-        return WorkflowRunResultKind.Completed;
     }
 
     private async Task<string[]> HostedWorkflowIdsAsync(CancellationToken cancellationToken)

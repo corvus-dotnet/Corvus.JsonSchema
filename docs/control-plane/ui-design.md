@@ -378,6 +378,28 @@ Three smaller elements the run widgets compose (and a host can reuse standalone)
 - **`<arazzo-value-editor>`** — a **strongly-typed form built from a step's precomputed schema metadata**
   (unions/tuples/maps/`const`, inline booleans, live per-field validation). It is the editor for Skip's
   `skipOutputs` and for typed inputs; validates against the baked schema before emitting `value-changed`.
+  It **normalizes each schema at the field boundary** (`normalizeDescriptor`), so a raw `oneOf`/`anyOf`
+  renders as a union chooser and a simple `allOf` as a merged form even off the baked path (the run
+  dialog included), rather than degrading to the raw-JSON fallback. It does **not** resolve `$ref`s —
+  reference resolution stays the baked path's job — so authored library references reach it pre-resolved.
+
+### `<arazzo-schema-editor>` — typed JSON-Schema authoring (§5.3a)
+
+The typed authoring form for a workflow's `inputs` and the components library's input schemas, in
+place of a guarded JSON textarea. It edits a **subset** of JSON Schema visually and stays lossless
+over the rest: property rows carry type/format/required/enum/`const` and a typed `default`;
+`oneOf`/`anyOf`/`allOf` author as first-class combiner nodes; constructs the form does not render show
+as advanced rows that preserve the raw subschema and open the JSON tier. The type menu leads with the
+shared library — reference an existing `components.inputs` type, extract the node into a new shared
+type, or author inline — so referencing shared types is the simple default for nested schemas.
+
+| | |
+|---|---|
+| **Properties** | `.value` (a JSON Schema object or boolean), `.library` (the `components.inputs` candidates for the reference picker), `.emptyDeletes` (JSON-tier blank behaviour: delete vs hold-last-valid), `.title` |
+| **Events** | `schema-changed {detail:{schema}}` (`schema: undefined` clears the node), `library-create {detail:{name, schema}}`, `library-open {detail:{name}}` |
+| **Tiers** | **Form** (typed rows, combiner nodes, advanced rows) or **JSON** (the shared guarded editor, `wireGuardedJson`; the form tier never deletes), plus a live preview that renders the authored schema through `<arazzo-value-editor>` |
+| **Normalization** | the client renderer (`schema-descriptor.js`) and the server's baked-schema generator (`WorkflowSchemaMetadataGenerator`) apply the same rules — `oneOf`/`anyOf` → union picker, simple `allOf` → merged object — so both consumers agree; `$ref`s are not resolved at this seam (the baked path's job) |
+| **Validation** | the server's validate pass meta-validates each authored schema and returns positioned Problems findings (`/workflows/N/inputs/…`, `/components/inputs/K/…`), plus a dangling-local-`$ref` finding |
 
 ### Runners (`/runners`, §5.4)
 

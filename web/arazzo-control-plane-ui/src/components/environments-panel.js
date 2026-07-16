@@ -39,6 +39,8 @@ class ArazzoEnvironments extends ArazzoElement {
     /** @private */ this._history = [];          // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
+    /** @private */ this._total = null;            // bounded total across all pages (null until counted)
+    /** @private */ this._totalCapped = false;     // true when the true total meets/exceeds the server cap → render "N+"
     /** @private */ this._listSeq = 0;
     /** @private */ this._detailSeq = 0;
     /** @private */ this._form = null;           // the create-dialog form state
@@ -111,10 +113,17 @@ class ArazzoEnvironments extends ArazzoElement {
     this._error = null;
     this.renderBody();
     try {
-      const page = await client.listEnvironments({ pageToken: this._currentToken, limit: this.pageSize });
+      // Fetch the page and the bounded total (for the footer) together; the count is a no-rows bounded query, and a
+      // count failure must not break the list, so it falls back to null (footer then shows the visible page count).
+      const [page, total] = await Promise.all([
+        client.listEnvironments({ pageToken: this._currentToken, limit: this.pageSize }),
+        client.countEnvironments().catch(() => null),
+      ]);
       if (seq !== this._listSeq) return;
       this._envs = page.environments;
       this._nextPageToken = page.nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._envs.length, hasMore: !!this._nextPageToken });
@@ -188,10 +197,12 @@ class ArazzoEnvironments extends ArazzoElement {
     // deployment-internal tags and rejects the reserved sys: prefix (400).
     const mgmtEd = this.$('.d-mgmt-editor');
     const managementTags = mgmtEd ? mgmtEd.tags : [];
+    // The checkbox state IS the desired requirement — a present requireEvidence replaces the stored flag (§4.6).
+    const requireEvidence = this.$('.d-requireEvidence')?.checked ?? false;
     const saveBtn = this.$('.d-save');
     if (saveBtn) saveBtn.disabled = true;
     try {
-      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags });
+      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags, requireEvidence });
       this._detail = updated;
       const i = this._envs.findIndex((e) => e.name === updated.name);
       if (i >= 0) this._envs[i] = { ...this._envs[i], ...updated };
@@ -226,7 +237,7 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', displayName: '', description: '', managementTags: [], formError: null };
+    this._form = { name: '', displayName: '', description: '', managementTags: [], requireEvidence: false, formError: null };
     this.renderEditor();
     this.$('dialog').showModal();
     this.$('.f-name')?.focus();
@@ -248,6 +259,7 @@ class ArazzoEnvironments extends ArazzoElement {
         name,
         displayName: (form.displayName || '').trim() || undefined,
         description: (form.description || '').trim() || undefined,
+        requireEvidence: form.requireEvidence || undefined,
         managementTags: managementTags.length ? managementTags : undefined,
       });
       this.closeEditor();
@@ -267,20 +279,24 @@ class ArazzoEnvironments extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        :host { display: block; }
-        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+        .layout > * { min-height: 0; }
+        .detail-pane { min-height: 0; overflow: auto; }
+        .detail-pane:empty { display: none; }
         @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
 
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
         /* The list is a bordered table, matching the Runs/Catalog/Sources lists. */
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
         .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
         .toolbar .grow { flex: 1; }
-        .err { margin: 10px 12px; }
+        .err { flex: none; margin: 10px 12px; }
         .err:empty { display: none; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr.selectable { cursor: pointer; }
@@ -291,6 +307,7 @@ class ArazzoEnvironments extends ArazzoElement {
         .edesc { color: var(--_muted); overflow: hidden; text-overflow: ellipsis; }
         .etime { color: var(--_muted); font-size: 12px; white-space: nowrap; }
         ${PAGER_CSS}
+        .pager { flex: none; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
 
@@ -298,11 +315,14 @@ class ArazzoEnvironments extends ArazzoElement {
         .detail .dhead { display: flex; align-items: baseline; gap: 8px; }
         .detail .dtitle { font-weight: 700; font-size: 16px; }
         .detail .dname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+        .detail .d-close { margin-left: auto; cursor: pointer; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_muted); width: 24px; height: 24px; line-height: 1; padding: 0; }
         .detail .section { padding: 12px; border-top: 1px solid var(--_border); }
         .detail .section:first-of-type { border-top: none; }
         .detail .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--_muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
         .field { display: grid; gap: 4px; margin-bottom: 10px; }
         .field > span { font-size: 12px; color: var(--_muted); }
+        label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0 0 4px; }
+        label.check input { width: auto; }
         .field input, .field textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         .field textarea { min-height: 52px; }
         .audit { color: var(--_muted); font-size: 12px; margin-top: 4px; }
@@ -328,10 +348,12 @@ class ArazzoEnvironments extends ArazzoElement {
             <button class="new primary" type="button" hidden>New environment</button>
           </div>
           <div class="err"></div>
-          <table>
-            <thead><tr><th>Environment</th><th>Description</th><th>Created</th></tr></thead>
-            <tbody class="list" part="rows"></tbody>
-          </table>
+          <div class="tablescroll">
+            <table>
+              <thead><tr><th>Environment</th><th>Description</th><th>Created</th></tr></thead>
+              <tbody class="list" part="rows"></tbody>
+            </table>
+          </div>
           <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
         <div class="detail-pane"></div>
@@ -385,9 +407,13 @@ class ArazzoEnvironments extends ArazzoElement {
   }
 
   renderFoot() {
+    // The footer shows the bounded grand total the caller's reach admits (with "+" when the server capped it), not just
+    // the current page's length; it falls back to the visible count if the count query was unavailable.
+    const shown = this._total != null ? `${this._total}${this._totalCapped ? '+' : ''}` : `${this._envs.length}`;
+    const noun = (this._total != null ? this._total : this._envs.length) === 1 ? 'environment' : 'environments';
     const info = this._loading
       ? 'Loading…'
-      : `${this._envs.length} environment${this._envs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+      : `${shown} ${noun}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
   }
 
@@ -409,7 +435,7 @@ class ArazzoEnvironments extends ArazzoElement {
     pane.innerHTML = `
       <div class="panel detail" part="detail">
         <div class="section">
-          <div class="dhead"><span class="dtitle">${escapeHtml(e.displayName || e.name)}</span><span class="dname">${escapeHtml(e.name)}</span></div>
+          <div class="dhead"><span class="dtitle">${escapeHtml(e.displayName || e.name)}</span><span class="dname">${escapeHtml(e.name)}</span><button class="d-close" type="button" title="Close" aria-label="Close">✕</button></div>
           <div class="audit">Created ${escapeHtml(relativeTime(e.createdAt))}${e.createdBy ? ` by ${escapeHtml(e.createdBy)}` : ''}${auditUpdated}</div>
         </div>
         <div class="section">
@@ -417,21 +443,17 @@ class ArazzoEnvironments extends ArazzoElement {
           ${writable ? `
             <div class="field"><span>Display name</span><input class="d-displayName" value="${escapeHtml(e.displayName || '')}" placeholder="${escapeHtml(e.name)}"></div>
             <div class="field"><span>Description</span><textarea class="d-description" placeholder="(optional)">${escapeHtml(e.description || '')}</textarea></div>
+            <label class="check"><input type="checkbox" class="d-requireEvidence"${e.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion</label>
+            <div class="hint">When set, a workflow version may be made available here only if its server-attested scenario suite passed at publish (workflow-designer §4.6).</div>
+            <div class="field"><span>Management tags</span><arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor></div>
+            <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</div></div>
-          `}
-        </div>
-        <div class="section">
-          <h4>Management tags</h4>
-          ${writable ? `
-            <arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor>
-            <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed. Saved with the details above.</div>
-          ` : `
-            ${Array.isArray(e.managementTags) && e.managementTags.length
-              ? `<div class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</div>`
-              : '<div class="muted">None — visible to everyone within reach.</div>'}
-            <div class="hint">Who may manage and see this environment (§14.2).</div>
+            ${e.requireEvidence ? '<div class="field"><span>Promotion</span><div>Requires green publish evidence (§4.6).</div></div>' : ''}
+            <div class="field"><span>Management tags</span><div>${Array.isArray(e.managementTags) && e.managementTags.length
+              ? `<span class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</span>`
+              : '<span class="muted">None — visible to everyone within reach.</span>'}</div></div>
           `}
         </div>
         <div class="section">
@@ -459,6 +481,7 @@ class ArazzoEnvironments extends ArazzoElement {
     if (saveBtn) saveBtn.addEventListener('click', () => this.saveMetadata());
     const delBtn = pane.querySelector('.d-delete');
     if (delBtn) delBtn.addEventListener('click', () => this.deleteEnvironment(e.name));
+    pane.querySelector('.d-close')?.addEventListener('click', () => { this.clearDetail(); this.renderBody(); });
   }
 
   availabilityHtml() {
@@ -479,6 +502,7 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="field"><span>Name</span><input class="f-name" placeholder="qa" value="${escapeHtml(f.name)}"></div>
       <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
+      <label class="check"><input type="checkbox" class="f-requireEvidence"${f.requireEvidence ? ' checked' : ''}> Require publish evidence for promotion (§4.6)</label>
       <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
       <div class="hint">Scope who may manage and see this environment (§14.2); an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
@@ -486,6 +510,7 @@ class ArazzoEnvironments extends ArazzoElement {
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });
     content.querySelector('.f-displayName').addEventListener('input', (ev) => { f.displayName = ev.target.value; });
     content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
+    content.querySelector('.f-requireEvidence').addEventListener('change', (ev) => { f.requireEvidence = ev.target.checked; });
     const mgmtEd = content.querySelector('.f-mgmt-editor');
     mgmtEd.tags = Array.isArray(f.managementTags) ? f.managementTags : [];
     mgmtEd.addEventListener('tags-changed', () => { f.managementTags = mgmtEd.tags; });

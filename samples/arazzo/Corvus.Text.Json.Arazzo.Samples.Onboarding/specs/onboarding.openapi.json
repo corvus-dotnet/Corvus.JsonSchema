@@ -1,0 +1,102 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Onboarding API", "version": "1.0.0" },
+  "paths": {
+    "/accounts": {
+      "post": {
+        "operationId": "createAccount",
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateAccountRequest" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Account" } } } } }
+      },
+      "get": {
+        "operationId": "listAccounts",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 200 } },
+          { "name": "pageToken", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccountPage" } } } } }
+      }
+    },
+    "/accounts/{accountId}": {
+      "get": {
+        "operationId": "getAccount",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccountView" } } } },
+          "404": { "description": "No such account" }
+        }
+      }
+    },
+    "/accounts/{accountId}/resources": {
+      "post": {
+        "operationId": "provisionResources",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Provisioning" } } } } }
+      }
+    },
+    "/accounts/{accountId}/welcome": {
+      "post": {
+        "operationId": "sendWelcome",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "202": { "description": "Accepted" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateAccountRequest": {
+        "type": "object",
+        "description": "The signup facts the onboarding service owns: who the account is for and the plan they chose. Identity verification is a separate concern owned by the KYC service.",
+        "properties": {
+          "email": { "type": "string", "format": "idn-email", "description": "The customer's email." },
+          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ], "description": "The chosen plan." }
+        },
+        "required": [ "email" ]
+      },
+      "Account": { "type": "object", "properties": { "accountId": { "type": "string", "format": "uuid" } }, "required": [ "accountId" ] },
+      "Provisioning": {
+        "type": "object",
+        "properties": {
+          "accountUrl": { "type": "string", "format": "uri" },
+          "quotaGb": { "type": "integer", "minimum": 1, "maximum": 1024 },
+          "resources": { "type": "array", "description": "The provisioned resources.", "items": { "$ref": "#/components/schemas/Resource" } },
+          "tags": { "type": "object", "description": "Arbitrary resource tags (key -> value).", "additionalProperties": { "type": "string" } }
+        }
+      },
+      "Resource": {
+        "type": "object",
+        "properties": {
+          "kind": { "type": "string", "enum": [ "database", "bucket", "queue" ] },
+          "name": { "type": "string" },
+          "region": { "type": "string", "enum": [ "eu-west-1", "us-east-1", "ap-southeast-2" ] },
+          "endpoint": { "type": "string", "format": "uri" }
+        },
+        "required": [ "kind", "name" ]
+      },
+      "AccountView": {
+        "type": "object",
+        "description": "The onboarding aggregate: an account and its progress through the journey (created -> provisioned -> welcomed). Identity verification is owned by the KYC service and rendered in the KYC console, not here. This is the read model the onboarding console renders.",
+        "properties": {
+          "accountId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": [ "created", "provisioned", "welcomed" ] },
+          "email": { "type": "string", "format": "idn-email" },
+          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ] },
+          "submittedAt": { "type": "string", "format": "date-time" },
+          "provisioning": { "$ref": "#/components/schemas/Provisioning" },
+          "provisionedAt": { "type": "string", "format": "date-time" },
+          "welcomedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [ "accountId", "status", "submittedAt" ]
+      },
+      "AccountPage": {
+        "type": "object",
+        "description": "A page of onboarding accounts, newest first, with an opaque continuation token.",
+        "properties": {
+          "accounts": { "type": "array", "items": { "$ref": "#/components/schemas/AccountView" } },
+          "nextPageToken": { "type": "string", "description": "Pass as pageToken to fetch the next page; absent on the last page." }
+        },
+        "required": [ "accounts" ]
+      }
+    }
+  }
+}

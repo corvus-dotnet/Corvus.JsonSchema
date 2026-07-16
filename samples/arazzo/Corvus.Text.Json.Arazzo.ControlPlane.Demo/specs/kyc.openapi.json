@@ -1,0 +1,131 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "KYC API", "version": "1.0.0" },
+  "paths": {
+    "/accounts/{accountId}/identity": {
+      "post": {
+        "operationId": "verifyIdentity",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdentityRequest" } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdentityResult" } } } } }
+      }
+    },
+    "/verifications": {
+      "get": {
+        "operationId": "listVerifications",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 200 } },
+          { "name": "pageToken", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VerificationPage" } } } } }
+      }
+    },
+    "/accounts/{accountId}/verification": {
+      "get": {
+        "operationId": "getVerification",
+        "parameters": [ { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VerificationView" } } } },
+          "404": { "description": "No such verification" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "IdentityRequest": {
+        "type": "object",
+        "properties": {
+          "fullName": { "type": "string", "maxLength": 120 },
+          "documentNumber": { "type": "string", "maxLength": 40 }
+        },
+        "required": [ "fullName" ]
+      },
+      "IdentityResult": {
+        "type": "object",
+        "properties": {
+          "verified": { "type": "boolean" },
+          "score": { "type": "number", "minimum": 0, "maximum": 1, "description": "Match confidence (0-1)." },
+          "method": { "type": "string", "enum": [ "document", "biometric", "knowledge-based" ] },
+          "reviewedAt": { "type": "string", "format": "date-time" },
+          "applicant": { "$ref": "#/components/schemas/Applicant" },
+          "flags": { "type": "array", "items": { "type": "string", "enum": [ "pep", "sanctions", "adverse-media" ] } },
+          "evidence": { "$ref": "#/components/schemas/Evidence" }
+        }
+      },
+      "Applicant": {
+        "type": "object",
+        "description": "The resolved identity.",
+        "properties": {
+          "fullName": { "type": "string", "maxLength": 120 },
+          "dateOfBirth": { "type": "string", "format": "date" },
+          "email": { "type": "string", "format": "idn-email" },
+          "country": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "ISO 3166-1 alpha-2." }
+        },
+        "required": [ "fullName" ]
+      },
+      "Evidence": {
+        "description": "The evidence that established the identity.",
+        "discriminator": { "propertyName": "kind" },
+        "oneOf": [
+          { "$ref": "#/components/schemas/DocumentEvidence" },
+          { "$ref": "#/components/schemas/BiometricEvidence" },
+          { "$ref": "#/components/schemas/KnowledgeEvidence" }
+        ]
+      },
+      "DocumentEvidence": {
+        "type": "object",
+        "title": "Document",
+        "properties": {
+          "kind": { "type": "string", "const": "document" },
+          "documentType": { "type": "string", "enum": [ "passport", "driving-licence", "national-id" ] },
+          "documentNumber": { "type": "string", "maxLength": 40 },
+          "expiry": { "type": "string", "format": "date" }
+        },
+        "required": [ "kind", "documentType", "documentNumber" ]
+      },
+      "BiometricEvidence": {
+        "type": "object",
+        "title": "Biometric",
+        "properties": {
+          "kind": { "type": "string", "const": "biometric" },
+          "modality": { "type": "string", "enum": [ "face", "fingerprint", "voice" ] },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "required": [ "kind", "modality", "confidence" ]
+      },
+      "KnowledgeEvidence": {
+        "type": "object",
+        "title": "Knowledge-based",
+        "properties": {
+          "kind": { "type": "string", "const": "knowledge-based" },
+          "questionsPassed": { "type": "integer", "minimum": 0, "maximum": 5 }
+        },
+        "required": [ "kind", "questionsPassed" ]
+      },
+      "VerificationView": {
+        "type": "object",
+        "description": "A KYC verification record: the outcome of an identity verification for an account, as the KYC console renders it.",
+        "properties": {
+          "accountId": { "type": "string" },
+          "status": { "type": "string", "enum": [ "verified", "blocked", "pending" ] },
+          "fullName": { "type": "string" },
+          "submittedAt": { "type": "string", "format": "date-time" },
+          "verifiedAt": { "type": "string", "format": "date-time" },
+          "channel": { "type": "string", "enum": [ "synchronous", "manual" ], "description": "How the verdict was produced: an inline verifyIdentity call, or a manual-recovery review." },
+          "identity": { "$ref": "#/components/schemas/IdentityResult" }
+        },
+        "required": [ "accountId", "status", "submittedAt" ]
+      },
+      "VerificationPage": {
+        "type": "object",
+        "description": "A page of KYC verification records, newest first, with an opaque continuation token.",
+        "properties": {
+          "verifications": { "type": "array", "items": { "$ref": "#/components/schemas/VerificationView" } },
+          "nextPageToken": { "type": "string" }
+        },
+        "required": [ "verifications" ]
+      }
+    }
+  }
+}

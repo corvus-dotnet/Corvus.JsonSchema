@@ -102,7 +102,7 @@ public partial class WorkflowExecutorEndToEndTests
         using (var workspace = JsonWorkspace.Create())
         using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(
             Encoding.UTF8.GetBytes("""{"firstId":"1","secondId":"2"}""")))
-        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement))
+        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement, "development"))
         {
             var inner = new MockApiTransport();
             inner.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Alpha"}""");
@@ -177,7 +177,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(
             Encoding.UTF8.GetBytes("""{"firstId":"1","secondId":"2"}"""));
-        using var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement);
+        using var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement, "development");
 
         var transport = new MockApiTransport();
         transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Alpha"}""");
@@ -212,7 +212,7 @@ public partial class WorkflowExecutorEndToEndTests
         using (var workspace = JsonWorkspace.Create())
         using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(
             Encoding.UTF8.GetBytes("""{"firstId":"1","secondId":"2"}""")))
-        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement))
+        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurable", inputsDocument.RootElement, "development"))
         {
             var transport = new MockApiTransport();
             transport.EnqueueResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Alpha"}""");
@@ -262,7 +262,7 @@ public partial class WorkflowExecutorEndToEndTests
         using (var workspace = JsonWorkspace.Create())
         using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(
             Encoding.UTF8.GetBytes("""{"firstId":"1"}""")))
-        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurableRetry", inputsDocument.RootElement))
+        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurableRetry", inputsDocument.RootElement, "development"))
         {
             var transport = new MockApiTransport();
             transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
@@ -390,7 +390,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         using var workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"sensorId":"s1"}"""));
-        using var run = WorkflowRun.CreateNew(store, "listen-param-1", "listenDurableParam", inputsDocument.RootElement);
+        using var run = WorkflowRun.CreateNew(store, "listen-param-1", "listenDurableParam", inputsDocument.RootElement, "development");
 
         var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
             null,
@@ -471,7 +471,7 @@ public partial class WorkflowExecutorEndToEndTests
         // ── Run 1: no message available → the run suspends on a message wait and returns. ──
         using (var workspace = JsonWorkspace.Create())
         using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}")))
-        using (var run = WorkflowRun.CreateNew(store, runId, "listenDurable", inputsDocument.RootElement))
+        using (var run = WorkflowRun.CreateNew(store, runId, "listenDurable", inputsDocument.RootElement, "development"))
         {
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null,
@@ -519,7 +519,7 @@ public partial class WorkflowExecutorEndToEndTests
         // Run 1 fails and suspends on a 60s durable timer.
         using (var workspace = JsonWorkspace.Create())
         using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"firstId":"1"}""")))
-        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurableRetry", inputsDocument.RootElement, time))
+        using (var run = WorkflowRun.CreateNew(store, runId, "adoptDurableRetry", inputsDocument.RootElement, "development", time))
         {
             var failing = new MockApiTransport();
             failing.SetResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
@@ -586,7 +586,7 @@ public partial class WorkflowExecutorEndToEndTests
         // Run 1 suspends awaiting a message on "measurements".
         using (var workspace = JsonWorkspace.Create())
         using (ParsedJsonDocument<JsonElement> inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}")))
-        using (var run = WorkflowRun.CreateNew(store, runId, "listenDurable", inputsDocument.RootElement))
+        using (var run = WorkflowRun.CreateNew(store, runId, "listenDurable", inputsDocument.RootElement, "development"))
         {
             var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(
                 null, [apiTransport, messageTransport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;

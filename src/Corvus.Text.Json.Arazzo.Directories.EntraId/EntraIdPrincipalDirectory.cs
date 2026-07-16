@@ -37,6 +37,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
     private readonly bool ownsHttpClient;
     private readonly TimeProvider timeProvider;
     private readonly SemaphoreSlim tokenGate = new(1, 1);
+    private readonly DirectoryMembershipExpander membershipExpander;
     private volatile CachedToken? cachedToken;
 
     /// <summary>Initializes a new instance of the <see cref="EntraIdPrincipalDirectory"/> class.</summary>
@@ -59,6 +60,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         this.ownsHttpClient = httpClient is null;
         this.httpClient = httpClient ?? new HttpClient();
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.membershipExpander = new DirectoryMembershipExpander(options.MembershipCacheTtl, this.timeProvider);
     }
 
     /// <inheritdoc/>
@@ -87,6 +89,19 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         // each ResolvedPrincipal (its Value/Label strings + stamped SecurityTagSet). When the mapper declares its
         // RequiredAttributes the $select makes Graph return only those, so both the response and the flatten shrink.
         byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+        // A person resolves to its FULL membership-expanded identity (design §16.5.4): capture each user's object id during
+        // the projection (Graph returns id on every entity), then fetch its group memberships (cached per user) and union a
+        // sys:group per group through the SAME mapper. Teams / roles ARE the memberships, so they are not themselves expanded.
+        if (kind == GranteeKind.Person)
+        {
+            var ids = new List<string>(top);
+            IReadOnlyList<ResolvedPrincipal> people = this.projector.SupportsSpanProjection
+                ? ProjectResponseSpan(kind, resource, body, top, this.projector, ids)
+                : ProjectResponse(kind, resource, body, top, this.projector, ids);
+            return await this.membershipExpander.ExpandAsync(people, ids, this.projector, (id, ct) => this.FetchGroupNamesAsync(id, token, ct), cancellationToken).ConfigureAwait(false);
+        }
+
         return this.projector.SupportsSpanProjection
             ? ProjectResponseSpan(kind, resource, body, top, this.projector)
             : ProjectResponse(kind, resource, body, top, this.projector);
@@ -163,7 +178,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
     // resource, projector) — the reader borrows `body` in place (no DOM, no copy). A dropped record (mapper returns null,
     // or one missing its value attribute) does not consume the limit. `internal` only so the allocation benchmark can
     // drive it without a network.
-    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, EntraIdResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponse(GranteeKind kind, EntraIdResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector, List<string>? capturedIds = null)
     {
         var results = new List<ResolvedPrincipal>(limit);
         var reader = new Utf8JsonReader(body);
@@ -186,6 +201,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
                     if (Project(kind, resource, attributes, projector) is { } principal)
                     {
                         results.Add(principal);
+                        capturedIds?.Add(First(attributes, "id") ?? string.Empty);
                     }
                 }
 
@@ -203,13 +219,18 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
     // stack-only DirectoryRecordView, and let the projector write the identity straight into a pooled buffer. No attribute
     // string is materialized; only the per-principal value/label (which ResolvedPrincipal requires) and the one identity
     // byte[] escape. The Graph entity is flat, so a wanted property is matched by name directly.
-    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, EntraIdResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector)
+    internal static IReadOnlyList<ResolvedPrincipal> ProjectResponseSpan(GranteeKind kind, EntraIdResource resource, byte[] body, int limit, DirectoryPrincipalProjector projector, List<string>? capturedIds = null)
     {
         var results = new List<ResolvedPrincipal>(limit);
 
-        // The wanted attribute names as UTF-8 (value first, then label, then the mapper's declared attributes), built once.
+        // When the caller will expand a person's memberships it also needs the user's object id (the id /users/{id}/memberOf
+        // keys on), captured in step with the principal so the two lists stay parallel.
+        bool captureId = capturedIds is not null;
+
+        // The wanted attribute names as UTF-8 (value first, then label, then the mapper's declared attributes, then the id
+        // when captured), built once.
         string[] required = [.. projector.RequiredAttributes];
-        int wantedCount = 1 + (resource.DisplayAttribute is null ? 0 : 1) + required.Length;
+        int wantedCount = 1 + (resource.DisplayAttribute is null ? 0 : 1) + required.Length + (captureId ? 1 : 0);
         byte[][] wanted = new byte[wantedCount][];
         int next = 0;
         int valueWanted = next;
@@ -224,6 +245,13 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         foreach (string attribute in required)
         {
             wanted[next++] = Encoding.UTF8.GetBytes(attribute);
+        }
+
+        int idWanted = -1;
+        if (captureId)
+        {
+            idWanted = next;
+            wanted[next++] = "id"u8.ToArray();
         }
 
         var reader = new Utf8JsonReader(body);
@@ -254,6 +282,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
                     int position = 0;
                     int valueSlice = -1;
                     int displaySlice = -1;
+                    int idSlice = -1;
                     while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
                     {
                         int which = -1;
@@ -287,6 +316,10 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
                         {
                             displaySlice = captured;
                         }
+                        else if (which == idWanted)
+                        {
+                            idSlice = captured;
+                        }
 
                         slices[captured++] = new DirectoryAttributeSlice(keyOffset, wanted[which].Length, valueOffset, valueLength);
                     }
@@ -309,6 +342,7 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
                     if (projector.TryProjectIdentity(kind, valueSpan, labelSpan, hasLabel: true, view) is { } principal)
                     {
                         results.Add(principal);
+                        capturedIds?.Add(idSlice >= 0 ? Encoding.UTF8.GetString(scratch, slices[idSlice].ValueOffset, slices[idSlice].ValueLength) : string.Empty);
                     }
                 }
             }
@@ -321,6 +355,82 @@ public sealed class EntraIdPrincipalDirectory : IPrincipalDirectory, IDisposable
         }
 
         return results;
+    }
+
+    // GET {GraphBaseUrl}/users/{id}/memberOf → { value: [{ @odata.type, displayName }, …] } (groups, directory roles, admin
+    // units). Only group entries (@odata.type == #microsoft.graph.group) contribute a sys:group; their identity value is the
+    // displayName. Throws on a non-success status so a misconfigured app permission surfaces.
+    private async Task<IReadOnlyList<string>> FetchGroupNamesAsync(string id, string token, CancellationToken cancellationToken)
+    {
+        string root = this.options.GraphBaseUrl.AbsoluteUri.TrimEnd('/');
+        var uri = new Uri($"{root}/users/{Uri.EscapeDataString(id)}/memberOf?$select=id,displayName", UriKind.Absolute);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using HttpResponseMessage response = await this.httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new EntraIdDirectoryException($"Graph returned {(int)response.StatusCode} ({response.StatusCode}) fetching group memberships for a user.");
+        }
+
+        byte[] body = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        return ParseGroupNames(body);
+    }
+
+    // Reads a Graph memberOf response ({ value: [{ @odata.type, displayName }, …] }) to the list of GROUP displayNames in
+    // place — a directoryRole / administrativeUnit member is skipped (its @odata.type is not a group), so only real group
+    // memberships become sys:group tags. `internal` only so the parse can be unit-tested.
+    internal static IReadOnlyList<string> ParseGroupNames(byte[] body)
+    {
+        var reader = new Utf8JsonReader(body);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+        {
+            return [];
+        }
+
+        List<string>? names = null;
+        while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+        {
+            bool isValue = reader.ValueTextEquals("value"u8);
+            reader.Read();
+            if (!isValue || reader.TokenType != JsonTokenType.StartArray)
+            {
+                reader.Skip();
+                continue;
+            }
+
+            while (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+            {
+                string? displayName = null;
+                bool isGroup = false;
+                while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    if (reader.ValueTextEquals("@odata.type"u8))
+                    {
+                        reader.Read();
+                        isGroup = reader.TokenType == JsonTokenType.String && reader.ValueTextEquals("#microsoft.graph.group"u8);
+                    }
+                    else if (reader.ValueTextEquals("displayName"u8))
+                    {
+                        reader.Read();
+                        displayName = reader.GetString();
+                    }
+                    else
+                    {
+                        reader.Read();
+                        reader.Skip();
+                    }
+                }
+
+                if (isGroup && !string.IsNullOrEmpty(displayName))
+                {
+                    (names ??= []).Add(displayName);
+                }
+            }
+
+            return names ?? (IReadOnlyList<string>)[];
+        }
+
+        return names ?? (IReadOnlyList<string>)[];
     }
 
     private static ResolvedPrincipal? Project(GranteeKind kind, EntraIdResource resource, Dictionary<string, IReadOnlyList<string>> attributes, DirectoryPrincipalProjector projector)

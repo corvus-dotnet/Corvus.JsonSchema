@@ -390,10 +390,6 @@ public readonly partial struct Ui5ManifestSchema
                                 }
                             }
 
-                            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
-                            context.ApplyEvaluated(ref hoistedAllOf0_context);
-                            context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
-
                             if ((~(hoistedAllOf1_requiredBits[0]) & HoistedAllOf1RequiredBitMask0) == 0)
                             {
                                 hoistedAllOf1_context.EvaluatedKeywordForProperty(true, 0, HoistedAllOf1RequiredPropertyViewIdPresent, "viewId"u8, "required"u8);
@@ -427,6 +423,10 @@ public readonly partial struct Ui5ManifestSchema
                             allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf1_context.IsMatch;
                             context.ApplyEvaluated(ref hoistedAllOf1_context);
                             context.CommitChildContext(hoistedAllOf1_context.IsMatch, ref hoistedAllOf1_context);
+
+                            allOfComposedIsMatch = allOfComposedIsMatch && hoistedAllOf0_context.IsMatch;
+                            context.ApplyEvaluated(ref hoistedAllOf0_context);
+                            context.CommitChildContext(hoistedAllOf0_context.IsMatch, ref hoistedAllOf0_context);
 
                             context.EvaluatedKeyword(allOfComposedIsMatch, allOfComposedIsMatch  ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
                         }

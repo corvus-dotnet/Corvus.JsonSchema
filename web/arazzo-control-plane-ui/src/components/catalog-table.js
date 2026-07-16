@@ -29,6 +29,8 @@ class ArazzoCatalogTable extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._rows = [];
+    /** @private */ this._total = null; // reach-scoped bounded total (distinct workflows) for the footer
+    /** @private */ this._totalCapped = false; // true when the true total meets/exceeds the server cap ("N+")
     /** @private */ this._history = []; // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextToken = null;
@@ -101,19 +103,26 @@ class ArazzoCatalogTable extends ArazzoElement {
 
     try {
       const f = this.filters;
-      const { versions, nextPageToken } = await client.searchCatalog({
+      const filter = {
         q: f.q,
         baseWorkflowId: f.baseWorkflowId,
         status: f.status,
         owner: f.owner,
         tags: f.tags,
         distinctWorkflows: true,
-        limit: this.pageSize,
-        pageToken: this._currentToken,
-      });
+      };
+
+      // The bounded total (for the footer) rides alongside the page: same filters + distinct mode, reach-scoped
+      // server-side. Best-effort — a count failure falls back to the page length and never breaks the list.
+      const [{ versions, nextPageToken }, total] = await Promise.all([
+        client.searchCatalog({ ...filter, limit: this.pageSize, pageToken: this._currentToken }),
+        client.countCatalog(filter).catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._rows = versions;
       this._nextToken = nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: versions.length, hasMore: !!nextPageToken });
@@ -150,11 +159,14 @@ class ArazzoCatalogTable extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         table { width: 100%; border-collapse: collapse; }
         thead th {
           text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
           padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
+          position: sticky; top: 0; z-index: 1;
         }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
         tbody tr:last-child td { border-bottom: none; }
@@ -171,16 +183,19 @@ class ArazzoCatalogTable extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         ${PAGER_CSS}
+        .pager { flex: none; }
       </style>
       <div class="wrap" part="table">
-        <table>
-          <thead>
-            <tr>
-              <th>Workflow</th><th>Latest</th><th>Status</th><th>Owner</th><th>Updated</th><th>Tags</th>
-            </tr>
-          </thead>
-          <tbody part="rows"></tbody>
-        </table>
+        <div class="tablescroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Workflow</th><th>Latest</th><th>Status</th><th>Owner</th><th>Updated</th><th>Tags</th>
+              </tr>
+            </thead>
+            <tbody part="rows"></tbody>
+          </table>
+        </div>
         <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;
@@ -249,9 +264,11 @@ class ArazzoCatalogTable extends ArazzoElement {
   }
 
   updatePager() {
+    // Prefer the reach-scoped bounded total ("N"/"N+" distinct workflows); fall back to the page length if unavailable.
+    const shown = this._total ?? this._rows.length;
     const info = this._loading
       ? 'Loading…'
-      : `${this._rows.length} workflow${this._rows.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+      : `${shown}${this._totalCapped ? '+' : ''} workflow${shown === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextToken, loading: this._loading, info });
   }
 

@@ -40,6 +40,7 @@ public readonly partial struct SecurityBindingWrite
 
         private const uint RequiredBitMask0 =
             RequiredBitForClaimType;
+        private static readonly JsonSchemaPathProvider AdditionalClausesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/additionalClauses"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ClaimTypeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/claimType"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ClaimValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/claimValue"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DescriptionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/description"u8, buffer, out written);
@@ -48,10 +49,25 @@ public readonly partial struct SecurityBindingWrite
         private static readonly JsonSchemaPathProvider ReadSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/read/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WriteSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/write/$ref"u8, buffer, out written);
 
-        private static void MatchClaimType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchAdditionalClauses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.SecurityBindingClauseArray.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.AdditionalClausesUtf8,
+                    evaluationPath: AdditionalClausesSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.SecurityBindingClauseArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            context.CommitChildContext(childContext.IsMatch, ref childContext);
+        }
+
+        private static void MatchClaimType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext1 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -59,8 +75,8 @@ public readonly partial struct SecurityBindingWrite
                     JsonPropertyNames.ClaimTypeUtf8,
                     evaluationPath: ClaimTypeSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-            context.CommitChildContext(childContext.IsMatch, ref childContext);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -73,7 +89,7 @@ public readonly partial struct SecurityBindingWrite
         private static void MatchClaimValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext1 =
+            JsonSchemaContext childContext2 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -81,14 +97,14 @@ public readonly partial struct SecurityBindingWrite
                     JsonPropertyNames.ClaimValueUtf8,
                     evaluationPath: ClaimValueSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
         private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext2 =
+            JsonSchemaContext childContext3 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -96,14 +112,14 @@ public readonly partial struct SecurityBindingWrite
                     JsonPropertyNames.DescriptionUtf8,
                     evaluationPath: DescriptionSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
         private static void MatchOrder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext3 =
+            JsonSchemaContext childContext4 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.ResolutionOrderAscending.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -111,26 +127,11 @@ public readonly partial struct SecurityBindingWrite
                     JsonPropertyNames.OrderUtf8,
                     evaluationPath: OrderSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.ResolutionOrderAscending.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
-            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
-        }
-
-        private static void MatchPurge(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext4 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.PurgeUtf8,
-                    evaluationPath: PurgeSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecurityBindingWrite.ResolutionOrderAscending.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
-        private static void MatchRead(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchPurge(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
@@ -138,14 +139,14 @@ public readonly partial struct SecurityBindingWrite
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.ReadUtf8,
-                    evaluationPath: ReadSchemaEvaluationPath);
+                    JsonPropertyNames.PurgeUtf8,
+                    evaluationPath: PurgeSchemaEvaluationPath);
 
             Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
             context.CommitChildContext(childContext5.IsMatch, ref childContext5);
         }
 
-        private static void MatchWrite(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchRead(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext6 =
@@ -153,16 +154,32 @@ public readonly partial struct SecurityBindingWrite
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.WriteUtf8,
-                    evaluationPath: WriteSchemaEvaluationPath);
+                    JsonPropertyNames.ReadUtf8,
+                    evaluationPath: ReadSchemaEvaluationPath);
 
             Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
             context.CommitChildContext(childContext6.IsMatch, ref childContext6);
         }
 
+        private static void MatchWrite(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext7 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.WriteUtf8,
+                    evaluationPath: WriteSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VerbGrant.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
+            context.CommitChildContext(childContext7.IsMatch, ref childContext7);
+        }
+
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
+                (static () => JsonPropertyNames.AdditionalClausesUtf8, MatchAdditionalClauses),
                 (static () => JsonPropertyNames.ClaimTypeUtf8, MatchClaimType),
                 (static () => JsonPropertyNames.ClaimValueUtf8, MatchClaimValue),
                 (static () => JsonPropertyNames.DescriptionUtf8, MatchDescription),

@@ -58,16 +58,17 @@ public readonly partial struct AvailabilityEntry
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentException.ThrowIfNullOrEmpty(environment);
-        return PersistedJson.ToPooledDocument<AvailabilityEntry, (string BaseWorkflowId, int VersionNumber, string Environment)>(
-            (baseWorkflowId, versionNumber, environment),
-            static (Utf8JsonWriter writer, in (string BaseWorkflowId, int VersionNumber, string Environment) s) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString(JsonPropertyNames.BaseWorkflowIdUtf8, s.BaseWorkflowId);
-                writer.WriteNumber(JsonPropertyNames.VersionNumberUtf8, s.VersionNumber);
-                writer.WriteString(JsonPropertyNames.EnvironmentUtf8, s.Environment);
-                writer.WriteEndObject();
-            });
+
+        // The generated Create() writes the document text and its parse metadata in one pass — no serialize-then-reparse
+        // round trip. The draft carries only the key: a default Source is omitted from the document, so the server-stamped
+        // fields (createdBy/createdAt/etag) stay absent for WriteNew to stamp.
+        return Create(
+            baseWorkflowId: baseWorkflowId,
+            createdAt: default,
+            createdBy: default,
+            environment: environment,
+            etag: default,
+            versionNumber: versionNumber);
     }
 
     /// <summary>Writes a brand-new availability entry's JSON into the caller's (pooled) writer in one pass — the draft's

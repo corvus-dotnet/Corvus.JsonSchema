@@ -63,6 +63,10 @@ internal class SecurityBindingWriteSettings : RunsSettings
     [Description("The required claim value; omit to match any value of the claim type.")]
     public string? ClaimValue { get; init; }
 
+    [CommandOption("--clause <DIMENSION=VALUE>")]
+    [Description("An additional identity-dimension clause ANDed with the primary claim to form a tag-set selector (repeatable), e.g. --clause iss=keycloak. Omit '=value' to match any value of the dimension. The binding applies only to a caller whose identity contains every clause.")]
+    public string[] Clauses { get; init; } = [];
+
     [CommandOption("--read <GRANT>")]
     [Description("Read grant: 'unrestricted' or a comma-separated list of rule names; omit to grant nothing.")]
     public string? Read { get; init; }
@@ -324,12 +328,34 @@ internal static class SecurityCommandHelpers
             b.Create(
                 claimType: settings.ClaimType,
                 claimValue: claimValue,
+                additionalClauses: Clauses(settings.Clauses),
                 read: Grant(settings.Read),
                 write: Grant(settings.Write),
                 purge: Grant(settings.Purge),
                 order: settings.Order,
                 description: description);
         });
+
+    // "dimension=value" → a clause pinning that value; "dimension" (no '=') → match any value of the dimension.
+    // null/empty → no additional clauses (default, omitted): a legacy single-clause binding.
+    private static Models.SecurityBindingWrite.SecurityBindingClauseArray.Source Clauses(string[] specs)
+    {
+        if (specs is null || specs.Length == 0)
+        {
+            return default;
+        }
+
+        return new Models.SecurityBindingWrite.SecurityBindingClauseArray.Source((ref Models.SecurityBindingWrite.SecurityBindingClauseArray.Builder ab) =>
+        {
+            foreach (string spec in specs)
+            {
+                int eq = spec.IndexOf('=', StringComparison.Ordinal);
+                string dimension = (eq < 0 ? spec : spec[..eq]).Trim();
+                Models.JsonString.Source value = eq < 0 ? default : (Models.JsonString.Source)spec[(eq + 1)..].Trim();
+                ab.AddItem(Models.SecurityBindingClause.Build(dimension: (Models.JsonString.Source)dimension, value: value));
+            }
+        });
+    }
 
     // "unrestricted" → full reach; "a,b" → rule names ANDed; null/empty → no grant (default).
     private static Models.VerbGrant.Source Grant(string? spec)

@@ -75,10 +75,10 @@ public sealed class RunnerRegistrationService(
 
     private async Task<RunnerRegistration> BuildRegistrationAsync(DateTimeOffset startedAt, CancellationToken cancellationToken)
     {
-        // Snapshot the catalog: the runner advertises every catalogued version as hosted-and-loaded. With live
-        // execution still paused (no compiled executor.dll to load), "loaded" means "this runner processes the
-        // version's runs" — via the stub resumer for now; real ALC loading replaces that. The control plane's
-        // IsVersionHostedAsync uses loaded == true to confirm a live host before accepting a trigger.
+        // Snapshot the catalog: the runner advertises every catalogued version as hosted-and-loaded. "loaded" means
+        // this runner re-enters the version's compiled executor.dll to execute its runs — the real HostedWorkflowResumer
+        // path, which loads the executor into a collectible ALC on first use. The control plane's IsVersionHostedAsync
+        // uses loaded == true to confirm a live host before accepting a trigger.
         CatalogPage page = await catalog.SearchAsync(new CatalogQuery(Limit: 1000), AccessContext.System, cancellationToken).ConfigureAwait(false);
 
         // A runner's row-security reach is its environment's (design §5.5): stamp the serving environment's
@@ -111,8 +111,9 @@ public sealed class RunnerRegistrationService(
             writer.WriteString("lastSeenAt", now.ToString("O", CultureInfo.InvariantCulture));
             writer.WriteNumber("maxConcurrency", options.MaxConcurrency);
 
-            // No inbound transports are bound yet (HTTP triggers belong to the control plane; the runner's own
-            // message/schedule transports arrive with live execution). An empty array is a valid registration.
+            // No INBOUND transports are bound yet (HTTP triggers belong to the control plane; the runner's own
+            // message/schedule trigger transports arrive with §11 Phase 4). An empty array is a valid registration.
+            // (Outbound source transports — how the executor calls each source — are the binder in Program.cs.)
             writer.WriteStartArray("transports");
             writer.WriteEndArray();
 

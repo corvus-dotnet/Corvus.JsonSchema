@@ -47,6 +47,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._grants = [];
+    /** @private */ this._total = null;          // q-scoped bounded total for the footer (null until first load)
+    /** @private */ this._totalCapped = false;   // true when the true total meets/exceeds the server cap ("N+")
     // The scopes currently offered in the authoring typeahead — the latest server result, not the whole vocabulary.
     /** @private */ this._scopes = [];
     /** @private */ this._loading = false;
@@ -108,10 +110,16 @@ class ArazzoGrantsPanel extends ArazzoElement {
       // One keyset page of grants, filtered server-side by q. Replaces the list (Prev/Next paging), not appended. The
       // scope vocabulary for the authoring typeahead is fetched on demand when the editor opens / as the user types
       // (loadScopeOptions), not loaded in full here.
-      const page = await client.searchSecurityBindings({ q: this._query.trim() || undefined, pageToken: this._currentToken, limit: this.pageSize });
+      const q = this._query.trim() || undefined;
+      const [page, total] = await Promise.all([
+        client.searchSecurityBindings({ q, pageToken: this._currentToken, limit: this.pageSize }),
+        client.countSecurityBindings({ q }).catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return;
       this._grants = page.bindings;
       this._nextPageToken = page.nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._grants.length, hasMore: !!this._nextPageToken });
@@ -188,7 +196,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
   blankForm(mode, editId) {
     return {
       mode, editId, personBlocked: false, granteeLabel: '',
-      claimType: '', claimValue: '', description: '', formError: null,
+      claimType: '', claimValue: '', additionalClauses: [], description: '', formError: null,
       verbs: { read: { mode: 'denied', scopes: [] }, write: { mode: 'denied', scopes: [] }, purge: { mode: 'denied', scopes: [] } },
     };
   }
@@ -210,6 +218,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     const f = this.blankForm('edit', id);
     f.claimType = g.claimType || '';
     f.claimValue = g.claimValue || '';
+    f.additionalClauses = (g.additionalClauses || []).map((c) => ({ dimension: c.dimension || '', value: c.value || '' }));
     for (const verb of VERBS) {
       f.verbs[verb] = { mode: grantMode(g[verb]), scopes: Array.isArray(g[verb]?.ruleNames) ? [...g[verb].ruleNames] : [] };
     }
@@ -235,11 +244,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
       f.granteeLabel = grantee.label || grantee.value || 'this person';
       f.claimType = '';
       f.claimValue = '';
+      f.additionalClauses = [];
     } else {
       f.personBlocked = false;
-      const primary = (grantee.identity || [])[0];
+      const identity = grantee.identity || [];
+      const primary = identity[0];
       f.claimType = primary?.dimension || grantee.kind || '';
       f.claimValue = primary?.value || grantee.value || '';
+      // The whole resolved identity is the selector: the first dimension is the primary claim, every remaining
+      // dimension is an additional clause ANDed with it (§16.5.4). Pinning the full identity is what stops a grant
+      // keyed on a bare name (a group/role) from also matching the same name under a different issuer or tenant.
+      f.additionalClauses = identity.slice(1).map((t) => ({ dimension: t.dimension || '', value: t.value || '' }));
       f.granteeLabel = grantee.label || grantee.value || '';
     }
     this.renderDetail();
@@ -255,6 +270,10 @@ class ArazzoGrantsPanel extends ArazzoElement {
       purge: verb(f.verbs.purge),
     };
     if (f.claimValue.trim()) body.claimValue = f.claimValue.trim();
+    const clauses = (f.additionalClauses || [])
+      .filter((c) => c.dimension.trim())
+      .map((c) => (c.value.trim() ? { dimension: c.dimension.trim(), value: c.value.trim() } : { dimension: c.dimension.trim() }));
+    if (clauses.length) body.additionalClauses = clauses;
     if (f.description.trim()) body.description = f.description.trim();
     return body;
   }
@@ -322,29 +341,36 @@ class ArazzoGrantsPanel extends ArazzoElement {
         ${SHARED_CSS}
         ${PAGER_CSS}
         ${PICKER_CSS}
-        :host { display: block; }
-        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+        .layout > * { min-height: 0; }
+        .detail-pane { min-height: 0; overflow: auto; }
+        .detail-pane:empty { display: none; }
         @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
         .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
         .toolbar .grow { flex: 1; }
         .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 160px; }
-        .err { margin: 10px 12px; }
+        .err { flex: none; margin: 10px 12px; }
         .err:empty { display: none; }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr.selectable { cursor: pointer; }
         tbody tr.selectable:hover { background: var(--_surface); }
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .claim { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .claim-and { font-weight: 400; color: var(--_muted); }
         .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
         .verbs b { color: var(--_text); font-weight: 600; text-transform: capitalize; }
         .gdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
+        .gscopes { color: var(--_muted); font-size: 12px; margin-top: 2px; font-style: italic; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
+        .pager { flex: none; }
 
         /* detail pane */
         .detail { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
@@ -365,6 +391,13 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .chips { display: flex; gap: 6px; flex-wrap: wrap; }
         .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 999px; padding: 2px 8px; }
         .chip button { border: none; background: none; cursor: pointer; color: var(--_muted); font-size: 13px; line-height: 1; padding: 0; }
+        .clauses { display: grid; gap: 6px; }
+        .clause-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+        .clause-row input { font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; min-width: 0; }
+        .clause-del { border: 1px solid var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 9px; line-height: 1; }
+        .clause-del:hover { color: var(--_text); }
+        .add-clause { justify-self: start; font: inherit; font-size: 12px; border: 1px dashed var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 10px; }
+        .add-clause:hover { color: var(--_text); border-color: var(--_muted); }
         .scope-empty { font-size: 12px; color: var(--_muted); }
         .verb-mode { font: inherit; padding: 7px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         .rule-search { position: relative; }
@@ -383,10 +416,12 @@ class ArazzoGrantsPanel extends ArazzoElement {
             <button class="new primary" type="button" hidden>New grant</button>
           </div>
           <div class="err"></div>
-          <table>
-            <thead><tr><th>Claim</th><th>Per-action access</th></tr></thead>
-            <tbody class="list" part="rows"></tbody>
-          </table>
+          <div class="tablescroll">
+            <table>
+              <thead><tr><th>Claim</th><th>Per-action access</th></tr></thead>
+              <tbody class="list" part="rows"></tbody>
+            </table>
+          </div>
           <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
         <div class="detail-pane"></div>
@@ -431,7 +466,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     } else {
       list.innerHTML = this._grants.map((g) => `
         <tr class="grow-row selectable" part="row" data-id="${escapeHtml(g.id)}" aria-selected="${String(g.id === this._selectedId)}">
-          <td part="cell"><span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}</span>${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}</td>
+          <td part="cell"><span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}${(g.additionalClauses || []).map((c) => ` <span class="claim-and">+ ${escapeHtml(c.dimension)}${c.value ? '=' + escapeHtml(c.value) : ''}</span>`).join('')}</span>${(g.scopes || []).length ? `<div class="gscopes">${g.eligibleOnly ? 'eligible for' : 'confers'} ${escapeHtml(g.scopes.join(', '))}${g.expiresAt ? ` until ${escapeHtml(new Date(g.expiresAt).toLocaleString())}` : ''}</div>` : ''}${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}</td>
           <td part="cell"><div class="verbs">${VERBS.map((v) => `<span><b>${v}</b> ${escapeHtml(grantSummary(g[v]))}</span>`).join('')}</div></td>
         </tr>`).join('');
       this.$$('.grow-row').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.id)));
@@ -441,7 +476,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
       hasPrev: this._history.length > 0,
       hasNext: !!this._nextPageToken,
       loading: this._loading,
-      info: this._loading ? 'Loading…' : `${this._grants.length} grant${this._grants.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
+      info: this._loading ? 'Loading…' : `${this._total ?? this._grants.length}${this._totalCapped ? '+' : ''} grant${(this._total ?? this._grants.length) === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
     });
   }
 
@@ -470,6 +505,37 @@ class ArazzoGrantsPanel extends ArazzoElement {
       </div>`;
   }
 
+  /**
+   * The additional-clause selector. On create it is editable: a grant keys on one claim, and the operator can pin more
+   * identity dimensions (issuer, tenant, …) the caller must ALSO carry, authoring the same tag-set selector (§16.5.4)
+   * the grantee picker fills from a resolved identity. On edit it is the read-only chip summary — the claim selector is
+   * fixed after creation. Empty clauses are dropped in buildBody, so a blank added row is harmless.
+   */
+  additionalClausesHtml(f, editable) {
+    const clauses = f.additionalClauses || [];
+    if (!editable) {
+      if (!clauses.length) return '';
+      return `
+        <div class="field"><span>AND every one of</span><div class="chips">${clauses.map((c) => `<span class="chip">${escapeHtml(c.dimension)}${c.value ? ' = ' + escapeHtml(c.value) : ''}</span>`).join('')}</div></div>
+        <div class="caveat">This grant pins the grantee's <strong>full resolved identity</strong> — it applies only to a caller who carries every one of these dimensions, so it will not match the same name under a different issuer or tenant.</div>`;
+    }
+
+    const rows = clauses.map((c, i) => `
+      <div class="clause-row" data-idx="${i}">
+        <input class="f-clause-dim" placeholder="dimension (e.g. iss)" value="${escapeHtml(c.dimension)}">
+        <input class="f-clause-val" placeholder="(any value)" value="${escapeHtml(c.value)}">
+        <button class="clause-del" type="button" title="Remove clause" aria-label="Remove clause">✕</button>
+      </div>`).join('');
+    return `
+      <div class="field"><span>AND also${clauses.length ? '' : ' (optional)'}</span>
+        <div class="clauses">
+          ${rows}
+          <button class="add-clause" type="button">+ Add identity clause</button>
+        </div>
+      </div>
+      <div class="caveat">A grant keys on one claim. Add a clause to require <strong>another identity dimension</strong> (e.g. an issuer or tenant) the caller must <em>also</em> carry, so the grant matches only that exact identity and not the same name under a different issuer. Picking a grantee above fills these in from its resolved identity.</div>`;
+  }
+
   renderDetail() {
     const pane = this._pane;
     if (!pane) return;
@@ -493,6 +559,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
               ${f.personBlocked ? `<div class="error-banner steer"><span>Per-person elevation for <strong>${escapeHtml(f.granteeLabel)}</strong> goes through the <strong>access-request flow</strong>, not a direct grant — request and have it approved instead.</span></div>` : ''}`}
             <div class="field"><span>Claim type</span><input class="f-claimType" placeholder="team" value="${escapeHtml(f.claimType)}" ${isEdit ? 'readonly' : ''}></div>
             <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}" ${isEdit ? 'readonly' : ''}></div>
+            ${this.additionalClausesHtml(f, !isEdit)}
             ${isEdit
               ? `<div class="caveat">The claim identifies <strong>who</strong> this grant applies to and is fixed after creation — to change who, delete this grant and create a new one via the picker.</div>`
               : `<div class="caveat">A claim is only as trustworthy as the issuer asserting it. With multiple semi-trusted identity providers, prefer an issuer-qualified claim over a bare one.</div>`}
@@ -524,6 +591,13 @@ class ArazzoGrantsPanel extends ArazzoElement {
     pane.querySelector('.f-claimType')?.addEventListener('input', (e) => { f.claimType = e.target.value; });
     pane.querySelector('.f-claimValue')?.addEventListener('input', (e) => { f.claimValue = e.target.value; });
     pane.querySelector('.f-description')?.addEventListener('input', (e) => { f.description = e.target.value; });
+
+    // Additional-clause rows: input mutates in place (no re-render, so the caret holds); add/remove re-render.
+    const clauseIdx = (el) => Number(el.closest('.clause-row').dataset.idx);
+    pane.querySelectorAll('.f-clause-dim').forEach((el) => el.addEventListener('input', (e) => { f.additionalClauses[clauseIdx(e.target)].dimension = e.target.value; }));
+    pane.querySelectorAll('.f-clause-val').forEach((el) => el.addEventListener('input', (e) => { f.additionalClauses[clauseIdx(e.target)].value = e.target.value; }));
+    pane.querySelectorAll('.clause-del').forEach((el) => el.addEventListener('click', (e) => { f.additionalClauses.splice(clauseIdx(e.target), 1); this.renderDetail(); }));
+    pane.querySelector('.add-clause')?.addEventListener('click', () => { (f.additionalClauses ||= []).push({ dimension: '', value: '' }); this.renderDetail(); });
 
     pane.querySelectorAll('.verb-mode').forEach((sel) => sel.addEventListener('change', () => {
       f.verbs[sel.dataset.verb].mode = sel.value;

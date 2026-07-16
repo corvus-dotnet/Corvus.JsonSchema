@@ -9,7 +9,7 @@ namespace Corvus.Text.Json.Arazzo.Directories.Okta;
 /// non-success status, or a missing / malformed response. The message names only non-sensitive detail (status code /
 /// shape), never the API token, so it is safe to log.
 /// </summary>
-public sealed class OktaDirectoryException : Exception
+public sealed class OktaDirectoryException : PrincipalDirectoryException
 {
     /// <summary>Initializes a new instance of the <see cref="OktaDirectoryException"/> class.</summary>
     /// <param name="reason">A non-sensitive description of the failure.</param>

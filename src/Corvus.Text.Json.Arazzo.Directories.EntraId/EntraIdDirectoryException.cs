@@ -9,7 +9,7 @@ namespace Corvus.Text.Json.Arazzo.Directories.EntraId;
 /// platform token endpoint — a non-success status, or a missing / malformed response. The message names only
 /// non-sensitive detail (status code / shape), never the client secret or access token, so it is safe to log.
 /// </summary>
-public sealed class EntraIdDirectoryException : Exception
+public sealed class EntraIdDirectoryException : PrincipalDirectoryException
 {
     /// <summary>Initializes a new instance of the <see cref="EntraIdDirectoryException"/> class.</summary>
     /// <param name="reason">A non-sensitive description of the failure.</param>

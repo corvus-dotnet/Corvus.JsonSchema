@@ -8,18 +8,87 @@
 // HashiCorp Vault for source credentials (design §13); Keycloak for OIDC and optionally Postgres join here next.
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-// The shared durability store. SQLite is the local stand-in for the production shared store (becomes an
-// AddPostgres resource later); injecting one connection string into both processes is how they share it — the
-// exact shape that generalizes to a real database. The control plane owns reset + seed; the runner reads + claims.
-string sharedStore = $"Data Source={Path.Combine(Path.GetTempPath(), "arazzo-demo-shared.db")}";
+// The single AppHost-level switch for the *example* seeding — the infrastructure counterpart to the runtime
+// IExampleSeed / seedExampleData split (W4). When true (the demo default) the provisioner seeds the demo source
+// secrets; a real deployment sets SeedExampleData=false and provisions only the real AppRole trust, then supplies its
+// own source secrets from its secret-management. Read via the plain indexer (the config Binder's GetValue<T> extension
+// is not in the AppHost's assembly set — same constraint as the GitHub-App read below): default true unless "false".
+bool seedExampleData = !string.Equals(builder.Configuration["SeedExampleData"], "false", StringComparison.OrdinalIgnoreCase);
 
-// Dev-only fixed Vault tokens — the locally-runnable stand-in for production secret-store auth (design §13.5.1).
-// In prod the runner's identity comes from platform attestation / AppRole (never a token baked into the workload),
-// and provisioning runs as a CI/IaC identity. Here the orchestrator delivers a fixed dev root token to the
-// write-capable provisioner and a separate fixed read-only token to the runner. The security-critical split —
-// provisioner writes, runner reads (path-scoped) — is preserved exactly.
+// Optional local, UNCOMMITTED GitHub App credentials for the designer's Git integration (workflow-designer §4.7 / D3).
+// Copy github-app.local.json.example → github-app.local.json and fill in your own App (see the README); absent means
+// the control plane brokers no App and the Git panel stays off. The client id is public; the secret never enters git.
+// Read directly (not via Configuration.AddJsonFile — that extension is not in the AppHost's assembly set) into two
+// locals the controlplane resource injects below as GitHubApp__ClientId (config) + GITHUB_APP_CLIENT_SECRET (env).
+string? githubClientId = null;
+string? githubClientSecret = null;
+string githubAppConfigPath = Path.Combine(builder.AppHostDirectory, "github-app.local.json");
+if (File.Exists(githubAppConfigPath))
+{
+    using System.Text.Json.JsonDocument githubAppConfig = System.Text.Json.JsonDocument.Parse(File.ReadAllText(githubAppConfigPath));
+    if (githubAppConfig.RootElement.TryGetProperty("GitHubApp", out System.Text.Json.JsonElement githubAppSection))
+    {
+        githubClientId = githubAppSection.TryGetProperty("ClientId", out System.Text.Json.JsonElement idElement) ? idElement.GetString() : null;
+        githubClientSecret = githubAppSection.TryGetProperty("ClientSecret", out System.Text.Json.JsonElement secretElement) ? secretElement.GetString() : null;
+    }
+}
+
+// The shared durability store — a real Postgres database. AddPostgres stands up a Postgres server container;
+// AddDatabase declares the shared 'workflowstore' database both processes open (its name IS the connection-string
+// name the apps look up, so no app-side config-key change is needed). Ephemeral (no data volume): a fresh empty
+// database each run — the reset-each-run theme without a wipe. The control plane owns the schema (each store's
+// PrepareAsync) + seed; the runner reads + claims. WithReference injects ConnectionStrings__workflowstore (the Npgsql
+// connection string) into each process, and WaitFor gates each on the database being healthy.
+var postgres = builder.AddPostgres("postgres");
+var workflowstore = postgres.AddDatabase("workflowstore");
+
+// The onboarding service's OWN database — a dedicated Postgres instance (the microservice-owns-its-data pattern: the
+// onboarding backend owns its schema + data independently of the control plane's shared workflowstore). Ephemeral,
+// like the workflowstore. The onboarding service provisions its schema (its own PrepareAsync) on startup.
+var onboardingPostgres = builder.AddPostgres("onboarding-postgres");
+var onboardingDb = onboardingPostgres.AddDatabase("onboardingdb");
+
+// The ledger service's OWN database — likewise a dedicated Postgres instance. The ledger service provisions its schema
+// and seeds its account book (its own PrepareAsync) on startup.
+var ledgerPostgres = builder.AddPostgres("ledger-postgres");
+var ledgerDb = ledgerPostgres.AddDatabase("ledgerdb");
+
+// The KYC service's OWN database — likewise a dedicated Postgres instance. The KYC service owns identity-verification
+// records (the synchronous verifyIdentity step persists a record here; the manual-recovery verdict updates it). It
+// provisions its schema (its own PrepareAsync) on startup.
+var kycPostgres = builder.AddPostgres("kyc-postgres");
+var kycDb = kycPostgres.AddDatabase("kycdb");
+
+// Vault secure introduction (design §13.5.1). Provisioning runs as a CI/IaC identity (here, a fixed dev root token on
+// the one-shot provisioner). The runner does NOT get a pre-minted token: it authenticates via Vault AppRole and
+// receives a dynamically-issued, short-TTL token. In production the runner's identity (its AppRole SecretID, or a
+// cloud/Kubernetes workload identity) is supplied by the runtime host's service principal / platform attestation;
+// THIS SAMPLE SIMULATES that by having the trusted orchestrator provision an AppRole and hand the runner a
+// response-wrapped SecretID (see web/../samples README). The security-critical split — provisioner writes, runner
+// reads (path-scoped) — is preserved exactly.
 const string vaultRootToken = "arazzo-dev-root-token";
-const string vaultRunnerReadOnlyToken = "arazzo-runner-ro-token";
+
+// The runner's AppRole RoleID — non-secret (like a username), so the orchestrator delivers it as plain config. The
+// SecretID is NOT here: the provisioner generates a response-wrapped SecretID at provision time and writes the
+// single-use wrapping token to a shared handoff dir; the runner unwraps it (never seeing the SecretID in plaintext).
+const string runnerRoleId = "arazzo-runner-approle";
+
+// The handoff directory for the response-wrapped SecretID: the provisioner (vault-init) writes the single-use wrapping
+// token here and the runner reads + unwraps it. It stands in for the runtime host delivering the workload's identity.
+// World-writable so the rootless-podman container user can write into it (the bind-mounted host dir is owned by the
+// host user); the provisioner chmod 644s the file so the host-side runner process can read it. Ephemeral per run.
+string vaultHandoffDir = Path.Combine(Path.GetTempPath(), "arazzo-vault-approle-" + Guid.NewGuid().ToString("N")[..12]);
+Directory.CreateDirectory(vaultHandoffDir);
+if (!OperatingSystem.IsWindows())
+{
+    // POSIX permissions only apply to the rootless-podman (Linux) host this sample targets; a no-op elsewhere.
+    File.SetUnixFileMode(
+        vaultHandoffDir,
+        UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+        | UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
+        | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+}
+string vaultWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid.wrap");
 
 // HashiCorp Vault, dev mode: unsealed, in-memory (fresh each run), KV v2 mounted at secret/. The secret *store*.
 var vault = builder.AddContainer("vault", "hashicorp/vault", "1.18")
@@ -28,55 +97,230 @@ var vault = builder.AddContainer("vault", "hashicorp/vault", "1.18")
     .WithArgs("server", "-dev")
     .WithHttpEndpoint(targetPort: 8200, name: "http");
 
+// The application-owned message bus — NATS with JetStream (durable, file-backed) so a message published before its
+// consumer subscribes is not lost. It carries the async KYC exchange (design §8): the onboard-customer-async workflow
+// publishes a review request to kyc.requests and suspends awaiting a verdict on kyc.verdict; the KYC service is the
+// manual-recovery inbox (consumes requests) + verdict publisher, and the runner subscribes to kyc.verdict to resume
+// the suspended run. Owned by the application, NOT the control plane. Ephemeral (no volume), like the rest of the demo.
+var nats = builder.AddContainer("nats", "nats", "2.10")
+    .WithArgs("-js")
+    .WithEndpoint(targetPort: 4222, scheme: "nats", name: "nats");
+
 // The provisioner: a one-shot Vault-CLI container — the *only* write-capable identity (the "CI/IaC provisioning
 // step" stand-in, design §13.5.1). It writes a read-only, path-scoped policy, mints the runner's read-only token
-// bound to it, seeds the demo secret values (dev dummies), then exits. The runner never has these privileges.
-const string provisionScript =
+// bound to it, then exits. The runner never has these privileges. The script splits along the same seam as the
+// runtime IExampleSeed (W4): the REAL AppRole-trust provisioning every deployment performs, then — only for the
+// example deployment (seedExampleData) — the demo source secrets. A real provisioner runs the trust half and seeds
+// its OWN real secrets from its secret-management, so the two halves are kept separate and assembled below.
+
+// REAL (every deployment): wait for Vault, write the read-only, path-scoped policy, enable AppRole, (re)create the
+// runner's role bound to that policy with a short-TTL renewable token, pin the non-secret RoleID, and hand off a
+// response-wrapped single-use SecretID via the shared dir. The runner never gets write privileges.
+const string approleTrustScript =
     "set -e; " +
     "until vault status >/dev/null 2>&1; do echo 'waiting for vault'; sleep 1; done; " +
     "echo 'path \"secret/data/arazzo/*\" { capabilities = [\"read\"] }' | vault policy write arazzo-runner-ro -; " +
-    $"vault token create -id={vaultRunnerReadOnlyToken} -policy=arazzo-runner-ro -period=24h; " +
+    // Enable the AppRole auth method (idempotent) and (re)create the runner's role bound to the read-only policy. The
+    // TOKEN is short-TTL + renewable (the short-lived-credential property, design §13.5.1). The SecretID is left
+    // session-lived (ttl/num_uses unlimited) so VaultSharp can transparently re-login when the token expires over the
+    // demo's lifetime; in production the platform would rotate the SecretID.
+    "vault auth enable approle 2>/dev/null || true; " +
+    "vault write auth/approle/role/arazzo-runner token_policies=arazzo-runner-ro token_ttl=20m token_max_ttl=2h secret_id_ttl=0 secret_id_num_uses=0; " +
+    // Pin a fixed, non-secret RoleID (like a username) the orchestrator injects to the runner as plain config.
+    $"vault write auth/approle/role/arazzo-runner/role-id role_id={runnerRoleId}; " +
+    // Generate a RESPONSE-WRAPPED SecretID: the SecretID never leaves Vault in plaintext — only a single-use wrapping
+    // token does. Write it to the shared handoff dir for the runner to unwrap. The wrap-ttl must comfortably exceed the
+    // gap until the runner reads it: the runner starts only after the control plane is healthy (Keycloak realm import,
+    // ~5 min), so a short wrap-ttl would expire first. Idempotent on a retry (upsert role; the file is overwritten).
+    "vault write -f -wrap-ttl=1800s -field=wrapping_token auth/approle/role/arazzo-runner/secret-id > /shared/secretid.wrap; " +
+    "chmod 644 /shared/secretid.wrap; ";
+
+// EXAMPLE-ONLY (seedExampleData): dev-dummy API keys for the sample's source services, at the Vault paths the seeded
+// credential *references* point at (vault://secret/arazzo/<source>#api-key). A real deployment omits this and provisions
+// its own real secrets. 'notifications' is a NATS source (no per-source api-key), so it is not seeded here.
+const string exampleSecretSeedScript =
     "vault kv put secret/arazzo/onboarding api-key=demo-onboarding-key; " +
     "vault kv put secret/arazzo/ledger api-key=demo-ledger-key; " +
-    "echo provisioning-complete";
+    "vault kv put secret/arazzo/kyc api-key=demo-kyc-key; ";
+
+// Completion tail (infra): announce done, then linger briefly so the orchestrator observes the container reach
+// 'Running' before it exits. A sub-second exit is read as a start failure (FailedToStart) and retried; with this the
+// container goes Running -> exit 0 -> Finished, and WithHiddenOnCompletion(0) below then hides it as a completed step.
+const string provisionCompletionScript = "echo provisioning-complete; sleep 15";
+
+// Assemble: real trust always; the demo secrets only for the example deployment.
+string provisionScript = approleTrustScript
+    + (seedExampleData ? exampleSecretSeedScript : string.Empty)
+    + provisionCompletionScript;
 
 var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     .WithEnvironment("VAULT_TOKEN", vaultRootToken)
+    // The response-wrapped SecretID handoff: the provisioner writes the single-use wrapping token to /shared, which is
+    // the host dir the runner reads (its stand-in for a runtime host delivering the workload's identity).
+    .WithBindMount(vaultHandoffDir, "/shared")
     .WithEntrypoint("/bin/sh")
     .WithArgs("-c", provisionScript)
-    .WaitFor(vault);
+    .WaitFor(vault)
+    // This is a run-to-completion provisioner: it does its work and exits 0. Tell the orchestrator that exit 0 is a
+    // valid terminal completion (not an unexpected stop to restart, nor a start failure) and hide it from the
+    // dashboard once done — the standard init-container pattern. Without this the DCP treats the quick exit as
+    // "failed to start" and retries it (harmless because the script is idempotent, but noisy and misleading).
+    .WithHiddenOnCompletion(0);
 
-// Keycloak — the identity provider (design §16). It is bootstrapped declaratively: the realm import seeds the
-// `arazzo` realm with an `arazzo-admins` group (→ the first system admin, §16.2), demo domain groups, a seed
-// admin + demo user, and the UI (auth-code+PKCE) and CLI (device-flow) OIDC clients with a `groups` claim mapper.
-// Ephemeral (no data volume): the realm is re-imported fresh on each run, matching the demo's reset-each-run
-// theme (the control plane wipes SQLite, Vault dev is in-memory) — predictable state, no volume drift.
+// Keycloak — the identity provider (design §16). Bootstrapped declaratively along the real/example seam (§W4). The base
+// realm import (`arazzo-realm.json` + `arazzo-users-0.json`) ALWAYS seeds the `arazzo` realm, its `arazzo-admins` group
+// (→ the first system admin, §16.2), the UI (auth-code+PKCE) / CLI (device-flow) OIDC clients with a `groups` mapper, and
+// the grantee-directory service account (real infra the §16.5.4 resolver needs). The demo personas (arazzo-admin, alice)
+// live in `arazzo-users-1.json` and import only when SeedExampleData is on — so one switch governs all example fiction.
+// Ephemeral (no data volume): the realm is re-imported fresh on each run, matching the demo's reset-each-run theme (the
+// Postgres containers are ephemeral, Vault dev is in-memory) — predictable state, no volume drift.
 var keycloak = builder.AddKeycloak("keycloak")
-    .WithRealmImport("realms");
+    .WithRealmImport("realms/arazzo-realm.json")
+    .WithRealmImport("realms/arazzo-users-0.json");
+if (seedExampleData)
+{
+    keycloak = keycloak.WithRealmImport("realms/arazzo-users-1.json");
+}
+
+// The onboarding domain service — a real external source: its own process + its own database (above). It replaces the
+// former inline /svc/onboarding mock; the control plane's startup live runs and the runner's executed runs both call
+// it over the network. It provisions its own schema on startup and serves the generated onboarding API (the workflow's
+// create/verify/provision/welcome ops, plus list/get for the onboarding console). Externally reachable for the console.
+var onboarding = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Onboarding_Host>("onboarding")
+    .WithReference(onboardingDb)
+    .WaitFor(onboardingDb)
+    .WithHttpEndpoint()
+    .WithExternalHttpEndpoints()
+    .WithHttpHealthCheck("/health");
+
+// The ledger/reconciliation domain service — the second real external source (its own process + its own database). It
+// replaces the former inline /svc/ledger mock; the control plane's startup live runs and the runner's executed runs
+// both call it over the network. It seeds its account book on startup and serves the generated ledger API (the
+// nightly-reconcile workflow's ops, plus reconciliation/account reads). Externally reachable for a future console.
+var ledger = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Ledger_Host>("ledger")
+    .WithReference(ledgerDb)
+    .WaitFor(ledgerDb)
+    .WithHttpEndpoint()
+    .WithExternalHttpEndpoints()
+    .WithHttpHealthCheck("/health");
+
+// The KYC domain service — the third real external source (its own process + its own database). It owns ALL identity
+// verification: the workflow's synchronous verifyIdentity step (createAccount@onboarding -> verifyIdentity@kyc ->
+// provision@onboarding), and later the manual-recovery verdict published onto the bus (design §8). It provisions its
+// own schema on startup and serves the generated KYC API (verifyIdentity plus list/get for the manual-recovery
+// console). Externally reachable for that console.
+var kyc = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Kyc_Host>("kyc")
+    .WithReference(kycDb)
+    .WaitFor(kycDb)
+    // The KYC service is both sides of the async exchange: it consumes review requests (kyc.requests) and publishes
+    // verdicts (kyc.verdict) on the application bus.
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WaitFor(nats)
+    .WithHttpEndpoint()
+    .WithExternalHttpEndpoints()
+    .WithHttpHealthCheck("/health");
 
 // The ASP.NET control-plane host: the real server surface (catalog, runs, credentials, administrators, security)
-// plus the build-free web UI and the demo /svc backends. It stores credential *references* only (never binds to
+// plus the build-free web UI. It stores credential *references* only (never binds to
 // Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
 // validation (§16.3) and waits for the realm import. Externally reachable; OTel flows to the dashboard.
 var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo>("controlplane")
-    .WithEnvironment("ConnectionStrings__workflowstore", sharedStore)
+    .WithReference(workflowstore)
+    .WaitFor(workflowstore)
+    // §18 multi-process: a SEPARATE runner process hosts $draft debug runs, so the control plane must NOT run its own
+    // in-process draft pump (else both would claim the same runs). The control plane only MARKS runs claimable.
+    .WithEnvironment("ControlPlane__HostDraftRunnerInProcess", "false")
+    // W4 seeding split: the AppHost's single SeedExampleData switch drives the control plane's example seed too, so one
+    // flag governs all demo fiction end to end (this control-plane seed + the Vault demo secrets + the Keycloak personas).
+    .WithEnvironment("ControlPlane__SeedExampleData", seedExampleData ? "true" : "false")
+    // §14.1/§16: ENFORCE authentication + row security. This activates the whole (already-built) auth stack — Keycloak
+    // JWT-bearer + BFF cookie/OIDC + dev-API-key, ControlPlaneSecurityMode.Scoped, and the per-row reach policy — so the
+    // API is no longer anonymous. The first administrator is bootstrapped declaratively (§16.2): the Keycloak realm
+    // import seeds the arazzo-admins group + seed admin, and the control plane's tier-3 deployment-policy grant maps that
+    // group to the service operator. Everyone else earns reach through the §16.5 access-request -> approval flow.
+    .WithEnvironment("ControlPlane__RequireAuthorization", "true")
     .WithReference(keycloak)
     .WaitFor(keycloak)
+    // Grantee-directory (§16.5.4): the control plane resolves real Keycloak users/groups/roles for the grant pickers
+    // through the arazzo-directory service-account client (realm import gives it realm-management view-users/query-groups).
+    // The Keycloak base URL is otherwise only in service-discovery config, so surface it explicitly; the client id is
+    // public config; the secret is injected as an env var the directory resolves via env://ARAZZO_DIRECTORY_CLIENT_SECRET
+    // (must equal the realm import's client secret).
+    .WithEnvironment("ControlPlane__Keycloak__BaseUrl", keycloak.GetEndpoint("http"))
+    .WithEnvironment("ControlPlane__Directory__ClientId", "arazzo-directory")
+    .WithEnvironment("ARAZZO_DIRECTORY_CLIENT_SECRET", "arazzo-directory-dev-secret")
+    // Onboarding, ledger, and kyc are real external sources: inject their endpoints so the control plane's live-
+    // execution transports route those sources there (its startup live runs call them), and wait for them to be healthy.
+    .WithEnvironment("ControlPlane__Sources__Onboarding", onboarding.GetEndpoint("http"))
+    .WithEnvironment("ControlPlane__Sources__Ledger", ledger.GetEndpoint("http"))
+    .WithEnvironment("ControlPlane__Sources__Kyc", kyc.GetEndpoint("http"))
+    // The control plane's live resumer executes the seeded async run, whose send step publishes to the bus.
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WaitFor(onboarding)
+    .WaitFor(ledger)
+    .WaitFor(kyc)
+    .WaitFor(nats)
+    // PINNED external port (8090), isProxied:false so the app binds :8090 DIRECTLY (no DCP proxy on a random port) —
+    // the browser-facing control-plane URL is then stable across runs. Two things need a fixed URL: the GitHub App's
+    // OAuth callback (http://localhost:8090/arazzo/v1/github/auth/callback is registered on the App, and a dynamic
+    // port would change it every run), and the designer/app links a user keeps open. The runner's WithReference/
+    // GetEndpoint and the health check resolve to :8090.
+    .WithHttpEndpoint(port: 8090, isProxied: false)
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
+
+// Enable the designer's GitHub App broker (§4.7 / D3) when local credentials are present (read at the top). The client
+// id is public (it rides the authorize URL) so it goes in as config; the secret is injected as an env var the control
+// plane resolves through env://GITHUB_APP_CLIENT_SECRET — never committed. Absent → "brokers no App" (Git panel off).
+if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(githubClientSecret))
+{
+    controlplane
+        .WithEnvironment("GitHubApp__ClientId", githubClientId)
+        .WithEnvironment("GITHUB_APP_CLIENT_SECRET", githubClientSecret);
+}
 
 // The runner ("execution-host") — the second process in the topology. It shares the store, registers in the
 // runner registry, and claims/resumes runs (design §5/§7). It is the §13 secret *consumer*: it holds ONLY the
 // read-only Vault token (least privilege), waits for provisioning to finish, and resolves credentials at bind
-// time. It waits for the control plane to seed the store + holds a reference for the future /svc executor calls.
+// time. It waits for the control plane to seed the store, then claims and executes runs against the real source services (below).
 builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
-    .WithEnvironment("ConnectionStrings__workflowstore", sharedStore)
+    .WithReference(workflowstore)
+    .WaitFor(workflowstore)
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
-    .WithEnvironment("VAULT_TOKEN", vaultRunnerReadOnlyToken)
+    // Secure introduction: NOT a pre-minted token. The runner gets its non-secret AppRole RoleID as plain config and
+    // the PATH to the single-use wrapping token the provisioner left behind; it unwraps that to obtain the SecretID and
+    // authenticates via AppRole for a dynamically-issued, short-TTL token. (In production the runtime host's service
+    // principal / platform attestation supplies this; the sample simulates it — see the samples README.)
+    .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)
+    .WithEnvironment("Runner__Vault__WrapTokenFile", vaultWrapTokenPath)
+    // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
+    // executing each against the real source services (below).
+    .WithEnvironment("Runner__Environment", "development")
+    // All source backends are real external services (their own processes + databases); the runner routes each at its
+    // endpoint and waits for them (its executed runs call them). There is no /svc mock backend to point at any more.
+    .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
+    .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
+    .WithEnvironment("Runner__Sources__Kyc", kyc.GetEndpoint("http"))
+    // The runner subscribes to kyc.verdict to resume suspended async runs, and publishes review requests when it
+    // executes an async run's send step.
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
     .WithReference(controlplane)
     .WaitFor(controlplane)
+    .WaitFor(onboarding)
+    .WaitFor(ledger)
+    .WaitFor(kyc)
+    .WaitFor(nats)
+    // Wait for the provisioner to FINISH, not just for Vault to be reachable. vault-init writes the read-only policy
+    // and mints the runner's token; if the runner starts the moment Vault is up, its startup credential self-check can
+    // beat that provisioning and get a 403 from Vault (a transient-but-ugly error trace). This is now safe to gate on:
+    // vault-init reliably reaches Finished (it lingers briefly so the DCP observes Running, then WithHiddenOnCompletion
+    // hides it) — the earlier reason we couldn't WaitForCompletion here (the one-shot never being seen as completed).
     .WaitForCompletion(vaultInit)
+    // Aspire-managed HTTP endpoint (no hardcoded port). The runner is an internal worker, so Aspire proxies this
+    // endpoint; letting Aspire assign the port (rather than the old launchSettings applicationUrl=5280) is what stops
+    // the app from binding the same port as the DCP proxy — the collision that was crashing the runner on startup.
+    .WithHttpEndpoint()
     .WithHttpHealthCheck("/health");
 
 builder.Build().Run();

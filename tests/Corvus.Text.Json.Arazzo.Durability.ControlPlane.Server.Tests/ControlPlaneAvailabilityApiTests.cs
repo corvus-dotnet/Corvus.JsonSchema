@@ -100,6 +100,34 @@ public sealed class ControlPlaneAvailabilityApiTests
     }
 
     [TestMethod]
+    public async Task An_environment_requiring_evidence_admits_only_green_suites()
+    {
+        await using Scoped host = await StartAsync();
+
+        // The environment opts in (workflow-designer design §4.6): promotion here requires green publish evidence.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production","requireEvidence":true}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // An unevidenced version is refused (409, evidence-required) — credential readiness alone no longer suffices.
+        await host.SeedVersionAsync("checkout", "acme");
+        HttpResponseMessage refused = await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/production", Write, "acme");
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("evidence-required");
+        }
+
+        // A red suite is refused the same way; a green suite is admitted.
+        await host.SeedEvidencedVersionAsync("ledger", "acme", green: false);
+        (await host.SendAsync(HttpMethod.Put, "/catalog/ledger/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        await host.SeedEvidencedVersionAsync("payments", "acme", green: true);
+        (await host.SendAsync(HttpMethod.Put, "/catalog/payments/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // Default-off: an environment without the flag keeps the §7.7 behaviour — the unevidenced version promotes.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"staging"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/staging", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    [TestMethod]
     public async Task The_scopes_are_enforced()
     {
         await using Scoped host = await StartAsync();
@@ -170,6 +198,16 @@ public sealed class ControlPlaneAvailabilityApiTests
             await catalog.AddAsync(Package(workflowId, sourceNames), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
         }
 
+        // Seeds a source-less version whose package embeds publish evidence (§4.6) — a green or red attested suite.
+        public async Task SeedEvidencedVersionAsync(string workflowId, string tenant, bool green)
+        {
+            SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
+            byte[] scenarios = Encoding.UTF8.GetBytes("""[{"name":"happy","expect":{"outcome":"completed"}}]""");
+            byte[] evidence = Encoding.UTF8.GetBytes($$"""{"packageHash":"seed","engineVersion":"test","at":"2026-07-05T00:00:00Z","suite":{"total":1,"passed":{{(green ? 1 : 0)}},"failed":{{(green ? 0 : 1)}}},"scenarios":[{"name":"happy","passed":{{(green ? "true" : "false")}},"outcome":"{{(green ? "completed" : "faulted")}}"}]}""");
+            ReadOnlyMemory<byte> package = CatalogPackage.Build(Workflow(workflowId, []), [], scenarios, evidence);
+            await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+        }
+
         public async ValueTask DisposeAsync()
         {
             client.Dispose();
@@ -178,8 +216,17 @@ public sealed class ControlPlaneAvailabilityApiTests
 
         private static ReadOnlyMemory<byte> Package(string workflowId, string[] sourceNames)
         {
+            byte[] sourceDoc = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"Source","version":"1.0"},"paths":{}}""");
+            var sources = sourceNames
+                .Select(n => new KeyValuePair<string, byte[]>(n, sourceDoc))
+                .ToList();
+            return CatalogPackage.Build(Workflow(workflowId, sourceNames), sources);
+        }
+
+        private static byte[] Workflow(string workflowId, string[] sourceNames)
+        {
             string descriptions = string.Join(",", sourceNames.Select(n => $$"""{ "name": "{{n}}", "url": "./{{n}}.json", "type": "openapi" }"""));
-            byte[] workflow = Encoding.UTF8.GetBytes($$"""
+            return Encoding.UTF8.GetBytes($$"""
             {
               "arazzo": "1.1.0",
               "info": { "title": "Flow", "description": "A flow." },
@@ -187,11 +234,6 @@ public sealed class ControlPlaneAvailabilityApiTests
               "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
             }
             """);
-            byte[] sourceDoc = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"Source","version":"1.0"},"paths":{}}""");
-            var sources = sourceNames
-                .Select(n => new KeyValuePair<string, byte[]>(n, sourceDoc))
-                .ToList();
-            return CatalogPackage.Build(workflow, sources);
         }
 
         private async Task<HttpResponseMessage> SendCoreAsync(HttpRequestMessage request, string? scope, string tenant)

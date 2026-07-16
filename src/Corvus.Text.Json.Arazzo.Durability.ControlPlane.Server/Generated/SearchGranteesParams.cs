@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the SearchGrantees operation (GET /identity/grantees).
 /// </summary>
-/// <remarks>Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` (default) is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured. Page with `limit` and the opaque `pageToken`.</remarks>
+/// <remarks>Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured (every searchable kind unless `kind` restricts); `merged` unions the two, directory-preferred (one bounded result set — no paging). An absent source defaults to `merged` when a directory is configured, `observed` otherwise. `observed` pages with `limit` and the opaque `pageToken`.</remarks>
 public readonly struct SearchGranteesParams
 {
 

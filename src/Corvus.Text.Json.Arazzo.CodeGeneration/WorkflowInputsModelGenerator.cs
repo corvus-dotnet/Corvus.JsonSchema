@@ -34,21 +34,44 @@ public static class WorkflowInputsModelGenerator
     /// <param name="arazzoDocumentUtf8">The full Arazzo document, as UTF-8 JSON.</param>
     /// <param name="workflowIndex">The zero-based index of the workflow within the document's <c>workflows</c> array.</param>
     /// <param name="modelNamespace">The namespace for the generated model types.</param>
+    /// <param name="schemaDocuments">External JSON Schema documents (name → UTF-8) the inputs schema may reference
+    /// by <c>schemas/&lt;name&gt;#&lt;pointer&gt;</c> (design §6, #94); each registers as a sibling of the Arazzo
+    /// document so the relative reference resolves with no rewriting. <see langword="null"/> when there are none.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The generated model (type name, accessor map, and source files), or <see langword="null"/> if the workflow declares no inputs object with properties.</returns>
     public static async ValueTask<WorkflowInputsModel?> GenerateAsync(
         ReadOnlyMemory<byte> arazzoDocumentUtf8,
         int workflowIndex,
         string modelNamespace,
+        IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(modelNamespace);
 
         JsonDocument document = JsonDocument.Parse(arazzoDocumentUtf8);
+        var externalDocuments = new List<JsonDocument>();
         var resolver = new PrepopulatedDocumentResolver();
         try
         {
             resolver.AddDocument(DocumentUri, document);
+
+            // External schema documents (design §6, #94). A document that declares an absolute root $id is
+            // canonically identified by it (JSON Schema 2020-12) — the PREFERRED authored reference form —
+            // so it registers under that $id. Every document ALSO registers under the virtual sibling URI
+            // (schemas/<name>), the fallback form for a document with no $id; either authored form resolves.
+            if (schemaDocuments is not null)
+            {
+                foreach ((string name, byte[] bytes) in schemaDocuments)
+                {
+                    JsonDocument external = JsonDocument.Parse(bytes);
+                    externalDocuments.Add(external);
+                    resolver.AddDocument("https://corvus.local/arazzo/schemas/" + name, external);
+                    if (TryGetRootId(external, out string? id))
+                    {
+                        resolver.AddDocument(id, external);
+                    }
+                }
+            }
 
             var vocabularyRegistry = new VocabularyRegistry();
             VocabularyAnalyser.RegisterAnalyser(resolver, vocabularyRegistry);
@@ -93,7 +116,30 @@ public static class WorkflowInputsModelGenerator
         {
             resolver.Dispose();
             document.Dispose();
+            foreach (JsonDocument external in externalDocuments)
+            {
+                external.Dispose();
+            }
         }
+    }
+
+    // Reads a schema document's canonical identity: its root `$id` when it declares one that parses as an
+    // absolute URI (a relative root `$id` would resolve against the retrieval URI, which is virtual here —
+    // the fallback registration already covers that document).
+    private static bool TryGetRootId(JsonDocument document, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? id)
+    {
+        id = null;
+        if (document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+            && document.RootElement.TryGetProperty("$id", out System.Text.Json.JsonElement idElement)
+            && idElement.ValueKind == System.Text.Json.JsonValueKind.String
+            && idElement.GetString() is { Length: > 0 } value
+            && Uri.TryCreate(value, UriKind.Absolute, out _))
+        {
+            id = value;
+            return true;
+        }
+
+        return false;
     }
 }
 

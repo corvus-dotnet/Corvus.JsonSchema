@@ -54,10 +54,11 @@ public static class SecurityPolicySerialization
     /// <param name="etag">The new record etag.</param>
     /// <returns>The pooled document that owns the persisted bytes.</returns>
     public static ParsedJsonDocument<SecurityRuleDocument> SerializeNewRuleDoc(string name, SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-        => PersistedJson.ToPooledDocument<SecurityRuleDocument, (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
-            (name, draft, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag));
+
+        // The generated Create() (via the entity's CreateNew) realises the stamped document (text + parse metadata) in
+        // one pooled pass — the old route built the workspace trio, wrote it, and reparsed the bytes. The driver reads
+        // fields AND raw bytes off the returned document, so the parse metadata is genuinely consumed.
+        => SecurityRuleDocument.CreateNew(name, draft, actor, createdAt, etag);
 
     /// <summary>Checks the etag and serializes the carried-forward update to owned JSON bytes, for a byte[]-leaf driver.</summary>
     /// <param name="existing">The stored rule, already parsed by the backend leaf (read synchronously here).</param>
@@ -124,10 +125,10 @@ public static class SecurityPolicySerialization
     /// <param name="etag">The new record etag.</param>
     /// <returns>The pooled document that owns the persisted bytes.</returns>
     public static ParsedJsonDocument<SecurityBindingDocument> SerializeNewBindingDoc(string id, SecurityBindingDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
-        => PersistedJson.ToPooledDocument<SecurityBindingDocument, (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag)>(
-            (id, draft, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => SecurityBindingDocument.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag));
+
+        // The generated Create() (via the entity's CreateNew) realises the stamped document in one pooled pass — the
+        // old route built the workspace trio, wrote it, and reparsed the bytes.
+        => SecurityBindingDocument.CreateNew(id, draft, actor, createdAt, etag);
 
     /// <summary>Checks the etag and serializes the carried-forward update to owned JSON bytes, for a byte[]-leaf driver.</summary>
     /// <param name="existing">The stored binding, already parsed by the backend leaf (read synchronously here).</param>

@@ -46,7 +46,7 @@ describe('<arazzo-grants-panel>', () => {
   });
 
   it('pages the grants with Prev/Next (keyset), not append', async () => {
-    // Three grants are seeded (bind-1, bind-2, bind-3); page-size=1 splits them across three keyset pages.
+    // Four grants are seeded (bind-1..bind-4); page-size=1 splits them across four keyset pages.
     el = panelWithMock({ scopes: 'security:read', 'page-size': '1' });
     mount(el);
     await nextEvent(el, 'loaded');
@@ -68,13 +68,25 @@ describe('<arazzo-grants-panel>', () => {
     ok(!$(el, '.prev').disabled, 'Prev enabled on page 2');
     ok(!$(el, '.next').disabled, 'Next still enabled — a third page follows');
 
-    // Next → page 3 (the last page): Next now disabled.
+    // Next → page 3, then page 4 (the last page): Next now disabled.
     loaded = nextEvent(el, 'loaded');
     $(el, '.next').click();
     await loaded;
-    equal(rows(el).length, 1, 'page 3 holds the last grant');
+    equal(rows(el).length, 1, 'page 3 holds one grant');
     ok(!$(el, '.prev').disabled, 'Prev enabled on page 3');
+    ok(!$(el, '.next').disabled, 'Next still enabled — a fourth page follows');
+
+    loaded = nextEvent(el, 'loaded');
+    $(el, '.next').click();
+    await loaded;
+    equal(rows(el).length, 1, 'page 4 holds the last grant');
+    ok(!$(el, '.prev').disabled, 'Prev enabled on page 4');
     ok($(el, '.next').disabled, 'Next disabled on the last page');
+
+    // Prev → back to page 3 before returning to page 2.
+    loaded = nextEvent(el, 'loaded');
+    $(el, '.prev').click();
+    await loaded;
 
     // Prev → back to page 2.
     loaded = nextEvent(el, 'loaded');
@@ -130,6 +142,64 @@ describe('<arazzo-grants-panel>', () => {
     await pickGrantee(el, 'payments');
     equal($(el, '.f-claimType').value, 'team', 'claim type derived');
     equal($(el, '.f-claimValue').value, 'payments', 'claim value derived');
+  });
+
+  it('pins a multi-dimension grantee identity as a tag-set selector (primary + additional clauses)', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' }, {
+      granteesSeed: [{ kind: 'team', value: 'payments-eu', label: 'Payments EU (keycloak)', source: 'directory', complete: true, identity: [{ dimension: 'team', value: 'payments-eu' }, { dimension: 'sys:iss', value: 'https://keycloak' }] }],
+    });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    await pickGrantee(el, 'payments-eu');
+    equal($(el, '.f-claimType').value, 'team', 'primary claim is the first identity dimension');
+    equal($(el, '.f-claimValue').value, 'payments-eu', 'primary value');
+    ok([...el.shadowRoot.querySelectorAll('.f-clause-dim')].some((i) => i.value === 'sys:iss')
+      && [...el.shadowRoot.querySelectorAll('.f-clause-val')].some((i) => i.value === 'https://keycloak'),
+      'the remaining identity dimension is shown as an editable additional-clause row');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    const g = e.detail.grants.find((x) => x.claimType === 'team' && x.claimValue === 'payments-eu');
+    ok(g, 'grant created');
+    ok((g.additionalClauses || []).some((c) => c.dimension === 'sys:iss' && c.value === 'https://keycloak'), 'the issuer dimension is pinned as an additional clause (not dropped)');
+  });
+
+  it('authors an additional identity clause by hand (add-clause), not only via the picker', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    setInput(el, '.f-claimType', 'team');
+    setInput(el, '.f-claimValue', 'payments');
+    // No grantee picked: the operator pins an issuer clause directly, so a single-claim grant is not the only option.
+    $(el, '.add-clause').click();
+    setInput(el, '.f-clause-dim', 'iss');
+    setInput(el, '.f-clause-val', 'https://keycloak');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    const g = e.detail.grants.find((x) => x.claimType === 'team' && x.claimValue === 'payments'
+      && (x.additionalClauses || []).some((c) => c.dimension === 'iss' && c.value === 'https://keycloak'));
+    ok(g, 'a hand-authored multi-clause grant is created');
+  });
+
+  it('creates a plain single-claim grant with no order supplied (server defaults it)', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    setInput(el, '.f-claimType', 'role');
+    setInput(el, '.f-claimValue', 'tenant-admin');
+    setVerbMode(el, 'read', 'unrestricted');
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.confirm').click();
+    const e = await changed;
+    const g = e.detail.grants.find((x) => x.claimType === 'role' && x.claimValue === 'tenant-admin');
+    ok(g, 'a single-claim grant is created without the client ever sending an order');
+    ok(!editorOpen(el), 'the pane clears after create (no error banner)');
   });
 
   it('steers a person grantee to the request flow instead of a direct grant', async () => {

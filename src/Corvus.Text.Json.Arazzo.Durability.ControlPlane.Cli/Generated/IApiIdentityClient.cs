@@ -62,7 +62,7 @@ public interface IApiIdentityClient : IAsyncDisposable
         /// <summary>
         /// Gets all available scopes for <c>oauth2</c>.
         /// </summary>
-        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write"];
+        public static readonly string[] Oauth2AvailableScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
 
         /// <summary>
@@ -140,7 +140,7 @@ public interface IApiIdentityClient : IAsyncDisposable
     /// Search resolvable grantees
     /// </summary>
     /// <remarks>
-    /// Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` (default) is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured. Page with `limit` and the opaque `pageToken`.
+    /// Searches for grantees matching a prefix, each resolved to its exact sys: identity (design §16.5.4). Source `observed` is the store-indexed typeahead of identities the control plane has already seen (access requesters, version authors, administrators, grantees); `directory` queries the external directory when one is configured (every searchable kind unless `kind` restricts); `merged` unions the two, directory-preferred (one bounded result set — no paging). An absent source defaults to `merged` when a directory is configured, `observed` otherwise. `observed` pages with `limit` and the opaque `pageToken`.
     /// </remarks>
     /// <param name="kind">The kind parameter.</param>
     /// <param name="q">The q parameter.</param>

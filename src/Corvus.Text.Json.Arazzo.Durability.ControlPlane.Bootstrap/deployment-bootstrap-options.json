@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.corvus.dev/arazzo/control-plane/deployment-bootstrap-options.json",
+  "title": "DeploymentBootstrapOptions",
+  "description": "Configuration for the real, deployment-agnostic bootstrap of an Arazzo control plane (design §14/§16). Every value that is specific to a deployment lives here, so the bootstrap logic itself is generic. Supplied as JSON and validated against this schema, so a deployment (ZeroFailed, appsettings, a secret store) configures the control plane declaratively rather than through hand-authored code.",
+  "type": "object",
+  "properties": {
+    "identityClaimType": {
+      "type": "string",
+      "description": "The token claim carrying a principal's group/identity memberships (e.g. 'groups'). Used for the genesis-administrator grant and as the source of the sys: identity dimension (§16.5.5).",
+      "default": "groups"
+    },
+    "genesisAdminGroup": {
+      "type": "string",
+      "description": "The value of identityClaimType granted genesis administration (§16.2 tier 3): all capability scopes plus unrestricted read/write/purge reach. The first administrator logs in via OIDC already holding admin — bootstrapped by config, the identity analogue of secret-zero. This stored binding IS the deliberate deployment policy; no group otherwise confers capability by mere membership.",
+      "minLength": 1
+    },
+    "genesisScopes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "The capability scopes the genesis administrator holds (e.g. 'catalog:read', 'runs:write', 'security:write'). A deployment typically supplies the full control-plane scope set.",
+      "uniqueItems": true
+    },
+    "genesisAdditionalClauses": {
+      "type": "array",
+      "description": "Extra identity-dimension clauses (design §16.5.4) ANDed with the genesis administrator's primary group clause to form a tag-set selector: the genesis grant then applies only to a caller whose canonical identity also carries every one of these dimensions. Use it to issuer-qualify the genesis grant (dimension 'iss' = the deployment's IdP), so a group of the same name asserted by a different identity provider does not inherit genesis administration. Absent is a single-clause group grant.",
+      "items": {
+        "title": "GenesisAdditionalClause",
+        "type": "object",
+        "required": ["dimension"],
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The operator-facing identity dimension (the internal prefix stripped) the caller must carry."
+          },
+          "value": {
+            "type": "string",
+            "description": "The value the dimension must equal; absent matches any value of the dimension."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "labelOrderings": {
+      "type": "object",
+      "description": "The ordered tag dimensions (§14.2): each property is a dimension name mapping to its labels in ascending order (e.g. classification -> [public, internal, confidential, restricted]). The ordered rule templates rank against these; surfaced read-only at GET /security/orderings.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 }
+      }
+    },
+    "internalTagPrefix": {
+      "type": "string",
+      "description": "The reserved prefix for deployment-internal, client-invisible security tags (§14.3), e.g. 'sys:'.",
+      "default": "sys:",
+      "minLength": 1
+    },
+    "selfElevationGroups": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Groups whose members may JIT self-elevate without a human approver (§16.5.3). Everyone else submits an access request approved by a workflow administrator.",
+      "uniqueItems": true
+    },
+    "seedExampleData": {
+      "type": "boolean",
+      "description": "When true, the deployment additionally runs its IExampleSeed (demo/fixture content: sample workflows, personas, credential references). Production deployments leave this false.",
+      "default": false
+    }
+  },
+  "required": ["genesisAdminGroup"]
+}

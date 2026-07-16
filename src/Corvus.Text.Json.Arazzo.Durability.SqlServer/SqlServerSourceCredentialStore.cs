@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -74,7 +75,9 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
         byte[] json = SourceCredentialSerialization.SerializeNew(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
         string tags = SourceCredentialKey.Discriminator(draft.ManagementTagsValue, draft.UsageTagsValue);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand insert = connection.CreateCommand();
+        insert.Transaction = transaction;
         insert.CommandText = "INSERT INTO SourceCredentials (SourceName, Environment, TagsHash, Tags, Etag, Document) VALUES (@s, @e, HASHBYTES('SHA2_256', @t), @t, @etag, @doc);";
         insert.Parameters.AddWithValue("@s", draft.SourceNameValue);
         insert.Parameters.AddWithValue("@e", draft.EnvironmentValue);
@@ -89,6 +92,12 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
         {
             throw new InvalidOperationException($"A source credential binding for '{draft.SourceNameValue}@{draft.EnvironmentValue}' with those security tags already exists.");
         }
+
+        // Mirror the MANAGEMENT tags (the reach discriminator, distinct from the row's combined mgmt+usage Tags key)
+        // into the queryable side table (keyed by the same in-SQL HASHBYTES discriminator) so the §14.2 read reach can
+        // be pushed into the list/count query. Atomic; tags are immutable so no re-sync on update.
+        await SyncSecurityTagsAsync(connection, transaction, draft.SourceNameValue, draft.EnvironmentValue, tags, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         return PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
     }
@@ -123,65 +132,46 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
         try
         {
             // Keyset seek past the cursor in (SourceName, Environment, TagsHash) order — an indexed range scan over the
-            // primary key, not a table load. Tags is nvarchar(max) and cannot be a key/ordered column, so the orderable
-            // PK component TagsHash (binary(32)) is the tie-breaker; the token carries it as a hex string. Reach is a
-            // per-row predicate applied in memory as we stream; the reader is consumed only until the page fills, so we
-            // read ≈ pageSize / selectivity rows, never the whole table.
+            // primary key, not a table load (Tags is nvarchar(max) and cannot be a key/ordered column, so the orderable
+            // PK component TagsHash binary(32) is the tie-breaker, carried in the token as hex) — with the §14.2 read
+            // reach pushed into the query as a correlated EXISTS over SourceCredentialSecurityTags (the same predicate
+            // context.Admits evaluates, but applied in the database), so out-of-reach rows never leave it.
             await using SqlCommand select = connection.CreateCommand();
+            var conditions = new List<string>(2);
             if (hasCursor)
             {
-                select.CommandText =
-                    "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials " +
-                    "WHERE SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND TagsHash > @t) " +
-                    "ORDER BY SourceName, Environment, TagsHash;";
+                conditions.Add("(SourceName > @s OR (SourceName = @s AND Environment > @e) OR (SourceName = @s AND Environment = @e AND TagsHash > @t))");
                 select.Parameters.AddWithValue("@s", cursor.SourceName);
                 select.Parameters.AddWithValue("@e", cursor.Environment);
                 select.Parameters.AddWithValue("@t", Convert.FromHexString(cursor.TieBreaker));
             }
-            else
+
+            AppendReachPredicate(conditions, select, context);
+
+            var sql = new StringBuilder("SELECT TOP (@limit) SourceName, Environment, TagsHash, Document FROM SourceCredentials");
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+            if (conditions.Count > 0)
             {
-                select.CommandText = "SELECT SourceName, Environment, TagsHash, Document FROM SourceCredentials ORDER BY SourceName, Environment, TagsHash;";
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
             }
+
+            sql.Append(" ORDER BY SourceName, Environment, TagsHash;");
+            select.CommandText = sql.ToString();
 
             await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                string source = reader.GetString(0);
-                string environment = reader.GetString(1);
-                string tie = Convert.ToHexString(reader.GetFieldValue<byte[]>(2));
-                byte[] json = reader.GetFieldValue<byte[]>(3);
-                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                bool kept = false;
-                try
+                if (docs.Count == pageSize)
                 {
-                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
-                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
-                        : SecurityTagSet.Empty;
-                    if (!context.Admits(AccessVerb.Read, tags))
-                    {
-                        continue;
-                    }
-
-                    if (docs.Count == pageSize)
-                    {
-                        hasMore = true;
-                        break;
-                    }
-
-                    docs.Add(cand);
-                    kept = true;
-                    lastSource = source;
-                    lastEnv = environment;
-                    lastTie = tie;
+                    hasMore = true; // the (pageSize+1)th admitted row exists → there is a next page
+                    break;
                 }
-                finally
-                {
-                    if (!kept)
-                    {
-                        cand.Dispose();
-                    }
-                }
+
+                lastSource = reader.GetString(0);
+                lastEnv = reader.GetString(1);
+                lastTie = Convert.ToHexString(reader.GetFieldValue<byte[]>(2));
+                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(reader.GetFieldValue<byte[]>(3)));
             }
 
             return hasMore
@@ -238,13 +228,42 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
             SourceCredentialSerialization.EnsureEtag($"{sourceName}@{environment}", expectedEtag, SourceCredentialSerialization.EtagOf(existing));
         }
 
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM SourceCredentials WHERE SourceName = @s AND Environment = @e AND TagsHash = HASHBYTES('SHA2_256', @t);";
+        delete.Transaction = transaction;
+        delete.CommandText =
+            "DELETE FROM SourceCredentials WHERE SourceName = @s AND Environment = @e AND TagsHash = HASHBYTES('SHA2_256', @t); " +
+            "DELETE FROM SourceCredentialSecurityTags WHERE SourceName = @s AND Environment = @e AND TagsHash = HASHBYTES('SHA2_256', @t);";
         delete.Parameters.AddWithValue("@s", sourceName);
         delete.Parameters.AddWithValue("@e", environment);
         delete.Parameters.AddWithValue("@t", tags!);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(AccessContext context, int cap, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+        var conditions = new List<string>(1);
+        AppendReachPredicate(conditions, select, context);
+
+        // Bounded count: COUNT over a TOP (@cap) subquery, so the scan stops one row past the cap; the (cap+1)th row
+        // trips Capped. Same reach predicate as the list (AppendReachPredicate) — cannot drift. (SQL Server has no LIMIT.)
+        var inner = new StringBuilder("SELECT TOP (@cap) 1 AS x FROM SourceCredentials");
+        select.Parameters.AddWithValue("@cap", cap + 1);
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        select.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        object? result = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        int total = result is int i ? i : Convert.ToInt32(result, CultureInfo.InvariantCulture);
+        return total > cap ? (cap, true) : (total, false);
     }
 
     /// <inheritdoc/>
@@ -323,6 +342,57 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
         return (null, null);
     }
 
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over SourceCredentialSecurityTags mirroring the
+    // caller's reach (the same rules context.Admits evaluates), keyed on the (SourceName, Environment, TagsHash) row
+    // discriminator. A null reach (unrestricted) adds nothing. Shared by ListAsync and CountAsync so the count can never
+    // drift from the list it annotates.
+    private static void AppendReachPredicate(List<string> conditions, SqlCommand command, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            "SourceCredentialSecurityTags",
+            ["SourceName", "Environment", "TagsHash"],
+            "TagKey",
+            "TagValue",
+            "SourceCredentials",
+            value =>
+            {
+                string p = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue(p, value);
+                return p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
+    }
+
+    // Mirrors a binding's MANAGEMENT tags into the queryable side table (keyed by the same in-SQL HASHBYTES
+    // discriminator) so the reach can be pushed into the list/count query. Reach filters on the management tags
+    // (distinct from the row's combined mgmt+usage Tags discriminator). Tags are immutable, so this runs only on add.
+    private static async Task SyncSecurityTagsAsync(SqlConnection connection, SqlTransaction transaction, string sourceName, string environment, string canonicalTags, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using SqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = "INSERT INTO SourceCredentialSecurityTags (SourceName, Environment, TagsHash, TagKey, TagValue) VALUES (@s, @e, HASHBYTES('SHA2_256', @t), @key, @value);";
+            insert.Parameters.AddWithValue("@s", sourceName);
+            insert.Parameters.AddWithValue("@e", environment);
+            insert.Parameters.AddWithValue("@t", canonicalTags);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     private async ValueTask<SqlConnection> OpenAsync(CancellationToken cancellationToken)
     {
         var connection = new SqlConnection(this.connectionString);
@@ -352,6 +422,18 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
                 CONSTRAINT PK_SourceCredentials PRIMARY KEY (SourceName, Environment, TagsHash)
             );
             CREATE INDEX IX_SourceCredentials_Source ON SourceCredentials (SourceName);
+        END;
+        IF OBJECT_ID(N'SourceCredentialSecurityTags', N'U') IS NULL
+        BEGIN
+            CREATE TABLE SourceCredentialSecurityTags (
+                SourceName NVARCHAR(450) NOT NULL,
+                Environment NVARCHAR(450) NOT NULL,
+                TagsHash BINARY(32) NOT NULL,
+                TagKey NVARCHAR(200) NOT NULL,
+                TagValue NVARCHAR(200) NOT NULL
+            );
+            CREATE INDEX IX_SourceCredentialSecurityTags_owner ON SourceCredentialSecurityTags (SourceName, Environment, TagsHash);
+            CREATE INDEX IX_SourceCredentialSecurityTags_kv ON SourceCredentialSecurityTags (TagKey, TagValue);
         END;
         """;
 }

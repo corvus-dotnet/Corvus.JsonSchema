@@ -98,16 +98,17 @@ public readonly partial struct EnvironmentRunnerAuthorization
     {
         ArgumentException.ThrowIfNullOrEmpty(environment);
         ArgumentException.ThrowIfNullOrEmpty(runnerId);
-        var state = (environment, runnerId);
-        return PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization, (string Environment, string RunnerId)>(
-            in state,
-            static (Utf8JsonWriter writer, in (string Environment, string RunnerId) c) =>
-            {
-                writer.WriteStartObject();
-                writer.WriteString(JsonPropertyNames.EnvironmentUtf8, c.Environment);
-                writer.WriteString(JsonPropertyNames.RunnerIdUtf8, c.RunnerId);
-                writer.WriteEndObject();
-            });
+
+        // The generated Create() writes the document text and its parse metadata in one pass — no serialize-then-reparse
+        // round trip. The draft carries only the create-content: a default Source is omitted from the document, so the
+        // server-stamped fields (createdAt/createdBy/etag/status) stay absent for WriteNew to stamp.
+        return Create(
+            createdAt: default,
+            createdBy: default,
+            environment: environment,
+            etag: default,
+            runnerId: runnerId,
+            status: default);
     }
 
     /// <summary>Realises a new (Pending) authorization into the caller's (pooled) writer in one pass — the draft's

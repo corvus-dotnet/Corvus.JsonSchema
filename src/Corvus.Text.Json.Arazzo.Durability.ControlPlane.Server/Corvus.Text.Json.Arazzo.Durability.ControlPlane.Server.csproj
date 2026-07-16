@@ -31,6 +31,11 @@
     <!-- The validate endpoint builds a target schema from the package and validates against it at runtime. -->
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.CodeGeneration\Corvus.Text.Json.Arazzo.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
+    <!-- fetchSourceDocument (design §4.4): credentialed server-side fetch + YAML spec parsing. -->
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.SourceCredentials.Http\Corvus.Text.Json.Arazzo.SourceCredentials.Http.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Yaml\Corvus.Text.Json.Yaml.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Testing\Corvus.Text.Json.Arazzo.Testing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
@@ -39,5 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The Arazzo meta-schemas, embedded for validateWorkspaceWorkflow's document-conformance pass
+         (picked by the document's declared arazzo version). -->
+    <EmbeddedResource Include="..\Corvus.Text.Json.Arazzo10\Arazzo10.json" Link="Schemas\Arazzo10.json" LogicalName="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Schemas.Arazzo10.json" />
+    <EmbeddedResource Include="..\Corvus.Text.Json.Arazzo11\Arazzo11.json" Link="Schemas\Arazzo11.json" LogicalName="Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Schemas.Arazzo11.json" />
   </ItemGroup>
 </Project>

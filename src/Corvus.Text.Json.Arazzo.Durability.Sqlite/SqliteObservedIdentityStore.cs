@@ -303,6 +303,79 @@ public sealed class SqliteObservedIdentityStore : IObservedIdentityStore, IAsync
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing.
+        if (identity.IsEmpty)
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
+        // Materialise the authored tags once (the ref-struct enumerator cannot cross the await below); the pushdown finds
+        // grantees whose tag set STRICTLY contains all of them.
+        List<SecurityTag> tags = identity.ToList();
+        string kindToken = kind.ToToken();
+        string valueKey = (string)value;
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+
+            // Strict superset pushed to the child tag table: a candidate contains every authored tag (its count of tags
+            // matching the authored (key,value) set equals the authored tag count) AND has strictly more tags in total
+            // (so it is a proper superset, not the set-equal FindIdentityConflict case). Both correlated counts ride the
+            // (SubjectKind, SubjectValue) and (TagKey, TagValue) indexes — no table scan.
+            var membership = new System.Text.StringBuilder();
+            for (int i = 0; i < tags.Count; i++)
+            {
+                if (i > 0)
+                {
+                    membership.Append(" OR ");
+                }
+
+                membership.Append("(t.TagKey = @tk").Append(i).Append(" AND t.TagValue = @tv").Append(i).Append(')');
+                select.Parameters.AddWithValue("@tk" + i.ToString(CultureInfo.InvariantCulture), tags[i].Key);
+                select.Parameters.AddWithValue("@tv" + i.ToString(CultureInfo.InvariantCulture), tags[i].Value);
+            }
+
+            select.CommandText =
+                "SELECT o.SubjectKind, o.SubjectValue, o.Document FROM ObservedIdentities o " +
+                "WHERE NOT (o.SubjectKind = @k AND o.SubjectValue = @v) " +
+                "AND (SELECT COUNT(*) FROM ObservedIdentitySecurityTags t WHERE t.SubjectKind = o.SubjectKind AND t.SubjectValue = o.SubjectValue AND (" + membership + ")) = @xc " +
+                "AND (SELECT COUNT(*) FROM ObservedIdentitySecurityTags t2 WHERE t2.SubjectKind = o.SubjectKind AND t2.SubjectValue = o.SubjectValue) > @xc " +
+                "ORDER BY o.SubjectValue, o.SubjectKind LIMIT @lim;";
+            select.Parameters.AddWithValue("@k", kindToken);
+            select.Parameters.AddWithValue("@v", valueKey);
+            select.Parameters.AddWithValue("@xc", tags.Count);
+            select.Parameters.AddWithValue("@lim", cap);
+
+            var docs = new PooledDocumentList<ObservedIdentity>(cap);
+            try
+            {
+                using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    docs.Add(ReadDocument(reader, 2));
+                }
+
+                return ObservedIdentityPage.Create(docs);
+            }
+            catch
+            {
+                docs.Dispose();
+                throw;
+            }
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync() => await this.connection.DisposeAsync().ConfigureAwait(false);
 
     // The driver mints the Document column as a byte[] (the read leaf — GetFieldValue); parse it NON-COPYING (it is a fresh

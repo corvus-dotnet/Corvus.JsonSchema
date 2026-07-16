@@ -10,6 +10,7 @@ using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
+using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,7 +79,13 @@ public static class ControlPlaneEndpointExtensions
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IWorkspaceWorkflowStore? workspaceWorkflowStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null, IEnvironmentRunnerAuthorizationStore? environmentRunnerAuthorizationStore = null, SourceDocumentFetcher? sourceFetcher = null,
+        Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? workflowSimulator = null,
+        GitHubBroker? gitHubBroker = null,
+        IWorkflowStateStore? workflowStateStore = null,
+        IDraftRunStore? draftRunStore = null,
+        InProcessDraftRunner? draftRunner = null,
+        IDraftRunTraceStore? draftRunTraceStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -123,9 +130,15 @@ public static class ControlPlaneEndpointExtensions
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
         var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access);
 
-        // The access-overview (GET /access/grants) aggregates a grantee's bindings + administered workflows + usable
-        // credentials, so the security handler also reads the catalog (administered workflows) and the credential store.
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore);
+        // The environment administration service (§7.7) is shared by the environments/availability handlers below and
+        // by the access-overview aggregation (administered environments), so it is constructed ahead of both.
+        IEnvironmentAdministratorStore envAdminStore = environmentAdministratorStore ?? new InMemoryEnvironmentAdministratorStore();
+        var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
+
+        // The access-overview (GET /access/grants) aggregates a grantee's bindings + conferred capability scopes +
+        // administered workflows and environments + usable credentials, so the security handler also reads the catalog
+        // (administered workflows), the credential store, and the environment administration reverse index.
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration);
 
         // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
         // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
@@ -151,15 +164,28 @@ public static class ControlPlaneEndpointExtensions
         // administration service over the environment-administrator store), and creating an environment grants the creator
         // administration. Both default to an in-memory store so the endpoints function in development.
         IEnvironmentStore envStore = environmentStore ?? new InMemoryEnvironmentStore();
-        IEnvironmentAdministratorStore envAdminStore = environmentAdministratorStore ?? new InMemoryEnvironmentAdministratorStore();
-        var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
         var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore);
 
         // The sources registry API (§7.6): first-class, reach-scoped source documents a workflow references by name. The
         // data plane is reach-filtered (the source store); sources are not governed (no administrator set) — reach
         // membership is the management gate. Defaults to an in-memory store so the endpoints function in development.
         ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
-        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access);
+        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher);
+        IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
+
+        // §18 debug runs on the durable host (workflow-designer design §18 slice 3e-2c): a debug run IS a durable
+        // $draft run the in-process runner executes. When the run store, the draft store, and the in-process runner
+        // are all wired, build the capture front end's peer — a run-management client constructed with the SAME
+        // recording+tracing resumer the runner exposes (InProcessDraftRunner.Resumer), so its native faulted-run
+        // resume verbs (retry/skip/rewind/state-patch) are mark-claimable (§18 R5b), so the management client needs no
+        // resumer — a runner performs the re-execution. Absent a run store or a runner the debug-run endpoints fail
+        // closed; debug runs REQUIRE a runner to advance the runs the control plane marks claimable.
+        ISecuredWorkflowManagement? debugRunManagement = workflowStateStore is not null && draftRunner is not null
+            ? new SecuredWorkflowManagement(workflowStateStore, "arazzo-debug-runs")
+            : null;
+        var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(
+            wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,
+            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner, draftRunTraceStore: draftRunTraceStore);
 
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
@@ -181,16 +207,26 @@ public static class ControlPlaneEndpointExtensions
         IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
         var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, environmentAdministration, access, accessRequestSubjectClaimType);
 
+        // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
+        // status, and proxied contents reads. Deployment-configured; fails closed when no broker is
+        // wired. Token custody keys by the same subject claim the request surfaces use.
+        var gitHubHandler = new ArazzoControlPlaneGitHubHandler(
+            gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType,
+            workspaceStore: wcStore, sources: srcStore);
+
         return endpoints.MapApiEndpoints(
             securityHandler,
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners, access),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator),
             availabilityHandler,
             credentialsHandler,
+            workspaceHandler,
+            gitHubHandler,
+            workspaceHandler, // debugRunsHandler — the same instance implements IApiDebugRunsHandler (§18 debug runs).
+            sourcesHandler,
             environmentsHandler,
             runnerAuthorizationsHandler,
-            sourcesHandler,
             administratorsHandler,
             accessRequestsHandler,
             availabilityRequestsHandler,

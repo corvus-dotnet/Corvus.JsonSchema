@@ -17,6 +17,12 @@ public sealed class DevApiKeyOptions : AuthenticationSchemeOptions
 {
     /// <summary>Gets the configured API keys mapped to the space-delimited scopes each grants.</summary>
     public IDictionary<string, string> Keys { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Gets the configured API keys mapped to the space-delimited group memberships each key's principal
+    /// carries (as <c>groups</c> claims). A key can thus inherit that group's stored reach grant — e.g. mapping the
+    /// admin key to <c>arazzo-admins</c> gives it the §16.2 genesis grant's full row reach, making it a genuine full
+    /// administrator (all scopes AND full reach), not merely an all-scopes principal with no reach.</summary>
+    public IDictionary<string, string> Groups { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 }
 
 /// <summary>
@@ -51,6 +57,19 @@ public sealed class DevApiKeyAuthenticationHandler(IOptionsMonitor<DevApiKeyOpti
 
         var identity = new ClaimsIdentity(SchemeName);
         identity.AddClaim(new Claim("scope", scopes));
+
+        // A stable subject so the principal is a first-class identity (audit, access-request subject), and the key's
+        // configured group memberships as `groups` claims so it inherits that group's stored reach grant (§16.2) —
+        // this is what lets the admin key be a genuine full administrator (all scopes AND full row reach).
+        identity.AddClaim(new Claim("preferred_username", presented.ToString()));
+        if (this.Options.Groups.TryGetValue(presented.ToString(), out string? groups))
+        {
+            foreach (string group in groups.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                identity.AddClaim(new Claim("groups", group));
+            }
+        }
+
         var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName);
         return Task.FromResult(AuthenticateResult.Success(ticket));
     }

@@ -223,6 +223,32 @@ public abstract class AvailabilityStoreConformance
         seen.ShouldBe([("audit", 1), ("audit", 2), ("billing", 1), ("billing", 3), ("checkout", 1), ("checkout", 2), ("checkout", 10)]);
     }
 
+    [TestMethod]
+    public async Task Counting_is_bounded_on_both_axes()
+    {
+        IAvailabilityStore store = await this.NewStoreAsync();
+        await this.MakeAsync(store, "checkout", 1, "production");
+        await this.MakeAsync(store, "checkout", 1, "staging");
+        await this.MakeAsync(store, "checkout", 1, "qa");
+        await this.MakeAsync(store, "checkout", 2, "production");
+        await this.MakeAsync(store, "billing", 1, "production");
+
+        // By-version axis: checkout v1 is available in 3 environments, v2 in 1, an absent version in 0.
+        (await store.CountByVersionAsync("checkout", 1, 100, default)).ShouldBe((3, false));
+        (await store.CountByVersionAsync("checkout", 2, 100, default)).ShouldBe((1, false));
+        (await store.CountByVersionAsync("checkout", 99, 100, default)).ShouldBe((0, false));
+
+        // By-environment axis: production has 3 (workflow, version) pairs, staging 1, an empty environment 0.
+        (await store.CountByEnvironmentAsync("production", 100, default)).ShouldBe((3, false));
+        (await store.CountByEnvironmentAsync("staging", 100, default)).ShouldBe((1, false));
+        (await store.CountByEnvironmentAsync("nowhere", 100, default)).ShouldBe((0, false));
+
+        // The count saturates at the cap and reports Capped once the true total meets or exceeds it (the "N+" footer).
+        (await store.CountByEnvironmentAsync("production", 2, default)).ShouldBe((2, true));
+        (await store.CountByEnvironmentAsync("production", 3, default)).ShouldBe((3, false));
+        (await store.CountByVersionAsync("checkout", 1, 2, default)).ShouldBe((2, true));
+    }
+
     // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as (mirroring HTTP).
     private static ParsedJsonDocument<JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
     {

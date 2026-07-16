@@ -456,6 +456,96 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     private static string OrderKey(int order)
         => ((uint)(order ^ int.MinValue)).ToString("x8", CultureInfo.InvariantCulture);
 
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        int n = 0;
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(RulePrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (qText is null)
+            {
+                // No filter: the rule keys ARE the rules, so count them (no record fetch), bounded.
+                if (++n > bound)
+                {
+                    return (bound, true);
+                }
+
+                continue;
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } bytes })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityRuleDocument> document = ParsedJsonDocument<SecurityRuleDocument>.Parse(bytes.AsMemory());
+            if (RuleMatches(document.RootElement, qText) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        int n = 0;
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(BindingOrderIndexPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (qText is null)
+            {
+                // No filter: the order-index marker keys ARE the bindings, so count them (no record fetch), bounded.
+                if (++n > bound)
+                {
+                    return (bound, true);
+                }
+
+                continue;
+            }
+
+            string rest = key[BindingOrderIndexPrefix.Length..];
+            int dot = rest.IndexOf('.');
+            if (dot < 0)
+            {
+                continue;
+            }
+
+            // The marker key already carries the Base64Url(id), so the binding doc key is BindingPrefix + that segment.
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(BindingPrefix + rest[(dot + 1)..], cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } bytes })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityBindingDocument> document = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory());
+            if (BindingMatches(document.RootElement, qText) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
     // q matchers — KV has no server-side substring, so q is applied client-side over the parsed page document; the compared
     // fields realise to managed strings only for this comparison (the documents themselves stay pooled/bytes-native).
     private static bool RuleMatches(in SecurityRuleDocument rule, string q)

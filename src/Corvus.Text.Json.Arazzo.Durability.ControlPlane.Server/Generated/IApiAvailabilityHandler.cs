@@ -30,6 +30,15 @@ public interface IApiAvailabilityHandler
     ValueTask<ListVersionAvailabilityResult> HandleListVersionAvailabilityAsync(ListVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/availability/count — Count the environments a workflow version is available in
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountVersionAvailabilityResult> HandleCountVersionAvailabilityAsync(CountVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles PUT /catalog/{baseWorkflowId}/versions/{versionNumber}/availability/{environment} — Make a workflow version available in an environment
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
@@ -55,4 +64,13 @@ public interface IApiAvailabilityHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<ListEnvironmentAvailabilityResult> HandleListEnvironmentAvailabilityAsync(ListEnvironmentAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /environments/{name}/availability/count — Count the workflow versions available in an environment
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountEnvironmentAvailabilityResult> HandleCountEnvironmentAvailabilityAsync(CountEnvironmentAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

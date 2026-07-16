@@ -73,11 +73,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents an action triggered by the user on UI: the navigation to create an object
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef Create
+        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef CreateValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreateValueUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionPropDef value))
                 {
                     return value;
                 }
@@ -562,9 +562,9 @@ public readonly partial struct Ui5ManifestSchema
         public static class JsonPropertyNames
         {
             /// <summary>
-            /// Gets the JSON property name for <see cref="Create"/>.
+            /// Gets the JSON property name for <see cref="CreateValue"/>.
             /// </summary>
-            public const string Create = "create";
+            public const string CreateValue = "create";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Display"/>.
@@ -577,9 +577,9 @@ public readonly partial struct Ui5ManifestSchema
             public const string Edit = "edit";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="Create"/>.
+            /// Gets the JSON property name for <see cref="CreateValue"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> CreateUtf8 => "create"u8;
+            public static ReadOnlySpan<byte> CreateValueUtf8 => "create"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Display"/>.
@@ -598,9 +598,9 @@ public readonly partial struct Ui5ManifestSchema
         private static class JsonPropertyNamesEscaped
         {
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="Create"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="CreateValue"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> Create => "create"u8;
+            public static ReadOnlySpan<byte> CreateValue => "create"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="Display"/>.
@@ -620,9 +620,9 @@ public readonly partial struct Ui5ManifestSchema
         private static class JsonPropertyNamesPrebaked
         {
             /// <summary>
-            /// Gets the pre-baked property name blob for <see cref="Create"/>.
+            /// Gets the pre-baked property name blob for <see cref="CreateValue"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> Create => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x22];
+            public static ReadOnlySpan<byte> CreateValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x22];
 
             /// <summary>
             /// Gets the pre-baked property name blob for <see cref="Display"/>.

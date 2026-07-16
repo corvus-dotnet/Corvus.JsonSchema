@@ -170,10 +170,10 @@ public readonly partial struct Draft04Schema
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator long(PositiveIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+        public static implicit operator long(PositiveIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator double(PositiveIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+        public static implicit operator double(PositiveIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Corvus.Numerics.BigNumber(PositiveIntegerDefault0 value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();

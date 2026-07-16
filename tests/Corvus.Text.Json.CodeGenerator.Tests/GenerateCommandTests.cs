@@ -153,6 +153,92 @@ public class GenerateCommandTests : IDisposable
     }
 
     [TestMethod]
+    public async Task Generate_V4ConstrainedAndNullableInteger_EmitsImplicitPreferredNumericOperators()
+    {
+        // Regression test for #834. The V4 engine classified a type as a "multi-core union" (whose
+        // numeric conversions are explicit for branch safety) by counting ImpliedCoreTypes() flags.
+        // That count unions keyword implications, so "type": "integer" plus a numeric constraint
+        // (minimum/maximum imply Number) counted Integer|Number = 2, and ["integer", "null"] counted
+        // Integer|Null = 2 — demoting the 4.x implicit conversions for the preferred .NET numeric
+        // type to explicit. Only a union that can hold a non-numeric value kind may force explicit.
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "constrained-integer-operators.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputRootTypeName OperatorsRoot --outputPath \"{_outputDir}\" --engine V4");
+
+        Assert.AreEqual(0, result.ExitCode, $"Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        string allContent = ReadAllGeneratedContent(_outputDir);
+
+        // A constrained int32 integer ("count") converts to and from its preferred type implicitly.
+        AssertContainsOperator(allContent, "public static implicit operator int(CountValue value)");
+        AssertContainsOperator(allContent, "public static implicit operator CountValue(int value)");
+
+        // Non-preferred numeric conversions remain explicit, as in 4.x.
+        AssertContainsOperator(allContent, "public static explicit operator long(CountValue value)");
+
+        // A nullable integer ("total", no format) prefers long, implicitly, as in 4.x.
+        AssertContainsOperator(allContent, "public static implicit operator long(TotalValue value)");
+        AssertContainsOperator(allContent, "public static implicit operator TotalValue(long value)");
+
+        // A union with a non-numeric branch ("mixed") keeps the explicit conversions introduced in 5.1
+        // — an implicit conversion could throw when the instance holds the string branch.
+        AssertContainsOperator(allContent, "public static explicit operator long(MixedValue value)");
+        AssertContainsOperator(allContent, "public static explicit operator MixedValue(long value)");
+    }
+
+    [TestMethod]
+    public async Task Generate_V5ConstrainedAndNullableInteger_EmitsImplicitNumericOperators()
+    {
+        // Companion to the V4 regression test for #834. The V5 engine had the same quirk from the
+        // same root cause: ImpliedCoreTypes() flag-counting sent a constrained integer (Integer|Number)
+        // or a nullable numeric (Integer|Null) down the multi-type-union branch, demoting the numeric
+        // conversions that a bare "type": "integer" emits implicitly (long, double) to explicit.
+        // A type whose implied kinds are all within the numeric domain (Number/Integer/Null) must emit
+        // the same implicit conversions as a single-core numeric type.
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "constrained-integer-operators.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputRootTypeName OperatorsRoot --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, $"Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+
+        string allContent = ReadAllGeneratedContent(_outputDir);
+
+        // A constrained int32 integer ("count") keeps its format-driven implicit int conversion and
+        // emits the standard implicit numeric conversions of a single-core integer type.
+        AssertContainsOperator(allContent, "public static implicit operator int(CountValue value)");
+        AssertContainsOperator(allContent, "public static implicit operator long(CountValue value)");
+        AssertContainsOperator(allContent, "public static implicit operator double(CountValue value)");
+
+        // Allocating conversions stay explicit, matching the single-core numeric shape.
+        AssertContainsOperator(allContent, "public static explicit operator decimal(CountValue value)");
+
+        // A nullable integer ("total") emits the same implicit conversions as a single-core integer.
+        AssertContainsOperator(allContent, "public static implicit operator long(TotalValue value)");
+        AssertContainsOperator(allContent, "public static implicit operator double(TotalValue value)");
+
+        // A union with a non-numeric branch ("mixed") keeps explicit numeric conversions — an implicit
+        // conversion could throw when the instance holds the string branch.
+        AssertContainsOperator(allContent, "public static explicit operator long(MixedValue value)");
+        AssertContainsOperator(allContent, "public static explicit operator double(MixedValue value)");
+    }
+
+    private static string ReadAllGeneratedContent(string outputDir)
+    {
+        string[] files = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
+        Assert.IsTrue(files.Length > 0, "Expected generated .cs files");
+        return string.Join("\n", files.Select(File.ReadAllText));
+    }
+
+    private static void AssertContainsOperator(string allContent, string expectedSignature)
+    {
+        Assert.IsTrue(
+            allContent.Contains(expectedSignature, StringComparison.Ordinal),
+            $"Expected the generated code to contain \"{expectedSignature}\" (regression #834).");
+    }
+
+    [TestMethod]
     public async Task Generate_WithOptionalAsNullable_ProducesFiles()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");

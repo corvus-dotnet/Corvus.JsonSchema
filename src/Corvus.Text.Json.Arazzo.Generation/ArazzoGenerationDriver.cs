@@ -73,6 +73,9 @@ public static class ArazzoGenerationDriver
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <param name="registeredDocuments">The documents available in memory (must include the Arazzo document under <paramref name="arazzoRetrievalUri"/>), keyed by the absolute URI they resolve as. See the file-path overload for the resolution order.</param>
     /// <param name="progress">An optional callback invoked with human-readable progress messages.</param>
+    /// <param name="schemaDocuments">External JSON Schema documents (name → UTF-8) the root document's inputs
+    /// schemas may reference by <c>schemas/&lt;name&gt;#&lt;pointer&gt;</c> (design §6, #94); they belong to the
+    /// root package, so cross-document sub-workflow generation does not inherit them.</param>
     /// <returns>The absolute paths of all files written.</returns>
     public static async Task<IReadOnlyList<string>> GenerateAsync(
         Uri arazzoRetrievalUri,
@@ -82,7 +85,8 @@ public static class ArazzoGenerationDriver
         bool durable,
         CancellationToken cancellationToken,
         IReadOnlyList<RegisteredDocument>? registeredDocuments = null,
-        Action<string>? progress = null)
+        Action<string>? progress = null,
+        IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null)
     {
         ArgumentNullException.ThrowIfNull(arazzoRetrievalUri);
 
@@ -102,7 +106,7 @@ public static class ArazzoGenerationDriver
         var generated = new Dictionary<string, string>(StringComparer.Ordinal);
 
         await GenerateDocumentAsync(
-            arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress)
+            arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress, schemaDocuments)
             .ConfigureAwait(false);
 
         return written;
@@ -128,13 +132,14 @@ public static class ArazzoGenerationDriver
         Dictionary<string, string> generated,
         List<string> written,
         CancellationToken cancellationToken,
-        Action<string>? progress)
+        Action<string>? progress,
+        IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null)
     {
         ancestors.Add(baseUri.AbsoluteUri);
         try
         {
             await GenerateDocumentCoreAsync(
-                arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress)
+                arazzoBytes, baseUri, rootNamespace, outputPath, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress, schemaDocuments)
                 .ConfigureAwait(false);
         }
         finally
@@ -155,7 +160,8 @@ public static class ArazzoGenerationDriver
         Dictionary<string, string> generated,
         List<string> written,
         CancellationToken cancellationToken,
-        Action<string>? progress)
+        Action<string>? progress,
+        IReadOnlyList<KeyValuePair<string, byte[]>>? schemaDocuments = null)
     {
         // Generate the client/models for each source description and collect its operations (OpenAPI),
         // channel operations (AsyncAPI), or recursively the workflows of an arazzo-type source.
@@ -228,7 +234,7 @@ public static class ArazzoGenerationDriver
                         else
                         {
                             await GenerateDocumentAsync(
-                                childBytes, childBaseUri, sourceNamespace, sourceOutput, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress)
+                                childBytes, childBaseUri, sourceNamespace, sourceOutput, clientName, durable, documentLoader, ancestors, generated, written, cancellationToken, progress, schemaDocuments: null)
                                 .ConfigureAwait(false);
 
                             string childNamespace = $"{sourceNamespace}.{ArazzoCodeGeneration.DefaultWorkflowsNamespaceSuffix}";
@@ -248,7 +254,8 @@ public static class ArazzoGenerationDriver
                 new ArazzoGenerationOptions(
                     rootNamespace,
                     Durable: durable,
-                    SubWorkflowSourceNamespaces: subWorkflowNamespaces.Count > 0 ? subWorkflowNamespaces : null),
+                    SubWorkflowSourceNamespaces: subWorkflowNamespaces.Count > 0 ? subWorkflowNamespaces : null,
+                    SchemaDocuments: schemaDocuments),
                 cancellationToken)
             .ConfigureAwait(false);
 

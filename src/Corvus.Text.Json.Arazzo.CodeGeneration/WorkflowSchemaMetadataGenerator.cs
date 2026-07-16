@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using ArazzoExpr = Corvus.Text.Json.Arazzo.ArazzoExpression;
 using ArazzoExprSource = Corvus.Text.Json.Arazzo.ArazzoExpressionSource;
@@ -64,6 +65,13 @@ public static class WorkflowSchemaMetadataGenerator
         "minItems", "maxItems", "uniqueItems",
         "default", "const", "title", "readOnly", "writeOnly", "examples",
     ];
+
+    // Keywords an allOf branch may carry and still count as a "simple" mergeable object contribution
+    // (mirrors schema-descriptor.js SIMPLE_ALLOF_KEYS).
+    private static readonly HashSet<string> SimpleAllOfKeys = new(StringComparer.Ordinal)
+    {
+        "type", "properties", "required", "title", "description",
+    };
 
     /// <summary>
     /// Generates the schema-metadata document for a workflow package.
@@ -1039,6 +1047,60 @@ public static class WorkflowSchemaMetadataGenerator
             return;
         }
 
+        // allOf simple property-merge (checked after unions, which win). Every branch must be an object
+        // schema contributing only properties/required (+ type:object/title/description); the merged
+        // descriptor is the union of properties and of required, with a same-key overlap allowed only when
+        // the two subschemas are structurally equal (order-insensitive). A conflict, a non-object branch, or
+        // a branch keyword beyond that set makes it not-simple and falls through to the raw typeless
+        // descriptor — the rendered form must never diverge from what the schema validates. Mirrors
+        // schema-descriptor.js mergeSimpleAllOf.
+        if (depth < MaxDepth && schema.ValueKind == JsonValueKind.Object
+            && schema.TryGetProperty("allOf", out JsonElement allOfBranches) && allOfBranches.ValueKind == JsonValueKind.Array
+            && TryMergeSimpleAllOf(allOfBranches, out List<KeyValuePair<string, JsonElement>> mergedProperties, out List<string> mergedRequired))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("type", "object");
+            if (forceNullable)
+            {
+                writer.WriteBoolean("nullable", true);
+            }
+
+            if (schema.TryGetProperty("title", out JsonElement mergedTitle) && mergedTitle.ValueKind == JsonValueKind.String)
+            {
+                writer.WriteString("title", mergedTitle.GetString());
+            }
+
+            if (schema.TryGetProperty("description", out JsonElement mergedDescription) && mergedDescription.ValueKind == JsonValueKind.String)
+            {
+                writer.WriteString("description", mergedDescription.GetString());
+            }
+
+            writer.WritePropertyName("properties");
+            writer.WriteStartObject();
+            foreach (KeyValuePair<string, JsonElement> property in mergedProperties)
+            {
+                writer.WritePropertyName(property.Key);
+                WriteTypeDescriptor(writer, property.Value, documentRoot, depth + 1);
+            }
+
+            writer.WriteEndObject();
+
+            if (mergedRequired.Count > 0)
+            {
+                writer.WritePropertyName("required");
+                writer.WriteStartArray();
+                foreach (string name in mergedRequired)
+                {
+                    writer.WriteStringValue(name);
+                }
+
+                writer.WriteEndArray();
+            }
+
+            writer.WriteEndObject();
+            return;
+        }
+
         writer.WriteStartObject();
         if (depth >= MaxDepth || schema.ValueKind != JsonValueKind.Object)
         {
@@ -1156,6 +1218,80 @@ public static class WorkflowSchemaMetadataGenerator
         }
 
         writer.WriteEndObject();
+    }
+
+    /// <summary>
+    /// The simple allOf property-merge: every branch is an object schema contributing only
+    /// properties/required (+ type:object/title/description). Yields the union of properties (each RAW,
+    /// re-normalised by the caller) and of required, or <see langword="false"/> when any branch makes it
+    /// not-simple. Mirrors schema-descriptor.js mergeSimpleAllOf; "agree" is order-insensitive deep equality.
+    /// </summary>
+    private static bool TryMergeSimpleAllOf(JsonElement allOf, out List<KeyValuePair<string, JsonElement>> mergedProperties, out List<string> mergedRequired)
+    {
+        mergedProperties = [];
+        mergedRequired = [];
+        Dictionary<string, int> propertyIndex = new(StringComparer.Ordinal);
+
+        foreach (JsonElement branch in allOf.EnumerateArray())
+        {
+            if (branch.ValueKind != JsonValueKind.Object)
+            {
+                return false; // a non-object branch (boolean, scalar, …)
+            }
+
+            foreach (var keyword in branch.EnumerateObject())
+            {
+                if (!SimpleAllOfKeys.Contains(keyword.Name))
+                {
+                    return false; // a branch keyword beyond the mergeable set
+                }
+            }
+
+            if (branch.TryGetProperty("type", out JsonElement branchType)
+                && (branchType.ValueKind != JsonValueKind.String || branchType.GetString() != "object"))
+            {
+                return false; // a non-object typed branch
+            }
+
+            if (branch.TryGetProperty("properties", out JsonElement branchProperties))
+            {
+                if (branchProperties.ValueKind != JsonValueKind.Object)
+                {
+                    return false;
+                }
+
+                foreach (var property in branchProperties.EnumerateObject())
+                {
+                    JsonElement propertyValue = property.Value;
+                    if (propertyIndex.TryGetValue(property.Name, out int existing))
+                    {
+                        JsonElement existingValue = mergedProperties[existing].Value;
+                        if (!JsonElementHelpers.DeepEquals(in existingValue, in propertyValue))
+                        {
+                            return false; // a conflicting same-key overlap — never a guessed merge
+                        }
+                    }
+                    else
+                    {
+                        propertyIndex[property.Name] = mergedProperties.Count;
+                        mergedProperties.Add(new KeyValuePair<string, JsonElement>(property.Name, propertyValue));
+                    }
+                }
+            }
+
+            if (branch.TryGetProperty("required", out JsonElement branchRequired) && branchRequired.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement name in branchRequired.EnumerateArray())
+                {
+                    if (name.ValueKind == JsonValueKind.String && name.GetString() is { } required && !mergedRequired.Contains(required))
+                    {
+                        mergedRequired.Add(required);
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     private static (string? Type, bool Nullable) ReadType(JsonElement schema)

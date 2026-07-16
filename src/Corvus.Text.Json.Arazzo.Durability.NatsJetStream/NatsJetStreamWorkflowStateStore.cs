@@ -272,6 +272,15 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 continue;
             }
 
+            // §18: a paused (or faulted) run the control plane marked resume-claimable (ResumeRequestedAt present) also
+            // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
+            if (entry.ResumeRequestedAt is not null
+                && (entry.Status == WorkflowRunStatus.Suspended || entry.Status == WorkflowRunStatus.Faulted))
+            {
+                yield return runId;
+                continue;
+            }
+
             if (entry.Status == WorkflowRunStatus.Pending)
             {
                 yield return runId;
@@ -311,15 +320,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         var listings = new List<WorkflowRunListing>();
         await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
-            if ((query.Status is not { } status || index.Status == status)
-                && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId)
-                && (query.CreatedAfter is not { } createdAfter || index.CreatedAt >= createdAfter)
-                && (query.CreatedBefore is not { } createdBefore || index.CreatedAt < createdBefore)
-                && (query.UpdatedAfter is not { } updatedAfter || index.UpdatedAt >= updatedAfter)
-                && (query.UpdatedBefore is not { } updatedBefore || index.UpdatedAt < updatedBefore)
-                && (query.CorrelationId is not { } cid || index.CorrelationId == cid)
-                && query.Tags.AllContainedIn(index.Tags)
-                && (query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true)
+            if (Matches(query, index)
                 && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
             {
                 listings.Add(new WorkflowRunListing(runId, index));
@@ -334,6 +335,40 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
         return WorkflowContinuationToken.Paginate(listings, query.Limit);
     }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountAsync(WorkflowQuery query, int cap, CancellationToken cancellationToken)
+    {
+        // Bounded scan: count matches with the SAME filter the list applies (so the §14.2 reach cannot drift), stopping
+        // one past the cap. A count is order-independent, so no sort or keyset paging.
+        int count = 0;
+        await foreach ((WorkflowRunId _, WorkflowRunIndexEntry index) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (Matches(query, index) && ++count > cap)
+            {
+                return (cap, true);
+            }
+        }
+
+        return (count, false);
+    }
+
+    // The shared visibility filter (status / workflow / draft-exclusion / timestamps / correlation / tags / §14.2
+    // security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor + sorts, CountAsync scans with just this.
+    // Both share the one predicate so the reach filter cannot drift.
+    private static bool Matches(in WorkflowQuery query, in WorkflowRunIndexEntry index)
+        => (query.Status is not { } status || index.Status == status)
+            && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId)
+
+            // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
+            && (query.WorkflowId is not null || !string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+            && (query.CreatedAfter is not { } createdAfter || index.CreatedAt >= createdAfter)
+            && (query.CreatedBefore is not { } createdBefore || index.CreatedAt < createdBefore)
+            && (query.UpdatedAfter is not { } updatedAfter || index.UpdatedAt >= updatedAfter)
+            && (query.UpdatedBefore is not { } updatedBefore || index.UpdatedAt < updatedBefore)
+            && (query.CorrelationId is not { } cid || index.CorrelationId == cid)
+            && query.Tags.AllContainedIn(index.Tags)
+            && (query.Security?.IsSatisfiedBy(index.SecurityTags) ?? true);
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
@@ -388,8 +423,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
     // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null entry environment) matches
     // anything; otherwise the run's pinned environment must equal the runner's.
+    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (an
+    // unpinned or differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload
+    // (list all claimable regardless of environment), never a runner.
     private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
+        => runnerEnvironment is null || (runEnvironment is not null && string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal));
 
     private static class Envelope
     {
@@ -437,6 +475,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 if (index.Environment is { } environment)
                 {
                     writer.WriteString("environment", environment);
+                }
+
+                if (index.ResumeRequestedAt is { } resume)
+                {
+                    writer.WriteNumber("resumeRequestedAt", resume.ToUnixTimeMilliseconds());
                 }
 
                 if (!index.Tags.IsEmpty)
@@ -490,7 +533,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
                 DecodeTags(root),
                 DecodeSecurityTags(root),
-                root.TryGetProperty("environment"u8, out JsonElement environment) ? environment.GetString() : null);
+                root.TryGetProperty("environment"u8, out JsonElement environment) ? environment.GetString() : null,
+                root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAt.GetInt64()) : null);
         }
 
         private static TagSet DecodeTags(JsonElement root)

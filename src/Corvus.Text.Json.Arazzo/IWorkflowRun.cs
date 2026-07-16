@@ -115,4 +115,26 @@ public interface IWorkflowRun
     /// <param name="payload">The delivered message payload when present.</param>
     /// <returns><see langword="true"/> if a delivered message was handed in.</returns>
     bool TryTakeDeliveredMessage(out JsonElement payload);
+
+    /// <summary>
+    /// Begins a child scope for a sub-workflow invocation (a <c>workflowId</c>-bound step or a
+    /// <c>goto</c>-workflow transfer), returning the run the durable executor threads into the sub-workflow's
+    /// <c>ExecuteAsync</c>. The default returns <see langword="null"/> — the sub-workflow runs untracked, exactly
+    /// as an unthreaded call would (no checkpoints, no nested recording), which is the correct behaviour for a
+    /// production durable run whose child never checkpoints. A tracing or recording run overrides this to return a
+    /// child recorder that shares the parent's step budget, virtual clock, stop conditions, and exchange cursor
+    /// and collects the sub-workflow's step records as the parent step's nested trace.
+    /// </summary>
+    /// <param name="stepId">The parent step invoking the sub-workflow (the goto action's target for a transfer).</param>
+    /// <param name="subWorkflowId">The invoked workflow's id.</param>
+    /// <returns>The child scope to thread into the sub-workflow, or <see langword="null"/> to run it untracked.</returns>
+    IWorkflowRun? BeginSubWorkflow(string stepId, string subWorkflowId) => null;
+
+    /// <summary>
+    /// The sub-workflow nesting depth cap every tracking run surface honours (§15-8a decision §8.2):
+    /// a deliberate constant well past any legitimate composition depth, so runaway mutual recursion
+    /// between workflows exhausts predictably instead of overflowing the stack. The demo mock aligns
+    /// to this value.
+    /// </summary>
+    public const int MaxSubWorkflowDepth = 8;
 }

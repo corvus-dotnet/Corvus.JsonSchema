@@ -21,6 +21,24 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IApiSourcesHandler
 {
     /// <summary>
+    /// Handles GET /sources/{name}/operations — List a registered source's operation surface
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListRegisteredSourceOperationsResult> HandleListRegisteredSourceOperationsAsync(ListRegisteredSourceOperationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /sources/fetch — Fetch a source document from a web endpoint
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<FetchSourceDocumentResult> HandleFetchSourceDocumentAsync(FetchSourceDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /sources — List registered sources
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
@@ -64,4 +82,13 @@ public interface IApiSourcesHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<DeleteSourceResult> HandleDeleteSourceAsync(DeleteSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /sources/count — Count registered sources
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<CountSourcesResult> HandleCountSourcesAsync(CountSourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

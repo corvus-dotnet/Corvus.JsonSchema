@@ -12,8 +12,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// Arazzo document the author wrote.
 /// </summary>
 /// <remarks>
-/// <strong>Allocation ledger.</strong> <see cref="SameAdministrator"/> (the membership comparison, called in nested loops
-/// when authorizing/mutating administration) compares the two sets directly on their unescaped UTF-8 tag bytes
+/// <strong>Allocation ledger.</strong> <see cref="SameAdministrator"/> (the exact set-equality comparison for identity
+/// operations — add-idempotency, dedupe, digest matching; the administration authorization gate is membership, §16.5.4)
+/// compares the two sets directly on their unescaped UTF-8 tag bytes
 /// (<see cref="SecurityTagSet.SetEquals"/>) — no managed strings, no list, no hash — instead of materializing two tag
 /// <see cref="List{T}"/>s plus their strings per call. <see cref="AdministratorIdentity"/> filters the workflow tag via the holder's allocation-free enumerator (one
 /// list, not two plus a LINQ iterator). <see cref="WithWorkflowTag"/> is the per-version <em>publish</em> path (cold)
@@ -62,8 +63,9 @@ public static class WorkflowIdentity
         return SecurityTagSet.FromTags(tags);
     }
 
-    /// <summary>Whether two administrator identities are equal as sets (order-independent), the administration
-    /// membership comparison.</summary>
+    /// <summary>Whether two administrator identities are equal as sets (order-independent) — the exact identity
+    /// comparison for the identity operations (add-idempotency, dedupe, digest matching). The administration
+    /// authorization gate uses membership (containment), not this; see the secured catalog's IsAdministeredByMember.</summary>
     /// <param name="a">The first set.</param>
     /// <param name="b">The second set.</param>
     /// <returns><see langword="true"/> if they contain exactly the same tags.</returns>

@@ -2175,5 +2175,161 @@ public readonly partial struct Ui5ManifestSchema
         {
             return workspace.CreateBuilder<Target, Mutable>(this);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Target> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Target>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Target> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Target>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Target> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Target>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="clearControlAggregation">The value of the property.</param>
+        /// <param name="controlAggregation">The value of the property.</param>
+        /// <param name="controlId">The value of the property.</param>
+        /// <param name="parent">The value of the property.</param>
+        /// <param name="targetParent">The value of the property.</param>
+        /// <param name="title">The value of the property.</param>
+        /// <param name="transition">The value of the property.</param>
+        /// <param name="transitionParameters">The value of the property.</param>
+        /// <param name="viewLevel">The value of the property.</param>
+        /// <param name="viewType">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Target> Create(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(clearControlAggregation, controlAggregation, controlId, parent, targetParent, title, transition, transitionParameters, viewLevel, viewType);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Target>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="clearControlAggregation">The value of the property.</param>
+        /// <param name="controlAggregation">The value of the property.</param>
+        /// <param name="controlId">The value of the property.</param>
+        /// <param name="parent">The value of the property.</param>
+        /// <param name="targetParent">The value of the property.</param>
+        /// <param name="title">The value of the property.</param>
+        /// <param name="transition">The value of the property.</param>
+        /// <param name="transitionParameters">The value of the property.</param>
+        /// <param name="viewLevel">The value of the property.</param>
+        /// <param name="viewType">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Target> Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, clearControlAggregation, controlAggregation, controlId, parent, targetParent, title, transition, transitionParameters, viewLevel, viewType);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Target>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
     }
 }

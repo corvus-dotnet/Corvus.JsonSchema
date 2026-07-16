@@ -373,7 +373,11 @@ public sealed class AccessRequestApprovalServiceTests
 
         public async Task<PersistentRowSecurityPolicy> RefreshedPolicyAsync()
         {
-            var resolver = new PersistentRowSecurityPolicy(this.Policy, timeProvider: this.Clock);
+            // The deployment resolver maps the subject claim to its sys:sub dimension, so a sub-keyed grant is selected by
+            // the caller's canonical identity (§16.5.4 membership), not by the raw claim.
+            static IReadOnlyList<SecurityTag> SubjectTags(ClaimsPrincipal? p)
+                => p?.FindFirst("sub") is { } s ? [new SecurityTag("sys:sub", s.Value)] : [];
+            var resolver = new PersistentRowSecurityPolicy(this.Policy, internalTagResolver: SubjectTags, timeProvider: this.Clock);
             await resolver.RefreshAsync();
             return resolver;
         }

@@ -252,6 +252,61 @@ public sealed class CosmosObservedIdentityStore : IObservedIdentityStore, IAsync
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, Corvus.Text.Json.Arazzo.Durability.JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+    {
+        int cap = limit > 0 ? limit : 1;
+
+        // The empty identity is a subset of every set but grants no administration scope, so it broadens nothing.
+        if (identity.IsEmpty)
+        {
+            return ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
+        }
+
+        List<SecurityTag> tags = identity.ToList();
+        string kindToken = kind.ToToken();
+        string valueKey = (string)value;
+
+        // Strict superset over the embedded securityTags array: the candidate contains every authored tag (a native
+        // EXISTS per tag, the CosmosSecurityRuleEmitter idiom) AND has strictly more tags in total (ARRAY_LENGTH > count),
+        // so it is a proper superset, not the set-equal FindIdentityConflict case. Full reach (cross-partition, no reach
+        // predicate); LIMIT is a server-controlled literal int.
+        var sql = new System.Text.StringBuilder("SELECT c.subjectValue, c.subjectKind, c.doc FROM c WHERE NOT (c.subjectKind = @k AND c.subjectValue = @v)");
+        for (int i = 0; i < tags.Count; i++)
+        {
+            sql.Append(" AND EXISTS(SELECT VALUE t FROM t IN c.securityTags WHERE t.k = @tk").Append(i).Append(" AND t.v = @tv").Append(i).Append(')');
+        }
+
+        sql.Append(" AND ARRAY_LENGTH(c.securityTags) > @xc ORDER BY c.sortKey OFFSET 0 LIMIT ").Append(cap.ToString(CultureInfo.InvariantCulture));
+
+        var definition = new QueryDefinition(sql.ToString())
+            .WithParameter("@k", kindToken)
+            .WithParameter("@v", valueKey)
+            .WithParameter("@xc", tags.Count);
+        for (int i = 0; i < tags.Count; i++)
+        {
+            definition = definition
+                .WithParameter("@tk" + i.ToString(CultureInfo.InvariantCulture), tags[i].Key)
+                .WithParameter("@tv" + i.ToString(CultureInfo.InvariantCulture), tags[i].Value);
+        }
+
+        var docs = new PooledDocumentList<ObservedIdentity>(cap);
+        try
+        {
+            await foreach ((string rowValue, string rowKind, ReadOnlyMemory<byte> doc) in this.QueryDocumentsAsync(definition, cancellationToken).ConfigureAwait(false))
+            {
+                docs.Add(PersistedJson.ToPooledDocument<ObservedIdentity>(doc.Span));
+            }
+
+            return ObservedIdentityPage.Create(docs);
+        }
+        catch
+        {
+            docs.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.ownsClient)

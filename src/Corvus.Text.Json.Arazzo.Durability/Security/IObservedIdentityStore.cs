@@ -84,4 +84,32 @@ public interface IObservedIdentityStore
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The conflicting grantee's record as a pooled document the caller disposes (the conflict is the server's to decide on / audit — a handler must not echo cross-reach details), or <see langword="null"/> when the identity is unique to (<paramref name="kind"/>, <paramref name="value"/>).</returns>
     ValueTask<ParsedJsonDocument<ObservedIdentity>?> FindIdentityConflictAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Probes for existing grantees whose <c>sys:</c> identity is a <strong>strict superset</strong> of
+    /// <paramref name="identity"/> — i.e. granting <paramref name="identity"/> (the narrower set) broadens administration
+    /// under the membership model (§16.5.4) to <em>also</em> admit those grantees and everyone whose identity contains
+    /// <paramref name="identity"/>. Returns up to <paramref name="limit"/> such grantees whose (kind, value) differs from
+    /// (<paramref name="kind"/>, <paramref name="value"/>), or an empty page when <paramref name="identity"/> is not a
+    /// strict subset of any other grantee. This is the membership counterpart of <see cref="FindIdentityConflictAsync"/>,
+    /// but a <strong>non-blocking advisory</strong>: the authoring path surfaces the overlap so an operator sees that a
+    /// narrow grant subsumes a broader existing grantee (the review's directory-mapper trap), and does not refuse it.
+    /// </summary>
+    /// <remarks>
+    /// Runs at <strong>full reach</strong> like <see cref="FindIdentityConflictAsync"/> (a breadth overlap is a fact
+    /// regardless of who can see the party), so the caller decides what to echo — the grant-authoring path reach-filters
+    /// the surfaced overlaps to the grantees the caller may see. The empty (unscoped) identity is trivially a subset of
+    /// every set but conveys no administration scope, so it broadens nothing and always returns an empty page.
+    /// <para>The default implementation returns an empty page — a fail-safe for a backend that has not yet implemented the
+    /// scan (a missing advisory is never a wrong grant, only a missing warning); every production backend overrides it
+    /// with a native scan.</para>
+    /// </remarks>
+    /// <param name="kind">The grantee kind being authored (excluded from the match with <paramref name="value"/>), as a JSON value the backend reifies only at its key leaf.</param>
+    /// <param name="value">The grantee value being authored (excluded from the match with <paramref name="kind"/>), as a JSON value the backend reifies only at its key leaf.</param>
+    /// <param name="identity">The resolved <c>sys:</c> identity being granted — the (narrower) set to test for strict-subset overlap.</param>
+    /// <param name="limit">The maximum number of overlapping grantees to return (a non-positive value is treated as 1).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>Up to <paramref name="limit"/> grantees whose identity strictly contains <paramref name="identity"/>, as a disposable page the caller disposes; empty when none.</returns>
+    ValueTask<ObservedIdentityPage> FindBroadeningOverlapsAsync(ObservedIdentity.GranteeKind kind, JsonString value, SecurityTagSet identity, int limit, CancellationToken cancellationToken)
+        => new(ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0)));
 }

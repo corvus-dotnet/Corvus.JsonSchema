@@ -81,6 +81,16 @@ public abstract class ControlPlaneRowSecurityPolicy
     /// <returns><see langword="true"/> if the key carries the reserved internal prefix.</returns>
     public bool IsInternalTag(ReadOnlySpan<byte> keyUtf8) => keyUtf8.StartsWith(this.InternalTagPrefixUtf8);
 
+    /// <summary>Strips the reserved internal-tag prefix from a resolved identity dimension (as unescaped UTF-8),
+    /// recovering the operator-facing claim a binding keys on (<c>sys:sub</c> → <c>sub</c>); a dimension without the
+    /// prefix (a bare team/role) is returned unchanged. The span-based counterpart of <see cref="IsInternalTag"/>, over
+    /// the cached UTF-8 prefix, so a caller matches the access-grants overview to runtime enforcement without a hardcoded
+    /// literal prefix.</summary>
+    /// <param name="dimensionUtf8">The resolved identity dimension key as unescaped UTF-8.</param>
+    /// <returns>The dimension with the internal prefix removed if present; otherwise unchanged (a slice of the input).</returns>
+    public ReadOnlySpan<byte> StripInternalPrefix(ReadOnlySpan<byte> dimensionUtf8)
+        => dimensionUtf8.StartsWith(this.InternalTagPrefixUtf8) ? dimensionUtf8[this.InternalTagPrefixUtf8.Length..] : dimensionUtf8;
+
     /// <summary>Gets the reserved internal-tag key prefix (the public accessor of <see cref="InternalTagPrefix"/>) — the
     /// security wrapper reads it to preserve a version's internal tags across an admin re-tag (§14.2).</summary>
     public string InternalTagKeyPrefix => this.InternalTagPrefix;
@@ -308,6 +318,15 @@ internal sealed class ControlPlaneAccess
     /// <returns><see langword="true"/> if the key carries the reserved internal prefix.</returns>
     public bool IsInternalTag(ReadOnlySpan<byte> keyUtf8) => this.policy?.IsInternalTag(keyUtf8) ?? false;
 
+    /// <summary>Strips the deployment-configured internal-tag prefix from a resolved identity dimension (UTF-8),
+    /// recovering the operator-facing claim a binding keys on (<c>sys:sub</c> → <c>sub</c>); a dimension without the
+    /// prefix, or an unscoped deployment (no policy), returns it unchanged. The access-grants overview matches bindings
+    /// to a grantee through this, so it uses the same prefix runtime enforcement does rather than a hardcoded literal.</summary>
+    /// <param name="dimensionUtf8">The resolved identity dimension key as unescaped UTF-8.</param>
+    /// <returns>The dimension with the internal prefix removed if present; otherwise unchanged.</returns>
+    public ReadOnlySpan<byte> StripInternalPrefix(ReadOnlySpan<byte> dimensionUtf8)
+        => this.policy is { } p ? p.StripInternalPrefix(dimensionUtf8) : dimensionUtf8;
+
     /// <summary>Gets the reserved internal-tag key prefix for the current deployment — the security wrapper uses it to
     /// preserve a version's internal tags across an admin re-tag (§14.2). Falls back to the default when unscoped (no
     /// internal tags are stamped then, so the prefix is not exercised).</summary>
@@ -368,4 +387,69 @@ internal sealed class ControlPlaneAccess
     // The whoami path resolves the caller's internal tags as a list once per request (not per row), so wrapping them into
     // the holder here pays a single FromTags off the hot list paths — which now take the SecurityTagSet directly.
     public IReadOnlyList<CredentialUsageGrant> CallerIdentityGrants() => this.DescribeUsageScope(SecurityTagSet.FromTags(this.InternalTags()));
+
+    // Returns a client view of the version whose deployment-internal security tags (the reserved prefix, §14.2) are
+    // stripped — the persisted document keeps them for row authorization; only the response drops them. When the
+    // version carries no internal tags the original element is returned unchanged (zero-copy, no rewrite). A rewritten
+    // view is a pooled document owned by the workspace, so its element stays valid through the deferred body
+    // serialization. Lives on the ACCESS policy (not one handler) so catalog add and workspace publish share it.
+    internal CatalogVersion PublicView(CatalogVersion version, JsonWorkspace workspace)
+    {
+        SecurityTagSet full = version.SecurityTagsValue;
+        if (full.IsEmpty || !this.HasInternalTag(full))
+        {
+            return version;
+        }
+
+        SecurityTagSet visible = this.BuildVisibleTags(full);
+        var stripped = ParsedJsonDocument<CatalogVersion>.Parse(CatalogVersion.CreateWithSecurityTags(version, visible));
+        workspace.TakeOwnership(stripped);
+        return stripped.RootElement;
+    }
+
+    // Whether the set carries any deployment-internal tag (string-free span scan).
+    private bool HasInternalTag(SecurityTagSet set)
+    {
+        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                if (this.IsInternalTag(e.CurrentKey))
+                {
+                    return true;
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+
+        return false;
+    }
+
+    // Builds the non-internal (client-visible) subset of a tag set bytes-native — each retained tag is appended from
+    // its unescaped UTF-8 key/value, so no per-tag managed string is created.
+    private SecurityTagSet BuildVisibleTags(SecurityTagSet full)
+        => SecurityTagSet.Build(
+            (Full: full, Access: this),
+            static (ref IdentityBuilder builder, in (SecurityTagSet Full, ControlPlaneAccess Access) s) =>
+            {
+                SecurityTagSet.Utf8Enumerator e = s.Full.EnumerateUtf8();
+                try
+                {
+                    while (e.MoveNext())
+                    {
+                        if (!s.Access.IsInternalTag(e.CurrentKey))
+                        {
+                            builder.Add(e.CurrentKey, e.CurrentValue);
+                        }
+                    }
+                }
+                finally
+                {
+                    e.Dispose();
+                }
+            });
 }

@@ -1,0 +1,134 @@
+// <copyright file="DefaultDeploymentBootstrap.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
+using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
+
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
+
+/// <summary>
+/// The default <see cref="IDeploymentBootstrap"/>: seeds the security / identity policy a control-plane deployment
+/// needs, purely from <see cref="DeploymentBootstrapOptions"/>. Nothing here is specific to a deployment — every
+/// deployment-specific value (the genesis-administrator group, its scopes, the label taxonomy, …) comes from config.
+/// </summary>
+public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
+{
+    /// <inheritdoc/>
+    public async ValueTask BootstrapSecurityAsync(ISecurityPolicyStore securityStore, DeploymentBootstrapOptions options, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(securityStore);
+
+        // (1) The editable bootstrap rules (§14.2) — idempotent (only missing rule names are added).
+        await SecurityBootstrap.SeedAsync(securityStore, "bootstrap", cancellationToken).ConfigureAwait(false);
+
+        // Bindings carry a store-assigned id (no natural key like a rule name), so this bootstrap must dedupe by the
+        // binding SUBJECT (claim type + value) to stay idempotent: a deployment runs it on every startup, and appending
+        // the same bootstrap bindings each time would accumulate duplicates. Load the current set once and add only the
+        // subjects that are missing (mirrors how SecurityBootstrap.SeedAsync adds only missing rule names). If an
+        // operator has since deleted a bootstrap binding, a re-run restores it; if they still hold it, the re-run is a
+        // no-op.
+        using PooledDocumentList<SecurityBindingDocument> existingBindings = await securityStore.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        bool BindingExists(string claimType, string? claimValue)
+        {
+            foreach (SecurityBindingDocument binding in existingBindings)
+            {
+                if (string.Equals(binding.ClaimTypeValue, claimType, StringComparison.Ordinal)
+                    && string.Equals(binding.ClaimValueOrNull, claimValue, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // (2) The read-all shell binding: every authenticated principal may READ the whole control plane; WRITE/purge
+        // reach is deny-by-default, conferred per-principal only through the access-request → approval flow (§16.5).
+        if (!BindingExists("*", null))
+        {
+            using ParsedJsonDocument<SecurityBindingDocument> readAll = SecurityBindingDocument.Draft(
+                "*", null, read: VerbGrant.Full, write: VerbGrant.None, purge: VerbGrant.None,
+                description: "Authenticated principals may read the whole control plane.");
+            (await securityStore.AddBindingAsync(readAll.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
+        }
+
+        // (3) The genesis administrator (§16.2 tier 3): the configured group claim → all capability scopes plus
+        // unrestricted read/write/purge reach. The first admin logs in via OIDC already holding admin (the identity
+        // analogue of secret-zero). This stored binding IS the deliberate deployment policy — no group otherwise
+        // confers capability by mere membership; everyone else earns reach through the §16.5 approval flow.
+        string claimType = options.IdentityClaimType.IsNotUndefined() ? (string)options.IdentityClaimType : "groups";
+        string genesisGroup = (string)options.GenesisAdminGroup;
+        if (!BindingExists(claimType, genesisGroup))
+        {
+            using ParsedJsonDocument<SecurityBindingDocument> admin = SecurityBindingDocument.Draft(
+                claimType, genesisGroup, read: VerbGrant.Full, write: VerbGrant.Full, purge: VerbGrant.Full,
+                scopes: ReadScopes(options),
+                description: $"Genesis administrator (§16.2 tier 3): the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach.",
+                additionalClauses: ReadAdditionalClauses(options));
+            (await securityStore.AddBindingAsync(admin.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
+        }
+    }
+
+    /// <summary>Builds the ordered tag dimensions (§14.2) from configuration — a map of dimension name to its labels
+    /// in ascending order. Surfaced read-only at <c>GET /security/orderings</c> and baked into the ordered rule
+    /// templates. Used at composition time when constructing the row-security policy.</summary>
+    /// <param name="options">The deployment configuration.</param>
+    /// <returns>The label orderings.</returns>
+    public static SecurityLabelOrderings BuildLabelOrderings(DeploymentBootstrapOptions options)
+    {
+        var orderings = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        if (options.LabelOrderings.IsNotUndefined())
+        {
+            foreach (var dimension in options.LabelOrderings.EnumerateObject())
+            {
+                var labels = new List<string>();
+                foreach (var label in dimension.Value.EnumerateArray())
+                {
+                    labels.Add((string)label);
+                }
+
+                orderings[dimension.Name] = labels;
+            }
+        }
+
+        return new SecurityLabelOrderings(orderings);
+    }
+
+    private static IReadOnlyList<string> ReadScopes(DeploymentBootstrapOptions options)
+    {
+        if (!options.GenesisScopes.IsNotUndefined())
+        {
+            return [];
+        }
+
+        var scopes = new List<string>();
+        foreach (var scope in options.GenesisScopes.EnumerateArray())
+        {
+            scopes.Add((string)scope);
+        }
+
+        return scopes;
+    }
+
+    // The genesis grant's additional identity-dimension clauses (§16.5.4): each is ANDed with the primary group clause,
+    // so the genesis grant applies only to a caller whose canonical identity contains every clause. Null when none are
+    // configured (a single-clause group grant). Used to issuer-qualify the genesis administrator.
+    private static IReadOnlyList<(string Dimension, string? Value)>? ReadAdditionalClauses(DeploymentBootstrapOptions options)
+    {
+        if (!options.GenesisAdditionalClauses.IsNotUndefined())
+        {
+            return null;
+        }
+
+        var clauses = new List<(string Dimension, string? Value)>();
+        foreach (var clause in options.GenesisAdditionalClauses.EnumerateArray())
+        {
+            clauses.Add(((string)clause.DimensionValue, clause.Value.IsNotUndefined() ? (string)clause.Value : null));
+        }
+
+        return clauses.Count > 0 ? clauses : null;
+    }
+}

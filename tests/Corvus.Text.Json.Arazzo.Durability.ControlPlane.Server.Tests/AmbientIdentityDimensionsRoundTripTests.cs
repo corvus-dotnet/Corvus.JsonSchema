@@ -172,10 +172,29 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
     private static ClaimsPrincipal Principal(params (string Type, string Value)[] claims)
         => new(new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)).ToList(), "test"));
 
-    // A deployment hook mapping the principal's sub claim to its sys:sub internal tag (the caller's identity for row
-    // creation + administration membership).
+    // A deployment hook mapping the principal's sub + role claims to their sys: internal tags — the caller's canonical
+    // identity for row creation, administration membership, and reach binding selection by membership (§16.5.4). The
+    // round-trip tests carry only sub (so no sys:role is added); the reach tests add role, selecting a role-keyed binding.
     private static IReadOnlyList<SecurityTag> SubTags(ClaimsPrincipal? principal)
-        => principal?.FindFirst("sub") is { } sub ? [new SecurityTag("sys:sub", sub.Value)] : [];
+    {
+        if (principal is null)
+        {
+            return [];
+        }
+
+        var tags = new List<SecurityTag>();
+        if (principal.FindFirst("sub") is { } sub)
+        {
+            tags.Add(new SecurityTag("sys:sub", sub.Value));
+        }
+
+        if (principal.FindFirst("role") is { } role)
+        {
+            tags.Add(new SecurityTag("sys:role", role.Value));
+        }
+
+        return tags;
+    }
 
     // The same, plus the deployment's issuer (sys:iss=kc) — mirroring a directory-resolved identity so the runtime
     // caller set-equals a directory-projected grantee (the DirectoryIssuer runtime contract).

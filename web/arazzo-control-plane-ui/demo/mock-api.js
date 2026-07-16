@@ -10,6 +10,8 @@
 
 import { unpackWorkflowPackage } from '../src/workflow-package.js';
 
+import { resolveAgainstFrame } from '../src/expression-language.js';
+
 const TERMINAL = new Set(['Completed', 'Cancelled']);
 let etagSeq = 1000;
 
@@ -83,12 +85,12 @@ export function seedRuns() {
       correlationId: '33aa71f9b5c6d7e8f90a1b2c3d4e5f60', tags: ['tenant-7'],
     },
     {
-      id: 'run-0a5512cd', workflowId: 'adopt-pet-v1', status: 'Completed', cursor: 6,
+      id: 'run-0a5512cd', workflowId: 'adopt-pet-v1', status: 'Completed', cursor: 4,
       createdAt: iso(-2 * day), updatedAt: iso(-2 * day + 5 * min), etag: nextEtag(),
       correlationId: '0a5512cd6e7f8a9b0c1d2e3f4a5b6c7d', tags: ['tenant-42'],
     },
     {
-      id: 'run-44b0e7e2', workflowId: 'nightly-reconcile-v2', status: 'Completed', cursor: 9,
+      id: 'run-44b0e7e2', workflowId: 'nightly-reconcile-v2', status: 'Completed', cursor: 6,
       createdAt: iso(-9 * day), updatedAt: iso(-9 * day + 2 * min), etag: nextEtag(),
       correlationId: '44b0e7e2c3d4e5f6a7b8c9d0e1f20314',
     },
@@ -159,6 +161,44 @@ const STEP_SETS = {
   'adopt-pet': ['findPet', 'reservePayment', 'submitAdoption', 'confirmAdoption'],
   'nightly-reconcile': ['loadLedger', 'fetchTransactions', 'matchEntries', 'flagDiscrepancies', 'postCorrections', 'publishReport'],
   'onboard-customer': ['createAccount', 'verifyIdentity', 'provisionResources', 'sendWelcome'],
+};
+
+// Every seeded step binds a REAL operation of the workflow's referenced sources, with the path
+// parameters those operations require — a catalog document must open into a working copy without
+// workspace-sources warnings. Where the stepId happens to equal the operationId nothing extra is
+// needed; the entries here carry the differences (bindings, parameters, request bodies).
+const STEP_BINDINGS = {
+  'adopt-pet': {
+    findPet: { operationId: 'getPet', parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }], outputs: { petName: '$response.body#/name' } },
+    reservePayment: { parameters: [{ name: 'petId', in: 'path', value: '$inputs.petId' }], outputs: { reservationId: '$response.body#/reservationId' } },
+    submitAdoption: { requestBody: { contentType: 'application/json', payload: { petId: '$inputs.petId', adopterEmail: '$inputs.adopterEmail' } }, outputs: { adoptionId: '$response.body#/adoptionId' } },
+    confirmAdoption: { parameters: [{ name: 'adoptionId', in: 'path', value: '$steps.submitAdoption.outputs.adoptionId' }] },
+  },
+  'nightly-reconcile': {
+    loadLedger: { outputs: { reconciliationId: '$response.body#/reconciliationId' } },
+    fetchTransactions: { parameters: [{ name: 'period', in: 'query', value: '$inputs.period' }] },
+    matchEntries: { parameters: [{ name: 'reconciliationId', in: 'path', value: '$steps.loadLedger.outputs.reconciliationId' }], outputs: { matched: '$response.body#/matched', unmatched: '$response.body#/unmatched' } },
+  },
+  'onboard-customer': {
+    createAccount: { outputs: { accountId: '$response.body#/accountId' } },
+    verifyIdentity: { parameters: [{ name: 'accountId', in: 'path', value: '$steps.createAccount.outputs.accountId' }] },
+    provisionResources: { parameters: [{ name: 'accountId', in: 'path', value: '$steps.createAccount.outputs.accountId' }] },
+  },
+};
+
+// The workflow-level outputs each seeded document exposes (resolved from step outputs at run end).
+const WORKFLOW_OUTPUTS = {
+  'adopt-pet': { adoptionId: '$steps.submitAdoption.outputs.adoptionId', petName: '$steps.findPet.outputs.petName' },
+  'nightly-reconcile': { unmatched: '$steps.matchEntries.outputs.unmatched' },
+  'onboard-customer': { accountId: '$steps.createAccount.outputs.accountId' },
+};
+
+// The typed shape each seeded workflow is invoked with (drives the schemas endpoint's inputs
+// descriptor and the scenario form).
+const WORKFLOW_INPUTS = {
+  'adopt-pet': { type: 'object', required: ['petId'], properties: { petId: { type: 'string' }, adopterEmail: { type: 'string', format: 'email' } } },
+  'nightly-reconcile': { type: 'object', required: ['period'], properties: { period: { type: 'string', description: 'The ledger period, e.g. 2026-06.' }, dryRun: { type: 'boolean' } } },
+  'onboard-customer': { type: 'object', required: ['customerEmail'], properties: { customerEmail: { type: 'string', format: 'email' }, plan: { type: 'string', enum: ['starter', 'standard', 'enterprise'] } } },
 };
 
 // Typed outputs per step (a TypeDescriptor each) — the precomputed metadata the typed patch builder reads.
@@ -452,12 +492,31 @@ function pickVariant(d, value) {
 
 function workflowDoc(workflowId, title, description, sourceRefs) {
   const base = workflowId.replace(/-v\d+$/, '');
-  const stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
+  const n = Number(workflowId.match(/-v(\d+)$/)?.[1] ?? '1');
+  let stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
+  const bindings = STEP_BINDINGS[base] ?? {};
+  // nightly-reconcile carries a REAL version history so the catalog compare host (§9.11) has something to
+  // diff: v1 predates discrepancy flagging + automated corrections (added in v2), and v3 tightens
+  // matchEntries with an explicit success criterion. v2 stays the canonical six-step pipeline (a completed
+  // run pins its cursor at 6, and v3's evidence names all six steps).
+  if (base === 'nightly-reconcile' && n <= 1) {
+    stepIds = stepIds.filter((s) => s !== 'flagDiscrepancies' && s !== 'postCorrections');
+  }
+  const steps = stepIds.map((stepId) => ({ stepId, operationId: stepId, ...structuredClone(bindings[stepId] ?? {}) }));
+  if (base === 'nightly-reconcile' && n >= 3) {
+    const m = steps.find((s) => s.stepId === 'matchEntries');
+    if (m) m.successCriteria = [{ condition: '$statusCode == 200' }];
+  }
   return {
     arazzo: '1.1.0',
     info: { title, description },
     sourceDescriptions: (sourceRefs ?? []).map((s) => ({ name: s.name, url: `./${s.name}.json`, type: s.type })),
-    workflows: [{ workflowId, steps: stepIds.map((stepId) => ({ stepId, operationId: stepId })) }],
+    workflows: [{
+      workflowId,
+      ...(WORKFLOW_INPUTS[base] ? { inputs: structuredClone(WORKFLOW_INPUTS[base]) } : {}),
+      steps,
+      ...(WORKFLOW_OUTPUTS[base] ? { outputs: structuredClone(WORKFLOW_OUTPUTS[base]) } : {}),
+    }],
   };
 }
 
@@ -468,20 +527,214 @@ const SOURCE_DOCS = {
   petstore: {
     openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' },
     servers: [{ url: 'https://petstore.example.com/v1' }],
-    components: { securitySchemes: { apiKey: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } } },
+    components: {
+      securitySchemes: { apiKey: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } },
+      schemas: {
+        Pet: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, status: { type: 'string', enum: ['available', 'pending', 'adopted'] } } },
+      },
+    },
+    paths: {
+      '/pets': {
+        get: {
+          operationId: 'listPets',
+          summary: 'List pets available for adoption',
+          parameters: [
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['available', 'pending', 'adopted'] } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', maximum: 100 } },
+            {
+              name: 'filter', in: 'query', style: 'deepObject', description: 'Structured matching.',
+              schema: { type: 'object', properties: { breed: { type: 'string' }, goodWith: { type: 'object', properties: { children: { type: 'boolean' }, cats: { type: 'boolean' } } } } },
+            },
+          ],
+          responses: { 200: { description: 'A page of pets', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Pet' } } } } } },
+        },
+        post: {
+          operationId: 'createPet',
+          summary: 'Register a new pet',
+          requestBody: { content: { 'application/json': { schema: { $ref: '#/components/schemas/Pet' } } } },
+          responses: { 201: { description: 'created' }, 400: { description: 'invalid' } },
+        },
+      },
+      '/pets/{petId}': {
+        parameters: [{ name: 'petId', in: 'path', required: true, schema: { type: 'string' } }],
+        get: {
+          operationId: 'getPet',
+          summary: 'One pet by id',
+          responses: { 200: { description: 'the pet', content: { 'application/json': { schema: { $ref: '#/components/schemas/Pet' } } } }, 404: { description: 'unknown pet' } },
+        },
+      },
+      '/pets/{petId}/adopt': {
+        parameters: [{ name: 'petId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'adoptPet',
+          summary: 'Adopt a pet (the happy ending)',
+          responses: { 200: { description: 'adopted' }, 409: { description: 'already adopted' }, default: { description: 'unexpected' } },
+        },
+      },
+      '/pets/{petId}/payments': {
+        parameters: [{ name: 'petId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'reservePayment',
+          summary: 'Reserve the adoption fee against a card',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['amount'], properties: { amount: { type: 'number' }, capture: { type: 'boolean', default: false } } } } } },
+          responses: {
+            201: { description: 'reserved', content: { 'application/json': { schema: { type: 'object', properties: { reservationId: { type: 'string' }, amount: { type: 'number' } } } } } },
+            402: { description: 'declined' },
+            default: { description: 'unexpected' },
+          },
+        },
+      },
+      '/adoptions': {
+        post: {
+          operationId: 'submitAdoption',
+          summary: 'Submit the adoption paperwork',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['petId'], properties: { petId: { type: 'string' }, adopterEmail: { type: 'string', format: 'email' } } } } } },
+          responses: {
+            201: { description: 'submitted', content: { 'application/json': { schema: { type: 'object', properties: { adoptionId: { type: 'string' } } } } } },
+            409: { description: 'already adopted' },
+          },
+        },
+      },
+      '/adoptions/{adoptionId}/confirm': {
+        parameters: [{ name: 'adoptionId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'confirmAdoption',
+          summary: 'Confirm the adoption after the home check',
+          responses: { 200: { description: 'confirmed' }, 404: { description: 'unknown adoption' } },
+        },
+      },
+    },
   },
   events: {
     asyncapi: '3.0.0', info: { title: 'Events', version: '1.0.0' },
     servers: { production: { host: 'events.example.com', protocol: 'kafka' } },
     components: { securitySchemes: { tokenAuth: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'events:read': 'Read events' } } } } } },
+    channels: {
+      orderEvents: {
+        address: 'orders/events',
+        messages: { orderEvent: { payload: { type: 'object', properties: { orderId: { type: 'string' }, kind: { type: 'string' }, at: { type: 'string', format: 'date-time' } } } } },
+      },
+      kycResults: {
+        address: 'kyc.results',
+        messages: { kycResult: { payload: { type: 'object', properties: { customerId: { type: 'string' }, status: { type: 'string', enum: ['clear', 'review', 'failed'] }, checkedAt: { type: 'string', format: 'date-time' } } } } },
+      },
+    },
+    operations: {
+      onOrderEvent: { action: 'receive', summary: 'Order lifecycle events arrive here', channel: { $ref: '#/channels/orderEvents' } },
+      publishOrderEvent: { action: 'send', summary: 'Emit an order lifecycle event', channel: { $ref: '#/channels/orderEvents' } },
+      onKycResult: { action: 'receive', summary: 'Identity-check verdicts arrive here', channel: { $ref: '#/channels/kycResults' } },
+    },
   },
   billing: {
     openapi: '3.1.0', info: { title: 'Billing', version: '1.0.0' },
     servers: [{ url: 'https://billing.example.com' }],
     components: { securitySchemes: { clientCreds: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'ledger:read': 'Read the ledger' } } } } } },
+    paths: {
+      '/invoices': {
+        get: {
+          operationId: 'listInvoices',
+          summary: 'List invoices for a period',
+          parameters: [{ name: 'period', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { 200: { description: 'invoices' } },
+        },
+      },
+      '/reconciliations': {
+        post: {
+          operationId: 'startReconciliation',
+          summary: 'Kick off a ledger reconciliation',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { period: { type: 'string' }, dryRun: { type: 'boolean' } } } } } },
+          responses: { 202: { description: 'accepted' }, 409: { description: 'already running' } },
+        },
+      },
+      '/ledger': {
+        get: {
+          operationId: 'loadLedger',
+          summary: 'Open the current ledger for reconciliation',
+          responses: { 200: { description: 'the ledger', content: { 'application/json': { schema: { type: 'object', properties: { reconciliationId: { type: 'string' }, openedAt: { type: 'string', format: 'date-time' } } } } } }, 503: { description: 'ledger unavailable' } },
+        },
+      },
+      '/transactions': {
+        get: {
+          operationId: 'fetchTransactions',
+          summary: 'Fetch the settled transactions for a period',
+          parameters: [{ name: 'period', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { 200: { description: 'a page of transactions' } },
+        },
+      },
+      '/reconciliations/{reconciliationId}/matches': {
+        parameters: [{ name: 'reconciliationId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'matchEntries',
+          summary: 'Match ledger entries to transactions',
+          responses: { 200: { description: 'matched', content: { 'application/json': { schema: { type: 'object', properties: { matched: { type: 'integer' }, unmatched: { type: 'integer' } } } } } }, 404: { description: 'unknown reconciliation' } },
+        },
+      },
+      '/discrepancies': {
+        post: {
+          operationId: 'flagDiscrepancies',
+          summary: 'Record the unmatched entries for follow-up',
+          responses: { 201: { description: 'recorded' }, 503: { description: 'ledger service unavailable' } },
+        },
+      },
+      '/corrections': {
+        post: {
+          operationId: 'postCorrections',
+          summary: 'Post the correcting entries',
+          responses: { 201: { description: 'posted' }, 409: { description: 'period closed' } },
+        },
+      },
+      '/reports': {
+        post: {
+          operationId: 'publishReport',
+          summary: 'Publish the reconciliation report',
+          responses: { 201: { description: 'published' } },
+        },
+      },
+    },
+  },
+  accounts: {
+    openapi: '3.1.0', info: { title: 'Accounts', version: '1.0.0' },
+    servers: [{ url: 'https://accounts.example.com' }],
+    components: { securitySchemes: { clientCreds: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'accounts:write': 'Manage accounts' } } } } } },
+    paths: {
+      '/accounts': {
+        post: {
+          operationId: 'createAccount',
+          summary: 'Create a customer account',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' }, plan: { type: 'string', enum: ['starter', 'standard', 'enterprise'] } } } } } },
+          responses: {
+            201: { description: 'created', content: { 'application/json': { schema: { type: 'object', properties: { accountId: { type: 'string' } } } } } },
+            409: { description: 'email already registered' },
+          },
+        },
+      },
+      '/accounts/{accountId}/identity-checks': {
+        parameters: [{ name: 'accountId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'verifyIdentity',
+          summary: 'Start an identity (KYC) check — the verdict arrives on kyc.results',
+          responses: { 202: { description: 'check started' }, 422: { description: 'document unreadable' } },
+        },
+      },
+      '/accounts/{accountId}/resources': {
+        parameters: [{ name: 'accountId', in: 'path', required: true, schema: { type: 'string' } }],
+        post: {
+          operationId: 'provisionResources',
+          summary: 'Provision the tenant resources',
+          responses: { 201: { description: 'provisioned' }, 429: { description: 'region quota reached' } },
+        },
+      },
+      '/notifications/welcome': {
+        post: {
+          operationId: 'sendWelcome',
+          summary: 'Send the welcome email',
+          responses: { 202: { description: 'queued' } },
+        },
+      },
+    },
   },
 };
-const SOURCE_TYPES = { petstore: 'openapi', events: 'asyncapi', billing: 'openapi' };
+const SOURCE_TYPES = { petstore: 'openapi', events: 'asyncapi', billing: 'openapi', accounts: 'openapi' };
 
 // ---- source registry (§7.6) — first-class, reach-scoped registered sources, referenced by name ------------------
 // A source is registered once ({ name, type, document } + per-environment credentials); workflows reference it by
@@ -506,7 +759,7 @@ function seedCatalog() {
   const refsByBase = {
     'adopt-pet': [{ name: 'petstore', type: 'openapi' }],
     'nightly-reconcile': [{ name: 'billing', type: 'openapi' }],
-    'onboard-customer': [{ name: 'events', type: 'asyncapi' }],
+    'onboard-customer': [{ name: 'accounts', type: 'openapi' }, { name: 'events', type: 'asyncapi' }],
   };
   const refsFor = (base) => refsByBase[base] ?? [{ name: 'petstore', type: 'openapi' }];
   const teamA = { name: 'Reconciliation Team', email: 'reconcile@example.com', team: 'Platform', url: 'https://runbooks.example.com/nightly-reconcile' };
@@ -524,8 +777,33 @@ function seedCatalog() {
   return [
     v('nightly-reconcile', 1, 'Obsolete', 'Nightly Reconcile', teamA, ['prod', 'billing'], 30, { obsoletedBy: 'alice@example.com', obsoletedAt: iso(-10 * day), lastUpdatedBy: 'alice@example.com', lastUpdatedAt: iso(-10 * day) }),
     v('nightly-reconcile', 2, 'Active', 'Nightly Reconcile', teamA, ['prod', 'billing'], 10),
-    v('nightly-reconcile', 3, 'Active', 'Nightly Reconcile', teamA, ['prod', 'billing', 'beta'], 1),
-    v('adopt-pet', 1, 'Active', 'Adopt a Pet', teamB, ['prod'], 5),
+    // Two evidence states for the catalog-detail badge (§4.6): a green suite and a partial one
+    // (published with requireScenarios:false). The older versions predate evidence entirely.
+    v('nightly-reconcile', 3, 'Active', 'Nightly Reconcile', teamA, ['prod', 'billing', 'beta'], 1, {
+      _evidence: {
+        packageHash: 'nightly-reconcile3'.padEnd(64, '0'),
+        engineVersion: 'mock',
+        at: iso(-1 * day),
+        suite: { total: 3, passed: 3, failed: 0 },
+        scenarios: [
+          { name: 'discrepancies-found', passed: true, outcome: 'completed', pathSummary: 'loadLedger → fetchTransactions → matchEntries → flagDiscrepancies → postCorrections → publishReport' },
+          { name: 'clean-ledger', passed: true, outcome: 'completed', pathSummary: 'loadLedger → fetchTransactions → matchEntries → publishReport' },
+          { name: 'ledger-unavailable', passed: true, outcome: 'faulted', pathSummary: 'loadLedger' },
+        ],
+      },
+    }),
+    v('adopt-pet', 1, 'Active', 'Adopt a Pet', teamB, ['prod'], 5, {
+      _evidence: {
+        packageHash: 'adopt-pet1'.padEnd(64, '0'),
+        engineVersion: 'mock',
+        at: iso(-5 * day),
+        suite: { total: 2, passed: 1, failed: 1 },
+        scenarios: [
+          { name: 'happy-adoption', passed: true, outcome: 'completed', pathSummary: 'findPet → reservePayment → submitAdoption → confirmAdoption' },
+          { name: 'pet-already-adopted', passed: false, outcome: 'faulted', pathSummary: 'findPet → reservePayment' },
+        ],
+      },
+    }),
     v('onboard-customer', 1, 'Active', 'Onboard Customer', teamB, ['prod', 'kyc'], 7),
   ];
 }
@@ -588,7 +866,12 @@ function seedCredentials() {
     b('billing', 'production', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'workflow', value: 'nightly-reconcile' }], kind: 'workflow', label: 'nightly-reconcile' }, expiresAt: iso(3 * day) }),
     b('legacy', 'production', 'basic', [{ name: 'password', ref: 'env://LEGACY_PW' }], { config: [{ key: 'username', value: 'svc-legacy' }], expiresAt: iso(-2 * day) }),
     b('events', 'staging', 'bearer', [{ name: 'value', ref: 'awssm://events-token' }], {}),
+    b('accounts', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'keyvault://accounts-staging#1' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'onboarding-client' }], description: 'Accounts API for onboarding.' }),
     b('billing', 'staging', 'oauth2ClientCredentials', [{ name: 'clientSecret', ref: 'vault://kv/billing-staging#secret' }], { config: [{ key: 'tokenUrl', value: 'https://idp.example.com/oauth/token' }, { key: 'clientId', value: 'billing-client' }], usageGrantee: { identity: [{ dimension: 'sys:sub', value: 'u-1042' }], kind: 'person', label: 'Ada Lovelace' } }),
+  
+    // §18: developer-sandbox credentials so the demo working copy is debug-ready in 'development'.
+    b('payments', 'development', 'httpBearer', [{ name: 'token', ref: 'vault://kv/dev/payments#token' }]),
+    b('order-events', 'development', 'httpBearer', [{ name: 'token', ref: 'vault://kv/dev/order-events#token' }]),
   ];
 }
 
@@ -624,11 +907,19 @@ function seedEnvironments() {
     name, displayName, description, managementTags,
     createdBy: 'alice@example.com', createdAt: iso(-40 * day), etag: nextEtag(),
   });
-  return [
+  const environments = [
     // Production is scoped by a management tag (§14.2) so its read-only display has something to show.
     e('production', 'Production', 'The live production environment.', [{ key: 'team', value: 'platform' }]),
     e('staging', 'Staging', 'Pre-production staging environment.'),
+    // Evidence-gated (§4.6): promotion here requires a green attested scenario suite.
+    e('uat', 'UAT', 'User acceptance — promotion requires green attested scenario evidence.'),
   ];
+  environments[2].requireEvidence = true;
+  // Development-class (§18): drafts may execute here as debug runs.
+  const dev = e('development', 'Development', 'Developer sandbox — working-copy drafts may run here as debug runs (§18).');
+  dev.allowsDraftRuns = true;
+  environments.push(dev);
+  return environments;
 }
 
 // ---- workflow administration (§15) — deployment-mapped {dimension,value} identities ------------
@@ -705,8 +996,11 @@ function seedGrantees() {
   // Resolvable grantees as the server's GET /identity/grantees returns them: a well-known kind, a value/label,
   // the exact sys: identity as a {dimension,value} array, where it was resolved (observed/directory), and whether
   // that identity is the principal's *complete* stamped identity. The picker resolves these — no hand-typed tuples.
+  // A directory person carries its FULL membership-expanded identity (§16.5.4): Ada resolves with her sys:team
+  // membership, so looking her up in the Access Overview surfaces the payments team's reach binding she inherits
+  // through that membership (not only her own sub-keyed grant) — the "look yourself up, see your effective grants" flow.
   return [
-    { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }], source: 'directory', complete: true },
+    { kind: 'person', value: 'u-1042', label: 'Ada Lovelace', identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }, { dimension: 'sys:team', value: 'payments' }], source: 'directory', complete: true },
     { kind: 'person', value: 'u-2099', label: 'Grace Hopper', identity: [{ dimension: 'sys:sub', value: 'u-2099' }], source: 'observed', complete: false },
     { kind: 'team', value: 'payments', label: 'Payments', identity: [{ dimension: 'team', value: 'payments' }], source: 'directory', complete: true },
     { kind: 'role', value: 'sre', label: 'Site Reliability', identity: [{ dimension: 'role', value: 'sre' }], source: 'directory', complete: true },
@@ -836,11 +1130,14 @@ function seedSecurityOrderings() {
 function seedSecurityBindings() {
   const hr = 60 * 60 * 1000;
   const day = 24 * hr;
-  // Claim → per-verb reach bindings (§14.2): a group/role claim conferring read, and a tenant claim conferring full reach.
+  // Claim → per-verb reach bindings (§14.2): a group/role claim conferring read, and a tenant claim conferring full
+  // reach. Scope-bearing bindings are written only by the §16.5 approval flow (never the authoring endpoint), so the
+  // seed mimics its output: an active time-boxed grant on bind-2 and an eligible-only (PIM) assignment on bind-4.
   return [
     { id: 'bind-1', claimType: 'team', claimValue: 'payments', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 0, description: 'Payments team can read payments-domain rows.', createdBy: 'alice@example.com', createdAt: iso(-12 * day), etag: nextEtag() },
-    { id: 'bind-2', claimType: 'tenant', claimValue: 'acme', read: { unrestricted: true }, write: { unrestricted: true }, purge: { unrestricted: false }, order: 1, description: 'Acme tenant operators.', createdBy: 'alice@example.com', createdAt: iso(-5 * day), etag: nextEtag() },
+    { id: 'bind-2', claimType: 'tenant', claimValue: 'acme', read: { unrestricted: true }, write: { unrestricted: true }, purge: { unrestricted: false }, order: 1, description: 'Acme tenant operators.', scopes: ['runs:read', 'runs:write'], expiresAt: iso(5 * day), createdBy: 'alice@example.com', createdAt: iso(-5 * day), etag: nextEtag() },
     { id: 'bind-3', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 2, description: 'Ada Lovelace can read payments-domain rows.', createdBy: 'alice@example.com', createdAt: iso(-4 * day), etag: nextEtag() },
+    { id: 'bind-4', claimType: 'team', claimValue: 'payments', read: { unrestricted: false }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 3, description: 'Eligibility for access request req-7.', scopes: ['runs:purge'], expiresAt: iso(2 * day), eligibleOnly: true, createdBy: 'approval-service', createdAt: iso(-1 * day), etag: nextEtag() },
   ];
 }
 
@@ -912,12 +1209,12 @@ function seedRunnerAuthorizations() {
 // (§15/§7.7), so alice@ops (seeded on every resource) administers everything, omar@ops (seeded on onboard-customer +
 // staging) administers only those, and vera/pat administer nothing. A real deployment derives all this from the
 // principal's token; here the demo selects an identity. `administrator` is the default so existing tests are unchanged.
-const READ_ALL_SCOPES = 'runs:read catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read';
+const READ_ALL_SCOPES = 'runs:read catalog:read credentials:read sources:read workspace:read environments:read availability:read administrators:read security:read';
 export const DEMO_PERSONAS = {
   administrator: {
     label: 'Administrator — alice@ops (administers everything)',
     subject: 'alice@ops',
-    scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
+    scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write workspace:read workspace:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
     reach: 'all',
   },
   operator: {
@@ -927,7 +1224,7 @@ export const DEMO_PERSONAS = {
     // the requests in the environments he administers, but cannot promote directly.
     label: 'Operator — omar@ops (administers onboard-customer + staging)',
     subject: 'omar@ops',
-    scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
+    scopes: 'runs:read runs:write catalog:read credentials:read sources:read workspace:read workspace:write environments:read availability:read administrators:read security:read',
     reach: 'all',
   },
   viewer: {
@@ -946,7 +1243,7 @@ export const DEMO_PERSONAS = {
     // scopes isolates capability. See the demo's tab gating (index.html) for how a missing read scope hides a surface.
     label: 'Payments read-only — pat@payments (reach: domain=payments)',
     subject: 'pat@payments',
-    scopes: 'runs:read catalog:read credentials:read sources:read environments:read availability:read',
+    scopes: 'runs:read catalog:read credentials:read sources:read workspace:read environments:read availability:read',
     reach: { readDomain: 'payments' },
   },
 };
@@ -957,6 +1254,8 @@ export function createMockControlPlane(options = {}) {
   const runnerAuthorizations = options.runnerAuthorizationsSeed ? structuredClone(options.runnerAuthorizationsSeed) : seedRunnerAuthorizations();
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
   const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
+  const debugRunsStore = new Map(); // §18 debug runs, in-memory for the session
+  const auditEvents = [];
   const environments = options.environmentsSeed ? structuredClone(options.environmentsSeed) : seedEnvironments();
   const sourceRegistry = options.sourcesSeed ? structuredClone(options.sourcesSeed) : seedSources();
   const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
@@ -1019,10 +1318,15 @@ export function createMockControlPlane(options = {}) {
     if (method === 'GET') return null;
     if (/\/catalog\/[^/]+\/versions\/[^/]+\/availability\/[^/]+$/.test(path)) return 'availability:write';
     if (path.includes('/accessRequests') || path.includes('/availabilityRequests')) return null;
+    if (/\/workspace\/workflows\/[^/]+\/publish\/?$/.test(path)) return 'catalog:write'; // publish mints a catalog version (§4.6)
+    if (/\/catalog\/[^/]+\/versions\/[^/]+\/simulate\/?$/.test(path)) return null; // simulation mutates nothing (§4.3)
+    if (path.includes('/github/auth/callback')) return null; // the browser callback authenticates by its single-use state (§4.7)
+    if (path.includes('/github')) return 'workspace:write'; // begin sign-in / disconnect (§4.7)
     if (path.includes('/catalog')) return method === 'PURGE' || method === 'DELETE' ? 'catalog:purge' : 'catalog:write';
     if (path.includes('/credentials')) return 'credentials:write';
     if (path.includes('/environments')) return 'environments:write'; // incl. env-admin governance (§7.7)
     if (path.includes('/sources')) return 'sources:write';
+    if (path.includes('/workspace')) return 'workspace:write';
     if (path.includes('/security')) return 'security:write';
     if (path.includes('/administrators')) return 'administrators:write';
     if (path.includes('/runs')) return method === 'PURGE' || method === 'DELETE' ? 'runs:purge' : 'runs:write';
@@ -1107,6 +1411,312 @@ export function createMockControlPlane(options = {}) {
     return json(structuredClone(r));
   }
 
+  // ---- brokered GitHub (workflow-designer §4.7) --------------------------------------------------
+  // The mock plays BOTH halves: the control-plane broker AND a fake GitHub. beginGitHubAuth returns
+  // an authorizeUrl pointing straight at the mock's own callback, so a popup opened to it completes
+  // the sign-in immediately and the opener's session poll flips to connected — the demo's one-click
+  // flow. State is single-use, like the real broker; contents live in a tiny fixed tree.
+  let gitHubConnected = false;
+  let gitHubStateCounter = 0;
+  const gitHubStates = new Set();
+  // btoa is Latin1-only: route the UTF-8 bytes through a binary string (the GitHub contents shape).
+  const utf8ToBase64 = (s) => {
+    const bytes = new TextEncoder().encode(s);
+    let binary = '';
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoaSafe(binary);
+  };
+  const gitHubFile = (path, content) => ({
+    kind: 'file',
+    file: { name: path.split('/').pop(), path, sha: `sha-${path}`, size: content.length, encoding: 'base64', content: utf8ToBase64(content) },
+  });
+  const gitHubBranches = new Set(['main']);
+  const gitHubTree = {
+    '': {
+      kind: 'dir',
+      entries: [
+        { name: 'petstore.openapi.json', path: 'petstore.openapi.json', type: 'file', size: 512, sha: 'sha-petstore' },
+        { name: 'flows', path: 'flows', type: 'dir', sha: 'sha-flows' },
+        { name: 'scenarios', path: 'scenarios', type: 'dir', sha: 'sha-scenarios' },
+      ],
+    },
+    flows: {
+      kind: 'dir',
+      entries: [{ name: 'adopt.arazzo.json', path: 'flows/adopt.arazzo.json', type: 'file', size: 256, sha: 'sha-adopt' }],
+    },
+    scenarios: {
+      kind: 'dir',
+      entries: [{ name: 'adopt', path: 'scenarios/adopt', type: 'dir', sha: 'sha-scenarios-adopt' }],
+    },
+    'scenarios/adopt': {
+      kind: 'dir',
+      entries: [
+        { name: 'happy-adoption.scenario.json', path: 'scenarios/adopt/happy-adoption.scenario.json', type: 'file', size: 512, sha: 'sha-sc-happy' },
+        { name: 'payment-declined.scenario.json', path: 'scenarios/adopt/payment-declined.scenario.json', type: 'file', size: 384, sha: 'sha-sc-declined' },
+      ],
+    },
+    'scenarios/adopt/happy-adoption.scenario.json': gitHubFile('scenarios/adopt/happy-adoption.scenario.json', JSON.stringify({
+      name: 'happy-adoption',
+      description: 'Every operation answers well; the adoption completes end to end.',
+      inputs: { petId: 'p-1', adopterEmail: 'sam@example.com' },
+      mocks: [
+        { source: 'petstore', operationId: 'getPet', responses: [{ status: 200, body: { id: 'p-1', name: 'Biscuit', status: 'available' } }] },
+        { source: 'petstore', operationId: 'reservePayment', responses: [{ status: 201, body: { reservationId: 'res-9', amount: 40 } }] },
+        { source: 'petstore', operationId: 'submitAdoption', responses: [{ status: 201, body: { adoptionId: 'a-42' } }] },
+        { source: 'petstore', operationId: 'confirmAdoption', responses: [{ status: 200 }] },
+      ],
+      expect: {
+        outcome: 'completed',
+        path: ['findPet', 'reservePayment', 'submitAdoption', 'confirmAdoption'],
+        pathMode: 'exact',
+        outputs: [
+          { condition: "$outputs.adoptionId == 'a-42'" },
+          { condition: "$steps.reservePayment.outputs.reservationId == 'res-9'" },
+        ],
+      },
+    }, null, 2)),
+    'scenarios/adopt/payment-declined.scenario.json': gitHubFile('scenarios/adopt/payment-declined.scenario.json', JSON.stringify({
+      name: 'payment-declined',
+      description: 'The card declines; the run faults at the reservation.',
+      inputs: { petId: 'p-1' },
+      mocks: [
+        { source: 'petstore', operationId: 'getPet', responses: [{ status: 200, body: { id: 'p-1', name: 'Biscuit', status: 'available' } }] },
+        { source: 'petstore', operationId: 'reservePayment', responses: [{ status: 402 }] },
+      ],
+      expect: { outcome: 'faulted', path: ['findPet', 'reservePayment'], pathMode: 'exact' },
+    }, null, 2)),
+    'petstore.openapi.json': gitHubFile('petstore.openapi.json', JSON.stringify(SOURCE_DOCS.petstore)),
+    'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(workflowDoc('adopt-pet-v1', 'Adopt a Pet', 'Adopt a pet — imported from GitHub.', [{ name: 'petstore', type: 'openapi' }]))),
+  };
+
+  // Snag 9: the bound branch's commit history (newest first) plus per-commit content overrides —
+  // enough to browse history, compare any commit side-by-side (contents at ref), and roll back
+  // (pull at ref). A commit override carries only the files that DIFFER at that commit; anything
+  // else serves the current tree, which is an honest-enough approximation for the demo.
+  const historicalAdoptDoc = (dropSteps, description) => {
+    const doc = workflowDoc('adopt-pet-v1', 'Adopt a Pet', description, [{ name: 'petstore', type: 'openapi' }]);
+    doc.workflows[0].steps = doc.workflows[0].steps.filter((step) => !dropSteps.includes(step.stepId));
+    return doc;
+  };
+  const gitHubCommits = [
+    { sha: 'a3f1c9d4e8b2a7c1d5e9f3b6a2c8d4e7f1a5b9c3', message: 'Confirm adoptions after submission', author: 'Octo Cat', date: iso(-2 * 86_400_000) },
+    { sha: 'b7e2d8c5f1a9b3e6c2d7f4a8b5c1e9d3f6a2b8c4', message: 'Submit the adoption once payment reserves', author: 'Priya Ops', date: iso(-5 * 86_400_000) },
+    { sha: 'c1d9e5b2f8a4c7d3e6b1f9a5c2d8e4b7f3a6c9d1', message: 'Initial adopt workflow', author: 'Octo Cat', date: iso(-9 * 86_400_000) },
+  ];
+  const gitHubCommitFiles = {
+    'b7e2d8c5f1a9b3e6c2d7f4a8b5c1e9d3f6a2b8c4': {
+      'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(historicalAdoptDoc(['confirmAdoption'], 'Adopt a pet — before confirmation.'))),
+    },
+    'c1d9e5b2f8a4c7d3e6b1f9a5c2d8e4b7f3a6c9d1': {
+      'flows/adopt.arazzo.json': gitHubFile('flows/adopt.arazzo.json', JSON.stringify(historicalAdoptDoc(['submitAdoption', 'confirmAdoption'], 'The first cut of the adopt workflow.'))),
+    },
+  };
+  const gitHubFileAt = (ref, path) => (ref && gitHubCommitFiles[ref]?.[path]) ? gitHubCommitFiles[ref][path] : gitHubTree[path];
+
+  // The working-copy variant of schemasFor: RECOMPUTED from the current document + attachments,
+  // like the server's generator — each workflow's inputs schema passes through as its descriptor
+  // (the mock's schemas are already descriptor-shaped), and each step resolves its operation and
+  // per-status response bodies from the attached source documents.
+  function workingCopySchemasFor(wc) {
+    const attachedDocs = {};
+    for (const attachment of wc.sources ?? []) {
+      const doc = attachment.document ?? sourceRegistry.find((s) => s.name === attachment.sourceName)?.document;
+      if (doc) attachedDocs[attachment.name] = doc;
+    }
+
+    const workflows = {};
+    for (const wf of wc.document?.workflows ?? []) {
+      if (!wf.workflowId) continue;
+      const steps = {};
+      for (const step of wf.steps ?? []) {
+        if (!step.stepId) continue;
+        const entry = { outputs: {} };
+        for (const [sourceName, doc] of Object.entries(attachedDocs)) {
+          for (const [pathTemplate, methods] of Object.entries(doc.paths ?? {})) {
+            for (const [method, op] of Object.entries(methods ?? {})) {
+              if (op && typeof op === 'object' && op.operationId && op.operationId === step.operationId) {
+                entry.operation = { source: sourceName, kind: 'openapi', operationId: op.operationId, method, path: pathTemplate };
+                entry.responses = Object.fromEntries(Object.entries(op.responses ?? {}).map(([status, response]) => {
+                  const schema = response?.content?.['application/json']?.schema;
+                  return [status, schema ? { body: schema } : {}];
+                }));
+              }
+            }
+          }
+
+          // AsyncAPI 3 operations resolve to their channel address (the typed-form wait hints read it).
+          for (const [opId, op] of Object.entries(doc.operations ?? {})) {
+            if (opId !== step.operationId) continue;
+            const address = op?.channel?.$ref ? doc.channels?.[op.channel.$ref.split('/').pop()]?.address : op?.channel?.address;
+            entry.operation = { source: sourceName, kind: 'asyncapi', operationId: opId, ...(op?.action ? { action: op.action } : {}), ...(address ? { channel: address } : {}) };
+          }
+
+          // A channelPath binding (no operationId) resolves against the doc's channels directly.
+          if (!entry.operation && typeof step.channelPath === 'string' && step.channelPath) {
+            for (const [channelKey, channel] of Object.entries(doc.channels ?? {})) {
+              const address = channel?.address ?? channelKey;
+              if (address === step.channelPath || channelKey === step.channelPath) {
+                entry.operation = { source: sourceName, kind: 'asyncapi', action: 'receive', channel: address };
+                // AsyncAPI 3 keys channel.messages; 2.x hangs the message off publish/subscribe.
+                const messageRef = Object.values(channel?.messages ?? {})[0] ?? channel?.publish?.message ?? channel?.subscribe?.message;
+                const message = messageRef?.$ref ? doc.components?.messages?.[messageRef.$ref.split('/').pop()] : messageRef;
+                if (message?.payload) entry.message = { channel: address, payload: message.payload };
+              }
+            }
+          }
+        }
+
+        steps[step.stepId] = entry;
+      }
+
+      // Resolve a root-level `#/components/inputs/<name>` reference like the real generator's ResolveRef, so a
+      // $ref-rooted inputs schema bakes to a renderable descriptor for the run dialog / completions (§6).
+      let inputs = wf.inputs || { type: 'object', properties: {} };
+      const refMatch = typeof inputs.$ref === 'string' && /^#\/components\/inputs\/(.+)$/.exec(inputs.$ref);
+      if (refMatch && wc.document?.components?.inputs?.[refMatch[1]]) inputs = structuredClone(wc.document.components.inputs[refMatch[1]]);
+      workflows[wf.workflowId] = { inputs, steps };
+    }
+
+    return { formatVersion: 1, workflows };
+  }
+
+  // btoa/atob are Latin1-only: decode base64 back through the binary-string route.
+  const base64ToUtf8 = (b64) => new TextDecoder().decode(Uint8Array.from(atobSafe(b64), (c) => c.charCodeAt(0)));
+
+  // The §4.7 Git round-trip on a bound working copy: commit writes the document (+ bound specs +
+  // scenario files) into the fake repo; pull refreshes the working copy from it under the etag guard.
+  function handleWorkingCopyGit(path, method, body) {
+    const gitOp = path.match(/\/workspace\/workflows\/([^/]+)\/git\/(pull|commit)\/?$/);
+    if (!gitOp || method !== 'POST') return null;
+    const wc = workingCopies.find((x) => x.id === decodeURIComponent(gitOp[1]));
+    if (!wc) return problem(404, 'Working copy not found', `No working copy '${decodeURIComponent(gitOp[1])}'.`);
+    if (!wc.gitBinding) return problem(400, 'Not Git-bound', `Working copy '${wc.id}' has no gitBinding; save one first (§4.7).`);
+    if (!gitHubConnected) return problem(409, 'GitHub not connected', 'The caller has no GitHub session; begin the sign-in first.');
+    const binding = wc.gitBinding;
+    if (!gitHubBranches.has(binding.branch)) {
+      return problem(404, 'Not found', `'${binding.owner}/${binding.repo}' has no branch '${binding.branch}' — create it from the Git dialog first.`);
+    }
+
+    const dir = binding.scenariosDir ? binding.scenariosDir.replace(/\/$/, '') : null;
+
+    if (gitOp[2] === 'commit') {
+      if (!body?.message) return problem(400, 'Invalid commit', "A commit requires a 'message'.");
+      const files = [];
+      const write = (p, value) => { gitHubTree[p] = gitHubFile(p, JSON.stringify(value)); files.push({ path: p, sha: gitHubTree[p].file.sha }); };
+      write(binding.path, wc.document);
+      for (const [name, specPath] of Object.entries(binding.specPaths ?? {})) {
+        const attachment = (wc.sources ?? []).find((s) => s.name === name);
+        const doc = attachment?.document ?? sourceRegistry.find((s) => s.name === attachment?.sourceName)?.document;
+        if (!doc) return problem(400, 'Spec unresolvable', `specPaths entry '${name}' names no attached (or resolvable registry) source.`);
+        write(specPath, doc);
+      }
+      if (dir) for (const scenario of wc.scenarios ?? []) write(`${dir}/${scenario.name}.scenario.json`, scenario);
+      const result = { files };
+      if (body.pullRequest) result.pullRequest = { number: 42, url: `https://github.example/${binding.owner}/${binding.repo}/pull/42` };
+      return json(result);
+    }
+
+    if (!body?.expectedEtag) return problem(400, 'Invalid pull', "A pull requires the 'expectedEtag'.");
+    if (body.expectedEtag !== wc.etag) return problem(409, 'Save conflict', 'The working copy changed; re-fetch and pull again.');
+    // An explicit ref makes the pull the git-history ROLLBACK: the bound files are read at that
+    // commit; the binding is unchanged, so the next commit records the rollback on the branch.
+    const pullRef = body.ref;
+    const documentNode = gitHubFileAt(pullRef, binding.path);
+    if (documentNode?.kind !== 'file') return problem(404, 'Not found', `'${binding.owner}/${binding.repo}/${binding.path}' does not exist on the bound branch.`);
+    wc.document = JSON.parse(base64ToUtf8(documentNode.file.content));
+    if (dir) {
+      wc.scenarios = Object.entries(gitHubTree)
+        .filter(([p, node]) => node.kind === 'file' && p.startsWith(`${dir}/`) && p.endsWith('.scenario.json'))
+        .sort(([a], [b2]) => (a < b2 ? -1 : 1))
+        .map(([p]) => JSON.parse(base64ToUtf8(gitHubFileAt(pullRef, p).file.content)));
+    }
+    wc.lastUpdatedBy = actingSubject(); wc.lastUpdatedAt = iso(0); wc.etag = nextEtag();
+    return json(structuredClone(wc));
+  }
+
+  function handleGitHub(path, method, params, origin, body) {
+    const m = path.match(/\/github\/(auth\/callback|auth|session|repos\/([^/]+)\/([^/]+)\/(?:contents|branches|commits))\/?$/);
+    if (!m) return null;
+    const route = m[1];
+    if (route === 'auth' && method === 'POST') {
+      const state = `mock-state-${++gitHubStateCounter}`;
+      gitHubStates.add(state);
+      const prefix = path.slice(0, path.indexOf('/github'));
+      return json({ authorizeUrl: `${origin}${prefix}/github/auth/callback?code=mock&state=${encodeURIComponent(state)}`, state });
+    }
+
+    if (route === 'auth/callback' && method === 'GET') {
+      const state = params.get('state');
+      if (!state || !gitHubStates.delete(state)) {
+        return problem(400, 'Invalid state', 'The state is unknown, expired, or already used; begin the sign-in again.');
+      }
+
+      gitHubConnected = true;
+      return new Response(null, { status: 200 });
+    }
+
+    if (route === 'session' && method === 'GET') {
+      return gitHubConnected
+        ? json({
+            connected: true,
+            login: 'octo',
+            name: 'Octo Cat',
+            avatarUrl: 'https://avatars.example/octo.png',
+            installations: [{ id: 7, account: 'acme-org', repositories: [{ owner: 'acme-org', name: 'specs', fullName: 'acme-org/specs', defaultBranch: 'main', private: true }] }],
+          })
+        : json({ connected: false });
+    }
+
+    if (route === 'session' && method === 'DELETE') {
+      gitHubConnected = false;
+      return new Response(null, { status: 204 });
+    }
+
+    if (route.startsWith('repos/')) {
+      if (!gitHubConnected) return problem(409, 'GitHub not connected', 'The caller has no GitHub session; begin the sign-in first.');
+      const owner = decodeURIComponent(m[2]);
+      const repo = decodeURIComponent(m[3]);
+      if (owner !== 'acme-org' || repo !== 'specs') {
+        return problem(404, 'Not found', `'${owner}/${repo}' does not exist, or is outside the user ∩ installation intersection.`);
+      }
+
+      if (route.endsWith('/branches') && method === 'GET') {
+        return json({ defaultBranch: 'main', branches: [...gitHubBranches].sort().map((name) => ({ name, sha: `sha-${name}`, protected: name === 'main' })) });
+      }
+
+      if (route.endsWith('/branches') && method === 'POST') {
+        const name = (body?.name ?? '').trim();
+        if (!name) return problem(400, 'Invalid branch name', 'Provide a branch name.');
+        const from = body?.from ?? 'main';
+        if (!gitHubBranches.has(from)) return problem(404, 'Not found', `'${owner}/${repo}' has no branch '${from}'.`);
+        if (gitHubBranches.has(name)) return problem(409, 'Branch not created', `GitHub refused creating '${name}' — most often the name is already taken.`);
+        gitHubBranches.add(name);
+        return json({ name, sha: `sha-${from}` }, 201);
+      }
+
+      if (route.endsWith('/commits') && method === 'GET') {
+        const perPage = Math.min(100, Math.max(1, Number(params.get('perPage') ?? 30)));
+        const page = Math.max(1, Number(params.get('page') ?? 1));
+        const sha = params.get('sha');
+        // A commit sha starts the history mid-stream; a branch name (or nothing) starts at the
+        // head. The path filter is accepted but not applied — every seeded commit touches the
+        // bound flow, which is the case the history browser scopes to anyway.
+        const start = sha && gitHubCommits.some((c) => c.sha === sha) ? gitHubCommits.findIndex((c) => c.sha === sha) : 0;
+        const scoped = gitHubCommits.slice(start);
+        const offset = (page - 1) * perPage;
+        return json({ commits: scoped.slice(offset, offset + perPage).map((c) => ({ ...c })), hasMore: offset + perPage < scoped.length });
+      }
+
+      if (method === 'GET') {
+        const node = gitHubFileAt(params.get('ref'), params.get('path') || '');
+        if (!node) return problem(404, 'Not found', `'${owner}/${repo}/${params.get('path')}' does not exist.`);
+        return json(node);
+      }
+    }
+
+    return null;
+  }
+
   async function handle(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
     const u = new URL(url, 'https://mock');
@@ -1136,6 +1746,15 @@ export function createMockControlPlane(options = {}) {
 
     const sourcesResponse = handleSources(path, method, u.searchParams, body);
     if (sourcesResponse) return sourcesResponse;
+
+    const gitHubResponse = handleGitHub(path, method, u.searchParams, u.origin, body);
+    if (gitHubResponse) return gitHubResponse;
+
+    const workingCopyGitResponse = handleWorkingCopyGit(path, method, body);
+    if (workingCopyGitResponse) return workingCopyGitResponse;
+
+    const workspaceResponse = handleWorkspace(path, method, u.searchParams, body);
+    if (workspaceResponse) return workspaceResponse;
 
     const administratorsResponse = handleAdministrators(path, method, body);
     if (administratorsResponse) return administratorsResponse;
@@ -1299,7 +1918,7 @@ export function createMockControlPlane(options = {}) {
       return problem(405, 'Method not allowed');
     }
 
-    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|validate|sources\/[^/]+))?$/);
+    const versionMatch = path.match(/^\/catalog\/([^/]+)\/versions\/([^/]+)(?:\/(package|workflow|schemas|validate|simulate|evidence|sources\/[^/]+))?$/);
     if (versionMatch) {
       const base = decodeURIComponent(versionMatch[1]);
       const n = Number(versionMatch[2]);
@@ -1309,7 +1928,11 @@ export function createMockControlPlane(options = {}) {
       if (!sub && method === 'GET') {
         // Reach (§14.2): a version whose workflow domain the caller cannot read reads back as not found.
         if (!reachAdmits(v.securityTags ?? securityTagsForBase(v.baseWorkflowId))) return problem(404, 'Version not found', `No version ${n} of workflow '${base}'.`);
-        return json(toCatalogSummary(v));
+        // Parity with the server (§4.6): the DETAIL — and only the detail — carries the evidence
+        // summary; an empty suite attests nothing, so it is omitted like versions without evidence.
+        const summary = toCatalogSummary(v);
+        if (v._evidence?.suite?.total > 0) summary.evidence = { at: v._evidence.at, suite: v._evidence.suite };
+        return json(summary);
       }
       if (!sub && method === 'PATCH') return updateVersion(v, body);
       if (!sub && method === 'DELETE') return deleteVersion(v);
@@ -1317,6 +1940,16 @@ export function createMockControlPlane(options = {}) {
       if (sub === 'workflow' && method === 'GET') return json(v._workflow);
       if (sub === 'schemas' && method === 'GET') return json(schemasFor(v));
       if (sub === 'validate' && method === 'POST') return json(validateValue(v, body));
+      if (sub === 'simulate' && method === 'POST') {
+        // The published version's packaged document, simulated verbatim (§4.3) — bound to the
+        // version's own referenced sources, same as a working copy is to its attachments.
+        const refs = (v.sources ?? []).map((ref) => ({ name: ref.name, document: v._sources?.[ref.name] }));
+        const outcome = simulateDocument(v._workflow, body ?? {}, refs);
+        return outcome instanceof Response ? outcome : json(outcome);
+      }
+      if (sub === 'evidence' && method === 'GET') {
+        return v._evidence ? json(v._evidence) : problem(404, 'Evidence not found', 'This version carries no publish evidence.');
+      }
       if (sub && sub.startsWith('sources/') && method === 'GET') {
         const name = decodeURIComponent(sub.slice('sources/'.length));
         const doc = v._sources?.[name];
@@ -1801,6 +2434,11 @@ export function createMockControlPlane(options = {}) {
       order: Number.isFinite(body.order) ? body.order : 0,
     };
     if (body.claimValue != null) b.claimValue = body.claimValue;
+    // The tag-set selector's extra clauses (§16.5.4) are stored verbatim, mirroring the server's whole-document
+    // round-trip — a binding applies only to a caller whose identity contains every clause (see handleAccessGrants).
+    if (Array.isArray(body.additionalClauses) && body.additionalClauses.length) {
+      b.additionalClauses = body.additionalClauses.map((c) => (c.value != null ? { dimension: c.dimension, value: c.value } : { dimension: c.dimension }));
+    }
     if (body.description) b.description = body.description;
     return b;
   }
@@ -1829,13 +2467,39 @@ export function createMockControlPlane(options = {}) {
     const idents = Array.isArray(grantee.identity) ? grantee.identity : [];
     const stripSys = (d) => (typeof d === 'string' && d.startsWith('sys:')) ? d.slice(4) : d;
 
-    // bindings: a binding matches when its claimType is the wildcard, or an identity dimension (sys: stripped) equals the
-    // claimType and (the binding is value-agnostic, or the values match). Same summary shape the bindings list returns.
+    // bindings: a binding matches when the grantee's identity contains EVERY clause of its tag-set selector (§16.5.4) —
+    // the primary clause (claimType/claimValue; the wildcard '*' matches any) AND each additional clause. A clause is
+    // satisfied when an identity dimension (sys: stripped) equals the clause dimension and (the clause is value-agnostic,
+    // or the values match). Same summary shape the bindings list returns; mirrors the server's BindingAppliesToGrantee.
+    const clauseSatisfied = (dim, val) => idents.some((t) => stripSys(t.dimension) === dim && (val == null || val === '' || t.value === val));
     const bindings = securityBindings
-      .filter((b) => b.claimType === '*'
-        || idents.some((t) => stripSys(t.dimension) === b.claimType
-          && (b.claimValue == null || b.claimValue === '' || t.value === b.claimValue)))
+      .filter((b) => (b.claimType === '*' || clauseSatisfied(b.claimType, b.claimValue))
+        && (b.additionalClauses || []).every((c) => clauseSatisfied(c.dimension, c.value)))
       .map((b) => structuredClone(b));
+
+    // capabilities: the scopes the matched bindings confer, resolved as the server's runtime resolver does — an
+    // expired binding confers nothing; an eligibleOnly binding records §16.5.3 eligibility rather than an active
+    // scope. One entry per scope, active dominating eligible; within a class a never-expiring conferral clears the
+    // expiry, otherwise the later expiry stands. Sorted by scope, mirroring the server's deterministic order.
+    const nowMs = Date.now();
+    const mergeCap = (a, b) => {
+      if (a.eligible !== b.eligible) return a.eligible ? b : a;
+      const expiresAt = a.expiresAt && b.expiresAt ? (Date.parse(a.expiresAt) >= Date.parse(b.expiresAt) ? a.expiresAt : b.expiresAt) : null;
+      return { eligible: a.eligible, expiresAt };
+    };
+    const capMap = new Map();
+    for (const b of bindings) {
+      if (b.expiresAt && Date.parse(b.expiresAt) <= nowMs) continue;
+      for (const scope of (b.scopes || [])) {
+        const conferred = { eligible: !!b.eligibleOnly, expiresAt: b.expiresAt ?? null };
+        const existing = capMap.get(scope);
+        capMap.set(scope, existing ? mergeCap(existing, conferred) : conferred);
+      }
+    }
+    const capabilities = [...capMap.keys()].sort().map((scope) => {
+      const c = capMap.get(scope);
+      return { scope, eligible: c.eligible, ...(c.expiresAt ? { expiresAt: c.expiresAt } : {}) };
+    });
 
     // administers: a base workflow the grantee administers — its admin array holds a grant whose identity is a subset of
     // the grantee's identity (an identity-based grant the grantee satisfies).
@@ -1844,6 +2508,13 @@ export function createMockControlPlane(options = {}) {
         .some((g) => (g.identity || []).every((gt) => idents.some((t) => t.dimension === gt.dimension && t.value === gt.value))))
       .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
       .map((baseWorkflowId) => ({ baseWorkflowId }));
+
+    // administersEnvironments: the environment twin of administers, over the environment administrator sets.
+    const administersEnvironments = Object.keys(environmentAdministrators)
+      .filter((env) => (environmentAdministrators[env] || [])
+        .some((g) => (g.identity || []).every((gt) => idents.some((t) => t.dimension === gt.dimension && t.value === gt.value))))
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+      .map((environment) => ({ environment }));
 
     // credentialUsage: credentials scoped to THIS grantee's identity — a usage-restricted binding whose usageGrantee
     // identity is a subset of the grantee's identity. Shared bindings (no usageGrantee, usable by any run) are
@@ -1855,7 +2526,7 @@ export function createMockControlPlane(options = {}) {
       .sort((a, b) => (a.sourceName < b.sourceName ? -1 : a.sourceName > b.sourceName ? 1
         : a.environment < b.environment ? -1 : a.environment > b.environment ? 1 : 0));
 
-    return json({ grantee, bindings, administers, credentialUsage });
+    return json({ grantee, bindings, capabilities, administers, administersEnvironments, credentialUsage });
   }
 
   // Keyset pagination over `name` plus a case-insensitive q over name/expression — the same contract the durable store
@@ -1993,6 +2664,11 @@ export function createMockControlPlane(options = {}) {
     if (missing.length > 0) {
       return problem(409, 'Environment not ready', `Version ${versionNumber} of '${base}' cannot be made available in '${environment}': no usable credential for ${missing.join(', ')}.`);
     }
+    // Promotion readiness (workflow-designer §4.6): readiness = credentials ∧ (suiteGreen ∨ ¬requireEvidence).
+    // Default-off — environments without the flag keep the credential-only gate exactly.
+    if (findEnvironment(environment)?.requireEvidence && !hasGreenEvidence(version)) {
+      return problem(409, 'Evidence required', `Version ${versionNumber} of '${base}' cannot be made available in '${environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).`);
+    }
     const entry = { baseWorkflowId: base, versionNumber, environment, createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag() };
     availabilityEntries.push(entry);
     return json(structuredClone(entry), 201);
@@ -2012,9 +2688,32 @@ export function createMockControlPlane(options = {}) {
   // catalog's per-version embedded source (/catalog/.../sources/{n}) is a different endpoint, handled earlier.
 
   function handleSources(fullPath, method, params, body) {
+    if (/\/sources\/fetch\/?$/.test(fullPath) && !fullPath.includes('/workspace/')) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      if (!body?.url) return problem(400, 'Invalid fetch', "A 'url' is required.");
+      if (!/^https:/.test(body.url)) return problem(400, 'Invalid fetch', 'Only https URLs are permitted.');
+      // The demo mock serves a canned petstore for any https URL (a real deployment fetches server-side).
+      const document = structuredClone(sourceRegistry[0]?.document ?? { openapi: '3.1.0', info: { title: 'Fetched', version: '1.0' }, paths: {} });
+      return json({
+        url: body.url,
+        type: document.openapi ? 'openapi' : document.asyncapi ? 'asyncapi' : 'arazzo',
+        version: document.openapi ?? document.asyncapi ?? document.arazzo,
+        digest: 'demo-digest-0000000000000000000000000000000000000000000000000000000000',
+        contentType: 'application/json',
+        document,
+      });
+    }
+
+    const ops = fullPath.match(/\/sources\/([^/]+)\/operations\/?$/);
+    if (ops && !fullPath.includes('/catalog/') && !fullPath.includes('/workspace/')) {
+      const s = sourceRegistry.find((x) => x.name === decodeURIComponent(ops[1]));
+      if (!s) return problem(404, 'Source not found', `No source named '${ops[1]}'.`);
+      return json({ operations: projectOperationSurface(s.document) });
+    }
+
     const m = fullPath.match(/\/sources(?:\/([^/]+))?\/?$/);
     if (!m) return null;
-    if (fullPath.includes('/catalog/')) return null; // a version's embedded source, not the registry
+    if (fullPath.includes('/catalog/') || fullPath.includes('/workspace/')) return null; // a version's embedded source or a working-copy attachment, not the registry
     const name = m[1] ? decodeURIComponent(m[1]) : null;
     if (!name) {
       if (method === 'GET') return listSourcesPage(params);
@@ -2023,6 +2722,12 @@ export function createMockControlPlane(options = {}) {
     }
     if (method === 'GET') return getRegisteredSource(name);
     if (method === 'PUT') return updateSource(name, body);
+    if (method === 'DELETE') {
+      const at = sourceRegistry.findIndex((x) => x.name === name);
+      if (at < 0) return problem(404, 'Source not found', `No source named '${name}'.`);
+      sourceRegistry.splice(at, 1);
+      return new Response(null, { status: 204 });
+    }
     return problem(405, 'Method not allowed');
   }
 
@@ -2078,6 +2783,1286 @@ export function createMockControlPlane(options = {}) {
     if (body?.description !== undefined) s.description = body.description;
     s.lastUpdatedBy = actingSubject(); s.lastUpdatedAt = iso(0); s.etag = nextEtag();
     return json(structuredClone(s));
+  }
+
+  // ---- designer workspace (workflow-designer design §4.1) -----------------------------------------
+  // Working copies: mutable Arazzo documents saved during development without minting catalog versions. Keyed by a
+  // server-minted id; a save presents the etag it read (expectedEtag) and conflicts (409) when stale. The list returns
+  // summaries (no document/designer state). The demo mock does not support the from-catalog-version carry-over.
+
+  const workingCopies = [];
+  let workingCopySeq = 0;
+
+  function handleWorkspace(fullPath, method, params, body) {
+    const srcOps = fullPath.match(/\/workspace\/workflows\/([^/]+)\/sources\/([^/]+)\/operations\/?$/);
+    if (srcOps) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcOps[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const entry = (wc.sources ?? []).find((x) => x.name === decodeURIComponent(srcOps[2]));
+      if (!entry) return problem(404, 'Attachment not found');
+      const doc = entry.document ?? sourceRegistry.find((x) => x.name === entry.sourceName)?.document;
+      if (!doc) return problem(404, 'Source not found', 'The referenced registered source no longer exists.');
+      return json({ operations: projectOperationSurface(doc) });
+    }
+
+    const dbg = fullPath.match(/\/workspace\/workflows\/([^/]+)\/debug-runs(?:\/([^/]+))?(?:\/(resume|cancel))?\/?$/);
+    if (dbg) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(dbg[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+
+      // §18 R-UI-3b2: a minimal RFC 6902 applier for StatePatch remediation — /inputs/* and /stepOutputs/<step>/*
+      // paths over the run context (add/replace/remove), enough for the dock's "correct a value and continue".
+      const applyStatePatch = (run, patch) => {
+        for (const op of Array.isArray(patch) ? patch : []) {
+          const m = /^\/(inputs|stepOutputs)\/(.+)$/.exec(op?.path ?? '');
+          if (!m) continue;
+          const root = m[1] === 'inputs' ? (run.inputs ??= {}) : (run.overrides ??= {});
+          const segs = m[2].split('/').map((s) => s.replace(/~1/g, '/').replace(/~0/g, '~'));
+          const key = segs.pop();
+          let target = root;
+          for (const s of segs) { target = (target[s] ??= {}); }
+          if (op?.op === 'remove') delete target[key];
+          else target[key] = op?.value;
+        }
+      };
+
+      // The interim executor (§18 slice 2): the stateless simulator plays the environment's
+      // runner — the trace shape, pause semantics, and resume verbs are the real contract;
+      // real transport arrives with the engine seam (slice 3).
+      const execute = (run) => {
+        const mocks = [];
+        for (const attachment of wc.sources ?? []) {
+          const sdoc = attachment.document ?? sourceRegistry.find((x) => x.name === attachment.sourceName)?.document;
+          for (const [pth, methods] of Object.entries(sdoc?.paths ?? {})) {
+            for (const [method, op] of Object.entries(methods ?? {})) {
+              if (!op || typeof op !== 'object') continue;
+              const success = Object.keys(op.responses ?? {}).find((c) => /^2\d\d$/.test(c));
+              mocks.push({ method, path: pth, status: Number(success ?? 200), body: {} });
+            }
+          }
+        }
+        const budget = run.pause?.afterEachStep
+          ? { maxSteps: run.cursor + 1 }
+          : run.pause?.beforeSteps?.length
+            ? { breakBefore: run.pause.beforeSteps }
+            : undefined;
+        // §18 R-UI-3b: when this debug run opts into the transient-fault illustration, its first HTTP step's endpoint
+        // is DOWN until it has been retried once (run.attempts), so the dock's Retry demonstrably recovers it.
+        const downSteps = [];
+        if (run.simulateTransientFault) {
+          const wfDoc = wc.document.workflows?.find((w) => w.workflowId === run.workflowId);
+          const firstHttp = (wfDoc?.steps ?? []).find((s) => s.operationId && !s.channelPath);
+          if (firstHttp && (run.attempts?.[firstHttp.stepId] ?? 0) < 1) downSteps.push(firstHttp.stepId);
+        }
+        const request = {
+          workflowId: run.workflowId,
+          scenario: { inputs: run.inputs ?? {}, mocks },
+          ...(budget?.maxSteps ? { budget: { maxSteps: budget.maxSteps } } : {}),
+          ...(budget?.breakBefore ? { until: { breakpoints: budget.breakBefore } } : {}),
+          ...(Object.keys(run.overrides).length ? { overrides: { stepOutputs: structuredClone(run.overrides) } } : {}),
+          ...(downSteps.length ? { downSteps } : {}),
+        };
+        const trace = simulateDocument(wc.document, request, undefined);
+        if (trace instanceof Response) return trace;
+        run.trace = trace;
+        run.cursor = trace.stepsExecuted ?? (trace.steps?.length ?? 0);
+        run.status = trace.outcome === 'suspended' ? 'suspended'
+          : trace.outcome === 'faulted' ? 'faulted'
+          : trace.outcome === 'completed' ? 'completed'
+          : 'paused';
+        // A budget stop reads as paused even though the underlying outcome says completed-so-far.
+        if (budget?.maxSteps && run.cursor >= budget.maxSteps && trace.outcome === 'completed' && (wc.document.workflows.find((w) => w.workflowId === run.workflowId)?.steps?.length ?? 0) > run.cursor) {
+          run.status = 'paused';
+        }
+        run.updatedAt = iso(0);
+        return null;
+      };
+
+      const view = (run) => json({
+        debugRunId: run.id, workflowId: run.workflowId, environment: run.environment,
+        status: run.status, cursor: run.cursor, trace: structuredClone(run.trace ?? { outcome: 'running', stepsExecuted: 0, steps: [] }),
+        documentEtag: run.documentEtag, startedBy: run.startedBy, startedAt: run.startedAt, updatedAt: run.updatedAt,
+      }, run.justCreated ? 201 : 200);
+
+      if (!dbg[2] && method === 'POST') {
+        const env = environments.find((x) => x.name === body?.environment);
+        if (!env) return problem(404, 'Environment not found', `No environment '${body?.environment}'.`);
+        if (!env.allowsDraftRuns) {
+          return problem(403, 'Drafts may not run here', `Environment '${env.name}' does not allow draft debug runs (§18) — its administrators must set allowsDraftRuns.`);
+        }
+        const declared = (wc.document?.sourceDescriptions ?? []).map((x) => x.name);
+        const missing = declared.filter((name) => !credentials.some((c) => c.sourceName === name && c.environment === env.name));
+        if (missing.length) {
+          return problem(409, 'Credentials not ready', `No credential bound in '${env.name}' for: ${missing.join(', ')}.`);
+        }
+        const wfId = body?.workflowId;
+        if (!wfId || !(wc.document?.workflows ?? []).some((w) => w.workflowId === wfId)) {
+          return problem(400, 'Unknown workflow', `The document declares no workflow '${wfId}'.`);
+        }
+        const run = {
+          id: `dbg-${nextEtag().replaceAll('"', '')}`, wcId: wc.id, workflowId: wfId, environment: env.name,
+          inputs: body?.inputs, pause: body?.pause, overrides: {}, attempts: {},
+          simulateTransientFault: !!body?.simulateTransientFault, cursor: 0, status: 'running',
+          documentEtag: wc.etag, startedBy: actingSubject(), startedAt: iso(0), updatedAt: iso(0), justCreated: true,
+        };
+        // §18 R5: the control plane enqueues a Pending run; a runner advances it out-of-band. The mock plays the
+        // runner on the next getDebugRun poll (pendingAdvance), so the dock must PUMP getDebugRun — it must NOT read
+        // the advanced state from this enqueue response (which reports the un-advanced 'running').
+        run.pendingAdvance = true;
+        debugRunsStore.set(run.id, run);
+        auditEvents.push?.({ kind: 'debug-run-started', workingCopyId: wc.id, environment: env.name, documentEtag: run.documentEtag, by: run.startedBy, at: run.startedAt });
+        const response = view(run);
+        run.justCreated = false;
+        return response;
+      }
+
+      const run = debugRunsStore.get(decodeURIComponent(dbg[2] ?? ''));
+      if (!run || run.wcId !== wc.id) return problem(404, 'Debug run not found');
+      if (!dbg[3] && method === 'GET') {
+        // §18 R5: the mock plays the runner — the first poll after a start/resume mark advances the run one segment,
+        // so a dock that pumps getDebugRun sees the run progress from 'running' to paused/completed/faulted.
+        if (run.pendingAdvance) {
+          run.pendingAdvance = false;
+          const fail = execute(run);
+          if (fail) return fail;
+        }
+        return view(run);
+      }
+      if (!dbg[3] && method === 'DELETE') {
+        // §18 R5c: purge the debug run — its captured draft, metadata trace, and durable run die with it. Idempotent 204.
+        debugRunsStore.delete(run.id);
+        return new Response(null, { status: 204 });
+      }
+      if (dbg[3] === 'cancel' && method === 'POST') {
+        run.status = 'cancelled';
+        run.updatedAt = iso(0);
+        return view(run);
+      }
+      if (dbg[3] === 'resume' && method === 'POST') {
+        if (['completed', 'cancelled'].includes(run.status)) return problem(409, 'Not resumable', `The debug run is ${run.status}.`);
+        const action = body?.action;
+        const faultedStepId = run.trace?.fault?.stepId ?? run.trace?.steps?.at(-1)?.stepId;
+        // A remediation cycle passes, so a TRANSIENT (endpoint-down) fault clears — the re-run step now succeeds.
+        const recoverTransientFault = () => {
+          if (faultedStepId) run.attempts = { ...(run.attempts ?? {}), [faultedStepId]: (run.attempts?.[faultedStepId] ?? 0) + 1 };
+        };
+        if (action?.mode === 'Skip') {
+          // Step over: the paused/faulted step's outputs are PROVIDED; it does not execute.
+          const wf = wc.document.workflows.find((w) => w.workflowId === run.workflowId);
+          const at = action.targetCursor != null ? action.targetCursor - 1 : run.cursor;
+          const stepId = wf?.steps?.[at]?.stepId ?? run.trace?.steps?.at(-1)?.stepId;
+          if (stepId) run.overrides[stepId] = action.skipOutputs ?? {};
+        } else if (action?.mode === 'Rewind') {
+          run.cursor = Math.max(0, (action.targetCursor ?? 0)); // deliberate re-execution forward from here
+          recoverTransientFault();
+        } else if (action?.mode === 'RetryFaultedStep') {
+          recoverTransientFault(); // the endpoint recovered — the retried step's transient-down state clears
+        } else if (action?.mode === 'StatePatch') {
+          applyStatePatch(run, action.patch); // correct the run context (inputs / step outputs), then continue
+          recoverTransientFault();
+        }
+        if (body?.pause !== undefined) run.pause = body.pause;
+        // §18 R5: mark the run resume-claimable and return the un-advanced state; the runner (mock) advances it on the
+        // next getDebugRun poll. The dock must pump getDebugRun rather than read this mark response.
+        run.status = 'running';
+        run.pendingAdvance = true;
+        return view(run);
+      }
+      return problem(405, 'Method not allowed');
+    }
+
+    const srcOne = fullPath.match(/\/workspace\/workflows\/([^/]+)\/sources\/([^/]+)\/?$/);
+    if (srcOne) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcOne[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const name = decodeURIComponent(srcOne[2]);
+      if (method === 'GET') {
+        const attachment = (wc.sources ?? []).find((x) => x.name === name);
+        if (!attachment) return problem(404, 'Attachment not found');
+        return json(attachment); // the stored attachment IS the restore payload
+      }
+      if (method === 'PUT') return attachWorkingCopySource(wc, name, body);
+      if (method === 'DELETE') {
+        const at = (wc.sources ?? []).findIndex((x) => x.name === name);
+        if (at < 0) return problem(404, 'Attachment not found');
+        wc.sources.splice(at, 1);
+        wc.etag = nextEtag();
+        return new Response(null, { status: 204 });
+      }
+      return problem(405, 'Method not allowed');
+    }
+
+    const srcList = fullPath.match(/\/workspace\/workflows\/([^/]+)\/sources\/?$/);
+    if (srcList) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(srcList[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      return json({ sources: (wc.sources ?? []).map(({ document, ...rest }) => structuredClone(rest)) });
+    }
+
+    const publish = fullPath.match(/\/workspace\/workflows\/([^/]+)\/publish\/?$/);
+    if (publish) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(publish[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      if (!body?.owner?.name || !body?.owner?.email) return problem(400, 'Invalid publish', 'owner.name and owner.email are required.');
+
+      // 1 — the validation gate.
+      const report = validateWorkingCopyDocument(wc.document, wc.sources ?? []);
+      if (!report.valid) return json({ reason: 'validation', diagnostics: report.diagnostics }, 422);
+
+      // 2 — the server-attested suite.
+      const results = (wc.scenarios ?? []).map((sc) => runScenarioAgainst(wc, sc));
+      const passed = results.filter((r) => r.passed).length;
+      const suite = { total: results.length, passed, failed: results.length - passed, results };
+      if (suite.failed > 0 && body.requireScenarios !== false) return json({ reason: 'scenarios', suite }, 422);
+
+      // 3 — the new draft version, evidence attached (the mock stores it on the version).
+      const base = wc.document.workflows?.[0]?.workflowId ?? 'workflow';
+      const versionNumber = catalog.filter((v) => v.baseWorkflowId === base).reduce((m, v) => Math.max(m, v.versionNumber), 0) + 1;
+      const version = {
+        baseWorkflowId: base, versionNumber, workflowId: `${base}-v${versionNumber}`,
+        title: wc.document.info?.title ?? wc.name, description: wc.document.info?.description,
+        status: 'Draft', tags: body.tags ?? [], owner: body.owner,
+        sources: (wc.document.sourceDescriptions ?? []).map((sd) => ({ name: sd.name, type: sd.type })),
+        hash: `${base}${versionNumber}`.padEnd(64, '0'),
+        securityTags: securityTagsForBase(base),
+        createdBy: actingSubject(), createdAt: iso(0),
+        _workflow: structuredClone(wc.document),
+        _scenarios: structuredClone(wc.scenarios ?? []),
+        _evidence: {
+          packageHash: `${base}${versionNumber}`.padEnd(64, '0'),
+          engineVersion: 'mock',
+          at: iso(0),
+          suite: { total: suite.total, passed: suite.passed, failed: suite.failed },
+          scenarios: results.map((r) => ({ name: r.scenario, passed: r.passed, outcome: r.outcome, pathSummary: r.trace.steps.map((st) => st.stepId).join(' → ') })),
+        },
+      };
+      catalog.push(version);
+      return json(toCatalogSummary(version), 201);
+    }
+
+    const scenarioRun = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/([^/]+)\/run\/?$/);
+    if (scenarioRun) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(scenarioRun[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const sc = (wc.scenarios ?? []).find((x) => x.name === decodeURIComponent(scenarioRun[2]));
+      if (!sc) return problem(404, 'Scenario not found');
+      return json(runScenarioAgainst(wc, sc));
+    }
+
+    const scenarioOne = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/([^/]+)\/?$/);
+    if (scenarioOne) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(scenarioOne[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      const name = decodeURIComponent(scenarioOne[2]);
+      if (method === 'PUT') {
+        if (body?.name !== name) return problem(400, 'Scenario name mismatch');
+        wc.scenarios = [...(wc.scenarios ?? []).filter((x) => x.name !== name), structuredClone(body)];
+        wc.etag = nextEtag();
+        return json({ scenario: body, etag: wc.etag });
+      }
+      if (method === 'DELETE') {
+        const at = (wc.scenarios ?? []).findIndex((x) => x.name === name);
+        if (at < 0) return problem(404, 'Scenario not found');
+        wc.scenarios.splice(at, 1);
+        wc.etag = nextEtag();
+        return new Response(null, { status: 204 });
+      }
+      return problem(405, 'Method not allowed');
+    }
+
+    const scenarios = fullPath.match(/\/workspace\/workflows\/([^/]+)\/scenarios\/?$/);
+    if (scenarios) {
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(scenarios[1]));
+      if (!wc) return problem(404, 'Working copy not found');
+      if (method === 'GET') return json({ scenarios: wc.scenarios ?? [] });
+      if (method === 'POST') {
+        const results = (wc.scenarios ?? []).map((sc) => runScenarioAgainst(wc, sc));
+        const passed = results.filter((r) => r.passed).length;
+        return json({ total: results.length, passed, failed: results.length - passed, results });
+      }
+      return problem(405, 'Method not allowed');
+    }
+
+    const simulate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/simulate\/?$/);
+    if (simulate) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(simulate[1]));
+      if (!wc) return problem(404, 'Working copy not found', `No working copy '${simulate[1]}' exists, or it is outside your reach.`);
+      const outcome = simulateDocument(wc.document, body ?? {});
+      return outcome instanceof Response ? outcome : json(outcome);
+    }
+
+    const validate = fullPath.match(/\/workspace\/workflows\/([^/]+)\/validate\/?$/);
+    if (validate) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(validate[1]));
+      if (!wc) return problem(404, 'Working copy not found', `No working copy '${validate[1]}' exists, or it is outside your reach.`);
+      return json(validateWorkingCopyDocument(wc.document, wc.sources ?? []));
+    }
+
+    const wcSchemas = fullPath.match(/\/workspace\/workflows\/([^/]+)\/schemas\/?$/);
+    if (wcSchemas) {
+      if (method !== 'GET') return problem(405, 'Method not allowed');
+      const wc = workingCopies.find((x) => x.id === decodeURIComponent(wcSchemas[1]));
+      if (!wc) return problem(404, 'Working copy not found', `No working copy '${wcSchemas[1]}' exists, or it is outside your reach.`);
+      return json(workingCopySchemasFor(wc));
+    }
+
+    const m = fullPath.match(/\/workspace\/workflows(?:\/([^/]+))?\/?$/);
+    if (!m) return null;
+    const id = m[1] ? decodeURIComponent(m[1]) : null;
+    if (!id) {
+      if (method === 'GET') return listWorkingCopiesPage(params);
+      if (method === 'POST') return createWorkingCopy(body);
+      return problem(405, 'Method not allowed');
+    }
+    const wc = workingCopies.find((x) => x.id === id);
+    if (!wc) return problem(404, 'Working copy not found', `No working copy '${id}' exists, or it is outside your reach.`);
+    if (method === 'GET') return json(structuredClone(wc));
+    if (method === 'PUT') return saveWorkingCopy(wc, body);
+    if (method === 'DELETE') {
+      workingCopies.splice(workingCopies.indexOf(wc), 1);
+      return new Response(null, { status: 204 });
+    }
+    return problem(405, 'Method not allowed');
+  }
+
+  function listWorkingCopiesPage(params) {
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const sorted = [...workingCopies].sort((a, b) => a.id.localeCompare(b.id));
+    const offset = Number(params.get('pageToken')) || 0;
+    // The list omits each working copy's document and designer state (returned only on a single read).
+    const pageItems = sorted.slice(offset, offset + limit).map(({ document, designerState, ...rest }) => structuredClone(rest));
+    const nextPageToken = offset + limit < sorted.length ? String(offset + limit) : null;
+    return json({ workingCopies: pageItems, nextPageToken });
+  }
+
+  function createWorkingCopy(body) {
+    if (body?.fromBaseWorkflowId) {
+      if (body.document != null) return problem(400, 'Invalid working copy', 'Supply a document OR a from-version, not both.');
+      const base = body.fromBaseWorkflowId;
+      const version = catalog
+        .filter((v) => v.baseWorkflowId === base && (body.fromVersionNumber == null || v.versionNumber === body.fromVersionNumber))
+        .sort((a, b) => b.versionNumber - a.versionNumber)[0];
+      if (!version) {
+        return problem(404, 'Version not found', `No catalog version '${base}'${body.fromVersionNumber != null ? ` v${body.fromVersionNumber}` : ''} exists, or it is outside your reach.`);
+      }
+
+      // The carry-over: the version's document opens as a draft, its referenced sources attached
+      // by registry name so every operation resolves immediately.
+      const wc = {
+        id: `wc-${String(++workingCopySeq).padStart(10, '0')}`,
+        name: body.name || version.title,
+        baseWorkflowId: base,
+        basedOnVersion: version.versionNumber,
+        document: structuredClone(version._workflow),
+        sources: (version.sources ?? []).map((ref) => ({
+          name: ref.name, kind: 'registry', sourceName: ref.name, ...(ref.type ? { type: ref.type } : {}),
+          attachedBy: actingSubject(), attachedAt: iso(0),
+        })),
+        managementTags: body?.managementTags ?? [],
+        createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
+      };
+      workingCopies.push(wc);
+      return json(structuredClone(wc), 201);
+    }
+    const name = body?.name
+      || body?.document?.workflows?.[0]?.workflowId
+      || 'untitled';
+    const document = body?.document != null ? body.document : {
+      arazzo: '1.1.0', info: { title: name, version: '0.1.0' }, sourceDescriptions: [], workflows: [],
+    };
+    const wc = {
+      id: `wc-${String(++workingCopySeq).padStart(10, '0')}`,
+      name,
+      document,
+      ...(body?.designerState != null ? { designerState: body.designerState } : {}),
+      managementTags: body?.managementTags ?? [],
+      createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
+    };
+    workingCopies.push(wc);
+    return json(structuredClone(wc), 201);
+  }
+
+  function saveWorkingCopy(wc, body) {
+    if (body?.document == null) return problem(400, 'Invalid working copy', "A save requires the 'document'.");
+    if (!body.expectedEtag) return problem(400, 'Invalid working copy', "A save requires the 'expectedEtag' it read (optimistic concurrency).");
+    if (body.expectedEtag !== wc.etag) {
+      return problem(409, 'Save conflict', `Expected etag ${body.expectedEtag} no longer matches. Re-fetch the working copy and reconcile.`);
+    }
+    // The id, provenance, tags, and created-* audit are immutable; document/name/designer state are replaced when supplied.
+    wc.document = body.document;
+    if (body.name !== undefined) wc.name = body.name;
+    if (body.designerState !== undefined) wc.designerState = body.designerState;
+    if (body.gitBinding !== undefined) wc.gitBinding = body.gitBinding; // §4.7: present replaces, absent keeps
+    wc.lastUpdatedBy = actingSubject(); wc.lastUpdatedAt = iso(0); wc.etag = nextEtag();
+    return json(structuredClone(wc));
+  }
+
+  // A light stand-in for the server's validate pass: the required-shape subset of the schema check
+  // plus the document-local goto-target/duplicate-id semantics. The real backend also runs full
+  // JSON-Schema conformance and criterion/expression syntax through the runtime's own compilers.
+  function collectOperationIdentities(sourceDoc, operations, channels) {
+    for (const [, pathItem] of Object.entries(sourceDoc.paths ?? {})) {
+      for (const [, op] of Object.entries(pathItem ?? {})) {
+        if (op?.operationId) operations.add(op.operationId);
+      }
+    }
+    for (const key of Object.keys(sourceDoc.channels ?? {})) channels.add(key);
+    for (const key of Object.keys(sourceDoc.operations ?? {})) operations.add(key);
+  }
+
+  // The workspace-level source-integrity pass (mirrors the server): declared-but-unattached,
+  // attached-but-undeclared, bindings absent from every attached surface, bindings with NO
+  // declared sources at all.
+  function workspaceSourceFindings(doc, attachments) {
+    const findings = [];
+    const declared = (doc.sourceDescriptions ?? []).map((s) => s.name).filter(Boolean);
+    const attachedNames = new Set();
+    const schemaAttachments = new Set();
+    const operations = new Set();
+    const channels = new Set();
+    let anySurface = false;
+    const schemaAttachmentIds = new Set();
+    const schemaIdOwners = new Map();
+    for (const att of attachments) {
+      if (!att.name) continue;
+      // A jsonschema attachment (#94) is deliberately NOT a sourceDescription (the Arazzo spec pins that enum) —
+      // exempt from the declaration cross-check, no operation surface. Its resolvable identities are its
+      // absolute root $id (the PREFERRED reference form) and the virtual schemas/<name> fallback, mirroring
+      // the server. Two attachments claiming the same $id make references ambiguous — an error, like the server.
+      if (att.type === 'jsonschema') {
+        schemaAttachments.add(att.name);
+        const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+        if (typeof d?.$id === 'string' && /^https?:\/\//.test(d.$id)) {
+          const owner = schemaIdOwners.get(d.$id);
+          if (owner) {
+            findings.push({ severity: 'error', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: `Schema attachments '${owner}' and '${att.name}' both declare the root $id '${d.$id}' — references to it are ambiguous; give each document a distinct $id.` });
+          } else {
+            schemaIdOwners.set(d.$id, att.name);
+            schemaAttachmentIds.add(d.$id);
+          }
+        }
+        continue;
+      }
+      attachedNames.add(att.name);
+      if (!declared.includes(att.name)) {
+        findings.push({ severity: 'info', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: `Attached source '${att.name}' is not declared in sourceDescriptions — the document cannot reference its operations.` });
+      }
+      const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+      if (d) { collectOperationIdentities(d, operations, channels); anySurface = true; }
+    }
+
+    // Dangling external schema references (#94), mirroring the server's pass-4 walk: a schemas/<name>
+    // (fallback-form) $ref whose named jsonschema document is not attached, or an absolute http(s) $ref
+    // (the preferred $id form) matching no attached document's root $id — neither can resolve at publish.
+    const checkExternalRefs = (node, basePath) => {
+      if (node && typeof node === 'object' && !Array.isArray(node)) {
+        if (typeof node.$ref === 'string' && node.$ref.startsWith('schemas/')) {
+          const name = node.$ref.slice('schemas/'.length).split('#')[0];
+          if (!schemaAttachments.has(name)) {
+            findings.push({ severity: 'error', category: 'schema', instancePath: basePath, message: `References the external schema '${name}', which is not attached — attach a jsonschema source under that name.` });
+          }
+        } else if (typeof node.$ref === 'string' && /^https?:\/\//.test(node.$ref)) {
+          const identity = node.$ref.split('#')[0];
+          if (!schemaAttachmentIds.has(identity)) {
+            findings.push({ severity: 'error', category: 'schema', instancePath: basePath, message: `References the external schema '${identity}', which is not attached — attach the jsonschema source whose $id this is.` });
+          }
+        }
+        for (const v of Object.values(node)) checkExternalRefs(v, basePath);
+      } else if (Array.isArray(node)) {
+        for (const v of node) checkExternalRefs(v, basePath);
+      }
+    };
+    (doc.workflows ?? []).forEach((wf, wi) => { if (wf.inputs) checkExternalRefs(wf.inputs, `/workflows/${wi}/inputs`); });
+    Object.entries(doc.components?.inputs ?? {}).forEach(([key, schema]) => checkExternalRefs(schema, `/components/inputs/${key}`));
+    declared.forEach((name, i) => {
+      if (!attachedNames.has(name)) {
+        findings.push({ severity: 'warning', category: 'workspace-sources', instancePath: `/sourceDescriptions/${i}`, message: `Declared source '${name}' has no attachment in this working copy — its operations cannot resolve here.` });
+      }
+    });
+    (doc.workflows ?? []).forEach((wf, wi) => {
+      (wf.steps ?? []).forEach((step, si) => {
+        const bindsOp = typeof step.operationId === 'string' && step.operationId.length;
+        const bindsChannel = typeof step.channelPath === 'string' && step.channelPath.length;
+        if (!bindsOp && !bindsChannel) return;
+        if (!declared.length) {
+          findings.push({ severity: 'error', category: 'workspace-sources', instancePath: '/sourceDescriptions', message: 'Steps bind operations but the document declares no sourceDescriptions — nothing can resolve them.' });
+          return;
+        }
+        if (!anySurface) return;
+        if (bindsOp && !step.operationId.startsWith('$sourceDescriptions.') && !operations.has(step.operationId)) {
+          findings.push({ severity: 'warning', category: 'workspace-sources', instancePath: `/workflows/${wi}/steps/${si}/operationId`, message: `Operation '${step.operationId}' is not found in any attached source — did its source description get removed?` });
+        }
+        if (bindsChannel && !channels.has(step.channelPath)) {
+          findings.push({ severity: 'warning', category: 'workspace-sources', instancePath: `/workflows/${wi}/steps/${si}/channelPath`, message: `Channel '${step.channelPath}' is not found in any attached source.` });
+        }
+      });
+    });
+    return findings;
+  }
+
+  // Mirrors the server's pass 4 (schema-form §5): the Arazzo meta-schema treats inputs schemas as opaque, so
+  // validate the CONTENT of each workflow.inputs + components.inputs.* structurally (enough to flag nonsense
+  // keyword values) plus a dangling local-$ref check (§6). The real server runs the full 2020-12 meta-schema.
+  function inputsSchemaFindings(doc) {
+    const out = [];
+    const has = (o, k) => o && Object.prototype.hasOwnProperty.call(o, k);
+    const check = (schema, basePath) => {
+      if (schema === true || schema === false || schema === undefined) return; // boolean/absent schemas are fine
+      if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+        out.push({ severity: 'error', category: 'schema', instancePath: basePath, message: 'An inputs schema must be a JSON Schema object or boolean.' });
+        return;
+      }
+      if (has(schema, 'type') && !(typeof schema.type === 'string' || (Array.isArray(schema.type) && schema.type.every((t) => typeof t === 'string')))) {
+        out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/type`, message: 'The "type" keyword must be a string or an array of strings.' });
+      }
+      if (has(schema, 'required') && !Array.isArray(schema.required)) out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/required`, message: 'The "required" keyword must be an array.' });
+      if (has(schema, 'properties') && (typeof schema.properties !== 'object' || Array.isArray(schema.properties))) out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/properties`, message: 'The "properties" keyword must be an object.' });
+      if (has(schema, 'enum') && !Array.isArray(schema.enum)) out.push({ severity: 'error', category: 'schema', instancePath: `${basePath}/enum`, message: 'The "enum" keyword must be an array.' });
+      if (typeof schema.$ref === 'string') {
+        const m = /^#\/components\/inputs\/(.+)$/.exec(schema.$ref);
+        if (m && !(doc.components?.inputs && m[1] in doc.components.inputs)) {
+          out.push({ severity: 'error', category: 'schema', instancePath: basePath, message: `References the library schema '${m[1]}', which does not exist under components.inputs.` });
+        }
+      }
+    };
+    for (const [wi, wf] of (doc.workflows || []).entries()) if (has(wf, 'inputs')) check(wf.inputs, `/workflows/${wi}/inputs`);
+    for (const [name, schema] of Object.entries(doc.components?.inputs || {})) check(schema, `/components/inputs/${name}`);
+    return out;
+  }
+
+  function validateWorkingCopyDocument(doc, attachments = []) {
+    const diagnostics = [];
+    const schemaError = (instancePath, message) => diagnostics.push({ severity: 'error', category: 'schema', instancePath, message });
+    if (!doc || typeof doc !== 'object') {
+      schemaError('', 'The document must be a JSON object.');
+      return { valid: false, diagnostics };
+    }
+    if (typeof doc.arazzo !== 'string') schemaError('', "Required property 'arazzo' is missing.");
+    if (!doc.info || typeof doc.info !== 'object') schemaError('', "Required property 'info' is missing.");
+    if (!Array.isArray(doc.sourceDescriptions) || doc.sourceDescriptions.length === 0) schemaError('', "Required property 'sourceDescriptions' must be a non-empty array.");
+    if (!Array.isArray(doc.workflows) || doc.workflows.length === 0) schemaError('', "Required property 'workflows' must be a non-empty array.");
+
+    for (const [wi, workflow] of (Array.isArray(doc.workflows) ? doc.workflows : []).entries()) {
+      const steps = Array.isArray(workflow?.steps) ? workflow.steps : [];
+      const stepIds = new Set(steps.map((s) => s?.stepId).filter(Boolean));
+      const seen = new Set();
+      for (const [si, step] of steps.entries()) {
+        if (step?.stepId) {
+          if (seen.has(step.stepId)) {
+            diagnostics.push({
+              severity: 'error', category: 'duplicate-id',
+              instancePath: `/workflows/${wi}/steps/${si}/stepId`,
+              message: `Duplicate stepId '${step.stepId}' — step ids must be unique within the workflow.`,
+            });
+          }
+          seen.add(step.stepId);
+        }
+        for (const list of ['onSuccess', 'onFailure']) {
+          for (const [ai, action] of (Array.isArray(step?.[list]) ? step[list] : []).entries()) {
+            if ((action?.type === 'goto' || action?.type === 'retry') && action.stepId && !stepIds.has(action.stepId)) {
+              diagnostics.push({
+                severity: 'error', category: 'goto-target',
+                instancePath: `/workflows/${wi}/steps/${si}/${list}/${ai}`,
+                message: `The ${action.type} action targets unknown step '${action.stepId}'.`,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    diagnostics.push(...workspaceSourceFindings(doc, attachments));
+    diagnostics.push(...payloadTypingFindings(doc, attachments));
+    diagnostics.push(...inputsSchemaFindings(doc));
+    const anyError = diagnostics.some((d) => d.severity === 'error');
+    return { valid: !anyError, diagnostics };
+  }
+
+  // Payload typing (§5.3): literals in step request payloads checked against the bound operation's
+  // schema. Runtime expressions are exempt ("$inputs.x" is fine where the schema says boolean); a
+  // plain "tru" on a boolean leaf can never satisfy the API — an error. Missing required
+  // properties warn: no expression can add an absent key at runtime.
+  function payloadTypingFindings(doc, attachments) {
+    const findings = [];
+    const attachedDocs = [];
+    for (const a of attachments ?? []) {
+      const d = a.document ?? sourceRegistry.find((s) => s.name === a.sourceName)?.document;
+      if (d) attachedDocs.push(d);
+    }
+
+    if (!attachedDocs.length) return findings;
+    const isExpr = (t) => t.startsWith('$') || t.includes('{$');
+    const deref = (node, root) => {
+      for (let hops = 0; node && typeof node === 'object' && typeof node.$ref === 'string' && node.$ref.startsWith('#/') && hops < 8; hops++) {
+        node = node.$ref.slice(2).split('/').reduce((cur, tok) => cur?.[tok.replaceAll('~1', '/').replaceAll('~0', '~')], root);
+      }
+      return node;
+    };
+    const opSchema = (operationId) => {
+      for (const root of attachedDocs) {
+        for (const item of Object.values(root.paths ?? {})) {
+          for (const op of Object.values(item ?? {})) {
+            if (op && typeof op === 'object' && op.operationId === operationId) {
+              const rb = deref(op.requestBody, root);
+              const schema = deref(rb?.content?.['application/json']?.schema, root);
+              return schema ? { schema, root } : null;
+            }
+          }
+        }
+      }
+      return null;
+    };
+    // An expression's STATIC type, resolved from the document itself: the workflow's inputs
+    // schema for $inputs.…, a step's output declaration chased through its operation's first 2xx
+    // response schema for $steps.<id>.outputs.<name>. null = unknown (benefit of the doubt).
+    const descendSchema = (schema, ptr, root) => {
+      let node = deref(schema, root);
+      if (!ptr || ptr === '#' || ptr === '#/') return node;
+      if (!ptr.startsWith('#/')) return null;
+      for (const tok of ptr.slice(2).split('/')) {
+        node = deref(node, root);
+        if (!node || typeof node !== 'object') return null;
+        const key = tok.replaceAll('~1', '/').replaceAll('~0', '~');
+        node = /^\d+$/.test(key) && node.items ? node.items : node.properties?.[key];
+      }
+      return deref(node, root);
+    };
+    const typeAt = (schema, segments, ptr, root) => {
+      let node = deref(schema, root);
+      for (const seg of segments) {
+        node = deref(node, root);
+        if (!node || typeof node !== 'object') return null;
+        node = node.properties?.[seg];
+      }
+      node = descendSchema(node, ptr, root);
+      return node && typeof node === 'object' && typeof node.type === 'string' ? node.type : null;
+    };
+    const typeOfExpression = (expression, workflow, root) => {
+      if (expression.includes('{$')) return 'string';
+      const hash = expression.indexOf('#');
+      const head = hash < 0 ? expression : expression.slice(0, hash);
+      const ptr = hash < 0 ? null : expression.slice(hash);
+      const segs = head.split('.');
+      if (segs[0] === '$inputs') return workflow.inputs ? typeAt(workflow.inputs, segs.slice(1), ptr, root) : null;
+      if (segs[0] === '$steps' && segs[2] === 'outputs' && segs[3]) {
+        const st = (workflow.steps ?? []).find((x) => x.stepId === segs[1]);
+        const decl = st?.outputs?.[segs[3]];
+        if (typeof decl !== 'string') return null;
+        if (decl === '$statusCode') return 'integer';
+        if (decl.startsWith('$response.body')) {
+          const resolved = opSchema(st.operationId);
+          if (!resolved) return null;
+          let twoXx = null;
+          for (const item of Object.values(resolved.root.paths ?? {})) {
+            for (const op of Object.values(item ?? {})) {
+              if (!op || op.operationId !== st.operationId) continue;
+              for (const [code, response] of Object.entries(op.responses ?? {})) {
+                if (/^2\d\d$/.test(code)) {
+                  const schema = deref(response, resolved.root)?.content?.['application/json']?.schema;
+                  if (schema) { twoXx = deref(schema, resolved.root); break; }
+                }
+              }
+            }
+          }
+          if (!twoXx) return null;
+          const declPtr = decl.length > '$response.body'.length ? decl.slice('$response.body'.length) : null;
+          const at = descendSchema(twoXx, declPtr, resolved.root);
+          if (!at) return null;
+          return typeAt(at, segs.slice(4), ptr, resolved.root);
+        }
+      }
+      return null;
+    };
+    const compatible = (a, b) => a === b || (a === 'integer' && b === 'number') || (a === 'number' && b === 'integer');
+
+    const check = (value, schema, root, pointer, depth = 0, typing = null) => {
+      schema = deref(schema, root);
+      if (depth > 12 || !schema || typeof schema !== 'object') return;
+      if (typeof value === 'string') {
+        if (!isExpr(value)) {
+          if (['boolean', 'number', 'integer'].includes(schema.type)) {
+            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' is neither a ${schema.type} nor a runtime expression — the operation's schema requires a ${schema.type} here.` });
+          }
+          return;
+        }
+        if (typing && ['boolean', 'number', 'integer', 'string'].includes(schema.type)) {
+          const exprType = typeOfExpression(value, typing.workflow, root);
+          if (exprType && !compatible(exprType, schema.type)) {
+            findings.push({ severity: 'error', category: 'payload-typing', instancePath: pointer, message: `'${value}' resolves to a ${exprType} — the operation's schema requires a ${schema.type} here.` });
+          }
+        }
+        return;
+      }
+      if (value && typeof value === 'object' && !Array.isArray(value) && (!schema.type || schema.type === 'object')) {
+        for (const name of schema.required ?? []) {
+          if (!(name in value)) findings.push({ severity: 'warning', category: 'payload-typing', instancePath: pointer, message: `Required property '${name}' is missing from the payload — the operation's schema requires it.` });
+        }
+        for (const [name, v] of Object.entries(value)) {
+          if (schema.properties?.[name]) check(v, schema.properties[name], root, `${pointer}/${name}`, depth + 1, typing);
+        }
+        return;
+      }
+      if (Array.isArray(value) && schema.type === 'array' && schema.items) {
+        value.forEach((v, i) => check(v, schema.items, root, `${pointer}/${i}`, depth + 1, typing));
+      }
+    };
+    for (const [wi, workflow] of (Array.isArray(doc.workflows) ? doc.workflows : []).entries()) {
+      for (const [si, step] of (Array.isArray(workflow?.steps) ? workflow.steps : []).entries()) {
+        const payload = step?.requestBody?.payload;
+        if (payload === undefined || !step?.operationId) continue;
+        const resolved = opSchema(step.operationId);
+        if (resolved) check(payload, resolved.schema, resolved.root, `/workflows/${wi}/steps/${si}/requestBody/payload`, 0, { workflow });
+      }
+    }
+
+    return findings;
+  }
+
+  function attachWorkingCopySource(wc, name, body) {
+    const isRegistry = !!body?.sourceName;
+    const isInline = body?.document != null;
+    if (isRegistry === isInline) return problem(400, 'Invalid attachment', 'Supply EXACTLY ONE of sourceName or document.');
+    let type = body.type;
+    if (isInline && !type) {
+      type = body.document.openapi ? 'openapi' : body.document.asyncapi ? 'asyncapi' : body.document.arazzo ? 'arazzo' : null;
+      if (!type) return problem(400, 'Invalid attachment', 'The inline document declares neither openapi, asyncapi, nor arazzo; supply an explicit type.');
+    }
+    if (isRegistry) {
+      const registered = sourceRegistry.find((x) => x.name === body.sourceName);
+      if (!registered) return problem(404, 'Source not found', `No registered source named '${body.sourceName}'.`);
+      type = type || registered.type;
+    }
+    wc.sources = (wc.sources ?? []).filter((x) => x.name !== name);
+    const entry = {
+      name, kind: isRegistry ? 'registry' : 'inline',
+      ...(isRegistry ? { sourceName: body.sourceName } : { document: structuredClone(body.document) }),
+      ...(type ? { type } : {}),
+      attachedBy: actingSubject(), attachedAt: iso(0),
+    };
+    wc.sources.push(entry);
+    wc.etag = nextEtag();
+    const { document, ...rest } = entry;
+    return json({ ...structuredClone(rest), etag: wc.etag });
+  }
+
+  // A light stand-in for the server's deterministic simulator (§8): the REAL server compiles and
+  // executes the workflow; the demo walks the steps with first-match-wins semantics over the
+  // request's scripted mocks, evaluating only `$statusCode ==/!= N` conditions (other conditions
+  // count as satisfied when the status is 2xx). Approximate by design — good enough to drive the
+  // debug UI's overlay, truth tables, and stepping against the mock control plane.
+  function simulateDocument(doc, request, attachments, depth = 0, shared = null) {
+    const wf = (doc.workflows ?? []).find((w) => !request.workflowId || w.workflowId === request.workflowId)
+      ?? (request.workflowId ? null : doc.workflows?.[0]);
+    if (request.workflowId && !doc.workflows?.some((w) => w.workflowId === request.workflowId)) {
+      return problem(400, 'Unknown workflow', `The document declares no workflow '${request.workflowId}'.`);
+    }
+    if (!wf || !(wf.steps ?? []).length) return problem(422, 'Not executable', 'The document does not compile to an executable workflow.');
+
+    const scenario = request.scenario ?? {};
+    const routes = new Map();
+    for (const m of scenario.mocks ?? []) {
+      const key = `${(m.method || '').toLowerCase()} ${m.path}`;
+      if (!routes.has(key)) routes.set(key, []);
+      routes.get(key).push(m);
+    }
+    const takeResponse = (op) => {
+      const key = `${(op?.method || 'get').toLowerCase()} ${op?.path ?? ''}`;
+      const queue = routes.get(key);
+      if (!queue || !queue.length) return { status: 404, body: undefined };
+      const next = queue.length > 1 ? queue.shift() : queue[0];
+      return { status: next.status, body: next.body };
+    };
+    // Bind steps to method/path via the sources' operation surfaces: the caller's attachments
+    // (a catalog version's referenced sources), else the owning working copy's.
+    const boundSources = attachments ?? (workingCopies.find((x) => x.document === doc)?.sources) ?? [];
+    const surface = [];
+    for (const att of boundSources) {
+      const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+      if (d) surface.push(...projectOperationSurface(d));
+    }
+    const bindingOf = (step) => surface.find((o) =>
+      (o.operationId && o.operationId === step.operationId)
+      || (step.channelPath && o.channelPath === step.channelPath)) ?? null;
+
+    const until = request.until ?? {};
+    const breakpoints = new Set(until.breakpoints ?? []);
+    // §18 R-UI-3b: steps whose environment endpoint is DOWN this execution (debug-run transient-fault illustration).
+    // A down step's request never gets a status, so status-based onFailure/retry criteria do NOT apply — faithful to a
+    // real connection failure — and the step faults. A RetryFaultedStep resume clears it (the endpoint recovered).
+    const downSteps = new Set(request.downSteps ?? []);
+    const clockStart = Date.parse('2020-01-01T00:00:00Z');
+    // Root-owned state shared across inlined sub-workflows (§15-8a parity with the engine): ONE
+    // step budget, ONE virtual clock (child advances land in the root's clockAdvances), ONE
+    // trigger queue, and ONE arrival-counter space keyed by scoped step path.
+    const state = shared ?? {
+      triggers: [...(scenario.triggers ?? [])],
+      budget: { executed: 0 },
+      maxSteps: Math.min(request.budget?.maxSteps ?? 256, 1024),
+      clock: { ms: 0 },
+      clockAdvances: [],
+      arrivals: new Map(),
+      prefix: '',
+    };
+    const triggerQueue = state.triggers;
+    let wait;
+
+    const evalCriterion = (condition, status) => {
+      const m = /^\s*\$statusCode\s*(==|!=)\s*(\d+)\s*$/.exec(condition ?? '');
+      if (!m) return status >= 200 && status < 300;
+      return m[1] === '==' ? status === Number(m[2]) : status !== Number(m[2]);
+    };
+
+    const steps = [];
+    const stepOutputs = {};
+    const retries = new Map();
+    let outcome = 'completed';
+    let pausedBefore;
+    let fault;
+    let index = 0;
+    let executed = 0;
+
+    while (index >= 0 && index < wf.steps.length) {
+      const step = wf.steps[index];
+      // Scoped step paths (§3.5): stops match the COMPOSED path, so a bare id addresses root steps
+      // only; arrivals are root-owned and cumulative, keyed by the composed path.
+      const scopedId = state.prefix + step.stepId;
+      const arrival = (state.arrivals.get(scopedId) ?? 0) + 1;
+      state.arrivals.set(scopedId, arrival);
+      if (breakpoints.has(scopedId) || (until.beforeStepId === scopedId && arrival === (until.occurrence ?? 1))) {
+        outcome = 'paused';
+        pausedBefore = step.stepId;
+        break;
+      }
+      executed += 1;
+      if (++state.budget.executed > state.maxSteps) { outcome = 'budgetExhausted'; break; }
+
+      const op = bindingOf(step);
+
+      // STEP OVER / what-if (§3.3): an overridden step does not execute — its outputs are
+      // PROVIDED (the runs-view Skip, brought to the debugger). No exchange happens; only
+      // criteria-less actions can route (there is no status code to judge).
+      const outputOverrides = request.overrides?.stepOutputs ?? {};
+      if (Object.prototype.hasOwnProperty.call(outputOverrides, step.stepId)) {
+        const provided = outputOverrides[step.stepId];
+        const skipRecord = { stepId: step.stepId, status: 'completed', attempt: 0, skipped: true, ...(provided !== undefined ? { outputs: provided } : {}) };
+        if (provided !== undefined) stepOutputs[step.stepId] = provided;
+        const skipActions = (step.onSuccess?.length ? step.onSuccess : wf.successActions ?? [])
+          .map((a) => (a.reference ? resolveComponentAction(doc, a.reference) : a)).filter(Boolean)
+          .find((a) => !(a.criteria?.length));
+        if (skipActions) {
+          skipRecord.actionTaken = { type: skipActions.type, ...(skipActions.name ? { name: skipActions.name } : {}), ...(skipActions.stepId ? { target: skipActions.stepId } : {}) };
+          steps.push(skipRecord);
+          if (skipActions.type === 'end') { index = -1; break; }
+          if (skipActions.type === 'goto') { index = wf.steps.findIndex((x) => x.stepId === skipActions.stepId); continue; }
+        } else {
+          skipRecord.actionTaken = { type: 'fallThrough' };
+          steps.push(skipRecord);
+        }
+
+        index += 1;
+        continue;
+      }
+
+      // A sub-workflow step (workflowId binding): the target workflow runs INLINE — its nested
+      // trace rides the record (`subTrace`) so the debugger can step into it (§3.3).
+      if (typeof step.workflowId === 'string' && step.workflowId && !step.operationId && !step.channelPath) {
+        // The engine's cap (IWorkflowRun.MaxSubWorkflowDepth = 8): runaway recursion exhausts
+        // predictably, exactly like the budget. Child scopes get the shared state with their
+        // composed path prefix — and NO overrides (§10 F6: a root override matching a child's
+        // bare stepId must never fire inside the child).
+        if (depth >= 8) { outcome = 'budgetExhausted'; break; }
+        const sub = simulateDocument(
+          doc,
+          { workflowId: step.workflowId, scenario, until: request.until },
+          attachments,
+          depth + 1,
+          { ...state, prefix: `${state.prefix}${step.stepId}/` });
+        if (sub instanceof Response) { outcome = 'faulted'; fault = { stepId: step.stepId, attempt: 1, error: `Sub-workflow '${step.workflowId}' is not executable.` }; break; }
+        const subRecord = {
+          stepId: step.stepId,
+          // An in-progress parent presents its child's state as its own status (§3.5) — a paused
+          // or suspended child never reads as a green completed.
+          status: sub.outcome === 'faulted' ? 'faulted'
+            : sub.outcome === 'paused' ? 'paused'
+              : sub.outcome === 'suspended' ? 'suspended'
+                : 'completed',
+          attempt: retries.get(step.stepId) ?? 0,
+          subTrace: { workflowId: step.workflowId, ...sub },
+          ...(sub.outputs !== undefined ? { outputs: sub.outputs } : {}),
+        };
+        if (sub.outputs !== undefined) stepOutputs[step.stepId] = sub.outputs;
+        if (sub.outcome === 'paused') {
+          // A scoped stop inside the child: the ancestor record carries the partial sub-trace, and
+          // this level's pausedBefore composes the scoped path segment by segment (§3.5).
+          steps.push(subRecord);
+          outcome = 'paused';
+          pausedBefore = `${step.stepId}/${sub.pausedBefore}`;
+          break;
+        }
+        if (sub.outcome === 'budgetExhausted') {
+          steps.push(subRecord);
+          outcome = 'budgetExhausted';
+          break;
+        }
+        if (sub.outcome === 'suspended') {
+          // The wait bubbles: the parent suspends where the child does.
+          steps.push(subRecord);
+          outcome = 'suspended';
+          wait = sub.wait;
+          break;
+        }
+
+        const subOk = sub.outcome === 'completed';
+        const subActions = subOk
+          ? (step.onSuccess?.length ? step.onSuccess : wf.successActions ?? [])
+          : (step.onFailure?.length ? step.onFailure : wf.failureActions ?? []);
+        const subFired = subActions.map((a) => (a.reference ? resolveComponentAction(doc, a.reference) : a)).filter(Boolean)
+          .find((a) => !(a.criteria?.length)); // sub-workflow steps have no $statusCode; only criteria-less actions fire
+        if (subFired) {
+          subRecord.actionTaken = { type: subFired.type, ...(subFired.name ? { name: subFired.name } : {}), ...(subFired.stepId ? { target: subFired.stepId } : {}) };
+          steps.push(subRecord);
+          if (subFired.type === 'end') { index = -1; break; }
+          if (subFired.type === 'goto') { index = wf.steps.findIndex((x) => x.stepId === subFired.stepId); continue; }
+        } else if (!subOk) {
+          outcome = 'faulted';
+          fault = { stepId: step.stepId, attempt: 1, error: `Sub-workflow '${step.workflowId}' faulted.` };
+          subRecord.status = 'faulted';
+          subRecord.actionTaken = { type: 'fault' };
+          steps.push(subRecord);
+          break;
+        } else {
+          subRecord.actionTaken = { type: 'fallThrough' };
+          steps.push(subRecord);
+        }
+
+        index += 1;
+        continue;
+      }
+
+      // A message step (AsyncAPI receive, bound by operationId or channelPath): consume a matching
+      // scenario trigger, or SUSPEND on the wait — the same semantics the real engine gives staged
+      // `triggers` and injected ones.
+      if ((op?.kind === 'asyncapi' && (op.action ?? 'receive') === 'receive')
+        || (typeof step.channelPath === 'string' && step.channelPath && !step.operationId)) {
+        const channel = op.channelPath ?? step.channelPath ?? step.operationId;
+        const ti = triggerQueue.findIndex((t) => t.channel === channel);
+        if (ti < 0) {
+          outcome = 'suspended';
+          wait = { kind: 'message', channel };
+          break;
+        }
+
+        const [trigger] = triggerQueue.splice(ti, 1);
+        const messageRecord = {
+          stepId: step.stepId, status: 'completed', attempt: retries.get(step.stepId) ?? 0,
+          requests: [{ method: 'message', path: channel, status: 200, ...(trigger.payload !== undefined ? { responseBody: trigger.payload } : {}) }],
+          actionTaken: { type: 'fallThrough' },
+        };
+        const messageOutputs = extractOutputs(step.outputs, { statusCode: 200, messagePayload: trigger.payload });
+        if (messageOutputs !== undefined) { messageRecord.outputs = messageOutputs; stepOutputs[step.stepId] = messageOutputs; }
+        steps.push(messageRecord);
+        index += 1;
+        continue;
+      }
+
+      // A DOWN endpoint faults at the transport level — no status, so status-based onFailure/retry never fires (the
+      // real behaviour of a connection failure); Retry (which clears the down state) is the remedy, not onFailure.
+      if (downSteps.has(step.stepId)) {
+        const at = (retries.get(step.stepId) ?? 0) + 1;
+        steps.push({
+          stepId: step.stepId, status: 'faulted', attempt: at,
+          requests: [{ method: op?.method ?? 'post', path: op?.path ?? `/${step.stepId}`, error: 'ECONNREFUSED — endpoint unreachable' }],
+          actionTaken: { type: 'fault' },
+        });
+        outcome = 'faulted';
+        fault = { stepId: step.stepId, attempt: at, error: `Connection refused: ${op?.path ?? step.stepId} is unreachable (the environment endpoint is down).` };
+        break;
+      }
+
+      const { status, body: respBody } = takeResponse(op ?? { method: 'get', path: `/${step.stepId}` });
+      const attempt = retries.get(step.stepId) ?? 0;
+      const criteria = (step.successCriteria ?? []).map((c) => ({ condition: c.condition, satisfied: evalCriterion(c.condition, status) }));
+      const ok = criteria.length ? criteria.every((c) => c.satisfied) : (status >= 200 && status < 300);
+
+      // The exchange records what the step actually SENT: parameters resolved into the path and
+      // query, the request body with its expressions resolved — the debugger's inputs view.
+      const frame = { inputs: scenario.inputs ?? {}, steps: Object.fromEntries(Object.entries(stepOutputs).map(([sid, o]) => [sid, { outputs: o }])) };
+      const resolveValue = (v) => {
+        if (typeof v === 'string' && v.startsWith('$')) {
+          const r = resolveAgainstFrame(v, frame);
+          return r.found ? r.value : v; // unresolved expressions stay visible as themselves
+        }
+        if (Array.isArray(v)) return v.map(resolveValue);
+        if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, resolveValue(x)]));
+        return v;
+      };
+      let resolvedPath = op?.path ?? `/${step.stepId}`;
+      const query = [];
+      for (const prm of step.parameters ?? []) {
+        if (!prm?.name || typeof prm.reference === 'string') continue;
+        const val = resolveValue(prm.value);
+        if ((prm.in ?? 'query') === 'path') resolvedPath = resolvedPath.replace(`{${prm.name}}`, encodeURIComponent(String(val)));
+        else if ((prm.in ?? 'query') === 'query') query.push(`${prm.name}=${encodeURIComponent(typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val))}`);
+      }
+      if (query.length) resolvedPath += `?${query.join('&')}`;
+      const sentBody = step.requestBody?.payload !== undefined ? resolveValue(step.requestBody.payload) : undefined;
+
+      const record = {
+        stepId: step.stepId, status: 'completed', attempt,
+        requests: [{ method: (op?.method ?? 'GET').toLowerCase(), path: resolvedPath, status, ...(sentBody !== undefined ? { requestBody: sentBody } : {}), ...(respBody !== undefined ? { responseBody: respBody } : {}) }],
+        ...(criteria.length ? { successCriteria: criteria } : {}),
+      };
+      const extracted = extractOutputs(step.outputs, { statusCode: status, responseBody: respBody });
+      if (extracted !== undefined) { record.outputs = extracted; stepOutputs[step.stepId] = extracted; }
+
+      const actions = ok
+        ? (step.onSuccess?.length ? step.onSuccess : wf.successActions ?? [])
+        : (step.onFailure?.length ? step.onFailure : wf.failureActions ?? []);
+      const fired = actions.map((a) => (a.reference ? resolveComponentAction(doc, a.reference) : a)).filter(Boolean)
+        .find((a) => (a.criteria ?? []).every((c) => evalCriterion(c.condition, status)));
+
+      if (fired) {
+        record.actionTaken = { type: fired.type, ...(fired.name ? { name: fired.name } : {}), ...(fired.stepId ? { target: fired.stepId } : {}) };
+        steps.push(record);
+        if (fired.type === 'end') { index = -1; break; }
+        if (fired.type === 'goto') { index = wf.steps.findIndex((x) => x.stepId === fired.stepId); continue; }
+        if (fired.type === 'retry') {
+          const used = retries.get(step.stepId) ?? 0;
+          if (used >= (fired.retryLimit ?? 1)) {
+            outcome = 'faulted';
+            fault = { stepId: step.stepId, attempt: used + 1, error: `Step '${step.stepId}' exhausted its retries.` };
+            record.status = 'faulted';
+            break;
+          }
+          retries.set(step.stepId, used + 1);
+          if (fired.retryAfter) {
+            state.clock.ms += fired.retryAfter * 1000;
+            state.clockAdvances.push({ to: new Date(clockStart + state.clock.ms).toISOString(), reason: 'timer due' });
+          }
+          continue; // re-enter the same step
+        }
+      } else if (!ok) {
+        outcome = 'faulted';
+        fault = { stepId: step.stepId, attempt: attempt + 1, error: `Step '${step.stepId}' did not satisfy its success criteria.` };
+        record.status = 'faulted';
+        record.actionTaken = { type: 'fault' };
+        steps.push(record);
+        break;
+      } else {
+        record.actionTaken = { type: 'fallThrough' };
+        steps.push(record);
+      }
+
+      index += 1;
+    }
+
+    // Workflow outputs resolve from the collected step outputs and the scenario inputs — only a
+    // completed run produces them, like the real engine.
+    let workflowOutputs;
+    if (outcome === 'completed' && wf.outputs && typeof wf.outputs === 'object') {
+      const frame = { inputs: scenario.inputs ?? {}, steps: Object.fromEntries(Object.entries(stepOutputs).map(([id, o]) => [id, { outputs: o }])) };
+      for (const [name, expr] of Object.entries(wf.outputs)) {
+        const resolved = typeof expr === 'string' ? resolveAgainstFrame(expr, frame) : { found: false };
+        if (resolved.found) (workflowOutputs ??= {})[name] = resolved.value;
+      }
+    }
+
+    return {
+      outcome,
+      ...(pausedBefore ? { pausedBefore } : {}),
+      ...(fault ? { fault } : {}),
+      ...(wait ? { wait } : {}),
+      ...(workflowOutputs !== undefined ? { outputs: workflowOutputs } : {}),
+      steps,
+      ...(depth === 0 && state.clockAdvances.length ? { clockAdvances: state.clockAdvances } : {}),
+      stepsExecuted: executed > state.maxSteps ? state.maxSteps : steps.length,
+    };
+  }
+
+  // Step output extraction, demo-grade: `$response.body#/ptr`, `$response.body`, `$message.payload#/ptr`,
+  // and `$statusCode` resolve; anything else is skipped (the real engine runs full expressions).
+  function extractOutputs(declared, { statusCode, responseBody, messagePayload }) {
+    if (!declared || typeof declared !== 'object') return undefined;
+    let out;
+    for (const [name, expr] of Object.entries(declared)) {
+      if (typeof expr !== 'string') continue;
+      let value;
+      if (expr === '$statusCode') value = statusCode;
+      else {
+        const m = /^\$(response\.body|message\.payload)(#\/(.*))?$/.exec(expr);
+        if (!m) continue;
+        value = m[1] === 'response.body' ? responseBody : messagePayload;
+        if (m[3] !== undefined) {
+          for (const tok of m[3].split('/')) {
+            const key = tok.replaceAll('~1', '/').replaceAll('~0', '~');
+            value = Array.isArray(value) ? value[Number(key)] : (value && typeof value === 'object' ? value[key] : undefined);
+          }
+        }
+      }
+      if (value !== undefined) (out ??= {})[name] = value;
+    }
+    return out;
+  }
+
+  // Mirror of the server's scenario runner: resolve (source, operationId) mocks to routes through
+  // the attachments, replay via the demo synthesizer, judge the expectations.
+  function runScenarioAgainst(wc, sc) {
+    const routes = new Map();
+    for (const att of wc.sources ?? []) {
+      const d = att.document ?? sourceRegistry.find((x) => x.name === att.sourceName)?.document;
+      for (const [pathT, item] of Object.entries(d?.paths ?? {})) {
+        for (const [m, op] of Object.entries(item ?? {})) {
+          if (op?.operationId) routes.set(`${att.name}\u0000${op.operationId}`, { method: m, path: pathT });
+        }
+      }
+    }
+    const mocks = [];
+    for (const mock of sc.mocks ?? []) {
+      const route = routes.get(`${mock.source}\u0000${mock.operationId}`);
+      if (!route) continue;
+      for (const r of mock.responses ?? []) mocks.push({ method: route.method, path: route.path, status: r.status, body: r.body });
+    }
+    const outcome = simulateDocument(wc.document, { scenario: { inputs: sc.inputs, mocks, triggers: sc.triggers, clock: sc.clock } });
+    const trace = outcome instanceof Response ? { outcome: 'faulted', steps: [], stepsExecuted: 0 } : outcome;
+    return judgeScenario(sc, trace);
+  }
+
+  function judgeScenario(sc, trace) {
+    const verdicts = [];
+    const expect = sc.expect;
+    if (!expect) {
+      verdicts.push({ kind: 'outcome', passed: trace.outcome === 'completed', detail: `expected completed (implicit); was ${trace.outcome}` });
+    } else {
+      if (expect.outcome) verdicts.push({ kind: 'outcome', passed: trace.outcome === expect.outcome, detail: `expected ${expect.outcome}; was ${trace.outcome}` });
+      if (Array.isArray(expect.path)) {
+        const visited = trace.steps.map((s) => s.stepId);
+        let passed;
+        if (expect.pathMode === 'exact') passed = visited.length === expect.path.length && visited.every((v, i) => v === expect.path[i]);
+        else { let at = 0; for (const v of visited) if (at < expect.path.length && v === expect.path[at]) at++; passed = at === expect.path.length; }
+        verdicts.push({ kind: 'path', passed, detail: `visited [${visited.join(', ')}]` });
+      }
+      // Output conditions evaluate against the FULL frame — workflow outputs AND every step's
+      // outputs — so intermediate results are assertable: `$steps.authorize.outputs.id == 'a-1'`.
+      const frame = {
+        inputs: sc.inputs ?? {},
+        outputs: trace.outputs,
+        steps: Object.fromEntries(trace.steps.filter((s) => s.outputs !== undefined).map((s) => [s.stepId, { outputs: s.outputs }])),
+      };
+      for (const o of expect.outputs ?? []) {
+        verdicts.push({ kind: 'output', ...evaluateOutputCondition(o.condition, frame) });
+      }
+      for (const [stepId, e] of Object.entries(expect.steps ?? {})) {
+        const attempts = trace.steps.filter((s) => s.stepId === stepId).length;
+        if (typeof e.reached === 'boolean') verdicts.push({ kind: 'step', passed: (attempts > 0) === e.reached, detail: `${stepId}: executions=${attempts}` });
+        if (typeof e.attempts === 'number') verdicts.push({ kind: 'step', passed: attempts === e.attempts, detail: `${stepId}: expected ${e.attempts}; was ${attempts}` });
+      }
+    }
+    return { scenario: sc.name, passed: verdicts.every((v) => v.passed), outcome: trace.outcome, expectations: verdicts, trace };
+  }
+
+  // `<expr> == <literal>` / `!=` over the judged frame (demo-grade; the server compiles the real
+  // criterion grammar). The literal is JSON: 'quoted', 42, true, false, null.
+  function evaluateOutputCondition(condition, frame) {
+    const m = /^\s*(\$\S+)\s*(==|!=)\s*(.+?)\s*$/.exec(condition ?? '');
+    if (!m) return { passed: false, detail: `${condition} — not a <expression> == <literal> condition` };
+    const resolved = resolveAgainstFrame(m[1], frame);
+    if (!resolved.found) return { passed: false, detail: `${condition} — ${resolved.reason}` };
+    let literal;
+    try { literal = JSON.parse(m[3].replaceAll("'", '"')); }
+    catch { return { passed: false, detail: `${condition} — right side is not a literal` }; }
+    const equal = JSON.stringify(resolved.value) === JSON.stringify(literal);
+    const passed = m[2] === '==' ? equal : !equal;
+    return { passed, detail: `${condition} — left was ${JSON.stringify(resolved.value)}` };
+  }
+
+  function resolveComponentAction(doc, reference) {
+    const m = /^\$components\.(successActions|failureActions)\.(.+)$/.exec(reference ?? '');
+    return m ? doc.components?.[m[1]]?.[m[2]] ?? null : null;
+  }
+
+  // A light stand-in for the server's operation-surface projection: OpenAPI paths×methods with
+  // parameters/request/responses, AsyncAPI 2.x publish/subscribe (→ receive/send) and 3.0
+  // operations, local $refs inlined to a bounded depth. Raw JSON Schema out, like the server.
+  function projectOperationSurface(doc) {
+    const deref = (node, depth = 0) => {
+      if (depth > 8 || node == null || typeof node !== 'object') return node;
+      if (node.$ref && typeof node.$ref === 'string' && node.$ref.startsWith('#/')) {
+        let target = doc;
+        for (const seg of node.$ref.slice(2).split('/')) target = target?.[seg.replaceAll('~1', '/').replaceAll('~0', '~')];
+        return deref(target, depth + 1);
+      }
+      if (Array.isArray(node)) return node.map((x) => deref(x, depth + 1));
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, deref(v, depth + 1)]));
+    };
+    const contentSchema = (content) => {
+      if (!content || typeof content !== 'object') return {};
+      const keys = Object.keys(content);
+      const chosen = keys.find((k) => k === 'application/json') ?? keys.find((k) => k.endsWith('+json') || k.endsWith('/json')) ?? keys[0];
+      if (!chosen) return {};
+      const schema = content[chosen]?.schema ? deref(content[chosen].schema) : undefined;
+      return { contentType: chosen, ...(schema ? { schema } : {}) };
+    };
+    const operations = [];
+    if (doc.openapi) {
+      for (const [path, item] of Object.entries(doc.paths ?? {})) {
+        if (!item || typeof item !== 'object') continue;
+        for (const method of ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query']) {
+          const op = item[method];
+          if (!op || typeof op !== 'object') continue;
+          const parameters = [...(Array.isArray(item.parameters) ? item.parameters : []), ...(Array.isArray(op.parameters) ? op.parameters : [])]
+            .map((x) => deref(x)).filter((x) => x?.name && x?.in)
+            .map((x) => ({ name: x.name, in: x.in, ...(x.required ? { required: true } : {}), ...(x.schema ? { schema: x.schema } : {}) }));
+          const responses = {};
+          for (const [code, r] of Object.entries(op.responses ?? {})) {
+            const resolved = deref(r);
+            const { schema } = contentSchema(resolved?.content);
+            responses[code] = schema ? { schema } : {};
+          }
+          const request = op.requestBody ? contentSchema(deref(op.requestBody)?.content) : null;
+          operations.push({
+            kind: 'openapi', path, method: method.toUpperCase(),
+            ...(op.operationId ? { operationId: op.operationId } : {}),
+            ...(op.summary || op.description ? { summary: op.summary ?? op.description } : {}),
+            ...(op.deprecated ? { deprecated: true } : {}),
+            ...(request && (request.contentType || request.schema) ? { request } : {}),
+            ...(parameters.length ? { parameters } : {}),
+            ...(Object.keys(responses).length ? { responses } : {}),
+          });
+        }
+      }
+    } else if (doc.asyncapi && String(doc.asyncapi).startsWith('3')) {
+      for (const [opId, op] of Object.entries(doc.operations ?? {})) {
+        const channel = deref(op?.channel);
+        const messages = op?.messages ?? channel?.messages;
+        const first = deref(Array.isArray(messages) ? messages[0] : Object.values(messages ?? {})[0]);
+        operations.push({
+          kind: 'asyncapi', operationId: opId,
+          ...(op?.action ? { action: op.action } : {}),
+          ...(channel?.address ? { channelPath: channel.address } : {}),
+          ...(op?.summary || op?.description ? { summary: op.summary ?? op.description } : {}),
+          ...(first?.payload ? { request: { schema: deref(first.payload) } } : {}),
+        });
+      }
+    } else if (doc.asyncapi) {
+      for (const [channelPath, channel] of Object.entries(doc.channels ?? {})) {
+        for (const [prop, action] of [['publish', 'receive'], ['subscribe', 'send']]) {
+          const op = channel?.[prop];
+          if (!op || typeof op !== 'object') continue;
+          let message = deref(op.message);
+          if (Array.isArray(message?.oneOf)) message = deref(message.oneOf[0]);
+          operations.push({
+            kind: 'asyncapi', channelPath, action,
+            ...(op.operationId ? { operationId: op.operationId } : {}),
+            ...(op.summary || op.description ? { summary: op.summary ?? op.description } : {}),
+            ...(message?.payload ? { request: { schema: message.payload } } : {}),
+          });
+        }
+      }
+    }
+    return operations;
   }
 
   // ---- deployment environments (§7.7) -----------------------------------------------------------
@@ -2175,6 +4160,13 @@ export function createMockControlPlane(options = {}) {
     return environments.find((e) => e.name === name);
   }
 
+  // Whether the version's publish evidence attests a green suite (it ran at least one scenario and none
+  // failed) — the evidence half of the §4.6 readiness formula.
+  function hasGreenEvidence(version) {
+    const suite = version._evidence?.suite;
+    return !!suite && suite.total > 0 && suite.failed === 0;
+  }
+
   function notFoundEnvironment(name) {
     return problem(404, 'Environment not found', `No environment named '${name}'.`);
   }
@@ -2203,6 +4195,8 @@ export function createMockControlPlane(options = {}) {
       managementTags: body.managementTags ?? [],
       createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
+    // Promotion readiness (workflow-designer §4.6): the environment may require green publish evidence.
+    if (typeof body.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
     environments.push(e);
     // Creating an environment grants the creator administration of it (§7.7), mirroring catalog version creation.
     environmentAdministrators[e.name] = [adminGrant([{ dimension: 'sys:sub', value: actingSubject() }], 'person', 'You (creator)')];
@@ -2225,6 +4219,8 @@ export function createMockControlPlane(options = {}) {
 
     if (body?.displayName !== undefined) e.displayName = body.displayName;
     if (body?.description !== undefined) e.description = body.description;
+    // A present requireEvidence replaces the promotion-readiness requirement (§4.6); absent leaves it unchanged.
+    if (typeof body?.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
     e.lastUpdatedBy = actingSubject(); e.lastUpdatedAt = iso(0); e.etag = nextEtag();
     return json(structuredClone(e));
   }
@@ -2274,7 +4270,8 @@ export function createMockControlPlane(options = {}) {
     const limit = Math.max(1, Math.min(Number(params.get('limit')) || 20, 100));
     const matches = grantees.filter((g) => {
       if (kind && g.kind !== kind) return false;
-      if (source && g.source !== source) return false;
+      // `merged` (and an absent source — the server's merged default when a directory is configured) unions both sources.
+      if (source && source !== 'merged' && g.source !== source) return false;
       if (q && !`${g.value} ${g.label || ''}`.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -2499,6 +4496,10 @@ export function createMockControlPlane(options = {}) {
       const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, r.environment, r.baseWorkflowId)).map((s) => s.name);
       if (missing.length > 0) {
         return problem(409, 'Environment not ready', `Version ${r.versionNumber} of '${r.baseWorkflowId}' cannot be made available in '${r.environment}': no usable credential for ${missing.join(', ')}.`);
+      }
+      // Promotion readiness (workflow-designer §4.6): approval hits the same evidence gate as a direct make-available.
+      if (findEnvironment(r.environment)?.requireEvidence && !hasGreenEvidence(version)) {
+        return problem(409, 'Evidence required', `Version ${r.versionNumber} of '${r.baseWorkflowId}' cannot be made available in '${r.environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).`);
       }
       r.status = 'Approved'; r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason;
       // Approval makes the version available — record it in the matrix (idempotent).

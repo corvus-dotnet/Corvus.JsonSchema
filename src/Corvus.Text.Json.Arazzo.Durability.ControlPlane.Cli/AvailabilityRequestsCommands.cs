@@ -93,10 +93,11 @@ internal sealed class AvailabilityRequestListCommand : AsyncCommand<Availability
         await using (transport)
         {
             // Walk every keyset page (the store pages server-side) so the output is the complete queue, never the first
-            // page alone. Each view is materialised (ToString) while its page response is alive, then the accumulated set
-            // is rendered/printed once. The Source filter values are built inline per call (they are ref structs that
-            // cannot be held across the loop's await).
-            var items = new List<string>();
+            // page alone. Each view is cloned detached while its page response is alive, then the accumulated set folds
+            // into ONE pooled document via the generated contextful Create() (each clone blits in as an element) — no
+            // per-item JSON string, no join, no re-encode + reparse. The Source filter values are built inline per call
+            // (they are ref structs that cannot be held across the loop's await).
+            var items = new List<Models.AvailabilityRequestView>();
             string? pageToken = null;
             do
             {
@@ -113,7 +114,7 @@ internal sealed class AvailabilityRequestListCommand : AsyncCommand<Availability
                         next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
                         foreach (Models.AvailabilityRequestView view in list.AvailabilityRequests.EnumerateArray())
                         {
-                            items.Add(view.ToString());
+                            items.Add(view.Clone());
                         }
 
                         return 0;
@@ -129,13 +130,22 @@ internal sealed class AvailabilityRequestListCommand : AsyncCommand<Availability
             }
             while (pageToken is not null);
 
-            string combined = $"{{\"availabilityRequests\":[{string.Join(",", items)}]}}";
+            using ParsedJsonDocument<Models.AvailabilityRequestList> rendered = Models.AvailabilityRequestList.Create(
+                context: items,
+                availabilityRequests: Models.AvailabilityRequestList.AvailabilityRequestViewArray.Build(
+                    items,
+                    static (in List<Models.AvailabilityRequestView> views, ref Models.AvailabilityRequestList.AvailabilityRequestViewArray.Builder b) =>
+                    {
+                        foreach (Models.AvailabilityRequestView view in views)
+                        {
+                            b.AddItem(view);
+                        }
+                    }));
             if (settings.Output.Equals("json", StringComparison.OrdinalIgnoreCase))
             {
-                return Output.Print(combined);
+                return Output.Print(rendered.RootElement.ToString());
             }
 
-            using ParsedJsonDocument<Models.AvailabilityRequestList> rendered = ParsedJsonDocument<Models.AvailabilityRequestList>.Parse(System.Text.Encoding.UTF8.GetBytes(combined).AsMemory());
             return AvailabilityRequestCommandHelpers.RenderTable(rendered.RootElement, settings.Environment, settings.Inbox);
         }
     }

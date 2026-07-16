@@ -19,6 +19,8 @@ class ArazzoRunsTable extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._runs = [];
+    /** @private */ this._total = null; // reach-scoped bounded total for the footer (null until first load)
+    /** @private */ this._totalCapped = false; // true when the true total meets/exceeds the server cap ("N+")
     /** @private */ this._history = []; // pageTokens of pages before the current one
     /** @private */ this._currentToken = undefined;
     /** @private */ this._nextToken = null;
@@ -92,7 +94,7 @@ class ArazzoRunsTable extends ArazzoElement {
     if (!silent) this.renderBody();
 
     try {
-      const { runs, nextPageToken } = await client.listRuns({
+      const filter = {
         status: this.filters.status,
         workflowId: this.filters.workflowId,
         createdAfter: this.getAttribute('created-after') || undefined,
@@ -101,12 +103,19 @@ class ArazzoRunsTable extends ArazzoElement {
         updatedBefore: this.getAttribute('updated-before') || undefined,
         tags: (this.getAttribute('tags') || '').split(/[,\s]+/).filter(Boolean),
         correlationId: this.getAttribute('correlation-id') || undefined,
-        limit: this.pageSize,
-        pageToken: this._currentToken,
-      });
+      };
+
+      // The bounded total (for the footer) rides alongside the page: same filter, reach-scoped server-side. It is
+      // best-effort — a count failure falls back to the page length and never breaks the list.
+      const [{ runs, nextPageToken }, total] = await Promise.all([
+        client.listRuns({ ...filter, limit: this.pageSize, pageToken: this._currentToken }),
+        client.countRuns(filter).catch(() => null),
+      ]);
       if (seq !== this._reqSeq) return; // a newer request superseded this one
       this._runs = runs;
       this._nextToken = nextPageToken;
+      this._total = total ? total.count : null;
+      this._totalCapped = total ? total.capped : false;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: runs.length, hasMore: !!nextPageToken });
@@ -156,11 +165,14 @@ class ArazzoRunsTable extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         table { width: 100%; border-collapse: collapse; }
         thead th {
           text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
           padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
+          position: sticky; top: 0; z-index: 1;
         }
         tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
         tbody tr:last-child td { border-bottom: none; }
@@ -177,16 +189,19 @@ class ArazzoRunsTable extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         ${PAGER_CSS}
+        .pager { flex: none; }
       </style>
       <div class="wrap" part="table">
-        <table>
-          <thead>
-            <tr>
-              <th>Status</th><th>Workflow</th><th>Environment</th><th>Run</th><th>Age</th><th>Waiting on</th><th>Error</th><th>Tags</th>
-            </tr>
-          </thead>
-          <tbody part="rows"></tbody>
-        </table>
+        <div class="tablescroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th><th>Workflow</th><th>Environment</th><th>Run</th><th>Age</th><th>Updated</th><th>Waiting on</th><th>Error</th><th>Tags</th>
+              </tr>
+            </thead>
+            <tbody part="rows"></tbody>
+          </table>
+        </div>
         <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;
@@ -200,7 +215,7 @@ class ArazzoRunsTable extends ArazzoElement {
     const selectable = this.hasAttribute('selectable');
 
     if (this._error) {
-      tbody.innerHTML = `<tr><td colspan="8">
+      tbody.innerHTML = `<tr><td colspan="9">
         <div class="error-banner">
           <span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span>
           <button class="retry" type="button">Retry</button>
@@ -212,13 +227,13 @@ class ArazzoRunsTable extends ArazzoElement {
 
     if (this._loading && this._runs.length === 0) {
       tbody.innerHTML = Array.from({ length: 4 }, () =>
-        `<tr>${'<td><div class="skl"></div></td>'.repeat(8)}</tr>`).join('');
+        `<tr>${'<td><div class="skl"></div></td>'.repeat(9)}</tr>`).join('');
       this.updatePager();
       return;
     }
 
     if (this._runs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty">No runs match the current filters.</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty">No runs match the current filters.</div></td></tr>`;
       this.updatePager();
       return;
     }
@@ -261,6 +276,7 @@ class ArazzoRunsTable extends ArazzoElement {
         <td part="cell" class="env">${run.environment ? `<span class="tag">${escapeHtml(run.environment)}</span>` : '<span class="muted">—</span>'}</td>
         <td part="cell" class="id"><span title="${escapeHtml(run.id)}">${escapeHtml(shortId(run.id))}</span><button class="copy ghost" type="button" data-id="${escapeHtml(run.id)}" title="Copy run id" aria-label="Copy run id">⧉</button></td>
         <td part="cell" class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</td>
+        <td part="cell" class="muted" title="${escapeHtml(absoluteTime(run.updatedAt))}">${escapeHtml(relativeTime(run.updatedAt))}</td>
         <td part="cell">${waiting}</td>
         <td part="cell">${err}</td>
         <td part="cell">${tags}</td>
@@ -268,9 +284,11 @@ class ArazzoRunsTable extends ArazzoElement {
   }
 
   updatePager() {
+    // Prefer the reach-scoped bounded total ("N"/"N+"); fall back to the page length if the count was unavailable.
+    const shown = this._total ?? this._runs.length;
     const info = this._loading
       ? 'Loading…'
-      : `${this._runs.length} run${this._runs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+      : `${shown}${this._totalCapped ? '+' : ''} run${shown === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextToken, loading: this._loading, info });
   }
 
