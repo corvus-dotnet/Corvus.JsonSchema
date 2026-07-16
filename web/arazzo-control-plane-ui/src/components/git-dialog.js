@@ -38,6 +38,9 @@ class ArazzoGitDialog extends ArazzoElement {
     /** @private */ this._historySeq = 0;
     /** @private */ this._historyPage = 0;
     /** @private */ this._historyKey = '';
+    /** @private */ this._historyCommits = [];
+    /** @private */ this._historySelection = []; // shas, oldest-pick first, MAX 2 (FIFO: a third pick evicts the first)
+    /** @private */ this._historyHasMore = false;
   }
 
   /** The Layer-0 client. */
@@ -52,6 +55,9 @@ class ArazzoGitDialog extends ArazzoElement {
     // leave the freshly-wiped list empty — "history doesn't load when you select the Git tab".
     this._historyKey = '';
     this._historyPage = 0;
+    this._historyCommits = [];
+    this._historySelection = [];
+    this._historyHasMore = false;
     this.render();
     this.$('.gh-connect').client = this._client;
     if (this.windowOpener) this.$('.gh-connect').windowOpener = this.windowOpener;
@@ -116,15 +122,29 @@ class ArazzoGitDialog extends ArazzoElement {
         .result[hidden], .load-result[hidden], .error-banner[hidden] { display: none; }
         .result .file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
         .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        .commits { display: grid; gap: 6px; }
-        .hist-commit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
-                  border: 1px solid var(--_border); border-radius: 6px; padding: 6px 10px; }
+        /* History: the kit's headered list — title + count, actions in the header, rows below. */
+        .hist { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; }
+        .hist .head { padding: 8px 10px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
+        .hist .head .title { font-weight: 700; font-size: 12.5px; }
+        .hist .head .count { color: var(--_muted); font-size: 11.5px; }
+        .hist .head .grow { flex: 1; }
+        .hist .head button { font-size: 11.5px; }
+        .cmp-wrap { position: relative; }
+        .cmp-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 208px; display: flex; flex-direction: column; padding: 4px; gap: 2px; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+        .cmp-menu .menu-item { text-align: left; white-space: nowrap; border: 1px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 12.5px; cursor: pointer; }
+        .cmp-menu .menu-item:hover:not(:disabled) { background: var(--_surface); }
+        .cmp-menu .menu-item:disabled { color: var(--_muted); cursor: default; }
+        .commits { display: grid; }
+        .hist-commit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 6px 10px; cursor: pointer;
+                  border-bottom: 1px solid var(--_border); }
+        .hist-commit:last-child { border-bottom: none; }
+        .hist-commit:hover { background: var(--_surface); }
+        .hist-commit[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); box-shadow: inset 3px 0 0 var(--_accent); }
         .hist-commit .msg { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-        .hist-commit .meta { grid-column: 1; font-size: 11px; color: var(--_muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        .hist-commit .meta { font-size: 11px; color: var(--_muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
                         overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-        .hist-commit .acts { grid-row: 1 / span 2; display: flex; gap: 6px; }
-        .hist-commit .acts button { font-size: 11.5px; }
-        .history-empty { font-size: 11.5px; color: var(--_muted); }
+        .history-more { border: none; border-top: 1px solid var(--_border); border-radius: 0; width: 100%; }
+        .history-empty { font-size: 11.5px; color: var(--_muted); padding: 8px 10px; }
       </style>
       <div class="panel" part="panel">
         <arazzo-input-dialog class="ask"></arazzo-input-dialog>
@@ -190,9 +210,21 @@ class ArazzoGitDialog extends ArazzoElement {
           </fieldset>
           <fieldset class="history-section" hidden>
             <legend>History — commits touching the bound document, newest first</legend>
-            <div class="commits"></div>
-            <div class="row-actions">
-              <button class="history-more ghost" type="button" hidden>Load more…</button>
+            <div class="hist">
+              <div class="head">
+                <span class="title">Commits</span>
+                <span class="count"></span>
+                <span class="grow"></span>
+                <span class="cmp-wrap">
+                  <button class="hist-cmp ghost" type="button" aria-haspopup="menu" aria-expanded="false" disabled
+                          title="Select one commit (vs the working copy or its predecessor) or two (between them)">⇆ Compare ▾</button>
+                  <div class="cmp-menu" role="menu" hidden></div>
+                </span>
+                <button class="hist-rollback ghost" type="button" disabled
+                        title="Select exactly one commit to roll the working copy back to it">↩ Roll back…</button>
+              </div>
+              <div class="commits" role="listbox" aria-multiselectable="true"></div>
+              <button class="history-more ghost" type="button" hidden>More…</button>
             </div>
           </fieldset>
           <arazzo-workflow-compare class="compare"></arazzo-workflow-compare>
@@ -227,6 +259,17 @@ class ArazzoGitDialog extends ArazzoElement {
     });
     this.$('.nb-create').addEventListener('click', () => this.createBranch());
     this.$('.history-more').addEventListener('click', () => { void this.loadHistory({ more: true }); });
+    this.$('.hist-cmp').addEventListener('click', () => this.toggleCompareMenu());
+    this.$('.hist-rollback').addEventListener('click', () => {
+      const sel = this.selectedCommits();
+      if (sel.length === 1) void this.rollbackTo(sel[0]);
+    });
+    // The menu closes on any press outside its wrap — component-scoped, never document-level.
+    this.shadowRoot.addEventListener('pointerdown', (e) => {
+      if (!e.composedPath().some((n) => n instanceof Element && n.classList?.contains('cmp-wrap'))) {
+        this.closeCompareMenu();
+      }
+    });
     this.wireTreeBrowser('.browse-path', '.tree-path', '.b-path', 'file');
     this.wireTreeBrowser('.browse-scenarios', '.tree-scenarios', '.b-scenarios', 'dir');
     // Picking a specs DIRECTORY tracks the attached sources automatically: every empty per-source
@@ -561,36 +604,144 @@ class ArazzoGitDialog extends ArazzoElement {
       if (seq !== this._historySeq) return;
       this._historyKey = key;
       this._historyPage = page;
-      const rows = this.$('.commits');
-      if (page === 1) rows.replaceChildren();
-      if (page === 1 && list.commits.length === 0) {
-        rows.innerHTML = '<span class="history-empty">No commits touch the bound document yet — the first commit starts the history.</span>';
+      if (page === 1) {
+        this._historyCommits = [];
+        this._historySelection = [];
       }
 
-      for (const commit of list.commits) rows.appendChild(this.renderCommit(commit));
-      this.$('.history-more').hidden = !list.hasMore;
+      this._historyCommits.push(...list.commits);
+      this._historyHasMore = !!list.hasMore;
+      this.renderHistory();
     } catch (err) {
       if (seq !== this._historySeq) return;
-      this.$('.commits').innerHTML = `<span class="history-empty">History could not be loaded — ${escapeHtml(err.problem?.detail || err.problem?.title || err.message)}</span>`;
-      this.$('.history-more').hidden = true;
+      this._historyCommits = [];
+      this._historySelection = [];
+      this._historyHasMore = false;
+      this.renderHistory(`History could not be loaded — ${escapeHtml(err.problem?.detail || err.problem?.title || err.message)}`);
     }
   }
 
-  /** @private — one commit row: message + sha·author·date, with Compare and Roll back actions. */
+  /** @private — the accumulated rows + the "More…" footer; selection survives paging (keyed by sha). */
+  renderHistory(errorHtml = null) {
+    const rows = this.$('.commits');
+    rows.replaceChildren();
+    if (errorHtml) {
+      rows.innerHTML = `<span class="history-empty">${errorHtml}</span>`;
+    } else if (this._historyCommits.length === 0) {
+      rows.innerHTML = '<span class="history-empty">No commits touch the bound document yet — the first commit starts the history.</span>';
+    } else {
+      for (const commit of this._historyCommits) rows.appendChild(this.renderCommit(commit));
+    }
+
+    this.$('.history-more').hidden = !this._historyHasMore;
+    this.updateHistoryActions();
+  }
+
+  /** @private — one selectable commit row: message + sha·author·date. Selection is click-to-toggle,
+   *  MAX TWO — picking a third evicts the earliest pick, so the gesture never dead-ends. */
   renderCommit(commit) {
     const row = document.createElement('div');
     row.className = 'hist-commit'; // NOT 'commit' — that class is the round-trip section's commit button
+    row.setAttribute('role', 'option');
+    row.setAttribute('data-sha', commit.sha);
+    row.setAttribute('aria-selected', String(this._historySelection.includes(commit.sha)));
     const when = commit.date ? new Date(commit.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     row.innerHTML = `
       <span class="msg" title="${escapeHtml(commit.message ?? '')}">${escapeHtml(commit.message ?? '(no message)')}</span>
-      <span class="acts">
-        <button class="cmp ghost" type="button" title="Open this commit's workflow side-by-side with the current state (read-only)">⇆ Compare</button>
-        <button class="rollback ghost" type="button" title="Replace the working copy with this commit's state (danger-confirmed; the next commit records the rollback)">↩ Roll back…</button>
-      </span>
       <span class="meta">${escapeHtml(commit.sha.slice(0, 7))}${commit.author ? ` · ${escapeHtml(commit.author)}` : ''}${when ? ` · ${escapeHtml(when)}` : ''}</span>`;
-    row.querySelector('.cmp').addEventListener('click', () => { void this.compareCommit(commit); });
-    row.querySelector('.rollback').addEventListener('click', () => { void this.rollbackTo(commit); });
+    row.addEventListener('click', () => this.toggleCommitSelection(commit.sha));
     return row;
+  }
+
+  /** @private */
+  toggleCommitSelection(sha) {
+    const at = this._historySelection.indexOf(sha);
+    if (at >= 0) {
+      this._historySelection.splice(at, 1);
+    } else {
+      this._historySelection.push(sha);
+      if (this._historySelection.length > 2) this._historySelection.shift();
+    }
+
+    for (const row of this.$$('.hist-commit')) {
+      row.setAttribute('aria-selected', String(this._historySelection.includes(row.getAttribute('data-sha'))));
+    }
+
+    this.updateHistoryActions();
+  }
+
+  /** @private — the selected commits, in LIST order (newest first), never more than two. */
+  selectedCommits() {
+    return this._historyCommits.filter((c) => this._historySelection.includes(c.sha));
+  }
+
+  /** @private — header state: the count, the Compare menu (1 selection: vs working copy / vs
+   *  predecessor; 2: between them), and Roll back enabled only at EXACTLY one selection. */
+  updateHistoryActions() {
+    const n = this._historySelection.length;
+    const count = this.$('.hist .count');
+    count.textContent = `${this._historyCommits.length}${this._historyHasMore ? '+' : ''} commit${this._historyCommits.length === 1 ? '' : 's'}${n ? ` · ${n} selected` : ''}`;
+    this.$('.hist-cmp').disabled = n === 0;
+    this.$('.hist-rollback').disabled = n !== 1;
+    this.closeCompareMenu();
+  }
+
+  /** @private */
+  toggleCompareMenu() {
+    const menu = this.$('.cmp-menu');
+    if (!menu.hidden) {
+      this.closeCompareMenu();
+      return;
+    }
+
+    const sel = this.selectedCommits();
+    menu.replaceChildren();
+    if (sel.length === 1) {
+      const commit = sel[0];
+      const idx = this._historyCommits.findIndex((c) => c.sha === commit.sha);
+      const predecessor = idx >= 0 ? this._historyCommits[idx + 1] : undefined;
+      menu.append(
+        this.compareMenuItem('With the working copy', () => this.compareCommit(commit)),
+        predecessor
+          ? this.compareMenuItem(`With its predecessor (${predecessor.sha.slice(0, 7)})`, () => this.compareCommits(predecessor, commit))
+          : this.compareMenuItem(
+              this._historyHasMore ? 'With its predecessor — load More… first' : 'With its predecessor — none (first commit)',
+              null),
+      );
+    } else if (sel.length === 2) {
+      const [newer, older] = sel; // list order is newest first
+      menu.append(this.compareMenuItem(
+        `${older.sha.slice(0, 7)} ↔ ${newer.sha.slice(0, 7)} (older → newer)`,
+        () => this.compareCommits(older, newer)));
+    }
+
+    menu.hidden = false;
+    this.$('.hist-cmp').setAttribute('aria-expanded', 'true');
+  }
+
+  /** @private */
+  compareMenuItem(label, action) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'menu-item';
+    item.setAttribute('role', 'menuitem');
+    item.textContent = label;
+    if (action) {
+      item.addEventListener('click', () => {
+        this.closeCompareMenu();
+        void action();
+      });
+    } else {
+      item.disabled = true;
+    }
+
+    return item;
+  }
+
+  /** @private */
+  closeCompareMenu() {
+    this.$('.cmp-menu').hidden = true;
+    this.$('.hist-cmp').setAttribute('aria-expanded', 'false');
   }
 
   /** The reusable compare dialog, so the host can `refresh()` it after applying a merge Take (§6.4). */
@@ -613,6 +764,29 @@ class ArazzoGitDialog extends ArazzoElement {
         left: { label: `Working copy (current) — ${this._workingCopy?.name ?? ''}`, document: live, mergeTarget: !!this.documentSource },
         right: { label: `${commit.sha.slice(0, 7)} — ${commit.message ?? ''}`, document: historic },
         workflowId: live?.workflows?.[0]?.workflowId,
+      });
+    } catch (err) {
+      this.showError(err.problem?.detail || err.problem?.title || err.message);
+    }
+  }
+
+  /** @private — two commits side-by-side, OLDER on the left so the diff reads as what changed over
+   *  time (added = present only on the right). Read-only: neither side is the merge target. */
+  async compareCommits(older, newer) {
+    this.clearError();
+    const binding = this.historyScope();
+    if (!binding) return;
+    try {
+      const [before, after] = await Promise.all([
+        this._client.browseRepo(binding.owner, binding.repo, { path: binding.path, ref: older.sha }),
+        this._client.browseRepo(binding.owner, binding.repo, { path: binding.path, ref: newer.sha }),
+      ]);
+      const olderDoc = decodeJsonFile(before);
+      const newerDoc = decodeJsonFile(after);
+      this.$('.compare').open({
+        left: { label: `${older.sha.slice(0, 7)} — ${older.message ?? ''}`, document: olderDoc },
+        right: { label: `${newer.sha.slice(0, 7)} — ${newer.message ?? ''}`, document: newerDoc },
+        workflowId: newerDoc?.workflows?.[0]?.workflowId,
       });
     } catch (err) {
       this.showError(err.problem?.detail || err.problem?.title || err.message);

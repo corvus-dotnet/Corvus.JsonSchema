@@ -120,16 +120,28 @@ describe('<arazzo-git-dialog>', () => {
     })).click();
     await boundEvent;
 
-    // The history section reveals with the bound branch's commits, newest first.
+    // The history section reveals as the headered list: title + count, header actions disabled
+    // until something is selected, the bound branch's commits newest first.
     const rows = await waitFor(() => {
       const r = [...el.shadowRoot.querySelectorAll('.hist-commit')];
       return r.length === 3 ? r : null;
     }, 'the seeded history loads');
     ok(rows[0].textContent.includes('Confirm adoptions'), 'the newest commit lists first');
     ok(rows[2].textContent.includes('Initial adopt workflow'), 'the oldest commit lists last');
+    ok(el.shadowRoot.querySelector('.hist .count').textContent.includes('3 commits'), 'the header counts the commits');
+    const cmpBtn = el.shadowRoot.querySelector('.hist-cmp');
+    const rollbackBtn = el.shadowRoot.querySelector('.hist-rollback');
+    ok(cmpBtn.disabled && rollbackBtn.disabled, 'no selection → both header actions disabled');
 
-    // Compare opens the reusable side-by-side visualizer: two read-only design surfaces.
-    rows[2].querySelector('.cmp').click();
+    // Selecting the oldest commit enables both; Compare "with the working copy" opens the
+    // reusable side-by-side visualizer: two read-only design surfaces.
+    rows[2].click();
+    equal(rows[2].getAttribute('aria-selected'), 'true', 'the row selects');
+    ok(!cmpBtn.disabled && !rollbackBtn.disabled, 'one selection → Compare and Roll back enable');
+    cmpBtn.click();
+    const withWc = await waitFor(() => [...el.shadowRoot.querySelectorAll('.cmp-menu .menu-item')]
+      .find((m) => m.textContent.includes('working copy')), 'the compare menu offers the working copy');
+    withWc.click();
     const compare = el.shadowRoot.querySelector('arazzo-workflow-compare');
     await waitFor(() => compare.shadowRoot?.querySelector('dialog[open]'), 'the comparison dialog opens');
     const surfaces = compare.shadowRoot.querySelectorAll('arazzo-design-surface');
@@ -137,10 +149,10 @@ describe('<arazzo-git-dialog>', () => {
     ok([...surfaces].every((s) => s.hasAttribute('readonly')), 'both sides are read-only');
     compare.close();
 
-    // Roll back to the oldest commit: a danger-confirmed pull at that ref replaces the working
-    // copy — and the binding never changes, so the next commit records the rollback.
+    // Roll back (header action, exactly one selection): a danger-confirmed pull at that ref
+    // replaces the working copy — the binding never changes, so the next commit records it.
     const pulledEvent = nextEvent(el, 'pulled');
-    rows[2].querySelector('.rollback').click();
+    rollbackBtn.click();
     const ask = el.shadowRoot.querySelector('arazzo-input-dialog');
     (await waitFor(() => {
       const b = ask.shadowRoot.querySelector('.confirm.danger');
@@ -149,5 +161,73 @@ describe('<arazzo-git-dialog>', () => {
     const pulled = await pulledEvent;
     equal(pulled.detail.workingCopy.document.workflows[0].steps.length, 2, 'the oldest commit state replaced the working copy');
     equal(pulled.detail.workingCopy.gitBinding.branch, 'main', 'a rollback never rebinds');
+  });
+
+  it('history selection: max two (third pick evicts the first), predecessor + pair compares, rollback gating', async () => {
+    const ctx = await dialogWithMock();
+    el = ctx.el;
+    el.open({ workingCopyId: ctx.wc.id });
+    const gh = await waitFor(() => el.shadowRoot.querySelector('.gh-connect'));
+    gh.pollIntervalMs = 10;
+    gh.windowOpener = (url) => { ctx.mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
+    (await waitFor(() => gh.shadowRoot.querySelector('.connect'))).click();
+    await waitFor(() => [...el.shadowRoot.querySelectorAll('.b-repo option')].length > 1);
+    const sel = el.shadowRoot.querySelector('.b-repo');
+    sel.value = 'acme-org/specs';
+    sel.dispatchEvent(new Event('change'));
+    await waitFor(() => {
+      const b = el.shadowRoot.querySelector('.b-branch');
+      return b.disabled || !b.options.length ? null : b;
+    });
+    el.shadowRoot.querySelector('.b-path').value = 'flows/adopt.arazzo.json';
+    el.shadowRoot.querySelector('.b-path').dispatchEvent(new Event('input'));
+    const boundEvent = nextEvent(el, 'binding-saved');
+    (await waitFor(() => {
+      const b = el.shadowRoot.querySelector('.save-binding');
+      return b.disabled ? null : b;
+    })).click();
+    await boundEvent;
+    const rows = await waitFor(() => {
+      const r = [...el.shadowRoot.querySelectorAll('.hist-commit')];
+      return r.length === 3 ? r : null;
+    });
+    const selected = () => [...el.shadowRoot.querySelectorAll('.hist-commit[aria-selected="true"]')];
+    const rollbackBtn = el.shadowRoot.querySelector('.hist-rollback');
+    const cmpBtn = el.shadowRoot.querySelector('.hist-cmp');
+
+    // One selection: the menu offers working copy AND the immediate predecessor.
+    rows[0].click();
+    cmpBtn.click();
+    let items = [...el.shadowRoot.querySelectorAll('.cmp-menu .menu-item')];
+    equal(items.length, 2, 'one selection → two compare choices');
+    ok(items.some((m) => m.textContent.includes('predecessor') && !m.disabled), 'the newest commit has a predecessor');
+
+    // Two selections: rollback disables, the menu collapses to the pair compare (older ↔ newer).
+    rows[2].click();
+    equal(selected().length, 2);
+    ok(rollbackBtn.disabled, 'two selections → Roll back disabled');
+    cmpBtn.click();
+    items = [...el.shadowRoot.querySelectorAll('.cmp-menu .menu-item')];
+    equal(items.length, 1, 'two selections → one compare choice');
+    ok(items[0].textContent.includes('older → newer'), 'the pair compares older to newer');
+    items[0].click();
+    const compare = el.shadowRoot.querySelector('arazzo-workflow-compare');
+    await waitFor(() => compare.shadowRoot?.querySelector('dialog[open]'), 'the pair comparison opens');
+    compare.close();
+
+    // A third pick evicts the EARLIEST pick — never more than two, never a dead click.
+    rows[1].click();
+    equal(selected().length, 2, 'still two selected');
+    equal(rows[0].getAttribute('aria-selected'), 'false', 'the earliest pick was evicted');
+    ok(el.shadowRoot.querySelector('.hist .count').textContent.includes('2 selected'), 'the header reports the selection');
+
+    // Deselect both: actions disable again; the oldest commit's predecessor item is disabled.
+    rows[1].click();
+    rows[2].click();
+    rows[2].click(); // reselect just the oldest
+    cmpBtn.click();
+    items = [...el.shadowRoot.querySelectorAll('.cmp-menu .menu-item')];
+    const pred = items.find((m) => m.textContent.includes('predecessor'));
+    ok(pred.disabled, 'the first commit has no predecessor — the item is disabled, not hidden');
   });
 });

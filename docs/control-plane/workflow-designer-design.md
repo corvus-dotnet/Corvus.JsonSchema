@@ -1129,12 +1129,18 @@ Slices 2↔3 and 5↔6 can swap/overlap; each slice lands green (build, tests, c
    channel with dedicated `--arazzo-diff-*` tokens, a shared union layout, three comparison modes
    (side-by-side, overlay/ghost, CodeMirror MergeView text), a grouped change list, the catalog-detail
    compare host (§9.11), and an interactive Take/Keep merge that emits `change-accepted` /
-   `merge-text-applied` for the host to apply to its one model. The Git pane's history browser ships
-   commit browsing (`GET /github/repos/{owner}/{repo}/commits`, scoped to the bound branch and
-   document) and rollback (a danger-confirmed pull carrying the commit's `ref` — the binding never
-   changes, so the next commit records the rollback on the branch); Compare opens the overlay by
-   default. Remaining out of scope: the similarity rename fallback, a step-scoped merge popover, and
-   8c's three-way base tracking / conflict presentation (§6.4 recorded alternatives).
+   `merge-text-applied` for the host to apply to its one model. The Git pane's history browser
+   (reworked 2026-07-16) is the kit's headered list: title + `N`/`N+` count, accumulating More…
+   paging (`GET /github/repos/{owner}/{repo}/commits`, scoped to the bound branch and document),
+   and click-to-select rows — MAX TWO, a third pick evicting the earliest so the gesture never
+   dead-ends. The header carries the actions: a **Compare ▾** dropdown (one selection: vs the
+   working copy — the merge-target compare — or vs its immediate predecessor in the path-scoped
+   history, disabled with a hint when the predecessor is unloaded or nonexistent; two selections:
+   older ↔ newer, read-only) and **Roll back…**, enabled only at EXACTLY one selection (a
+   danger-confirmed pull carrying the commit's `ref` — the binding never changes, so the next
+   commit records the rollback on the branch). Remaining out of scope: the similarity rename
+   fallback, a step-scoped merge popover, and 8c's three-way base tracking / conflict presentation
+   (§6.4 recorded alternatives).
 8b. **Step-output overrides (engine)** — BUILT for debug runs (§18 slice 3c).
    `SimulationScenario.StepOutputOverrides` (stepId → provided outputs) is the real seam: at the
    checkpoint boundary the replay unwinds the executor, records the overridden step as skipped
