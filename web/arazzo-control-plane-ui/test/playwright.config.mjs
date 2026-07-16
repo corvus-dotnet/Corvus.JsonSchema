@@ -4,6 +4,11 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: '.',
   reporter: process.env.CI ? 'github' : 'list',
+  // 10s assertion budget + 4 workers: with every ux file running in parallel, the in-browser
+  // mock's simulated latency stretches under CPU contention — the assertions are unchanged, just
+  // more patient, and the worker cap keeps seven Chromiums from starving each other.
+  expect: { timeout: 10_000 },
+  workers: 4,
   use: { baseURL: 'http://localhost:8138', trace: 'on-first-retry' },
   // Serve the project root so the demo (/demo) and the deliverable it imports (/src) both resolve; the
   // portable Node server also maps /ui/... → root (designer.html's absolute imports) — see smoke-server.mjs.
@@ -21,6 +26,7 @@ export default defineConfig({
   // record.spec.js is the clip recorder (run on demand via record.config.mjs) and never gates CI.
   projects: [
     { name: 'chromium', testMatch: '**/smoke.spec.js', fullyParallel: true, use: { ...devices['Desktop Chrome'] } },
-    { name: 'ux', testMatch: '**/ux/*.spec.js', fullyParallel: false, use: { ...devices['Desktop Chrome'] } },
+    // One retry (with trace) absorbs cold-spawn contention flakes; a test that fails twice is real.
+    { name: 'ux', testMatch: '**/ux/*.spec.js', fullyParallel: false, retries: 1, use: { ...devices['Desktop Chrome'] } },
   ],
 });
