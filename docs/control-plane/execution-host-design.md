@@ -227,7 +227,13 @@ heartbeat; the registry is a store-backed table (visible to all control-plane in
 This pairs with the process split: registration is the only thing a runner *pushes* to the control plane;
 everything else flows through the shared store.
 
-### 5.5 Runner ↔ environment binding, authorization, and reach scoping (DRAFT — for review)
+### 5.5 Runner ↔ environment binding, authorization, and reach scoping (IMPLEMENTED)
+
+> Status: the decisions below shipped end-to-end — `RunnerRegistration` carries `environment`/`reachTags`, the
+> env-admin authorization inbox is live (`/runnerAuthorizations` + `/environments/{name}/runners/{runnerId}/authorization`),
+> runs are environment-pinned at creation and runners claim only their exact environment. §5.6's in-process
+> collectible-ALC backend ships; the out-of-process backends (micro-guest / serverless / container-per-run) and
+> the runner machine-principal identity remain design intent.
 
 The §5.4 registry above is environment-agnostic and unscoped: a flat global list of processes with no notion of
 *which environment* a runner serves or *whose* it is. That is the gap flagged in `ux-review.md §7.7` ("Runners
