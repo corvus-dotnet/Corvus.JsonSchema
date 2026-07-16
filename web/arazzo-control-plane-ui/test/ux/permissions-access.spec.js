@@ -186,9 +186,8 @@ test('a grant is authored via the grantee picker with per-verb reach and identit
   await grants.locator('.scope-input[data-verb="read"]').click();
   await grants.locator('.results[data-verb="read"] li[data-name="reach-payments"]').click();
   await expect(grants.locator('.verb-row .chip', { hasText: 'reach-payments' })).toBeVisible();
-  // The typeahead's results listbox can linger over the footer under load and intercept the
-  // Create click — dismiss it and wait for it to clear before confirming.
-  await grants.locator('.scope-input[data-verb="read"]').press('Escape');
+  // Selecting a rule closes the suggestions and they STAY closed across the refocus (the dropdown
+  // overlays the pane's footer, so a lingering listbox would swallow the Create click).
   await expect(grants.locator('.results[data-verb="read"]')).toBeHidden();
   await grants.locator('select.verb-mode[data-verb="write"]').selectOption('unrestricted');
 

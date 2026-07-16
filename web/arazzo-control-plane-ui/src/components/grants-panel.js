@@ -60,6 +60,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     /** @private */ this._query = '';
     /** @private */ this._form = null;           // the detail-pane form state (null = nothing selected)
     /** @private */ this._selectedId = null;     // the selected grant id (null when creating / nothing selected)
+    /** @private */ this._squelchFocusPop = false; // true only across addRule's programmatic refocus
   }
 
   connectedCallback() {
@@ -182,7 +183,12 @@ class ArazzoGrantsPanel extends ArazzoElement {
     f.verbs[verb].scopes.push(name);
     this._activeRuleVerb = null;
     this.renderDetail();
+    // Refocus for further typing WITHOUT re-popping the suggestions: the dropdown overlays whatever
+    // sits below the verb row (including the pane's footer), so a completed selection must leave it
+    // closed — typing again re-opens it.
+    this._squelchFocusPop = true;
     this._pane?.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
+    this._squelchFocusPop = false;
   }
 
   /** Hide any open rule dropdown. */
@@ -437,9 +443,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
     });
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
-    // A pointerdown outside the open rule dropdown closes it (the dropdown lives in the rebuilt detail pane).
+    // A pointerdown anywhere but the open dropdown's own input/list closes it — INCLUDING elsewhere
+    // in this panel (the dropdown overlays the pane below it, so a click aimed at the footer must
+    // dismiss rather than leave the overlay intercepting).
     document.addEventListener('pointerdown', this._onDocDown ??= (e) => {
-      if (!this.shadowRoot.contains(e.composedPath()[0])) this.hideRuleDropdowns();
+      const verb = this._activeRuleVerb;
+      if (!verb) return;
+      const path = e.composedPath();
+      const input = this._pane?.querySelector(`.scope-input[data-verb="${verb}"]`);
+      const list = this._pane?.querySelector(`.results[data-verb="${verb}"]`);
+      if ((input && path.includes(input)) || (list && path.includes(list))) return;
+      this.hideRuleDropdowns();
     });
     this._pane = this.$('.detail-pane');
     this._layout = this.$('.layout');
@@ -608,7 +622,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
     // (renderRuleDropdown → addRule) adds a chip. `change` (exact-typed name + Enter/blur) is a keyboard fallback.
     pane.querySelectorAll('.scope-input').forEach((input) => {
       const verb = input.dataset.verb;
-      input.addEventListener('focus', () => { this.hideRuleDropdowns(); this._activeRuleVerb = verb; this.loadScopeOptions(input.value.trim()); });
+      input.addEventListener('focus', () => {
+        if (this._squelchFocusPop) return; // the post-selection refocus (addRule) keeps the dropdown closed
+        this.hideRuleDropdowns(); this._activeRuleVerb = verb; this.loadScopeOptions(input.value.trim());
+      });
+      input.addEventListener('keydown', (e) => {
+        // Escape dismisses the dropdown and STAYS dismissed: hideRuleDropdowns clears the active
+        // verb, so an in-flight search that resolves later has nowhere to render (renderRuleDropdown
+        // no-ops without one). preventDefault keeps the typed filter text (search inputs clear on
+        // Escape); a fresh keystroke or refocus re-opens the suggestions.
+        if (e.key === 'Escape') { e.preventDefault(); this.hideRuleDropdowns(); }
+      });
       input.addEventListener('input', () => {
         this._activeRuleVerb = verb;
         clearTimeout(this._scopeTimer);

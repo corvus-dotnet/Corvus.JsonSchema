@@ -134,6 +134,40 @@ describe('<arazzo-grants-panel>', () => {
     ok(e.detail.grants.find((g) => g.claimType === 'team' && g.claimValue === 'billing')?.write.ruleNames?.includes('reach-payments'), 'scoped write');
   });
 
+  it('the rule dropdown closes on selection and stays closed; Escape and a footer-aimed pointerdown dismiss it', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.new').click();
+    setVerbMode(el, 'read', 'scopes');
+    const input = () => [...el.shadowRoot.querySelectorAll('.scope-input')].find((i) => i.dataset.verb === 'read');
+    const list = () => [...el.shadowRoot.querySelectorAll('.results')].find((l) => l.dataset.verb === 'read');
+
+    // Focus pops the initial suggestions (a server-backed empty search).
+    input().dispatchEvent(new Event('focus'));
+    await waitFor(() => !list().hidden && list().querySelectorAll('li[data-name]').length >= 1);
+
+    // Selecting a rule adds the chip and CLOSES the dropdown — the programmatic refocus must not
+    // re-pop it (the dropdown overlays the pane's footer; a lingering listbox swallows Create).
+    list().querySelector('li[data-name="reach-payments"]').click();
+    ok([...el.shadowRoot.querySelectorAll('.chip')].some((c) => c.textContent.includes('reach-payments')), 'rule added as a chip');
+    ok(list().hidden, 'the dropdown is closed after the selection');
+    await el.loadScopeOptions(''); // a stale in-flight search resolving late has no active verb to render into
+    ok(list().hidden, 'a late-resolving search cannot re-open the dismissed dropdown');
+
+    // Escape dismisses a re-opened dropdown.
+    input().dispatchEvent(new Event('focus'));
+    await waitFor(() => !list().hidden);
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    ok(list().hidden, 'Escape closes the dropdown');
+
+    // A pointerdown aimed at the footer (inside the panel, outside the input/list) dismisses too.
+    input().dispatchEvent(new Event('focus'));
+    await waitFor(() => !list().hidden);
+    $(el, '.confirm').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+    ok(list().hidden, 'a pointerdown outside the input/list closes the dropdown');
+  });
+
   it('derives the canonical claim from a group/role grantee via the picker', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
