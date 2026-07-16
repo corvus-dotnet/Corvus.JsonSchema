@@ -17,7 +17,8 @@
 // *real* person/team/role/workflow and the server (GET /identity/grantees, directory + observed sources,
 // reach-filtered) resolves it to the exact sys: identity. The value this element yields is always a
 // server-resolved grantee, never a typed tuple. A grantee whose identity is not `complete` is flagged, because
-// exact-set-equality membership would not match a partial identity.
+// under membership (subset) matching a partial identity is BROADER than intended — every principal whose
+// stamped identity contains the resolved dimensions would match it.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
