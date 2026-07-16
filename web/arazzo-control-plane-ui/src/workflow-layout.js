@@ -272,23 +272,24 @@ export function routeEdges(graph, positions, opts = {}) {
       const b = positions[e.to];
       const bf = bandOf.get(e.from);
       const bt = bandOf.get(e.to);
-      // Direct lateral: nothing between the facing borders, in either dimension.
-      if (bf - bt <= 1) {
-        const targetLeft = b.x + nodeWidth + MIN_GAP_FOR_CORRIDOR <= a.x;
-        const targetRight = b.x >= a.x + nodeWidth + MIN_GAP_FOR_CORRIDOR;
-        if (targetLeft || targetRight) {
-          // The curve occupies only the space BETWEEN the facing borders (horizontal tangents keep
-          // it inside [cyA, cyB] vertically) — the endpoints' own cards are not obstacles.
-          const box = targetLeft
-            ? { lo: b.x + nodeWidth, hi: a.x, top: Math.min(cy(e.from), cy(e.to)), bottom: Math.max(cy(e.from), cy(e.to)) }
-            : { lo: a.x + nodeWidth, hi: b.x, top: Math.min(cy(e.from), cy(e.to)), bottom: Math.max(cy(e.from), cy(e.to)) };
-          const blocked = placed.some((n) => {
-            if (n.id === e.from || n.id === e.to) return false;
-            const r = nodeRect(n.id);
-            return r.x < box.hi && box.lo < r.x + r.w && r.y < box.bottom && box.top < r.y + r.h;
-          });
-          if (!blocked) return { e, direct: true, side: targetLeft ? 'left' : 'right' };
-        }
+      // Direct: whenever the pair is horizontally disjoint and NOTHING sits between the facing
+      // borders, connect them with one curve — source's facing border into the target's facing
+      // border — regardless of how many bands the edge spans. A lane (and its wrap-around into
+      // the target's far border) is only for pairs whose in-between space is occupied.
+      const targetLeft = b.x + nodeWidth + MIN_GAP_FOR_CORRIDOR <= a.x;
+      const targetRight = b.x >= a.x + nodeWidth + MIN_GAP_FOR_CORRIDOR;
+      if (targetLeft || targetRight) {
+        // The curve occupies only the space BETWEEN the facing borders (horizontal tangents keep
+        // it inside [cyA, cyB] vertically) — the endpoints' own cards are not obstacles.
+        const box = targetLeft
+          ? { lo: b.x + nodeWidth, hi: a.x, top: Math.min(cy(e.from), cy(e.to)), bottom: Math.max(cy(e.from), cy(e.to)) }
+          : { lo: a.x + nodeWidth, hi: b.x, top: Math.min(cy(e.from), cy(e.to)), bottom: Math.max(cy(e.from), cy(e.to)) };
+        const blocked = placed.some((n) => {
+          if (n.id === e.from || n.id === e.to) return false;
+          const r = nodeRect(n.id);
+          return r.x < box.hi && box.lo < r.x + r.w && r.y < box.bottom && box.top < r.y + r.h;
+        });
+        if (!blocked) return { e, direct: true, side: targetLeft ? 'left' : 'right' };
       }
       const lo = Math.min(bt, bf);
       const hi = Math.max(bt, bf);

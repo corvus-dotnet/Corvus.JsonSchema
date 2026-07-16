@@ -609,13 +609,15 @@ because bands are re-derived by clustering actual y positions):
   near-identical chords) cluster and spread into distinct **edge lanes**: deterministic slots
   `LANE_PITCH` (16) apart, ghosts sorted after solid edges so a ghost lane never coincides with a
   solid one (`buildGhostProjection` marks union ghost edges `ghost: true`).
-- An upward or same-band edge picks its anchors and side **geometrically**, never by fiat. An
-  adjacent-band, horizontally disjoint pair whose inter-border box is empty takes a **direct
-  lateral** — one facing-border-to-facing-border curve, no lane at all. Otherwise it takes a
-  vertical lane on the CHEAPER side: each side's cost is its two horizontal legs (source band and
-  target band) plus a heavy penalty per node a leg would cross — so a far-left target routes up
-  the left, never right-then-all-the-way-back. Same-side overlapping loops separate by greedy
-  interval colouring (`UP_LANE_PITCH` 18) — replacing the fixed right bow.
+- An upward or same-band edge picks its anchors and side **geometrically**, never by fiat. A
+  horizontally disjoint pair whose inter-border box is empty takes a **direct lateral** — one
+  facing-border-to-facing-border curve, no lane at all, however many bands it spans (so a source
+  never wraps around to the target's far border when the facing border is reachable). Only a pair
+  whose in-between space is occupied takes a vertical lane, on the CHEAPER side: each side's cost
+  is its two horizontal legs (source band and target band) plus a heavy penalty per node a leg
+  would cross — so a far-left target routes up the left, never right-then-all-the-way-back.
+  Same-side overlapping loops separate by greedy interval colouring (`UP_LANE_PITCH` 18) —
+  replacing the fixed right bow.
 - Departures spread along the source's bottom border (the mirror of the arrival spreading the
   renderer already did), ordered by where each edge is heading.
 - The renderer threads the waypoints as cubics — vertical tangents at the ports, chord-following

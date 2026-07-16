@@ -295,7 +295,7 @@ test('routeEdges: a blocked bounding box falls back to a lane instead of cutting
   assert.ok(!routes.lat.direct, 'blocked box → no direct curve');
 });
 
-test('routeEdges: a multi-band up-left target routes up the LEFT side (crossing penalty beats the fixed right lane)', () => {
+test('routeEdges: a multi-band disjoint pair with a clear in-between goes DIRECT, however many bands it spans', () => {
   const graph = {
     nodes: [{ id: 'pR' }, { id: 'cA' }, { id: 'vI' }, { id: 'nA' }],
     edges: [
@@ -304,11 +304,33 @@ test('routeEdges: a multi-band up-left target routes up the LEFT side (crossing 
       { id: 'far', from: 'nA', to: 'pR', kind: 'failure' },
     ],
   };
-  // pR sits top-left beside cA; nA is two bands below — a right lane's horizontal leg into pR
-  // would cross cA, so the route must take the left side.
+  // pR sits top-left beside cA; nA is two bands below. The space between nA's left border and
+  // pR's right border is empty, so the edge is ONE facing-border curve — no lane, no wrap-around.
   const positions = { pR: { x: 0, y: 0 }, cA: { x: 560, y: 0 }, vI: { x: 560, y: 220 }, nA: { x: 560, y: 440 } };
   const routes = routeEdges(graph, positions);
   assert.equal(routes.far.kind, 'up');
+  assert.equal(routes.far.direct, true);
+  assert.equal(routes.far.side, 'left');
+});
+
+test('routeEdges: a multi-band up-left target with a BLOCKED in-between takes the LEFT lane (crossing penalty beats the fixed right lane)', () => {
+  const graph = {
+    nodes: [{ id: 'pR' }, { id: 'cA' }, { id: 'vI' }, { id: 'blocker' }, { id: 'nA' }],
+    edges: [
+      { id: 'seq1', from: 'cA', to: 'vI', kind: 'seq' },
+      { id: 'seq2', from: 'vI', to: 'nA', kind: 'seq' },
+      { id: 'far', from: 'nA', to: 'pR', kind: 'failure' },
+    ],
+  };
+  // A blocker occupies the space between nA and pR, so no direct curve; a right lane's horizontal
+  // leg into pR would cross cA, so the route must take the left side.
+  const positions = {
+    pR: { x: 0, y: 0 }, cA: { x: 560, y: 0 }, vI: { x: 560, y: 220 },
+    blocker: { x: 300, y: 220 }, nA: { x: 560, y: 440 },
+  };
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes.far.kind, 'up');
+  assert.ok(!routes.far.direct, 'the blocker forbids the direct curve');
   assert.equal(routes.far.side, 'left');
   assert.ok(routes.far.points[0].x < 0, `lane ${routes.far.points[0].x} sits left of the whole span`);
 });
