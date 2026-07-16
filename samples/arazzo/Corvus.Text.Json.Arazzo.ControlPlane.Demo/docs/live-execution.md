@@ -41,6 +41,11 @@ claimable, and a runner advances it. See the R1–R5 commits and the debug-run U
 - **Multi-process** (the AppHost composition): a separate `Runner.Demo` process hosts `$draft`
   (`Runner:HostDraftRuns`) and the control plane's in-process pump is off, so the two planes are physically
   split. Both share the Postgres draft/state/trace stores.
+- **Automated e2e**: `Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.Tests` boots this whole
+  composition through `Aspire.Hosting.Testing` and drives the loop for real — runner registration,
+  a debug run enqueued un-advanced (R5), the separate runner process claiming and pausing it, a
+  resume to completion. Opt-in (a full container composition): `ARAZZO_APPHOST_E2E=1`, categories
+  `integration`+`docker`.
 
 ## Transports and credentials
 
