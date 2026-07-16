@@ -103,8 +103,22 @@ class ArazzoRunDetail extends ArazzoElement {
   syncPolling() {
     this.stopPolling();
     const ms = Number(this.getAttribute('poll')) || 0;
-    // Only poll while the run can still change.
-    if (ms > 0) this._pollTimer = setInterval(() => { if (!this._run || !TERMINAL.has(this._run.status)) this.load(); }, ms);
+    // Only poll while the run can still change — and never repaint under an open modal: load()
+    // rebuilds the body, which would tear a confirm dialog (cancel/resume) out from under the
+    // user's pointer mid-decision. The next tick lands after it closes.
+    if (ms > 0) {
+      this._pollTimer = setInterval(() => {
+        if (this.hasOpenModal()) return;
+        if (!this._run || !TERMINAL.has(this._run.status)) this.load();
+      }, ms);
+    }
+  }
+
+  /** True while any component under this detail (cancel/resume/…) has an open modal dialog. */
+  hasOpenModal() {
+    const walk = (root) => [...root.querySelectorAll('*')].some((el) =>
+      (el.localName === 'dialog' && el.open) || (el.shadowRoot && walk(el.shadowRoot)));
+    return walk(this.shadowRoot);
   }
 
   stopPolling() {

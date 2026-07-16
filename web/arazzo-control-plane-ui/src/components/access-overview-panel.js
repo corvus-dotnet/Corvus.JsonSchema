@@ -53,6 +53,15 @@ class ArazzoAccessOverview extends ArazzoElement {
     if (picker && picker.client !== this.client) picker.client = this.client;
   }
 
+  /**
+   * Re-run the aggregation for the selected grantee. The demo host calls refresh() on every panel in
+   * a view when its tab is activated, so a grants change made under another tab (revoke, approval,
+   * delete) is reflected here rather than leaving a stale overview on screen.
+   */
+  refresh() {
+    if (this._grantee) this.loadOverview(this._grantee);
+  }
+
   render() {
     this.shadowRoot.innerHTML = `
       <style>

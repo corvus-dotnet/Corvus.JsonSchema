@@ -4439,6 +4439,21 @@ export function createMockControlPlane(options = {}) {
       r.grantedBindingId = `bind-${++etagSeq}`;
       const windowSeconds = eligible ? body?.eligibilityWindowSeconds : (r.requestedDurationSeconds ?? 8 * 3600);
       r.grantedUntil = windowSeconds ? iso(windowSeconds * 1000) : undefined;
+      // Server parity: the approval is what WRITES the capability grant (§16.5.2/§16.5.3) — a
+      // time-boxed, approval-service-authored binding keyed on the subject claim. Active scopes on
+      // approve; an eligibility (confers nothing active) on approveAsEligible. The Grants panel and
+      // the Access overview's capability view read it like any other binding.
+      securityBindings.push({
+        id: r.grantedBindingId,
+        claimType: r.subjectClaimType, claimValue: r.subjectClaimValue,
+        read: { unrestricted: false }, write: { unrestricted: false }, purge: { unrestricted: false },
+        order: securityBindings.length,
+        description: `Access request ${r.id}: ${r.baseWorkflowId} for ${r.requesterLabel || r.createdBy}.`,
+        scopes: [...(r.requestedScopes || [])],
+        expiresAt: r.grantedUntil,
+        ...(eligible ? { eligibleOnly: true } : {}),
+        createdBy: 'approval-service', createdAt: iso(0), etag: nextEtag(),
+      });
     } else if (action === 'deny') {
       const conflict = requirePending('denied');
       if (conflict) return conflict;
@@ -4452,6 +4467,9 @@ export function createMockControlPlane(options = {}) {
         return problem(409, 'Invalid access-request state', `Request '${id}' is ${r.status}; only an approved grant can be revoked.`);
       }
       r.status = 'Revoked'; r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason; r.grantedUntil = undefined;
+      // Revoking the approval deletes the binding it wrote — the grant disappears everywhere.
+      const held = securityBindings.findIndex((b) => b.id === r.grantedBindingId);
+      if (held >= 0) securityBindings.splice(held, 1);
     }
     r.etag = nextEtag();
     return json(r);
