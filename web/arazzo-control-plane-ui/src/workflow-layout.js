@@ -112,3 +112,140 @@ export function layoutGraph(graph, opts = {}) {
   }
   return positions;
 }
+
+/** Edge-routing constants (world-coordinate units). */
+export const LANE_PITCH = 16;
+export const UP_LANE_PITCH = 18;
+export const CORRIDOR_MARGIN = 36;
+const MIN_GAP_FOR_CORRIDOR = 24;
+
+/**
+ * Route edges around the laid-out nodes (design: workflow-designer-design.md §6.3). Pure data in,
+ * pure data out, like `layoutGraph`. Only the edges that NEED waypoints get a route:
+ *
+ * - A downward edge spanning ≥2 rank bands gets one waypoint per crossed band, placed in an **edge
+ *   corridor** — the gap between adjacent nodes of that band (or just outside the row) nearest the
+ *   source→target straight line — so a skip edge runs visibly beside the nodes and chain edges it
+ *   used to cut through. Edges sharing a corridor take distinct **edge lanes** (deterministic
+ *   slots, `LANE_PITCH` apart; ghost edges sort after solid ones so a ghost never coincides).
+ * - An upward or same-band edge (retry / goto back up the flow) gets a right-side vertical lane,
+ *   lane-separated by greedy interval colouring over overlapping vertical spans — replacing the
+ *   old fixed-width bow that stacked concurrent loops onto one curve.
+ *
+ * Adjacent-rank downward edges need no route (distinct borders already separate them) and get no
+ * entry. Bands are derived by clustering the ACTUAL y positions, so routing survives manual node
+ * moves and injected layout engines alike. Edges into exit chips (`workflow:<id>` targets) are the
+ * renderer's own synthetic geometry and are skipped here.
+ *
+ * @param {{nodes: {id: string}[], edges: {id: string, from: string, to: string, ghost?: boolean}[]}} graph
+ * @param {Record<string, {x: number, y: number}>} positions Top-left node positions (post-override).
+ * @param {{nodeWidth?: number, nodeHeight?: number}} [opts]
+ * @returns {Record<string, {kind: 'down'|'up', points: {x: number, y: number}[]}>} Routes by edge id.
+ */
+export function routeEdges(graph, positions, opts = {}) {
+  const nodeWidth = opts.nodeWidth ?? NODE_WIDTH;
+  const nodeHeight = opts.nodeHeight ?? NODE_HEIGHT;
+
+  const placed = graph.nodes.filter((n) => positions[n.id]);
+  if (!placed.length) return {};
+
+  // 1. Cluster nodes into horizontal bands by y (exact ranks under the built-in layout; nearest
+  //    band after manual moves). A new band starts when a node clears the previous band's extent.
+  const byY = [...placed].sort((a, b) => (positions[a.id].y - positions[b.id].y) || (positions[a.id].x - positions[b.id].x));
+  const bands = [];
+  const bandOf = new Map();
+  for (const node of byY) {
+    const y = positions[node.id].y;
+    const current = bands[bands.length - 1];
+    if (!current || y > current.bottom - nodeHeight * 0.4) {
+      bands.push({ top: y, bottom: y + nodeHeight, members: [node.id] });
+    } else {
+      current.members.push(node.id);
+      current.top = Math.min(current.top, y);
+      current.bottom = Math.max(current.bottom, y + nodeHeight);
+    }
+    bandOf.set(node.id, bands.length - 1);
+  }
+  const bandCenter = (b) => (bands[b].top + bands[b].bottom) / 2;
+  const rowIntervals = bands.map((band) =>
+    band.members.map((id) => positions[id].x).sort((p, q) => p - q).map((x) => [x, x + nodeWidth]));
+
+  // 2. The corridor candidates of one band: outside either end of the row, or the centre of any
+  //    wide-enough gap between adjacent nodes. Pick the candidate nearest `wantX`.
+  const corridorX = (b, wantX) => {
+    const row = rowIntervals[b];
+    const candidates = [row[0][0] - CORRIDOR_MARGIN, row[row.length - 1][1] + CORRIDOR_MARGIN];
+    for (let i = 1; i < row.length; i++) {
+      const gap = row[i][0] - row[i - 1][1];
+      if (gap >= MIN_GAP_FOR_CORRIDOR) candidates.push((row[i - 1][1] + row[i][0]) / 2);
+    }
+    return candidates.reduce((best, c) => (Math.abs(c - wantX) < Math.abs(best - wantX) ? c : best));
+  };
+
+  const cx = (id) => positions[id].x + nodeWidth / 2;
+  const cy = (id) => positions[id].y + nodeHeight / 2;
+  const routes = {};
+
+  // 3. Downward band-skipping edges: a waypoint per crossed band, grouped into lanes per
+  //    (band, corridor). Ghosts sort last so a ghost lane never coincides with a solid one.
+  const crossings = new Map(); // `${band}@${corridorX}` -> [{edge, want}]
+  const longEdges = [];
+  for (const edge of graph.edges) {
+    if (!positions[edge.from] || !positions[edge.to] || edge.from === edge.to) continue;
+    const bf = bandOf.get(edge.from);
+    const bt = bandOf.get(edge.to);
+    if (bt > bf + 1) longEdges.push({ edge, bf, bt });
+  }
+  for (const { edge, bf, bt } of longEdges) {
+    const x1 = cx(edge.from);
+    const y1 = cy(edge.from);
+    const dx = cx(edge.to) - x1;
+    const dy = cy(edge.to) - y1 || 1;
+    for (let b = bf + 1; b < bt; b++) {
+      const want = x1 + dx * ((bandCenter(b) - y1) / dy);
+      const corridor = corridorX(b, want);
+      const key = `${b}@${Math.round(corridor)}`;
+      if (!crossings.has(key)) crossings.set(key, []);
+      crossings.get(key).push({ edge, band: b, corridor, want });
+    }
+  }
+  const slotted = new Map(); // `${edgeId}@${band}` -> x
+  for (const group of crossings.values()) {
+    group.sort((p, q) => (!!p.edge.ghost - !!q.edge.ghost)
+      || (cx(p.edge.from) - cx(q.edge.from)) || (cx(p.edge.to) - cx(q.edge.to))
+      || (p.edge.id < q.edge.id ? -1 : 1));
+    group.forEach((entry, i) => {
+      slotted.set(`${entry.edge.id}@${entry.band}`, entry.corridor + (i - (group.length - 1) / 2) * LANE_PITCH);
+    });
+  }
+  for (const { edge, bf, bt } of longEdges) {
+    const points = [];
+    for (let b = bf + 1; b < bt; b++) {
+      points.push({ x: slotted.get(`${edge.id}@${b}`), y: bandCenter(b) });
+    }
+    routes[edge.id] = { kind: 'down', points };
+  }
+
+  // 4. Upward (loop) edges: one right-side vertical lane each, greedy interval colouring over
+  //    overlapping [yTop, yBottom] spans so concurrent loops never share a curve.
+  const upward = graph.edges
+    .filter((e) => positions[e.from] && positions[e.to] && e.from !== e.to && bandOf.get(e.to) <= bandOf.get(e.from))
+    .map((e) => {
+      const lo = Math.min(bandOf.get(e.to), bandOf.get(e.from));
+      const hi = Math.max(bandOf.get(e.to), bandOf.get(e.from));
+      let right = -Infinity;
+      for (let b = lo; b <= hi; b++) right = Math.max(right, rowIntervals[b][rowIntervals[b].length - 1][1]);
+      return { e, yTop: Math.min(cy(e.from), cy(e.to)), yBottom: Math.max(cy(e.from), cy(e.to)), right };
+    })
+    .sort((p, q) => (p.yTop - q.yTop) || (p.yBottom - q.yBottom) || (!!p.e.ghost - !!q.e.ghost) || (p.e.id < q.e.id ? -1 : 1));
+  const laneEnds = []; // per lane: the largest yBottom taken so far
+  for (const entry of upward) {
+    let lane = laneEnds.findIndex((end) => entry.yTop > end);
+    if (lane === -1) lane = laneEnds.push(-Infinity) - 1;
+    laneEnds[lane] = entry.yBottom;
+    const x = entry.right + CORRIDOR_MARGIN + lane * UP_LANE_PITCH;
+    routes[entry.e.id] = { kind: 'up', points: [{ x, y: cy(entry.e.from) }, { x, y: cy(entry.e.to) }] };
+  }
+
+  return routes;
+}

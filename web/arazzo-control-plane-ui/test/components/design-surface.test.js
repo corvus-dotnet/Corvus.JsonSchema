@@ -415,3 +415,77 @@ describe('<arazzo-design-surface>', () => {
     ok(!node('validate-order').classList.contains('df-ghost'));
   });
 });
+
+describe('<arazzo-design-surface> edge routing (§6.3 corridor/lane pass)', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  // A chain a→b→c→d, a band-skipping goto a→d, a ghost skip b→d, and two departures from b.
+  const routedGraph = {
+    nodes: [
+      { id: 'a', kind: 'op', label: 'a', sublabel: '' },
+      { id: 'b', kind: 'op', label: 'b', sublabel: '' },
+      { id: 'c', kind: 'op', label: 'c', sublabel: '' },
+      { id: 'd', kind: 'op', label: 'd', sublabel: '' },
+    ],
+    edges: [
+      { id: 'e-ab', from: 'a', to: 'b', kind: 'seq' },
+      { id: 'e-bc', from: 'b', to: 'c', kind: 'seq' },
+      { id: 'e-cd', from: 'c', to: 'd', kind: 'seq' },
+      { id: 'skip-ad', from: 'a', to: 'd', kind: 'failure' },
+      { id: 'ghost:skip-bd', from: 'b', to: 'd', kind: 'seq', ghost: true },
+      { id: 'loop-ca', from: 'c', to: 'a', kind: 'failure' },
+      { id: 'loop-db', from: 'd', to: 'b', kind: 'failure' },
+    ],
+    defaults: { successActions: [], failureActions: [] },
+  };
+
+  function make() {
+    el = document.createElement('arazzo-design-surface');
+    el.style.cssText = 'display:block;width:900px;height:600px;';
+    mount(el);
+    el.graph = routedGraph;
+    return el;
+  }
+
+  const path = (id) => el.shadowRoot.querySelector(`.edge[data-id="${id}"] .line`).getAttribute('d');
+
+  it('no two rendered edge paths coincide (the overlay pile-up bug)', () => {
+    make();
+    const ds = routedGraph.edges.map((e) => path(e.id));
+    equal(new Set(ds).size, ds.length, 'every edge draws a distinct path');
+  });
+
+  it('a band-skipping edge takes waypoints beside the column instead of a straight line through it', () => {
+    make();
+    // The skip path is threaded through ≥2 corridor waypoints: 3+ cubic segments vs the plain 1.
+    const segments = (path('skip-ad').match(/C /g) || []).length;
+    ok(segments >= 3, `skip edge threads waypoints (got ${segments} cubic segments)`);
+    equal((path('e-ab').match(/C /g) || []).length, 1, 'adjacent edges keep the single cubic');
+  });
+
+  it('two edges leaving one node depart from different points on its border', () => {
+    make();
+    const start = (d) => d.match(/^M ([-\d.]+) ([-\d.]+)/).slice(1).map(Number);
+    const [x1] = start(path('e-bc'));
+    const [x2] = start(path('ghost:skip-bd'));
+    ok(x1 !== x2, `departures spread along the border (${x1} vs ${x2})`);
+  });
+
+  it('overlapping upward loops render on distinct right-side lanes', () => {
+    make();
+    // Each loop path carries its vertical lane as an L segment; the two lane x's differ.
+    const laneX = (d) => Number(d.match(/L ([-\d.]+) /)[1]);
+    ok(laneX(path('loop-ca')) !== laneX(path('loop-db')), 'lanes differ');
+  });
+
+  it('routing follows a node move (the moved band re-routes, no stale lanes)', () => {
+    make();
+    const before = path('skip-ad');
+    // Move c far to the right (the _moveNode path a drag takes): the corridor beside c relocates,
+    // so the skip edge crossing c's band must re-route — not keep its stale lane.
+    el._positions.c = { ...el._positions.c, x: el._positions.c.x + 260 };
+    el._moveNode('c');
+    ok(path('skip-ad') !== before, 'the skip edge re-routed after the move');
+  });
+});

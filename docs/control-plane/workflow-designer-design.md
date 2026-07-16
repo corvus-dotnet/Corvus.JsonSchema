@@ -580,7 +580,7 @@ Arazzo exists.
 | Layer | Nature | Notes |
 |-------|--------|-------|
 | **Projection** | Pure function: workflow → `{nodes, edges, defaultsLayer, diagnostics}` | DOM-free, lives with the document model (§5.2); unit-tested exhaustively against Arazzo fixtures. |
-| **Layout** | Pure data: dagre positions ⊕ `designerState` manual overrides | dagre lazy-loaded only when auto-layout is invoked; output is plain `{x,y}` per node + edge points. |
+| **Layout** | Pure data: layered positions ⊕ `designerState` manual overrides, then the routing pass | The built-in dependency-free layered layout (`workflow-layout.js`) ranks by longest path and centres each rank; a dagre adapter can be injected via `layoutEngine`. Output is plain `{x,y}` per node. A second pure pass, `routeEdges(graph, positions)`, then assigns waypoints to the edges that need them — see "Edge routing" below. |
 | **Renderer** | Keyed reconciliation of the projection onto SVG groups | Every visual state — selection, problems, debug overlay — is a CSS class on an owned element, themed by `--arazzo-*` tokens. No imperative styling. |
 | **Interaction** | A pointer state machine: `idle → pan · drag-node · draw-edge · marquee` | `setPointerCapture` + listeners on the component's own shadow root only. Coordinate math via the surface's own viewBox transform. **`document.elementFromPoint` and document-level listeners are banned** — the two APIs behind every shadow-DOM failure in the library survey simply do not appear. |
 | **Events out** | The kit contract | `selection-changed`, `step-created`, `edge-created`, `breakpoint-toggled`, … — the same events a library adapter would emit, so the recorded Rete fallback (§6.1) would replace one component's internals, not ripple. |
@@ -590,6 +590,32 @@ free-form containers, no plugin system. Precedent for this size and style alread
 773-line schema-form generator (`value-editor.js`), the hand-rolled `.awp` container, and the
 playground's bespoke SVG block renderer. Debug overlays are the projection re-rendered with trace
 decorations — there is no second rendering path to keep in sync.
+
+**Edge routing (the corridor/lane pass — added 2026-07-16).** Naive border-to-border cubics
+coincide in exactly the cases the designer cares about: a band-skipping edge (a goto, or a diff
+ghost bridging an inserted step) runs straight through the intermediate nodes and lies along the
+chain edges; every edge leaves its source at bottom-centre so two departures share a start; and
+concurrent back-loops all take the same fixed-width right-side bow. The §4.7 overlay made this
+acute — a ghost edge over an inserted/removed step is *by construction* a skip edge lying along
+the chain. The fix is a second pure pass in `workflow-layout.js`, `routeEdges(graph, positions)`,
+mirroring `layoutGraph`'s doctrine (pure data, no dependency, injected-engine- and manual-move-safe
+because bands are re-derived by clustering actual y positions):
+
+- A downward edge spanning ≥2 rank bands gets one waypoint per crossed band, placed in an **edge
+  corridor** — the gap between adjacent nodes of that band (or just outside the row) nearest the
+  source→target straight line. Edges sharing a corridor take distinct **edge lanes**:
+  deterministic slots `LANE_PITCH` (16) apart, ghosts sorted after solid edges so a ghost lane
+  never coincides with a solid one (`buildGhostProjection` marks union ghost edges `ghost: true`).
+- An upward or same-band edge gets a right-side vertical lane clearing every row it spans, with
+  overlapping loops separated by greedy interval colouring (`UP_LANE_PITCH` 18) — replacing the
+  fixed bow.
+- Departures spread along the source's bottom border (the mirror of the arrival spreading the
+  renderer already did), ordered by where each edge is heading.
+- The renderer threads the waypoints as cubics with vertical tangents (no corners), keeps
+  arrowhead landing arithmetic unchanged, and hangs each label on its route's middle waypoint so
+  labels follow their lane. Adjacent-rank downward edges keep the plain single cubic — they never
+  coincided. A node move recomputes the whole routing (lane groups shift), still O(edges) and
+  cheap at workflow scale.
 
 ### 6.4 Comparison & the diff overlay (§15-8d — resolved 2026-07-13)
 

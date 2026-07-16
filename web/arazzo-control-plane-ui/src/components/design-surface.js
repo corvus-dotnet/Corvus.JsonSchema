@@ -35,7 +35,7 @@
 //              zoom) so a node/edge sits at the viewport centre.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import { layoutGraph, NODE_WIDTH, NODE_HEIGHT } from '../workflow-layout.js';
+import { layoutGraph, routeEdges, NODE_WIDTH, NODE_HEIGHT } from '../workflow-layout.js';
 import { START_ID } from '../workflow-graph.js';
 
 const PSEUDO_R = 17; // radius of the start/end pseudo-node circles
@@ -403,6 +403,8 @@ class ArazzoDesignSurface extends ArazzoElement {
       }
     }
 
+    this._recomputeRouting();
+
     for (const edge of g.edges) edgesG.append(this._buildEdge(edge));
     for (const node of g.nodes) nodesG.append(this._buildNode(node));
     for (const [id, pos] of Object.entries(this._exitPositions)) extrasG.append(this._buildExitChip(id, pos));
@@ -524,6 +526,34 @@ class ArazzoDesignSurface extends ArazzoElement {
     return el;
   }
 
+  /** @private — corridor/lane routing (§6.3): waypoints for band-skipping and loop edges, plus
+   *  departure spreading along the source's bottom border (the mirror of `_inbound`), so edges
+   *  sharing a source or a column corridor never coincide. Recomputed on render and node move. */
+  _recomputeRouting() {
+    const g = this._graph;
+    this._routes = g ? routeEdges(g, this._positions) : {};
+    this._outbound = new Map();
+    if (!g) return;
+    const outGroups = new Map();
+    for (const edge of g.edges) {
+      if (edge.to.startsWith('workflow:')) continue; // exit chips leave from the right border
+      const a = this._positions[edge.from];
+      const b = this._positions[edge.to];
+      if (!a || !b || b.y <= a.y + NODE_HEIGHT / 2) continue; // only bottom-border departures
+      if (!outGroups.has(edge.from)) outGroups.set(edge.from, []);
+      outGroups.get(edge.from).push(edge);
+    }
+    for (const group of outGroups.values()) {
+      const sorted = [...group].sort((p, q) => {
+        const px = this._routes[p.id]?.points[0]?.x ?? this._positions[p.to]?.x ?? 0;
+        const qx = this._routes[q.id]?.points[0]?.x ?? this._positions[q.to]?.x ?? 0;
+        return (px - qx) || (p.id < q.id ? -1 : 1);
+      });
+      const spread = Math.min(14, (NODE_WIDTH - 52) / Math.max(1, sorted.length - 1));
+      sorted.forEach((edge, i) => this._outbound.set(edge.id, (i - (sorted.length - 1) / 2) * spread));
+    }
+  }
+
   /** @private — the parallel-fan offset for an edge: 0 when it has the route to itself. */
   _fan(edge) {
     const p = this._parallel?.get(edge.id);
@@ -549,7 +579,8 @@ class ArazzoDesignSurface extends ArazzoElement {
     };
   }
 
-  /** @private — smooth cubic between node borders; backward/sideways edges bow out to the side. */
+  /** @private — smooth cubic between node borders, threaded through the corridor/lane waypoints
+   *  `_recomputeRouting` assigned (§6.3); backward/sideways edges follow their right-side lane. */
   _edgePath(edge) {
     const a = this._positions[edge.from];
     const b = this._positions[edge.to] || this._exitPositions?.[edge.to];
@@ -564,28 +595,59 @@ class ArazzoDesignSurface extends ArazzoElement {
     const to = this._anchors(edge.to);
     const down = b.y > a.y + NODE_HEIGHT / 2;
     const arrive = this._inbound?.get(edge.id) ?? 0;
+    const route = this._routes?.[edge.id];
     if (down) {
-      const x1 = from.bottom.x + fan;
+      const depart = this._outbound?.get(edge.id) ?? 0;
+      const x1 = from.bottom.x + fan + depart;
       const y1 = from.bottom.y;
       const x2 = to.top.x + fan + arrive;
       const y2 = to.top.y;
+      if (route?.kind === 'down' && route.points.length) {
+        // Vertical tangents at every waypoint: each corridor crossing is a smooth S, not a corner.
+        let d = `M ${x1} ${y1}`;
+        let prev = { x: x1, y: y1 };
+        for (const wp of route.points) {
+          const c = Math.max(20, (wp.y - prev.y) / 2);
+          d += ` C ${prev.x} ${prev.y + c}, ${wp.x} ${wp.y - c}, ${wp.x} ${wp.y}`;
+          prev = wp;
+        }
+        const c = Math.max(24, (y2 - prev.y) / 2);
+        return `${d} C ${prev.x} ${prev.y + c}, ${x2} ${y2 - c}, ${x2} ${y2}`;
+      }
       const c = Math.max(24, (y2 - y1) / 2);
       return `M ${x1} ${y1} C ${x1 + fan} ${y1 + c}, ${x2 + fan + arrive} ${y2 - c}, ${x2} ${y2}`;
     }
-    // Upward or same-rank: route around the right side, arrivals spread down the border.
+    // Upward or same-rank: around the right side along the assigned lane (arrivals spread down the
+    // border); the legacy bow only remains as the no-route fallback.
     const x1 = from.right.x;
     const y1 = from.right.y;
     const x2 = to.right.x;
     const y2 = to.right.y + arrive * 0.6;
+    if (route?.kind === 'up') {
+      const wx = route.points[0].x + Math.abs(fan);
+      const u = y2 < y1 ? -1 : 1;
+      const k = Math.min(26, Math.abs(y2 - y1) / 2);
+      return `M ${x1} ${y1} C ${x1 + (wx - x1) * 0.6} ${y1}, ${wx} ${y1}, ${wx} ${y1 + u * k}`
+        + ` L ${wx} ${y2 - u * k}`
+        + ` C ${wx} ${y2}, ${x2 + (wx - x2) * 0.6} ${y2}, ${x2} ${y2}`;
+    }
     const bow = 70 + Math.abs(y2 - y1) * 0.08 + Math.abs(fan);
     return `M ${x1} ${y1} C ${x1 + bow} ${y1}, ${x2 + bow} ${y2}, ${x2} ${y2}`;
   }
 
-  /** @private */
+  /** @private — where an edge's label sits: on the route's middle waypoint when there is one (the
+   *  label follows its lane instead of stacking on the straight-line midpoint), else the midpoint. */
   _edgeMid(edge) {
     const a = this._positions[edge.from];
     const b = this._positions[edge.to] || this._exitPositions?.[edge.to];
     if (!a || !b) return { x: 0, y: 0 };
+    const route = this._routes?.[edge.id];
+    if (route?.kind === 'down' && route.points.length) {
+      return route.points[Math.floor((route.points.length - 1) / 2)];
+    }
+    if (route?.kind === 'up') {
+      return { x: route.points[0].x, y: (route.points[0].y + route.points[1].y) / 2 };
+    }
     const fan = this._fan(edge);
     return { x: (a.x + b.x + NODE_WIDTH) / 2 + fan, y: (a.y + NODE_HEIGHT + b.y) / 2 + fan * 0.5 };
   }
@@ -992,9 +1054,11 @@ class ArazzoDesignSurface extends ArazzoElement {
   _moveNode(id) {
     const pos = this._positions[id];
     this.$(`.node[data-id="${cssEscape(id)}"]`)?.setAttribute('transform', `translate(${pos.x} ${pos.y})`);
-    // Re-path the edges touching the node (cheap: a handful per node).
+    // Moving a node can re-band it and reshuffle corridor lanes, so recompute the routing and
+    // re-path EVERY edge — still cheap (a workflow is tens of edges), and the alternative
+    // (re-path only the touched edges) leaves other edges on stale lanes.
+    this._recomputeRouting();
     for (const edge of this._graph?.edges || []) {
-      if (edge.from !== id && edge.to !== id) continue;
       // querySelectorAll: ids are unique by construction, but stale twins must never survive a move.
       for (const el of this.$$(`.edge[data-id="${cssEscape(edge.id)}"]`)) {
         const d = this._edgePath(edge);

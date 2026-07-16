@@ -115,3 +115,118 @@ test('a retry loop back up the flow does not destroy the ranking', () => {
   assert.ok(positions.first.y < positions.second.y && positions.second.y < positions.third.y,
     'the loop edge is drawn but never ranks a predecessor below its successor');
 });
+
+// ── Edge routing (routeEdges, §6.3 corridor/lane pass) ──────────────────────────────────────────
+
+import { routeEdges, NODE_WIDTH, LANE_PITCH, UP_LANE_PITCH, CORRIDOR_MARGIN } from '../src/workflow-layout.js';
+
+/** A linear chain a→b→c→d with a skip edge and a ghost skip edge — the overlay's shape. */
+function chainWithSkips() {
+  const graph = {
+    nodes: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+    edges: [
+      { id: 'e-ab', from: 'a', to: 'b', kind: 'seq' },
+      { id: 'e-bc', from: 'b', to: 'c', kind: 'seq' },
+      { id: 'e-cd', from: 'c', to: 'd', kind: 'seq' },
+      { id: 'e-ad', from: 'a', to: 'd', kind: 'failure' },
+      { id: 'ghost:e-bd', from: 'b', to: 'd', kind: 'seq', ghost: true },
+    ],
+  };
+  return { graph, positions: layoutGraph(graph) };
+}
+
+test('routeEdges: adjacent-rank edges get no route; band-skipping edges get one waypoint per crossed band', () => {
+  const { graph, positions } = chainWithSkips();
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes['e-ab'], undefined);
+  assert.equal(routes['e-bc'], undefined);
+  assert.equal(routes['e-cd'], undefined);
+  assert.equal(routes['e-ad'].kind, 'down');
+  assert.equal(routes['e-ad'].points.length, 2); // crosses bands 1 and 2
+  assert.equal(routes['ghost:e-bd'].points.length, 1); // crosses band 2
+});
+
+test('routeEdges: a skip edge routes through a corridor BESIDE the column, not through it', () => {
+  const { graph, positions } = chainWithSkips();
+  const routes = routeEdges(graph, positions);
+  const colCentre = positions.b.x + NODE_WIDTH / 2;
+  for (const wp of routes['e-ad'].points) {
+    // Clear of the node cards it used to cut through: outside [x, x+width].
+    assert.ok(wp.x <= positions.b.x || wp.x >= positions.b.x + NODE_WIDTH,
+      `waypoint ${wp.x} must sit beside the column centred on ${colCentre}`);
+  }
+});
+
+test('routeEdges: edges sharing a corridor take distinct lanes, ghosts after solids, deterministically', () => {
+  const { graph, positions } = chainWithSkips();
+  const routes = routeEdges(graph, positions);
+  // Both skip edges cross band 2 in the same corridor: distinct lane x, exactly one pitch apart.
+  const solid = routes['e-ad'].points[1];
+  const ghost = routes['ghost:e-bd'].points[0];
+  assert.equal(solid.y, ghost.y);
+  assert.notEqual(solid.x, ghost.x);
+  assert.equal(Math.abs(solid.x - ghost.x), LANE_PITCH);
+  assert.ok(ghost.x > solid.x, 'the ghost sorts after the solid edge');
+  // Deterministic: a second run yields identical routes.
+  assert.deepEqual(routeEdges(graph, positions), routes);
+});
+
+test('routeEdges: overlapping upward loops take distinct right-side lanes; disjoint ones may share', () => {
+  const graph = {
+    nodes: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+    edges: [
+      { id: 'e-ab', from: 'a', to: 'b', kind: 'seq' },
+      { id: 'e-bc', from: 'b', to: 'c', kind: 'seq' },
+      { id: 'e-cd', from: 'c', to: 'd', kind: 'seq' },
+      { id: 'loop-ca', from: 'c', to: 'a', kind: 'failure' },
+      { id: 'loop-db', from: 'd', to: 'b', kind: 'failure' }, // overlaps loop-ca in y
+    ],
+  };
+  const positions = layoutGraph(graph);
+  const routes = routeEdges(graph, positions);
+  assert.equal(routes['loop-ca'].kind, 'up');
+  assert.equal(routes['loop-db'].kind, 'up');
+  const [xa, xb] = [routes['loop-ca'].points[0].x, routes['loop-db'].points[0].x];
+  assert.equal(Math.abs(xa - xb), UP_LANE_PITCH, 'overlapping loops sit one lane pitch apart');
+  // Each lane clears the rightmost node it spans.
+  const rightmost = Math.max(...Object.values(positions).map((p) => p.x)) + NODE_WIDTH;
+  assert.ok(Math.min(xa, xb) >= rightmost + CORRIDOR_MARGIN);
+});
+
+test('routeEdges: the onboard-customer overlay union — the goto and the chain share no corridor line', () => {
+  // v2 chain createAccount→verifyIdentity→provisionResources→notifyApplicant, the v2 goto
+  // verifyIdentity→notifyApplicant, and v1's ghost tail provisionResources→sendWelcome.
+  const graph = {
+    nodes: [{ id: 'createAccount' }, { id: 'verifyIdentity' }, { id: 'provisionResources' },
+      { id: 'notifyApplicant' }, { id: 'sendWelcome' }],
+    edges: [
+      { id: 's1', from: 'createAccount', to: 'verifyIdentity', kind: 'seq' },
+      { id: 's2', from: 'verifyIdentity', to: 'provisionResources', kind: 'seq' },
+      { id: 's3', from: 'provisionResources', to: 'notifyApplicant', kind: 'seq' },
+      { id: 'goto', from: 'verifyIdentity', to: 'notifyApplicant', kind: 'failure' },
+      { id: 'ghost:tail', from: 'provisionResources', to: 'sendWelcome', kind: 'seq', ghost: true },
+    ],
+  };
+  const positions = layoutGraph(graph);
+  const routes = routeEdges(graph, positions);
+  // The goto crosses provisionResources' band and must clear its card.
+  const wp = routes.goto.points[0];
+  const pr = positions.provisionResources;
+  assert.ok(wp.x <= pr.x || wp.x >= pr.x + NODE_WIDTH, 'the goto lane clears provisionResources');
+  // The adjacent chain edges keep their no-route straight paths.
+  assert.equal(routes.s1, undefined);
+  assert.equal(routes.s2, undefined);
+});
+
+test('routeEdges: bands derive from actual positions, so manual moves re-band instead of crashing', () => {
+  const { graph, positions } = chainWithSkips();
+  // Drag b far below d: the chain's bands reorder; routing still returns clean data.
+  const moved = { ...positions, b: { x: positions.b.x + 400, y: positions.d.y + 300 } };
+  const routes = routeEdges(graph, moved);
+  for (const route of Object.values(routes)) {
+    assert.ok(['down', 'up'].includes(route.kind));
+    for (const wp of route.points) {
+      assert.ok(Number.isFinite(wp.x) && Number.isFinite(wp.y));
+    }
+  }
+});

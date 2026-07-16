@@ -409,8 +409,10 @@ export function buildGhostProjection(result, base = 'right') {
   // exclusive other-side edges: those the diff painted with the other side's exclusive class.
   const exclusiveClass = other === 'left' ? 'removed' : 'added';
   const ghostEdgeSrc = otherGraph.edges.filter((e) => otherPaint.edges[e.id] === exclusiveClass);
+  // `ghost: true` reaches the routing pass (workflow-layout.js routeEdges), which sorts ghosts
+  // after solid edges in a shared corridor so a ghost lane never coincides with a solid one.
   const ghostEdges = ghostEdgeSrc.map((e) => ({
-    ...e, id: `ghost:${e.id}`, from: toBase(e.from), to: isWf(e.to) ? e.to : toBase(e.to),
+    ...e, id: `ghost:${e.id}`, from: toBase(e.from), to: isWf(e.to) ? e.to : toBase(e.to), ghost: true,
   }));
 
   const graph = { ...baseGraph, nodes: [...baseGraph.nodes, ...ghostNodes], edges: [...baseGraph.edges, ...ghostEdges] };
