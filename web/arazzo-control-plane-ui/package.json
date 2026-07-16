@@ -50,7 +50,8 @@
     "test:smoke": "playwright test --config test/playwright.config.mjs test/smoke.spec.js",
     "test:browser": "npm run test:components && npm run test:smoke && npm run test:ux",
     "test:all": "npm test && npm run test:browser",
-    "test:ux": "playwright test --config test/playwright.config.mjs test/ux"
+    "test:ux": "playwright test --config test/playwright.config.mjs test/ux",
+    "test:live": "ARAZZO_LIVE_UX=1 playwright test --config test/playwright.config.mjs --project=live --workers=1"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.3",
