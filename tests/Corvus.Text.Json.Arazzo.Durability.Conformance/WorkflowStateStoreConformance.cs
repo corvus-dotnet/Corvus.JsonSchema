@@ -183,6 +183,38 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Expiring_an_owners_leases_frees_its_runs_for_a_peer_immediately()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        if (store is not IWorkflowLeaseAdministration admin)
+        {
+            Assert.Inconclusive("This store does not implement IWorkflowLeaseAdministration (the §5.5 revocation fence).");
+            return;
+        }
+
+        // Two runs held by the runner about to be revoked, and one by a healthy peer — all under live (unexpired) leases.
+        await store.AcquireLeaseAsync("run-1", "revoked-runner", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync("run-2", "revoked-runner", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync("run-3", "healthy-runner", TimeSpan.FromMinutes(5), default);
+
+        // A peer cannot take run-1 while the revoked runner's lease is live.
+        (await store.AcquireLeaseAsync("run-1", "peer", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+
+        // Fence the revoked runner: only its live leases are expired, and the count reports how many.
+        (await admin.ExpireLeasesForOwnerAsync("revoked-runner", default)).ShouldBe(2);
+
+        // Its runs are re-acquirable by a peer now — at the same instant, without waiting for the TTL; the healthy peer's
+        // own lease is untouched.
+        (await store.AcquireLeaseAsync("run-1", "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync("run-2", "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync("run-3", "peer", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+
+        // Idempotent — an owner holding no live leases expires none.
+        (await admin.ExpireLeasesForOwnerAsync("nobody", default)).ShouldBe(0);
+    }
+
+    [TestMethod]
     public async Task QueryDue_returns_only_suspended_runs_whose_timer_is_due()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();

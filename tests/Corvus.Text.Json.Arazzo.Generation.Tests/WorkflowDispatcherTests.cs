@@ -187,6 +187,46 @@ public class WorkflowDispatcherTests
     }
 
     [TestMethod]
+    public async Task Revoking_a_runner_fences_its_in_flight_run_by_expiring_its_leases()
+    {
+        var clock = new MutableClock(T0);
+        IWorkflowCatalogStore catalog = await RunnableCatalogAsync();
+        var runStore = new InMemoryWorkflowStateStore(clock);
+
+        // A run is in flight on the runner about to be revoked: Running at cursor 0, held under a fresh (unexpired) lease —
+        // the compromised runner is mid-execution and still owns the lease.
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        using (WorkflowRun inflight = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, "development", clock))
+        {
+            await inflight.CheckpointAsync(0, default);
+        }
+
+        (await runStore.AcquireLeaseAsync("run-1", "compromised-runner", TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+        using var loader = new WorkflowExecutorLoader();
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+        var healthy = new WorkflowDispatcher(runStore, "healthy-runner", clock, runnerEnvironment: "development");
+
+        // A healthy peer cannot yet reclaim it — the compromised runner's lease is live (the TTL has not elapsed).
+        (await healthy.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0, "the run is still leased by the runner being revoked");
+
+        // The control plane fences the revoked runner: every lease it holds is expired immediately, without waiting for the
+        // TTL. This is the control-plane-enforced half of the fence — cooperative self-checks are worthless against an
+        // attacker-controlled runner, so the store, not the runner, invalidates the lease.
+        int fenced = await runStore.ExpireLeasesForOwnerAsync("compromised-runner", default);
+        fenced.ShouldBe(1);
+
+        // The healthy peer now reclaims the orphaned Running run within this poll (not after the lease TTL) and drives it to
+        // completion. The compromised runner's own in-flight work is then rejected by optimistic concurrency: the etag it
+        // holds is stale, so its next checkpoint save conflicts — it can no longer persist progress for this run.
+        (await healthy.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Completed);
+    }
+
+    [TestMethod]
     public async Task Claims_only_runs_pinned_to_the_runners_environment_and_environment_round_trips()
     {
         var clock = new MutableClock(T0);

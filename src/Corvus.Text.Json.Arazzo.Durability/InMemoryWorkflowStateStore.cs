@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// does for AsyncAPI. It is the reference against which the shared store-conformance suite runs, and is also
 /// usable for a real single-process run that does not need to survive a host restart.
 /// </summary>
-public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter
+public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IWorkflowLeaseAdministration, ISupportsRowSecurityFilter
 {
     private readonly Dictionary<string, Entry> entries = [];
     private readonly Dictionary<string, LeaseRecord> leases = [];
@@ -106,6 +106,41 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         }
 
         return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<int> ExpireLeasesForOwnerAsync(string owner, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(owner);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        lock (this.gate)
+        {
+            // Collect first, then expire — never mutate the dictionary mid-enumeration. Expiring in place (ExpiresAt = now)
+            // rather than removing keeps a record that a lease existed, and makes the run reclaimable now: HasLiveLease and
+            // AcquireLease both test ExpiresAt > now, which is false at exactly now.
+            List<string>? toExpire = null;
+            foreach ((string id, LeaseRecord record) in this.leases)
+            {
+                if (record.Owner == owner && record.ExpiresAt > now)
+                {
+                    (toExpire ??= []).Add(id);
+                }
+            }
+
+            if (toExpire is null)
+            {
+                return ValueTask.FromResult(0);
+            }
+
+            foreach (string id in toExpire)
+            {
+                this.leases[id] = this.leases[id] with { ExpiresAt = now };
+            }
+
+            return ValueTask.FromResult(toExpire.Count);
+        }
     }
 
     /// <inheritdoc/>

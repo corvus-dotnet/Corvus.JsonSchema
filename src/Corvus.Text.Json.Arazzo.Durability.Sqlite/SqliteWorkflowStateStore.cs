@@ -18,7 +18,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
 /// operations) and all operations are serialised through it — adequate for the local/embedded use this
 /// adapter targets. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>, which runs the idempotent schema.
 /// </remarks>
-public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IWorkflowLeaseAdministration, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -228,6 +228,30 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             delete.Parameters.AddWithValue("@id", lease.RunId.Value);
             delete.Parameters.AddWithValue("@token", lease.Token);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<int> ExpireLeasesForOwnerAsync(string owner, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(owner);
+
+        // The control-plane revocation fence (§5.5): expire every live lease this owner holds in place, so an authorized peer
+        // reclaims its in-flight runs at the next poll (WorkflowLeases.ExpiresAt <= now makes the row re-acquirable) rather
+        // than after the TTL. The affected count is the number of live leases fenced.
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand expire = this.connection.CreateCommand();
+            expire.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @now WHERE Owner = @owner AND ExpiresAt > @now;";
+            expire.Parameters.AddWithValue("@owner", owner);
+            expire.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
+            return await expire.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {

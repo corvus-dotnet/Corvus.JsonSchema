@@ -16,15 +16,18 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// Only the checkpoint payload is encrypted; the projected <see cref="WorkflowRunIndexEntry"/> fields (status,
 /// workflow id, due time, awaiting channel/correlation, error type) pass through in the clear so the backend can
 /// still serve the wait/visibility queries. If a correlation id is itself sensitive, store a deterministic hash
-/// of it instead of the raw value. The etag is the backend's and passes through unchanged. If the inner store
-/// also implements <see cref="IWorkflowWaitIndex"/>, so does this wrapper (delegating); otherwise the wait-index
-/// members throw <see cref="NotSupportedException"/>.
+/// of it instead of the raw value. The etag is the backend's and passes through unchanged. The wait-index,
+/// dispatch-index, and lease-administration (<see cref="IWorkflowLeaseAdministration"/>, the §5.5 revocation fence)
+/// capabilities delegate to the inner store when it implements them; otherwise those members throw
+/// <see cref="NotSupportedException"/>. Leases and their administration carry no run payload, so they pass through
+/// unencrypted.
 /// </remarks>
-public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IWorkflowLeaseAdministration, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private readonly IWorkflowStateStore inner;
     private readonly IWorkflowWaitIndex? innerIndex;
     private readonly IWorkflowDispatchIndex? innerDispatch;
+    private readonly IWorkflowLeaseAdministration? innerLeaseAdmin;
     private readonly ICheckpointProtector protector;
 
     /// <summary>Initializes a new instance of the <see cref="ProtectedWorkflowStateStore"/> class.</summary>
@@ -37,6 +40,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         this.inner = inner;
         this.innerIndex = inner as IWorkflowWaitIndex;
         this.innerDispatch = inner as IWorkflowDispatchIndex;
+        this.innerLeaseAdmin = inner as IWorkflowLeaseAdministration;
         this.protector = protector;
     }
 
@@ -82,6 +86,14 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     /// <inheritdoc/>
     public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
         => this.inner.ReleaseLeaseAsync(lease, cancellationToken);
+
+    /// <inheritdoc/>
+    public ValueTask<int> ExpireLeasesForOwnerAsync(string owner, CancellationToken cancellationToken)
+    {
+        // Leases pass through unprotected (they carry no run payload), so the revocation fence forwards straight to the
+        // inner store when it supports it — a wrapped Postgres/Sqlite store fences exactly as an unwrapped one would.
+        return (this.innerLeaseAdmin ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowLeaseAdministration.")).ExpireLeasesForOwnerAsync(owner, cancellationToken);
+    }
 
     /// <inheritdoc/>
     public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
