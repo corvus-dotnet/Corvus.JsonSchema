@@ -154,7 +154,7 @@ Both must pass.
 | <a id="tenant-shell"></a>**Tenant shell** | A deployment wrapper that ANDs a mandated [rule](#security-rule) (e.g. `sys:tenant == $claim.tenant`) and [internal-tag](#internal-sys-tag) stamping into every decision, so multi-tenant isolation is inescapable and users can only narrow within it. |
 | <a id="usability"></a>**Usability** | The label-superset test (`IsUsableBy`) governing which [runs](#run) may use a [credential](#credential): the run must carry all the binding's usage tags. Distinct from [reach](#reach) (superset test, not rule match). |
 
-## Normalization decisions
+## <a id="normalization-decisions"></a>Normalization decisions
 
 Conflicts found by the 2026-07 docs sweep, and the canonical resolutions. Renames were marked ⚠
 while pending; the 2026-07 normalization pass ([`terminology-normalization.md`](./terminology-normalization.md))
