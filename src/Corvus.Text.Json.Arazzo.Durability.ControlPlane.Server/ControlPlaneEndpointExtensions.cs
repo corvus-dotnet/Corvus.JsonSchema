@@ -218,9 +218,13 @@ public static class ControlPlaneEndpointExtensions
             gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType,
             workspaceStore: wcStore, sources: srcStore);
 
+        // The §860 step-journal read-access audit logs under a dedicated "Corvus.Arazzo.Audit" category so a deployment can
+        // route/retain it independently; the audit span rides the always-registered Corvus.Arazzo ActivitySource regardless.
+        ILogger? auditLogger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit");
+
         return endpoints.MapApiEndpoints(
             securityHandler,
-            new ArazzoControlPlaneHandler(management, access, catalog),
+            new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
             new ArazzoControlPlaneRunnersHandler(runners, access),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator),
             availabilityHandler,

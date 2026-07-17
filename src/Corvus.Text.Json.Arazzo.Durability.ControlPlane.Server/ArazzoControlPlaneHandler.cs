@@ -6,6 +6,7 @@ using System.Globalization;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
+using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -24,6 +25,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private readonly ISecuredWorkflowManagement management;
     private readonly ControlPlaneAccess access;
     private readonly ISecuredWorkflowCatalog? catalog;
+    private readonly ILogger? auditLogger;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class (unscoped: full access).</summary>
     /// <param name="management">The control-plane client the endpoints delegate to.</param>
@@ -39,13 +41,17 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     /// step-journal disclosure tier; when <see langword="null"/>, version-level journal redaction is not applied (the
     /// <c>runs:outputs:read</c> baseline gate and field-level redaction still apply). The full-access ctor never needs it:
     /// an unscoped caller always holds the stronger grant, so the classification is never consulted.</param>
-    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null)
+    /// <param name="auditLogger">The logger for the §860 step-journal read-access audit (who read which run's journal, at
+    /// which disclosure tier); when <see langword="null"/>, only the audit span is emitted (no structured log). The read
+    /// audit is emitted regardless of this — the span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/>.</param>
+    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(access);
         this.management = management;
         this.access = access;
         this.catalog = catalog;
+        this.auditLogger = auditLogger;
     }
 
     /// <inheritdoc/>
@@ -127,17 +133,24 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string runId = (string)parameters.RunId;
         AccessContext ctx = this.access.Current();
 
+        // §860: reading a run's step journal (a sensitive-payload read, §14) is audited — who read which run, at which
+        // disclosure tier — so a sensitive read no longer leaves no trace. The caller is the audited subject.
+        string actor = PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "system";
+
         // The journal discloses strictly more than the detail, so resolve the run first (for its version + reach): out of
         // read reach or absent → 404 (non-disclosing), the same gate GetStepJournalAsync applies.
         WorkflowRunDetail? detail = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
         if (detail is not { } d)
         {
+            // A refused read (out of reach or absent) is audited too — it is an attempted-access signal.
+            SensitiveReadAudit.JournalRead(this.auditLogger, actor, runId, string.Empty, JournalDisclosure.Refused);
             return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
         }
 
         ReadOnlyMemory<byte>? journal = await this.management.GetStepJournalAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
         if (journal is not { } bytes)
         {
+            SensitiveReadAudit.JournalRead(this.auditLogger, actor, runId, d.WorkflowId, JournalDisclosure.Refused);
             return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
         }
 
@@ -146,10 +159,14 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         // — write reach on the run (operator-level, §14.2). The classification is read from the CURRENT catalog version, so
         // reclassifying a workflow retroactively protects existing runs' journals.
         bool strongerGrant = ctx.Admits(AccessVerb.Write, d.SecurityTags);
-        if (!strongerGrant && await this.IsOutputsSensitiveVersionAsync(d.WorkflowId, cancellationToken).ConfigureAwait(false))
+        bool redacted = !strongerGrant && await this.IsOutputsSensitiveVersionAsync(d.WorkflowId, cancellationToken).ConfigureAwait(false);
+        if (redacted)
         {
             bytes = RedactAllOutputs(bytes);
         }
+
+        // §860 read-access audit: who read this run's step journal, and whether the payloads were disclosed or withheld.
+        SensitiveReadAudit.JournalRead(this.auditLogger, actor, runId, d.WorkflowId, redacted ? JournalDisclosure.Redacted : JournalDisclosure.Full);
 
         // Hand the parsed journal to the response workspace so it lives until the response is written
         // (the result Body references it); the workspace disposes it — do not dispose it here.

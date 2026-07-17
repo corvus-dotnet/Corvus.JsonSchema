@@ -104,6 +104,16 @@ reading a run's metadata, in two layers:
   no payload, while an operator reads it in full. The classification is read from the *current* version, so
   reclassifying a workflow retroactively protects its existing runs' journals.
 
+Because the journal is a sensitive read, every read of it is **audited**. The control plane emits a
+`workflow.journal.read` span (on the `Corvus.Arazzo` activity source) plus an audit-grade log record naming *who*
+read *which* run's journal and the disclosure tier the read reached: `full` (the payloads were disclosed),
+`redacted` (a sensitive version's payloads were withheld from a caller below the stronger grant), or `refused`
+(the run was out of the caller's read reach or absent — a non-disclosing `404`). A refused attempt is audited too,
+so a probe against a run the caller cannot see still leaves a trace. Governance mutations already emit audit
+spans; this closes the gap that a sensitive read left none. The signal is best-effort observability that flows to
+the deployment's telemetry and log pipeline, where security audits are retained and queried; it is zero-cost when
+no listener is attached.
+
 ## Where scopes come from
 
 Scopes do not live in the control plane, and they are not stored against an identity. They ride on the

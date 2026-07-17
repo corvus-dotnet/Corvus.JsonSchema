@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
@@ -316,6 +317,97 @@ public sealed class ControlPlaneRowSecurityTests
         Stj.JsonElement step = doc.RootElement.GetProperty("steps").EnumerateArray().Single();
         step.GetProperty("outputs").GetProperty("name").GetString().ShouldBe("Ada");
         step.TryGetProperty("redacted", out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Reading_a_journal_in_full_emits_a_full_disclosure_audit_span()
+    {
+        // §860: a step-journal read (a sensitive-payload read) is audited. The stronger grant discloses the payload, so the
+        // audit records disclosure tier "full", naming the caller and the run they read.
+        using JournalReadSpans audit = JournalReadSpans.Capture();
+        await using Scoped host = await StartAsync();
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
+        await SeedRunWithOutputsAsync(host.Store, "audit-full", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+
+        (await host.GetAsync("/runs/audit-full/steps", tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        Activity span = audit.ForRun("audit-full");
+        span.GetTagItem(ArazzoTelemetry.JournalDisclosureTag).ShouldBe("full");
+        span.GetTagItem(ArazzoTelemetry.WorkflowIdTag).ShouldBe("flow-v1");
+        ((string?)span.GetTagItem(ArazzoTelemetry.ActorTag)).ShouldNotBeNullOrEmpty();
+    }
+
+    [TestMethod]
+    public async Task Reading_a_redacted_journal_emits_a_redacted_disclosure_audit_span()
+    {
+        // A caller below the stronger grant reads a sensitive version: the payload is withheld and the audit records the read
+        // reached disclosure tier "redacted" — a sensitive read that disclosed nothing still leaves an attempted-access trace.
+        using JournalReadSpans audit = JournalReadSpans.Capture();
+        await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
+        await SeedRunWithOutputsAsync(host.Store, "audit-redacted", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+
+        (await host.GetAsync("/runs/audit-redacted/steps", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        audit.ForRun("audit-redacted").GetTagItem(ArazzoTelemetry.JournalDisclosureTag).ShouldBe("redacted");
+    }
+
+    [TestMethod]
+    public async Task A_refused_cross_tenant_read_emits_a_refused_disclosure_audit_span()
+    {
+        // The run is out of the caller's read reach (another tenant's), so nothing is disclosed and a non-disclosing 404 is
+        // returned. The attempt is still audited at tier "refused", with no workflow id (the run was never resolved).
+        using JournalReadSpans audit = JournalReadSpans.Capture();
+        await using Scoped host = await StartAsync();
+        await SeedRunWithOutputsAsync(host.Store, "audit-refused", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+
+        (await host.GetAsync("/runs/audit-refused/steps", tenant: "other")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        Activity span = audit.ForRun("audit-refused");
+        span.GetTagItem(ArazzoTelemetry.JournalDisclosureTag).ShouldBe("refused");
+        span.GetTagItem(ArazzoTelemetry.WorkflowIdTag).ShouldBeNull("a run that was never resolved carries no workflow id");
+    }
+
+    /// <summary>Captures the <c>workflow.journal.read</c> audit spans on the Arazzo <see cref="ActivitySource"/>.</summary>
+    private sealed class JournalReadSpans : IDisposable
+    {
+        private readonly List<Activity> spans = [];
+        private readonly ActivityListener listener;
+
+        private JournalReadSpans()
+        {
+            this.listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == ArazzoTelemetry.ActivitySourceName,
+                Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+                ActivityStopped = activity =>
+                {
+                    if (activity.OperationName == "workflow.journal.read")
+                    {
+                        lock (this.spans)
+                        {
+                            this.spans.Add(activity);
+                        }
+                    }
+                },
+            };
+            ActivitySource.AddActivityListener(this.listener);
+        }
+
+        public static JournalReadSpans Capture() => new();
+
+        // The single journal.read span for the given run — asserts exactly one was emitted (other tests' spans carry other run ids).
+        public Activity ForRun(string runId)
+        {
+            lock (this.spans)
+            {
+                return this.spans.Single(s => (string?)s.GetTagItem(ArazzoTelemetry.RunIdTag) == runId);
+            }
+        }
+
+        public void Dispose() => this.listener.Dispose();
     }
 
     private static async Task SeedRunWithOutputsAsync(InMemoryWorkflowStateStore store, string id, string workflowId, TimeProvider clock, params SecurityTag[] security)

@@ -65,6 +65,11 @@ public static class ArazzoTelemetry
     /// <summary>The span/measurement tag carrying a catalog version number.</summary>
     public const string VersionNumberTag = "corvus.arazzo.version_number";
 
+    /// <summary>The span tag carrying the disclosure tier a step-journal read reached (design §14/§860): <c>full</c> (the
+    /// payloads were disclosed), <c>redacted</c> (a sensitive version's payloads were withheld from a caller below the
+    /// stronger grant), or <c>refused</c> (the run was out of read reach or absent). The read-access audit signal.</summary>
+    public const string JournalDisclosureTag = "corvus.arazzo.journal_disclosure";
+
     private static readonly string Version =
         typeof(ArazzoTelemetry).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 
