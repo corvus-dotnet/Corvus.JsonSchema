@@ -15,6 +15,12 @@ IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(ar
 // is not in the AppHost's assembly set — same constraint as the GitHub-App read below): default true unless "false".
 bool seedExampleData = !string.Equals(builder.Configuration["SeedExampleData"], "false", StringComparison.OrdinalIgnoreCase);
 
+// Checkpoint protection key (§14 at rest, backlog #861): generated fresh per composition boot and handed to the
+// control plane as configuration. The demo resets its data every run, so an ephemeral key is exactly right — a
+// durable deployment sources this from its KMS/secret store instead (the same secure-introduction posture as the
+// Vault AppRole trust above).
+string checkpointProtectionKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+
 // Optional local, UNCOMMITTED GitHub App credentials for the designer's Git integration (workflow-designer §4.7 / D3).
 // Copy github-app.local.json.example → github-app.local.json and fill in your own App (see the README); absent means
 // the control plane brokers no App and the Git panel stays off. The client id is public; the secret never enters git.
@@ -240,6 +246,9 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     // import seeds the arazzo-admins group + seed admin, and the control plane's tier-3 deployment-policy grant maps that
     // group to the service operator. Everyone else earns reach through the §16.5 access-request -> approval flow.
     .WithEnvironment("ControlPlane__RequireAuthorization", "true")
+    // §14 at rest: the per-boot checkpoint-encryption key (see its generation above) — checkpoints, step
+    // outputs included, are AES-GCM-wrapped by the application before Postgres sees them.
+    .WithEnvironment("ControlPlane__CheckpointProtectionKey", checkpointProtectionKey)
     .WithReference(keycloak)
     .WaitFor(keycloak)
     // Grantee-directory (§16.5.4): the control plane resolves real Keycloak users/groups/roles for the grant pickers
@@ -287,6 +296,9 @@ if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(git
 builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     .WithReference(workflowstore)
     .WaitFor(workflowstore)
+    // §14 at rest: the SAME per-boot checkpoint key the control plane holds — every process touching the
+    // shared state store must wrap it identically.
+    .WithEnvironment("Runner__CheckpointProtectionKey", checkpointProtectionKey)
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     // Secure introduction: NOT a pre-minted token. The runner gets its non-secret AppRole RoleID as plain config and
     // the PATH to the single-use wrapping token the provisioner left behind; it unwraps that to obtain the SecretID and

@@ -87,7 +87,15 @@ await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.Postgr
 
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();
-PostgresWorkflowStateStore stateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
+PostgresWorkflowStateStore postgresStateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
+
+// At rest (§14, backlog #861): checkpoints — step outputs included — are application-encrypted before the backend
+// ever sees them. The key arrives from deployment configuration: the AppHost generates one per composition boot
+// (the demo resets its data each run, so an ephemeral key is exactly right; a durable deployment sources it from
+// its KMS/secret store instead). Absent the key (bare host runs, tests), the store runs unwrapped.
+IWorkflowStateStore stateStore = builder.Configuration["ControlPlane:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
+    ? new ProtectedWorkflowStateStore(postgresStateStore, new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey)))
+    : postgresStateStore;
 // The executor provider compiles a runnable executor into each catalogued version at add time (alongside the typed
 // metadata) — so a resumed run can re-enter the real generated Arazzo executor (live execution, §5/§8).
 PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider());
@@ -130,7 +138,9 @@ var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 // The submitter of version 1 establishes administration (DemoData seeds the workflows as administered by the
 // arazzo-admins group); the access-request approval flow routes a request to these administrators.
 var administrators = await PostgresWorkflowAdministratorStore.ConnectAsync(dataSource);
-var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "demo", administrators: administrators);
+// The wait-index cast holds for both branches of the protection wrap above (the protected store delegates its
+// index members; index entries pass through in the clear by design, so queries never touch checkpoint bytes).
+var catalog = new SecuredWorkflowCatalog(catalogStore, (IWorkflowWaitIndex)stateStore, "demo", administrators: administrators);
 
 // The runner registry is store-backed and shared, so a runner registering in its own process is visible to this
 // control plane's GET /runners (§5.4) — not an in-memory table only this process can see.

@@ -39,7 +39,14 @@ NpgsqlDataSource dataSource = NpgsqlDataSource.Create(connectionString);
 
 // Connect read-mostly: the control plane owns reset+seed, so the runner never deletes or seeds. It reads the
 // catalog (to learn which versions to host) and claims/leases/advances runs against the shared state store.
-PostgresWorkflowStateStore stateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
+PostgresWorkflowStateStore postgresStateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
+
+// At rest (§14, backlog #861): the SAME checkpoint-protection key the control plane holds — every process
+// that touches the shared state store must wrap it identically, or one side writes what the other cannot
+// read. The AppHost hands both the identical per-boot key.
+IWorkflowStateStore stateStore = builder.Configuration["Runner:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
+    ? new ProtectedWorkflowStateStore(postgresStateStore, new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey)))
+    : postgresStateStore;
 PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource);
 PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(dataSource);
 
@@ -55,7 +62,9 @@ PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAs
 // to serve its environment (an idempotent Pending authorization); an administrator of that environment authorizes it
 // before it is dispatchable. The runner writes Pending here; the control plane reads/decides over the same store.
 PostgresEnvironmentRunnerAuthorizationStore runnerAuthorizations = await PostgresEnvironmentRunnerAuthorizationStore.ConnectAsync(dataSource);
-var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "runner");
+// The wait-index cast holds for both branches of the protection wrap above (the protected store delegates its
+// index members; index entries pass through in the clear by design, so queries never touch checkpoint bytes).
+var catalog = new SecuredWorkflowCatalog(catalogStore, (IWorkflowWaitIndex)stateStore, "runner");
 
 // The single environment this runner serves (design §5.5). Configurable so one host image can be deployed per
 // environment; the demo defaults to production. The runner is only dispatchable for runs targeting it.
