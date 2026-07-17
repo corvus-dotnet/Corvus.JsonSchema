@@ -19,6 +19,7 @@ import { actorLabel, ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeT
 import './tag-editor.js';
 import './administrators-panel.js';
 import './pager.js';
+import './splitbar.js';
 
 class ArazzoEnvironments extends ArazzoElement {
   static get observedAttributes() {
@@ -288,7 +289,13 @@ class ArazzoEnvironments extends ArazzoElement {
         .layout > * { min-height: 0; }
         .detail-pane { min-height: 0; overflow: auto; }
         .detail-pane:empty { display: none; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
+        .layout .splitbar { display: none; }
+        @media (min-width: 880px) {
+          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+          .layout.has-selection .splitbar { display: block; }
+          .layout.has-selection > .wrap { margin-right: 14px; }
+          .layout.has-selection > .detail-pane { margin-left: 14px; }
+        }
 
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
         /* The list is a bordered table, matching the Runs/Catalog/Sources lists. */
@@ -360,6 +367,9 @@ class ArazzoEnvironments extends ArazzoElement {
           </div>
           <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
+        <arazzo-splitbar class="splitbar" orientation="vertical" target=".layout" prop="--detail-w"
+                         min="320" max="820" invert storage-key="environments.split.detail"
+                         aria-label="Resize the detail pane"></arazzo-splitbar>
         <div class="detail-pane"></div>
       </div>
       <dialog part="dialog">

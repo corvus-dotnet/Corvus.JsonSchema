@@ -42,6 +42,15 @@ describe('<arazzo-sources> credential entry point', () => {
     const doc = el.shadowRoot.querySelector('arazzo-json-view');
     ok(doc, 'the document section uses the shared JSON view');
     ok(doc.value.includes('"openapi"') || doc.value.includes('"asyncapi"'), 'it carries the registered document text');
+
+    // The master-detail split is resizable (#844): opening a detail arms the shared splitbar, targeting
+    // the layout's --detail-w that the has-selection grid consumes.
+    const layout = el.shadowRoot.querySelector('.layout');
+    ok(layout.classList.contains('has-selection'), 'the layout is in its two-pane mode');
+    const bar = el.shadowRoot.querySelector('.layout arazzo-splitbar');
+    ok(bar, 'a draggable splitbar sits between the list and the detail');
+    equal(bar.getAttribute('prop'), '--detail-w', 'the bar drives the width property the grid reads');
+    equal(bar.getAttribute('target'), '.layout', 'targeting the layout it lives in');
   });
 
   it('every source row offers ＋ credential, opening the dialog locked to that source', async () => {

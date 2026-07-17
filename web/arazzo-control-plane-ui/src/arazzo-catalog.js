@@ -16,6 +16,7 @@ import { ArazzoControlPlaneClient, CATALOG_STATUSES } from './arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './components/base.js';
 import './components/catalog-table.js';
 import './components/catalog-detail.js';
+import './components/splitbar.js';
 import './components/catalog-add-dialog.js';
 
 const LIGHT = `
@@ -117,7 +118,15 @@ class ArazzoCatalog extends ArazzoElement {
         .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
         .grow { flex: 1; }
         .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+        /* When a row is open the detail pane is resizable: the splitbar drives --detail-w, which the
+           grid consumes (list | bar | detail). The bar and the gap collapse when nothing is selected. */
+        .layout .splitbar { display: none; }
+        @media (min-width: 880px) {
+          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+          .layout.has-selection .splitbar { display: block; }
+          .layout.has-selection > arazzo-catalog-table { margin-right: 14px; }
+          .layout.has-selection > .detail-pane { margin-left: 14px; }
+        }
         .layout > * { min-height: 0; }
         .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         .detail-pane:empty { display: none; }
@@ -136,6 +145,9 @@ class ArazzoCatalog extends ArazzoElement {
       </div>
       <div class="layout" part="layout">
         <arazzo-catalog-table selectable part="table"></arazzo-catalog-table>
+        <arazzo-splitbar class="splitbar" orientation="vertical" target=".layout" prop="--detail-w"
+                         min="320" max="820" invert storage-key="catalog.split.detail"
+                         aria-label="Resize the detail pane"></arazzo-splitbar>
         <div class="detail-pane"></div>
       </div>
       <arazzo-catalog-add-dialog></arazzo-catalog-add-dialog>

@@ -20,6 +20,7 @@ import './pager.js';
 import './credential-dialog.js';
 import './source-operations.js';
 import './json-view.js';
+import './splitbar.js';
 
 class ArazzoSources extends ArazzoElement {
   static get observedAttributes() {
@@ -278,6 +279,13 @@ class ArazzoSources extends ArazzoElement {
         ${SHARED_CSS}
         :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
         .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+        .layout .splitbar { display: none; }
+        @media (min-width: 880px) {
+          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+          .layout.has-selection .splitbar { display: block; }
+          .layout.has-selection > .wrap { margin-right: 14px; }
+          .layout.has-selection > .detail-pane { margin-left: 14px; }
+        }
         .layout > * { min-height: 0; }
         @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
 
@@ -349,6 +357,9 @@ class ArazzoSources extends ArazzoElement {
           </div>
           <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
+        <arazzo-splitbar class="splitbar" orientation="vertical" target=".layout" prop="--detail-w"
+                         min="320" max="820" invert storage-key="sources.split.detail"
+                         aria-label="Resize the detail pane"></arazzo-splitbar>
         <div class="detail-pane"></div>
       </div>
       <dialog part="dialog">

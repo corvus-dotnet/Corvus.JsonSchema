@@ -17,6 +17,7 @@ import { ArazzoControlPlaneClient } from '../arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, define } from './base.js';
 import './credentials-table.js';
 import './credential-detail.js';
+import './splitbar.js';
 import './credential-dialog.js';
 
 class ArazzoCredentials extends ArazzoElement {
@@ -88,7 +89,13 @@ class ArazzoCredentials extends ArazzoElement {
         ${SHARED_CSS}
         :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
         .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+        .layout .splitbar { display: none; }
+        @media (min-width: 880px) {
+          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+          .layout.has-selection .splitbar { display: block; }
+          .layout.has-selection > arazzo-credentials-table { margin-right: 14px; }
+          .layout.has-selection > .detail-pane { margin-left: 14px; }
+        }
         .layout > * { min-height: 0; }
         .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         .detail-pane:empty { display: none; }
@@ -101,6 +108,9 @@ class ArazzoCredentials extends ArazzoElement {
       </div>
       <div class="layout" part="layout">
         <arazzo-credentials-table selectable part="table"></arazzo-credentials-table>
+        <arazzo-splitbar class="splitbar" orientation="vertical" target=".layout" prop="--detail-w"
+                         min="320" max="820" invert storage-key="credentials.split.detail"
+                         aria-label="Resize the detail pane"></arazzo-splitbar>
         <div class="detail-pane"></div>
       </div>
       <arazzo-credential-dialog></arazzo-credential-dialog>
