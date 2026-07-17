@@ -18,6 +18,8 @@ import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absolut
 import './tag-editor.js';
 import './pager.js';
 import './credential-dialog.js';
+import './source-operations.js';
+import './json-view.js';
 
 class ArazzoSources extends ArazzoElement {
   static get observedAttributes() {
@@ -459,8 +461,12 @@ class ArazzoSources extends ArazzoElement {
           `}
         </div>
         <div class="section">
+          <h4>Operations</h4>
+          <arazzo-source-operations class="d-ops"></arazzo-source-operations>
+        </div>
+        <div class="section">
           <h4>Document</h4>
-          <pre class="doc">${escapeHtml(docText)}</pre>
+          <arazzo-json-view class="d-doc"></arazzo-json-view>
         </div>
         ${writable ? `
         <div class="section">
@@ -470,6 +476,13 @@ class ArazzoSources extends ArazzoElement {
     `;
 
     pane.querySelector('.d-close')?.addEventListener('click', () => { this.clearDetail(); this.renderBody(); });
+    // The structured operation surface (#843): the standard filterable view over the registered document,
+    // plus the raw document as a highlighted read-only editor rather than plain text.
+    const opsView = pane.querySelector('.d-ops');
+    opsView.client = this.buildClient();
+    opsView.source = s.name;
+    opsView.addEventListener('error', (e) => e.stopPropagation()); // its inline error row is the surface
+    pane.querySelector('.d-doc').value = docText;
     const mgmtEd = pane.querySelector('.d-mgmt-editor');
     if (mgmtEd) mgmtEd.tags = Array.isArray(s.managementTags) ? s.managementTags : [];
     const saveBtn = pane.querySelector('.d-save');

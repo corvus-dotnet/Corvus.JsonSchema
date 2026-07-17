@@ -17,6 +17,33 @@ describe('<arazzo-sources> credential entry point', () => {
   let el;
   afterEach(() => el?.remove());
 
+  it('the detail shows the structured operation surface AND the highlighted document, not just raw text (#843)', async () => {
+    el = panel();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    // Open the first registered source's detail.
+    el.shadowRoot.querySelector('tbody tr[data-name]').click();
+    await waitFor(() => el.shadowRoot.querySelector('arazzo-source-operations'));
+
+    // The standard filterable operations view renders the source's real surface (method+path rows).
+    const opsView = el.shadowRoot.querySelector('arazzo-source-operations');
+    await waitFor(() => opsView.shadowRoot.querySelectorAll('.op').length > 0);
+    ok(opsView.shadowRoot.querySelector('.op .badge'), 'rows carry the binding badge (method/action)');
+    const before = opsView.shadowRoot.querySelectorAll('.op').length;
+    const filter = opsView.shadowRoot.querySelector('.filter');
+    filter.value = 'zzz-no-such-operation';
+    filter.dispatchEvent(new Event('input'));
+    ok(opsView.shadowRoot.querySelector('.empty'), 'the filter narrows to the empty state');
+    filter.value = '';
+    filter.dispatchEvent(new Event('input'));
+    equal(opsView.shadowRoot.querySelectorAll('.op').length, before, 'clearing the filter restores the surface');
+
+    // The document renders through the read-only JSON view (highlighted when CM lands; themed pre until then).
+    const doc = el.shadowRoot.querySelector('arazzo-json-view');
+    ok(doc, 'the document section uses the shared JSON view');
+    ok(doc.value.includes('"openapi"') || doc.value.includes('"asyncapi"'), 'it carries the registered document text');
+  });
+
   it('every source row offers ＋ credential, opening the dialog locked to that source', async () => {
     el = panel();
     mount(el);
