@@ -83,6 +83,81 @@ describe('<arazzo-runner-authorizations>', () => {
     equal(e.detail.authorization.status, 'Revoked', 'the authorization is now Revoked');
   });
 
+  it('an authorized runner offers Quarantine (amber) and Revoke, and quarantining drains it', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const status = el.shadowRoot.querySelector('.status');
+    status.value = 'Authorized';
+    status.dispatchEvent(new Event('change'));
+    await nextEvent(el, 'loaded');
+
+    const row = rowFor(el, 'production', 'runner-eu-1');
+    const quarantine = row.querySelector('.act[data-action="quarantine"]');
+    ok(quarantine, 'an authorized row offers Quarantine');
+    ok(quarantine.classList.contains('warn'), 'Quarantine is the amber (warn) action');
+    ok(row.querySelector('.act[data-action="revoke"]'), 'an authorized row offers Revoke');
+    ok(!row.querySelector('.act[data-action="authorize"]'), 'an authorized runner is not offered Authorize');
+
+    quarantine.click();
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('.decision-dialog'));
+    ok(dlg.textContent.includes('in-flight'), 'the quarantine dialog explains in-flight runs finish');
+    const decided = nextEvent(el, 'runner-authorization-decided');
+    dlg.querySelector('.ok').click();
+    const e = await decided;
+    equal(e.detail.action, 'quarantine', 'the quarantine decision fired');
+    equal(e.detail.authorization.status, 'Quarantined', 'the authorization is now Quarantined');
+  });
+
+  it('a quarantined runner offers Reinstate and returns it to Authorized without re-registration', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const status = el.shadowRoot.querySelector('.status');
+    status.value = 'Quarantined';
+    status.dispatchEvent(new Event('change'));
+    await nextEvent(el, 'loaded');
+
+    equal(rows(el).length, 1, 'one quarantined runner in the seed');
+    const row = rowFor(el, 'production', 'runner-eu-fault');
+    equal(row.querySelector('.badge').textContent.trim(), 'Quarantined', 'the status badge reads Quarantined');
+    const reinstate = row.querySelector('.act[data-action="reinstate"]');
+    ok(reinstate, 'a quarantined row offers Reinstate');
+    ok(row.querySelector('.act[data-action="revoke"]'), 'a quarantined row still offers Revoke');
+
+    reinstate.click();
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('.decision-dialog'));
+    const decided = nextEvent(el, 'runner-authorization-decided');
+    dlg.querySelector('.ok').click();
+    const e = await decided;
+    equal(e.detail.action, 'reinstate', 'the reinstate decision fired');
+    equal(e.detail.authorization.status, 'Authorized', 'the runner is Authorized again');
+  });
+
+  it('a revoked runner offers only Re-authorize (not quarantine or a second revoke)', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const status = el.shadowRoot.querySelector('.status');
+    status.value = 'Revoked';
+    status.dispatchEvent(new Event('change'));
+    await nextEvent(el, 'loaded');
+
+    const row = rowFor(el, 'production', 'runner-eu-old');
+    ok(row.querySelector('.act[data-action="reauthorize"]'), 'a revoked row offers Re-authorize');
+    ok(!row.querySelector('.act[data-action="revoke"]'), 'a revoked runner is not revoked again');
+    ok(!row.querySelector('.act[data-action="quarantine"]'), 'a revoked runner cannot be quarantined');
+
+    row.querySelector('.act[data-action="reauthorize"]').click();
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('.decision-dialog'));
+    ok(dlg.textContent.includes('compromised'), 'the re-authorize dialog warns about a formerly compromised runner');
+    const decided = nextEvent(el, 'runner-authorization-decided');
+    dlg.querySelector('.ok').click();
+    const e = await decided;
+    equal(e.detail.action, 'reauthorize', 'the re-authorize decision fired');
+    equal(e.detail.authorization.status, 'Authorized', 'the runner is Authorized again');
+  });
+
   it('pages the inbox with Prev/Next over the keyset cursor', async () => {
     // The seed has two pending authorizations (production/runner-us-1, staging/runner-eu-2). A page-size of 1 splits them
     // across two keyset pages ordered by (environment, runnerId): production first, then staging.

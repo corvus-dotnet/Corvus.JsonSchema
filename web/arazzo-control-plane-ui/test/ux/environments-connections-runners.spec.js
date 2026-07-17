@@ -402,13 +402,55 @@ test('a revoked runner leaves the dispatchable set and may be re-authorized (§5
   await expect(revoked.locator('.badge')).toHaveText('Revoked');
   await expect(revoked).toContainText('Host compromised - rotate first.');
   await expect(revoked.locator('.act[data-action="revoke"]')).toHaveCount(0);
-  await revoked.locator('.act[data-action="authorize"]').click();
+  // A revoked runner returns to service by re-authorization (a deliberate action, distinct from authorizing a pending one).
+  await revoked.locator('.act[data-action="reauthorize"]').click();
   await expect(inbox.locator('dialog.decision-dialog')).toBeVisible();
   await inbox.locator('dialog.decision-dialog .ok').click();
 
   // Re-authorized: it leaves the Revoked view (only the decommissioned host remains).
   await expect(rows).toHaveCount(1);
   await expect(rows.first()).toContainText('runner-eu-old');
+  assertClean(errors);
+});
+
+test('a faulted runner can be quarantined (temporary, in-flight drains) and reinstated (§5.5)', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openTab(page, 'Runner auth');
+  const inbox = page.locator('arazzo-runner-authorizations');
+  const rows = inbox.locator('tbody tr[data-key]');
+  await expect(rows.first()).toBeVisible();
+
+  // The authorized runner offers Quarantine (amber, temporary) beside Revoke (red, permanent).
+  await inbox.locator('.toolbar .status').selectOption('Authorized');
+  const eu1 = inbox.locator('tr[data-key="production runner-eu-1"]');
+  const quarantine = eu1.locator('.act[data-action="quarantine"]');
+  await expect(quarantine).toHaveClass(/warn/);
+  await quarantine.click();
+  const dlg = inbox.locator('dialog.decision-dialog');
+  await expect(dlg).toBeVisible();
+  await expect(dlg).toContainText(/in-flight runs finish/i);
+  await dlg.locator('.reason-in').fill('Intermittent 5xx; draining.');
+  await dlg.locator('.ok').click();
+
+  // It leaves the Authorized view; under Quarantined it sits with the pre-seeded quarantined host.
+  await expect(inbox.locator('tbody')).toContainText(/no authorized runner authorizations/i);
+  await inbox.locator('.toolbar .status').selectOption('Quarantined');
+  await expect(rows).toHaveCount(2);
+  const quarantined = inbox.locator('tr[data-key="production runner-eu-1"]');
+  await expect(quarantined.locator('.badge')).toHaveText('Quarantined');
+  await expect(quarantined).toContainText('Intermittent 5xx; draining.');
+  await expect(quarantined.locator('.act[data-action="revoke"]')).toHaveCount(1);
+
+  // Reinstate returns it to service with no re-registration; it leaves the Quarantined view.
+  await quarantined.locator('.act[data-action="reinstate"]').click();
+  await expect(dlg).toBeVisible();
+  await dlg.locator('.ok').click();
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText('runner-eu-fault');
+
+  // Back under Authorized it is dispatchable again.
+  await inbox.locator('.toolbar .status').selectOption('Authorized');
+  await expect(inbox.locator('tr[data-key="production runner-eu-1"]').locator('.badge')).toHaveText('Authorized');
   assertClean(errors);
 });
 

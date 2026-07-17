@@ -395,6 +395,22 @@ export class ArazzoControlPlaneClient {
     return this._request('DELETE', `${this._runnerAuthorizationPath(name, runnerId)}`, { body: decisionNote(note), signal: opts.signal });
   }
 
+  /**
+   * `quarantineRunner` — temporarily exclude a faulted runner from new dispatch while its in-flight runs drain (idempotent;
+   * an already-quarantined runner is returned unchanged). Reinstate it later with {@link authorizeRunner}, no re-registration
+   * required. The caller must be an administrator of the environment (`403`); the runner must have registered for it (`404`);
+   * only an authorized runner can be quarantined (`409` for a pending or revoked one).
+   * @param {string} name The environment.
+   * @param {string} runnerId The runner.
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link EnvironmentRunnerAuthorizationView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  quarantineRunner(name, runnerId, note = {}, opts = {}) {
+    if (!name || !runnerId) throw new TypeError('quarantineRunner requires a name and runnerId.');
+    return this._request('POST', `${this._environmentPath(name)}/runners/${encodeURIComponent(runnerId)}/quarantine`, { body: decisionNote(note), signal: opts.signal });
+  }
+
   /** @private */
   _runnerAuthorizationPath(name, runnerId) {
     return `${this._environmentPath(name)}/runners/${encodeURIComponent(runnerId)}/authorization`;

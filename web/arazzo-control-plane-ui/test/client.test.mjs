@@ -887,8 +887,22 @@ test('listEnvironmentRunnerAuthorizations is the per-environment roster (all sta
   const c = makeClient();
   const { authorizations } = await c.listEnvironmentRunnerAuthorizations('production');
   // Every production authorization, whatever its status, ordered by runnerId.
-  assert.deepEqual(authorizations.map((a) => a.runnerId), ['runner-eu-1', 'runner-eu-old', 'runner-us-1']);
+  assert.deepEqual(authorizations.map((a) => a.runnerId), ['runner-eu-1', 'runner-eu-fault', 'runner-eu-old', 'runner-us-1']);
   await assert.rejects(() => c.listEnvironmentRunnerAuthorizations('nope'), (e) => e.status === 404);
+});
+
+test('quarantineRunner drains an authorized runner and reinstate (authorizeRunner) returns it; a pending/revoked runner 409s', async () => {
+  const c = makeClient();
+  // The seeded authorized production runner can be quarantined (temporary exclusion), then reinstated by authorizing again.
+  const quarantined = await c.quarantineRunner('production', 'runner-eu-1', { reason: 'Flapping.' });
+  assert.equal(quarantined.status, 'Quarantined');
+  assert.equal(quarantined.reason, 'Flapping.');
+  assert.equal((await c.authorizeRunner('production', 'runner-eu-1')).status, 'Authorized');
+  // Only an authorized runner can be quarantined: a still-pending one and a revoked one both conflict (409).
+  await assert.rejects(() => c.quarantineRunner('production', 'runner-us-1'), (e) => e.status === 409);
+  await assert.rejects(() => c.quarantineRunner('production', 'runner-eu-old'), (e) => e.status === 409);
+  // A runner that never registered for the environment is 404.
+  await assert.rejects(() => c.quarantineRunner('production', 'ghost-runner'), (e) => e.status === 404);
 });
 
 test('authorizeRunner authorizes a pending runner (idempotent) and 404s for an unregistered runner', async () => {

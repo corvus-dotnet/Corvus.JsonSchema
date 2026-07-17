@@ -1212,6 +1212,7 @@ function seedRunnerAuthorizations() {
     a('production', 'runner-eu-1', 'Authorized', 30, { decidedBy: 'boss', decidedAt: iso(-29 * hr), reason: 'Vetted EU production host.' }),
     a('production', 'runner-us-1', 'Pending', 2),
     a('staging', 'runner-eu-2', 'Pending', 5),
+    a('production', 'runner-eu-fault', 'Quarantined', 8, { decidedBy: 'boss', decidedAt: iso(-1 * hr), reason: 'Intermittent timeouts; draining before reinstatement.' }),
     a('production', 'runner-eu-old', 'Revoked', 200, { decidedBy: 'boss', decidedAt: iso(-50 * hr), reason: 'Decommissioned host.' }),
   ];
 }
@@ -1425,6 +1426,24 @@ export function createMockControlPlane(options = {}) {
     if (!r) return problem(404, 'Runner authorization not found', `No runner '${runnerId}' has registered for environment '${environment}'.`);
     if (r.status === target) return json(structuredClone(r));
     r.status = target;
+    r.decidedBy = actingSubject();
+    r.decidedAt = iso(0);
+    if (body?.reason) r.reason = body.reason;
+    r.etag = nextEtag();
+    return json(structuredClone(r));
+  }
+
+  // Quarantine (temporary exclusion): only an Authorized runner can be quarantined — a Pending one is not dispatching and a
+  // Revoked one is a permanent removal quarantine must not downgrade (both 409). Idempotent for an already-Quarantined runner.
+  // Unlike revoke, quarantine drains in-flight work, so there is no fence to model here.
+  function quarantineRunnerAuthorization(environment, runnerId, body) {
+    const r = runnerAuthorizations.find((x) => x.environment === environment && x.runnerId === runnerId);
+    if (!r) return problem(404, 'Runner authorization not found', `No runner '${runnerId}' has registered for environment '${environment}'.`);
+    if (r.status === 'Quarantined') return json(structuredClone(r));
+    if (r.status !== 'Authorized') {
+      return problem(409, 'Runner not authorized', `Runner '${runnerId}' is not currently authorized to serve environment '${environment}', so it cannot be quarantined. Only an authorized runner can be quarantined; authorize it first, or revoke it to remove it permanently.`);
+    }
+    r.status = 'Quarantined';
     r.decidedBy = actingSubject();
     r.decidedAt = iso(0);
     if (body?.reason) r.reason = body.reason;
@@ -4203,6 +4222,17 @@ export function createMockControlPlane(options = {}) {
       if (method === 'POST') return decideRunnerAuthorization(name, runnerId, 'Authorized', body);
       if (method === 'DELETE') return decideRunnerAuthorization(name, runnerId, 'Revoked', body);
       return problem(405, 'Method not allowed');
+    }
+    // /environments/{name}/runners/{runnerId}/quarantine — temporarily exclude a faulted runner (§5.5); env-admin governed.
+    const runnerQuarantineMatch = path.match(/^\/environments\/([^/]+)\/runners\/([^/]+)\/quarantine$/);
+    if (runnerQuarantineMatch) {
+      const name = decodeURIComponent(runnerQuarantineMatch[1]);
+      const runnerId = decodeURIComponent(runnerQuarantineMatch[2]);
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      if (!findEnvironment(name)) return notFoundEnvironment(name);
+      const denied = requireAdministrator('quarantine a runner for an environment', { environment: name });
+      if (denied) return denied;
+      return quarantineRunnerAuthorization(name, runnerId, body);
     }
     // /environments/{name}/runners — that environment's runner roster (all statuses unless filtered; env-admin governed).
     const runnerRosterMatch = path.match(/^\/environments\/([^/]+)\/runners\/?$/);

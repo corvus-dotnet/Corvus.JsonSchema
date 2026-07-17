@@ -23,12 +23,14 @@ import './environment-picker.js';
 const STATUS_COLOR = {
   Pending: 'var(--arazzo-status-suspended, #b07d18)',
   Authorized: 'var(--arazzo-status-completed, #2a8a4a)',
+  // Quarantined is an amber "temporarily held" state, distinct from Pending's muted amber and Revoked's red.
+  Quarantined: 'var(--arazzo-status-quarantined, #d97706)',
   Revoked: 'var(--arazzo-status-faulted, #d4351c)',
 };
 
 // The API has no "all statuses" query — an absent status DEFAULTS to Pending (the inbox), so an
-// "all statuses" option would lie. The filter offers exactly the three real states.
-const STATUS_FILTERS = ['Pending', 'Authorized', 'Revoked'];
+// "all statuses" option would lie. The filter offers exactly the four real states.
+const STATUS_FILTERS = ['Pending', 'Authorized', 'Quarantined', 'Revoked'];
 
 class ArazzoRunnerAuthorizations extends ArazzoElement {
   static get observedAttributes() {
@@ -167,8 +169,13 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
 
   async decide(auth, action) {
     const client = this.buildClient();
+    // Reinstate (from Quarantined) and re-authorize (from Revoked) are the same authorize verb as authorizing a Pending
+    // runner — distinct only in the confirm affordance the operator sees. Quarantine and revoke are their own verbs.
     const call = {
       authorize: (note) => client.authorizeRunner(auth.environment, auth.runnerId, note),
+      reinstate: (note) => client.authorizeRunner(auth.environment, auth.runnerId, note),
+      reauthorize: (note) => client.authorizeRunner(auth.environment, auth.runnerId, note),
+      quarantine: (note) => client.quarantineRunner(auth.environment, auth.runnerId, note),
       revoke: (note) => client.revokeRunner(auth.environment, auth.runnerId, note),
     }[action];
     if (!call) return;
@@ -217,6 +224,8 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
         .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
         .actions button { font-size: 12px; padding: 4px 9px; }
+        /* Quarantine is an amber (warning) action, between the neutral primary and the red danger. */
+        button.warn { background: var(--arazzo-status-quarantined, #d97706); border-color: var(--arazzo-status-quarantined, #d97706); color: #fff; }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .err { flex: none; margin: 10px 12px; }
@@ -326,13 +335,20 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
     const decision = a.decidedBy
       ? `<span class="sub">${escapeHtml(a.decidedBy)}${a.decidedAt ? ' · ' + escapeHtml(relativeTime(a.decidedAt)) : ''}</span>${a.reason ? `<div class="reason">${escapeHtml(a.reason)}</div>` : ''}`
       : '<span class="muted">—</span>';
-    // Authorize is offered for a Pending or Revoked runner (re-authorize); Revoke for a Pending or Authorized one.
+    // The offered actions follow the lifecycle: a Pending runner is authorized or revoked; an Authorized one is quarantined
+    // (temporary, amber) or revoked (permanent, red); a Quarantined one is reinstated or revoked; a Revoked one is
+    // re-authorized (a deliberate return). Reinstate and re-authorize are the same authorize verb with distinct affordances.
+    const key = escapeHtml(this.rowKey(a));
+    const act = (action, label, cls) => `<button class="${cls} act" type="button" data-key="${key}" data-action="${action}">${label}</button>`;
     const actions = [];
-    if (a.status !== 'Authorized') {
-      actions.push(`<button class="primary act" type="button" data-key="${escapeHtml(this.rowKey(a))}" data-action="authorize">Authorize</button>`);
-    }
-    if (a.status !== 'Revoked') {
-      actions.push(`<button class="danger act" type="button" data-key="${escapeHtml(this.rowKey(a))}" data-action="revoke">Revoke</button>`);
+    if (a.status === 'Pending') {
+      actions.push(act('authorize', 'Authorize', 'primary'), act('revoke', 'Revoke', 'danger'));
+    } else if (a.status === 'Authorized') {
+      actions.push(act('quarantine', 'Quarantine', 'warn'), act('revoke', 'Revoke', 'danger'));
+    } else if (a.status === 'Quarantined') {
+      actions.push(act('reinstate', 'Reinstate', 'primary'), act('revoke', 'Revoke', 'danger'));
+    } else if (a.status === 'Revoked') {
+      actions.push(act('reauthorize', 'Re-authorize', 'primary'));
     }
     return `
       <tr part="row" data-key="${escapeHtml(this.rowKey(a))}">
@@ -378,11 +394,21 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
 
   // ---- dialogs ----------------------------------------------------------------------------------
 
-  /** A small authorize/revoke dialog capturing an optional reason. Null = cancelled. */
+  /** A small decision dialog capturing an optional reason, with copy specific to the lifecycle action. Null = cancelled. */
   decisionDialog(auth, action) {
+    const runner = escapeHtml(auth.runnerId);
+    const env = escapeHtml(auth.environment);
     const meta = {
-      authorize: { title: 'Authorize runner', confirm: 'Authorize', cls: 'primary' },
-      revoke: { title: 'Revoke runner', confirm: 'Revoke', cls: 'danger' },
+      authorize: { title: 'Authorize runner', confirm: 'Authorize', cls: 'primary',
+        message: `Allow <strong>${runner}</strong> to serve <strong>${env}</strong>.` },
+      reinstate: { title: 'Reinstate runner', confirm: 'Reinstate', cls: 'primary',
+        message: `Return <strong>${runner}</strong> to serving <strong>${env}</strong>. It resumes taking new work; its in-flight runs were left to drain.` },
+      reauthorize: { title: 'Re-authorize runner', confirm: 'Re-authorize', cls: 'primary',
+        message: `Return the revoked runner <strong>${runner}</strong> to serving <strong>${env}</strong>. Do this only if you are confident it is no longer compromised.` },
+      quarantine: { title: 'Quarantine runner', confirm: 'Quarantine', cls: 'warn',
+        message: `Temporarily stop <strong>${runner}</strong> taking new work in <strong>${env}</strong>. Its in-flight runs finish; reinstate it once it is healthy.` },
+      revoke: { title: 'Revoke runner', confirm: 'Revoke', cls: 'danger',
+        message: `Permanently remove <strong>${runner}</strong> from <strong>${env}</strong> and fence its in-flight work. Returning it later needs a fresh authorization.` },
     }[action];
     return new Promise((resolve) => {
       const dlg = document.createElement('dialog');
@@ -391,7 +417,7 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
         <form method="dialog">
           <div class="dhead">${escapeHtml(meta.title)}</div>
           <div class="dbody">
-            <div class="sub">${action === 'authorize' ? 'Allow' : 'Stop'} <strong>${escapeHtml(auth.runnerId)}</strong> ${action === 'authorize' ? 'to serve' : 'serving'} <strong>${escapeHtml(auth.environment)}</strong></div>
+            <div class="sub">${meta.message}</div>
             <label>Note (optional)
               <textarea class="reason-in" placeholder="Recorded with the decision…"></textarea>
             </label>
