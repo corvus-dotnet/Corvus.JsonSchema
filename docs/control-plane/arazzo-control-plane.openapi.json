@@ -5092,6 +5092,7 @@
           "status": { "$ref": "#/components/schemas/WorkflowRunStatus" },
           "cursor": { "type": "integer", "description": "The state-machine index of the next step to run." },
           "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "description": "When the run's checkpoint was last written; absent on a run checkpointed before this stamp existed." },
           "wait": {
             "description": "Why the run is suspended, if it is.",
             "$ref": "#/components/schemas/WorkflowWait"

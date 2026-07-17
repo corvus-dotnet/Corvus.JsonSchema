@@ -360,6 +360,27 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
+    /// Gets the (optional) <c>updatedAt</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When the run&#39;s checkpoint was last written; absent on a run checkpointed before this stamp existed.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime UpdatedAt
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UpdatedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>wait</c> property.
     /// </summary>
     /// <remarks>
@@ -893,6 +914,11 @@ public readonly partial struct WorkflowRunDetail
         public const string Tags = "tags";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="UpdatedAt"/>.
+        /// </summary>
+        public const string UpdatedAt = "updatedAt";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Wait"/>.
         /// </summary>
         public const string Wait = "wait";
@@ -946,6 +972,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the JSON property name for <see cref="Tags"/>.
         /// </summary>
         public static ReadOnlySpan<byte> TagsUtf8 => "tags"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="UpdatedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UpdatedAtUtf8 => "updatedAt"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Wait"/>.
@@ -1009,6 +1040,11 @@ public readonly partial struct WorkflowRunDetail
         public static ReadOnlySpan<byte> Tags => "tags"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="UpdatedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UpdatedAt => "updatedAt"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Wait"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Wait => "wait"u8;
@@ -1069,6 +1105,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the pre-baked property name blob for <see cref="Tags"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Tags => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="UpdatedAt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UpdatedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Wait"/>.

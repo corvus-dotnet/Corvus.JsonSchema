@@ -515,6 +515,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             }
         }
 
+        // One clock read stamps both records, so the checkpoint's own updatedAt and the index entry cannot drift.
+        DateTimeOffset updatedAt = this.timeProvider.GetUtcNow();
+
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
             this.Id,
             this.WorkflowId,
@@ -533,13 +536,14 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.securityTags,
             this.environment,
             this.pause,
-            this.resumeRequestedAt);
+            this.resumeRequestedAt,
+            updatedAt);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,
             this.Status,
             this.createdAt,
-            this.timeProvider.GetUtcNow(),
+            updatedAt,
             DueAt: this.wait is { Kind: WorkflowWaitKind.Timer } timer ? timer.DueAt : null,
             AwaitingChannel: this.wait is { Kind: WorkflowWaitKind.Message } message ? message.Channel : null,
             AwaitingCorrelationId: this.wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,

@@ -304,6 +304,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 environment: environment,
                 fault: fault,
                 tags: tags,
+                updatedAt: d.UpdatedAt is { } updated ? (Models.JsonDateTime.Source)updated : default,
                 wait: wait);
         });
 

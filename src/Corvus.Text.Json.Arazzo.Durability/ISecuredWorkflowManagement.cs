@@ -144,6 +144,7 @@ public interface ISecuredWorkflowManagement
 /// <param name="Tags">The free-form tags applied to the run at creation, if any.</param>
 /// <param name="SecurityTags">The security tags (KVP labels) applied to the run at creation, if any (§14.2), distinct from the free-form <paramref name="Tags"/>.</param>
 /// <param name="Environment">The deployment environment the run is pinned to (design §5.5), if any — its credential set and the runners it can be dispatched to; absent on a run created before run→environment pinning.</param>
+/// <param name="UpdatedAt">When the run's checkpoint was last written, if the writer stamped it (absent on a checkpoint written before the stamp existed).</param>
 public readonly record struct WorkflowRunDetail(
     WorkflowRunId Id,
     string WorkflowId,
@@ -156,7 +157,8 @@ public readonly record struct WorkflowRunDetail(
     string? CorrelationId = null,
     TagSet Tags = default,
     SecurityTagSet SecurityTags = default,
-    string? Environment = null);
+    string? Environment = null,
+    DateTimeOffset? UpdatedAt = null);
 
 /// <summary>How to resume a faulted run (plan §11). Each mode loads the checkpoint, mutates status/cursor/state
 /// under optimistic concurrency, then re-enters the executor.</summary>

@@ -38,6 +38,10 @@ public sealed class ControlPlaneServerTests
             using Stj.JsonDocument doc = await ReadJsonAsync(response);
             doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
             doc.RootElement.GetProperty("fault").GetProperty("stepId").GetString().ShouldBe("step1");
+
+            // The checkpoint carries its own write stamp, so the detail reports when the run last moved without
+            // needing a run-id point-read on the index.
+            doc.RootElement.GetProperty("updatedAt").GetDateTimeOffset().ShouldBe(T0);
         }
     }
 

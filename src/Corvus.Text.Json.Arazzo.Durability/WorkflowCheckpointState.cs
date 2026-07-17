@@ -34,7 +34,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         SecurityTagSet securityTags = default,
         string? environment = null,
         WorkflowPauseConfig? pause = null,
-        DateTimeOffset? resumeRequestedAt = null)
+        DateTimeOffset? resumeRequestedAt = null,
+        DateTimeOffset? updatedAt = null)
     {
         this.document = document;
         this.RunId = runId;
@@ -55,6 +56,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Environment = environment;
         this.Pause = pause;
         this.ResumeRequestedAt = resumeRequestedAt;
+        this.UpdatedAt = updatedAt;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -71,6 +73,9 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the instant the run was first created.</summary>
     public DateTimeOffset CreatedAt { get; }
+
+    /// <summary>Gets when the checkpoint was written, if the writer stamped it (absent on a checkpoint written before the stamp existed).</summary>
+    public DateTimeOffset? UpdatedAt { get; }
 
     /// <summary>Gets the restored per-step retry attempt counts (a pooled UTF-8-keyed map; disposed with this state).</summary>
     public PooledUtf8Map<int> RetryCounters { get; }

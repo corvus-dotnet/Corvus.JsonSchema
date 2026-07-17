@@ -59,6 +59,36 @@ public sealed class WorkflowCheckpointSerializerTests
         state.StepOutputs.TryGetValue("listTags", out JsonElement listTagsOutputs).ShouldBeTrue();
         listTagsOutputs.GetArrayLength().ShouldBe(2);
         state.Outputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+
+        // A checkpoint written without the updatedAt stamp (this one, and any persisted before the stamp existed)
+        // deserializes with no UpdatedAt rather than a fabricated instant.
+        state.UpdatedAt.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public void Round_trips_the_updated_at_stamp_when_the_writer_provides_one()
+    {
+        DateTimeOffset updatedAt = CreatedAt.AddMinutes(5);
+
+        using var retryCounters = PooledUtf8Map<int>.Rent(0);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        byte[] bytes = WorkflowCheckpointSerializer.Serialize(
+            "run-1",
+            "wf",
+            WorkflowRunStatus.Running,
+            cursor: 1,
+            CreatedAt,
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            updatedAt: updatedAt);
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(bytes);
+
+        state.CreatedAt.ShouldBe(CreatedAt);
+        state.UpdatedAt.ShouldBe(updatedAt);
     }
 
     [TestMethod]

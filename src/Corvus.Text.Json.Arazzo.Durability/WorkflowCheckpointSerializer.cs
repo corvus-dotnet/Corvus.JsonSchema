@@ -49,6 +49,8 @@ public static class WorkflowCheckpointSerializer
     /// <param name="environment">The deployment environment the run is pinned to (§5.5), if any.</param>
     /// <param name="pause">The §18 debugger pause configuration to persist, if the run carries one; a claiming
     /// runner reads it back on load and applies it. An ordinary run passes none, so nothing is written.</param>
+    /// <param name="updatedAt">When this checkpoint is being written — the same instant the caller stamps on the
+    /// <see cref="WorkflowRunIndexEntry"/>, carried in the run's own record so a point-read needs no index.</param>
     /// <returns>The serialized checkpoint document (UTF-8 JSON).</returns>
     public static byte[] Serialize(
         WorkflowRunId runId,
@@ -68,7 +70,8 @@ public static class WorkflowCheckpointSerializer
         SecurityTagSet securityTags = default,
         string? environment = null,
         WorkflowPauseConfig? pause = null,
-        DateTimeOffset? resumeRequestedAt = null)
+        DateTimeOffset? resumeRequestedAt = null,
+        DateTimeOffset? updatedAt = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -89,6 +92,10 @@ public static class WorkflowCheckpointSerializer
             writer.WriteString("status"u8, StatusName(status));
             writer.WriteNumber("cursor"u8, cursor);
             writer.WriteString("createdAt"u8, createdAt);
+            if (updatedAt is { } stamped)
+            {
+                writer.WriteString("updatedAt"u8, stamped);
+            }
 
             // Run-creation metadata (immutable): the telemetry correlation id, the pinned environment, and free-form tags.
             if (correlationId is { } cid)
@@ -251,6 +258,9 @@ public static class WorkflowCheckpointSerializer
             DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement)
                 ? createdAtElement.GetDateTimeOffset()
                 : default;
+            DateTimeOffset? updatedAt = root.TryGetProperty("updatedAt"u8, out JsonElement updatedAtElement)
+                ? updatedAtElement.GetDateTimeOffset()
+                : null;
 
             string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdMeta) ? correlationIdMeta.GetString() : null;
             string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentMeta) ? environmentMeta.GetString() : null;
@@ -371,7 +381,7 @@ public static class WorkflowCheckpointSerializer
                 ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
                 : null;
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt);
         }
         catch
         {

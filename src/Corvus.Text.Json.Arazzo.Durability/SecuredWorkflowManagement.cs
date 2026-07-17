@@ -159,7 +159,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             return null;
         }
 
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment);
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt);
     }
 
     /// <inheritdoc/>
@@ -656,6 +656,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 // Carry the immutable run-creation metadata (correlation id, pinned environment, tags) through the
                 // mutation — the run does not change environment when it is remediated, and dropping it here would make
                 // the run unclaimable (§5.5: a runner claims only runs pinned to exactly its environment).
+                DateTimeOffset mutatedAt = this.timeProvider.GetUtcNow();
                 mutated = WorkflowCheckpointSerializer.Serialize(
                     state.RunId,
                     state.WorkflowId,
@@ -672,13 +673,14 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     correlationId: state.CorrelationId,
                     environment: state.Environment,
                     tags: state.Tags,
-                    securityTags: state.SecurityTags);
+                    securityTags: state.SecurityTags,
+                    updatedAt: mutatedAt);
 
                 indexEntry = new WorkflowRunIndexEntry(
                     state.WorkflowId,
                     WorkflowRunStatus.Faulted,
                     state.CreatedAt,
-                    this.timeProvider.GetUtcNow(),
+                    mutatedAt,
                     ErrorType: state.Fault?.Error,
                     CorrelationId: state.CorrelationId,
                     Tags: state.Tags,
