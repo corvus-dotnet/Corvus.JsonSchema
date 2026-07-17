@@ -174,6 +174,7 @@ class ArazzoCriteriaEditor extends ArazzoElement {
   /** @private — switch a row's type: show/hide version + context, normalize the stored shape. */
   _setType(i, type, row) {
     const criterion = this._criteria[i];
+    const previousType = readType(criterion).type;
     if (type === 'simple') {
       delete criterion.type;
       delete criterion.context;
@@ -187,7 +188,15 @@ class ArazzoCriteriaEditor extends ArazzoElement {
     row.querySelector('.vwrap').hidden = !hasVersionChoice(type);
     row.querySelector('.version').innerHTML = (VERSIONS[type] || []).map((v) => `<option>${v}</option>`).join('');
     row.querySelector('.ctx').hidden = type === 'simple';
-    row.querySelector('.cond').setAttribute('placeholder', PLACEHOLDERS[type]);
+    const cond = row.querySelector('.cond');
+    // A condition still equal to the OLD type's canonical example is a seeded default, not authored content —
+    // clear it so the box shows the NEW type's valid example instead of teaching the old grammar. Anything the
+    // author actually wrote is theirs and survives the switch untouched.
+    if (criterion.condition === PLACEHOLDERS[previousType]) {
+      criterion.condition = '';
+      cond.value = '';
+    }
+    cond.setAttribute('placeholder', PLACEHOLDERS[type]);
     this._emit();
   }
 

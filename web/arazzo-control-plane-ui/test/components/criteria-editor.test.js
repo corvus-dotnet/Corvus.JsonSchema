@@ -81,6 +81,25 @@ describe('<arazzo-criteria-editor>', () => {
     equal(row.querySelector('.cond').getAttribute('placeholder'), '$[?@.status == "authorized"]');
   });
 
+  it('switching type clears a condition still equal to the OLD type’s example, but never authored content (#856)', async () => {
+    // A seeded route carries the simple-grammar default; switching to jsonpath must not keep teaching it.
+    make([{ condition: '$statusCode == 200' }]);
+    const row = () => el.shadowRoot.querySelectorAll('.row')[0];
+    const type = row().querySelector('.type');
+    type.value = 'jsonpath';
+    type.dispatchEvent(new Event('change', { bubbles: true }));
+    equal(row().querySelector('.cond').value, '', 'the stale simple example is cleared');
+    equal(row().querySelector('.cond').getAttribute('placeholder'), '$[?@.status == "authorized"]', 'the valid jsonpath example shows instead');
+
+    // Authored content is the author's: it survives a type switch untouched.
+    el.remove();
+    make([{ condition: '$statusCode == 299' }]);
+    const t2 = el.shadowRoot.querySelectorAll('.row .type')[0];
+    t2.value = 'jsonpath';
+    t2.dispatchEvent(new Event('change', { bubbles: true }));
+    equal(el.shadowRoot.querySelectorAll('.row')[0].querySelector('.cond').value, '$statusCode == 299', 'a real condition is kept');
+  });
+
   it('add and remove rows round-trip', async () => {
     make([]);
     ok(el.shadowRoot.querySelector('.empty').textContent.includes('always'), 'empty state names the semantics');

@@ -124,7 +124,9 @@ class ArazzoStepInspector extends ArazzoElement {
         .rrow arazzo-expression-input { display: block; min-width: 0; }
         .addpref { max-width: 100%; min-width: 0; }
         .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
-        .add-dep { font-size: 12px; max-width: 100%; min-width: 0; }
+        /* The add action sits on its OWN line below the pills/empty-state text — inline it read as a
+           run-on sentence and misaligned the control (backlog #854). */
+        .add-dep { font-size: 12px; max-width: max-content; min-width: 0; flex-basis: 100%; margin-top: 4px; }
         .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
       </style>
       <div class="form" part="form"></div>

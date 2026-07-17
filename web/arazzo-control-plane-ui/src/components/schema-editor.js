@@ -117,9 +117,11 @@ class ArazzoSchemaEditor extends ArazzoElement {
         .toggle { display: inline-flex; border: 1px solid var(--_border); border-radius: 6px; overflow: hidden; }
         .toggle button { border: none; background: var(--_bg); color: inherit; font: 12px var(--_font); padding: 3px 10px; cursor: pointer; }
         .toggle button[aria-pressed="true"] { background: var(--_surface); font-weight: 600; }
-        .rows { display: flex; flex-direction: column; gap: 4px; }
-        .node { border: 1px solid var(--_border); border-radius: 8px; padding: 6px 8px; background: var(--_bg); }
-        .node.child { margin-left: 14px; }
+        .rows { display: flex; flex-direction: column; gap: 6px; }
+        /* Rows sit on the surface tone (inputs inside stay on bg) so each property reads as its own card,
+           and nested levels hang off an accent-tinted rail — depth you can see at a glance (#858). */
+        .node { border: 1px solid var(--_border); border-radius: 8px; padding: 6px 8px; background: var(--_surface); }
+        .node.child { margin-left: 14px; border-left: 3px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 35%, var(--_border)); }
         .rowline { display: flex; align-items: center; gap: 6px; }
         .rowline .name { flex: 1; min-width: 60px; font: 12px var(--_font); padding: 3px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
         .rowline .name.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
@@ -136,6 +138,10 @@ class ArazzoSchemaEditor extends ArazzoElement {
         .more-body input, .more-body select { font: 12px var(--_font); padding: 2px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
         .more-body input.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
         .full { grid-column: 1 / -1; }
+        /* The default is the one constraint that changes RUNTIME behaviour (the generated getter serves it),
+           so it gets its own accent-edged cluster instead of blending into the constraint grid (#858). */
+        .default-cluster { display: grid; grid-template-columns: max-content 1fr; gap: 4px 8px; align-items: center; margin-top: 4px; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 35%, var(--_border)); border-left-width: 3px; border-radius: 6px; background: color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 6%, transparent); }
+        .default-cluster > label { font-size: 10.5px; font-weight: 700; color: var(--arazzo-accent, #3b6cf6); text-transform: uppercase; letter-spacing: 0.04em; }
         .variant { border: 1px dashed var(--_border); border-radius: 8px; padding: 6px 8px; margin: 6px 0; }
         .variant .vhead { display: flex; align-items: center; gap: 6px; }
         .variant .vlabel { flex: 1; font: 12px var(--_font); padding: 2px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
@@ -560,16 +566,19 @@ class ArazzoSchemaEditor extends ArazzoElement {
   }
 
   _defaultRow(body, schema) {
+    // Its own accent-edged cluster (see .default-cluster): the default must not blend into the constraint grid.
+    const cluster = document.createElement('div');
+    cluster.className = 'default-cluster full';
     const label = document.createElement('label'); label.textContent = 'default';
     const ve = document.createElement('arazzo-value-editor');
-    ve.className = 'full';
     if (schema.default !== undefined) ve.seed = schema.default; // seed BEFORE descriptor (value-editor contract)
     ve.descriptor = schema;
     // Native input events are composed, so an edit inside value-editor's shadow root reaches here.
     ve.addEventListener('input', () => {
       try { const v = ve.value; if (v === undefined) delete schema.default; else schema.default = v; this._commit(); } catch { /* invalid default held */ }
     });
-    body.append(label, ve);
+    cluster.append(label, ve);
+    body.append(cluster);
   }
 
   _objectBody(schema) {

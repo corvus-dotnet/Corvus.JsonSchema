@@ -390,8 +390,9 @@ function objectField(d, ctx) {
     const field = document.createElement('div');
     field.className = childCtx.required ? 'field required' : 'field';
     const built = buildField(props[name], childCtx);
-    if (props[name]?.type === 'boolean') {
-      // A checkbox reads best inline with its label, not stacked beneath it.
+    if (props[name]?.type === 'boolean' && built.node.type === 'checkbox') {
+      // A checkbox reads best inline with its label, not stacked beneath it. (An OPTIONAL boolean builds
+      // a tri-state select instead, which labels like any other scalar.)
       const label = document.createElement('label');
       label.className = 'check';
       const text = document.createElement('span');
@@ -629,10 +630,19 @@ function enumField(d, ctx) {
 }
 
 function booleanField(d, ctx) {
-  const input = document.createElement('input');
-  input.type = 'checkbox';
-  input.checked = ctx.seed === true;
-  return { node: input, read: () => input.checked };
+  if (ctx.required) {
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = ctx.seed === true;
+    return { node: input, read: () => input.checked };
+  }
+
+  // An OPTIONAL boolean needs three states — unset / true / false. A checkbox can only flip, so once a
+  // value existed (e.g. a schema default) there was no way back to "no value" (backlog #857).
+  const select = document.createElement('select');
+  select.innerHTML = '<option value="">(unset)</option><option value="true">true</option><option value="false">false</option>';
+  select.value = ctx.seed === true ? 'true' : (ctx.seed === false ? 'false' : '');
+  return { node: select, read: () => (select.value === '' ? undefined : select.value === 'true') };
 }
 
 function numberField(d, ctx) {

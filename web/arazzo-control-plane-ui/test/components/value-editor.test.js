@@ -21,16 +21,41 @@ describe('<arazzo-value-editor>', () => {
     await waitFor(() => el.shadowRoot.querySelector('input[type="number"]'));
 
     el.shadowRoot.querySelector('input[type="number"]').value = '42';
-    const select = el.shadowRoot.querySelector('select');
-    select.value = '1'; // 'settled'
-    el.shadowRoot.querySelector('input[type="checkbox"]').checked = true;
+    // Two selects: the status enum, then the OPTIONAL boolean's tri-state (unset/true/false — a
+    // checkbox could never return to "no value", #857).
+    const [statusSel, confirmedSel] = el.shadowRoot.querySelectorAll('select');
+    statusSel.value = '1'; // 'settled'
+    confirmedSel.value = 'true';
     el.shadowRoot.querySelector('input[type="text"]').value = 'abc-123';
 
     const v = el.value;
     equal(v.amount, 42, 'number coerced');
     equal(v.status, 'settled', 'enum resolved to its value');
-    equal(v.confirmed, true, 'boolean from the checkbox');
+    equal(v.confirmed, true, 'boolean from the tri-state select');
     equal(v.paymentId, 'abc-123', 'string field');
+  });
+
+  it('an optional boolean is tri-state: seeded true, clearable back to unset, and explicit false expressible (#857)', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.seed = { flag: true };
+    el.descriptor = { type: 'object', properties: { flag: { type: 'boolean' } } };
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('select'));
+    const sel = el.shadowRoot.querySelector('select');
+    equal(sel.value, 'true', 'the seeded value round-trips');
+    sel.value = '';
+    ok(!('flag' in (el.value ?? {})), 'unset omits the field — the way back to "no default"');
+    sel.value = 'false';
+    equal(el.value.flag, false, 'explicit false is still expressible');
+  });
+
+  it('a REQUIRED boolean keeps the inline checkbox (a definite value has exactly two states)', async () => {
+    el = document.createElement('arazzo-value-editor');
+    el.descriptor = { type: 'object', properties: { flag: { type: 'boolean' } }, required: ['flag'] };
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('input[type="checkbox"]'));
+    el.shadowRoot.querySelector('input[type="checkbox"]').checked = true;
+    equal(el.value.flag, true, 'checkbox drives the required boolean');
   });
 
   it('omits blank optional fields', async () => {

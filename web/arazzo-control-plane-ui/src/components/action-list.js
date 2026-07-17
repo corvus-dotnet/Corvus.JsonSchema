@@ -195,8 +195,12 @@ export function buildActionList({ actions, kind, stepIds, workflowIds, completio
         // end; one that gained criteria rejoins the ordered section.
         if (isCatchAll(e.detail.action) !== wasCatchAll) {
           const [moved] = actions.splice(i, 1);
-          actions.splice(isCatchAll(moved) ? actions.length : firstCatchAllIndex(), 0, moved);
+          const newIndex = isCatchAll(moved) ? actions.length : firstCatchAllIndex();
+          actions.splice(newIndex, 0, moved);
           render();
+          // The author is mid-edit in this row (e.g. they just added the first criterion): the rebuild
+          // must not collapse it under them — a rolled-up row mid-gesture reads as data loss.
+          root.querySelectorAll('details')[newIndex]?.setAttribute('open', '');
         }
         onChange();
       });
