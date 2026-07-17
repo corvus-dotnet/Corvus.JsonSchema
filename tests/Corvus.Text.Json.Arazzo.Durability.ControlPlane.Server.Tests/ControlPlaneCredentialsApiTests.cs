@@ -2,10 +2,13 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -293,8 +296,134 @@ public sealed class ControlPlaneCredentialsApiTests
         }
     }
 
+    [TestMethod]
+    public async Task Creating_a_credential_emits_a_created_governance_audit_span()
+    {
+        // §850 credential-custody audit: creating a binding leaves a trace naming the actor, the binding, and the outcome.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync();
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        Activity span = audit.ForTarget("petstore@production");
+        span.OperationName.ShouldBe("credential.create");
+        span.GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("created");
+        span.GetTagItem(ArazzoTelemetry.TargetKindTag).ShouldBe("credential");
+        ((string?)span.GetTagItem(ArazzoTelemetry.ActorTag)).ShouldNotBeNullOrEmpty();
+    }
+
+    [TestMethod]
+    public async Task Rotating_a_credential_is_audited_and_counted()
+    {
+        // A rotation (the secret reference changed) is audited as "rotated" and feeds the rotation-rate counter — distinct
+        // from a metadata/tag update, which is not a rotation.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        using RotationCounter rotations = RotationCounter.Capture();
+        await using Scoped host = await StartAsync();
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Put, "/credentials/petstore/production", """{"authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE#2"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        audit.ForTarget("petstore@production", "credential.update").GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("rotated");
+        rotations.Total.ShouldBeGreaterThanOrEqualTo(1);
+    }
+
+    [TestMethod]
+    public async Task Deleting_a_credential_emits_a_deleted_governance_audit_span()
+    {
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendAsync(HttpMethod.Delete, "/credentials/petstore/production", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        audit.ForTarget("petstore@production", "credential.delete").GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("deleted");
+    }
+
+    [TestMethod]
+    public async Task An_out_of_reach_create_is_audited_as_refused()
+    {
+        // The privilege-escalation guard refuses a binding managed outside the caller's write reach; the security control
+        // firing is audited too.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync(new RestrictedWritePolicy());
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        audit.ForTarget("petstore@production", "credential.create").GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("refused-out-of-reach");
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+    /// <summary>Captures the credential-custody governance-audit spans (design §850) on the Arazzo <see cref="ActivitySource"/>.</summary>
+    private sealed class GovernanceAuditSpans : IDisposable
+    {
+        private readonly List<Activity> spans = [];
+        private readonly ActivityListener listener;
+
+        private GovernanceAuditSpans()
+        {
+            this.listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == ArazzoTelemetry.ActivitySourceName,
+                Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+                ActivityStopped = activity =>
+                {
+                    if (activity.OperationName.StartsWith("credential.", StringComparison.Ordinal))
+                    {
+                        lock (this.spans)
+                        {
+                            this.spans.Add(activity);
+                        }
+                    }
+                },
+            };
+            ActivitySource.AddActivityListener(this.listener);
+        }
+
+        public static GovernanceAuditSpans Capture() => new();
+
+        // The single audit span for the given binding (and optionally a specific action) — asserts exactly one matched.
+        public Activity ForTarget(string targetId, string? action = null)
+        {
+            lock (this.spans)
+            {
+                return this.spans.Single(s => (string?)s.GetTagItem(ArazzoTelemetry.TargetIdTag) == targetId && (action is null || s.OperationName == action));
+            }
+        }
+
+        public void Dispose() => this.listener.Dispose();
+    }
+
+    /// <summary>Sums the credential rotation-rate counter (design §850) via a <see cref="MeterListener"/>.</summary>
+    private sealed class RotationCounter : IDisposable
+    {
+        private readonly MeterListener listener;
+        private long total;
+
+        private RotationCounter()
+        {
+            this.listener = new MeterListener
+            {
+                InstrumentPublished = (instrument, l) =>
+                {
+                    if (instrument.Meter.Name == ArazzoTelemetry.MeterName && instrument.Name == "corvus.arazzo.credentials.rotated")
+                    {
+                        l.EnableMeasurementEvents(instrument);
+                    }
+                },
+            };
+            this.listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => Interlocked.Add(ref this.total, measurement));
+            this.listener.Start();
+        }
+
+        public long Total => Interlocked.Read(ref this.total);
+
+        public static RotationCounter Capture() => new();
+
+        public void Dispose() => this.listener.Dispose();
+    }
 
     private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null)
     {

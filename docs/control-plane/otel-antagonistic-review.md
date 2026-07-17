@@ -230,7 +230,11 @@ Ranked by security value first, then by breadth of the surface it closes.
    (O-ACC, O-ENV promotion). The paper trail for elevation and promotion, and the security control that
    refuses self-decision. **Landed as slice 3.**
 3. **Credential create / rotate / delete + usage-grant authoring** (O-CRED). Secret custody. Add a
-   rotation counter.
+   rotation counter. **Landed:** `credential.create` (usage-grant authoring is audited here, since a
+   binding's usage scope is set at creation and immutable after), `credential.update` (distinguishing a
+   `rotated` — the secret reference changed — from a metadata `updated`), `credential.delete`, and the
+   `refused-out-of-reach` privilege-escalation guard; rotations feed the `corvus.arazzo.credentials.rotated`
+   counter.
 4. **Grants and rules authoring** (O-SEC). The authorization model itself, including rule reorder.
 5. **Runner authorization: authorize / quarantine / revoke / reinstate** (O-RNR). Containment actions.
 6. **Environment create / update / delete, promotion (make-available / demote), admin transfers**

@@ -179,4 +179,11 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Histogram<double> CheckpointDuration { get; } =
         Meter.CreateHistogram<double>("corvus.arazzo.checkpoint.duration", "s", "Duration of persisting a run checkpoint");
+
+    /// <summary>
+    /// Gets the counter for source credentials rotated through the control plane (a rotation = changing the secret
+    /// reference of a binding). A rotation rate that falls to zero is a governance signal (design §850).
+    /// </summary>
+    public static Counter<long> CredentialsRotated { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.credentials.rotated", "{credential}", "Source credentials rotated via the control plane");
 }

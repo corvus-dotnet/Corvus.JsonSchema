@@ -122,13 +122,18 @@ public static class ControlPlaneEndpointExtensions
             ? new ControlPlaneAccess()
             : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy);
 
+        // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a
+        // deployment can route/retain it independently; the audit spans ride the always-registered Corvus.Arazzo
+        // ActivitySource regardless. Shared by the journal-read audit (§860) and the governance-mutation audit (§850).
+        ILogger? auditLogger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit");
+
         // The security-authoring API persists rules/bindings; if the deployment's policy is the persistent one,
         // refresh it after writes so authoring changes take effect for subsequent authorization decisions.
         ISecurityPolicyStore policyStore = securityPolicyStore ?? new InMemorySecurityPolicyStore();
 
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
-        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access);
+        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditLogger: auditLogger);
 
         // The environment administration service (§7.7) is shared by the environments/availability handlers below and
         // by the access-overview aggregation (administered environments), so it is constructed ahead of both.
@@ -144,11 +149,6 @@ public static class ControlPlaneEndpointExtensions
         // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
         // observed identities into it, so the grantee typeahead is self-populating.
         IObservedIdentityStore observedStore = observedIdentityStore ?? new InMemoryObservedIdentityStore();
-
-        // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a
-        // deployment can route/retain it independently; the audit spans ride the always-registered Corvus.Arazzo
-        // ActivitySource regardless. Shared by the journal-read audit (§860) and the governance-mutation audit (§850).
-        ILogger? auditLogger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit");
 
         // The administration management API (§15) governs a base id's administrator set by current-administrator
         // membership; it delegates to the catalog client (which owns the administrator store, if one is configured) and

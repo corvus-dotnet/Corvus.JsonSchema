@@ -7,6 +7,7 @@ using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -33,11 +34,15 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
     private static readonly TimeSpan DefaultExpiringWindow = TimeSpan.FromDays(7);
 
+    // The audited resource kind for every write on this surface (design §850).
+    private const string TargetKind = "credential";
+
     private readonly ISourceCredentialStore store;
     private readonly ControlPlaneAccess access;
     private readonly string actor;
     private readonly TimeProvider timeProvider;
     private readonly TimeSpan expiringWindow;
+    private readonly ILogger? auditLogger;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
@@ -57,7 +62,8 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// (defaults to <see cref="TimeProvider.System"/>).</param>
     /// <param name="expiringWindow">How far ahead of expiry a still-valid credential is reported as
     /// <see cref="CredentialStatus.ExpiringSoon"/> (defaults to 7 days).</param>
-    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null)
+    /// <param name="auditLogger">The logger for the §850 credential-custody audit (who created/rotated/deleted which binding); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
+    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -67,7 +73,12 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         this.actor = actor;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.expiringWindow = expiringWindow ?? DefaultExpiringWindow;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject: the authenticated principal who made the change, falling back to the deployment-configured
+    // audit actor when no principal is resolvable (the same identity the store stamps as createdBy/lastUpdatedBy).
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
 
     /// <inheritdoc/>
     public async ValueTask<ListCredentialsResult> HandleListCredentialsAsync(ListCredentialsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -208,6 +219,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 : SecurityTagSet.Empty;
             if (!this.access.Current().Admits(AccessVerb.Write, managementTags))
             {
+                GovernanceAudit.Mutation(this.auditLogger, "credential.create", this.AuditActor(), TargetKind, CredentialKey((string)body.SourceName, (string)body.Environment), "refused-out-of-reach");
                 return CreateCredentialResult.BadRequest(
                     Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
             }
@@ -216,6 +228,10 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // workspace — it disposes it after the response is written — rather than `using`-disposing at method exit
             // (the body is validated/serialized after this returns). The draft is the input only, so it stays scoped.
             ParsedJsonDocument<SourceCredentialBinding> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
+
+            // §850 credential-custody audit: creating a binding also authors its usage scope (which identities it may act
+            // as), immutable thereafter — so the created event is where usage-grant authoring is audited.
+            GovernanceAudit.Mutation(this.auditLogger, "credential.create", this.AuditActor(), TargetKind, CredentialKey((string)body.SourceName, (string)body.Environment), hasUsageGrantee ? "created-scoped" : "created");
             workspace.TakeOwnership(created);
             return CreateCredentialResult.Created(ToSummary(created.RootElement), workspace);
         }
@@ -282,6 +298,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // A principal may not re-tag a binding to a management scope outside its own reach.
             if (!managementTags.IsEmpty && !this.access.Current().Admits(AccessVerb.Write, managementTags))
             {
+                GovernanceAudit.Mutation(this.auditLogger, "credential.update", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), "refused-out-of-reach");
                 return UpdateCredentialResult.BadRequest(
                     Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
             }
@@ -309,6 +326,15 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 return UpdateCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
             }
 
+            // §850 credential-custody audit: a rotation (the secret reference changed) is distinguished from a
+            // metadata/tag-only update, and rotations feed the rotation-rate counter (a rate that falls to zero is a signal).
+            bool rotated = body.SecretRefs.IsNotUndefined();
+            GovernanceAudit.Mutation(this.auditLogger, "credential.update", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), rotated ? "rotated" : "updated");
+            if (rotated)
+            {
+                ArazzoTelemetry.CredentialsRotated.Add(1);
+            }
+
             // The summary references the pooled binding document (per-field From() zero-copy wrap) — hand it to the
             // workspace so the deferred body validation/serialization is safe (it disposes the document afterwards).
             workspace.TakeOwnership(b);
@@ -326,6 +352,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         string sourceName = (string)parameters.SourceName;
         string environment = (string)parameters.Environment;
         bool deleted = await this.store.DeleteAsync(sourceName, environment, WorkflowEtag.None, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (deleted)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "credential.delete", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), "deleted");
+        }
+
         return deleted
             ? DeleteCredentialResult.NoContent()
             : DeleteCredentialResult.NotFound(NotFoundProblem(sourceName, environment), workspace);
@@ -639,6 +670,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             array.AddItem(Models.CredentialBindingSummary.Build(in summaryCtx, BuildSummary));
         }
     }
+
+    // The (sourceName, environment) audit target key (design §850), mirroring the not-found problem's '{sourceName}@{environment}'.
+    private static string CredentialKey(string sourceName, string environment) => $"{sourceName}@{environment}";
 
     private static Models.ProblemDetails.Source NotFoundProblem(string sourceName, string environment)
         => Problem("credential-not-found", "Credential not found", 404, $"No source credential binding for '{sourceName}@{environment}' exists.");
