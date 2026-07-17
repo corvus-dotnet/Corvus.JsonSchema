@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-17T13:22:30.6819426\u002B00:00",
+  "generatedAt": "2026-07-17T14:21:59.9874481\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -778,6 +778,9 @@
     "Models/OperationSurface.SourceOperationDescriptorArray.cs",
     "Models/OperationSurface.SourceOperationDescriptorArray.Mutable.cs",
     "Models/OperationSurface.SourceOperationDescriptorArray.JsonSchema.cs",
+    "Models/OutputsSensitivity.cs",
+    "Models/OutputsSensitivity.Mutable.cs",
+    "Models/OutputsSensitivity.JsonSchema.cs",
     "Models/PageLimit.cs",
     "Models/PageLimit.Mutable.cs",
     "Models/PageLimit.JsonSchema.cs",
@@ -1374,6 +1377,6 @@
   "generatorVersion": "1.0.0\u002Bbc37e60e2049113e55a86ca2212a459876e95adb",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "311f93239313614a021c746cc02faf63e5a3cc1c8f0c9b02924830ffc46ee8f6",
+  "specFileHash": "bf361b61aa7adbc7101516d38ce26a6cc25ab96db75e07b112db8f0b1242565d",
   "specVersion": "3.2"
 }

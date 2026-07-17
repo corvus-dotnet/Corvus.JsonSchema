@@ -41,6 +41,11 @@
       "description": "The security tags (KVP labels) — the input to tag-based row authorization (§14.2), distinct from the free-form tags. Optional for backward compatibility with versions catalogued before security tags existed.",
       "items": { "$ref": "#/$defs/SecurityTagInfo" }
     },
+    "outputsSensitivity": {
+      "type": "string",
+      "description": "How sensitive this version's step outputs are for disclosure (design §14). Distinct from row-visibility security tags: it classifies the step-output PAYLOADS above who may see the run. 'standard' (the default when absent) means the step journal is readable at the runs:outputs:read tier; 'sensitive' means the whole journal is redacted from callers who hold only that tier and requires the stronger grant (write reach on the run). A governed edit for a workflow administrator.",
+      "enum": ["standard", "sensitive"]
+    },
     "owner": {
       "$ref": "#/$defs/CatalogOwnerInfo"
     },

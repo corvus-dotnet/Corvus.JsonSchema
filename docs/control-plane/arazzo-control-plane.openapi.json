@@ -5103,10 +5103,11 @@
       },
       "WorkflowRunStepRecord": {
         "type": "object",
-        "description": "One recorded step: its id and the outputs value the checkpoint stored for it.",
+        "description": "One recorded step: its id and the outputs value the checkpoint stored for it. When the caller may read the journal but not this step's payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), the sensitive content is redacted: `redacted` is true and the withheld content is absent or blanked rather than disclosed.",
         "properties": {
           "stepId": { "type": "string" },
-          "outputs": { "description": "The step's recorded outputs value, verbatim from the checkpoint." }
+          "outputs": { "description": "The step's recorded outputs value, verbatim from the checkpoint. Absent (or with sensitive fields blanked) when `redacted` is true." },
+          "redacted": { "type": "boolean", "description": "True when some or all of this step's outputs were withheld from the caller because they are classified sensitive and the caller lacks the stronger grant (write reach on the run). The step is still attested to have recorded outputs; only the payload is withheld (non-disclosing)." }
         },
         "required": ["stepId"]
       },
@@ -5282,6 +5283,11 @@
         "enum": ["Active", "Obsolete"],
         "description": "A catalog version's lifecycle status."
       },
+      "OutputsSensitivity": {
+        "type": "string",
+        "enum": ["standard", "sensitive"],
+        "description": "How sensitive a catalog version's step-output payloads are for disclosure (design §14), distinct from row-visibility security tags. 'standard' (the default when absent) reads the step journal at the runs:outputs:read tier; 'sensitive' redacts the whole journal from callers who hold only that tier and requires the stronger grant (write reach on the run)."
+      },
       "CatalogOwner": {
         "type": "object",
         "description": "The accountable governance owner of a workflow, for integration with governance tooling.",
@@ -5372,7 +5378,8 @@
           "owner": { "$ref": "#/components/schemas/CatalogOwner" },
           "tags": { "type": "array", "items": { "type": "string" } },
           "status": { "$ref": "#/components/schemas/CatalogStatus" },
-          "securityTags": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSecurityTag" }, "description": "Replace the version's non-internal security tags (§14.2 reach labels). The reserved internal-tag prefix is rejected (400); internal tags remain deployment-owned." }
+          "securityTags": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSecurityTag" }, "description": "Replace the version's non-internal security tags (§14.2 reach labels). The reserved internal-tag prefix is rejected (400); internal tags remain deployment-owned." },
+          "outputsSensitivity": { "$ref": "#/components/schemas/OutputsSensitivity", "description": "Classify this version's step-output payloads (design §14). 'sensitive' redacts the whole step journal from callers who hold only runs:outputs:read; reading it then needs the stronger grant (write reach on the run)." }
         }
       },
       "CatalogVersionSummary": {
@@ -5387,6 +5394,7 @@
           "status": { "$ref": "#/components/schemas/CatalogStatus" },
           "tags": { "type": "array", "items": { "type": "string" } },
           "securityTags": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSecurityTag" }, "description": "The version's non-internal security tags (§14.2) — the reach labels row-security rules match on. Internal/reserved-prefix tags are deployment-owned and stripped from this view. A run inherits its version's security tags." },
+          "outputsSensitivity": { "$ref": "#/components/schemas/OutputsSensitivity", "description": "How sensitive this version's step-output payloads are (design §14). Absent means 'standard'. 'sensitive' redacts the step journal from callers below the stronger grant." },
           "owner": { "$ref": "#/components/schemas/CatalogOwner" },
           "sources": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSourceRef" }, "description": "The source documents in this version's package, addressable individually via the source endpoint." },
           "runnable": { "type": "boolean", "description": "Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run." },

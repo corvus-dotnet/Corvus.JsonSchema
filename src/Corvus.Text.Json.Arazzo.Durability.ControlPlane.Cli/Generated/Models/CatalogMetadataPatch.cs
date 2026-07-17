@@ -60,6 +60,30 @@ public readonly partial struct CatalogMetadataPatch
     public static CatalogMetadataPatch DefaultInstance { get; }
 
     /// <summary>
+    /// Gets the (optional) <c>outputsSensitivity</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Classify this version&#39;s step-output payloads (design &#167;14). &#39;sensitive&#39; redacts the whole step journal from callers who hold only runs:outputs:read; reading it then needs the stronger grant (write reach on the run).
+    /// </para>
+    /// <para>
+    /// How sensitive a catalog version&#39;s step-output payloads are for disclosure (design &#167;14), distinct from row-visibility security tags. &#39;standard&#39; (the default when absent) reads the step journal at the runs:outputs:read tier; &#39;sensitive&#39; redacts the whole journal from callers who hold only that tier and requires the stronger grant (write reach on the run).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.OutputsSensitivity OutputsSensitivity
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsSensitivityUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.OutputsSensitivity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>owner</c> property.
     /// </summary>
     /// <remarks>
@@ -572,6 +596,11 @@ public readonly partial struct CatalogMetadataPatch
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public const string OutputsSensitivity = "outputsSensitivity";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Owner"/>.
         /// </summary>
         public const string Owner = "owner";
@@ -590,6 +619,11 @@ public readonly partial struct CatalogMetadataPatch
         /// Gets the JSON property name for <see cref="Tags"/>.
         /// </summary>
         public const string Tags = "tags";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutputsSensitivityUtf8 => "outputsSensitivity"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Owner"/>.
@@ -618,6 +652,11 @@ public readonly partial struct CatalogMetadataPatch
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutputsSensitivity => "outputsSensitivity"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Owner => "owner"u8;
@@ -644,6 +683,11 @@ public readonly partial struct CatalogMetadataPatch
     /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutputsSensitivity => [0x45, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x73, 0x53, 0x65, 0x6E, 0x73, 0x69, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Owner"/>.
         /// </summary>

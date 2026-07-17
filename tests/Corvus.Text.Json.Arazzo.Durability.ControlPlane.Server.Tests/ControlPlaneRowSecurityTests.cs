@@ -268,6 +268,65 @@ public sealed class ControlPlaneRowSecurityTests
             => Encoding.UTF8.GetString(policy.StripInternalPrefix(dimension));
     }
 
+    [TestMethod]
+    public async Task A_sensitive_versions_step_journal_is_redacted_below_the_stronger_grant()
+    {
+        // §14 disclosure tier: a caller may read the run (read reach) but lacks the stronger grant (write reach). A version
+        // its author classified sensitive therefore has its WHOLE step journal redacted — steps are marked redacted with no
+        // payload, so the KYC identity data the run processed is not disclosed.
+        await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
+        await SeedRunWithOutputsAsync(host.Store, "run-kyc", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-kyc/steps", tenant: "acme"));
+        Stj.JsonElement step = doc.RootElement.GetProperty("steps").EnumerateArray().Single();
+        step.GetProperty("stepId").GetString().ShouldBe("verify");
+        step.GetProperty("redacted").GetBoolean().ShouldBeTrue();
+        step.TryGetProperty("outputs", out _).ShouldBeFalse("the sensitive payload must not be disclosed");
+    }
+
+    [TestMethod]
+    public async Task The_stronger_grant_reads_a_sensitive_versions_journal_in_full()
+    {
+        // The default policy: an operator (no tenant claim) is unrestricted, so it holds write reach on the run — the
+        // stronger grant. A sensitive version's journal is therefore NOT redacted for them; the payload is disclosed.
+        await using Scoped host = await StartAsync();
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
+        await SeedRunWithOutputsAsync(host.Store, "run-kyc", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-kyc/steps", tenant: null));
+        Stj.JsonElement step = doc.RootElement.GetProperty("steps").EnumerateArray().Single();
+        step.GetProperty("outputs").GetProperty("ssn").GetString().ShouldBe("123-45-6789");
+        step.TryGetProperty("redacted", out _).ShouldBeFalse("a full read carries no redaction marker");
+    }
+
+    [TestMethod]
+    public async Task A_standard_versions_journal_is_not_redacted_even_below_the_stronger_grant()
+    {
+        // The escalation fires only for a version an author classified sensitive: a standard (unclassified) version's
+        // journal reads in full at the baseline tier, even for a caller without write reach. The classification, not mere
+        // reach, gates the payload.
+        await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await SeedRunWithOutputsAsync(host.Store, "run-ok", "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/runs/run-ok/steps", tenant: "acme"));
+        Stj.JsonElement step = doc.RootElement.GetProperty("steps").EnumerateArray().Single();
+        step.GetProperty("outputs").GetProperty("name").GetString().ShouldBe("Ada");
+        step.TryGetProperty("redacted", out _).ShouldBeFalse();
+    }
+
+    private static async Task SeedRunWithOutputsAsync(InMemoryWorkflowStateStore store, string id, string workflowId, TimeProvider clock, params SecurityTag[] security)
+    {
+        using ParsedJsonDocument<JsonElement> outputs = ParsedJsonDocument<JsonElement>.Parse(
+            """{ "verify": { "ssn": "123-45-6789", "name": "Ada" } }"""u8.ToArray());
+        using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, "development", clock, securityTags: SecurityTagSet.FromTags(security));
+        run.SetStepOutputs("verify", outputs.RootElement.GetProperty("verify"u8));
+        await run.CheckpointAsync(cursor: 1, default);
+    }
+
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;

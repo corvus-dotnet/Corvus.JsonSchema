@@ -220,7 +220,7 @@ public static class ControlPlaneEndpointExtensions
 
         return endpoints.MapApiEndpoints(
             securityHandler,
-            new ArazzoControlPlaneHandler(management, access),
+            new ArazzoControlPlaneHandler(management, access, catalog),
             new ArazzoControlPlaneRunnersHandler(runners, access),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator),
             availabilityHandler,

@@ -23,6 +23,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
     private readonly ISecuredWorkflowManagement management;
     private readonly ControlPlaneAccess access;
+    private readonly ISecuredWorkflowCatalog? catalog;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class (unscoped: full access).</summary>
     /// <param name="management">The control-plane client the endpoints delegate to.</param>
@@ -34,12 +35,17 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class.</summary>
     /// <param name="management">The control-plane client the endpoints delegate to.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
-    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access)
+    /// <param name="catalog">The catalog, used to resolve a run's version output-sensitivity classification for the §14
+    /// step-journal disclosure tier; when <see langword="null"/>, version-level journal redaction is not applied (the
+    /// <c>runs:outputs:read</c> baseline gate and field-level redaction still apply). The full-access ctor never needs it:
+    /// an unscoped caller always holds the stronger grant, so the classification is never consulted.</param>
+    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null)
     {
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(access);
         this.management = management;
         this.access = access;
+        this.catalog = catalog;
     }
 
     /// <inheritdoc/>
@@ -119,11 +125,30 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     public async ValueTask<GetRunStepsResult> HandleGetRunStepsAsync(GetRunStepsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = (string)parameters.RunId;
+        AccessContext ctx = this.access.Current();
 
-        ReadOnlyMemory<byte>? journal = await this.management.GetStepJournalAsync(runId, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        // The journal discloses strictly more than the detail, so resolve the run first (for its version + reach): out of
+        // read reach or absent → 404 (non-disclosing), the same gate GetStepJournalAsync applies.
+        WorkflowRunDetail? detail = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
+        if (detail is not { } d)
+        {
+            return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        ReadOnlyMemory<byte>? journal = await this.management.GetStepJournalAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
         if (journal is not { } bytes)
         {
             return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        // §14 disclosure tier: the endpoint has already demanded the runs:outputs:read baseline scope. On top of that, a
+        // version its author classified sensitive has its WHOLE step journal redacted for callers below the stronger grant
+        // — write reach on the run (operator-level, §14.2). The classification is read from the CURRENT catalog version, so
+        // reclassifying a workflow retroactively protects existing runs' journals.
+        bool strongerGrant = ctx.Admits(AccessVerb.Write, d.SecurityTags);
+        if (!strongerGrant && await this.IsOutputsSensitiveVersionAsync(d.WorkflowId, cancellationToken).ConfigureAwait(false))
+        {
+            bytes = RedactAllOutputs(bytes);
         }
 
         // Hand the parsed journal to the response workspace so it lives until the response is written
@@ -131,6 +156,64 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         ParsedJsonDocument<Models.WorkflowRunSteps> parsed = ParsedJsonDocument<Models.WorkflowRunSteps>.Parse(bytes);
         workspace.TakeOwnership(parsed);
         return GetRunStepsResult.Ok(parsed.RootElement, workspace);
+    }
+
+    // Whether the run's catalog version is classified output-sensitive (§14). Read trusted (System) — the classification
+    // is a governance property, not reach-gated data, so a caller who may read the run always sees the correct tier
+    // (never fail-open because the version happens to sit outside their reach). Absent catalog or an unparseable/unknown
+    // version → not sensitive (the baseline scope and field-level redaction still apply).
+    private async ValueTask<bool> IsOutputsSensitiveVersionAsync(string workflowId, CancellationToken cancellationToken)
+    {
+        if (this.catalog is null || !TryParseVersionedId(workflowId, out string baseWorkflowId, out int versionNumber))
+        {
+            return false;
+        }
+
+        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, AccessContext.System, cancellationToken).ConfigureAwait(false);
+        return version is { } v && v.RootElement.IsOutputsSensitive;
+    }
+
+    // Split a versioned workflow id ("{base}-v{n}") into its base id and version number (mirrors HostedWorkflowResumer).
+    private static bool TryParseVersionedId(string workflowId, out string baseWorkflowId, out int versionNumber)
+    {
+        int suffix = workflowId.LastIndexOf("-v", StringComparison.Ordinal);
+        if (suffix > 0 && int.TryParse(workflowId.AsSpan(suffix + 2), out versionNumber))
+        {
+            baseWorkflowId = workflowId[..suffix];
+            return true;
+        }
+
+        baseWorkflowId = string.Empty;
+        versionNumber = 0;
+        return false;
+    }
+
+    // Rewrite the step journal withholding every step's outputs: each record keeps its stepId and is marked redacted, the
+    // payload absent (non-disclosing). The whole-journal redaction for a version an author classified sensitive (§14).
+    private static ReadOnlyMemory<byte> RedactAllOutputs(ReadOnlyMemory<byte> journalUtf8)
+    {
+        using ParsedJsonDocument<Models.WorkflowRunSteps> doc = ParsedJsonDocument<Models.WorkflowRunSteps>.Parse(journalUtf8);
+        Models.WorkflowRunSteps journal = doc.RootElement;
+
+        var buffer = new System.Buffers.ArrayBufferWriter<byte>();
+        using (var writer = new System.Text.Json.Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("runId"u8, (string)journal.RunId);
+            writer.WriteStartArray("steps"u8);
+            foreach (Models.WorkflowRunStepRecord step in journal.Steps.EnumerateArray())
+            {
+                writer.WriteStartObject();
+                writer.WriteString("stepId"u8, (string)step.StepId);
+                writer.WriteBoolean("redacted"u8, true);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
+        return buffer.WrittenMemory;
     }
 
     /// <inheritdoc/>

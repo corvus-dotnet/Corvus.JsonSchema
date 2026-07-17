@@ -205,7 +205,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken, OutputsSensitivity? outputsSensitivity = null)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -245,7 +245,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         }
 
         ParsedJsonDocument<CatalogVersion>? updated = await this.catalog.UpdateMetadataAsync(
-            baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status, effectiveSecurityTags), cancellationToken).ConfigureAwait(false);
+            baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status, effectiveSecurityTags, outputsSensitivity), cancellationToken).ConfigureAwait(false);
         if (updated is null)
         {
             // Unrestricted write reach with no version present (or a concurrent delete) → not found.

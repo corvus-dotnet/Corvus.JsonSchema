@@ -271,9 +271,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             securityTags = userTags;
         }
 
+        // Reclassify output sensitivity (§14): a present `outputsSensitivity` sets/clears the version's step-output
+        // disclosure classification (absent = leave unchanged). Parsed string-free against the wire enum.
+        OutputsSensitivity? outputsSensitivity = ParseOutputsSensitivity(patch.OutputsSensitivity);
+
         // The client resolves read-then-write reach on a single fetch (§14.2): outside read reach → 404 (non-disclosing),
         // readable but outside write reach → 403 — so the handler no longer pre-fetches the version for the reach check.
-        CatalogUpdateResult result = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, securityTags, this.access.InternalTagPrefix, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        CatalogUpdateResult result = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, securityTags, this.access.InternalTagPrefix, this.access.Current(), cancellationToken, outputsSensitivity).ConfigureAwait(false);
         if (result.Outcome == CatalogUpdateOutcome.NotFound)
         {
             return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
@@ -717,6 +721,20 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private static TagSet ToTags(Models.PostCatalogBody.JsonStringArray tags) => TagSet.CopyFrom(tags);
 
     private static TagSet? ToTags(Models.CatalogMetadataPatch.JsonStringArray tags) => tags.IsUndefined() ? null : TagSet.CopyFrom(tags);
+
+    // The output-sensitivity reclassification from a patch, parsed string-free against the wire enum; an absent (or
+    // unrecognised) value leaves the version's classification unchanged.
+    private static OutputsSensitivity? ParseOutputsSensitivity(Models.OutputsSensitivity value)
+    {
+        if (!value.IsNotUndefined())
+        {
+            return null;
+        }
+
+        return value.ValueEquals("sensitive"u8) ? OutputsSensitivity.Sensitive
+            : value.ValueEquals("standard"u8) ? OutputsSensitivity.Standard
+            : null;
+    }
 
     private static TagSet ToTags(Models.TagList tags) => TagSet.CopyFrom(tags);
 

@@ -167,6 +167,30 @@ public readonly partial struct CatalogMetadataPatch
         }
 
         /// <summary>
+        /// Gets the (optional) <c>outputsSensitivity</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Classify this version&#39;s step-output payloads (design &#167;14). &#39;sensitive&#39; redacts the whole step journal from callers who hold only runs:outputs:read; reading it then needs the stronger grant (write reach on the run).
+        /// </para>
+        /// <para>
+        /// How sensitive a catalog version&#39;s step-output payloads are for disclosure (design &#167;14), distinct from row-visibility security tags. &#39;standard&#39; (the default when absent) reads the step journal at the runs:outputs:read tier; &#39;sensitive&#39; redacts the whole journal from callers who hold only that tier and requires the stronger grant (write reach on the run).
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Mutable OutputsSensitivity
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsSensitivityUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the (optional) <c>owner</c> property.
         /// </summary>
         /// <remarks>
@@ -272,6 +296,51 @@ public readonly partial struct CatalogMetadataPatch
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Set the <c>outputsSensitivity</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetOutputsSensitivity(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.OutputsSensitivityUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsSensitivityUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutputsSensitivity, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>outputsSensitivity</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveOutputsSensitivity()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.OutputsSensitivityUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -716,10 +785,11 @@ public readonly partial struct CatalogMetadataPatch
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source _createArg5;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -734,12 +804,13 @@ public readonly partial struct CatalogMetadataPatch
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
             _createArg4 = arg4;
+            _createArg5 = arg5;
             _kind = Kind.Create;
         }
 
@@ -760,7 +831,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -785,7 +856,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -810,7 +881,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -835,7 +906,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -860,7 +931,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -888,10 +959,11 @@ public readonly partial struct CatalogMetadataPatch
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> _createArg5;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -904,13 +976,14 @@ public readonly partial struct CatalogMetadataPatch
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> arg4)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> arg5)
         {
             _context = context;
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
             _createArg4 = arg4;
+            _createArg5 = arg5;
             _kind = Kind.Create;
         }
 
@@ -929,7 +1002,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -954,7 +1027,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -979,7 +1052,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1004,7 +1077,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1029,7 +1102,7 @@ public readonly partial struct CatalogMetadataPatch
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1063,11 +1136,13 @@ public readonly partial struct CatalogMetadataPatch
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default)
         {
+            outputsSensitivity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutputsSensitivity, ref builder);
             owner.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Owner, ref builder);
             securityTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityTags, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
@@ -1078,12 +1153,13 @@ public readonly partial struct CatalogMetadataPatch
         /// Creates an instance of a <see cref="CatalogMetadataPatch"/>.
         /// </summary>
         public void Create(
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default)
         {
-            Create(ref _builder, owner, securityTags, status, tags);
+            Create(ref _builder, outputsSensitivity, owner, securityTags, status, tags);
         }
 
         /// <summary>
@@ -1092,6 +1168,7 @@ public readonly partial struct CatalogMetadataPatch
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default,
@@ -1100,6 +1177,7 @@ public readonly partial struct CatalogMetadataPatch
         where TContext : allows ref struct
         #endif
         {
+            outputsSensitivity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutputsSensitivity, ref builder);
             owner.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Owner, ref builder);
             securityTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityTags, ref builder);
             status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
@@ -1111,6 +1189,7 @@ public readonly partial struct CatalogMetadataPatch
         /// </summary>
         public void Create<TContext>(
             in TContext context,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default,
@@ -1119,7 +1198,7 @@ public readonly partial struct CatalogMetadataPatch
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, owner, securityTags, status, tags);
+            Create(context, ref _builder, outputsSensitivity, owner, securityTags, status, tags);
         }
 
         internal static void BuildValue(Build value, ref ComplexValueBuilder o)
@@ -1152,11 +1231,12 @@ public readonly partial struct CatalogMetadataPatch
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5);
             o.EndObject();
         }
 
@@ -1169,14 +1249,15 @@ public readonly partial struct CatalogMetadataPatch
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
+        /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5);
             o.EndObject();
         }
     }
@@ -1213,14 +1294,15 @@ public readonly partial struct CatalogMetadataPatch
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
+    /// <param name="outputsSensitivity">The value of the <c>"outputsSensitivity"</c> property.</param>
     /// <param name="owner">The value of the <c>"owner"</c> property.</param>
     /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
     /// <param name="status">The value of the <c>"status"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default)
     {
-        return new Source(owner, securityTags, status, tags);
+        return new Source(outputsSensitivity, owner, securityTags, status, tags);
     }
 
     /// <summary>
@@ -1228,17 +1310,18 @@ public readonly partial struct CatalogMetadataPatch
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="outputsSensitivity">The value of the <c>"outputsSensitivity"</c> property.</param>
     /// <param name="owner">The value of the <c>"owner"</c> property.</param>
     /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
     /// <param name="status">The value of the <c>"status"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> tags = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, owner, securityTags, status, tags);
+        return new Source<TContext>(context, outputsSensitivity, owner, securityTags, status, tags);
     }
 
     /// <summary>
@@ -1334,19 +1417,20 @@ public readonly partial struct CatalogMetadataPatch
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="outputsSensitivity">The value of the property.</param>
     /// <param name="owner">The value of the property.</param>
     /// <param name="securityTags">The value of the property.</param>
     /// <param name="status">The value of the property.</param>
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(owner, securityTags, status, tags);
+        ovb.Create(outputsSensitivity, owner, securityTags, status, tags);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1359,13 +1443,14 @@ public readonly partial struct CatalogMetadataPatch
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
+    /// <param name="outputsSensitivity">The value of the property.</param>
     /// <param name="owner">The value of the property.</param>
     /// <param name="securityTags">The value of the property.</param>
     /// <param name="status">The value of the property.</param>
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1374,7 +1459,7 @@ public readonly partial struct CatalogMetadataPatch
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, owner, securityTags, status, tags);
+        ovb.Create(context, outputsSensitivity, owner, securityTags, status, tags);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1475,13 +1560,14 @@ public readonly partial struct CatalogMetadataPatch
     /// <summary>
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
+    /// <param name="outputsSensitivity">The value of the property.</param>
     /// <param name="owner">The value of the property.</param>
     /// <param name="securityTags">The value of the property.</param>
     /// <param name="status">The value of the property.</param>
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<CatalogMetadataPatch> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<CatalogMetadataPatch> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source tags = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1489,7 +1575,7 @@ public readonly partial struct CatalogMetadataPatch
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(owner, securityTags, status, tags);
+            ovb.Create(outputsSensitivity, owner, securityTags, status, tags);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1506,13 +1592,14 @@ public readonly partial struct CatalogMetadataPatch
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The value of the property.</param>
+    /// <param name="outputsSensitivity">The value of the property.</param>
     /// <param name="owner">The value of the property.</param>
     /// <param name="securityTags">The value of the property.</param>
     /// <param name="status">The value of the property.</param>
     /// <param name="tags">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<CatalogMetadataPatch> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<CatalogMetadataPatch> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity.Source outputsSensitivity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source<TContext> securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus.Source status = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1523,7 +1610,7 @@ public readonly partial struct CatalogMetadataPatch
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(context, owner, securityTags, status, tags);
+            ovb.Create(context, outputsSensitivity, owner, securityTags, status, tags);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

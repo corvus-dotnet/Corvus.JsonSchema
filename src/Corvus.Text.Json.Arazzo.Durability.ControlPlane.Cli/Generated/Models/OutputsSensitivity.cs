@@ -17,24 +17,24 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
+/// How sensitive a catalog version&#39;s step-output payloads are for disclosure (design &#167;14), distinct from row-visibility security tags. &#39;standard&#39; (the default when absent) reads the step journal at the runs:outputs:read tier; &#39;sensitive&#39; redacts the whole journal from callers who hold only that tier and requires the stronger grant (write reach on the run).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct CatalogMetadataPatch
+public readonly partial struct OutputsSensitivity
 #if NET8_0_OR_GREATER
-    : IJsonElement<CatalogMetadataPatch>,
+    : IJsonElement<OutputsSensitivity>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<CatalogMetadataPatch>,
+    : IJsonElement<OutputsSensitivity>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct CatalogMetadataPatch
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="CatalogMetadataPatch"/> struct.
+    /// Initializes a new instance of the <see cref="OutputsSensitivity"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal CatalogMetadataPatch(IJsonDocument parent, int idx)
+    internal OutputsSensitivity(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,126 +57,28 @@ public readonly partial struct CatalogMetadataPatch
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static CatalogMetadataPatch DefaultInstance { get; }
+    public static OutputsSensitivity DefaultInstance { get; }
 
-    /// <summary>
-    /// Gets the (optional) <c>outputsSensitivity</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Classify this version&#39;s step-output payloads (design &#167;14). &#39;sensitive&#39; redacts the whole step journal from callers who hold only runs:outputs:read; reading it then needs the stronger grant (write reach on the run).
-    /// </para>
-    /// <para>
-    /// How sensitive a catalog version&#39;s step-output payloads are for disclosure (design &#167;14), distinct from row-visibility security tags. &#39;standard&#39; (the default when absent) reads the step journal at the runs:outputs:read tier; &#39;sensitive&#39; redacts the whole journal from callers who hold only that tier and requires the stronger grant (write reach on the run).
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity OutputsSensitivity
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsSensitivityUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.OutputsSensitivity value))
-            {
-                return value;
-            }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
 
-            return default;
-        }
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
 
-    /// <summary>
-    /// Gets the (optional) <c>owner</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The accountable governance owner of a workflow, for integration with governance tooling.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner Owner
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner value))
-            {
-                return value;
-            }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
 
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>securityTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Replace the version&#39;s non-internal security tags (&#167;14.2 reach labels). The reserved internal-tag prefix is rejected (400); internal tags remain deployment-owned.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray SecurityTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>status</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// A catalog version&#39;s lifecycle status.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus Status
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogStatus value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>tags</c> property.
-    /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray Tags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the number of properties in the object.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public int GetPropertyCount()
-    {
-        CheckValidInstance();
-        return _parent.GetPropertyCount(_idx);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
 
     /// <inheritdoc/>
     public JsonValueKind ValueKind => TokenType.ToValueKind();
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator string(OutputsSensitivity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
     /// <summary>
     /// Operator ==.
@@ -186,7 +88,7 @@ public readonly partial struct CatalogMetadataPatch
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in CatalogMetadataPatch left, in CatalogMetadataPatch right)
+    public static bool operator ==(in OutputsSensitivity left, in OutputsSensitivity right)
     {
         return left.Equals(right);
     }
@@ -199,7 +101,7 @@ public readonly partial struct CatalogMetadataPatch
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in CatalogMetadataPatch left, in CatalogMetadataPatch right)
+    public static bool operator !=(in OutputsSensitivity left, in OutputsSensitivity right)
     {
         return !left.Equals(right);
     }
@@ -212,7 +114,7 @@ public readonly partial struct CatalogMetadataPatch
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in CatalogMetadataPatch left, in JsonElement right)
+    public static bool operator ==(in OutputsSensitivity left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -225,7 +127,7 @@ public readonly partial struct CatalogMetadataPatch
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in CatalogMetadataPatch left, in JsonElement right)
+    public static bool operator !=(in OutputsSensitivity left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -236,7 +138,7 @@ public readonly partial struct CatalogMetadataPatch
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(CatalogMetadataPatch instance)
+    public static implicit operator JsonElement(OutputsSensitivity instance)
     {
         return JsonElement.From(instance);
     }
@@ -247,9 +149,9 @@ public readonly partial struct CatalogMetadataPatch
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator CatalogMetadataPatch(JsonElement instance)
+    public static implicit operator OutputsSensitivity(JsonElement instance)
     {
-        return CatalogMetadataPatch.From(instance);
+        return OutputsSensitivity.From(instance);
     }
 
     /// <summary>
@@ -258,7 +160,7 @@ public readonly partial struct CatalogMetadataPatch
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CatalogMetadataPatch From<T>(in T instance)
+    public static OutputsSensitivity From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -283,10 +185,10 @@ public readonly partial struct CatalogMetadataPatch
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CatalogMetadataPatch ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static OutputsSensitivity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CatalogMetadataPatch>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<OutputsSensitivity>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -309,10 +211,10 @@ public readonly partial struct CatalogMetadataPatch
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CatalogMetadataPatch ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static OutputsSensitivity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CatalogMetadataPatch>(json, options);
+        return JsonElementHelpers.ParseValue<OutputsSensitivity>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -335,10 +237,10 @@ public readonly partial struct CatalogMetadataPatch
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CatalogMetadataPatch ParseValue(string json, JsonDocumentOptions options = default)
+    public static OutputsSensitivity ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CatalogMetadataPatch>(json, options);
+        return JsonElementHelpers.ParseValue<OutputsSensitivity>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -378,10 +280,10 @@ public readonly partial struct CatalogMetadataPatch
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static CatalogMetadataPatch ParseValue(ref Utf8JsonReader reader)
+    public static OutputsSensitivity ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<CatalogMetadataPatch>(ref reader);
+        return JsonElementHelpers.ParseValue<OutputsSensitivity>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -423,16 +325,16 @@ public readonly partial struct CatalogMetadataPatch
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out CatalogMetadataPatch? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out OutputsSensitivity? result)
     {
-        return JsonElementHelpers.TryParseValue<CatalogMetadataPatch>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<OutputsSensitivity>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new CatalogMetadataPatch(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new OutputsSensitivity(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -445,6 +347,57 @@ public readonly partial struct CatalogMetadataPatch
         where T : struct, IJsonElement
     {
         return JsonElementHelpers.DeepEquals(this, other);
+    }
+
+    /// <summary>
+    /// Compare with a UTF-8 string.
+    /// </summary>
+    /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
+    {
+        CheckValidInstance();
+
+        if (TokenType != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
+    }
+
+    /// <summary>
+    /// Compare with a string.
+    /// </summary>
+    /// <param ref="utf8Text">The text to compare with.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool ValueEquals(ReadOnlySpan<char> text)
+    {
+        CheckValidInstance();
+
+        if (TokenType != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        return _parent.TextEquals(_idx, text, isPropertyName: false);
+    }
+
+    /// <summary>
+    /// Compare with a string.
+    /// </summary>
+    /// <param ref="utf8Text">The text to compare with.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool ValueEquals(string text)
+    {
+        CheckValidInstance();
+
+        if (TokenType != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        return _parent.TextEquals(_idx, text, isPropertyName: false);
     }
 
     /// <inheritdoc/>
@@ -522,11 +475,11 @@ public readonly partial struct CatalogMetadataPatch
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static CatalogMetadataPatch IJsonElement<CatalogMetadataPatch>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static OutputsSensitivity IJsonElement<OutputsSensitivity>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"CatalogMetadataPatch: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"OutputsSensitivity: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -541,11 +494,11 @@ public readonly partial struct CatalogMetadataPatch
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="CatalogMetadataPatch"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="OutputsSensitivity"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="CatalogMetadataPatch"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="OutputsSensitivity"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -554,10 +507,10 @@ public readonly partial struct CatalogMetadataPatch
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public CatalogMetadataPatch Clone()
+    public OutputsSensitivity Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<CatalogMetadataPatch>(_idx);
+        return _parent.CloneElement<OutputsSensitivity>(_idx);
     }
 
     /// <summary>
@@ -565,7 +518,7 @@ public readonly partial struct CatalogMetadataPatch
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="CatalogMetadataPatch"/> that lives for the lifetime of its
+    /// An immutable <see cref="OutputsSensitivity"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -579,133 +532,72 @@ public readonly partial struct CatalogMetadataPatch
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public CatalogMetadataPatch Freeze()
+    public OutputsSensitivity Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<CatalogMetadataPatch>(_idx);
+            return mutable.FreezeElement<OutputsSensitivity>(_idx);
         }
 
         return this;
     }
 
     /// <summary>
-    /// Provides UTF8 and string versions of the JSON property names on the object.
+    /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
     /// </summary>
-    public static class JsonPropertyNames
+    /// <typeparam name="TContext">The immutable context to pass in to the match function.</typeparam>
+    /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+    /// <param name="context">The context to pass to the match function.</param>
+    /// <param name="matchStandard">Match 1st item.</param>
+    /// <param name="matchSensitive">Match 2nd item.</param>
+    /// <param name="defaultMatch">Match any other value.</param>
+    /// <returns>An instance of the value returned by the match function.</returns>
+    public TResult Match<TContext, TResult>(
+        in TContext context,
+        Func<TContext, TResult> matchStandard,
+        Func<TContext, TResult> matchSensitive,
+        Func<TContext, TResult> defaultMatch)
+#if NET9_0_OR_GREATER
+    where TContext : allows ref struct
+#endif
     {
-        /// <summary>
-        /// Gets the JSON property name for <see cref="OutputsSensitivity"/>.
-        /// </summary>
-        public const string OutputsSensitivity = "outputsSensitivity";
+        if (this.ValueEquals(Constants.Enum1))
+        {
+            return matchStandard(context);
+        }
 
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Owner"/>.
-        /// </summary>
-        public const string Owner = "owner";
+        if (this.ValueEquals(Constants.Enum2))
+        {
+            return matchSensitive(context);
+        }
 
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public const string SecurityTags = "securityTags";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public const string Status = "status";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public const string Tags = "tags";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="OutputsSensitivity"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OutputsSensitivityUtf8 => "outputsSensitivity"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Owner"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OwnerUtf8 => "owner"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTagsUtf8 => "securityTags"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> TagsUtf8 => "tags"u8;
+        return defaultMatch(context);
     }
 
     /// <summary>
-    /// Provides escaped UTF-8 versions of the JSON property names on the object.
+    /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
     /// </summary>
-    private static class JsonPropertyNamesEscaped
+    /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+    /// <param name="matchStandard">Match 1st item.</param>
+    /// <param name="matchSensitive">Match 2nd item.</param>
+    /// <param name="defaultMatch">Match any other value.</param>
+    /// <returns>An instance of the value returned by the match function.</returns>
+    public TResult Match<TResult>(
+        Func<TResult> matchStandard,
+        Func<TResult> matchSensitive,
+        Func<TResult> defaultMatch)
     {
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="OutputsSensitivity"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OutputsSensitivity => "outputsSensitivity"u8;
+        if (this.ValueEquals(Constants.Enum1))
+        {
+            return matchStandard();
+        }
 
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Owner"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Owner => "owner"u8;
+        if (this.ValueEquals(Constants.Enum2))
+        {
+            return matchSensitive();
+        }
 
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => "securityTags"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Status => "status"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Tags => "tags"u8;
-    }
-
-    /// <summary>
-    /// Provides pre-baked property name blobs for fast builder property storage.
-    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
-    /// </summary>
-    private static class JsonPropertyNamesPrebaked
-    {
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="OutputsSensitivity"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OutputsSensitivity => [0x45, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x73, 0x53, 0x65, 0x6E, 0x73, 0x69, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Owner"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Owner => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x77, 0x6E, 0x65, 0x72, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x54, 0x61, 0x67, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Tags => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x73, 0x22];
+        return defaultMatch();
     }
 }

@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// One recorded step: its id and the outputs value the checkpoint stored for it.
+/// One recorded step: its id and the outputs value the checkpoint stored for it. When the caller may read the journal but not this step&#39;s payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), the sensitive content is redacted: `redacted` is true and the withheld content is absent or blanked rather than disclosed.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -41,6 +41,7 @@ public readonly partial struct WorkflowRunStepRecord
         private const uint RequiredBitMask0 =
             RequiredBitForStepId;
         private static readonly JsonSchemaPathProvider OutputsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/outputs"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RedactedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/redacted"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StepIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/stepId"u8, buffer, out written);
 
         private static void MatchOutputs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
@@ -58,10 +59,25 @@ public readonly partial struct WorkflowRunStepRecord
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchStepId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchRedacted(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RedactedUtf8,
+                    evaluationPath: RedactedSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+        }
+
+        private static void MatchStepId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext2 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -69,8 +85,8 @@ public readonly partial struct WorkflowRunStepRecord
                     JsonPropertyNames.StepIdUtf8,
                     evaluationPath: StepIdSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -84,6 +100,7 @@ public readonly partial struct WorkflowRunStepRecord
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.OutputsUtf8, MatchOutputs),
+                (static () => JsonPropertyNames.RedactedUtf8, MatchRedacted),
                 (static () => JsonPropertyNames.StepIdUtf8, MatchStepId),
             ]);
         }

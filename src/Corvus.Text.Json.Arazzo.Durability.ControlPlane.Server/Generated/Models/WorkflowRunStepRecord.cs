@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// One recorded step: its id and the outputs value the checkpoint stored for it.
+/// One recorded step: its id and the outputs value the checkpoint stored for it. When the caller may read the journal but not this step&#39;s payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), the sensitive content is redacted: `redacted` is true and the withheld content is absent or blanked rather than disclosed.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -163,7 +163,7 @@ public readonly partial struct WorkflowRunStepRecord
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The step&#39;s recorded outputs value, verbatim from the checkpoint.
+    /// The step&#39;s recorded outputs value, verbatim from the checkpoint. Absent (or with sensitive fields blanked) when `redacted` is true.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.JsonElement Outputs
@@ -171,6 +171,27 @@ public readonly partial struct WorkflowRunStepRecord
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsUtf8, out Corvus.Text.Json.JsonElement value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>redacted</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// True when some or all of this step&#39;s outputs were withheld from the caller because they are classified sensitive and the caller lacks the stronger grant (write reach on the run). The step is still attested to have recorded outputs; only the payload is withheld (non-disclosing).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean Redacted
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RedactedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
             {
                 return value;
             }
@@ -649,6 +670,11 @@ public readonly partial struct WorkflowRunStepRecord
         public const string Outputs = "outputs";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Redacted"/>.
+        /// </summary>
+        public const string Redacted = "redacted";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="StepId"/>.
         /// </summary>
         public const string StepId = "stepId";
@@ -657,6 +683,11 @@ public readonly partial struct WorkflowRunStepRecord
         /// Gets the JSON property name for <see cref="Outputs"/>.
         /// </summary>
         public static ReadOnlySpan<byte> OutputsUtf8 => "outputs"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Redacted"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RedactedUtf8 => "redacted"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="StepId"/>.
@@ -675,6 +706,11 @@ public readonly partial struct WorkflowRunStepRecord
         public static ReadOnlySpan<byte> Outputs => "outputs"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Redacted"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Redacted => "redacted"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="StepId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> StepId => "stepId"u8;
@@ -690,6 +726,11 @@ public readonly partial struct WorkflowRunStepRecord
         /// Gets the pre-baked property name blob for <see cref="Outputs"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Outputs => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Redacted"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Redacted => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x64, 0x61, 0x63, 0x74, 0x65, 0x64, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="StepId"/>.

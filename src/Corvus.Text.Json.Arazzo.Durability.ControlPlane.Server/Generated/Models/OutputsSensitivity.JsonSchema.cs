@@ -17,119 +17,86 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// One recorded step: its id and the outputs value the checkpoint stored for it. When the caller may read the journal but not this step&#39;s payload (a version classified sensitive, or a field marked sensitive in the output schema, without the stronger grant), the sensitive content is redacted: `redacted` is true and the withheld content is absent or blanked rather than disclosed.
+/// How sensitive a catalog version&#39;s step-output payloads are for disclosure (design &#167;14), distinct from row-visibility security tags. &#39;standard&#39; (the default when absent) reads the step journal at the runs:outputs:read tier; &#39;sensitive&#39; redacts the whole journal from callers who hold only that tier and requires the stronger grant (write reach on the run).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct WorkflowRunStepRecord
-    : IJsonElement<WorkflowRunStepRecord>
+public readonly partial struct OutputsSensitivity
+    : IJsonElement<OutputsSensitivity>
 {
+    /// <summary>
+    /// Provides accesors for enumerated values
+    /// </summary>
+    private static class Constants
+    {
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly byte[] Enum1 = "standard"u8.ToArray();
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly OutputsSensitivity EnumJson1 = ParsedJsonDocument<OutputsSensitivity>.StringConstant([.."\"standard\""u8]);
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly byte[] Enum2 = "sensitive"u8.ToArray();
+        /// <summary>
+        /// A constant for the <c>enum</c> keyword.
+        /// </summary>
+        public static readonly OutputsSensitivity EnumJson2 = ParsedJsonDocument<OutputsSensitivity>.StringConstant([.."\"sensitive\""u8]);
+    }
+
+    /// <summary>
+    /// Provides named constants for enum values.
+    /// </summary>
+    public static class EnumValues
+    {
+        /// <summary>
+        /// Gets the string "standard"
+        /// as a <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static OutputsSensitivity Standard { get; } = Constants.EnumJson1;
+        /// <summary>
+        /// Gets the string "standard"
+        /// as a UTF8 byte array.
+        /// </summary>
+        public static ReadOnlySpan<byte> StandardUtf8 => Constants.Enum1;
+
+        /// <summary>
+        /// Gets the string "sensitive"
+        /// as a <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static OutputsSensitivity Sensitive { get; } = Constants.EnumJson2;
+        /// <summary>
+        /// Gets the string "sensitive"
+        /// as a UTF8 byte array.
+        /// </summary>
+        public static ReadOnlySpan<byte> SensitiveUtf8 => Constants.Enum2;
+    }
+
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyStepIdPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("stepId"u8, buffer, out written);
-        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyStepIdNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("stepId"u8, buffer, out written);
-
-        private const int RequiredOffsetForStepId = 0;
-        private const uint RequiredBitForStepId = 0b00000000000000000000000000000001;
-
-        private const uint RequiredBitMask0 =
-            RequiredBitForStepId;
-        private static readonly JsonSchemaPathProvider OutputsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/outputs"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider RedactedSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/redacted"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider StepIdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/stepId"u8, buffer, out written);
-
-        private static void MatchOutputs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext =
-                Corvus.Text.Json.JsonElement.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.OutputsUtf8,
-                    evaluationPath: OutputsSchemaEvaluationPath);
-
-            Corvus.Text.Json.JsonElement.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-            context.CommitChildContext(childContext.IsMatch, ref childContext);
-        }
-
-        private static void MatchRedacted(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext1 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.RedactedUtf8,
-                    evaluationPath: RedactedSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
-        }
-
-        private static void MatchStepId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-        {
-            context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext2 =
-                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContextUnescaped(
-                    parentDocument,
-                    parentDocumentIndex,
-                    ref context,
-                    JsonPropertyNames.StepIdUtf8,
-                    evaluationPath: StepIdSchemaEvaluationPath);
-
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
-
-            if (!context.HasCollector && !context.IsMatch)
-            {
-                return;
-            }
-
-            requiredBitBuffer[RequiredOffsetForStepId] |= RequiredBitForStepId;
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
-        {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.OutputsUtf8, MatchOutputs),
-                (static () => JsonPropertyNames.RedactedUtf8, MatchRedacted),
-                (static () => JsonPropertyNames.StepIdUtf8, MatchStepId),
-            ]);
-        }
-
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
-
-        private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
-#if NET
-        [NotNullWhen(true)]
-#endif
-        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
-        {
-            return Matchers.TryGetNamedMatcher(span, out matcher);
-        }
-
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/WorkflowRunStepRecord"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/OutputsSensitivity"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/components/schemas/WorkflowRunStepRecord";
+        public const string SchemaLocation = "/components/schemas/OutputsSensitivity";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/WorkflowRunStepRecord"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/OutputsSensitivity"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -150,60 +117,40 @@ public readonly partial struct WorkflowRunStepRecord
                 JsonTokenType.EndObject or
                 JsonTokenType.EndArray));
 
-            if (!JsonSchemaEvaluation.MatchTypeObject(tokenType,"type"u8, ref context))
+            if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
             {
                 if (!context.HasCollector)
                 {
                     return;
                 }
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
-                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
             }
             else
             {
-                Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
-                int objectValidation_propertyCount = 0;
+                using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
-                var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
-                while (objectValidation_enumerator.MoveNext())
+                if (unescapedUtf8JsonString.Span.SequenceEqual("standard"u8))
                 {
-                    int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
-                    using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
-
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
-                    {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
-
-                        if (!context.HasCollector && !context.IsMatch)
-                        {
-                            return;
-                        }
-                    }
-
-                    objectValidation_propertyCount++;
+                    goto enumShortCircuitSuccess;
                 }
 
-                // Do a quick test to see if we have all of the required bits set in each element
-                if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
+                if (unescapedUtf8JsonString.Span.SequenceEqual("sensitive"u8))
                 {
-                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyStepIdPresent, "stepId"u8, "required"u8);
+                    goto enumShortCircuitSuccess;
                 }
-                else if (!context.HasCollector)
+
+                context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
+
+                if (!context.HasCollector)
                 {
-                    context.EvaluatedBooleanSchema(false);
                     return;
                 }
-                else
-                {
-                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForStepId] & RequiredBitForStepId) == 0)
-                    {
-                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyStepIdNotPresent, "stepId"u8, "required"u8);
-                    }
-                    else
-                    {
-                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyStepIdPresent, "stepId"u8, "required"u8);
-                    }
-                }
+
+                goto enumAfterFailure;
+
+enumShortCircuitSuccess:
+                context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
+
+enumAfterFailure:;
             }
         }
 

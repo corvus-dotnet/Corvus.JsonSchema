@@ -92,10 +92,13 @@ public interface ISecuredWorkflowCatalog
     /// re-tag; ignored when <paramref name="securityTags"/> is <see langword="null"/>.</param>
     /// <param name="context">The caller's access grant; the version must be within its write reach.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="outputsSensitivity">A reclassification of the version's step-output sensitivity (design §14), if set;
+    /// <see langword="null"/> leaves it unchanged. Governs whether the step journal is redacted from callers who hold only
+    /// <c>runs:outputs:read</c> (below the stronger grant).</param>
     /// <returns>The outcome and, on <see cref="CatalogUpdateOutcome.Updated"/>, the updated version document (which the
     /// caller owns): <see cref="CatalogUpdateOutcome.NotFound"/> if it is absent or outside read reach (non-disclosing),
     /// <see cref="CatalogUpdateOutcome.Forbidden"/> if readable but outside write reach.</returns>
-    ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken);
+    ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken, OutputsSensitivity? outputsSensitivity = null);
 
     /// <summary>Deletes a single version, refusing while any workflow run references its versioned workflow id, if the caller's write reach admits it (§14.2).</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>

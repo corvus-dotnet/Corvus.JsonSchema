@@ -14,6 +14,19 @@ public enum CatalogStatus
     Obsolete,
 }
 
+/// <summary>How sensitive a catalog version's step-output payloads are for disclosure (design §14), distinct from
+/// row-visibility security tags: it classifies the step-output PAYLOADS above who may see the run.</summary>
+public enum OutputsSensitivity
+{
+    /// <summary>The default (also the meaning of an absent classification): the step journal is readable at the
+    /// <c>runs:outputs:read</c> tier.</summary>
+    Standard,
+
+    /// <summary>The step journal is redacted from callers who hold only <c>runs:outputs:read</c>; reading it requires the
+    /// stronger grant (write reach on the run).</summary>
+    Sensitive,
+}
+
 /// <summary>The accountable governance owner of a cataloged workflow, for integration with governance tooling.</summary>
 /// <param name="Name">The owning person or team's display name.</param>
 /// <param name="Email">A contact email (an <c>idn-email</c>).</param>
@@ -54,12 +67,16 @@ public readonly record struct CatalogMetadata(CatalogOwner Owner, string Created
 /// (design §14.2) — <see langword="null"/> leaves the version's security tags unchanged. The set is already the final
 /// tags to persist: the security wrapper has merged the caller's new non-internal labels with the version's preserved
 /// deployment-internal tags, so a store simply replaces its stored/queryable representation with it.</param>
+/// <param name="OutputsSensitivity">A reclassification of the version's step-output sensitivity (design §14), if set —
+/// <see langword="null"/> leaves it unchanged. <c>Standard</c> clears the marker (the default); <c>Sensitive</c> redacts
+/// the whole step journal from callers below the stronger grant.</param>
 public readonly record struct CatalogMetadataPatch(
     string UpdatedBy,
     CatalogOwner? Owner = null,
     TagSet? Tags = null,
     CatalogStatus? Status = null,
-    SecurityTagSet? SecurityTags = null);
+    SecurityTagSet? SecurityTags = null,
+    OutputsSensitivity? OutputsSensitivity = null);
 
 // The catalog version's persisted metadata is the generated Corvus.Text.Json type CatalogVersion
 // (see CatalogVersion.cs + Schemas/CatalogVersion.json) — the entity stores hold as JSON.

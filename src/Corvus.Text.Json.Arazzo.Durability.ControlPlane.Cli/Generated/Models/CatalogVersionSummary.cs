@@ -350,6 +350,30 @@ public readonly partial struct CatalogVersionSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>outputsSensitivity</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// How sensitive this version&#39;s step-output payloads are (design &#167;14). Absent means &#39;standard&#39;. &#39;sensitive&#39; redacts the step journal from callers below the stronger grant.
+    /// </para>
+    /// <para>
+    /// How sensitive a catalog version&#39;s step-output payloads are for disclosure (design &#167;14), distinct from row-visibility security tags. &#39;standard&#39; (the default when absent) reads the step journal at the runs:outputs:read tier; &#39;sensitive&#39; redacts the whole journal from callers who hold only that tier and requires the stronger grant (write reach on the run).
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.OutputsSensitivity OutputsSensitivity
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsSensitivityUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.OutputsSensitivity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>owner</c> property.
     /// </summary>
     /// <remarks>
@@ -1047,6 +1071,11 @@ public readonly partial struct CatalogVersionSummary
         public const string ObsoletedBy = "obsoletedBy";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public const string OutputsSensitivity = "outputsSensitivity";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Owner"/>.
         /// </summary>
         public const string Owner = "owner";
@@ -1140,6 +1169,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the JSON property name for <see cref="ObsoletedBy"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ObsoletedByUtf8 => "obsoletedBy"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutputsSensitivityUtf8 => "outputsSensitivity"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Owner"/>.
@@ -1243,6 +1277,11 @@ public readonly partial struct CatalogVersionSummary
         public static ReadOnlySpan<byte> ObsoletedBy => "obsoletedBy"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutputsSensitivity => "outputsSensitivity"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Owner => "owner"u8;
@@ -1343,6 +1382,11 @@ public readonly partial struct CatalogVersionSummary
         /// Gets the pre-baked property name blob for <see cref="ObsoletedBy"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ObsoletedBy => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x62, 0x73, 0x6F, 0x6C, 0x65, 0x74, 0x65, 0x64, 0x42, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OutputsSensitivity"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutputsSensitivity => [0x45, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x73, 0x53, 0x65, 0x6E, 0x73, 0x69, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Owner"/>.

@@ -70,6 +70,11 @@ public readonly partial struct CatalogVersion
     /// <summary>Gets the security tags (KVP labels) as a deferred holder over the persisted bytes, distinct from the free-form <see cref="TagsValue"/> (§14.2).</summary>
     public SecurityTagSet SecurityTagsValue => SecurityTagSet.CopyFrom(this.SecurityTags);
 
+    /// <summary>Gets a value indicating whether this version's step outputs are classified sensitive (design §14): the
+    /// whole step journal is redacted from callers below the stronger grant (write reach on the run). Compared string-free;
+    /// an absent classification (or "standard") is not sensitive.</summary>
+    public bool IsOutputsSensitive => this.OutputsSensitivity.IsNotUndefined() && this.OutputsSensitivity.ValueEquals("sensitive"u8);
+
     /// <summary>Gets the package source documents as a deferred holder over the persisted bytes.</summary>
     public SourceSet SourcesValue => SourceSet.CopyFrom(this.Sources);
 
@@ -231,6 +236,21 @@ public readonly partial struct CatalogVersion
             else
             {
                 builder.RootElement.SetSecurityTags(SecurityTagInfoArray.ParseValue(securityTags.RawJson));
+            }
+        }
+
+        // Reclassify output sensitivity (§14): Sensitive stamps the marker, Standard clears it (absent = standard). Absent
+        // patch → the classification is carried bytes-to-bytes unchanged.
+        if (patch.OutputsSensitivity is { } outputsSensitivity)
+        {
+            // Qualify the enum: inside CatalogVersion, the generated OutputsSensitivity property shadows the type name.
+            if (outputsSensitivity == global::Corvus.Text.Json.Arazzo.Durability.OutputsSensitivity.Sensitive)
+            {
+                builder.RootElement.SetOutputsSensitivity("sensitive"u8);
+            }
+            else
+            {
+                builder.RootElement.RemoveOutputsSensitivity();
             }
         }
 
