@@ -272,6 +272,19 @@
       buttons.forEach((b) => b.addEventListener('click', () => select(b)));
     };
     document.querySelectorAll('[role="tablist"]').forEach(wireTabGroup);
+
+    // Deep links FROM the access overview's Administers lists: Open navigates to the thing itself —
+    // the catalog detail for a workflow, the environment detail for an environment.
+    const clickTab = (viewId) => document.querySelector(`[role="tab"][aria-controls="${viewId}"]`)?.click();
+    const overviewPanel = document.querySelector('arazzo-access-overview');
+    overviewPanel?.addEventListener('open-workflow', (e) => {
+      clickTab('view-catalog');
+      document.querySelector('arazzo-catalog')?.openWorkflow(e.detail.baseWorkflowId);
+    });
+    overviewPanel?.addEventListener('open-environment', (e) => {
+      clickTab('view-environments');
+      document.querySelector('arazzo-environments')?.select(e.detail.environment);
+    });
   </script>
 </body>
 </html>

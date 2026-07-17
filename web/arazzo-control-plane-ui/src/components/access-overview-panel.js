@@ -10,7 +10,7 @@
 //
 // Attributes : base-url, scopes (gates Revoke)
 // Properties : .client
-// Events     : grantee-selected {grantee}, revoked {bindingId}, open-workflow {baseWorkflowId},
+// Events     : grantee-selected {grantee}, revoked {bindingId}, open-workflow {baseWorkflowId}, open-environment {environment},
 //              open-credential {sourceName, environment}, error {problem}
 
 import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, confirmDialog, define } from './base.js';
@@ -182,7 +182,7 @@ class ArazzoAccessOverview extends ArazzoElement {
       : '<div class="empty">Administers nothing.</div>';
 
     const envAdmin = environments.length
-      ? environments.map((e) => `<div class="row"><span class="grow">${escapeHtml(e.environment)}</span></div>`).join('')
+      ? environments.map((e) => `<div class="row"><span class="grow">${escapeHtml(e.environment)}</span><button class="link" type="button" data-environment="${escapeHtml(e.environment)}">Open</button></div>`).join('')
       : '<div class="empty">Administers no environments.</div>';
 
     const creds = usage.length
@@ -193,7 +193,7 @@ class ArazzoAccessOverview extends ArazzoElement {
       <div class="who">${granteeChip(o.grantee || this._grantee)}</div>
       <div class="section"><h4>Reach (grants)</h4>${reach}</div>
       <div class="section"><h4>Capabilities</h4>${caps}</div>
-      <div class="section"><h4>Administers</h4>${admin}</div>
+      <div class="section"><h4>Administers workflows</h4>${admin}</div>
       <div class="section"><h4>Administers environments</h4>${envAdmin}</div>
       <div class="section"><h4>Credential usage</h4>${creds}</div>
     `;
@@ -204,6 +204,7 @@ class ArazzoAccessOverview extends ArazzoElement {
     const body = this.$('.body');
     body.querySelectorAll('[data-revoke]').forEach((btn) => btn.addEventListener('click', () => this.revoke(btn.dataset.revoke)));
     body.querySelectorAll('[data-workflow]').forEach((btn) => btn.addEventListener('click', () => this.emit('open-workflow', { baseWorkflowId: btn.dataset.workflow })));
+    body.querySelectorAll('[data-environment]').forEach((btn) => btn.addEventListener('click', () => this.emit('open-environment', { environment: btn.dataset.environment })));
     body.querySelectorAll('[data-cred]').forEach((btn) => btn.addEventListener('click', () => {
       const [sourceName, environment] = btn.dataset.cred.split('@');
       this.emit('open-credential', { sourceName, environment });

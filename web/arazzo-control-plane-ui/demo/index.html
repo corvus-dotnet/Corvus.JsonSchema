@@ -223,6 +223,10 @@
     const personaSel = document.getElementById('persona');
     personaSel.addEventListener('change', (e) => applyPersona(e.target.value));
 
+    // Deep links FROM the access overview's Administers lists: Open navigates to the thing itself.
+    overview.addEventListener('open-workflow', (e) => { selectTab('catalog'); catalog.openWorkflow(e.detail.baseWorkflowId); });
+    overview.addEventListener('open-environment', (e) => { selectTab('environments'); environments.select(e.detail.environment); });
+
     // Tabs.
     const tabNames = ['runs', 'runners', 'catalog', 'credentials', 'environments', 'access', 'permissions', 'promotions', 'runner-auth'];
     const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));

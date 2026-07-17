@@ -245,6 +245,19 @@ class ArazzoCatalog extends ArazzoElement {
     this._layout.classList.remove('has-selection');
   }
 
+  /** Open a workflow's detail by base id (newest version) — the deep-link hosts use (e.g. the access
+   *  overview's Administers → Open). A no-op when the id resolves to nothing within the caller's reach. */
+  async openWorkflow(baseWorkflowId) {
+    const client = this.buildClient();
+    if (!client || !baseWorkflowId) return;
+    try {
+      const { versions } = await client.searchCatalog({ baseWorkflowId, limit: 50 });
+      if (!versions.length) return;
+      const newest = versions.reduce((a, b) => ((b.versionNumber ?? 0) > (a.versionNumber ?? 0) ? b : a));
+      this.showDetail(newest, versions);
+    } catch { /* out of reach or gone — leave the list as-is */ }
+  }
+
   /**
    * Reload the catalog list from page 1 and clear any open detail — the public hook the demo calls on a persona change.
    * The new caller's reach changes the visible workflows, so the previous list and any now-out-of-reach open detail (which

@@ -3,7 +3,7 @@
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/access-overview-panel.js';
-import { ok, equal, waitFor, mount } from './helpers.js';
+import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
 
 describe('<arazzo-access-overview>', () => {
   let el;
@@ -58,9 +58,18 @@ describe('<arazzo-access-overview>', () => {
     equal(eligible.length, 1, 'one eligible-only capability');
     ok(eligible[0].includes('runs:purge') && eligible[0].includes('(eligible)'), 'runs:purge marked eligible');
     const sections = [...el.shadowRoot.querySelectorAll('.section')];
+    const wfSection = sections.find((s) => s.querySelector('h4')?.textContent === 'Administers workflows');
+    ok(wfSection, 'the workflow list is explicitly labelled (plain "Administers" was ambiguous, #848)');
     const envSection = sections.find((s) => s.querySelector('h4')?.textContent === 'Administers environments');
     const envs = [...envSection.querySelectorAll('.row .grow')].map((r) => r.textContent.trim());
     equal(envs.join(','), 'production,staging', 'administered environments listed');
+
+    // Environment rows deep-link like workflow rows do: Open emits open-environment for the host to route (#848).
+    const openBtn = envSection.querySelector('button[data-environment="production"]');
+    ok(openBtn, 'each environment row has an Open action');
+    const opened = nextEvent(el, 'open-environment');
+    openBtn.click();
+    equal((await opened).detail.environment, 'production', 'Open names the environment');
   });
 
   it('hides Revoke without security:write (scope honesty)', async () => {
