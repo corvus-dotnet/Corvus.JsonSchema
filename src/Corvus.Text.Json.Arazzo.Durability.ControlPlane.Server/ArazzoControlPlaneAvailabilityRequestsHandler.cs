@@ -106,7 +106,11 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         }
 
         string? reason = parameters.Body.Reason.IsNotUndefined() ? (string)parameters.Body.Reason : null;
-        using ParsedJsonDocument<AvailabilityRequest> draft = AvailabilityRequest.Draft(baseWorkflowId, versionNumber, environment, reason);
+
+        // The requester's display name resolves at submit (the same stamp the access-request flow makes), so the
+        // approver queue reads as a person, not a raw actor id.
+        using ParsedJsonDocument<AvailabilityRequest> draft = AvailabilityRequest.Draft(
+            baseWorkflowId, versionNumber, environment, reason, PrincipalDisplayName.Resolve(this.access.CurrentPrincipal));
         ParsedJsonDocument<AvailabilityRequest> created = await this.requests.CreateAsync(draft.RootElement, this.CallerActor(), cancellationToken).ConfigureAwait(false);
         workspace.TakeOwnership(created);
         return SubmitAvailabilityRequestResult.Created(ToView(created.RootElement), workspace);

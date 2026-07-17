@@ -99,8 +99,9 @@ public readonly partial struct AvailabilityRequest
     /// <param name="versionNumber">The 1-based version number to make available.</param>
     /// <param name="environment">The target environment.</param>
     /// <param name="reason">An optional justification.</param>
+    /// <param name="requesterLabel">An optional human-friendly requester label (the display name resolved at submit).</param>
     /// <returns>A pooled, disposable draft document the caller must dispose once the store/pipeline has read it.</returns>
-    public static ParsedJsonDocument<AvailabilityRequest> Draft(string baseWorkflowId, int versionNumber, string environment, string? reason = null)
+    public static ParsedJsonDocument<AvailabilityRequest> Draft(string baseWorkflowId, int versionNumber, string environment, string? reason = null, string? requesterLabel = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         ArgumentException.ThrowIfNullOrEmpty(environment);
@@ -117,7 +118,8 @@ public readonly partial struct AvailabilityRequest
             id: default,
             status: default,
             versionNumber: versionNumber,
-            reason: reason is { } r ? (JsonString.Source)r : default);
+            reason: reason is { } r ? (JsonString.Source)r : default,
+            requesterLabel: requesterLabel is { } l ? (JsonString.Source)l : default);
     }
 
     /// <summary>Realises a brand-new Pending request as a self-contained pooled document in one pass — the
@@ -141,7 +143,8 @@ public readonly partial struct AvailabilityRequest
             id: id,
             status: AvailabilityRequestStatusNames.Pending,
             versionNumber: draft.VersionNumber,
-            reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default);
+            reason: draft.Reason.IsNotUndefined() ? (JsonString.Source)draft.Reason : default,
+            requesterLabel: draft.RequesterLabel.IsNotUndefined() ? (JsonString.Source)draft.RequesterLabel : default);
     }
 
     /// <summary>Realises a new (Pending) request into the caller's (pooled) writer in one pass — the draft's create-content
@@ -163,6 +166,11 @@ public readonly partial struct AvailabilityRequest
         if (draft.Reason.IsNotUndefined())
         {
             WriteValue(writer, JsonPropertyNames.ReasonUtf8, (JsonElement)draft.Reason);
+        }
+
+        if (draft.RequesterLabel.IsNotUndefined())
+        {
+            WriteValue(writer, JsonPropertyNames.RequesterLabelUtf8, (JsonElement)draft.RequesterLabel);
         }
 
         writer.WriteString(JsonPropertyNames.StatusUtf8, AvailabilityRequestStatusNames.Pending);

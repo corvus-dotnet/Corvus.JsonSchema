@@ -7834,6 +7834,7 @@
           "baseWorkflowId": { "type": "string", "description": "The base workflow id." },
           "versionNumber": { "type": "integer", "format": "int32", "description": "The version number requested." },
           "environment": { "type": "string", "description": "The target environment." },
+          "requesterLabel": { "type": "string", "description": "An optional human-friendly requester label." },
           "reason": { "type": "string", "description": "The optional justification supplied with the request." },
           "status": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn"], "description": "The lifecycle state. 'Approved' means the version was made available in the environment; 'Withdrawn' means the requester withdrew the pending request." },
           "createdBy": { "type": "string", "description": "The requester's audit identity." },

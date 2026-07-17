@@ -102,8 +102,13 @@ describe('<arazzo-availability-requests>', () => {
     const e = await submitted;
     equal(e.detail.request.baseWorkflowId, 'onboard-customer', 'the new request targets the chosen workflow');
     equal(e.detail.request.environment, 'staging', 'targets the ready environment');
+    // The server stamps the requester's resolved display name at submit, so queues read as people.
+    equal(e.detail.request.requesterLabel, 'Alice (Ops)', 'the request carries the acting identity\'s display name');
     // The submitter's "my requests" view now shows the request they just raised (attributed to the acting identity).
     await waitFor(() => rows(el).length === 1);
+    // The approver queue is where the stamp pays off: the requester cell reads as a person, not a raw actor id.
+    el.setAttribute('view', 'queue');
+    await waitFor(() => [...rows(el)].some((r) => r.querySelector('.who')?.textContent.includes('Alice (Ops)')));
   });
 
   it('offers the environment a version is actually ready in (adopt-pet → production)', async () => {

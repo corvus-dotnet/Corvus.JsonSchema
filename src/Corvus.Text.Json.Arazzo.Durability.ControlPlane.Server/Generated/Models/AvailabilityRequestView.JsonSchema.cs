@@ -93,6 +93,7 @@ public readonly partial struct AvailabilityRequestView
         private static readonly JsonSchemaPathProvider EtagSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/etag"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider IdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/id"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ReasonSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/reason"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider RequesterLabelSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/requesterLabel"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider VersionNumberSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/versionNumber"u8, buffer, out written);
 
@@ -288,10 +289,25 @@ public readonly partial struct AvailabilityRequestView
             context.CommitChildContext(childContext9.IsMatch, ref childContext9);
         }
 
-        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        private static void MatchRequesterLabel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.RequesterLabelUtf8,
+                    evaluationPath: RequesterLabelSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
+            context.CommitChildContext(childContext10.IsMatch, ref childContext10);
+        }
+
+        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext11 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -299,8 +315,8 @@ public readonly partial struct AvailabilityRequestView
                     JsonPropertyNames.StatusUtf8,
                     evaluationPath: StatusSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
-            context.CommitChildContext(childContext10.IsMatch, ref childContext10);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
+            context.CommitChildContext(childContext11.IsMatch, ref childContext11);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -313,7 +329,7 @@ public readonly partial struct AvailabilityRequestView
         private static void MatchVersionNumber(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext11 =
+            JsonSchemaContext childContext12 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -321,8 +337,8 @@ public readonly partial struct AvailabilityRequestView
                     JsonPropertyNames.VersionNumberUtf8,
                     evaluationPath: VersionNumberSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext11);
-            context.CommitChildContext(childContext11.IsMatch, ref childContext11);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext12);
+            context.CommitChildContext(childContext12.IsMatch, ref childContext12);
 
             if (!context.HasCollector && !context.IsMatch)
             {
@@ -345,6 +361,7 @@ public readonly partial struct AvailabilityRequestView
                 (static () => JsonPropertyNames.EtagUtf8, MatchEtag),
                 (static () => JsonPropertyNames.IdUtf8, MatchId),
                 (static () => JsonPropertyNames.ReasonUtf8, MatchReason),
+                (static () => JsonPropertyNames.RequesterLabelUtf8, MatchRequesterLabel),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
                 (static () => JsonPropertyNames.VersionNumberUtf8, MatchVersionNumber),
             ]);

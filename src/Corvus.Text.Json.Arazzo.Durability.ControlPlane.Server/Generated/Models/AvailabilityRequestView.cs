@@ -387,6 +387,27 @@ public readonly partial struct AvailabilityRequestView
     }
 
     /// <summary>
+    /// Gets the (optional) <c>requesterLabel</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An optional human-friendly requester label.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RequesterLabel
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequesterLabelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>status</c> property.
     /// </summary>
     /// <remarks>
@@ -928,6 +949,11 @@ public readonly partial struct AvailabilityRequestView
         public const string Reason = "reason";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="RequesterLabel"/>.
+        /// </summary>
+        public const string RequesterLabel = "requesterLabel";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
         /// </summary>
         public const string Status = "status";
@@ -986,6 +1012,11 @@ public readonly partial struct AvailabilityRequestView
         /// Gets the JSON property name for <see cref="Reason"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ReasonUtf8 => "reason"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RequesterLabel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequesterLabelUtf8 => "requesterLabel"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
@@ -1054,6 +1085,11 @@ public readonly partial struct AvailabilityRequestView
         public static ReadOnlySpan<byte> Reason => "reason"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RequesterLabel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequesterLabel => "requesterLabel"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Status => "status"u8;
@@ -1119,6 +1155,11 @@ public readonly partial struct AvailabilityRequestView
         /// Gets the pre-baked property name blob for <see cref="Reason"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Reason => [0x85, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x73, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RequesterLabel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RequesterLabel => [0x05, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x72, 0x4C, 0x61, 0x62, 0x65, 0x6C, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Status"/>.

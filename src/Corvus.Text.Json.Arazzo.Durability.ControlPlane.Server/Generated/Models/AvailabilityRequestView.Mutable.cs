@@ -494,6 +494,27 @@ public readonly partial struct AvailabilityRequestView
         }
 
         /// <summary>
+        /// Gets the (optional) <c>requesterLabel</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// An optional human-friendly requester label.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable RequesterLabel
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequesterLabelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>status</c> property.
         /// </summary>
         /// <remarks>
@@ -947,6 +968,51 @@ public readonly partial struct AvailabilityRequestView
         }
 
         /// <summary>
+        /// Set the <c>requesterLabel</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetRequesterLabel(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RequesterLabelUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequesterLabelUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequesterLabel, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>requesterLabel</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveRequesterLabel()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RequesterLabelUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
@@ -1350,6 +1416,7 @@ public readonly partial struct AvailabilityRequestView
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg10;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg11;
         private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg12;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg13;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1364,7 +1431,7 @@ public readonly partial struct AvailabilityRequestView
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1378,6 +1445,7 @@ public readonly partial struct AvailabilityRequestView
             _createArg10 = arg10;
             _createArg11 = arg11;
             _createArg12 = arg12;
+            _createArg13 = arg13;
             _kind = Kind.Create;
         }
 
@@ -1398,7 +1466,7 @@ public readonly partial struct AvailabilityRequestView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1423,7 +1491,7 @@ public readonly partial struct AvailabilityRequestView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1448,7 +1516,7 @@ public readonly partial struct AvailabilityRequestView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1473,7 +1541,7 @@ public readonly partial struct AvailabilityRequestView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1498,7 +1566,7 @@ public readonly partial struct AvailabilityRequestView
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1662,7 +1730,8 @@ public readonly partial struct AvailabilityRequestView
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default)
         {
             baseWorkflowId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BaseWorkflowId, ref builder);
             createdAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CreatedAt, ref builder);
@@ -1676,6 +1745,7 @@ public readonly partial struct AvailabilityRequestView
             decidedBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecidedBy, ref builder);
             decisionReason.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecisionReason, ref builder);
             reason.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Reason, ref builder);
+            requesterLabel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequesterLabel, ref builder);
         }
 
         /// <summary>
@@ -1693,9 +1763,10 @@ public readonly partial struct AvailabilityRequestView
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default)
         {
-            Create(ref _builder, baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason);
+            Create(ref _builder, baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason, requesterLabel);
         }
 
         /// <summary>
@@ -1805,11 +1876,12 @@ public readonly partial struct AvailabilityRequestView
         /// <param name="arg10">The value of the property.</param>
         /// <param name="arg11">The value of the property.</param>
         /// <param name="arg12">The value of the property.</param>
+        /// <param name="arg13">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
             o.EndObject();
         }
     }
@@ -1858,10 +1930,11 @@ public readonly partial struct AvailabilityRequestView
     /// <param name="decidedBy">The value of the <c>"decidedBy"</c> property.</param>
     /// <param name="decisionReason">The value of the <c>"decisionReason"</c> property.</param>
     /// <param name="reason">The value of the <c>"reason"</c> property.</param>
+    /// <param name="requesterLabel">The value of the <c>"requesterLabel"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default)
     {
-        return new Source(baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason);
+        return new Source(baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason, requesterLabel);
     }
 
     /// <summary>
@@ -1969,15 +2042,16 @@ public readonly partial struct AvailabilityRequestView
     /// <param name="decidedBy">The value of the property.</param>
     /// <param name="decisionReason">The value of the property.</param>
     /// <param name="reason">The value of the property.</param>
+    /// <param name="requesterLabel">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason);
+        ovb.Create(baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason, requesterLabel);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2090,9 +2164,10 @@ public readonly partial struct AvailabilityRequestView
     /// <param name="decidedBy">The value of the property.</param>
     /// <param name="decisionReason">The value of the property.</param>
     /// <param name="reason">The value of the property.</param>
+    /// <param name="requesterLabel">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AvailabilityRequestView> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<AvailabilityRequestView> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source versionNumber, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -2100,7 +2175,7 @@ public readonly partial struct AvailabilityRequestView
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason);
+            ovb.Create(baseWorkflowId, createdAt, createdBy, environment, etag, id, status, versionNumber, decidedAt, decidedBy, decisionReason, reason, requesterLabel);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

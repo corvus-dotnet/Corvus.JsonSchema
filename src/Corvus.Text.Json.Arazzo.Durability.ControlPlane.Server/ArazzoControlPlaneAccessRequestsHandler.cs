@@ -83,7 +83,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             (JsonElement)parameters.Body.RequestedScopes,
             this.subjectClaimType,
             subject,
-            principal.Identity?.Name,
+            PrincipalDisplayName.Resolve(principal),
             (JsonElement)parameters.Body.Reason,
             parameters.Body.RequestedDurationSeconds.IsNotUndefined() ? (long)parameters.Body.RequestedDurationSeconds : null);
 

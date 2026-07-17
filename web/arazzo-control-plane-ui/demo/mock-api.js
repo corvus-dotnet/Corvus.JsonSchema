@@ -1231,6 +1231,7 @@ export const DEMO_PERSONAS = {
   administrator: {
     label: 'Administrator — alice@ops (administers everything)',
     subject: 'alice@ops',
+    displayName: 'Alice (Ops)',
     scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write workspace:read workspace:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
     reach: 'all',
   },
@@ -1241,12 +1242,14 @@ export const DEMO_PERSONAS = {
     // the requests in the environments he administers, but cannot promote directly.
     label: 'Operator — omar@ops (administers onboard-customer + staging)',
     subject: 'omar@ops',
+    displayName: 'Omar (Ops)',
     scopes: 'runs:read runs:write catalog:read credentials:read sources:read workspace:read workspace:write environments:read availability:read administrators:read security:read',
     reach: 'all',
   },
   viewer: {
     label: 'Auditor — vera@audit (read-only, full reach, administers nothing)',
     subject: 'vera@audit',
+    displayName: 'Vera (Audit)',
     scopes: READ_ALL_SCOPES,
     reach: 'all',
   },
@@ -1260,6 +1263,7 @@ export const DEMO_PERSONAS = {
     // scopes isolates capability. See the demo's tab gating (index.html) for how a missing read scope hides a surface.
     label: 'Payments read-only — pat@payments (reach: domain=payments)',
     subject: 'pat@payments',
+    displayName: 'Pat (Payments)',
     scopes: 'runs:read catalog:read credentials:read sources:read workspace:read environments:read availability:read',
     reach: { readDomain: 'payments' },
   },
@@ -4436,7 +4440,7 @@ export function createMockControlPlane(options = {}) {
     }
     const r = {
       id: `req-${++etagSeq}`, baseWorkflowId: body.baseWorkflowId, requestedScopes: body.requestedScopes,
-      subjectClaimType: 'preferred_username', subjectClaimValue: actingSubject(), requesterLabel: actingSubject(),
+      subjectClaimType: 'preferred_username', subjectClaimValue: actingSubject(), requesterLabel: actingDisplayName(),
       reason: body.reason, requestedDurationSeconds: body.requestedDurationSeconds,
       status: 'Pending', createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
@@ -4564,6 +4568,11 @@ export function createMockControlPlane(options = {}) {
     return json({ availabilityRequests: pageItems, nextPageToken });
   }
 
+  // The mock analogue of the server's submit-time display-name stamp (principal Identity.Name).
+  function actingDisplayName() {
+    return DEMO_PERSONAS[persona.name]?.displayName ?? actingSubject();
+  }
+
   function submitAvailabilityRequest(body) {
     if (!body?.baseWorkflowId || body.versionNumber == null || !body?.environment) {
       return problem(400, 'Invalid availability request', 'A baseWorkflowId, versionNumber, and environment are required.');
@@ -4571,7 +4580,7 @@ export function createMockControlPlane(options = {}) {
     const r = {
       id: `areq-${++etagSeq}`, baseWorkflowId: body.baseWorkflowId, versionNumber: Number(body.versionNumber), environment: body.environment,
       reason: body.reason, status: 'Pending',
-      subjectClaimType: 'preferred_username', subjectClaimValue: actingSubject(), requesterLabel: actingSubject(),
+      subjectClaimType: 'preferred_username', subjectClaimValue: actingSubject(), requesterLabel: actingDisplayName(),
       createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
     availabilityRequests.push(r);

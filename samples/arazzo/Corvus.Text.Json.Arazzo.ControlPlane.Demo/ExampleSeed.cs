@@ -220,7 +220,7 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // Inbox content for the admin governance surfaces: a pending promotion request (§7.6, asking to make a
         // catalogued version available in production). The pending ACCESS request is oscar's, seeded with his persona.
         using (ParsedJsonDocument<AvailabilityRequest> promotion = AvailabilityRequest.Draft(
-            "onboard-customer", 2, "production", "Please promote v2 to production."))
+            "onboard-customer", 2, "production", "Please promote v2 to production.", requesterLabel: "Alice Payments"))
         {
             (await context.AvailabilityRequests.CreateAsync(promotion.RootElement, "alice", cancellationToken)).Dispose();
         }

@@ -27,6 +27,10 @@
       "type": "string",
       "description": "An optional justification supplied with the request."
     },
+    "requesterLabel": {
+      "type": "string",
+      "description": "An optional human-friendly requester label (the display name resolved at submit), so approver queues read as people, not raw actor ids."
+    },
     "status": {
       "type": "string",
       "description": "The request's lifecycle state.",

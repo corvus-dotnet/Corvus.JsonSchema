@@ -346,6 +346,11 @@ test('the promotion loop crosses real identities: wanda requests staging availab
     const queue = erinPage.locator('#sub-approvals-availability arazzo-availability-requests');
     const queued = queue.locator('tbody tr[data-id]', { hasText: reason });
     await expect(queued).toHaveCount(1);
+
+    // The queue row reads as a person: the server stamped wanda's resolved display name (from the
+    // realm's firstName/lastName) as requesterLabel at submit, so erin sees "Wanda Reconcile",
+    // not a raw actor id.
+    await expect(queued.locator('.who')).toHaveText('Wanda Reconcile');
     await queued.locator('.act[data-action="deny"]').click();
     await queue.locator('dialog.decision-dialog .reason-in').fill('Live UX test cleanup: denied by design.');
     await queue.locator('dialog.decision-dialog button.ok').click();

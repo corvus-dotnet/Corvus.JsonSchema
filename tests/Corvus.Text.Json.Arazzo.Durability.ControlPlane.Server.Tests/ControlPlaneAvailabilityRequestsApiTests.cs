@@ -89,6 +89,33 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
     }
 
     [TestMethod]
+    public async Task Submitting_stamps_the_requester_display_name_when_the_principal_resolves_one()
+    {
+        await using Scoped host = await StartAsync();
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "acme");
+
+        // A principal whose identity resolves a display name gets it stamped at submit, so the approver queue reads as a
+        // person, and the stamp survives into the approver's queue view verbatim.
+        using (Stj.JsonDocument named = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/availabilityRequests", """{"baseWorkflowId":"checkout","versionNumber":1,"environment":"production"}""", "globex", name: "Wanda Reconcile")))
+        {
+            named.RootElement.GetProperty("requesterLabel").GetString().ShouldBe("Wanda Reconcile");
+        }
+
+        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/availabilityRequests?scope=queue", "acme")))
+        {
+            inbox.RootElement.GetProperty("availabilityRequests").EnumerateArray().Single().GetProperty("requesterLabel").GetString().ShouldBe("Wanda Reconcile");
+        }
+
+        // A principal with no resolvable name (a bare service principal) omits the property — absent, not null or empty.
+        using (Stj.JsonDocument unnamed = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/availabilityRequests", """{"baseWorkflowId":"checkout","versionNumber":1,"environment":"production"}""", "initech")))
+        {
+            unnamed.RootElement.TryGetProperty("requesterLabel", out _).ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
     public async Task Only_the_requester_can_withdraw_and_only_an_administrator_can_decide()
     {
         await using Scoped host = await StartAsync();
@@ -216,8 +243,8 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string tenant)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), tenant);
 
-        public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string tenant)
-            => this.SendCoreAsync(new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, tenant);
+        public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string tenant, string? name = null)
+            => this.SendCoreAsync(new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, tenant, name);
 
         public async Task<HttpResponseMessage> SendAnonymousAsync(HttpMethod method, string path)
         {
@@ -277,7 +304,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
             """);
         }
 
-        private async Task<HttpResponseMessage> SendCoreAsync(HttpRequestMessage request, string tenant)
+        private async Task<HttpResponseMessage> SendCoreAsync(HttpRequestMessage request, string tenant, string? name = null)
         {
             using (request)
             {
@@ -285,6 +312,11 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
                 // specific scope); X-Tenant becomes both the governance identity and the requester subject.
                 request.Headers.Add(ScopeTenantSubAuthHandler.ScopeHeader, "authenticated");
                 request.Headers.Add(ScopeTenantSubAuthHandler.TenantHeader, tenant);
+                if (name is not null)
+                {
+                    request.Headers.Add(ScopeTenantSubAuthHandler.NameHeader, name);
+                }
+
                 return await client.SendAsync(request);
             }
         }
@@ -296,6 +328,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         public const string SchemeName = "ScopesTenantSub";
         public const string ScopeHeader = "X-Scopes";
         public const string TenantHeader = "X-Tenant";
+        public const string NameHeader = "X-Name";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -313,6 +346,13 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
             {
                 identity.AddClaim(new Claim("tenant", tenant.ToString()));
                 identity.AddClaim(new Claim("sub", tenant.ToString()));
+            }
+
+            // An optional display name (X-Name) drives Identity.Name, mirroring an IdP that resolves one; its absence
+            // mirrors a bare service principal.
+            if (this.Request.Headers.TryGetValue(NameHeader, out Microsoft.Extensions.Primitives.StringValues name))
+            {
+                identity.AddClaim(new Claim(ClaimsIdentity.DefaultNameClaimType, name.ToString()));
             }
 
             return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
