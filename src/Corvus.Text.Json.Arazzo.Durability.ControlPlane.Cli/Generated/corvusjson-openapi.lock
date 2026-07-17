@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-17T11:10:48.9176082\u002B00:00",
+  "generatedAt": "2026-07-17T13:22:30.6819426\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -1100,11 +1100,11 @@
     "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorArray.Mutable.cs",
     "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorArray.JsonSchema.cs",
     "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorArray.SourceOperationParameterDescriptor.cs",
-    "Models/SourceOperationDescriptor.SourceOperationParameterDescriptor_._SourceOperationParameterDescriptor.Mutable.cs",
-    "Models/SourceOperationDescriptor.SourceOperationParameterDescrip_._SourceOperationParameterDescriptor.JsonSchema.cs",
-    "Models/SourceOperationDescriptor.SourceOperationParameterDescript_._SourceOperationParameterDescriptor.RawSchema.cs",
-    "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorArray_._ParameterDescriptor.RawSchema.Mutable.cs",
-    "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorArray_._ameterDescriptor.RawSchema.JsonSchema.cs",
+    "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorA_._SourceOperationParameterDescriptor.Mutable.cs",
+    "Models/SourceOperationDescriptor.SourceOperationParameterDescript_._SourceOperationParameterDescriptor.JsonSchema.cs",
+    "Models/SourceOperationDescriptor.SourceOperationParameterDescripto_._SourceOperationParameterDescriptor.RawSchema.cs",
+    "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorArray_._nParameterDescriptor.RawSchema.Mutable.cs",
+    "Models/SourceOperationDescriptor.SourceOperationParameterDescriptorArray_._rameterDescriptor.RawSchema.JsonSchema.cs",
     "Models/SourceOperationDescriptor.SourceOperationRequestDescriptor.cs",
     "Models/SourceOperationDescriptor.SourceOperationRequestDescriptor.Mutable.cs",
     "Models/SourceOperationDescriptor.SourceOperationRequestDescriptor.JsonSchema.cs",
@@ -1374,6 +1374,6 @@
   "generatorVersion": "1.0.0\u002Bbc37e60e2049113e55a86ca2212a459876e95adb",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "4c5ec1fe658518435bba740e005de6894afac0a920dd89416f1a3572da42ef55",
+  "specFileHash": "311f93239313614a021c746cc02faf63e5a3cc1c8f0c9b02924830ffc46ee8f6",
   "specVersion": "3.2"
 }

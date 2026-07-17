@@ -29,6 +29,13 @@ public static class ControlPlaneScopes
     /// <summary>List and read runs and runners.</summary>
     public const string RunsRead = "runs:read";
 
+    /// <summary>Read a run's recorded step outputs (the step journal) — the payload disclosure tier layered over
+    /// <see cref="RunsRead"/> (design §14.1). A run's step outputs can carry the sensitive data the workflow processed
+    /// (for a KYC flow, identity data), so reading them is gated above ordinary run-metadata visibility: the journal
+    /// endpoint demands this scope <em>in addition to</em> <see cref="RunsRead"/>, so a reach-scoped observer who may see a
+    /// run cannot read its payloads without it.</summary>
+    public const string RunsOutputsRead = "runs:outputs:read";
+
     /// <summary>Start (trigger), resume, or cancel runs.</summary>
     public const string RunsWrite = "runs:write";
 
@@ -78,7 +85,7 @@ public static class ControlPlaneScopes
     public const string AvailabilityWrite = "availability:write";
 
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, WorkspaceRead, WorkspaceWrite, AvailabilityRead, AvailabilityWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsOutputsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, WorkspaceRead, WorkspaceWrite, AvailabilityRead, AvailabilityWrite];
 }
 
 /// <summary>

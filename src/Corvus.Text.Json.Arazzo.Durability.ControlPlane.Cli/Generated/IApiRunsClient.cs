@@ -140,12 +140,12 @@ public interface IApiRunsClient : IAsyncDisposable
         /// <summary>
         /// Gets the scopes required by <c>GetRunSteps</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] GetRunStepsOauth2Scopes = ["runs:read"];
+        public static readonly string[] GetRunStepsOauth2Scopes = ["runs:read", "runs:outputs:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>GetRunSteps</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] GetRunStepsOpenIdConnectScopes = ["runs:read"];
+        public static readonly string[] GetRunStepsOpenIdConnectScopes = ["runs:read", "runs:outputs:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>ResumeRun</c> for the <c>Oauth2</c> scheme.
@@ -180,12 +180,12 @@ public interface IApiRunsClient : IAsyncDisposable
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] AllOauth2Scopes = ["runs:purge", "runs:read", "runs:write"];
+        public static readonly string[] AllOauth2Scopes = ["runs:outputs:read", "runs:purge", "runs:read", "runs:write"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] AllOpenIdConnectScopes = ["runs:purge", "runs:read", "runs:write"];
+        public static readonly string[] AllOpenIdConnectScopes = ["runs:outputs:read", "runs:purge", "runs:read", "runs:write"];
     }
 
     /// <summary>
@@ -242,7 +242,7 @@ public interface IApiRunsClient : IAsyncDisposable
     /// Get a run's recorded step outputs
     /// </summary>
     /// <remarks>
-    /// The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found).
+    /// The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found). Because step outputs can carry the sensitive data the workflow processed (for a KYC flow, identity data), reading them is a distinct disclosure tier ABOVE run-metadata visibility: this operation demands the `runs:outputs:read` capability scope IN ADDITION to `runs:read`, so a reach-scoped observer who may see a run cannot read its payloads without it. Outputs a version classifies sensitive, and fields marked sensitive in a workflow's output schema, are redacted from the journal unless the caller additionally holds write reach on the run (§14.2).
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>

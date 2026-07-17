@@ -258,13 +258,13 @@
       "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
       "get": {
         "operationId": "getRunSteps",
-        "security": [{ "oauth2": ["runs:read"] }, { "openIdConnect": ["runs:read"] }, { "mtls": [] }],
+        "security": [{ "oauth2": ["runs:read", "runs:outputs:read"] }, { "openIdConnect": ["runs:read", "runs:outputs:read"] }, { "mtls": [] }],
         "tags": ["runs"],
         "summary": "Get a run's recorded step outputs",
-        "description": "The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found).",
+        "description": "The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found). Because step outputs can carry the sensitive data the workflow processed (for a KYC flow, identity data), reading them is a distinct disclosure tier ABOVE run-metadata visibility: this operation demands the `runs:outputs:read` capability scope IN ADDITION to `runs:read`, so a reach-scoped observer who may see a run cannot read its payloads without it. Outputs a version classifies sensitive, and fields marked sensitive in a workflow's output schema, are redacted from the journal unless the caller additionally holds write reach on the run (§14.2).",
         "responses": {
           "200": {
-            "description": "The recorded step outputs, in recording order.",
+            "description": "The recorded step outputs, in recording order (sensitive content redacted unless the caller holds the stronger grant).",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkflowRunSteps" } } }
           },
           "404": { "$ref": "#/components/responses/NotFound" }

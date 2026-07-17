@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the GetRunSteps operation.
 /// </summary>
-/// <remarks>The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found).</remarks>
+/// <remarks>The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found). Because step outputs can carry the sensitive data the workflow processed (for a KYC flow, identity data), reading them is a distinct disclosure tier ABOVE run-metadata visibility: this operation demands the `runs:outputs:read` capability scope IN ADDITION to `runs:read`, so a reach-scoped observer who may see a run cannot read its payloads without it. Outputs a version classifies sensitive, and fields marked sensitive in a workflow's output schema, are redacted from the journal unless the caller additionally holds write reach on the run (§14.2).</remarks>
 public readonly struct GetRunStepsRequest : IApiRequest<GetRunStepsRequest>
 {
 

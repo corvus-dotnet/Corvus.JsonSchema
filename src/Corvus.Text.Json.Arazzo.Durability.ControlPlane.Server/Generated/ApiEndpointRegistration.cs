@@ -1776,7 +1776,7 @@ public static class ApiEndpointRegistration
                 routeTemplate: "/runs/{runId}/steps",
                 tags: new[] { "runs" },
                 isCallback: false,
-                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:read", "runs:outputs:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:read", "runs:outputs:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetRunStepsEndpoint);
 
         IEndpointConventionBuilder __ResumeRunEndpoint = app.MapPost("/runs/{runId}/resume", async (HttpContext context) =>
@@ -13785,12 +13785,12 @@ public static class ApiEndpointRegistration
         /// <summary>
         /// Gets the scopes required by <c>GetRunSteps</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] GetRunStepsOauth2Scopes = ["runs:read"];
+        public static readonly string[] GetRunStepsOauth2Scopes = ["runs:read", "runs:outputs:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>GetRunSteps</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] GetRunStepsOpenIdConnectScopes = ["runs:read"];
+        public static readonly string[] GetRunStepsOpenIdConnectScopes = ["runs:read", "runs:outputs:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>ResumeRun</c> for the <c>Oauth2</c> scheme.
@@ -14870,12 +14870,12 @@ public static class ApiEndpointRegistration
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] AllOauth2Scopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
+        public static readonly string[] AllOauth2Scopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:outputs:read", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] AllOpenIdConnectScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
+        public static readonly string[] AllOpenIdConnectScopes = ["administrators:read", "administrators:write", "availability:read", "availability:write", "catalog:purge", "catalog:read", "catalog:write", "credentials:read", "credentials:write", "environments:read", "environments:write", "runs:outputs:read", "runs:purge", "runs:read", "runs:write", "security:read", "security:write", "sources:read", "sources:write", "workspace:read", "workspace:write"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Bearer</c> scheme.
