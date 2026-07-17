@@ -162,6 +162,48 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ReadOnlyMemory<byte>?> GetStepJournalAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        if (checkpoint is not { } cp)
+        {
+            return null;
+        }
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
+
+        // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2) — the same
+        // gate as GetAsync, because the journal discloses strictly more than the detail.
+        if (!context.Admits(AccessVerb.Read, state.SecurityTags))
+        {
+            return null;
+        }
+
+        // The projection is written while the checkpoint state is alive (its elements are views into the
+        // pooled document); the returned array is fully detached. Outputs are copied bytes-to-bytes.
+        return PersistedJson.ToArray(state, static (Utf8JsonWriter writer, in WorkflowCheckpointState s) =>
+        {
+            writer.WriteStartObject();
+            writer.WriteString("runId"u8, s.RunId.Value);
+            writer.WriteStartArray("steps"u8);
+            PooledUtf8Map<JsonElement>.Enumerator entries = s.StepOutputs.GetEnumerator();
+            while (entries.MoveNext())
+            {
+                writer.WriteStartObject();
+                writer.WriteString("stepId"u8, entries.CurrentKey);
+                writer.WritePropertyName("outputs"u8);
+                entries.CurrentValue.WriteTo(writer);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        });
+    }
+
     // Whether a run is within the caller's write reach (§14.2): unrestricted writers and a missing run pass (the
     // operation then reports its own not-found / no-op); otherwise the run's security tags must satisfy the reach.
     private async ValueTask<bool> IsWithinWriteReachAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)

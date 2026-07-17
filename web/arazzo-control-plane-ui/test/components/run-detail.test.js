@@ -129,3 +129,36 @@ describe('<arazzo-run-detail> progress projection', () => {
     ok(fault.closest('li').textContent.includes('provisionResources'), 'on the step the fault record names');
   });
 });
+
+describe('<arazzo-run-detail> recorded step outputs', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  // The journal endpoint's UI: a step with recorded outputs expands to show them verbatim; steps
+  // that recorded nothing stay plain rows (nothing is invented).
+  it('expands recorded outputs on the steps that have them', async () => {
+    el = detailWithMock('run-0a5512cd'); // Completed adopt-pet run with a 4-step journal
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden && p.querySelector('.step-out') ? p : null;
+    });
+    equal(prog.querySelectorAll('.step-out').length, 4, 'all four recorded steps are expandable');
+    const first = prog.querySelector('.step-out');
+    first.open = true;
+    ok(first.querySelector('pre').textContent.includes('pet-77'), 'the recorded outputs render verbatim');
+  });
+
+  it('a faulted run mixes recorded and unrecorded steps faithfully', async () => {
+    el = detailWithMock('run-dd44ee55'); // journal holds the two steps BEFORE the fault
+    mount(el);
+    const prog = await waitFor(() => {
+      const p = el.shadowRoot.querySelector('.progress');
+      return p && !p.hidden && p.querySelector('.step-out') ? p : null;
+    });
+    equal(prog.querySelectorAll('.step-out').length, 2, 'only the steps that recorded outputs expand');
+    const faulted = [...prog.querySelectorAll('.prog-steps li')].find((li) => li.textContent.includes('provisionResources'));
+    ok(faulted.querySelector('.pos.fault'), 'the faulted step keeps its marker');
+    ok(!faulted.querySelector('.step-out'), 'and does not pretend to have recorded outputs');
+  });
+});

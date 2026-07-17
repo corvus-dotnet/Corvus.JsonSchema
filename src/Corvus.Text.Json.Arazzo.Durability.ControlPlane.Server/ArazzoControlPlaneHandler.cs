@@ -116,6 +116,24 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<GetRunStepsResult> HandleGetRunStepsAsync(GetRunStepsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string runId = (string)parameters.RunId;
+
+        ReadOnlyMemory<byte>? journal = await this.management.GetStepJournalAsync(runId, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (journal is not { } bytes)
+        {
+            return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        // Hand the parsed journal to the response workspace so it lives until the response is written
+        // (the result Body references it); the workspace disposes it — do not dispose it here.
+        ParsedJsonDocument<Models.WorkflowRunSteps> parsed = ParsedJsonDocument<Models.WorkflowRunSteps>.Parse(bytes);
+        workspace.TakeOwnership(parsed);
+        return GetRunStepsResult.Ok(parsed.RootElement, workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<DeleteRunResult> HandleDeleteRunAsync(DeleteRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = (string)parameters.RunId;

@@ -1700,6 +1700,85 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:purge" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:purge" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __DeleteRunEndpoint);
 
+        IEndpointConventionBuilder __GetRunStepsEndpoint = app.MapGet("/runs/{runId}/steps", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("runId", out object? RunIdRouteVal) && RunIdRouteVal is string RunIdRaw)
+                {
+                    RunIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RunIdRaw, workspace);
+                }
+
+                if (RunIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'runId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!RunIdValue.IsUndefined() && !RunIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'runId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetRunStepsParams parameters = new()
+                {
+                    RunId = RunIdValue,
+                }
+                ;
+
+                GetRunStepsResult result = await runsHandler.HandleGetRunStepsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getRunSteps",
+                methodName: "GetRunSteps",
+                httpMethod: "GET",
+                routeTemplate: "/runs/{runId}/steps",
+                tags: new[] { "runs" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runs:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runs:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetRunStepsEndpoint);
+
         IEndpointConventionBuilder __ResumeRunEndpoint = app.MapPost("/runs/{runId}/resume", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -13572,6 +13651,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>DeleteRun</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] DeleteRunOpenIdConnectScopes = ["runs:purge"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetRunSteps</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetRunStepsOauth2Scopes = ["runs:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetRunSteps</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetRunStepsOpenIdConnectScopes = ["runs:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>ResumeRun</c> for the <c>Oauth2</c> scheme.

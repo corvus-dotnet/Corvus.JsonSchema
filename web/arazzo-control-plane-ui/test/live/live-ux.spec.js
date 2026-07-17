@@ -232,6 +232,13 @@ test('a REAL suspended run shows its durable wait, and the cancel confirm surviv
   await expect(progress.locator('.pos-line')).toContainText(/Position \d+ of \d+|All \d+ steps dispatched/);
   await expect(detail.locator('dl')).not.toContainText('ETag');
 
+  // The REAL journal: the engine recorded outputs for the steps it executed before the wait, and
+  // the card expands them verbatim from the checkpoint (GET /runs/{id}/steps).
+  const recorded = progress.locator('.step-out');
+  await expect(recorded.first()).toBeVisible();
+  await recorded.first().locator('summary').click();
+  await expect(recorded.first().locator('pre')).toBeVisible();
+
   // Open the cancel confirm and hold it across at least one full refresh interval.
   await detail.locator('arazzo-cancel-button .trigger').click();
   const dlg = detail.locator('arazzo-cancel-button dialog');

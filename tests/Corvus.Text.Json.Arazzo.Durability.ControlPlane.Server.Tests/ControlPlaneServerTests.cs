@@ -42,6 +42,50 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task GetRunSteps_returns_the_recorded_journal_in_order()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            // Seed a run whose checkpoint carries a two-step journal (recording order matters).
+            using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
+                """{ "stepA": { "a": 1 }, "stepB": { "b": "two" } }"""u8.ToArray()))
+            {
+                using WorkflowRun run = WorkflowRun.CreateNew(host.Store, "r-steps", "wf", default, "development", host.Clock);
+                run.SetStepOutputs("stepA", doc.RootElement.GetProperty("stepA"u8));
+                run.SetStepOutputs("stepB", doc.RootElement.GetProperty("stepB"u8));
+                await run.CheckpointAsync(cursor: 2, default);
+            }
+
+            HttpResponseMessage response = await host.Client.GetAsync("/runs/r-steps/steps");
+
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            using Stj.JsonDocument doc2 = await ReadJsonAsync(response);
+            doc2.RootElement.GetProperty("runId").GetString().ShouldBe("r-steps");
+            Stj.JsonElement steps = doc2.RootElement.GetProperty("steps");
+            steps.GetArrayLength().ShouldBe(2);
+            steps[0].GetProperty("stepId").GetString().ShouldBe("stepA");
+            steps[0].GetProperty("outputs").GetProperty("a").GetInt32().ShouldBe(1);
+            steps[1].GetProperty("stepId").GetString().ShouldBe("stepB");
+            steps[1].GetProperty("outputs").GetProperty("b").GetString().ShouldBe("two");
+        }
+    }
+
+    [TestMethod]
+    public async Task GetRunSteps_unknown_run_returns_404_problem()
+    {
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            HttpResponseMessage response = await host.Client.GetAsync("/runs/nope/steps");
+
+            response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            using Stj.JsonDocument doc = await ReadJsonAsync(response);
+            doc.RootElement.GetProperty("title").GetString().ShouldBe("Run not found");
+        }
+    }
+
+    [TestMethod]
     public async Task Get_unknown_run_returns_404_problem()
     {
         Host host = await StartAsync();

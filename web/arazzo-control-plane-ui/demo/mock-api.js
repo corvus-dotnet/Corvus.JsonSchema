@@ -64,6 +64,10 @@ export function seedRuns() {
       id: 'run-dd44ee55', workflowId: 'onboard-customer-v1', status: 'Faulted', cursor: 2,
       createdAt: iso(-70 * min), updatedAt: iso(-3 * min), etag: nextEtag(),
       fault: { stepId: 'provisionResources', attempt: 2, error: 'QuotaExceededException: region eu-west-1 database quota reached', at: iso(-3 * min) },
+      stepOutputs: [
+        { stepId: 'createAccount', outputs: { accountId: 'acct-5150' } },
+        { stepId: 'verifyIdentity', outputs: { verified: true, score: 0.97 } },
+      ],
       _errorType: 'QuotaExceededException',
       correlationId: 'dd44ee55ff66aa77bb88cc99dd00ee11', tags: ['tenant-7'],
     },
@@ -88,6 +92,13 @@ export function seedRuns() {
       id: 'run-0a5512cd', workflowId: 'adopt-pet-v1', status: 'Completed', cursor: 4,
       createdAt: iso(-2 * day), updatedAt: iso(-2 * day + 5 * min), etag: nextEtag(),
       correlationId: '0a5512cd6e7f8a9b0c1d2e3f4a5b6c7d', tags: ['tenant-42'],
+      // The checkpoint's step journal (recording order): what GET /runs/{id}/steps projects.
+      stepOutputs: [
+        { stepId: 'findPet', outputs: { petId: 'pet-77', name: 'Luna' } },
+        { stepId: 'reservePayment', outputs: { reservationId: 'rsv-9001' } },
+        { stepId: 'submitAdoption', outputs: { applicationId: 'app-3141' } },
+        { stepId: 'confirmAdoption', outputs: { confirmed: true, receipt: 'rcpt-2718' } },
+      ],
     },
     {
       id: 'run-44b0e7e2', workflowId: 'nightly-reconcile-v2', status: 'Completed', cursor: 6,
@@ -1832,7 +1843,7 @@ export function createMockControlPlane(options = {}) {
     }
 
     // /runs/{id}[/action]
-    const m = path.match(/\/runs\/([^/]+)(?:\/(resume|cancel))?$/);
+    const m = path.match(/\/runs\/([^/]+)(?:\/(resume|cancel|steps))?$/);
     if (m) {
       const id = decodeURIComponent(m[1]);
       const action = m[2];
@@ -1843,6 +1854,12 @@ export function createMockControlPlane(options = {}) {
         // Reach (§14.2): a run outside the caller's reach reads back as not found (non-disclosing).
         if (!reachAdmits(securityTagsForBase(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
         return json(toDetail(run));
+      }
+      if (action === 'steps' && method === 'GET') {
+        // The checkpoint's step journal, verbatim and in recording order — a step that recorded
+        // nothing is absent, and no per-step status or timing is invented (server parity).
+        if (!reachAdmits(securityTagsForBase(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
+        return json({ runId: run.id, steps: structuredClone(run.stepOutputs ?? []) });
       }
       if (!action && method === 'DELETE') return deleteRun(run);
       if (action === 'resume' && method === 'POST') return resumeRun(run, body);

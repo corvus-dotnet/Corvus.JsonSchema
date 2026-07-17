@@ -75,6 +75,19 @@ public interface ISecuredWorkflowManagement
     /// <returns>The run detail, or <see langword="null"/> if no run with that id exists or it is not within read reach.</returns>
     ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Projects the run's recorded step journal from its authoritative checkpoint: the steps that recorded
+    /// outputs, in recording order, as the UTF-8 JSON body <c>{ runId, steps: [{ stepId, outputs }] }</c>.
+    /// Nothing is invented — a step that recorded no outputs is absent, and there is no per-step status or
+    /// timing (the checkpoint does not attest those). Reach-gated exactly like <see cref="GetAsync"/>:
+    /// a missing run and a run outside the caller's read reach both read back as <see langword="null"/>.
+    /// </summary>
+    /// <param name="id">The run id.</param>
+    /// <param name="context">The caller's resolved access context (§14.2).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The journal body, or <see langword="null"/> when absent or outside reach.</returns>
+    ValueTask<ReadOnlyMemory<byte>?> GetStepJournalAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken);
+
     /// <summary>Resumes a faulted run, re-executing it from its last checkpoint per the chosen <see cref="ResumeMode"/>.</summary>
     /// <param name="id">The run id.</param>
     /// <param name="options">How to resume — retry the faulted step, rewind to an earlier cursor, skip the faulted step, or apply a state patch first.</param>

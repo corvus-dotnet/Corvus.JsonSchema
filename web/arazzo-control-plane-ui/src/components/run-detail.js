@@ -153,6 +153,10 @@ class ArazzoRunDetail extends ArazzoElement {
         .pos { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_accent); white-space: nowrap; }
         .pos.wait { color: var(--arazzo-status-suspended, #b45309); }
         .pos.fault { color: var(--_danger); }
+        .pos.out { color: var(--_muted); cursor: pointer; }
+        .step-out summary { cursor: pointer; list-style: none; }
+        .step-out summary::-webkit-details-marker { display: none; }
+        .step-out pre { margin: 4px 0 6px; padding: 8px 10px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 6px; font-size: 11.5px; overflow-x: auto; }
         .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
         .fault { border-color: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 40%, var(--_border)); }
         .fault .err { color: var(--arazzo-status-faulted, #d4351c); font-family: ui-monospace, monospace; font-size: 12px; }
@@ -259,15 +263,22 @@ class ArazzoRunDetail extends ArazzoElement {
     const bodyEl = host.querySelector('.prog-body');
     const match = /^(.*)-v(\d+)$/.exec(run.workflowId || '');
     let steps = null;
+    let journal = new Map(); // stepId → recorded outputs (the checkpoint's attested journal)
     if (match && this.client) {
       try {
-        if (this._progressFor !== run.workflowId) {
-          const doc = await this.client.getCatalogWorkflow(match[1], Number(match[2]));
-          const wf = (doc.workflows || []).find((w) => w.workflowId === run.workflowId) || (doc.workflows || [])[0];
-          this._progressSteps = wf ? (wf.steps || []).map((st) => st.stepId) : null;
-          this._progressFor = run.workflowId;
-        }
+        const [, recorded] = await Promise.all([
+          (async () => {
+            if (this._progressFor !== run.workflowId) {
+              const doc = await this.client.getCatalogWorkflow(match[1], Number(match[2]));
+              const wf = (doc.workflows || []).find((w) => w.workflowId === run.workflowId) || (doc.workflows || [])[0];
+              this._progressSteps = wf ? (wf.steps || []).map((st) => st.stepId) : null;
+              this._progressFor = run.workflowId;
+            }
+          })(),
+          this.client.getRunSteps(run.id).catch(() => null), // best-effort: older servers have no journal endpoint
+        ]);
         steps = this._progressSteps;
+        for (const rec of (recorded?.steps || [])) journal.set(rec.stepId, rec.outputs);
       } catch {
         steps = null;
       }
@@ -282,14 +293,27 @@ class ArazzoRunDetail extends ArazzoElement {
     const next = atEnd ? null : steps[run.cursor];
     const waitStep = run.status === 'Suspended' && !atEnd ? next : null;
     const faultStep = run.fault?.stepId || (run.status === 'Faulted' ? next : null);
+    const rowFor = (id, i, dispatched, marks) => {
+      // A step with recorded outputs expands to show them, verbatim from the checkpoint.
+      if (journal.has(id)) {
+        const outputs = journal.get(id);
+        return `<li class="${dispatched ? 'dispatched' : ''}"><details class="step-out">
+          <summary><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')} <span class="pos out">outputs</span></summary>
+          <pre>${escapeHtml(JSON.stringify(outputs === undefined ? null : outputs, null, 2))}</pre>
+        </details></li>`;
+      }
+      return `<li class="${dispatched ? 'dispatched' : ''}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')}</li>`;
+    };
+    const listed = new Set(steps);
     const rows = steps.map((id, i) => {
       const marks = [];
       if (i === run.cursor && run.status !== 'Completed') marks.push('<span class="pos">▶ next</span>');
       if (waitStep === id && i === run.cursor) marks.push('<span class="pos wait">waiting</span>');
       if (faultStep === id) marks.push('<span class="pos fault">✗ faulted</span>');
-      const dispatched = i < run.cursor;
-      return `<li class="${dispatched ? 'dispatched' : ''}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')}</li>`;
-    }).join('');
+      return rowFor(id, i, i < run.cursor, marks);
+    }).join('')
+      // Journal entries the document list doesn't carry (a revisited or renamed step) still show.
+      + [...journal.keys()].filter((id) => !listed.has(id)).map((id) => rowFor(id, -1, true, [])).join('');
     const summary = run.status === 'Completed'
       ? `All ${steps.length} steps dispatched.`
       : (atEnd

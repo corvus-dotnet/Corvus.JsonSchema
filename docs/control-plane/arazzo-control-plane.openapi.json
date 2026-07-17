@@ -254,6 +254,23 @@
         }
       }
     },
+    "/runs/{runId}/steps": {
+      "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
+      "get": {
+        "operationId": "getRunSteps",
+        "security": [{ "oauth2": ["runs:read"] }, { "openIdConnect": ["runs:read"] }, { "mtls": [] }],
+        "tags": ["runs"],
+        "summary": "Get a run's recorded step outputs",
+        "description": "The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found).",
+        "responses": {
+          "200": {
+            "description": "The recorded step outputs, in recording order.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkflowRunSteps" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/runs/{runId}/resume": {
       "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
       "post": {
@@ -5042,6 +5059,28 @@
           }
         },
         "required": ["runs"]
+      },
+      "WorkflowRunSteps": {
+        "type": "object",
+        "description": "A run's recorded step journal, projected from its authoritative checkpoint: the steps that recorded outputs, in recording order. Nothing is invented — a step that recorded no outputs is absent, and there is no per-step status or timing (the checkpoint does not attest those).",
+        "properties": {
+          "runId": { "type": "string" },
+          "steps": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkflowRunStepRecord" },
+            "description": "The recorded steps, in the order the checkpoint recorded them."
+          }
+        },
+        "required": ["runId", "steps"]
+      },
+      "WorkflowRunStepRecord": {
+        "type": "object",
+        "description": "One recorded step: its id and the outputs value the checkpoint stored for it.",
+        "properties": {
+          "stepId": { "type": "string" },
+          "outputs": { "description": "The step's recorded outputs value, verbatim from the checkpoint." }
+        },
+        "required": ["stepId"]
       },
       "WorkflowRunDetail": {
         "type": "object",

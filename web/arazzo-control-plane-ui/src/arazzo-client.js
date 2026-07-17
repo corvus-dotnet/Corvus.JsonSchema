@@ -162,6 +162,18 @@ export class ArazzoControlPlaneClient {
     return this._request('GET', `/runs/${encodeURIComponent(runId)}`, { signal: opts.signal });
   }
 
+  /**
+   * `getRunSteps` — the run's recorded step journal (`GET /runs/{runId}/steps`): each step that
+   * recorded outputs, in recording order, verbatim from the authoritative checkpoint. Steps that
+   * recorded nothing are absent; there is no per-step status or timing.
+   * @param {string} runId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ runId: string, steps: Array<{ stepId: string, outputs?: any }> }>}
+   */
+  getRunSteps(runId, opts = {}) {
+    return this._request('GET', `/runs/${encodeURIComponent(runId)}/steps`, { signal: opts.signal });
+  }
+
   // ---- runs:write -------------------------------------------------------------------------------
 
   /**
