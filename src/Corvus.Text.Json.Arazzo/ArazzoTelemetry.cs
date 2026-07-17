@@ -79,6 +79,10 @@ public static class ArazzoTelemetry
     /// identifier only, never a payload. Paired with <see cref="TargetKindTag"/>.</summary>
     public const string TargetIdTag = "corvus.arazzo.target_id";
 
+    /// <summary>The measurement tag carrying the governance action name (design §850), e.g. <c>access-request.approve</c>
+    /// or <c>runner.revoke</c> — the same value as the audit span's name. Dimensions the governance-decision counter.</summary>
+    public const string ActionTag = "corvus.arazzo.action";
+
     private static readonly string Version =
         typeof(ArazzoTelemetry).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 
@@ -186,4 +190,12 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> CredentialsRotated { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.credentials.rotated", "{credential}", "Source credentials rotated via the control plane");
+
+    /// <summary>
+    /// Gets the counter for governance decisions recorded through the control plane (design §850), dimensioned by
+    /// <see cref="ActionTag">action</see> and <see cref="OutcomeTag">outcome</see>. Every governance audit increments it,
+    /// so decision rates — approvals, denials, revocations, refusals — are queryable per action without bespoke counters.
+    /// </summary>
+    public static Counter<long> GovernanceDecisions { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.governance.decisions", "{decision}", "Governance decisions recorded via the control plane");
 }

@@ -252,22 +252,31 @@ Ranked by security value first, then by breadth of the surface it closes.
    `refused-own-request` for the independent-decision bar and `refused-not-administrator`); and
    `workflow.add-administrator / transfer-administration / remove-administrator`.
 7. **Audit-grade log for the existing run and catalog spans; attribute the authenticated principal**
-   (O-RUN-1, O-RUN-2, O-CAT-1). Upgrade the two surfaces that already have spans.
-8. **Debug-run and source/workspace spans** (O-DBG, O-CRED-3). Development-time traceability.
-9. **Governance rate metrics** (POLISH): counters per decision outcome (approved / denied / revoked),
-   credential rotations, runner revocations — the rates worth charting.
+   (O-RUN-1, O-RUN-2, O-CAT-1). **Landed:** handler-level governance audits attributed to the
+   authenticated caller — `run.resume / cancel / delete / purge` and `catalog.publish / update / delete /
+   purge`. The existing domain-service execution spans (lease owner, resume mode, correlation) stay for
+   tracing; the new audits add the retained log and the real actor.
+8. **Debug-run and source/workspace spans** (O-DBG, O-CRED-3). **Landed:** `source.create / update /
+   delete` and `debug-run.start / cancel / delete`.
+9. **Governance rate metrics** (POLISH). **Landed:** a single `corvus.arazzo.governance.decisions`
+   counter incremented inside the governance-audit emitter, dimensioned by action and outcome — so
+   decision rates (approvals, denials, revocations, refusals) are queryable per action across every
+   audited surface at once, plus the `corvus.arazzo.credentials.rotated` counter from item 3.
 
-Items 7–9 are follow-up slices; each touches a distinct handler family and wants its own contract
-tests. This document is the standing worklist for them. Items 1–6 — every MAJOR governance surface that
-changes the system's security posture — are landed: the access-request lifecycle, credential custody,
-grants and rules authoring, runner authorization, and environments / promotion / administrator
-transfers all now emit a governance audit.
+Items 1–9 are all landed: every MAJOR governance surface that changes the system's security posture —
+the access-request lifecycle, credential custody, grants and rules authoring, runner authorization, and
+environments / promotion / administrator transfers — plus the run/catalog mutations, the source and
+debug-run surfaces, and the governance-decision rate metric. The control plane can now answer "who
+changed this, and when" for every governed action, and the payload-hygiene guarantee holds throughout.
 
 ## 5. Verdict
 
-Payload hygiene is clean and the runtime + runs telemetry is genuinely good. The gap is breadth: the
-governance surfaces that change the system's security posture — credentials, grants, rules, runner
-authorization, access and promotion decisions, administrator transfers — emit no telemetry at all, so
-the control plane cannot answer "who changed this, and when" for its most sensitive actions. The fix is
-not per-surface cleverness but one reusable, payload-safe audit primitive applied uniformly, started in
-slices 2 and 3 and ranked for completion above.
+The review's original finding was that payload hygiene was clean and the runtime + runs telemetry was
+good, but breadth was the gap: the governance surfaces that change the system's security posture —
+credentials, grants, rules, runner authorization, access and promotion decisions, administrator
+transfers — emitted no telemetry at all. That gap is now closed. One reusable, payload-safe audit
+primitive (`GovernanceAudit`) is applied uniformly across every governed action, so each leaves a span
+plus an audit-grade log naming who acted, on which resource, with what outcome — refusals included — and
+feeds a per-action decision-rate counter. The primitive takes only ids and a controlled outcome label,
+so the payload-hygiene guarantee (no step output, no secret reaches telemetry) holds by construction as
+coverage grew. The whole worklist (items 1–9) is landed.

@@ -2,10 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -150,6 +152,63 @@ public sealed class ControlPlaneSourcesApiTests
 
         // A write scope cannot read in this fixture (distinct scopes) → 403 on the read endpoint.
         (await host.SendAsync(HttpMethod.Get, "/sources", Write)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [TestMethod]
+    public async Task The_source_lifecycle_emits_governance_audit_spans()
+    {
+        // §850 (item 8): source estate changes are traceable — register, edit, retire each leave an audit.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/sources", PetstoreBody, Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Put, "/sources/petstore", """{"displayName":"Pet Store (v2)"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/sources/petstore", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        audit.Outcomes("petstore").ShouldBe(["created", "updated", "deleted"]);
+    }
+
+    [TestMethod]
+    public async Task A_governance_action_increments_the_decision_rate_counter()
+    {
+        // §850 (item 9): every governance audit feeds the corvus.arazzo.governance.decisions counter, dimensioned by
+        // action + outcome, so decision rates are queryable per action without a bespoke counter each.
+        long recorded = 0;
+        string? action = null;
+        string? outcome = null;
+        using var listener = new MeterListener
+        {
+            InstrumentPublished = (instrument, l) =>
+            {
+                if (instrument.Meter.Name == ArazzoTelemetry.MeterName && instrument.Name == "corvus.arazzo.governance.decisions")
+                {
+                    l.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<long>((_, measurement, tags, _) =>
+        {
+            foreach (KeyValuePair<string, object?> tag in tags)
+            {
+                if (tag.Key == ArazzoTelemetry.ActionTag && (string?)tag.Value == "source.create")
+                {
+                    Interlocked.Add(ref recorded, measurement);
+                    action = "source.create";
+                }
+
+                if (tag.Key == ArazzoTelemetry.OutcomeTag && action == "source.create")
+                {
+                    outcome = (string?)tag.Value;
+                }
+            }
+        });
+        listener.Start();
+
+        await using Scoped host = await StartAsync(new TenantPolicy());
+        (await host.SendJsonAsync(HttpMethod.Post, "/sources", PetstoreBody, Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        Interlocked.Read(ref recorded).ShouldBeGreaterThanOrEqualTo(1);
+        outcome.ShouldBe("created");
     }
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)

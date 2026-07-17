@@ -9,6 +9,7 @@ using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
+using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -41,6 +42,10 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     private readonly ControlPlaneAccess access;
     private readonly SourceDocumentFetcher? fetcher;
     private readonly string actor;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kind for a source mutation (design §850, worklist item 8).
+    private const string TargetKind = "source";
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
@@ -58,7 +63,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     /// <param name="fetcher">The server-side document fetcher for <c>fetchSourceDocument</c> (§4.4);
     /// fetching fails closed (400) when <see langword="null"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneSourcesHandler(ISourceStore store, ControlPlaneAccess access, SourceDocumentFetcher? fetcher = null, string actor = "control-plane")
+    internal ArazzoControlPlaneSourcesHandler(ISourceStore store, ControlPlaneAccess access, SourceDocumentFetcher? fetcher = null, string actor = "control-plane", ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -67,7 +72,11 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         this.access = access;
         this.fetcher = fetcher;
         this.actor = actor;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject for a source mutation: the authenticated caller, falling back to the configured actor.
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
 
     /// <inheritdoc/>
     public async ValueTask<ListSourcesResult> HandleListSourcesAsync(ListSourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -161,6 +170,8 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
                 managementTags);
             ParsedJsonDocument<RegisteredSource> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
+            GovernanceAudit.Mutation(this.auditLogger, "source.create", this.AuditActor(), TargetKind, (string)body.Name, "created");
+
             // The full source (document included) is congruent with the API model — a free whole-document re-wrap. Hand the
             // pooled document to the workspace (it disposes it after the response is written); the draft is input only.
             workspace.TakeOwnership(created);
@@ -238,6 +249,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
             return UpdateSourceResult.NotFound(NotFoundProblem(name), workspace);
         }
 
+        GovernanceAudit.Mutation(this.auditLogger, "source.update", this.AuditActor(), TargetKind, name, "updated");
         workspace.TakeOwnership(s);
         return UpdateSourceResult.Ok(Models.SourceEntity.From(s.RootElement), workspace);
     }
@@ -247,6 +259,11 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     {
         string name = (string)parameters.Name;
         bool deleted = await this.store.DeleteAsync(name, WorkflowEtag.None, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (deleted)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "source.delete", this.AuditActor(), TargetKind, name, "deleted");
+        }
+
         return deleted
             ? DeleteSourceResult.NoContent()
             : DeleteSourceResult.NotFound(NotFoundProblem(name), workspace);

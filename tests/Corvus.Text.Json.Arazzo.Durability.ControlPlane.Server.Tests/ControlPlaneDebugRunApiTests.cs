@@ -264,6 +264,29 @@ public sealed class ControlPlaneDebugRunApiTests
     }
 
     [TestMethod]
+    public async Task Starting_and_cancelling_a_debug_run_emits_governance_audit_spans()
+    {
+        // §850 (item 8): a debug run is a real execution against real sources, so its lifecycle is traceable — a
+        // developer can pivot a debug session into the deployment's telemetry.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock());
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
+
+        HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
+            """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"},"pause":{"afterEachStep":true}}""", StartScopes);
+        started.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string debugRunId;
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
+        {
+            debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/cancel", "{}", StartScopes)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        audit.Outcomes(debugRunId).ShouldBe(["started", "cancelled"]);
+    }
+
+    [TestMethod]
     public async Task A_run_with_no_pause_advances_straight_to_completion()
     {
         await using Scoped host = await StartAsync(withRunner: true, HappyMock());

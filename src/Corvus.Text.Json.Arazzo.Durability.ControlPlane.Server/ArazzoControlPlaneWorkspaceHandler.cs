@@ -13,6 +13,7 @@ using Corvus.Text.Json.Arazzo.Durability.Sources;
 using Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows;
 using Corvus.Text.Json.Arazzo.Testing;
 using Corvus.Text.Json.Internal;
+using Microsoft.Extensions.Logging;
 using Environment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
@@ -67,6 +68,10 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     private readonly ISecuredWorkflowManagement? debugRunManagement;
     private readonly InProcessDraftRunner? draftRunner;
     private readonly DraftRunManagement? draftRunManagement;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kind for a debug-run lifecycle event (design §850, worklist item 8).
+    private const string DebugRunTargetKind = "debug-run";
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
@@ -168,7 +173,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     /// <param name="draftRunTraceStore">The durable trace store §18 <c>get-debug-run</c> reads each run's assembled
     /// metadata trace from (§18 R4) — written by the runner, possibly in a different process. When <see langword="null"/>
     /// the trace is omitted from the debug-run view.</param>
-    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null, IWorkflowStateStore? workflowStateStore = null, IDraftRunStore? draftRunStore = null, ISecuredWorkflowManagement? debugRunManagement = null, InProcessDraftRunner? draftRunner = null, IDraftRunTraceStore? draftRunTraceStore = null)
+    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null, IWorkflowStateStore? workflowStateStore = null, IDraftRunStore? draftRunStore = null, ISecuredWorkflowManagement? debugRunManagement = null, InProcessDraftRunner? draftRunner = null, IDraftRunTraceStore? draftRunTraceStore = null, ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -193,7 +198,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         this.draftRunManagement = workflowStateStore is not null && draftRunStore is not null
             ? new DraftRunManagement(workflowStateStore, draftRunStore, this.timeProvider)
             : null;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject for a debug-run event: the authenticated developer, falling back to the configured actor.
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
 
     /// <inheritdoc/>
     public async ValueTask<ListWorkspaceWorkflowsResult> HandleListWorkspaceWorkflowsAsync(ListWorkspaceWorkflowsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -1418,6 +1427,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         WorkflowRunId runId = await this.draftRunManagement!.StartAsync(start, inputs, securityTags, pause, cancellationToken: cancellationToken).ConfigureAwait(false);
 
+        GovernanceAudit.Mutation(this.auditLogger, "debug-run.start", this.AuditActor(), DebugRunTargetKind, runId.Value, "started");
+
         ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
         if (view is not { } created)
         {
@@ -1633,7 +1644,10 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         // Terminal + idempotent: a non-terminal run is marked Cancelled; an already-terminal (or out-of-reach) run
         // returns false and the current state below is returned unchanged.
-        await this.debugRunManagement!.CancelAsync(runId, "debug-run cancelled by developer", this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (await this.debugRunManagement!.CancelAsync(runId, "debug-run cancelled by developer", this.access.Current(), cancellationToken).ConfigureAwait(false))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "debug-run.cancel", this.AuditActor(), DebugRunTargetKind, runId.Value, "cancelled");
+        }
 
         ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
         if (view is not { } v)
@@ -1682,6 +1696,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         await this.draftRunStore!.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
         await this.workflowStateStore!.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
 
+        GovernanceAudit.Mutation(this.auditLogger, "debug-run.delete", this.AuditActor(), DebugRunTargetKind, runId.Value, "deleted");
         return DeleteDebugRunResult.NoContent();
     }
 

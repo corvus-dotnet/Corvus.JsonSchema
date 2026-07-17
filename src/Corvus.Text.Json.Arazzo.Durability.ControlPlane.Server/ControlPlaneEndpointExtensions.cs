@@ -175,7 +175,7 @@ public static class ControlPlaneEndpointExtensions
         // data plane is reach-filtered (the source store); sources are not governed (no administrator set) — reach
         // membership is the management gate. Defaults to an in-memory store so the endpoints function in development.
         ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
-        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher);
+        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access, sourceFetcher, auditLogger: auditLogger);
         IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
 
         // §18 debug runs on the durable host (workflow-designer design §18 slice 3e-2c): a debug run IS a durable
@@ -190,7 +190,7 @@ public static class ControlPlaneEndpointExtensions
             : null;
         var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(
             wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,
-            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner, draftRunTraceStore: draftRunTraceStore);
+            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner, draftRunTraceStore: draftRunTraceStore, auditLogger: auditLogger);
 
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
@@ -227,7 +227,7 @@ public static class ControlPlaneEndpointExtensions
             securityHandler,
             new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
             new ArazzoControlPlaneRunnersHandler(runners, access),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator),
+            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger),
             availabilityHandler,
             credentialsHandler,
             workspaceHandler,

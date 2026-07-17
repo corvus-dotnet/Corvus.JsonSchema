@@ -10,6 +10,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Testing;
+using Microsoft.Extensions.Logging;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -43,6 +44,10 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private readonly IEnvironmentStore? environmentStore;
     private readonly IAvailabilityStore? availabilityStore;
     private readonly WorkflowSimulator? simulator;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kind for a catalog mutation (design §850, worklist item 7).
+    private const string CatalogTargetKind = "catalog-version";
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class (unscoped: full access).</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
@@ -60,7 +65,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
     /// <param name="environmentStore">The environment registry used to validate that a run's pinned environment exists and is in the caller's reach (design §5.5); <see langword="null"/> skips that check.</param>
     /// <param name="availabilityStore">The availability registry used to validate that the version is available in the pinned environment (§7.8); <see langword="null"/> skips that check.</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null)
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -73,7 +78,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         this.environmentStore = environmentStore;
         this.availabilityStore = availabilityStore;
         this.simulator = simulator;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject for a catalog mutation: the authenticated caller, falling back to "system" when unresolved.
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "system";
+
+    // The (baseWorkflowId, version) audit target key for a catalog mutation (design §850).
+    private static string CatalogKey(string baseWorkflowId, int versionNumber) => $"{baseWorkflowId}:{versionNumber}";
 
     /// <inheritdoc/>
     public async ValueTask<AddCatalogVersionResult> HandleAddCatalogVersionAsync(AddCatalogVersionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -110,6 +122,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         try
         {
             ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
+
+            CatalogVersionRef reference = version.RootElement.Ref;
+            GovernanceAudit.Mutation(this.auditLogger, "catalog.publish", this.AuditActor(), CatalogTargetKind, CatalogKey(reference.BaseWorkflowId, reference.VersionNumber), "published");
 
             // The summary is a zero-copy view over the version document, so hand the pooled document to the workspace —
             // it owns it for the response's lifetime, and a throw cannot leak the rented buffer.
@@ -289,6 +304,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         ParsedJsonDocument<CatalogVersion> v = result.Document!;
+        GovernanceAudit.Mutation(this.auditLogger, "catalog.update", this.AuditActor(), CatalogTargetKind, CatalogKey(baseWorkflowId, versionNumber), "updated");
         workspace.TakeOwnership(v);
         return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.access.PublicView(v.RootElement, workspace)), workspace);
     }
@@ -302,6 +318,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // The client resolves read-then-write reach on its single fetch (§14.2) — 404 outside read reach (non-disclosing),
         // 403 readable but outside write reach — so the handler no longer pre-fetches the version for the reach check.
         CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (outcome == CatalogDeleteOutcome.Deleted)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "catalog.delete", this.AuditActor(), CatalogTargetKind, CatalogKey(baseWorkflowId, versionNumber), "deleted");
+        }
+
         return outcome switch
         {
             CatalogDeleteOutcome.Deleted => DeleteCatalogVersionResult.NoContent(),
@@ -318,6 +339,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // The scoped catalog client row-scopes the purge (§14.2): reaps only obsolete versions the principal may
         // see (see run purge — the capability is orthogonal to reach).
         int purged = await this.catalog.PurgeAsync(this.access.Current(), cancellationToken).ConfigureAwait(false);
+        GovernanceAudit.Mutation(this.auditLogger, "catalog.purge", this.AuditActor(), CatalogTargetKind, "(obsolete versions)", purged > 0 ? "purged" : "purged-none");
         return PurgeCatalogResult.Ok(
             new Models.PurgeResult.Source((ref Models.PurgeResult.Builder b) => b.Create(purgedCount: purged)), workspace);
     }

@@ -54,6 +54,13 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         this.auditLogger = auditLogger;
     }
 
+    // The audited resource kind for a run mutation (design §850, worklist item 7).
+    private const string RunTargetKind = "run";
+
+    // The §850 audit subject for a run mutation: the authenticated caller (the operator who decided it), not the fixed
+    // lease-owner identity the domain service's execution span carries. Falls back to "system" when unresolved.
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "system";
+
     /// <inheritdoc/>
     public async ValueTask<ListRunsResult> HandleListRunsAsync(ListRunsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
@@ -252,9 +259,13 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             return DeleteRunResult.Forbidden(ForbiddenProblem(runId), workspace);
         }
 
-        return await this.management.DeleteAsync(runId, ctx, cancellationToken).ConfigureAwait(false)
-            ? DeleteRunResult.NoContent()
-            : DeleteRunResult.Conflict(Problem("not-deletable", "Run is not deletable", 409, $"Run '{runId}' is held by another owner; retry."), workspace);
+        if (await this.management.DeleteAsync(runId, ctx, cancellationToken).ConfigureAwait(false))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "run.delete", this.AuditActor(), RunTargetKind, runId, "deleted");
+            return DeleteRunResult.NoContent();
+        }
+
+        return DeleteRunResult.Conflict(Problem("not-deletable", "Run is not deletable", 409, $"Run '{runId}' is held by another owner; retry."), workspace);
     }
 
     /// <inheritdoc/>
@@ -279,6 +290,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         ResumeOptions options = ToResumeOptions(parameters.Body);
         if (await this.management.ResumeAsync(runId, options, ctx, cancellationToken).ConfigureAwait(false))
         {
+            GovernanceAudit.Mutation(this.auditLogger, "run.resume", this.AuditActor(), RunTargetKind, runId, "resumed");
             WorkflowRunDetail? resumed = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
             return resumed is { } d
                 ? ResumeRunResult.Ok(BuildDetail(d), workspace)
@@ -313,6 +325,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string reason = (string)parameters.Body.Reason;
         if (await this.management.CancelAsync(runId, reason, ctx, cancellationToken).ConfigureAwait(false))
         {
+            GovernanceAudit.Mutation(this.auditLogger, "run.cancel", this.AuditActor(), RunTargetKind, runId, "cancelled");
             WorkflowRunDetail? cancelled = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
             return cancelled is { } d
                 ? CancelRunResult.Ok(BuildDetail(d), workspace)
@@ -333,6 +346,9 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         var olderThan = DateTimeOffset.Parse((string)parameters.OlderThan, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 1000;
         int purged = await this.management.PurgeAsync(new WorkflowPurgeQuery(olderThan, limit), this.access.Current(), cancellationToken).ConfigureAwait(false);
+
+        // The bulk purge is audited by its cutoff (the count rides the workflow.purge execution span's purged_count tag).
+        GovernanceAudit.Mutation(this.auditLogger, "run.purge", this.AuditActor(), RunTargetKind, $"olderThan={olderThan.ToString("O", CultureInfo.InvariantCulture)}", purged > 0 ? "purged" : "purged-none");
         return PurgeRunsResult.Ok(
             new Models.PurgeResult.Source((ref Models.PurgeResult.Builder b) => b.Create(purgedCount: purged)),
             workspace);

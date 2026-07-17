@@ -55,5 +55,12 @@ internal static class GovernanceAudit
             targetKind,
             targetId,
             outcome);
+
+        // §850 (worklist item 9): feed the governance-decision rate counter, dimensioned by action + outcome, so decision
+        // rates — approvals, denials, revocations, refusals — are queryable per action without a bespoke counter each.
+        ArazzoTelemetry.GovernanceDecisions.Add(
+            1,
+            new KeyValuePair<string, object?>(ArazzoTelemetry.ActionTag, action),
+            new KeyValuePair<string, object?>(ArazzoTelemetry.OutcomeTag, outcome));
     }
 }

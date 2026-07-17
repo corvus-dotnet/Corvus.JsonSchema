@@ -368,6 +368,24 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task Run_mutations_emit_governance_audit_spans()
+    {
+        // §850 (item 7): a run mutation leaves an audit-grade trace attributed to the caller — complementing the
+        // existing execution span the domain service emits with the lease-owner identity.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            await FaultRunAsync(host.Store, "r1", host.Clock);
+
+            (await host.Client.PostAsync("/runs/r1/cancel", Json("""{"reason":"operator abandoned"}"""))).StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await host.Client.DeleteAsync("/runs/r1")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+            audit.Outcomes("r1").ShouldBe(["cancelled", "deleted"]);
+        }
+    }
+
+    [TestMethod]
     public async Task Cancel_of_a_terminal_run_returns_409()
     {
         Host host = await StartAsync();
