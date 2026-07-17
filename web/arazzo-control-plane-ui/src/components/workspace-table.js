@@ -132,10 +132,15 @@ class ArazzoWorkspaceTable extends ArazzoElement {
     if (!client) return;
     try {
       // Ask for a name up front so "untitled" documents don't accumulate — via the kit's standard
-      // dialog (system prompts are banned); `promptFn` remains an injectable test seam.
+      // dialog (system prompts are banned); `promptFn` remains an injectable test seam. The dialog title
+      // matches the button that opened it ("New workflow"); the message names what actually gets created.
       const answer = this.promptFn
         ? this.promptFn('Name the new working copy:', 'untitled')
-        : await this.$('.ask').ask({ title: 'New working copy', field: { label: 'Name', value: 'untitled' } });
+        : await this.$('.ask').ask({
+          title: 'New workflow',
+          message: 'Starts as a working copy — a draft only you edit. Publishing it later mints catalog v1.',
+          field: { label: 'Name', value: 'untitled' },
+        });
       if (answer === null) return;
       const workingCopy = await client.createWorkingCopy({ name: (answer || 'untitled').trim() || 'untitled' });
       this.reload();

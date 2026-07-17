@@ -18,6 +18,7 @@
 
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define } from './base.js';
 import './pager.js';
+import './environment-picker.js';
 
 const STATUS = {
   valid: { label: 'valid', color: 'var(--arazzo-status-completed, #2a8a4a)' },
@@ -110,6 +111,10 @@ class ArazzoCredentialsTable extends ArazzoElement {
       return;
     }
 
+    // The environment filter picker shares this table's client (it searches the reach-scoped registry).
+    const envPicker = this.$('.env');
+    if (envPicker) envPicker.client = client;
+
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
@@ -196,7 +201,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
             </select>
           </label>
           <input class="src" type="text" placeholder="source…" aria-label="Filter by source">
-          <input class="env" type="text" placeholder="environment…" aria-label="Filter by environment">
+          <arazzo-environment-picker class="env" placeholder="environment…"></arazzo-environment-picker>
           <span class="grow"></span>
           <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
@@ -217,10 +222,11 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const src = this.$('.src');
     src.value = this.getAttribute('source') || '';
     src.addEventListener('input', () => this.filters = { ...this.filters, source: src.value.trim() || undefined });
-    // Environment is the list's natural grouping axis, so it filters like source does.
+    // Environment is the list's natural grouping axis; it filters via the standard reach-scoped picker (pick from
+    // the registry, never free-type a name that may match nothing). `change` fires on pick AND clear.
     const env = this.$('.env');
     env.value = this.getAttribute('environment') || '';
-    env.addEventListener('input', () => this.filters = { ...this.filters, environment: env.value.trim() || undefined });
+    env.addEventListener('change', () => this.filters = { ...this.filters, environment: env.value || undefined });
     this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());

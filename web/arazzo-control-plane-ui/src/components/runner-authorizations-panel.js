@@ -18,6 +18,7 @@
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, absoluteTime, relativeTime, define } from './base.js';
 import './pager.js';
+import './environment-picker.js';
 
 const STATUS_COLOR = {
   Pending: 'var(--arazzo-status-suspended, #b07d18)',
@@ -201,7 +202,7 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
         .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
         .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
         .toolbar .grow { flex: 1; }
-        .toolbar .env { min-width: 220px; flex: 1; font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+        .toolbar .env { min-width: 220px; flex: 1; }
         select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         .tablescroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
         table { width: 100%; border-collapse: collapse; }
@@ -255,17 +256,16 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
     const current = this.effectiveStatus();
     const statusOptions = STATUS_FILTERS.map((s) =>
       `<option value="${s}"${s === current ? ' selected' : ''}>${s}</option>`).join('');
-    // A single environment is an OPTIONAL filter (absent = every environment you administer).
+    // A single environment is an OPTIONAL filter (absent = every environment you administer), picked from the
+    // standard reach-scoped registry autocomplete rather than free-typed.
     toolbar.innerHTML = `
-      <input class="env" type="text" placeholder="All environments you administer" value="${escapeHtml(this.environment)}">
+      <arazzo-environment-picker class="env" placeholder="All environments you administer" value="${escapeHtml(this.environment)}"></arazzo-environment-picker>
       <span class="grow"></span>
       <label class="sub">Status <select class="status">${statusOptions}</select></label>
       <button class="refresh ghost" type="button" title="Refresh">↻</button>`;
-    this.$('.env').addEventListener('input', (e) => {
-      clearTimeout(this._envTimer);
-      const value = e.target.value.trim();
-      this._envTimer = setTimeout(() => { this.environment = value; }, 300);
-    });
+    const env = this.$('.env');
+    env.client = this.buildClient();
+    env.addEventListener('change', () => { this.environment = env.value; });
     // Status is a server-side filter, so a change resets to page 1 (it cannot just re-filter a partial page).
     this.$('.status').addEventListener('change', (e) => { this._statusFilter = e.target.value; this.reload(); });
     this.$('.refresh').addEventListener('click', () => this.reload());

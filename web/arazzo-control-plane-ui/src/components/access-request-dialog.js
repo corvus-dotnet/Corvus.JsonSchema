@@ -99,7 +99,7 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
       </style>
       <dialog part="dialog">
         <form method="dialog">
-          <div class="dhead">Request access</div>
+          <div class="dhead">Request workflow access</div>
           <div class="dbody">
             ${wfRow}
             <div>

@@ -88,6 +88,8 @@ class ArazzoAccessOverview extends ArazzoElement {
         .verb { display: flex; gap: 10px; font-size: 13px; padding: 2px 0; }
         .verb .v { width: 46px; color: var(--_muted); }
         .verb .denied { color: var(--_muted); }
+        /* Unrestricted reach is the value a reviewer should slow down on — same amber alert as the grants list. */
+        .verb .wide { color: var(--arazzo-status-suspended, #b07d18); font-weight: 700; }
         .row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--_border); }
         .row:last-child { border-bottom: none; }
         .row .grow { flex: 1; }
@@ -158,7 +160,7 @@ class ArazzoAccessOverview extends ArazzoElement {
           ? '<div class="pim">PIM eligibility — confers nothing until elevated (see Capabilities below).</div>'
           : VERBS.map((v) => {
             const denied = grantMode(b[v]) === 'denied';
-            return `<div class="verb"><span class="v">${v}</span><span class="${denied ? 'denied' : ''}">${escapeHtml(grantSummary(b[v]))}</span></div>`;
+            return `<div class="verb"><span class="v">${v}</span><span class="${denied ? 'denied' : (grantMode(b[v]) === 'unrestricted' ? 'wide' : '')}">${escapeHtml(grantSummary(b[v]))}</span></div>`;
           }).join('');
         return `<div class="grant${b.eligibleOnly ? ' eligible' : ''}"><div class="grant-head"><span class="claim">${claim}</span><span class="grow"></span>`
           + (canWrite ? `<button class="revoke" type="button" data-revoke="${escapeHtml(b.id)}" title="Revoke this grant">Revoke</button>` : '')

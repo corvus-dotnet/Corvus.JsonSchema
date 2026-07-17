@@ -419,14 +419,18 @@ test("the runner-authorization inbox narrows to one environment's queue per stat
   const rows = inbox.locator('tbody tr[data-key]');
   await expect(rows).toHaveCount(2); // all administered environments, Pending default
 
-  // Narrow to staging: only its pending registration.
-  await inbox.locator('.toolbar .env').fill('staging');
+  // Narrow to staging via the standard environments picker: pick from the reach-scoped registry, never free-type.
+  const envPicker = inbox.locator('.toolbar .env');
+  await envPicker.locator('input.q').fill('staging');
+  await envPicker.locator('.results li[data-index]', { hasText: 'staging' }).first().click();
   await expect(rows).toHaveCount(1);
   await expect(rows.first()).toContainText('runner-eu-2');
   await expect(rows.first().locator('.env-name')).toHaveText('staging');
 
-  // Re-point at production: its pending queue, then its revoked roster via the status filter.
-  await inbox.locator('.toolbar .env').fill('production');
+  // Re-point at production: clear the picked chip, pick again — its pending queue, then its revoked roster.
+  await envPicker.locator('.clear').click();
+  await envPicker.locator('input.q').fill('production');
+  await envPicker.locator('.results li[data-index]', { hasText: 'production' }).first().click();
   await expect(rows).toHaveCount(1);
   await expect(rows.first()).toContainText('runner-us-1');
   await inbox.locator('.toolbar .status').selectOption('Revoked');

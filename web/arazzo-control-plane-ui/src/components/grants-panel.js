@@ -53,7 +53,7 @@ const isSystemCritical = (g) => g.claimType === '*' || VERBS.some((v) => g[v]?.u
 
 const systemBadge = (g) => (g.claimType === '*'
   ? ' <span class="sysbadge" title="Applies to every authenticated principal — deleting it removes the floor for everyone.">baseline</span>'
-  : (isSystemCritical(g) ? ' <span class="sysbadge" title="Carries Unrestricted reach — treat as system-critical.">wide reach</span>' : ''));
+  : (isSystemCritical(g) ? ' <span class="sysbadge warn" title="Carries Unrestricted reach — treat as system-critical.">⚠ wide reach</span>' : ''));
 
 // The issuer pin repeats on nearly every row; at list level it is noise, so it collapses to one
 // small chip (full value on hover). Any OTHER additional clause stays spelled out — those are the
@@ -438,6 +438,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .verbs b { color: var(--_text); font-weight: 600; text-transform: capitalize; }
         .gdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
         .sysbadge { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); vertical-align: 1px; }
+        /* Wide reach is the row an administrator should slow down on — an amber alert, not quiet metadata. */
+        .sysbadge.warn { color: var(--arazzo-status-suspended, #b07d18); border-color: var(--arazzo-status-suspended, #b07d18); background: color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 12%, transparent); }
         .claim-and.pin { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); }
         .gscopes { color: var(--_muted); font-size: 12px; margin-top: 2px; font-style: italic; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
