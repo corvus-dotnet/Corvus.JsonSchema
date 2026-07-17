@@ -39,7 +39,7 @@ public interface IApiRunnerAuthorizationsHandler
     ValueTask<CountEnvironmentRunnerAuthorizationsResult> HandleCountEnvironmentRunnerAuthorizationsAsync(CountEnvironmentRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles POST /environments/{name}/runners/{runnerId}/authorization — Authorize a runner to serve an environment
+    /// Handles POST /environments/{name}/runners/{runnerId}/authorization — Authorize (or reinstate) a runner to serve an environment
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>
@@ -55,6 +55,15 @@ public interface IApiRunnerAuthorizationsHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<RevokeRunnerResult> HandleRevokeRunnerAsync(RevokeRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /environments/{name}/runners/{runnerId}/quarantine — Quarantine a runner (temporary exclusion)
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<QuarantineRunnerResult> HandleQuarantineRunnerAsync(QuarantineRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /runnerAuthorizations — List runner authorizations (the approver inbox)

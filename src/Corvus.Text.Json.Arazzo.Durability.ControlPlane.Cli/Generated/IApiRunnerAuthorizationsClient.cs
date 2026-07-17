@@ -138,6 +138,16 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
         public static readonly string[] RevokeRunnerOpenIdConnectScopes = ["environments:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>QuarantineRunner</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QuarantineRunnerOauth2Scopes = ["environments:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QuarantineRunner</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] QuarantineRunnerOpenIdConnectScopes = ["environments:write"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["environments:read", "environments:write"];
@@ -173,10 +183,10 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
     ValueTask<CountEnvironmentRunnerAuthorizationsResponse> CountEnvironmentRunnerAuthorizationsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetEnvironmentsByNameRunnersCountStatus.Source status = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
-    /// Authorize a runner to serve an environment
+    /// Authorize (or reinstate) a runner to serve an environment
     /// </summary>
     /// <remarks>
-    /// Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.
+    /// Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. This is also the return path for a quarantined runner (reinstate) and a revoked one (re-authorize): it transitions Pending, Quarantined, or Revoked to Authorized. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="runnerId">The runnerId parameter.</param>
@@ -188,13 +198,25 @@ public interface IApiRunnerAuthorizationsClient : IAsyncDisposable
     /// Revoke a runner's authorization to serve an environment
     /// </summary>
     /// <remarks>
-    /// Revokes the runner's authorization for this environment (design §5.5), immediately removing it from dispatch; the record persists with status Revoked. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.
+    /// Permanently removes a compromised runner (design §5.5): the runner stops being dispatched to immediately, and any lease it currently holds is expired so an authorized peer reclaims its in-flight runs at once (its own further checkpoint writes then conflict) — the fence. The record persists with status Revoked, and a revoked runner cannot return to service without a deliberate re-authorization. For a merely faulted runner that should return without ceremony, quarantine it instead. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="runnerId">The runnerId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<RevokeRunnerResponse> RevokeRunnerAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Quarantine a runner (temporary exclusion)
+    /// </summary>
+    /// <remarks>
+    /// Temporarily excludes a faulted runner from new dispatch (design §5.5): it stops receiving new and orphaned work while its in-flight runs drain to completion (unlike revoke, quarantine does not fence them). The record persists with status Quarantined; reinstate it by authorizing it again, with no re-registration required. Only an Authorized runner can be quarantined — quarantining a Pending or Revoked runner conflicts (409). The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent — quarantining an already-Quarantined runner returns the existing record.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="runnerId">The runnerId parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<QuarantineRunnerResponse> QuarantineRunnerAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runnerId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunnerAuthorizationDecisionNote.Source body = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List runner authorizations (the approver inbox)

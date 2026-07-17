@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A runner&#39;s authorization to serve a deployment environment (design &#167;5.5): keyed by (environment, runnerId), governed by the environment&#39;s administrators. A runner enters Pending on registration and is dispatchable only once Authorized; Revoked removes it from dispatch.
+/// A runner&#39;s authorization to serve a deployment environment (design &#167;5.5): keyed by (environment, runnerId), governed by the environment&#39;s administrators. A runner enters Pending on registration and is dispatchable only once Authorized. Quarantined temporarily excludes a faulted runner from new dispatch while its in-flight runs drain, and it is reinstated to Authorized without re-registering. Revoked permanently removes a compromised runner and fences its in-flight work; returning it requires a deliberate re-authorization.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -456,7 +456,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The authorization&#39;s lifecycle state; only Authorized is dispatchable.
+        /// The authorization&#39;s lifecycle state; only Authorized is dispatchable (Pending, Quarantined, and Revoked are all excluded from dispatch).
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentRunnerAuthorizationView.StatusEntity.Mutable Status

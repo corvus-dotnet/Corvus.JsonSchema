@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the RevokeRunner operation.
 /// </summary>
-/// <remarks>Revokes the runner's authorization for this environment (design §5.5), immediately removing it from dispatch; the record persists with status Revoked. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.</remarks>
+/// <remarks>Permanently removes a compromised runner (design §5.5): the runner stops being dispatched to immediately, and any lease it currently holds is expired so an authorized peer reclaims its in-flight runs at once (its own further checkpoint writes then conflict) — the fence. The record persists with status Revoked, and a revoked runner cannot return to service without a deliberate re-authorization. For a merely faulted runner that should return without ceremony, quarantine it instead. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.</remarks>
 public readonly struct RevokeRunnerRequest : IApiRequest<RevokeRunnerRequest>
 {
 

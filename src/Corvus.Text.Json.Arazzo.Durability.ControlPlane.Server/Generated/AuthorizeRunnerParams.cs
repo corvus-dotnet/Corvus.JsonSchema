@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the AuthorizeRunner operation (POST /environments/{name}/runners/{runnerId}/authorization).
 /// </summary>
-/// <remarks>Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.</remarks>
+/// <remarks>Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. This is also the return path for a quarantined runner (reinstate) and a revoked one (re-authorize): it transitions Pending, Quarantined, or Revoked to Authorized. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.</remarks>
 public readonly struct AuthorizeRunnerParams
 {
 

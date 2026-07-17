@@ -11060,6 +11060,136 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "environments:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "environments:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __RevokeRunnerEndpoint);
 
+        IEndpointConventionBuilder __QuarantineRunnerEndpoint = app.MapPost("/environments/{name}/runners/{runnerId}/quarantine", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>? bodyDoc = null;
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NameValue = default;
+                if (context.Request.RouteValues.TryGetValue("name", out object? NameRouteVal) && NameRouteVal is string NameRaw)
+                {
+                    NameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(NameRaw, workspace);
+                }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunnerIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("runnerId", out object? RunnerIdRouteVal) && RunnerIdRouteVal is string RunnerIdRaw)
+                {
+                    RunnerIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(RunnerIdRaw, workspace);
+                }
+
+                if (NameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (RunnerIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'runnerId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!NameValue.IsUndefined() && !NameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!RunnerIdValue.IsUndefined() && !RunnerIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'runnerId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                // An optional request body is read only when the request actually carries one;
+                // an absent body leaves the body parameter undefined rather than failing to parse.
+                if ((context.Request.ContentLength ?? 0) > 0 || context.Request.Headers.ContainsKey("Transfer-Encoding"))
+                {
+                    try
+                    {
+                        bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
+
+                    if (!bodyDoc!.RootElement.EvaluateSchema())
+                    {
+                        context.Response.StatusCode = 400;
+                        context.Response.ContentType = "application/problem+json";
+                        await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                        return;
+                    }
+
+                }
+
+                QuarantineRunnerParams parameters = new()
+                {
+                    Name = NameValue,
+                    RunnerId = RunnerIdValue,
+                    Body = bodyDoc is null ? default : bodyDoc.RootElement,
+                }
+                ;
+
+                QuarantineRunnerResult result = await runnerAuthorizationsHandler.HandleQuarantineRunnerAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "quarantineRunner",
+                methodName: "QuarantineRunner",
+                httpMethod: "POST",
+                routeTemplate: "/environments/{name}/runners/{runnerId}/quarantine",
+                tags: new[] { "runnerAuthorizations" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "environments:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "environments:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __QuarantineRunnerEndpoint);
+
         IEndpointConventionBuilder __ListRunnerAuthorizationsEndpoint = app.MapGet("/runnerAuthorizations", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -14496,6 +14626,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>RevokeRunner</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] RevokeRunnerOpenIdConnectScopes = ["environments:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QuarantineRunner</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] QuarantineRunnerOauth2Scopes = ["environments:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>QuarantineRunner</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] QuarantineRunnerOpenIdConnectScopes = ["environments:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>ListSources</c> for the <c>Oauth2</c> scheme.

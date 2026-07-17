@@ -43,6 +43,10 @@ public readonly partial struct EnvironmentRunnerAuthorization
     /// <summary>Gets a value indicating whether the runner is awaiting an administrator's decision, compared string-free.</summary>
     public bool IsPending => this.Status.ValueEquals("Pending"u8);
 
+    /// <summary>Gets a value indicating whether the runner is quarantined (temporarily excluded from dispatch while its
+    /// in-flight runs drain), compared string-free.</summary>
+    public bool IsQuarantined => this.Status.ValueEquals("Quarantined"u8);
+
     /// <summary>Gets a value indicating whether the runner's authorization has been revoked, compared string-free.</summary>
     public bool IsRevoked => this.Status.ValueEquals("Revoked"u8);
 
@@ -54,6 +58,7 @@ public readonly partial struct EnvironmentRunnerAuthorization
     {
         RunnerAuthorization.RunnerAuthorizationStatus.Pending => this.IsPending,
         RunnerAuthorization.RunnerAuthorizationStatus.Authorized => this.IsAuthorized,
+        RunnerAuthorization.RunnerAuthorizationStatus.Quarantined => this.IsQuarantined,
         RunnerAuthorization.RunnerAuthorizationStatus.Revoked => this.IsRevoked,
         _ => false,
     };

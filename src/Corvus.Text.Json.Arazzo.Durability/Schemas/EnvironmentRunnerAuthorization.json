@@ -15,8 +15,8 @@
     },
     "status": {
       "type": "string",
-      "description": "The authorization's lifecycle state. Only an Authorized runner is dispatchable for the environment (§5.5).",
-      "enum": ["Pending", "Authorized", "Revoked"]
+      "description": "The authorization's lifecycle state. Only an Authorized runner is dispatchable for the environment (§5.5); Pending, Quarantined, and Revoked are all excluded from dispatch. Quarantined temporarily excludes a faulted runner while its in-flight runs drain (reinstated by authorizing again); Revoked permanently removes a compromised runner and fences its in-flight work.",
+      "enum": ["Pending", "Authorized", "Quarantined", "Revoked"]
     },
     "reason": {
       "type": "string",

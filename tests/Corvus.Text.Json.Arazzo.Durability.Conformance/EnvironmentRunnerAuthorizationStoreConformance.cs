@@ -135,6 +135,34 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     }
 
     [TestMethod]
+    public async Task Quarantining_records_the_decision_and_is_not_dispatchable()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        using (await store.EnsurePendingAsync("production", "runner-1", "runner-1", default))
+        {
+        }
+
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? decided = await store.DecideAsync(
+            "production",
+            "runner-1",
+            new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Quarantined, Reason: "faulted"),
+            WorkflowEtag.None,
+            "boss",
+            default);
+
+        decided.ShouldNotBeNull();
+        decided!.RootElement.StatusValue.ShouldBe("Quarantined");
+        decided.RootElement.DecidedByOrNull.ShouldBe("boss");
+        decided.RootElement.ReasonOrNull.ShouldBe("faulted");
+
+        // A quarantined runner is excluded from dispatch (only Authorized is dispatchable) — the load-bearing invariant that
+        // the dispatch gate reads through IsAuthorized, so quarantine stops new work without any gate change.
+        decided.RootElement.IsQuarantined.ShouldBeTrue();
+        decided.RootElement.IsAuthorized.ShouldBeFalse();
+        decided.RootElement.HasStatus(RunnerAuthorizationStatus.Quarantined).ShouldBeTrue();
+    }
+
+    [TestMethod]
     public async Task Deciding_a_missing_authorization_returns_null()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();

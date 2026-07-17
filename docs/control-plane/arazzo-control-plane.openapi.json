@@ -83,7 +83,7 @@
   },
   {
     "name": "runnerAuthorizations",
-    "description": "Authorize which runners may serve a deployment environment (design §5.5). Receiving an environment's runs means receiving its credentials, so a runner may not self-assert into an environment: it enters Pending on registration and is dispatchable only once an administrator of that environment authorizes it; authorization can be revoked. Listing an environment's runners and authorizing/revoking are governed by that environment's administrators (scopes environments:read / environments:write); the cross-environment approver inbox spans every environment the caller administers, mirroring the §15.4 availability-request inbox."
+    "description": "Authorize which runners may serve a deployment environment (design §5.5). Receiving an environment's runs means receiving its credentials, so a runner may not self-assert into an environment: it enters Pending on registration and is dispatchable only once an administrator of that environment authorizes it. An administrator can quarantine a faulted runner to exclude it from new dispatch while its in-flight runs drain (reinstating it later without re-registration), or revoke a compromised runner to remove it permanently and fence its in-flight work. Listing an environment's runners and deciding them are governed by that environment's administrators (scopes environments:read / environments:write); the cross-environment approver inbox spans every environment the caller administers, mirroring the §15.4 availability-request inbox."
   },
   {
     "name": "identity",
@@ -3185,7 +3185,7 @@
         "description": "Returns a page of the runner authorizations for this environment (design §5.5) — each runner that has registered for it with its Pending/Authorized/Revoked status, ordered by runnerId. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach). Optionally filtered by status.",
         "parameters": [
           { "$ref": "#/components/parameters/EnvironmentNamePath" },
-          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Revoked"] }, "description": "Only authorizations in this state." },
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Quarantined", "Revoked"] }, "description": "Only authorizations in this state." },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
@@ -3209,7 +3209,7 @@
         "description": "Counts this environment's runner authorizations (design §5.5), bounded by the server's cap — no rows are returned (for the list footer). Same filters as listEnvironmentRunnerAuthorizations: the caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach); optionally filtered by status. When 'capped' is true the true total meets or exceeds the cap, so 'count' is the cap.",
         "parameters": [
           { "$ref": "#/components/parameters/EnvironmentNamePath" },
-          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Revoked"] }, "description": "Only authorizations in this state." }
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Quarantined", "Revoked"] }, "description": "Only authorizations in this state." }
         ],
         "responses": {
           "200": { "description": "The bounded count of the environment's runner authorizations.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CountResult" } } } },
@@ -3227,8 +3227,8 @@
           { "mtls": [] }
         ],
         "tags": ["runnerAuthorizations"],
-        "summary": "Authorize a runner to serve an environment",
-        "description": "Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.",
+        "summary": "Authorize (or reinstate) a runner to serve an environment",
+        "description": "Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. This is also the return path for a quarantined runner (reinstate) and a revoked one (re-authorize): it transitions Pending, Quarantined, or Revoked to Authorized. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.",
         "parameters": [
           { "$ref": "#/components/parameters/EnvironmentNamePath" },
           { "$ref": "#/components/parameters/RunnerIdPath" }
@@ -3253,7 +3253,7 @@
         ],
         "tags": ["runnerAuthorizations"],
         "summary": "Revoke a runner's authorization to serve an environment",
-        "description": "Revokes the runner's authorization for this environment (design §5.5), immediately removing it from dispatch; the record persists with status Revoked. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.",
+        "description": "Permanently removes a compromised runner (design §5.5): the runner stops being dispatched to immediately, and any lease it currently holds is expired so an authorized peer reclaims its in-flight runs at once (its own further checkpoint writes then conflict) — the fence. The record persists with status Revoked, and a revoked runner cannot return to service without a deliberate re-authorization. For a merely faulted runner that should return without ceremony, quarantine it instead. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.",
         "parameters": [
           { "$ref": "#/components/parameters/EnvironmentNamePath" },
           { "$ref": "#/components/parameters/RunnerIdPath" }
@@ -3266,6 +3266,33 @@
           "200": { "description": "The runner's authorization (now Revoked).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentRunnerAuthorizationView" } } } },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/environments/{name}/runners/{runnerId}/quarantine": {
+      "post": {
+        "operationId": "quarantineRunner",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runnerAuthorizations"],
+        "summary": "Quarantine a runner (temporary exclusion)",
+        "description": "Temporarily excludes a faulted runner from new dispatch (design §5.5): it stops receiving new and orphaned work while its in-flight runs drain to completion (unlike revoke, quarantine does not fence them). The record persists with status Quarantined; reinstate it by authorizing it again, with no re-registration required. Only an Authorized runner can be quarantined — quarantining a Pending or Revoked runner conflicts (409). The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent — quarantining an already-Quarantined runner returns the existing record.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "$ref": "#/components/parameters/RunnerIdPath" }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RunnerAuthorizationDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The runner's authorization (now Quarantined).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentRunnerAuthorizationView" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
         }
       }
     },
@@ -4272,7 +4299,7 @@
         "summary": "List runner authorizations (the approver inbox)",
         "description": "Lists runner authorizations across the environments the caller administers — the approver inbox for authorizing runners (design §5.5/§15.4), ordered by (environment, runnerId). With environment, returns that environment's authorizations and the caller must administer it (403 otherwise). Without environment, returns the inbox spanning every environment the caller administers; defaults to Pending so an administrator sees the runners awaiting authorization. Optionally filtered by status.",
         "parameters": [
-          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Revoked"] }, "description": "Only authorizations in this state (the inbox defaults to Pending when omitted)." },
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Quarantined", "Revoked"] }, "description": "Only authorizations in this state (the inbox defaults to Pending when omitted)." },
           { "name": "environment", "in": "query", "required": false, "schema": { "type": "string" }, "description": "A single environment whose authorizations to list (requires administrator of it); absent lists the inbox across every administered environment." },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
@@ -4306,6 +4333,7 @@
               "enum": [
                 "Pending",
                 "Authorized",
+                "Quarantined",
                 "Revoked"
               ]
             },
@@ -5433,11 +5461,11 @@
       },
       "EnvironmentRunnerAuthorizationView": {
         "type": "object",
-        "description": "A runner's authorization to serve a deployment environment (design §5.5): keyed by (environment, runnerId), governed by the environment's administrators. A runner enters Pending on registration and is dispatchable only once Authorized; Revoked removes it from dispatch.",
+        "description": "A runner's authorization to serve a deployment environment (design §5.5): keyed by (environment, runnerId), governed by the environment's administrators. A runner enters Pending on registration and is dispatchable only once Authorized. Quarantined temporarily excludes a faulted runner from new dispatch while its in-flight runs drain, and it is reinstated to Authorized without re-registering. Revoked permanently removes a compromised runner and fences its in-flight work; returning it requires a deliberate re-authorization.",
         "properties": {
           "environment": { "type": "string", "description": "The environment the runner serves." },
           "runnerId": { "type": "string", "description": "The runner the authorization applies to." },
-          "status": { "type": "string", "enum": ["Pending", "Authorized", "Revoked"], "description": "The authorization's lifecycle state; only Authorized is dispatchable." },
+          "status": { "type": "string", "enum": ["Pending", "Authorized", "Quarantined", "Revoked"], "description": "The authorization's lifecycle state; only Authorized is dispatchable (Pending, Quarantined, and Revoked are all excluded from dispatch)." },
           "reason": { "type": "string", "description": "An optional note recorded with the most recent decision." },
           "createdBy": { "type": "string", "description": "The actor that created the record (the runner self-registering enters Pending)." },
           "createdAt": { "type": "string", "format": "date-time", "description": "When the record was created (the runner first registered for the environment)." },
@@ -5458,7 +5486,7 @@
       },
       "RunnerAuthorizationDecisionNote": {
         "type": "object",
-        "description": "An optional note recorded with an authorize or revoke decision.",
+        "description": "An optional note recorded with an authorize, quarantine, reinstate, or revoke decision.",
         "properties": {
           "reason": { "type": "string", "description": "An optional human-readable justification for the decision." }
         }

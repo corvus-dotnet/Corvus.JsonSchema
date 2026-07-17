@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A runner&#39;s authorization to serve a deployment environment (design &#167;5.5): keyed by (environment, runnerId), governed by the environment&#39;s administrators. A runner enters Pending on registration and is dispatchable only once Authorized; Revoked removes it from dispatch.
+/// A runner&#39;s authorization to serve a deployment environment (design &#167;5.5): keyed by (environment, runnerId), governed by the environment&#39;s administrators. A runner enters Pending on registration and is dispatchable only once Authorized. Quarantined temporarily excludes a faulted runner from new dispatch while its in-flight runs drain, and it is reinstated to Authorized without re-registering. Revoked permanently removes a compromised runner and fences its in-flight work; returning it requires a deliberate re-authorization.
 /// </para>
 /// </remarks>
 public readonly partial struct EnvironmentRunnerAuthorizationView
@@ -34,7 +34,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The authorization&#39;s lifecycle state; only Authorized is dispatchable.
+    /// The authorization&#39;s lifecycle state; only Authorized is dispatchable (Pending, Quarantined, and Revoked are all excluded from dispatch).
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -65,11 +65,19 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly byte[] Enum3 = "Revoked"u8.ToArray();
+            public static readonly byte[] Enum3 = "Quarantined"u8.ToArray();
             /// <summary>
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
-            public static readonly StatusEntity EnumJson3 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Revoked\""u8]);
+            public static readonly StatusEntity EnumJson3 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Quarantined\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum4 = "Revoked"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly StatusEntity EnumJson4 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Revoked\""u8]);
         }
 
         /// <summary>
@@ -100,19 +108,42 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
             public static ReadOnlySpan<byte> AuthorizedUtf8 => Constants.Enum2;
 
             /// <summary>
+            /// Gets the string "Quarantined"
+            /// as a <see cref="StatusEntity"/>.
+            /// </summary>
+            public static StatusEntity Quarantined { get; } = Constants.EnumJson3;
+            /// <summary>
+            /// Gets the string "Quarantined"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> QuarantinedUtf8 => Constants.Enum3;
+
+            /// <summary>
             /// Gets the string "Revoked"
             /// as a <see cref="StatusEntity"/>.
             /// </summary>
-            public static StatusEntity Revoked { get; } = Constants.EnumJson3;
+            public static StatusEntity Revoked { get; } = Constants.EnumJson4;
             /// <summary>
             /// Gets the string "Revoked"
             /// as a UTF8 byte array.
             /// </summary>
-            public static ReadOnlySpan<byte> RevokedUtf8 => Constants.Enum3;
+            public static ReadOnlySpan<byte> RevokedUtf8 => Constants.Enum4;
         }
 
         public static partial class JsonSchema
         {
+            private static EnumStringSet BuildEnumStringSet()
+            {
+                return new EnumStringSet([
+                    static () => "Pending"u8,
+                    static () => "Authorized"u8,
+                    static () => "Quarantined"u8,
+                    static () => "Revoked"u8,
+                ]);
+            }
+
+            private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
@@ -158,17 +189,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
                 {
                     using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
-                    if (unescapedUtf8JsonString.Span.SequenceEqual("Pending"u8))
-                    {
-                        goto enumShortCircuitSuccess;
-                    }
-
-                    if (unescapedUtf8JsonString.Span.SequenceEqual("Authorized"u8))
-                    {
-                        goto enumShortCircuitSuccess;
-                    }
-
-                    if (unescapedUtf8JsonString.Span.SequenceEqual("Revoked"u8))
+                    if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
                     {
                         goto enumShortCircuitSuccess;
                     }

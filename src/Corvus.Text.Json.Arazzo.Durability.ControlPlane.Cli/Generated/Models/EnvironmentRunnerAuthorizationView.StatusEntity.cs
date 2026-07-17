@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A runner&#39;s authorization to serve a deployment environment (design &#167;5.5): keyed by (environment, runnerId), governed by the environment&#39;s administrators. A runner enters Pending on registration and is dispatchable only once Authorized; Revoked removes it from dispatch.
+/// A runner&#39;s authorization to serve a deployment environment (design &#167;5.5): keyed by (environment, runnerId), governed by the environment&#39;s administrators. A runner enters Pending on registration and is dispatchable only once Authorized. Quarantined temporarily excludes a faulted runner from new dispatch while its in-flight runs drain, and it is reinstated to Authorized without re-registering. Revoked permanently removes a compromised runner and fences its in-flight work; returning it requires a deliberate re-authorization.
 /// </para>
 /// </remarks>
 public readonly partial struct EnvironmentRunnerAuthorizationView
@@ -34,7 +34,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The authorization&#39;s lifecycle state; only Authorized is dispatchable.
+    /// The authorization&#39;s lifecycle state; only Authorized is dispatchable (Pending, Quarantined, and Revoked are all excluded from dispatch).
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -562,13 +562,15 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         /// <param name="context">The context to pass to the match function.</param>
         /// <param name="matchPending">Match 1st item.</param>
         /// <param name="matchAuthorized">Match 2nd item.</param>
-        /// <param name="matchRevoked">Match 3rd item.</param>
+        /// <param name="matchQuarantined">Match 3rd item.</param>
+        /// <param name="matchRevoked">Match 4th item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
             in TContext context,
             Func<TContext, TResult> matchPending,
             Func<TContext, TResult> matchAuthorized,
+            Func<TContext, TResult> matchQuarantined,
             Func<TContext, TResult> matchRevoked,
             Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
@@ -587,6 +589,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
 
             if (this.ValueEquals(Constants.Enum3))
             {
+                return matchQuarantined(context);
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
                 return matchRevoked(context);
             }
 
@@ -599,12 +606,14 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="matchPending">Match 1st item.</param>
         /// <param name="matchAuthorized">Match 2nd item.</param>
-        /// <param name="matchRevoked">Match 3rd item.</param>
+        /// <param name="matchQuarantined">Match 3rd item.</param>
+        /// <param name="matchRevoked">Match 4th item.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
             Func<TResult> matchPending,
             Func<TResult> matchAuthorized,
+            Func<TResult> matchQuarantined,
             Func<TResult> matchRevoked,
             Func<TResult> defaultMatch)
         {
@@ -619,6 +628,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
             }
 
             if (this.ValueEquals(Constants.Enum3))
+            {
+                return matchQuarantined();
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
             {
                 return matchRevoked();
             }

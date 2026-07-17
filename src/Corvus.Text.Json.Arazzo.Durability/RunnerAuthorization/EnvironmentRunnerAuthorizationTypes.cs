@@ -13,7 +13,12 @@ public enum RunnerAuthorizationStatus
     /// <summary>Authorized; the runner is dispatchable for the environment.</summary>
     Authorized,
 
-    /// <summary>Revoked by an environment administrator; the runner is no longer dispatchable for the environment.</summary>
+    /// <summary>Quarantined by an environment administrator: temporarily excluded from new dispatch (a faulted runner) while
+    /// its in-flight runs drain; reinstated to <see cref="Authorized"/> without re-registration. Not dispatchable.</summary>
+    Quarantined,
+
+    /// <summary>Revoked by an environment administrator (a compromised runner): permanently removed from dispatch and its
+    /// in-flight work fenced. Returning to service requires a deliberate re-authorization. Not dispatchable.</summary>
     Revoked,
 }
 
@@ -71,6 +76,9 @@ public static class RunnerAuthorizationStatusNames
     /// <summary>The persisted name for <see cref="RunnerAuthorizationStatus.Authorized"/>.</summary>
     public const string Authorized = "Authorized";
 
+    /// <summary>The persisted name for <see cref="RunnerAuthorizationStatus.Quarantined"/>.</summary>
+    public const string Quarantined = "Quarantined";
+
     /// <summary>The persisted name for <see cref="RunnerAuthorizationStatus.Revoked"/>.</summary>
     public const string Revoked = "Revoked";
 
@@ -81,6 +89,7 @@ public static class RunnerAuthorizationStatusNames
     {
         RunnerAuthorizationStatus.Pending => Pending,
         RunnerAuthorizationStatus.Authorized => Authorized,
+        RunnerAuthorizationStatus.Quarantined => Quarantined,
         RunnerAuthorizationStatus.Revoked => Revoked,
         _ => throw new ArgumentOutOfRangeException(nameof(status)),
     };

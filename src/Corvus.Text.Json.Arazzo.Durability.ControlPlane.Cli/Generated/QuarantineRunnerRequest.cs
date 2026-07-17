@@ -15,10 +15,10 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 
 /// <summary>
-/// Request type for the AuthorizeRunner operation.
+/// Request type for the QuarantineRunner operation.
 /// </summary>
-/// <remarks>Authorizes the runner to serve this environment (design §5.5) — it becomes dispatchable for runs targeting the environment. This is also the return path for a quarantined runner (reinstate) and a revoked one (re-authorize): it transitions Pending, Quarantined, or Revoked to Authorized. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or if no runner with that id has registered for it). Idempotent — authorizing an already-Authorized runner returns the existing record.</remarks>
-public readonly struct AuthorizeRunnerRequest : IApiRequest<AuthorizeRunnerRequest>
+/// <remarks>Temporarily excludes a faulted runner from new dispatch (design §5.5): it stops receiving new and orphaned work while its in-flight runs drain to completion (unlike revoke, quarantine does not fence them). The record persists with status Quarantined; reinstate it by authorizing it again, with no re-registration required. Only an Authorized runner can be quarantined — quarantining a Pending or Revoked runner conflicts (409). The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent — quarantining an already-Quarantined runner returns the existing record.</remarks>
+public readonly struct QuarantineRunnerRequest : IApiRequest<QuarantineRunnerRequest>
 {
 
     /// <summary>
@@ -32,18 +32,18 @@ public readonly struct AuthorizeRunnerRequest : IApiRequest<AuthorizeRunnerReque
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunnerId { get; init; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AuthorizeRunnerRequest"/> struct.
+    /// Initializes a new instance of the <see cref="QuarantineRunnerRequest"/> struct.
     /// </summary>
     /// <param name="name">The name parameter.</param>
     /// <param name="runnerId">The runnerId parameter.</param>
-    public AuthorizeRunnerRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runnerId)
+    public QuarantineRunnerRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString name, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runnerId)
     {
         this.Name = name;
         this.RunnerId = runnerId;
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/environments/{name}/runners/{runnerId}/authorization"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/environments/{name}/runners/{runnerId}/quarantine"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Post;
@@ -77,7 +77,7 @@ public readonly struct AuthorizeRunnerRequest : IApiRequest<AuthorizeRunnerReque
         {
             writer.Write(escRunnerId[..ewRunnerId]);
         }
-        writer.Write("/authorization"u8);
+        writer.Write("/quarantine"u8);
     }
 
     /// <inheritdoc/>

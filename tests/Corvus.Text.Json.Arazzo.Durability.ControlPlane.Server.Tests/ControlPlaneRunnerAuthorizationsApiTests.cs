@@ -115,6 +115,124 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
+    public async Task Quarantining_an_authorized_runner_makes_it_quarantined()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument quarantined = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/quarantine", "acme"));
+        quarantined.RootElement.GetProperty("status").GetString().ShouldBe("Quarantined");
+        quarantined.RootElement.GetProperty("decidedBy").GetString().ShouldBe("acme");
+    }
+
+    [TestMethod]
+    public async Task Reinstating_a_quarantined_runner_authorizes_it_without_re_registration()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/quarantine", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Reinstate is the ordinary authorize verb applied to a quarantined runner — no re-registration required.
+        using Stj.JsonDocument reinstated = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme"));
+        reinstated.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+    }
+
+    [TestMethod]
+    public async Task Quarantining_a_pending_runner_conflicts()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // A Pending runner is not dispatching, so there is nothing to drain — quarantine is a 409, not a silent no-op.
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/quarantine", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [TestMethod]
+    public async Task Quarantining_a_revoked_runner_conflicts_so_it_cannot_be_downgraded_to_temporary()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // A permanent removal must not be silently downgraded to a temporary exclusion.
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/quarantine", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [TestMethod]
+    public async Task Re_authorizing_a_revoked_runner_returns_it_to_service()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Revoke is not terminal: a deliberate re-authorization returns a revoked runner to service.
+        using Stj.JsonDocument reauthorized = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme"));
+        reauthorized.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+    }
+
+    [TestMethod]
+    public async Task Quarantining_as_a_non_administrator_is_forbidden()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/quarantine", "globex")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [TestMethod]
+    public async Task Revoking_a_runner_fences_the_in_flight_run_it_leases()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The runner holds a live lease on a run it is executing. A peer cannot take it while the lease is live.
+        (await host.StateStore.AcquireLeaseAsync("run-1", "runner-1", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await host.StateStore.AcquireLeaseAsync("run-1", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+
+        // Revoking the runner fences its in-flight work: the lease is expired, so a peer reclaims the run at once.
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.StateStore.AcquireLeaseAsync("run-1", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task The_roster_filters_by_quarantined_status()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-a", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-b", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-a/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-b/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-a/quarantine", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument quarantined = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production/runners?status=Quarantined", "acme"));
+        Stj.JsonElement entry = quarantined.RootElement.GetProperty("authorizations").EnumerateArray().Single();
+        entry.GetProperty("runnerId").GetString().ShouldBe("runner-a");
+        entry.GetProperty("status").GetString().ShouldBe("Quarantined");
+    }
+
+    [TestMethod]
     public async Task Listing_an_environments_runners_as_an_administrator_lists_the_seeded_runner_and_filters_by_status()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
@@ -202,10 +320,13 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations);
+        // Pass the workflow state store so the runner-authorization handler picks up its lease-administration capability
+        // (the §5.5 revocation fence): revoking a runner expires the leases it holds. The store is exposed to the test so a
+        // fence assertion can check that a revoked runner's lease is reclaimable.
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store);
         await app.StartAsync();
 
-        return new Scoped(app, app.GetTestClient());
+        return new Scoped(app, app.GetTestClient(), store);
     }
 
     // Maps X-Tenant to both the deployment governance identity (sys:tenant=<t>) and the requester subject (sub=<t>), with
@@ -221,8 +342,10 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         }
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client) : IAsyncDisposable
+    private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore stateStore) : IAsyncDisposable
     {
+        public InMemoryWorkflowStateStore StateStore => stateStore;
+
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string tenant)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), tenant);
 

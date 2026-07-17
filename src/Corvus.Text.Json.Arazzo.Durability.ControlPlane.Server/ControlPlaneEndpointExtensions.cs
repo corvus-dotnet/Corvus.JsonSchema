@@ -205,7 +205,11 @@ public static class ControlPlaneEndpointExtensions
         // Governed by the environment's administrators; the approver inbox spans the environments the caller administers.
         // Defaults to an in-memory store.
         IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
-        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, environmentAdministration, access, accessRequestSubjectClaimType);
+
+        // The revocation fence (§5.5): if the workflow state store can administer leases, revoke expires a compromised runner's
+        // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all
+        // future dispatch on revoke; only the immediate in-flight fence is unavailable.
+        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType);
 
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
         // status, and proxied contents reads. Deployment-configured; fails closed when no broker is

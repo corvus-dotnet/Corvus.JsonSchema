@@ -546,13 +546,15 @@ public readonly partial struct GetRunnerAuthorizationsStatus
     /// <param name="context">The context to pass to the match function.</param>
     /// <param name="matchPending">Match 1st item.</param>
     /// <param name="matchAuthorized">Match 2nd item.</param>
-    /// <param name="matchRevoked">Match 3rd item.</param>
+    /// <param name="matchQuarantined">Match 3rd item.</param>
+    /// <param name="matchRevoked">Match 4th item.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TResult Match<TContext, TResult>(
         in TContext context,
         Func<TContext, TResult> matchPending,
         Func<TContext, TResult> matchAuthorized,
+        Func<TContext, TResult> matchQuarantined,
         Func<TContext, TResult> matchRevoked,
         Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
@@ -571,6 +573,11 @@ public readonly partial struct GetRunnerAuthorizationsStatus
 
         if (this.ValueEquals(Constants.Enum3))
         {
+            return matchQuarantined(context);
+        }
+
+        if (this.ValueEquals(Constants.Enum4))
+        {
             return matchRevoked(context);
         }
 
@@ -583,12 +590,14 @@ public readonly partial struct GetRunnerAuthorizationsStatus
     /// <typeparam name="TResult">The result of calling the match function.</typeparam>
     /// <param name="matchPending">Match 1st item.</param>
     /// <param name="matchAuthorized">Match 2nd item.</param>
-    /// <param name="matchRevoked">Match 3rd item.</param>
+    /// <param name="matchQuarantined">Match 3rd item.</param>
+    /// <param name="matchRevoked">Match 4th item.</param>
     /// <param name="defaultMatch">Match any other value.</param>
     /// <returns>An instance of the value returned by the match function.</returns>
     public TResult Match<TResult>(
         Func<TResult> matchPending,
         Func<TResult> matchAuthorized,
+        Func<TResult> matchQuarantined,
         Func<TResult> matchRevoked,
         Func<TResult> defaultMatch)
     {
@@ -603,6 +612,11 @@ public readonly partial struct GetRunnerAuthorizationsStatus
         }
 
         if (this.ValueEquals(Constants.Enum3))
+        {
+            return matchQuarantined();
+        }
+
+        if (this.ValueEquals(Constants.Enum4))
         {
             return matchRevoked();
         }

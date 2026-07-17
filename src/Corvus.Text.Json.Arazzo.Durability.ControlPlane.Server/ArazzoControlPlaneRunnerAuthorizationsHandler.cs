@@ -38,6 +38,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private readonly IEnvironmentStore environments;
     private readonly SecuredEnvironmentAdministration administration;
     private readonly ControlPlaneAccess access;
+    private readonly IWorkflowLeaseAdministration? leaseAdministration;
     private readonly string subjectClaimType;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneRunnerAuthorizationsHandler"/> class.</summary>
@@ -45,12 +46,17 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// <param name="environments">The environment store (target-environment visibility for the governance gate).</param>
     /// <param name="administration">The environment-administration governance service (current-administrator gating + the reverse index for the inbox).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/>, deployment identity, and principal per request.</param>
+    /// <param name="leaseAdministration">The workflow state store's lease-administration capability, if it has one (§5.5 revocation
+    /// fence): revoking a runner expires the leases it holds so an authorized peer reclaims its in-flight runs at once. A
+    /// deployment whose store lacks the capability (<see langword="null"/>) still stops all future dispatch on revoke; only the
+    /// immediate in-flight fence is unavailable.</param>
     /// <param name="subjectClaimType">The claim type identifying the deciding subject (the audit actor); default <c>sub</c>.</param>
     internal ArazzoControlPlaneRunnerAuthorizationsHandler(
         IEnvironmentRunnerAuthorizationStore authorizations,
         IEnvironmentStore environments,
         SecuredEnvironmentAdministration administration,
         ControlPlaneAccess access,
+        IWorkflowLeaseAdministration? leaseAdministration = null,
         string subjectClaimType = "sub")
     {
         ArgumentNullException.ThrowIfNull(authorizations);
@@ -62,6 +68,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         this.environments = environments;
         this.administration = administration;
         this.access = access;
+        this.leaseAdministration = leaseAdministration;
         this.subjectClaimType = subjectClaimType;
     }
 
@@ -153,6 +160,66 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     }
 
     /// <inheritdoc/>
+    public async ValueTask<QuarantineRunnerResult> HandleQuarantineRunnerAsync(QuarantineRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string environment = (string)parameters.Name;
+        string runnerId = (string)parameters.RunnerId;
+
+        GovernanceGate gate = await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false);
+        if (gate == GovernanceGate.NotFound)
+        {
+            return QuarantineRunnerResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+        }
+
+        if (gate != GovernanceGate.Authorized)
+        {
+            return QuarantineRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
+        }
+
+        ParsedJsonDocument<EnvironmentRunnerAuthorization>? fetched = await this.authorizations.GetAsync(environment, runnerId, cancellationToken).ConfigureAwait(false);
+        if (fetched is null)
+        {
+            return QuarantineRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
+        }
+
+        // Idempotent — quarantining an already-Quarantined runner returns the existing record (status compared string-free).
+        if (fetched.RootElement.IsQuarantined)
+        {
+            workspace.TakeOwnership(fetched);
+            return QuarantineRunnerResult.Ok(ToView(fetched.RootElement), workspace);
+        }
+
+        // Only an Authorized runner can be quarantined: a Pending runner is not dispatching (nothing to drain), and a Revoked
+        // one is a permanent removal that quarantine must not silently downgrade to a temporary exclusion. Both conflict (409).
+        if (!fetched.RootElement.IsAuthorized)
+        {
+            fetched.Dispose();
+            return QuarantineRunnerResult.Conflict(NotAuthorizedToQuarantineProblem(environment, runnerId), workspace);
+        }
+
+        WorkflowEtag expectedEtag = fetched.RootElement.EtagValue;
+        fetched.Dispose();
+        try
+        {
+            // Quarantine drains — unlike revoke, it does NOT fence in-flight runs. The gate excludes a non-Authorized runner
+            // from NEW and orphaned claims, so the faulted runner takes no new work while its current runs finish.
+            ParsedJsonDocument<EnvironmentRunnerAuthorization>? decided = await this.authorizations.DecideAsync(
+                environment, runnerId, new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Quarantined, NoteReason(parameters.Body)), expectedEtag, this.CallerActor(), cancellationToken).ConfigureAwait(false);
+            if (decided is null)
+            {
+                return QuarantineRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
+            }
+
+            workspace.TakeOwnership(decided);
+            return QuarantineRunnerResult.Ok(ToView(decided.RootElement), workspace);
+        }
+        catch (RunnerAuthorizationConflictException)
+        {
+            return QuarantineRunnerResult.Conflict(ConcurrentDecisionProblem(environment, runnerId), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<RevokeRunnerResult> HandleRevokeRunnerAsync(RevokeRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string environment = (string)parameters.Name;
@@ -175,9 +242,11 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return RevokeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
         }
 
-        // Idempotent — revoking an already-Revoked runner returns the existing record (status compared string-free).
+        // Idempotent — revoking an already-Revoked runner returns the existing record (status compared string-free), and
+        // re-applies the fence in case the runner had re-leased anything (harmless if it holds no leases).
         if (fetched.RootElement.IsRevoked)
         {
+            await this.FenceRevokedRunnerAsync(runnerId, cancellationToken).ConfigureAwait(false);
             workspace.TakeOwnership(fetched);
             return RevokeRunnerResult.Ok(ToView(fetched.RootElement), workspace);
         }
@@ -193,8 +262,25 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return RevokeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
         }
 
+        // Fence in-flight work AFTER the Revoked status is durable: expire the runner's leases so an authorized peer reclaims
+        // its in-flight runs at once (its own next checkpoint write then conflicts). A store without the lease-administration
+        // capability skips this; the authorization gate still stops all future dispatch on the next poll.
+        await this.FenceRevokedRunnerAsync(runnerId, cancellationToken).ConfigureAwait(false);
+
         workspace.TakeOwnership(decided);
         return RevokeRunnerResult.Ok(ToView(decided.RootElement), workspace);
+    }
+
+    // The §5.5 in-flight revocation fence: expire every lease the runner holds so an authorized peer reclaims its in-flight
+    // runs immediately and the revoked runner's own next optimistic-concurrency write conflicts. Control-plane-enforced (a
+    // cooperative self-check is worthless against a compromised runner); a store without the capability cannot fence in-flight
+    // work, but revoke still stops all future dispatch through the authorization gate. The lease owner is the runner id.
+    private async ValueTask FenceRevokedRunnerAsync(string runnerId, CancellationToken cancellationToken)
+    {
+        if (this.leaseAdministration is { } admin)
+        {
+            await admin.ExpireLeasesForOwnerAsync(runnerId, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc/>
@@ -318,6 +404,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         return status.ValueEquals("Pending"u8) ? RunnerAuthorizationStatus.Pending
             : status.ValueEquals("Authorized"u8) ? RunnerAuthorizationStatus.Authorized
+            : status.ValueEquals("Quarantined"u8) ? RunnerAuthorizationStatus.Quarantined
             : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
             : null;
     }
@@ -331,6 +418,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         return status.ValueEquals("Pending"u8) ? RunnerAuthorizationStatus.Pending
             : status.ValueEquals("Authorized"u8) ? RunnerAuthorizationStatus.Authorized
+            : status.ValueEquals("Quarantined"u8) ? RunnerAuthorizationStatus.Quarantined
             : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
             : null;
     }
@@ -345,6 +433,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         return status.ValueEquals("Pending"u8) ? RunnerAuthorizationStatus.Pending
             : status.ValueEquals("Authorized"u8) ? RunnerAuthorizationStatus.Authorized
+            : status.ValueEquals("Quarantined"u8) ? RunnerAuthorizationStatus.Quarantined
             : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
             : null;
     }
@@ -359,6 +448,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         return status.ValueEquals("Pending"u8) ? RunnerAuthorizationStatus.Pending
             : status.ValueEquals("Authorized"u8) ? RunnerAuthorizationStatus.Authorized
+            : status.ValueEquals("Quarantined"u8) ? RunnerAuthorizationStatus.Quarantined
             : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
             : null;
     }
@@ -424,6 +514,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private static Models.ProblemDetails.Source ConcurrentDecisionProblem(string environment, string runnerId)
         => Problem("concurrent-decision", "Concurrent decision", 409, $"The authorization of runner '{runnerId}' for environment '{environment}' was changed concurrently; reload it and retry.");
+
+    private static Models.ProblemDetails.Source NotAuthorizedToQuarantineProblem(string environment, string runnerId)
+        => Problem("not-authorized-to-quarantine", "Runner not authorized", 409, $"Runner '{runnerId}' is not currently authorized to serve environment '{environment}', so it cannot be quarantined. Only an authorized runner can be quarantined; authorize it first, or revoke it to remove it permanently.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(

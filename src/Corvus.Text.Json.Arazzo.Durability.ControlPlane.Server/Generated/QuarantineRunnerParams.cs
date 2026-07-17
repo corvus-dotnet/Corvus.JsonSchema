@@ -15,10 +15,10 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Parameters for the RevokeRunner operation (DELETE /environments/{name}/runners/{runnerId}/authorization).
+/// Parameters for the QuarantineRunner operation (POST /environments/{name}/runners/{runnerId}/quarantine).
 /// </summary>
-/// <remarks>Permanently removes a compromised runner (design §5.5): the runner stops being dispatched to immediately, and any lease it currently holds is expired so an authorized peer reclaims its in-flight runs at once (its own further checkpoint writes then conflict) — the fence. The record persists with status Revoked, and a revoked runner cannot return to service without a deliberate re-authorization. For a merely faulted runner that should return without ceremony, quarantine it instead. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent.</remarks>
-public readonly struct RevokeRunnerParams
+/// <remarks>Temporarily excludes a faulted runner from new dispatch (design §5.5): it stops receiving new and orphaned work while its in-flight runs drain to completion (unlike revoke, quarantine does not fence them). The record persists with status Quarantined; reinstate it by authorizing it again, with no re-registration required. Only an Authorized runner can be quarantined — quarantining a Pending or Revoked runner conflicts (409). The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach, or no such runner authorization exists). Idempotent — quarantining an already-Quarantined runner returns the existing record.</remarks>
+public readonly struct QuarantineRunnerParams
 {
 
     /// <summary>
