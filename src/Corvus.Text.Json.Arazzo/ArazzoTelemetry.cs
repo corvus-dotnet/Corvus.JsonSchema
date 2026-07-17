@@ -70,6 +70,15 @@ public static class ArazzoTelemetry
     /// stronger grant), or <c>refused</c> (the run was out of read reach or absent). The read-access audit signal.</summary>
     public const string JournalDisclosureTag = "corvus.arazzo.journal_disclosure";
 
+    /// <summary>The span tag carrying the kind of resource a governance action targeted (design §850): e.g.
+    /// <c>access-request</c>, <c>credential</c>, <c>security-binding</c>, <c>runner</c>, <c>environment</c>. Paired with
+    /// <see cref="TargetIdTag"/> it names <em>which</em> resource a governance audit concerns, uniformly across surfaces.</summary>
+    public const string TargetKindTag = "corvus.arazzo.target_kind";
+
+    /// <summary>The span tag carrying the id (or name) of the resource a governance action targeted (design §850) — an
+    /// identifier only, never a payload. Paired with <see cref="TargetKindTag"/>.</summary>
+    public const string TargetIdTag = "corvus.arazzo.target_id";
+
     private static readonly string Version =
         typeof(ArazzoTelemetry).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 

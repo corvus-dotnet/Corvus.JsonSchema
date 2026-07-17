@@ -145,6 +145,11 @@ public static class ControlPlaneEndpointExtensions
         // observed identities into it, so the grantee typeahead is self-populating.
         IObservedIdentityStore observedStore = observedIdentityStore ?? new InMemoryObservedIdentityStore();
 
+        // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a
+        // deployment can route/retain it independently; the audit spans ride the always-registered Corvus.Arazzo
+        // ActivitySource regardless. Shared by the journal-read audit (§860) and the governance-mutation audit (§850).
+        ILogger? auditLogger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit");
+
         // The administration management API (§15) governs a base id's administrator set by current-administrator
         // membership; it delegates to the catalog client (which owns the administrator store, if one is configured) and
         // names administrators by deployment-mapped grants rather than raw internal tags.
@@ -155,7 +160,7 @@ public static class ControlPlaneEndpointExtensions
         // in-process when the deployment's policy is the persistent one).
         IAccessRequestStore requestStore = accessRequestStore ?? new InMemoryAccessRequestStore();
         var approvalService = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy);
-        var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, selfElevationEligibility);
+        var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, selfElevationEligibility, auditLogger);
 
         var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);
 
@@ -217,10 +222,6 @@ public static class ControlPlaneEndpointExtensions
         var gitHubHandler = new ArazzoControlPlaneGitHubHandler(
             gitHubBroker, access, endpoints.ServiceProvider.GetService<IHttpContextAccessor>(), accessRequestSubjectClaimType,
             workspaceStore: wcStore, sources: srcStore);
-
-        // The §860 step-journal read-access audit logs under a dedicated "Corvus.Arazzo.Audit" category so a deployment can
-        // route/retain it independently; the audit span rides the always-registered Corvus.Arazzo ActivitySource regardless.
-        ILogger? auditLogger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit");
 
         return endpoints.MapApiEndpoints(
             securityHandler,

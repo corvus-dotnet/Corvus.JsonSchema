@@ -2,10 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -253,10 +255,102 @@ public sealed class ControlPlaneAccessRequestsApiTests
         }
     }
 
+    [TestMethod]
+    public async Task Approving_a_request_emits_a_granted_governance_audit_span()
+    {
+        // §850: a governance decision leaves an audit trace — the span names the action, the decider (actor), the
+        // targeted request, and the outcome. The decider is the authenticated principal, not a fixed service identity.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", "boss");
+        string id = await SubmitAsync(host, "flow", "alice");
+
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve", Auth, "boss")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        Activity span = audit.ForTarget(id);
+        span.OperationName.ShouldBe("access-request.approve");
+        span.GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("granted");
+        span.GetTagItem(ArazzoTelemetry.ActorTag).ShouldBe("boss");
+        span.GetTagItem(ArazzoTelemetry.TargetKindTag).ShouldBe("access-request");
+    }
+
+    [TestMethod]
+    public async Task A_self_decision_refusal_is_audited_as_refused_own_request()
+    {
+        // The independent-decision bar refuses alice deciding her own request; that the security control fired — who
+        // tried to self-approve what — is exactly the signal a security team wants, so the refusal is audited too.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", "alice");
+        string id = await SubmitAsync(host, "flow", "alice");
+
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        Activity span = audit.ForTarget(id);
+        span.OperationName.ShouldBe("access-request.approve");
+        span.GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("refused-own-request");
+        span.GetTagItem(ArazzoTelemetry.ActorTag).ShouldBe("alice");
+    }
+
+    [TestMethod]
+    public async Task Denying_a_request_emits_a_denied_governance_audit_span()
+    {
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", "boss");
+        string id = await SubmitAsync(host, "flow", "alice");
+
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/deny", Auth, "boss")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        Activity span = audit.ForTarget(id);
+        span.OperationName.ShouldBe("access-request.deny");
+        span.GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("denied");
+    }
+
     private static async Task<string> SubmitAsync(Scoped host, string workflowId, string who)
     {
         using Stj.JsonDocument submitted = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", $$"""{"baseWorkflowId":"{{workflowId}}","requestedScopes":["runs:write"]}""", Auth, who));
         return submitted.RootElement.GetProperty("id").GetString()!;
+    }
+
+    /// <summary>Captures the governance-audit spans (design §850) the access-request surface emits on the Arazzo <see cref="ActivitySource"/>.</summary>
+    private sealed class GovernanceAuditSpans : IDisposable
+    {
+        private readonly List<Activity> spans = [];
+        private readonly ActivityListener listener;
+
+        private GovernanceAuditSpans()
+        {
+            this.listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == ArazzoTelemetry.ActivitySourceName,
+                Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+                ActivityStopped = activity =>
+                {
+                    if (activity.OperationName.StartsWith("access-request.", StringComparison.Ordinal))
+                    {
+                        lock (this.spans)
+                        {
+                            this.spans.Add(activity);
+                        }
+                    }
+                },
+            };
+            ActivitySource.AddActivityListener(this.listener);
+        }
+
+        public static GovernanceAuditSpans Capture() => new();
+
+        // The single audit span for the given request id — asserts exactly one was emitted (other tests carry other ids).
+        public Activity ForTarget(string targetId)
+        {
+            lock (this.spans)
+            {
+                return this.spans.Single(s => (string?)s.GetTagItem(ArazzoTelemetry.TargetIdTag) == targetId);
+            }
+        }
+
+        public void Dispose() => this.listener.Dispose();
     }
 
     private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
