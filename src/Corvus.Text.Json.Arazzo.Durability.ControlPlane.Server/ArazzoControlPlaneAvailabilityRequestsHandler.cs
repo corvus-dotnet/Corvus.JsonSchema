@@ -240,6 +240,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         int versionNumber;
         WorkflowEtag expectedEtag;
         string statusValue;
+        bool isRequester;
         using (ParsedJsonDocument<AvailabilityRequest>? fetched = await this.requests.GetAsync(id, cancellationToken).ConfigureAwait(false))
         {
             if (fetched is null)
@@ -253,12 +254,20 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             versionNumber = request.VersionNumberValue;
             expectedEtag = request.EtagValue;
             statusValue = request.StatusValue;
+            isRequester = this.IsRequester(request);
         }
 
         // Governance: the caller must be a current administrator of the request's target environment.
         if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
         {
             return ApproveAvailabilityRequestResult.Forbidden(NotAdministratorProblem(environment), workspace);
+        }
+
+        // Independent decision: a request is never decided by its own requester, even an administrator — approval
+        // must come from a second pair of hands. The requester's own exit is withdraw.
+        if (isRequester)
+        {
+            return ApproveAvailabilityRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
         if (!IsPending(statusValue))
@@ -319,6 +328,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         string environment;
         WorkflowEtag expectedEtag;
         string statusValue;
+        bool isRequester;
         using (ParsedJsonDocument<AvailabilityRequest>? fetched = await this.requests.GetAsync(id, cancellationToken).ConfigureAwait(false))
         {
             if (fetched is null)
@@ -330,11 +340,19 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             environment = request.EnvironmentValue;
             expectedEtag = request.EtagValue;
             statusValue = request.StatusValue;
+            isRequester = this.IsRequester(request);
         }
 
         if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
         {
             return DenyAvailabilityRequestResult.Forbidden(NotAdministratorProblem(environment), workspace);
+        }
+
+        // Independent decision: denying your own request is withdraw wearing a decision's clothes — refuse it so
+        // decidedBy always names an independent administrator.
+        if (isRequester)
+        {
+            return DenyAvailabilityRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
         if (!IsPending(statusValue))
@@ -530,6 +548,9 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 
     private static Models.ProblemDetails.Source NotRequesterProblem()
         => Problem("not-requester", "Not the requester", 403, "Only the requester may withdraw their request.");
+
+    private static Models.ProblemDetails.Source OwnRequestProblem()
+        => Problem("own-request", "Own request", 403, "You raised this request, so another administrator must decide it; you may withdraw it instead.");
 
     private static Models.ProblemDetails.Source NotAdministratorProblem(string environment)
         => Problem("not-administrator", "Not an administrator", 403, $"You are not a current administrator of environment '{environment}'.");

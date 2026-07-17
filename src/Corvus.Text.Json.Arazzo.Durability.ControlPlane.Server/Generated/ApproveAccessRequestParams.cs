@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the ApproveAccessRequest operation (POST /accessRequests/{requestId}/approve).
 /// </summary>
-/// <remarks>Approves a pending request, writing the capped, time-boxed grant (run access only, scoped to the workflow). The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).</remarks>
+/// <remarks>Approves a pending request, writing the capped, time-boxed grant (run access only, scoped to the workflow). The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject — a decision is always independent, so a request that would grant the caller access is refused (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).</remarks>
 public readonly struct ApproveAccessRequestParams
 {
 

@@ -4456,6 +4456,12 @@ export function createMockControlPlane(options = {}) {
       const denied = requireAdministrator(`${action} an access request`, { workflow: r.baseWorkflowId });
       if (denied) return denied;
     }
+
+    // Independent decision (server parity): a request whose subject is the caller is never theirs to decide —
+    // approving it would mint the caller their own grant. 403 own-request; the requester's exit is withdraw.
+    if ((action === 'approve' || action === 'approveAsEligible' || action === 'deny') && r.subjectClaimValue === actingSubject()) {
+      return problem(403, 'Own request', 'This request would grant you access, so another administrator must decide it; you may withdraw it instead.');
+    }
     const reason = body?.reason;
     const requirePending = (verb) => r.status === 'Pending' ? null
       : problem(409, 'Invalid access-request state', `Request '${id}' is ${r.status}; only a pending request can be ${verb}.`);
@@ -4594,6 +4600,12 @@ export function createMockControlPlane(options = {}) {
     if (action !== 'withdraw') {
       const denied = requireAdministrator(`${action} a promotion request`, { environment: r.environment });
       if (denied) return denied;
+
+      // Independent decision (server parity): a request is never decided by its own requester, even an
+      // administrator. 403 own-request; the requester's exit is withdraw.
+      if (r.createdBy === actingSubject()) {
+        return problem(403, 'Own request', 'You raised this request, so another administrator must decide it; you may withdraw it instead.');
+      }
     }
     const reason = body?.reason;
     const requirePending = (verb) => r.status === 'Pending' ? null
@@ -4654,6 +4666,9 @@ export function createMockControlPlane(options = {}) {
     // show the gated-elevation model from both sides. Defaults to 'administrator'.
     setPersona: (name) => { persona = personaState(name); return persona.name; },
     get persona() { return persona.name; },
+    // The acting persona's subject — what a real host learns from its identity endpoint (the BFF /me) — so demo
+    // pages can stamp acting-subject on the request queues exactly as the live shell does.
+    actingSubject: () => actingSubject(),
     fetch: async (url, init) => {
       if (latency) await new Promise((r) => setTimeout(r, latency));
       return handle(url, init);

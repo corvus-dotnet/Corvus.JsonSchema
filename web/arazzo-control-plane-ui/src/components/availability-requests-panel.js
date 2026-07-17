@@ -34,7 +34,7 @@ const STATUS_FILTERS = ['', 'Pending', 'Approved', 'Denied', 'Withdrawn'];
 
 class ArazzoAvailabilityRequests extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'view', 'environment', 'theme', 'page-size'];
+    return ['base-url', 'view', 'environment', 'theme', 'page-size', 'acting-subject'];
   }
 
   constructor() {
@@ -92,6 +92,15 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
 
   get environment() {
     return this.getAttribute('environment') || '';
+  }
+
+  /**
+   * The acting principal's subject (the host stamps it from its identity source, e.g. the BFF /me endpoint), so the
+   * queue can render the independent-decision rule on the caller's own rows instead of buttons that can only 403.
+   * Absent = unknown identity: buttons stay live and the server's own-request refusal is the backstop.
+   */
+  get actingSubject() {
+    return this.getAttribute('acting-subject') || '';
   }
 
   set environment(value) {
@@ -253,6 +262,8 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
         .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
         .actions button { font-size: 12px; padding: 4px 9px; }
+        .actions button[disabled] { opacity: 0.45; cursor: not-allowed; }
+        .own-note { flex-basis: 100%; text-align: right; font-size: 11px; color: var(--_muted); }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .err { flex: none; margin: 10px 12px; }
@@ -412,7 +423,15 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
       : '<span class="muted">—</span>';
     let actions = '';
     if (r.status === 'Pending') {
-      actions = `
+      // Independent decision: the server refuses a requester deciding their own request (403 own-request), so the
+      // caller's own rows render that fact — disabled decisions with the reason — not buttons that can only fail.
+      const own = this.actingSubject !== '' && r.createdBy === this.actingSubject;
+      actions = own
+        ? `
+        <button class="primary act" type="button" disabled title="Your own request — another administrator must decide it">Approve</button>
+        <button class="danger act" type="button" disabled title="Your own request — another administrator must decide it">Deny</button>
+        <div class="own-note">yours — needs another administrator</div>`
+        : `
         <button class="primary act" type="button" data-id="${escapeHtml(r.id)}" data-action="approve">Approve</button>
         <button class="danger act" type="button" data-id="${escapeHtml(r.id)}" data-action="deny">Deny</button>`;
     }

@@ -3973,7 +3973,7 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["accessRequests"],
         "summary": "Approve an access request",
-        "description": "Approves a pending request, writing the capped, time-boxed grant (run access only, scoped to the workflow). The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).",
+        "description": "Approves a pending request, writing the capped, time-boxed grant (run access only, scoped to the workflow). The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject — a decision is always independent, so a request that would grant the caller access is refused (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).",
         "requestBody": {
           "required": false,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestDecisionNote" } } }
@@ -3996,7 +3996,7 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["accessRequests"],
         "summary": "Approve an access request as durable eligibility",
-        "description": "Approves a pending request as durable eligibility (design §16.5.3) rather than as a live grant: writes a capped eligibility assignment scoped to the workflow, after which the requester may self-elevate JIT without re-approval (each activation independently time-boxed). The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).",
+        "description": "Approves a pending request as durable eligibility (design §16.5.3) rather than as a live grant: writes a capped eligibility assignment scoped to the workflow, after which the requester may self-elevate JIT without re-approval (each activation independently time-boxed; self-elevation is the designed exception to the independent-decision rule, because the eligibility itself was independently decided). The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject (403 own-request). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).",
         "requestBody": {
           "required": false,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestEligibilityNote" } } }
@@ -4019,7 +4019,7 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["accessRequests"],
         "summary": "Deny an access request",
-        "description": "Denies a pending request. The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409).",
+        "description": "Denies a pending request. The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).",
         "requestBody": {
           "required": false,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccessRequestDecisionNote" } } }
@@ -4207,7 +4207,7 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["availabilityRequests"],
         "summary": "Approve an availability request",
-        "description": "Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).",
+        "description": "Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise), and must not be the request's own requester — a decision is always independent, even for an administrator (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).",
         "requestBody": {
           "required": false,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestDecisionNote" } } }
@@ -4229,7 +4229,7 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["availabilityRequests"],
         "summary": "Deny an availability request",
-        "description": "Denies a pending request. The caller must be an administrator of the target environment (403 otherwise). A request that is not pending conflicts (409).",
+        "description": "Denies a pending request. The caller must be an administrator of the target environment (403 otherwise), and must not be the request's own requester (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).",
         "requestBody": {
           "required": false,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestDecisionNote" } } }

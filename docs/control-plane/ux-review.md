@@ -364,6 +364,9 @@ and many-to-many**, NOT a supersede:
   - Otherwise → raise a **request** to that environment's administrators via a **new approver inbox**, mirroring the
     §16.5 access-request/approval pattern (actionable-default Pending, context-per-row, decision + audit note), with
     *environment* administrators as approvers and *(workflow version → environment)* as the subject.
+  - **Independent decision**: a request is never decided by its own requester, even an administrator (403
+    `own-request` on approve and deny alike; the requester's exit is withdraw) — the same bar as §16.5, so
+    `decidedBy` always names a second pair of hands.
 - A version can be made available in an environment only where its sources have a **full credential set** (§7.7) —
   readiness gates availability.
 - A workflow version's detail shows the environments it is available in; an environment shows the (workflow, version)

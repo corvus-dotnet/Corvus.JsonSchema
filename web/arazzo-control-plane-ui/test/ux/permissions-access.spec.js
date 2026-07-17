@@ -533,6 +533,45 @@ test('the approver inbox offers approve / make-eligible / deny on each pending r
   assertClean(errors);
 });
 
+test('independent decision end to end: a request you raised is non-actionable in your own inbox (server + shell agree)', async ({ page }) => {
+  const errors = watchErrors(page);
+  // The Operator persona (omar@ops) administers staging AND cannot promote directly, so he raises a request — then
+  // that request lands in his OWN approver inbox, where the independent-decision rule must make it non-actionable.
+  await openApp(page);
+  await page.locator('#persona').selectOption('operator');
+  await page.getByRole('tab', { name: 'Promotions' }).click();
+  const panel = page.locator('arazzo-availability-requests');
+
+  // Raise a staging promotion request through the dialog (onboard-customer is ready in staging).
+  await panel.locator('.new').click();
+  const dlg = panel.locator('arazzo-availability-request-dialog');
+  await expect(dlg.locator('dialog')).toBeVisible();
+  const wfInput = dlg.locator('.sub-wf input.q');
+  await wfInput.fill('onboard-customer');
+  await dlg.locator('.sub-wf .results li[data-index]', { hasText: 'onboard-customer' }).first().click();
+  await expect(dlg.locator('.ver-in option[value="1"]')).toHaveCount(1);
+  await dlg.locator('.env-in').selectOption('staging');
+  await dlg.locator('.reason-in').fill('ux: independent-decision self-request');
+  await dlg.locator('.ok').click();
+  await expect(dlg.locator('dialog')).not.toBeVisible();
+
+  // In his approver inbox the row he just raised is his own: decisions are disabled, with the reason, and there is
+  // no live approve/deny to click.
+  await panel.locator('.tab-queue').click();
+  const own = panel.locator('tbody tr[data-id]', { hasText: 'ux: independent-decision self-request' });
+  await expect(own).toHaveCount(1);
+  await expect(own.locator('.actions button[disabled]').first()).toBeVisible();
+  await expect(own.locator('.own-note')).toBeVisible();
+  await expect(own.locator('.act[data-action="approve"]')).toHaveCount(0);
+
+  // And the server agrees: even if a client forced the call, the mock refuses it 403 (proven in the component tier);
+  // here the shell simply never offers the button. His own exit — withdraw — remains available in My requests.
+  await panel.locator('.tab-mine').click();
+  await expect(panel.locator('tbody tr[data-id]', { hasText: 'ux: independent-decision self-request' })
+    .locator('.act[data-action="withdraw"]')).toBeVisible();
+  assertClean(errors);
+});
+
 test('approve-as-eligible captures an eligibility window and lands the request in the Eligible state (PIM, not active)', async ({ page }) => {
   const errors = watchErrors(page);
   await openTab(page, 'Access');

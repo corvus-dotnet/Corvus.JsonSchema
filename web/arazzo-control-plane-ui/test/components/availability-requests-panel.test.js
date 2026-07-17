@@ -27,6 +27,34 @@ describe('<arazzo-availability-requests>', () => {
     ok(el.shadowRoot.textContent.includes('production'), 'shows the target environment');
   });
 
+  it('renders the independent-decision rule on the caller’s own queue row; other rows stay actionable', async () => {
+    el = panelWithMock({ view: 'queue' });
+    // The host stamps the acting subject from its identity source (BFF /me / demo persona); carol raised areq-3003.
+    el.setAttribute('acting-subject', 'carol');
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const own = el.shadowRoot.querySelector('tr[data-id="areq-3003"]');
+    ok(own.querySelector('.actions button[disabled]'), 'the own row’s decisions are disabled');
+    ok(own.querySelector('.own-note'), 'and it says why (another administrator must decide)');
+    ok(!own.querySelector('.act[data-action="approve"]'), 'no live approve on the own row');
+    const other = el.shadowRoot.querySelector('tr[data-id="areq-3002"]');
+    ok(other.querySelector('.act[data-action="approve"]'), 'other requesters’ rows keep live decisions');
+  });
+
+  it('the mock refuses deciding your own promotion request (server parity: 403 own-request)', async () => {
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    const submit = await mock.fetch('https://mock/arazzo/v1/availabilityRequests', {
+      method: 'POST',
+      body: JSON.stringify({ baseWorkflowId: 'onboard-customer', versionNumber: 1, environment: 'staging' }),
+    });
+    equal(submit.status, 201, 'the acting persona submits their own request');
+    const { id } = await submit.json();
+    const decide = await mock.fetch(`https://mock/arazzo/v1/availabilityRequests/${id}/approve`, { method: 'POST' });
+    equal(decide.status, 403, 'deciding it yourself is refused, administrator or not');
+    const problem = await decide.json();
+    ok(/another administrator/i.test(problem.detail), 'the problem explains the independent-decision rule');
+  });
+
   it('opens straight to the actionable inbox (Pending) in the approver view', async () => {
     el = panelWithMock({ view: 'queue' });
     mount(el);

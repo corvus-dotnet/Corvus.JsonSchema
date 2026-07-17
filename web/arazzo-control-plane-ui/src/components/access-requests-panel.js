@@ -38,7 +38,7 @@ const STATUS_FILTERS = ['', 'Pending', 'Approved', 'Eligible', 'Denied', 'Withdr
 
 class ArazzoAccessRequests extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'view', 'base-workflow-id', 'theme', 'page-size'];
+    return ['base-url', 'view', 'base-workflow-id', 'theme', 'page-size', 'acting-subject'];
   }
 
   constructor() {
@@ -96,6 +96,16 @@ class ArazzoAccessRequests extends ArazzoElement {
 
   get baseWorkflowId() {
     return this.getAttribute('base-workflow-id') || '';
+  }
+
+  /**
+   * The acting principal's subject (the host stamps it from its identity source, e.g. the BFF /me endpoint), so the
+   * queue can render the independent-decision rule on the caller's own rows instead of buttons that can only 403.
+   * Keyed on the request's SUBJECT — who a decision would empower — exactly as the server's bar is. Absent =
+   * unknown identity: buttons stay live and the server's own-request refusal is the backstop.
+   */
+  get actingSubject() {
+    return this.getAttribute('acting-subject') || '';
   }
 
   set baseWorkflowId(value) {
@@ -268,6 +278,8 @@ class ArazzoAccessRequests extends ArazzoElement {
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
         .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
         .actions button { font-size: 12px; padding: 4px 9px; }
+        .actions button[disabled] { opacity: 0.45; cursor: not-allowed; }
+        .own-note { flex-basis: 100%; text-align: right; font-size: 11px; color: var(--_muted); }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .err { flex: none; margin: 10px 12px; }
@@ -440,7 +452,16 @@ class ArazzoAccessRequests extends ArazzoElement {
       : '<span class="muted">—</span>';
     let actions = '';
     if (r.status === 'Pending') {
-      actions = `
+      // Independent decision: a request whose SUBJECT is the caller is never theirs to decide — approving it would
+      // mint them their own grant — so render the rule (disabled decisions + reason), not buttons that can only 403.
+      const own = this.actingSubject !== '' && r.subjectClaimValue === this.actingSubject;
+      actions = own
+        ? `
+        <button class="primary act" type="button" disabled title="This request would grant you access — another administrator must decide it">Approve</button>
+        <button class="ghost act" type="button" disabled title="This request would grant you access — another administrator must decide it">Make eligible</button>
+        <button class="danger act" type="button" disabled title="This request would grant you access — another administrator must decide it">Deny</button>
+        <div class="own-note">yours — needs another administrator</div>`
+        : `
         <button class="primary act" type="button" data-id="${escapeHtml(r.id)}" data-action="approve">Approve</button>
         <button class="ghost act" type="button" data-id="${escapeHtml(r.id)}" data-action="approve-as-eligible">Make eligible</button>
         <button class="danger act" type="button" data-id="${escapeHtml(r.id)}" data-action="deny">Deny</button>`;

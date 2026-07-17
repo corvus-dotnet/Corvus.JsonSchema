@@ -89,6 +89,35 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
     }
 
     [TestMethod]
+    public async Task A_requester_never_decides_their_own_request_even_as_an_administrator()
+    {
+        await using Scoped host = await StartAsync();
+
+        // acme administers 'production' (creator becomes administrator) and then raises a request ITSELF - the
+        // administrator-requester case the independent-decision bar exists for.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "acme");
+        string id = await host.SubmitAsync("checkout", 1, "production", "acme");
+
+        // Approve and deny are both refused 403 own-request: a decision must come from a second administrator.
+        HttpResponseMessage approve = await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/approve", "acme");
+        approve.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(approve))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldContain("own-request");
+        }
+
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/deny", "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // The request is untouched by the refused decisions (still Pending), and the requester's own exit - withdraw -
+        // still works.
+        using (Stj.JsonDocument withdrawn = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/withdraw", "acme")))
+        {
+            withdrawn.RootElement.GetProperty("status").GetString().ShouldBe("Withdrawn");
+        }
+    }
+
+    [TestMethod]
     public async Task Submitting_stamps_the_requester_display_name_when_the_principal_resolves_one()
     {
         await using Scoped host = await StartAsync();

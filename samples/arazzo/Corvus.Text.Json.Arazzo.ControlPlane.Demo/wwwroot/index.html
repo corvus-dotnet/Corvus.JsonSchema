@@ -192,6 +192,20 @@
     CLIENT_PANELS.forEach((tag) => document.querySelectorAll(tag).forEach((el) => { el.client = sharedClient; }));
     const allPanels = [...FETCH_PANELS, ...CLIENT_PANELS].flatMap((tag) => [...document.querySelectorAll(tag)]);
 
+    // The acting subject (the BFF's /me name is the same preferred_username the server keys requests on) lets the
+    // request queues render the independent-decision rule on the caller's own rows — disabled decisions with the
+    // reason — instead of buttons that can only 403. If /me is unavailable the attribute stays unset and the
+    // server's own-request refusal remains the (sole) backstop.
+    fetch('/me', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        if (me?.name) {
+          document.querySelectorAll('arazzo-access-requests, arazzo-availability-requests')
+            .forEach((el) => el.setAttribute('acting-subject', me.name));
+        }
+      })
+      .catch(() => { /* no BFF: server-side enforcement only */ });
+
     // Approvals badges: poll the three approver queues' bounded /count endpoints for outstanding (Pending) work and badge
     // the Approvals tab + its sub-tabs, so the user sees at a glance whether there is anything to action. Auto-refreshes;
     // a 403 (the user administers nothing) just yields 0 and hides the badge. The count is bounded by the server's cap —

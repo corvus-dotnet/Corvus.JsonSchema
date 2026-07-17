@@ -223,6 +223,36 @@ public sealed class ControlPlaneAccessRequestsApiTests
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
+    [TestMethod]
+    public async Task A_requester_never_decides_their_own_access_request_even_as_the_administrator()
+    {
+        await using Scoped host = await StartAsync();
+
+        // alice administers 'flow' AND raises a request for it herself — approving it would mint alice her own
+        // grant, the exact escalation the independent-decision bar refuses.
+        await EstablishAsync(host.Catalog, "flow", "alice");
+        string id = await SubmitAsync(host, "flow", "alice");
+
+        // Every decision verb is refused 403 own-request: approve (a live grant), approveAsEligible (durable
+        // eligibility), and deny alike.
+        HttpResponseMessage approve = await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve", Auth, "alice");
+        approve.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(approve))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldContain("own-request");
+        }
+
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approveAsEligible", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/deny", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // The refused decisions changed nothing: the request is still pending, and the requester's own exit —
+        // withdraw — still works.
+        using (Stj.JsonDocument withdrawn = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/withdraw", Auth, "alice")))
+        {
+            withdrawn.RootElement.GetProperty("status").GetString().ShouldBe("Withdrawn");
+        }
+    }
+
     private static async Task<string> SubmitAsync(Scoped host, string workflowId, string who)
     {
         using Stj.JsonDocument submitted = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", $$"""{"baseWorkflowId":"{{workflowId}}","requestedScopes":["runs:write"]}""", Auth, who));

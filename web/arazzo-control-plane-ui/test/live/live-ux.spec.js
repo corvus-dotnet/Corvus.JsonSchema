@@ -365,6 +365,67 @@ test('the promotion loop crosses real identities: wanda requests staging availab
   }
 });
 
+test('independent decision on real infrastructure: an admin cannot decide a promotion they raised; a second admin can', async ({ browser }) => {
+  // The §7.8 independent-decision rule end to end on real identities. arazzo-admin administers every
+  // environment (so the request lands in their OWN approvals queue) AND can raise a request — the exact
+  // administrator-requester case the bar exists for. Their own row must be non-actionable; erin, an
+  // independent staging administrator, decides it (deny keeps the suite re-runnable — nothing lands).
+  const adminCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  const erinCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  try {
+    const adminPage = await adminCtx.newPage();
+    await signIn(adminPage, LIVE_USERS.admin);
+
+    const reason = uniq('live-ux own-request');
+    await openLiveTab(adminPage, 'Requests');
+    await openLiveSubTab(adminPage, 'sub-requests-availability');
+    const minePanel = adminPage.locator('#sub-requests-availability arazzo-availability-requests');
+    await minePanel.locator('button.new').click();
+    const dlg = adminPage.locator('arazzo-availability-request-dialog');
+    const wfInput = dlg.locator('.sub-wf input.q');
+    await wfInput.click();
+    await wfInput.fill('nightly');
+    await dlg.locator('.sub-wf .results li[data-index]', { hasText: 'nightly-reconcile' }).first().click();
+    await expect(dlg.locator('.ver-in')).toBeEnabled();
+    await dlg.locator('.env-in').selectOption('staging');
+    await dlg.locator('.reason-in').fill(reason);
+    await dlg.locator('button.ok').click();
+    await expect(minePanel.locator('tbody tr[data-id]', { hasText: reason }).locator('.badge')).toHaveText('Pending');
+
+    // In the admin's OWN approvals queue the request they just raised is non-actionable: the shell stamps
+    // acting-subject from /me and renders the independent-decision rule (disabled decisions + the reason),
+    // never a live approve/deny.
+    await openLiveTab(adminPage, 'Approvals');
+    await openLiveSubTab(adminPage, 'sub-approvals-availability');
+    const ownQueue = adminPage.locator('#sub-approvals-availability arazzo-availability-requests');
+    // The queue panel loaded at sign-in, before the submission — refresh it to pick the new request up.
+    await ownQueue.locator('button.refresh').click();
+    const ownRow = ownQueue.locator('tbody tr[data-id]', { hasText: reason });
+    await expect(ownRow).toHaveCount(1);
+    await expect(ownRow.locator('.actions button[disabled]').first()).toBeVisible();
+    await expect(ownRow.locator('.own-note')).toBeVisible();
+    await expect(ownRow.locator('.act[data-action="approve"]')).toHaveCount(0);
+
+    // erin is an independent staging administrator: the same request IS hers to decide. The server agrees —
+    // the decision goes through (proving the bar is per-requester, not a blanket lock).
+    const erinPage = await erinCtx.newPage();
+    await signIn(erinPage, LIVE_USERS.erin);
+    await openLiveTab(erinPage, 'Approvals');
+    await openLiveSubTab(erinPage, 'sub-approvals-availability');
+    const erinQueue = erinPage.locator('#sub-approvals-availability arazzo-availability-requests');
+    const erinRow = erinQueue.locator('tbody tr[data-id]', { hasText: reason });
+    await expect(erinRow).toHaveCount(1);
+    await expect(erinRow.locator('.act[data-action="deny"]')).toBeVisible(); // actionable for the independent admin
+    await erinRow.locator('.act[data-action="deny"]').click();
+    await erinQueue.locator('dialog.decision-dialog .reason-in').fill('Live UX test cleanup: denied by design.');
+    await erinQueue.locator('dialog.decision-dialog button.ok').click();
+    await expect(erinQueue.locator('tbody tr[data-id]', { hasText: reason })).toHaveCount(0);
+  } finally {
+    await adminCtx.close();
+    await erinCtx.close();
+  }
+});
+
 test('the Access overview offers inline Revoke in the live shell (server-authority gating)', async ({ page }) => {
   // The live host sets no scopes attributes by design; an absent attribute must mean "the server
   // is the authority", not "hide the privileged affordances". Regression for the hidden-Revoke

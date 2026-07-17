@@ -238,6 +238,11 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     public async ValueTask<ApproveAccessRequestResult> HandleApproveAccessRequestAsync(ApproveAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;
+        if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            return ApproveAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
+        }
+
         try
         {
             ParsedJsonDocument<AccessRequest>? result = await this.approval.ApproveAsync(id, this.CallerIdentity(), this.CallerActor(), NoteReason(parameters.Body), cancellationToken).ConfigureAwait(false);
@@ -263,6 +268,11 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     public async ValueTask<ApproveAccessRequestAsEligibleResult> HandleApproveAccessRequestAsEligibleAsync(ApproveAccessRequestAsEligibleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;
+        if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            return ApproveAccessRequestAsEligibleResult.Forbidden(OwnRequestProblem(), workspace);
+        }
+
         try
         {
             ParsedJsonDocument<AccessRequest>? result = await this.approval.ApproveAsEligibleAsync(id, this.CallerIdentity(), this.CallerActor(), EligibilityReason(parameters.Body), EligibilityWindow(parameters.Body), cancellationToken).ConfigureAwait(false);
@@ -288,6 +298,11 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     public async ValueTask<DenyAccessRequestResult> HandleDenyAccessRequestAsync(DenyAccessRequestParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.RequestId;
+        if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            return DenyAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
+        }
+
         try
         {
             ParsedJsonDocument<AccessRequest>? result = await this.approval.DenyAsync(id, this.CallerIdentity(), this.CallerActor(), NoteReason(parameters.Body), cancellationToken).ConfigureAwait(false);
@@ -460,6 +475,20 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             && request.SubjectClaimTypeEquals(this.subjectClaimType)
             && request.SubjectClaimValueEquals(subject);
     }
+
+    // Independent decision (§16.5): a request whose SUBJECT is the caller is never decided by the caller —
+    // approving it would mint the caller their own grant (the privilege-escalation case), and denying it is
+    // withdraw wearing a decision's clothes. Keyed on the subject claim, not the audit actor, because the
+    // subject is who the decision empowers. Self-ELEVATION of an already-approved eligibility is untouched:
+    // that is the §16.5.3 design, and the eligibility itself was independently decided.
+    private async ValueTask<bool> IsOwnRequestAsync(string id, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(id, cancellationToken).ConfigureAwait(false);
+        return fetched is { } doc && this.IsRequester(doc.RootElement);
+    }
+
+    private static Models.ProblemDetails.Source OwnRequestProblem()
+        => Problem("own-request", "Own request", 403, "This request would grant you access, so another administrator must decide it; you may withdraw it instead.");
 
     private async ValueTask<bool> IsAdministratorAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {

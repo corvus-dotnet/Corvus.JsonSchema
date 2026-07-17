@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the DenyAvailabilityRequest operation (POST /availabilityRequests/{requestId}/deny).
 /// </summary>
-/// <remarks>Denies a pending request. The caller must be an administrator of the target environment (403 otherwise). A request that is not pending conflicts (409).</remarks>
+/// <remarks>Denies a pending request. The caller must be an administrator of the target environment (403 otherwise), and must not be the request's own requester (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).</remarks>
 public readonly struct DenyAvailabilityRequestParams
 {
 

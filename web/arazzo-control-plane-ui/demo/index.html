@@ -201,6 +201,10 @@
       bindings.setAttribute('scopes', prefixed(scopes, 'security:'));
       overview.setAttribute('scopes', prefixed(scopes, 'security:')); // the who-can-do-what overview (gates inline Revoke)
       runnersPanel.setAttribute('scopes', prefixed(scopes, 'runs:')); // runs:read; read-only observability
+      // The acting subject (what a real host learns from its BFF /me): lets the queues render the
+      // independent-decision rule on the caller's own rows instead of decisions that can only 403.
+      access.setAttribute('acting-subject', mock.actingSubject());
+      promotions.setAttribute('acting-subject', mock.actingSubject());
       // A persona change swaps the caller's scopes AND reach, so reset every surface to page 1 (a stale page/cursor from
       // the previous caller's data must not carry over, and an open detail may now be out of reach). Prefer reload().
       for (const c of [panel, catalog, credentialsPanel, environments, access, promotions, reach, bindings, runnersPanel, runnerAuth]) {

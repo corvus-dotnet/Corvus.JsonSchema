@@ -27,6 +27,34 @@ describe('<arazzo-access-requests>', () => {
     ok(el.shadowRoot.textContent.includes('no access requests'), 'shows the empty state');
   });
 
+  it('renders the independent-decision rule on the caller’s own queue row; other rows stay actionable', async () => {
+    // The host stamps the acting subject (BFF /me / demo persona); the bar keys on the request's SUBJECT — who a
+    // decision would empower — so dave's pending request is not dave's to decide.
+    el = panelWithMock({ view: 'queue', 'acting-subject': 'dave' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const own = el.shadowRoot.querySelector('tr[data-id="req-2004"]');
+    ok(own.querySelector('.actions button[disabled]'), 'the own row’s decisions are disabled');
+    ok(own.querySelector('.own-note'), 'and it says why (another administrator must decide)');
+    ok(!own.querySelector('.act[data-action="approve"]'), 'no live approve on the own row');
+    const other = el.shadowRoot.querySelector('tr[data-id="req-2001"]');
+    ok(other.querySelector('.act[data-action="approve"]'), 'other subjects’ rows keep live decisions');
+  });
+
+  it('the mock refuses deciding a request that would grant YOU access (server parity: 403 own-request)', async () => {
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    const submit = await mock.fetch('https://mock/arazzo/v1/accessRequests', {
+      method: 'POST',
+      body: JSON.stringify({ baseWorkflowId: 'onboard-customer', requestedScopes: ['runs:write'] }),
+    });
+    equal(submit.status, 201, 'the acting persona submits a request for themselves');
+    const { id } = await submit.json();
+    for (const verb of ['approve', 'approveAsEligible', 'deny']) {
+      const decide = await mock.fetch(`https://mock/arazzo/v1/accessRequests/${id}/${verb}`, { method: 'POST' });
+      equal(decide.status, 403, `${verb} of your own request is refused, administrator or not`);
+    }
+  });
+
   it('filters the approver inbox by status', async () => {
     el = panelWithMock({ view: 'queue' });
     mount(el);
