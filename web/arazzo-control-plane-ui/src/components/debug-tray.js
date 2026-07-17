@@ -23,6 +23,7 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 import { actionEdgeId } from '../workflow-graph.js';
 import './value-editor.js';
+import './json-view.js';
 
 const OUTCOME_LABEL = {
   completed: '✓ completed',
@@ -182,6 +183,9 @@ class ArazzoDebugTray extends ArazzoElement {
     `;
     if (!trace) return;
 
+    // §843: hand the read-only outputs JSON to the CM6 views (in DOM order = the order jsonBlock pushed them).
+    this.$$('.ctx-json').forEach((el, i) => { el.value = this._ctxJson?.[i] ?? ''; });
+
     this.$('.scrub').addEventListener('input', (e) => { this.cursor = Number(e.target.value); });
     this.$('.prev').addEventListener('click', () => { this.cursor = this._cursor - 1; });
     this.$('.next').addEventListener('click', () => {
@@ -294,6 +298,13 @@ class ArazzoDebugTray extends ArazzoElement {
 
     const record = trace.steps[this._cursor - 1];
     const parts = [];
+    // §843: the read-only outputs blocks upgrade to a syntax-highlighted CM6 view (<arazzo-json-view>). The value is a
+    // property, so emit a placeholder here and set each element's .value after render() lands the markup (wireContextJson).
+    this._ctxJson = [];
+    const jsonBlock = (value) => {
+      this._ctxJson.push(JSON.stringify(value, null, 2));
+      return '<arazzo-json-view class="ctx-json" max-height="220"></arazzo-json-view>';
+    };
     if (record.requests?.length) {
       parts.push('<h4>exchanges — as sent</h4><table>' + record.requests.map((x) =>
         `<tr><td>${escapeHtml(x.method.toUpperCase())} ${escapeHtml(x.path)}</td><td class="v">${x.status ?? '<span class="muted">—</span>'}</td>
@@ -307,12 +318,12 @@ class ArazzoDebugTray extends ArazzoElement {
     }
 
     if (record.outputs !== undefined) {
-      parts.push(`<h4>outputs — $steps.${escapeHtml(record.stepId)}.outputs</h4><pre>${escapeHtml(JSON.stringify(record.outputs, null, 2))}</pre>`);
+      parts.push(`<h4>outputs — $steps.${escapeHtml(record.stepId)}.outputs</h4>${jsonBlock(record.outputs)}`);
     }
 
     if (this._cursor === this.length) {
       if (trace.outcome === 'completed' && trace.outputs !== undefined) {
-        parts.push(`<h4>workflow outputs</h4><pre>${escapeHtml(JSON.stringify(trace.outputs, null, 2))}</pre>`);
+        parts.push(`<h4>workflow outputs</h4>${jsonBlock(trace.outputs)}`);
       }
 
       if (trace.fault) {

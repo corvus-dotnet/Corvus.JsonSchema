@@ -47,6 +47,10 @@ describe('<arazzo-debug-tray>', () => {
     ok(el.shadowRoot.textContent.includes('✓ completed'));
     equal(el.shadowRoot.querySelectorAll('.step').length, 2);
     ok(el.shadowRoot.textContent.includes('workflow outputs'), 'final frame shows the workflow outputs');
+    // §843: the workflow outputs render in a read-only syntax-highlighted CM6 JSON view.
+    const outView = el.shadowRoot.querySelector('.ctx-json');
+    ok(outView && outView.tagName.toLowerCase() === 'arazzo-json-view', 'the outputs use the read-only JSON view');
+    ok(outView.value.includes('Fido'), 'carrying the workflow outputs');
   });
 
   it('the context pane shows what the step SENT — the resolved request body', () => {
@@ -64,7 +68,8 @@ describe('<arazzo-debug-tray>', () => {
     equal((await changed).detail.index, 1);
     ok(el.shadowRoot.textContent.includes('truth table'), 'the inspected step shows its criteria');
     ok(el.shadowRoot.textContent.includes('$statusCode == 200'));
-    ok(el.shadowRoot.textContent.includes('petName'), 'and its outputs');
+    // §843: the step outputs render in a read-only CM6 JSON view (nested shadow DOM), so read its .value.
+    ok(el.shadowRoot.querySelector('.ctx-json')?.value.includes('petName'), 'and its outputs');
   });
 
   it('frameAt projects the surface debugState: done steps, taken edges, active step', () => {
