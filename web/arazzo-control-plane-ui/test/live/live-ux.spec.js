@@ -206,6 +206,81 @@ test('the real runner is registered, online, and hosting the seeded workflow ver
   assertLiveClean(errors);
 });
 
+test('the real runner is quarantined then reinstated for real (§5.5): Approvals → Runners drives the live authorization store', async ({ page }) => {
+  // Exercises the runner lifecycle against the REAL Postgres authorization store: the composition's runner serves
+  // development and its auto-authorization has cleared it, so it sits Authorized. Quarantine it (temporary, drains
+  // in-flight), verify the reason persisted, then reinstate it. Shared-state discipline: the finally block guarantees
+  // the runner returns to Authorized so dispatch resumes for the rest of the suite (the auto-auth service only clears
+  // Pending runners, never a Quarantined one, so this cleanup is on us).
+  await signIn(page, LIVE_USERS.admin);
+  const errors = watchLiveErrors(page);
+  await openLiveTab(page, 'Approvals');
+  await openLiveSubTab(page, 'sub-approvals-runners');
+  const inbox = page.locator('arazzo-runner-authorizations');
+  await expect(inbox).toBeVisible();
+  const statusSel = inbox.locator('.toolbar .status');
+
+  // Find the development runner in the Authorized roster (the auto-auth service clears it shortly after boot).
+  await statusSel.selectOption('Authorized');
+  const authorizedRow = inbox.locator('tbody tr[data-key]').filter({ hasText: 'development' }).first();
+  await expect(authorizedRow).toBeVisible({ timeout: 20_000 });
+  const runnerKey = await authorizedRow.getAttribute('data-key');
+
+  const runnerRow = inbox.locator(`tbody tr[data-key="${runnerKey}"]`);
+  const dlg = inbox.locator('dialog.decision-dialog');
+  const refresh = inbox.locator('.toolbar .refresh');
+  // Force a fresh server fetch under a given status filter (the panel does not auto-refresh, so a switch alone can show
+  // a stale page); returns once the fetch has settled.
+  const showStatus = async (status) => { await statusSel.selectOption(status); await refresh.click(); };
+  const closeStrayDialog = async () => { if (await dlg.isVisible().catch(() => false)) { await dlg.locator('.cancel').click().catch(() => {}); } };
+
+  try {
+    // Drive the decision and CONFIRM it landed, retrying the whole interaction: a live mutation against a
+    // non-auto-refreshing panel can be missed on a fresh context's first render, and quarantine is idempotent and gated
+    // on Authorized, so re-issuing is safe. This asserts the real UI → API → Postgres round trip, not an optimistic view.
+    await expect(async () => {
+      await closeStrayDialog();
+      await showStatus('Authorized');
+      const quarantine = runnerRow.locator('.act[data-action="quarantine"]');
+      if (await quarantine.count()) {
+        await quarantine.click();
+        await expect(dlg).toBeVisible();
+        await expect(dlg).toContainText(/in-flight runs finish/i);
+        await dlg.locator('.reason-in').fill('Live UX quarantine probe.');
+        await dlg.locator('.ok').click();
+      }
+      await showStatus('Quarantined');
+      await expect(runnerRow.locator('.badge')).toHaveText('Quarantined', { timeout: 6_000 });
+    }).toPass({ timeout: 45_000 });
+
+    // The reason round-tripped through the real store.
+    await expect(runnerRow).toContainText('Live UX quarantine probe.');
+
+    // Reinstate returns it to Authorized (real DecideAsync) — same resilient confirm.
+    await expect(async () => {
+      await closeStrayDialog();
+      await showStatus('Quarantined');
+      const reinstate = runnerRow.locator('.act[data-action="reinstate"]');
+      if (await reinstate.count()) {
+        await reinstate.click();
+        await expect(dlg).toBeVisible();
+        await dlg.locator('.ok').click();
+      }
+      await showStatus('Authorized');
+      await expect(runnerRow.locator('.badge')).toHaveText('Authorized', { timeout: 6_000 });
+    }).toPass({ timeout: 45_000 });
+  } finally {
+    // Cleanup safety net: leave the shared runner Authorized so dispatch resumes for the rest of the suite.
+    try {
+      await closeStrayDialog();
+      await showStatus('Quarantined');
+      const stray = runnerRow.locator('.act[data-action="reinstate"]');
+      if (await stray.count()) { await stray.click(); await dlg.locator('.ok').click(); }
+    } catch { /* best effort — a reboot reseeds anyway */ }
+  }
+  assertLiveClean(errors);
+});
+
 test('a REAL suspended run shows its durable wait, and the cancel confirm survives live auto-refresh (then Keep running leaves it suspended)', async ({ page }) => {
   // The seeded async onboarding run is genuinely suspended in the store (waiting on a message the
   // demo never sends). Its detail must narrate the durable wait — and with auto-refresh ON, the
