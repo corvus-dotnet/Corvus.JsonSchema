@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// An availability request and its decision state (design &#167;7.8).
+/// A run&#39;s recorded step journal, projected from its authoritative checkpoint: the steps that recorded outputs, in recording order. Nothing is invented — a step that recorded no outputs is absent, and there is no per-step status or timing (the checkpoint does not attest those).
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct AvailabilityRequestView
+public readonly partial struct WorkflowRunSteps
 #if NET8_0_OR_GREATER
-    : IJsonElement<AvailabilityRequestView>,
+    : IJsonElement<WorkflowRunSteps>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<AvailabilityRequestView>,
+    : IJsonElement<WorkflowRunSteps>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct AvailabilityRequestView
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="AvailabilityRequestView"/> struct.
+    /// Initializes a new instance of the <see cref="WorkflowRunSteps"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal AvailabilityRequestView(IJsonDocument parent, int idx)
+    internal WorkflowRunSteps(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct AvailabilityRequestView
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static AvailabilityRequestView DefaultInstance { get; }
+    public static WorkflowRunSteps DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -159,294 +159,42 @@ public readonly partial struct AvailabilityRequestView
     }
 
     /// <summary>
-    /// Gets the <c>baseWorkflowId</c> property.
+    /// Gets the <c>runId</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunId
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RunIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>steps</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The base workflow id.
+    /// The recorded steps, in the order the checkpoint recorded them.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowId
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray Steps
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BaseWorkflowIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>createdAt</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// When the request was created.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime CreatedAt
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreatedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>createdBy</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The requester&#39;s audit identity.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString CreatedBy
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreatedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>decidedAt</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// When the request was decided, if decided.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime DecidedAt
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>decidedBy</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The deciding identity, if decided.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DecidedBy
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>decisionReason</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// An optional note recorded with the decision.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString DecisionReason
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecisionReasonUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>environment</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The target environment.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>etag</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The request&#39;s optimistic-concurrency token.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Etag
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EtagUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>id</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The request&#39;s stable id.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Id
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>reason</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The optional justification supplied with the request.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Reason
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReasonUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>requesterLabel</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// An optional human-friendly requester label.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequesterLabel
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequesterLabelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>status</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The lifecycle state. &#39;Approved&#39; means the version was made available in the environment; &#39;Withdrawn&#39; means the requester withdrew the pending request.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestView.StatusEntity Status
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AvailabilityRequestView.StatusEntity value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>versionNumber</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The version number requested.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32 VersionNumber
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionNumberUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInt32 value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunSteps.WorkflowRunStepRecordArray value))
             {
                 return value;
             }
@@ -489,7 +237,7 @@ public readonly partial struct AvailabilityRequestView
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in AvailabilityRequestView left, in AvailabilityRequestView right)
+    public static bool operator ==(in WorkflowRunSteps left, in WorkflowRunSteps right)
     {
         return left.Equals(right);
     }
@@ -502,7 +250,7 @@ public readonly partial struct AvailabilityRequestView
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in AvailabilityRequestView left, in AvailabilityRequestView right)
+    public static bool operator !=(in WorkflowRunSteps left, in WorkflowRunSteps right)
     {
         return !left.Equals(right);
     }
@@ -515,7 +263,7 @@ public readonly partial struct AvailabilityRequestView
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in AvailabilityRequestView left, in JsonElement right)
+    public static bool operator ==(in WorkflowRunSteps left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -528,7 +276,7 @@ public readonly partial struct AvailabilityRequestView
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in AvailabilityRequestView left, in JsonElement right)
+    public static bool operator !=(in WorkflowRunSteps left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -539,7 +287,7 @@ public readonly partial struct AvailabilityRequestView
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(AvailabilityRequestView instance)
+    public static implicit operator JsonElement(WorkflowRunSteps instance)
     {
         return JsonElement.From(instance);
     }
@@ -550,9 +298,9 @@ public readonly partial struct AvailabilityRequestView
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator AvailabilityRequestView(JsonElement instance)
+    public static implicit operator WorkflowRunSteps(JsonElement instance)
     {
-        return AvailabilityRequestView.From(instance);
+        return WorkflowRunSteps.From(instance);
     }
 
     /// <summary>
@@ -561,7 +309,7 @@ public readonly partial struct AvailabilityRequestView
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static AvailabilityRequestView From<T>(in T instance)
+    public static WorkflowRunSteps From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -586,10 +334,10 @@ public readonly partial struct AvailabilityRequestView
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static AvailabilityRequestView ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static WorkflowRunSteps ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<AvailabilityRequestView>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<WorkflowRunSteps>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -612,10 +360,10 @@ public readonly partial struct AvailabilityRequestView
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static AvailabilityRequestView ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static WorkflowRunSteps ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<AvailabilityRequestView>(json, options);
+        return JsonElementHelpers.ParseValue<WorkflowRunSteps>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -638,10 +386,10 @@ public readonly partial struct AvailabilityRequestView
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static AvailabilityRequestView ParseValue(string json, JsonDocumentOptions options = default)
+    public static WorkflowRunSteps ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<AvailabilityRequestView>(json, options);
+        return JsonElementHelpers.ParseValue<WorkflowRunSteps>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -681,10 +429,10 @@ public readonly partial struct AvailabilityRequestView
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static AvailabilityRequestView ParseValue(ref Utf8JsonReader reader)
+    public static WorkflowRunSteps ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<AvailabilityRequestView>(ref reader);
+        return JsonElementHelpers.ParseValue<WorkflowRunSteps>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -726,16 +474,16 @@ public readonly partial struct AvailabilityRequestView
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out AvailabilityRequestView? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out WorkflowRunSteps? result)
     {
-        return JsonElementHelpers.TryParseValue<AvailabilityRequestView>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<WorkflowRunSteps>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new AvailabilityRequestView(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new WorkflowRunSteps(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -825,11 +573,11 @@ public readonly partial struct AvailabilityRequestView
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static AvailabilityRequestView IJsonElement<AvailabilityRequestView>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static WorkflowRunSteps IJsonElement<WorkflowRunSteps>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"AvailabilityRequestView: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"WorkflowRunSteps: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -844,11 +592,11 @@ public readonly partial struct AvailabilityRequestView
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="AvailabilityRequestView"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="WorkflowRunSteps"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="AvailabilityRequestView"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="WorkflowRunSteps"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -857,10 +605,10 @@ public readonly partial struct AvailabilityRequestView
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public AvailabilityRequestView Clone()
+    public WorkflowRunSteps Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<AvailabilityRequestView>(_idx);
+        return _parent.CloneElement<WorkflowRunSteps>(_idx);
     }
 
     /// <summary>
@@ -868,7 +616,7 @@ public readonly partial struct AvailabilityRequestView
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="AvailabilityRequestView"/> that lives for the lifetime of its
+    /// An immutable <see cref="WorkflowRunSteps"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -882,12 +630,12 @@ public readonly partial struct AvailabilityRequestView
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public AvailabilityRequestView Freeze()
+    public WorkflowRunSteps Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<AvailabilityRequestView>(_idx);
+            return mutable.FreezeElement<WorkflowRunSteps>(_idx);
         }
 
         return this;
@@ -899,134 +647,24 @@ public readonly partial struct AvailabilityRequestView
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="BaseWorkflowId"/>.
+        /// Gets the JSON property name for <see cref="RunId"/>.
         /// </summary>
-        public const string BaseWorkflowId = "baseWorkflowId";
+        public const string RunId = "runId";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedAt"/>.
+        /// Gets the JSON property name for <see cref="Steps"/>.
         /// </summary>
-        public const string CreatedAt = "createdAt";
+        public const string Steps = "steps";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedBy"/>.
+        /// Gets the JSON property name for <see cref="RunId"/>.
         /// </summary>
-        public const string CreatedBy = "createdBy";
+        public static ReadOnlySpan<byte> RunIdUtf8 => "runId"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedAt"/>.
+        /// Gets the JSON property name for <see cref="Steps"/>.
         /// </summary>
-        public const string DecidedAt = "decidedAt";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedBy"/>.
-        /// </summary>
-        public const string DecidedBy = "decidedBy";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="DecisionReason"/>.
-        /// </summary>
-        public const string DecisionReason = "decisionReason";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Environment"/>.
-        /// </summary>
-        public const string Environment = "environment";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public const string Etag = "etag";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public const string Id = "id";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Reason"/>.
-        /// </summary>
-        public const string Reason = "reason";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RequesterLabel"/>.
-        /// </summary>
-        public const string RequesterLabel = "requesterLabel";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public const string Status = "status";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="VersionNumber"/>.
-        /// </summary>
-        public const string VersionNumber = "versionNumber";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="BaseWorkflowId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> BaseWorkflowIdUtf8 => "baseWorkflowId"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CreatedAtUtf8 => "createdAt"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedBy"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CreatedByUtf8 => "createdBy"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecidedAtUtf8 => "decidedAt"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedBy"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecidedByUtf8 => "decidedBy"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="DecisionReason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecisionReasonUtf8 => "decisionReason"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EnvironmentUtf8 => "environment"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EtagUtf8 => "etag"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> IdUtf8 => "id"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Reason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ReasonUtf8 => "reason"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="RequesterLabel"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequesterLabelUtf8 => "requesterLabel"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="VersionNumber"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> VersionNumberUtf8 => "versionNumber"u8;
+        public static ReadOnlySpan<byte> StepsUtf8 => "steps"u8;
     }
 
     /// <summary>
@@ -1035,69 +673,14 @@ public readonly partial struct AvailabilityRequestView
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="BaseWorkflowId"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RunId"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> BaseWorkflowId => "baseWorkflowId"u8;
+        public static ReadOnlySpan<byte> RunId => "runId"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CreatedAt"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Steps"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedAt => "createdAt"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CreatedBy"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CreatedBy => "createdBy"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="DecidedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecidedAt => "decidedAt"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="DecidedBy"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecidedBy => "decidedBy"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="DecisionReason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecisionReason => "decisionReason"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Environment => "environment"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Etag => "etag"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Id => "id"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Reason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Reason => "reason"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="RequesterLabel"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequesterLabel => "requesterLabel"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Status => "status"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="VersionNumber"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> VersionNumber => "versionNumber"u8;
+        public static ReadOnlySpan<byte> Steps => "steps"u8;
     }
 
     /// <summary>
@@ -1107,68 +690,13 @@ public readonly partial struct AvailabilityRequestView
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="BaseWorkflowId"/>.
+        /// Gets the pre-baked property name blob for <see cref="RunId"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> BaseWorkflowId => [0x05, 0x01, 0x00, 0x00, 0x22, 0x62, 0x61, 0x73, 0x65, 0x57, 0x6F, 0x72, 0x6B, 0x66, 0x6C, 0x6F, 0x77, 0x49, 0x64, 0x22];
+        public static ReadOnlySpan<byte> RunId => [0x75, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x49, 0x64, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CreatedAt"/>.
+        /// Gets the pre-baked property name blob for <see cref="Steps"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CreatedBy"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CreatedBy => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x42, 0x79, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="DecidedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecidedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x63, 0x69, 0x64, 0x65, 0x64, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="DecidedBy"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecidedBy => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x63, 0x69, 0x64, 0x65, 0x64, 0x42, 0x79, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="DecisionReason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> DecisionReason => [0x05, 0x01, 0x00, 0x00, 0x22, 0x64, 0x65, 0x63, 0x69, 0x73, 0x69, 0x6F, 0x6E, 0x52, 0x65, 0x61, 0x73, 0x6F, 0x6E, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Environment => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Etag => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x74, 0x61, 0x67, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Reason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Reason => [0x85, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x73, 0x6F, 0x6E, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="RequesterLabel"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RequesterLabel => [0x05, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x65, 0x72, 0x4C, 0x61, 0x62, 0x65, 0x6C, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="VersionNumber"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> VersionNumber => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x4E, 0x75, 0x6D, 0x62, 0x65, 0x72, 0x22];
+        public static ReadOnlySpan<byte> Steps => [0x75, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x65, 0x70, 0x73, 0x22];
     }
 }

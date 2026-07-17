@@ -15,31 +15,31 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 
 /// <summary>
-/// Request type for the ApproveAccessRequest operation.
+/// Request type for the GetRunSteps operation.
 /// </summary>
-/// <remarks>Approves a pending request, writing the capped, time-boxed grant (run access only, scoped to the workflow). The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject — a decision is always independent, so a request that would grant the caller access is refused (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).</remarks>
-public readonly struct ApproveAccessRequestRequest : IApiRequest<ApproveAccessRequestRequest>
+/// <remarks>The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found).</remarks>
+public readonly struct GetRunStepsRequest : IApiRequest<GetRunStepsRequest>
 {
 
     /// <summary>
-    /// Gets the requestId parameter.
+    /// Gets the runId parameter.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RequestId { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunId { get; init; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApproveAccessRequestRequest"/> struct.
+    /// Initializes a new instance of the <see cref="GetRunStepsRequest"/> struct.
     /// </summary>
-    /// <param name="requestId">The requestId parameter.</param>
-    public ApproveAccessRequestRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString requestId)
+    /// <param name="runId">The runId parameter.</param>
+    public GetRunStepsRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString runId)
     {
-        this.RequestId = requestId;
+        this.RunId = runId;
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/accessRequests/{requestId}/approve"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/runs/{runId}/steps"u8;
 
     /// <inheritdoc/>
-    public static OperationMethod Method => OperationMethod.Post;
+    public static OperationMethod Method => OperationMethod.Get;
 
     /// <inheritdoc/>
     public static bool HasPathParameters => true;
@@ -56,14 +56,14 @@ public readonly struct ApproveAccessRequestRequest : IApiRequest<ApproveAccessRe
     /// <inheritdoc/>
     public void WriteResolvedPath(IBufferWriter<byte> writer)
     {
-        writer.Write("/accessRequests/"u8);
-        using UnescapedUtf8JsonString utf8RequestId = ((JsonElement)this.RequestId).GetUtf8String();
-        Span<byte> escRequestId = stackalloc byte[utf8RequestId.Span.Length * 3];
-        if (Utf8Uri.TryEscapeDataString(utf8RequestId.Span, escRequestId, out int ewRequestId))
+        writer.Write("/runs/"u8);
+        using UnescapedUtf8JsonString utf8RunId = ((JsonElement)this.RunId).GetUtf8String();
+        Span<byte> escRunId = stackalloc byte[utf8RunId.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8RunId.Span, escRunId, out int ewRunId))
         {
-            writer.Write(escRequestId[..ewRequestId]);
+            writer.Write(escRunId[..ewRunId]);
         }
-        writer.Write("/approve"u8);
+        writer.Write("/steps"u8);
     }
 
     /// <inheritdoc/>
@@ -96,18 +96,18 @@ public readonly struct ApproveAccessRequestRequest : IApiRequest<ApproveAccessRe
         }
         else if (mode == ValidationMode.Detailed)
         {
-            using JsonSchemaResultsCollector collectorRequestId = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
-            if (!this.RequestId.EvaluateSchema(collectorRequestId))
+            using JsonSchemaResultsCollector collectorRunId = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!this.RunId.EvaluateSchema(collectorRunId))
             {
-                ThrowHelper.ThrowRequestParameterValidationFailed("requestId", SchemaValidationDetail.FormatResults(collectorRequestId));
+                ThrowHelper.ThrowRequestParameterValidationFailed("runId", SchemaValidationDetail.FormatResults(collectorRunId));
             }
 
         }
         else
         {
-            if (!this.RequestId.EvaluateSchema())
+            if (!this.RunId.EvaluateSchema())
             {
-                ThrowHelper.ThrowRequestParameterValidationFailed("requestId");
+                ThrowHelper.ThrowRequestParameterValidationFailed("runId");
             }
 
         }

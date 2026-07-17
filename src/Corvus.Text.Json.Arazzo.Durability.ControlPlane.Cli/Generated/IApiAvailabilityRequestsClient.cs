@@ -142,7 +142,7 @@ public interface IApiAvailabilityRequestsClient : IAsyncDisposable
     /// Approve an availability request
     /// </summary>
     /// <remarks>
-    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).
+    /// Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise), and must not be the request's own requester — a decision is always independent, even for an administrator (403 own-request; the requester's exit is withdraw). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7), or the environment requires evidence and the version's attested suite is not green (workflow-designer design §4.6) — is rejected (409).
     /// </remarks>
     /// <param name="requestId">The requestId parameter.</param>
     /// <param name="body">The request body..</param>
@@ -153,7 +153,7 @@ public interface IApiAvailabilityRequestsClient : IAsyncDisposable
     /// Deny an availability request
     /// </summary>
     /// <remarks>
-    /// Denies a pending request. The caller must be an administrator of the target environment (403 otherwise). A request that is not pending conflicts (409).
+    /// Denies a pending request. The caller must be an administrator of the target environment (403 otherwise), and must not be the request's own requester (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).
     /// </remarks>
     /// <param name="requestId">The requestId parameter.</param>
     /// <param name="body">The request body..</param>

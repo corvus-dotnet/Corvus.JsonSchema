@@ -138,6 +138,16 @@ public interface IApiRunsClient : IAsyncDisposable
         public static readonly string[] DeleteRunOpenIdConnectScopes = ["runs:purge"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetRunSteps</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetRunStepsOauth2Scopes = ["runs:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetRunSteps</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetRunStepsOpenIdConnectScopes = ["runs:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ResumeRun</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ResumeRunOauth2Scopes = ["runs:write"];
@@ -227,6 +237,16 @@ public interface IApiRunsClient : IAsyncDisposable
     /// <param name="runId">The runId parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<DeleteRunResponse> DeleteRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Get a run's recorded step outputs
+    /// </summary>
+    /// <remarks>
+    /// The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found).
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<GetRunStepsResponse> GetRunStepsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Resume a faulted run

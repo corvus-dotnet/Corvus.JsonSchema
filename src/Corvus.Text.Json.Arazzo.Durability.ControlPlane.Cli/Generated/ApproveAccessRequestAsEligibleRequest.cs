@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the ApproveAccessRequestAsEligible operation.
 /// </summary>
-/// <remarks>Approves a pending request as durable eligibility (design §16.5.3) rather than as a live grant: writes a capped eligibility assignment scoped to the workflow, after which the requester may self-elevate JIT without re-approval (each activation independently time-boxed). The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).</remarks>
+/// <remarks>Approves a pending request as durable eligibility (design §16.5.3) rather than as a live grant: writes a capped eligibility assignment scoped to the workflow, after which the requester may self-elevate JIT without re-approval (each activation independently time-boxed; self-elevation is the designed exception to the independent-decision rule, because the eligibility itself was independently decided). The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject (403 own-request). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).</remarks>
 public readonly struct ApproveAccessRequestAsEligibleRequest : IApiRequest<ApproveAccessRequestAsEligibleRequest>
 {
 

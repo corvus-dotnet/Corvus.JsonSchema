@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the DenyAccessRequest operation.
 /// </summary>
-/// <remarks>Denies a pending request. The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409).</remarks>
+/// <remarks>Denies a pending request. The caller must be an administrator of the target workflow (403 otherwise), and must not be the request's own subject (403 own-request — the requester withdraws instead, so decidedBy always names an independent administrator). A request that is not pending conflicts (409).</remarks>
 public readonly struct DenyAccessRequestRequest : IApiRequest<DenyAccessRequestRequest>
 {
 

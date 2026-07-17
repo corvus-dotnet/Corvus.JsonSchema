@@ -141,6 +141,25 @@ public sealed class ApiRunsClient : IApiRunsClient
     }
 
     /// <summary>
+    /// Get a run's recorded step outputs
+    /// </summary>
+    /// <remarks>
+    /// The step journal the run's authoritative checkpoint attests: each step that recorded outputs, in recording order, with the outputs value. This is what the checkpoint stores — steps that recorded nothing do not appear, and no timing or per-step status is invented. Reach-gated exactly like the run detail (outside read reach reads as not found).
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<GetRunStepsResponse> GetRunStepsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source runId, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, runId, 30).RootElement;
+        GetRunStepsRequest request = new(RunIdValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetRunStepsRequest, GetRunStepsResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Resume a faulted run
     /// </summary>
     /// <remarks>

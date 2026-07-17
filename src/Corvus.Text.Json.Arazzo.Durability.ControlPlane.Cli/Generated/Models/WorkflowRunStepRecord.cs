@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A run&#39;s management detail, read from its authoritative checkpoint.
+/// One recorded step: its id and the outputs value the checkpoint stored for it.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct WorkflowRunDetail
+public readonly partial struct WorkflowRunStepRecord
 #if NET8_0_OR_GREATER
-    : IJsonElement<WorkflowRunDetail>,
+    : IJsonElement<WorkflowRunStepRecord>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<WorkflowRunDetail>,
+    : IJsonElement<WorkflowRunStepRecord>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct WorkflowRunDetail
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="WorkflowRunDetail"/> struct.
+    /// Initializes a new instance of the <see cref="WorkflowRunStepRecord"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal WorkflowRunDetail(IJsonDocument parent, int idx)
+    internal WorkflowRunStepRecord(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct WorkflowRunDetail
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static WorkflowRunDetail DefaultInstance { get; }
+    public static WorkflowRunStepRecord DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -159,18 +159,18 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
-    /// Gets the (optional) <c>correlationId</c> property.
+    /// Gets the (optional) <c>outputs</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The run-wide telemetry correlation id set at creation (the value stamped on the run&#39;s `corvus.arazzo.correlation_id` spans), if any.
+    /// The step&#39;s recorded outputs value, verbatim from the checkpoint.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString CorrelationId
+    public Corvus.Text.Json.JsonElement Outputs
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CorrelationIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsUtf8, out Corvus.Text.Json.JsonElement value))
             {
                 return value;
             }
@@ -180,243 +180,18 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
-    /// Gets the <c>createdAt</c> property.
+    /// Gets the <c>stepId</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime CreatedAt
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString StepId
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreatedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>cursor</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The state-machine index of the next step to run.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger Cursor
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CursorUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>environment</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The deployment environment the run is pinned to (design &#167;5.5): its credential set, and the runners it can be dispatched to.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>etag</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The optimistic-concurrency token the checkpoint was read at.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Etag
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EtagUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>fault</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The fault record if the run is (or was) faulted.
-    /// </para>
-    /// <para>
-    /// A run&#39;s fault record (terminal-but-recoverable failure).
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault Fault
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FaultUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>id</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Id
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>status</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// A run&#39;s lifecycle status. `Faulted` is terminal-but-recoverable (awaiting remediation); `Completed` and `Cancelled` are terminal.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus Status
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>tags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The free-form tags applied to the run at creation.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray Tags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>updatedAt</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// When the run&#39;s checkpoint was last written; absent on a run checkpointed before this stamp existed.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime UpdatedAt
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UpdatedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>wait</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Why the run is suspended, if it is.
-    /// </para>
-    /// <para>
-    /// Why a run is suspended.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait Wait
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WaitUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>workflowId</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString WorkflowId
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WorkflowIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
             {
                 return value;
             }
@@ -459,7 +234,7 @@ public readonly partial struct WorkflowRunDetail
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in WorkflowRunDetail left, in WorkflowRunDetail right)
+    public static bool operator ==(in WorkflowRunStepRecord left, in WorkflowRunStepRecord right)
     {
         return left.Equals(right);
     }
@@ -472,7 +247,7 @@ public readonly partial struct WorkflowRunDetail
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in WorkflowRunDetail left, in WorkflowRunDetail right)
+    public static bool operator !=(in WorkflowRunStepRecord left, in WorkflowRunStepRecord right)
     {
         return !left.Equals(right);
     }
@@ -485,7 +260,7 @@ public readonly partial struct WorkflowRunDetail
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in WorkflowRunDetail left, in JsonElement right)
+    public static bool operator ==(in WorkflowRunStepRecord left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -498,7 +273,7 @@ public readonly partial struct WorkflowRunDetail
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in WorkflowRunDetail left, in JsonElement right)
+    public static bool operator !=(in WorkflowRunStepRecord left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -509,7 +284,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(WorkflowRunDetail instance)
+    public static implicit operator JsonElement(WorkflowRunStepRecord instance)
     {
         return JsonElement.From(instance);
     }
@@ -520,9 +295,9 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator WorkflowRunDetail(JsonElement instance)
+    public static implicit operator WorkflowRunStepRecord(JsonElement instance)
     {
-        return WorkflowRunDetail.From(instance);
+        return WorkflowRunStepRecord.From(instance);
     }
 
     /// <summary>
@@ -531,7 +306,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static WorkflowRunDetail From<T>(in T instance)
+    public static WorkflowRunStepRecord From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -556,10 +331,10 @@ public readonly partial struct WorkflowRunDetail
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static WorkflowRunDetail ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static WorkflowRunStepRecord ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<WorkflowRunDetail>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<WorkflowRunStepRecord>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -582,10 +357,10 @@ public readonly partial struct WorkflowRunDetail
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static WorkflowRunDetail ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static WorkflowRunStepRecord ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<WorkflowRunDetail>(json, options);
+        return JsonElementHelpers.ParseValue<WorkflowRunStepRecord>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -608,10 +383,10 @@ public readonly partial struct WorkflowRunDetail
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static WorkflowRunDetail ParseValue(string json, JsonDocumentOptions options = default)
+    public static WorkflowRunStepRecord ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<WorkflowRunDetail>(json, options);
+        return JsonElementHelpers.ParseValue<WorkflowRunStepRecord>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -651,10 +426,10 @@ public readonly partial struct WorkflowRunDetail
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static WorkflowRunDetail ParseValue(ref Utf8JsonReader reader)
+    public static WorkflowRunStepRecord ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<WorkflowRunDetail>(ref reader);
+        return JsonElementHelpers.ParseValue<WorkflowRunStepRecord>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -696,16 +471,16 @@ public readonly partial struct WorkflowRunDetail
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out WorkflowRunDetail? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out WorkflowRunStepRecord? result)
     {
-        return JsonElementHelpers.TryParseValue<WorkflowRunDetail>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<WorkflowRunStepRecord>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new WorkflowRunDetail(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new WorkflowRunStepRecord(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -795,11 +570,11 @@ public readonly partial struct WorkflowRunDetail
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static WorkflowRunDetail IJsonElement<WorkflowRunDetail>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static WorkflowRunStepRecord IJsonElement<WorkflowRunStepRecord>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"WorkflowRunDetail: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"WorkflowRunStepRecord: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -814,11 +589,11 @@ public readonly partial struct WorkflowRunDetail
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="WorkflowRunDetail"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="WorkflowRunStepRecord"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="WorkflowRunDetail"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="WorkflowRunStepRecord"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -827,10 +602,10 @@ public readonly partial struct WorkflowRunDetail
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public WorkflowRunDetail Clone()
+    public WorkflowRunStepRecord Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<WorkflowRunDetail>(_idx);
+        return _parent.CloneElement<WorkflowRunStepRecord>(_idx);
     }
 
     /// <summary>
@@ -838,7 +613,7 @@ public readonly partial struct WorkflowRunDetail
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="WorkflowRunDetail"/> that lives for the lifetime of its
+    /// An immutable <see cref="WorkflowRunStepRecord"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -852,12 +627,12 @@ public readonly partial struct WorkflowRunDetail
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public WorkflowRunDetail Freeze()
+    public WorkflowRunStepRecord Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<WorkflowRunDetail>(_idx);
+            return mutable.FreezeElement<WorkflowRunStepRecord>(_idx);
         }
 
         return this;
@@ -869,124 +644,24 @@ public readonly partial struct WorkflowRunDetail
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="CorrelationId"/>.
+        /// Gets the JSON property name for <see cref="Outputs"/>.
         /// </summary>
-        public const string CorrelationId = "correlationId";
+        public const string Outputs = "outputs";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedAt"/>.
+        /// Gets the JSON property name for <see cref="StepId"/>.
         /// </summary>
-        public const string CreatedAt = "createdAt";
+        public const string StepId = "stepId";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Cursor"/>.
+        /// Gets the JSON property name for <see cref="Outputs"/>.
         /// </summary>
-        public const string Cursor = "cursor";
+        public static ReadOnlySpan<byte> OutputsUtf8 => "outputs"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// Gets the JSON property name for <see cref="StepId"/>.
         /// </summary>
-        public const string Environment = "environment";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public const string Etag = "etag";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Fault"/>.
-        /// </summary>
-        public const string Fault = "fault";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public const string Id = "id";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public const string Status = "status";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public const string Tags = "tags";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="UpdatedAt"/>.
-        /// </summary>
-        public const string UpdatedAt = "updatedAt";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Wait"/>.
-        /// </summary>
-        public const string Wait = "wait";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="WorkflowId"/>.
-        /// </summary>
-        public const string WorkflowId = "workflowId";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="CorrelationId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CorrelationIdUtf8 => "correlationId"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CreatedAtUtf8 => "createdAt"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Cursor"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> CursorUtf8 => "cursor"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EnvironmentUtf8 => "environment"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EtagUtf8 => "etag"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Fault"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> FaultUtf8 => "fault"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> IdUtf8 => "id"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> TagsUtf8 => "tags"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="UpdatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> UpdatedAtUtf8 => "updatedAt"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Wait"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> WaitUtf8 => "wait"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="WorkflowId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> WorkflowIdUtf8 => "workflowId"u8;
+        public static ReadOnlySpan<byte> StepIdUtf8 => "stepId"u8;
     }
 
     /// <summary>
@@ -995,64 +670,14 @@ public readonly partial struct WorkflowRunDetail
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CorrelationId"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Outputs"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CorrelationId => "correlationId"u8;
+        public static ReadOnlySpan<byte> Outputs => "outputs"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CreatedAt"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="StepId"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedAt => "createdAt"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Cursor"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Cursor => "cursor"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Environment => "environment"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Etag => "etag"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Fault"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Fault => "fault"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Id => "id"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Status => "status"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Tags => "tags"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="UpdatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> UpdatedAt => "updatedAt"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Wait"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Wait => "wait"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="WorkflowId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> WorkflowId => "workflowId"u8;
+        public static ReadOnlySpan<byte> StepId => "stepId"u8;
     }
 
     /// <summary>
@@ -1062,63 +687,13 @@ public readonly partial struct WorkflowRunDetail
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CorrelationId"/>.
+        /// Gets the pre-baked property name blob for <see cref="Outputs"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CorrelationId => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x72, 0x72, 0x65, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x49, 0x64, 0x22];
+        public static ReadOnlySpan<byte> Outputs => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x73, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CreatedAt"/>.
+        /// Gets the pre-baked property name blob for <see cref="StepId"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Cursor"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Cursor => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x75, 0x72, 0x73, 0x6F, 0x72, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Environment => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Etag => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x74, 0x61, 0x67, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Fault"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Fault => [0x75, 0x00, 0x00, 0x00, 0x22, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Status"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Tags => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="UpdatedAt"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> UpdatedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Wait"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Wait => [0x65, 0x00, 0x00, 0x00, 0x22, 0x77, 0x61, 0x69, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="WorkflowId"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> WorkflowId => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x77, 0x6F, 0x72, 0x6B, 0x66, 0x6C, 0x6F, 0x77, 0x49, 0x64, 0x22];
+        public static ReadOnlySpan<byte> StepId => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x65, 0x70, 0x49, 0x64, 0x22];
     }
 }
