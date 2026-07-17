@@ -379,3 +379,60 @@ Verification notes. SEC-1 was verified in source (`access-overview-panel.js hasS
 screenshot and needs a reproduction before fixing. All screenshots were taken at 1440x900, light
 theme, from the running composition (control plane tabs) and the seeded designer demo (designer),
 2026-07-16.
+
+---
+
+## 5. Re-assessment (2026-07-17, after the remediation pass)
+
+Method: every fix landed, all suites re-run, then a fresh screenshot pass over twelve surfaces of the
+live composition and the designer, walked against the section-1 use cases looking for regressions and
+for anything the fixes newly broke or exposed.
+
+### 5.1 Finding dispositions
+
+| Finding | Disposition |
+|---|---|
+| RUN-1 | **Fixed (scoped).** The run detail carries a Progress card: the catalogued step list with the position marked, next/waiting/faulted annotated, "dispatched" (never "completed") for earlier steps. Verified live on the suspended async run ("Position 2 of 5 · next: awaitKycVerdict"). The deep per-step journal (timings, outcomes) needs a projection of sealed checkpoint data and stays on the follow-up list. |
+| RUN-2 | **Fixed (UI + mock); API follow-up recorded.** ETag and raw cursor rows removed; the Updated row renders only when the value exists. The list/detail updatedAt divergence is a store seam: WorkflowRunDetail lacks the index row's UpdatedAt and the run index has no point-read; threading it through touches every backend and was deliberately not rushed. |
+| RUN-3 / RUN-4 | **Fixed.** Date filters live behind a "Date filters" disclosure; Purge disables on an empty list. |
+| CAT-1 | **Fixed.** Version and compare selects moved to their own bar; nothing clips. |
+| CAT-2 / CAT-3 / CAT-4 | **Fixed.** Identity-first section order with management tags demoted; hash truncated with copy and hover; Purge obsolete disables itself at zero targets via the bounded count. |
+| ENV-1 / ENV-2 | **Fixed.** Each governance toggle sits in its own bordered group; administrator rows lead with the humanized identity, the issuer pin hidden from the line and preserved on hover (the shared chip change fixed every consumer at once). |
+| SRC-1 / CRED-1 | **Fixed.** "New credential…" on the Credentials page and per-row "＋ credential" on Sources, both opening the guided dialog (source-locked from a row); the credentials list gains an environment filter, single-line secret refs and de-noised grants chips. |
+| RNR-1 | **Fixed.** Runner cards wear their roster status with the pointer to Approvals › Runners. |
+| SEC-1 | **Fixed and pinned live.** The overview adopts the kit-wide absent-scopes convention; a live test asserts inline Revoke renders for the privileged caller in the live shell. |
+| SEC-2 | **Fixed.** Baseline and wide-reach badges; deleting either demands typing the claim back (confirmDialog challenge). |
+| SEC-3 | **Fixed.** "in use by N grants" chips (bounded drain); deleting a load-bearing rule spells out the strand consequence behind a typed challenge. |
+| SEC-4 / SEC-5 / SEC-6 | **Fixed.** Eligibility cards say what they are; long conferral lists summarize; the issuer pin is one hover-chip. |
+| APR-1 | **Partially fixed; schema follow-up recorded.** Display consistency shipped, but a resolved requester label on availability requests needs `requesterLabel` on the store schema (cross-backend), deferred with rationale rather than half-done. |
+| APR-2 | **Fixed.** The Pending inbox drops the always-empty Decision column in both request panels. |
+| DSN-1 – DSN-4 | **Fixed.** Canvas key behind the "?" button; labeled Run/Step/Stop; stale hint replaced; a session-active note on the inspector states where edits land. |
+| SH-1 | **Fixed.** 22 section references removed from product copy; a live test pins the environments pane §-free. |
+| SH-2 / SH-3 / SH-4 | **Fixed.** System actors render as ⚙ system; the sign-out link separates from the identity; capability chips carry minute precision. |
+
+### 5.2 New findings from the re-pass
+
+The re-pass caught two items the original review missed, both fixed in the same change:
+
+1. **The live shell contradicted its own gating doctrine.** It sets no scopes attributes "by design",
+   except two panels carried static partial lists, and the catalog's omission of `availability:write`
+   demoted the administrator's promotion matrix from "Make available" to "Request…". All static scopes
+   attributes are removed from the live shell; every panel now defers to the server, which is the
+   convention SEC-1 established.
+2. **Seed data leaks the spec too.** The genesis grant's description reads "(§16.2 tier 3)" in the
+   grants list. The bootstrap text is fixed at source; the running composition shows the old row until
+   its next reseed. Copy hygiene applies to seeded descriptions as much as UI strings.
+
+Remaining follow-ups, recorded and deliberately not rushed into a UI pass: the run step journal
+(RUN-1 deep form), detail updatedAt (RUN-2 store seam), and requesterLabel (APR-1 schema).
+
+### 5.3 Regression walk
+
+All suites green after the pass: node 290, components 433 (eleven new regression tests covering the
+progress card, rule usage, guarded deletes, eligibility cards, absent-scopes Revoke, the roster chip
+and both credential entry points), smoke 23, mock UX 95, live 13 (three new pins). Four tests that
+had pinned the old presentations were updated to pin the new ones (full hash → truncated+title, raw
+issuer clause → pinned chip, always-visible date inputs → disclosure, unguarded delete → challenge).
+The visual walk of the twelve re-captured surfaces found no layout breakage, no new clutter, and no
+use case from section 1 that got harder; the runs, security and catalog areas read materially calmer
+than the first pass.

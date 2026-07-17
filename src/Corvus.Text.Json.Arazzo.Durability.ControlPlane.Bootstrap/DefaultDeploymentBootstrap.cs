@@ -66,7 +66,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
             using ParsedJsonDocument<SecurityBindingDocument> admin = SecurityBindingDocument.Draft(
                 claimType, genesisGroup, read: VerbGrant.Full, write: VerbGrant.Full, purge: VerbGrant.Full,
                 scopes: ReadScopes(options),
-                description: $"Genesis administrator (§16.2 tier 3): the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach.",
+                description: $"Genesis administrator: the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach — the deployment's founding grant.",
                 additionalClauses: ReadAdditionalClauses(options));
             (await securityStore.AddBindingAsync(admin.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
         }
