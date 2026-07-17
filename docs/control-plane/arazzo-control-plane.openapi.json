@@ -4970,11 +4970,23 @@
       },
       "AccessGrantsAdministeredEnvironment": {
         "type": "object",
-        "description": "An environment a grantee administers (a link target for the environments panel).",
+        "description": "An environment a grantee administers (a link target for the environments panel), enriched with a summary of the environment so the row reads without a detail fetch.",
         "properties": {
           "environment": {
             "type": "string",
             "description": "The environment name."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The environment's human-facing display name, when set."
+          },
+          "allowsDraftRuns": {
+            "type": "boolean",
+            "description": "Whether working-copy drafts may execute here as debug runs (workflow-designer design §18). Absent means the environment could not be read (out of the reader's reach or since deleted); false means it does not allow draft runs."
+          },
+          "availability": {
+            "$ref": "#/components/schemas/CountResult",
+            "description": "A bounded count of the workflow versions available in this environment (the count-API pattern; rendered e.g. '12' or '100+'). Absent when the availability store is not configured."
           }
         },
         "required": [
@@ -4983,11 +4995,28 @@
       },
       "AccessGrantsAdministeredWorkflow": {
         "type": "object",
-        "description": "A base workflow a grantee administers (a link target for the catalog).",
+        "description": "A base workflow a grantee administers (a link target for the catalog), enriched with a summary of its representative catalog version so the row reads without a detail fetch.",
         "properties": {
           "baseWorkflowId": {
             "type": "string",
             "description": "The base workflow id."
+          },
+          "title": {
+            "type": "string",
+            "description": "The representative version's title (display name), when set."
+          },
+          "latestVersion": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The representative catalog version number (the one the catalog surfaces for this workflow). Absent when no version is readable."
+          },
+          "status": {
+            "type": "string",
+            "description": "The representative version's lifecycle status (e.g. 'Available', 'Obsolete'), when a version is readable."
+          },
+          "owner": {
+            "type": "string",
+            "description": "The representative version's owner name, when a version is readable and an owner is set."
           }
         },
         "required": [

@@ -7,8 +7,11 @@ using System.Buffers.Text;
 using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
+using Environment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -38,6 +41,8 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private readonly ISecuredWorkflowCatalog? catalog;
     private readonly ISourceCredentialStore? credentials;
     private readonly SecuredEnvironmentAdministration? environments;
+    private readonly IEnvironmentStore? environmentStore;
+    private readonly IAvailabilityStore? availabilityStore;
     private readonly TimeProvider timeProvider;
     private readonly string actor;
     private readonly ILogger? auditLogger;
@@ -61,7 +66,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <param name="policy">An optional policy to refresh after a mutation.</param>
     /// <param name="access">The request-scoped access binding the guard reads the caller's claims from (<see langword="null"/> disables the guard — the unscoped posture).</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, SecuredEnvironmentAdministration? environments = null, TimeProvider? timeProvider = null, string actor = "control-plane", ILogger? auditLogger = null)
+    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, SecuredEnvironmentAdministration? environments = null, TimeProvider? timeProvider = null, string actor = "control-plane", ILogger? auditLogger = null, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(actor);
@@ -71,6 +76,8 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         this.catalog = catalog;
         this.credentials = credentials;
         this.environments = environments;
+        this.environmentStore = environmentStore;
+        this.availabilityStore = availabilityStore;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.actor = actor;
         this.auditLogger = auditLogger;
@@ -505,10 +512,65 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             }
         }
 
+        // §849: enrich the administered rows server-side so each reads without a per-row detail fetch (the UI still makes
+        // one /access/grants call). Bounded — the administered sets are materialised in full above. The reads run under
+        // System context: the overview completely describes what the grantee administers, gated by the security:read scope.
+        // Each row's display values are materialised to managed strings inside the loop, so no page document is held.
+        var administeredWorkflows = new List<AdministeredWorkflowRow>(administered.Count);
+        foreach (string baseWorkflowId in administered)
+        {
+            AdministeredWorkflowRow row = new(baseWorkflowId, null, null, null, null);
+            if (this.catalog is { } enrichCatalog)
+            {
+                // The representative version (the one the catalog surfaces for this workflow) via a single bounded lookup.
+                using CatalogPage page = await enrichCatalog.SearchAsync(
+                    new CatalogQuery(BaseWorkflowId: baseWorkflowId, DistinctWorkflows: true, Limit: 1), AccessContext.System, cancellationToken).ConfigureAwait(false);
+                if (page.Versions.Count > 0)
+                {
+                    CatalogVersion version = page.Versions[0];
+                    string? title = version.Title.IsNotUndefined() ? (string)version.Title : null;
+                    string? owner = version.Owner.IsNotUndefined() && version.Owner.Name.IsNotUndefined() ? (string)version.Owner.Name : null;
+                    string? status = version.Status.IsNotUndefined() ? (string)version.Status : null;
+                    row = new(baseWorkflowId, title, version.Ref.VersionNumber, status, owner);
+                }
+            }
+
+            administeredWorkflows.Add(row);
+        }
+
+        var administeredEnvironmentRows = new List<AdministeredEnvironmentRow>(administeredEnvironments.Count);
+        foreach (string environmentName in administeredEnvironments)
+        {
+            string? displayName = null;
+            bool hasEnvironment = false;
+            bool allowsDraftRuns = false;
+            if (this.environmentStore is { } enrichEnvironments)
+            {
+                using ParsedJsonDocument<Environment>? environmentDoc = await enrichEnvironments.GetAsync(environmentName, AccessContext.System, cancellationToken).ConfigureAwait(false);
+                if (environmentDoc is { } environmentRecord)
+                {
+                    hasEnvironment = true;
+                    displayName = environmentRecord.RootElement.DisplayName.IsNotUndefined() ? (string)environmentRecord.RootElement.DisplayName : null;
+                    allowsDraftRuns = ((JsonElement)environmentRecord.RootElement.AllowsDraftRuns).ValueKind == JsonValueKind.True;
+                }
+            }
+
+            bool hasAvailability = false;
+            int availabilityCount = 0;
+            bool availabilityCapped = false;
+            if (this.availabilityStore is { } enrichAvailability)
+            {
+                (availabilityCount, availabilityCapped) = await enrichAvailability.CountByEnvironmentAsync(environmentName, CountCap, cancellationToken).ConfigureAwait(false);
+                hasAvailability = true;
+            }
+
+            administeredEnvironmentRows.Add(new(environmentName, displayName, hasEnvironment, allowsDraftRuns, hasAvailability, availabilityCount, availabilityCapped));
+        }
+
         // Build the response closure-free: a single context carries the five matched collections, threaded through the
         // outer object build and each inner array build (no capturing lambda). The grantee is echoed as a congruent
         // whole-document From wrap over the workspace-owned grantee document.
-        var overviewContext = new AccessGrantsContext(administered, administeredEnvironments, capabilities, matchedBindings, matchedCredentials);
+        var overviewContext = new AccessGrantsContext(administeredWorkflows, administeredEnvironmentRows, capabilities, matchedBindings, matchedCredentials);
         Models.AccessGrantsOverview.Source<AccessGrantsContext> body = Models.AccessGrantsOverview.Build(
             in overviewContext,
             administers: Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Build(in overviewContext, BuildAdministeredWorkflows),
@@ -859,19 +921,28 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     // (the same pattern the security-orderings labels use).
     private static void BuildAdministeredWorkflows(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsAdministeredWorkflowArray.Builder array)
     {
-        foreach (string baseWorkflowId in ctx.Administered)
+        foreach (AdministeredWorkflowRow row in ctx.Administered)
         {
-            array.AddItem(Models.AccessGrantsAdministeredWorkflow.Build(in baseWorkflowId, BuildAdministeredWorkflow));
+            array.AddItem(Models.AccessGrantsAdministeredWorkflow.Build(in row, BuildAdministeredWorkflow));
         }
     }
 
     private static void BuildAdministeredEnvironments(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsAdministeredEnvironmentArray.Builder array)
     {
-        foreach (string environment in ctx.AdministeredEnvironments)
+        foreach (AdministeredEnvironmentRow row in ctx.AdministeredEnvironments)
         {
-            array.AddItem(Models.AccessGrantsAdministeredEnvironment.Build(environment: environment));
+            array.AddItem(Models.AccessGrantsAdministeredEnvironment.Build(in row, BuildAdministeredEnvironment));
         }
     }
+
+    // §849: the enriched environment row — its display name, draft-run policy, and a bounded availability count (the
+    // count-API pattern). Optional fields are omitted (default) when the environment could not be read or no store is wired.
+    private static void BuildAdministeredEnvironment(in AdministeredEnvironmentRow row, ref Models.AccessGrantsAdministeredEnvironment.Builder b)
+        => b.Create(
+            environment: row.Environment,
+            allowsDraftRuns: row.HasEnvironment ? (Models.JsonBoolean.Source)row.AllowsDraftRuns : default,
+            availability: row.HasAvailability ? Models.CountResult.Build(capped: row.AvailabilityCapped, count: row.AvailabilityCount) : default,
+            displayName: row.DisplayName is { } displayName ? (Models.JsonString.Source)displayName : default);
 
     private static void BuildCapabilities(in AccessGrantsContext ctx, ref Models.AccessGrantsOverview.AccessGrantsCapabilityArray.Builder array)
     {
@@ -891,8 +962,15 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         }
     }
 
-    private static void BuildAdministeredWorkflow(in string baseWorkflowId, ref Models.AccessGrantsAdministeredWorkflow.Builder b)
-        => b.Create(baseWorkflowId: baseWorkflowId);
+    // §849: the enriched workflow row — its representative version's title, number, status, and owner name. Optional
+    // fields are omitted (default) when no version is readable.
+    private static void BuildAdministeredWorkflow(in AdministeredWorkflowRow row, ref Models.AccessGrantsAdministeredWorkflow.Builder b)
+        => b.Create(
+            baseWorkflowId: row.BaseWorkflowId,
+            latestVersion: row.LatestVersion is { } latestVersion ? (Models.JsonInt32.Source)latestVersion : default,
+            owner: row.Owner is { } owner ? (Models.JsonString.Source)owner : default,
+            status: row.Status is { } status ? (Models.JsonString.Source)status : default,
+            title: row.Title is { } title ? (Models.JsonString.Source)title : default);
 
     // Each usable credential is projected to its (sourceName, environment) key, carried bytes-native (Models.JsonString.From
     // over the binding's raw accessors — zero-copy element wraps referencing the workspace-owned page document).
@@ -908,11 +986,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
     // The matched aggregation sets, threaded as one context through the access-grants overview build (no closure). The
     // lists hold the matched documents (whose pages were handed to the workspace), so they live to serialization.
-    private readonly ref struct AccessGrantsContext(IReadOnlyList<string> administered, IReadOnlyList<string> administeredEnvironments, SortedDictionary<string, CapabilityGrant>? capabilities, List<SecurityBindingDocument> bindings, List<SourceCredentialBinding> credentials)
+    private readonly ref struct AccessGrantsContext(List<AdministeredWorkflowRow> administered, List<AdministeredEnvironmentRow> administeredEnvironments, SortedDictionary<string, CapabilityGrant>? capabilities, List<SecurityBindingDocument> bindings, List<SourceCredentialBinding> credentials)
     {
-        public IReadOnlyList<string> Administered { get; } = administered;
+        public List<AdministeredWorkflowRow> Administered { get; } = administered;
 
-        public IReadOnlyList<string> AdministeredEnvironments { get; } = administeredEnvironments;
+        public List<AdministeredEnvironmentRow> AdministeredEnvironments { get; } = administeredEnvironments;
 
         public SortedDictionary<string, CapabilityGrant>? Capabilities { get; } = capabilities;
 
@@ -920,6 +998,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         public List<SourceCredentialBinding> Credentials { get; } = credentials;
     }
+
+    // An administered-workflow row enriched with its representative version's display values (design §849). All display
+    // fields are materialised managed values (no page-document lifetime), absent when no version is readable.
+    private readonly record struct AdministeredWorkflowRow(string BaseWorkflowId, string? Title, int? LatestVersion, string? Status, string? Owner);
+
+    // An administered-environment row enriched with the environment's summary and a bounded availability count (§849).
+    private readonly record struct AdministeredEnvironmentRow(string Environment, string? DisplayName, bool HasEnvironment, bool AllowsDraftRuns, bool HasAvailability, int AvailabilityCount, bool AvailabilityCapped);
 
     // One resolved capability entry: eligible-only (a §16.5.3 eligibility) vs active, and the expiry to show. Merging
     // two conferrals of the same scope: active dominates eligible (an eligibility adds nothing when the scope is held

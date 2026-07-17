@@ -333,7 +333,9 @@ test('the Access overview aggregates one grantee: reach grants with inline Revok
   await expect(caps.first().locator('.until')).toContainText('until');
 
   // Administers: nightly-reconcile names her sys:sub in its administrator set; no environment does.
-  await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow')).toHaveText('nightly-reconcile');
+  await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow .name')).toHaveText('nightly-reconcile');
+  // §849: the workflow row is enriched with its representative version summary, so it reads without a detail fetch.
+  await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .sub').first()).toContainText(/v\d+/);
   await expect(overview.locator('.body')).toContainText('Administers no environments.');
 
   // Credential usage: the staging billing credential is usage-scoped to her identity.
@@ -393,7 +395,7 @@ test('a team grantee resolves through its team-keyed binding and administered wo
   await expect(caps.first()).toContainText('runs:write (eligible)');
 
   // Growth administers onboard-customer; every other section is an explicit empty, never a blank.
-  await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow')).toHaveText('onboard-customer');
+  await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow .name')).toHaveText('onboard-customer');
   await expect(overview.locator('.body')).toContainText('Administers no environments.');
   await expect(overview.locator('.body')).toContainText('No usable source credentials.');
   assertClean(errors);
@@ -438,8 +440,10 @@ test('under the built-in seeds the capability view resolves conferred vs eligibl
   await overview.locator('arazzo-grantee-picker .results li[data-index]', { hasText: 'platform' }).click();
   await expect(overview.locator('.body')).toContainText('No reach grants match');
   await expect(overview.locator('.body')).toContainText('No capability scopes.');
-  await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow')).toHaveText(['nightly-reconcile', 'onboard-customer']);
-  await expect(overview.locator('.section', { hasText: 'Administers environments' }).locator('.row .grow')).toHaveText('production');
+  await expect(overview.locator('.section', { hasText: 'Administers' }).first().locator('.row .grow .name')).toHaveText(['nightly-reconcile', 'onboard-customer']);
+  await expect(overview.locator('.section', { hasText: 'Administers environments' }).locator('.row .grow .name')).toHaveText('production');
+  // §849: the environment row is enriched with its summary + a bounded availability count.
+  await expect(overview.locator('.section', { hasText: 'Administers environments' }).locator('.row .sub').first()).toContainText('available');
   assertClean(errors);
 });
 

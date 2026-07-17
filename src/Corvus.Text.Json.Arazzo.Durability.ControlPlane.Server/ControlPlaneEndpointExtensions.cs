@@ -140,10 +140,18 @@ public static class ControlPlaneEndpointExtensions
         IEnvironmentAdministratorStore envAdminStore = environmentAdministratorStore ?? new InMemoryEnvironmentAdministratorStore();
         var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
 
+        // The environment + availability stores are constructed here (ahead of their own handlers below) so the
+        // access-overview aggregation can enrich a grantee's administered-environment rows with each environment's
+        // summary and a bounded count of the versions available in it (§849), without a per-row fetch. Both default to
+        // an in-memory store so the endpoints function in development.
+        IEnvironmentStore envStore = environmentStore ?? new InMemoryEnvironmentStore();
+        IAvailabilityStore availStore = availabilityStore ?? new InMemoryAvailabilityStore();
+
         // The access-overview (GET /access/grants) aggregates a grantee's bindings + conferred capability scopes +
         // administered workflows and environments + usable credentials, so the security handler also reads the catalog
-        // (administered workflows), the credential store, and the environment administration reverse index.
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration, auditLogger: auditLogger);
+        // (administered workflows + their representative version, §849), the credential store, the environment
+        // administration reverse index, and the environment + availability stores (administered-environment enrichment).
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration, auditLogger: auditLogger, environmentStore: envStore, availabilityStore: availStore);
 
         // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
         // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
@@ -165,10 +173,9 @@ public static class ControlPlaneEndpointExtensions
         var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);
 
         // The environments management API (§7.7): governed, reach-scoped deployment environments and their administrators.
-        // The data plane is reach-filtered (the environment store); governance is current-administrator-gated (the
-        // administration service over the environment-administrator store), and creating an environment grants the creator
-        // administration. Both default to an in-memory store so the endpoints function in development.
-        IEnvironmentStore envStore = environmentStore ?? new InMemoryEnvironmentStore();
+        // The data plane is reach-filtered (the environment store, hoisted above); governance is current-administrator-gated
+        // (the administration service over the environment-administrator store), and creating an environment grants the
+        // creator administration.
         var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger);
 
         // The sources registry API (§7.6): first-class, reach-scoped source documents a workflow references by name. The
@@ -194,8 +201,7 @@ public static class ControlPlaneEndpointExtensions
 
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
-        // version references must resolve a credential in that environment, §7.7). Defaults to an in-memory store.
-        IAvailabilityStore availStore = availabilityStore ?? new InMemoryAvailabilityStore();
+        // version references must resolve a credential in that environment, §7.7). The store is hoisted above.
         var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access, auditLogger: auditLogger);
 
         // The availability-request ("promotion request") API (§7.8): a principal who cannot make a version available

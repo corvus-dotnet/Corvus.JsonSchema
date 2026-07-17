@@ -72,6 +72,71 @@ public sealed class ControlPlaneAccessGrantsApiTests
         usage[0].GetProperty("environment").GetString().ShouldBe("production");
     }
 
+    [TestMethod]
+    public async Task Get_access_grants_enriches_administered_workflows_and_environments()
+    {
+        // §849: the administered rows carry a server-side summary so each reads without a per-row detail fetch.
+        ArazzoControlPlaneSecurityHandler handler = await CreateEnrichedHandlerAsync();
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var parameters = new GetAccessGrantsParams { Grantee = EncodeGranteeToken(GranteeJson, workspace) };
+        GetAccessGrantsResult result = await handler.HandleGetAccessGrantsAsync(parameters, workspace);
+        result.StatusCode.ShouldBe(200);
+
+        using Stj.JsonDocument doc = ReadResultBody(result);
+
+        // The administered-workflow row carries its representative version's summary.
+        Stj.JsonElement workflow = doc.RootElement.GetProperty("administers").EnumerateArray().Single();
+        workflow.GetProperty("baseWorkflowId").GetString().ShouldBe("orders-workflow");
+        workflow.GetProperty("title").GetString().ShouldBe("Orders");
+        workflow.GetProperty("latestVersion").GetInt32().ShouldBe(1);
+        workflow.GetProperty("owner").GetString().ShouldBe("Ops");
+        workflow.TryGetProperty("status", out _).ShouldBeTrue("the representative version's status is surfaced");
+
+        // The administered-environment row carries the environment summary + a bounded availability count (count-API).
+        Stj.JsonElement environment = doc.RootElement.GetProperty("administersEnvironments").EnumerateArray().Single();
+        environment.GetProperty("environment").GetString().ShouldBe("production");
+        environment.GetProperty("displayName").GetString().ShouldBe("Production");
+        environment.GetProperty("allowsDraftRuns").GetBoolean().ShouldBeFalse("the seeded environment does not allow draft runs");
+        environment.GetProperty("availability").GetProperty("count").GetInt32().ShouldBe(1);
+    }
+
+    // Seeds a catalog version, an environment record, an availability entry, and the grantee's administration of both, then
+    // constructs the handler WITH the environment + availability stores so the §849 administered-row enrichment runs.
+    private static async Task<ArazzoControlPlaneSecurityHandler> CreateEnrichedHandlerAsync()
+    {
+        SecurityTagSet granteeIdentity = SecurityTagSet.FromTags([new SecurityTag("sys:sub", "u-1042")]);
+
+        // Publish version 1 with the grantee's identity as its security tags: create-grants-admin (§15.2) then establishes
+        // the grantee as the sole administrator of 'orders-workflow', so it appears (enriched) in the grantee's administers.
+        var administratorStore = new InMemoryWorkflowAdministratorStore();
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: administratorStore);
+        ReadOnlyMemory<byte> package = WorkflowPackage.Pack(
+            Encoding.UTF8.GetBytes("""{"arazzo":"1.1.0","info":{"title":"Orders","version":"1"},"workflows":[{"workflowId":"orders-workflow","steps":[]}]}"""), []);
+        (await catalog.AddAsync(package, new CatalogOwner("Ops", "ops@example.com"), default, granteeIdentity, default)).Dispose();
+
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore();
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> environmentDraft =
+            Corvus.Text.Json.Arazzo.Durability.Environments.Environment.Draft("production", "Production", "The live environment.", SecurityTagSet.Empty))
+        {
+            (await environmentStore.AddAsync(environmentDraft.RootElement, "ops", default)).Dispose();
+        }
+
+        var envAdminStore = new InMemoryEnvironmentAdministratorStore();
+        var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
+        await environmentAdministration.EstablishAsync("production", granteeIdentity, default, false, default, false, default);
+
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore();
+        (await availabilityStore.MakeAvailableAsync("orders-workflow", 1, "production", "ops", default)).Entry.Dispose();
+
+        var policyStore = new InMemorySecurityPolicyStore();
+        var policy = new PersistentRowSecurityPolicy(policyStore);
+        var access = new ControlPlaneAccess(new HttpContextAccessor(), policy);
+        return new ArazzoControlPlaneSecurityHandler(
+            policyStore, policy, access, catalog, new InMemorySourceCredentialStore(), environmentAdministration,
+            environmentStore: environmentStore, availabilityStore: availabilityStore);
+    }
+
     // A resolved TEAM grantee — the live snag's shape (#96): the admin group's identity in the operator-facing wire
     // form ({group,iss}; the internal form is {sys:group,sys:iss}).
     private const string TeamGranteeJson =

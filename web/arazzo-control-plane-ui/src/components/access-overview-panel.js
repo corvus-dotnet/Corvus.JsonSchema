@@ -177,12 +177,32 @@ class ArazzoAccessOverview extends ArazzoElement {
       }).join('')}</div>`
       : '<div class="empty">No capability scopes.</div>';
 
+    // The rows carry a server-side summary (§849): the workflow's representative version, and the environment's draft-run
+    // policy and a bounded count of the versions available in it. Assemble only the parts the server supplied.
+    const workflowMeta = (a) => {
+      const parts = [];
+      if (a.title) parts.push(escapeHtml(a.title));
+      if (Number.isInteger(a.latestVersion)) parts.push(`v${a.latestVersion}`);
+      if (a.status) parts.push(escapeHtml(a.status));
+      if (a.owner) parts.push(escapeHtml(a.owner));
+      return parts.length ? `<div class="sub">${parts.join(' · ')}</div>` : '';
+    };
+    const envMeta = (e) => {
+      const parts = [];
+      if (e.displayName) parts.push(escapeHtml(e.displayName));
+      if (e.availability && Number.isInteger(e.availability.count)) {
+        parts.push(`${e.availability.count}${e.availability.capped ? '+' : ''} available`);
+      }
+      if (typeof e.allowsDraftRuns === 'boolean') parts.push(e.allowsDraftRuns ? 'drafts allowed' : 'no drafts');
+      return parts.length ? `<div class="sub">${parts.join(' · ')}</div>` : '';
+    };
+
     const admin = administers.length
-      ? administers.map((a) => `<div class="row"><span class="grow">${escapeHtml(a.baseWorkflowId)}</span><button class="link" type="button" data-workflow="${escapeHtml(a.baseWorkflowId)}">Open</button></div>`).join('')
+      ? administers.map((a) => `<div class="row"><span class="grow"><span class="name">${escapeHtml(a.baseWorkflowId)}</span>${workflowMeta(a)}</span><button class="link" type="button" data-workflow="${escapeHtml(a.baseWorkflowId)}">Open</button></div>`).join('')
       : '<div class="empty">Administers nothing.</div>';
 
     const envAdmin = environments.length
-      ? environments.map((e) => `<div class="row"><span class="grow">${escapeHtml(e.environment)}</span><button class="link" type="button" data-environment="${escapeHtml(e.environment)}">Open</button></div>`).join('')
+      ? environments.map((e) => `<div class="row"><span class="grow"><span class="name">${escapeHtml(e.environment)}</span>${envMeta(e)}</span><button class="link" type="button" data-environment="${escapeHtml(e.environment)}">Open</button></div>`).join('')
       : '<div class="empty">Administers no environments.</div>';
 
     const creds = usage.length

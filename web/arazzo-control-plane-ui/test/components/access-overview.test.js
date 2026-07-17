@@ -61,8 +61,17 @@ describe('<arazzo-access-overview>', () => {
     const wfSection = sections.find((s) => s.querySelector('h4')?.textContent === 'Administers workflows');
     ok(wfSection, 'the workflow list is explicitly labelled (plain "Administers" was ambiguous, #848)');
     const envSection = sections.find((s) => s.querySelector('h4')?.textContent === 'Administers environments');
-    const envs = [...envSection.querySelectorAll('.row .grow')].map((r) => r.textContent.trim());
+    const envs = [...envSection.querySelectorAll('.row .grow .name')].map((r) => r.textContent.trim());
     equal(envs.join(','), 'production,staging', 'administered environments listed');
+
+    // §849: each administered row is enriched with a server-side summary (no per-row fetch). The environment row shows
+    // its display name and a bounded availability count; the workflow row shows its representative version.
+    const prodRow = [...envSection.querySelectorAll('.row')].find((r) => r.querySelector('.name')?.textContent.trim() === 'production');
+    const prodSub = prodRow.querySelector('.sub')?.textContent || '';
+    ok(prodSub.includes('Production'), 'the environment row shows its display name');
+    ok(/\bavailable\b/.test(prodSub), 'the environment row shows a bounded availability count');
+    const wfSub = wfSection.querySelector('.row .sub')?.textContent || '';
+    ok(/\bv\d+\b/.test(wfSub), 'the workflow row shows its representative version number');
 
     // Environment rows deep-link like workflow rows do: Open emits open-environment for the host to route (#848).
     const openBtn = envSection.querySelector('button[data-environment="production"]');

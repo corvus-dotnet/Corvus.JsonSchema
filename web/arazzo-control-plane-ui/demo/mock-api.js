@@ -2607,18 +2607,42 @@ export function createMockControlPlane(options = {}) {
 
     // administers: a base workflow the grantee administers — its admin array holds a grant whose identity is a subset of
     // the grantee's identity (an identity-based grant the grantee satisfies).
+    // Each administered row is enriched server-side (§849) with a summary of the resource, so it reads without a per-row
+    // detail fetch: the workflow's representative (latest) version, and the environment's draft-run policy + a bounded
+    // count of the versions available in it.
     const administers = Object.keys(administrators)
       .filter((baseWorkflowId) => (administrators[baseWorkflowId] || [])
         .some((g) => (g.identity || []).every((gt) => idents.some((t) => t.dimension === gt.dimension && t.value === gt.value))))
       .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
-      .map((baseWorkflowId) => ({ baseWorkflowId }));
+      .map((baseWorkflowId) => {
+        const rep = catalog.filter((v) => v.baseWorkflowId === baseWorkflowId)
+          .sort((a, b) => b.versionNumber - a.versionNumber)[0];
+        if (!rep) return { baseWorkflowId };
+        const ownerName = rep.owner && (rep.owner.name || (typeof rep.owner === 'string' ? rep.owner : undefined));
+        return {
+          baseWorkflowId,
+          ...(rep.title ? { title: rep.title } : {}),
+          latestVersion: rep.versionNumber,
+          ...(rep.status ? { status: rep.status } : {}),
+          ...(ownerName ? { owner: ownerName } : {}),
+        };
+      });
 
     // administersEnvironments: the environment twin of administers, over the environment administrator sets.
     const administersEnvironments = Object.keys(environmentAdministrators)
       .filter((env) => (environmentAdministrators[env] || [])
         .some((g) => (g.identity || []).every((gt) => idents.some((t) => t.dimension === gt.dimension && t.value === gt.value))))
       .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
-      .map((environment) => ({ environment }));
+      .map((environment) => {
+        const env = environments.find((e) => e.name === environment);
+        const availabilityCount = availabilityEntries.filter((a) => a.environment === environment).length;
+        return {
+          environment,
+          ...(env && env.displayName ? { displayName: env.displayName } : {}),
+          ...(env ? { allowsDraftRuns: !!env.allowsDraftRuns } : {}),
+          availability: { count: availabilityCount, capped: false },
+        };
+      });
 
     // credentialUsage: credentials scoped to THIS grantee's identity — a usage-restricted binding whose usageGrantee
     // identity is a subset of the grantee's identity. Shared bindings (no usageGrantee, usable by any run) are
