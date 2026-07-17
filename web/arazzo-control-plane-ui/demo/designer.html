@@ -138,7 +138,7 @@
       <button id="legend-btn" type="button" title="What the canvas notation means" aria-expanded="false"
         style="position: absolute; left: 10px; bottom: 10px; z-index: 5; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--arazzo-border, #e3e6ea); background: var(--arazzo-bg, #fff); color: var(--arazzo-muted, #6b7280); font-size: 13px; cursor: pointer;">?</button>
       <div id="canvas-legend" hidden
-        style="position: absolute; left: 10px; bottom: 44px; z-index: 5; max-width: 380px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); box-shadow: 0 6px 24px rgba(0,0,0,0.12); padding: 12px 14px; font-size: 12.5px; line-height: 1.5;">
+        style="position: absolute; left: 10px; bottom: 44px; z-index: 5; width: min(380px, calc(100% - 56px)); max-height: min(44%, 420px); overflow-y: auto; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: 8px; background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); box-shadow: 0 6px 24px rgba(0,0,0,0.12); padding: 12px 14px; font-size: 12.5px; line-height: 1.5;">
         <div style="font-weight: 700; margin-bottom: 6px;">Reading the canvas</div>
         <div><b>OP</b> / <b>CH</b> badge — the step binds an API operation / a message channel.</div>
         <div><code>✓ 2</code> success criteria count · <code>→ 1</code> outputs count · <code>↻ ×3/5s</code> retry policy (attempts / backoff) · <code>⌁ defaults</code> the step uses the workflow's failure defaults.</div>
@@ -367,9 +367,24 @@
     // The canvas key: notation must be learnable in the UI itself, not the design doc.
     const legendBtn = document.getElementById('legend-btn');
     const legendPop = document.getElementById('canvas-legend');
-    legendBtn.addEventListener('click', () => {
-      legendPop.hidden = !legendPop.hidden;
-      legendBtn.setAttribute('aria-expanded', String(!legendPop.hidden));
+    const setLegend = (open) => {
+      if (open) {
+        // Bound against the CANVAS, not the pane: the card may never take more than 45% of the
+        // drawing area's height, whatever the viewport or dock state.
+        const surfaceBox = surface.getBoundingClientRect();
+        legendPop.style.maxHeight = `${Math.max(140, Math.round(surfaceBox.height * 0.45))}px`;
+      }
+      legendPop.hidden = !open;
+      legendBtn.setAttribute('aria-expanded', String(open));
+    };
+    legendBtn.addEventListener('click', () => setLegend(legendPop.hidden));
+    // A reference card must never hold canvas hostage: any interaction outside it (or Escape)
+    // dismisses — on a narrow viewport the card can cover half the drawing area.
+    document.addEventListener('pointerdown', (e) => {
+      if (!legendPop.hidden && !legendPop.contains(e.target) && e.target !== legendBtn) setLegend(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !legendPop.hidden) setLegend(false);
     });
     select.addEventListener('change', () => { project(); surface.fit(); });
     if ([...select.options].some((o) => o.value === 'place-order')) select.value = 'place-order';

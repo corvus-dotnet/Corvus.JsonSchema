@@ -546,3 +546,26 @@ test('a dangling schemas/<name> $ref surfaces a positioned external-schema error
   await expect(refRow).toContainText('not attached');
   assertClean(errors);
 });
+
+test('the canvas key stays bounded on a narrow viewport and dismisses on any outside interaction', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 }); // phone-sized: the card must not own the canvas
+  await openDesigner(page);
+
+  await page.locator('#legend-btn').click();
+  const legend = page.locator('#canvas-legend');
+  await expect(legend).toBeVisible();
+  const box = await legend.boundingBox();
+  expect(box.width).toBeLessThanOrEqual(390 - 56 + 1); // never edge-to-edge
+  const canvas = await page.locator('#surface').boundingBox();
+  expect(box.height).toBeLessThanOrEqual(canvas.height * 0.5 + 1); // never half the canvas tall
+
+  // Tapping the canvas (any outside interaction) dismisses; so does Escape.
+  await page.locator('#surface').click({ position: { x: 30, y: 30 } });
+  await expect(legend).toBeHidden();
+  await page.locator('#legend-btn').click();
+  await expect(legend).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(legend).toBeHidden();
+  assertClean(errors);
+});
