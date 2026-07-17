@@ -277,6 +277,14 @@ public static class DemoData
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
         (await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, securityTags: null, internalTagPrefix: null, AccessContext.System, default).ConfigureAwait(false)).Document?.Dispose();
+
+        // The onboarding flows process KYC identity data, so their authors classify step outputs sensitive (§14): a run's
+        // step journal is redacted for callers below the stronger grant — write reach on the run — so a reach-scoped
+        // observer sees each step withheld, while an operator/administrator reads it in full.
+        foreach ((string BaseWorkflowId, int VersionNumber) v in new[] { ("onboard-customer", 1), ("onboard-customer", 2), ("onboard-customer-async", 1), ("onboard-customer-retry", 1) })
+        {
+            (await catalog.UpdateAsync(v.BaseWorkflowId, v.VersionNumber, owner: null, tags: null, status: null, securityTags: null, internalTagPrefix: null, AccessContext.System, default, OutputsSensitivity.Sensitive).ConfigureAwait(false)).Document?.Dispose();
+        }
     }
 
     /// <summary>Builds a workflow package from on-disk spec files: an Arazzo workflow and its named sources.</summary>
