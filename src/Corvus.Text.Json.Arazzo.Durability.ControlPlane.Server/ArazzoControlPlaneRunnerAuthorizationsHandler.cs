@@ -8,6 +8,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 using Environment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -40,6 +41,10 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private readonly ControlPlaneAccess access;
     private readonly IWorkflowLeaseAdministration? leaseAdministration;
     private readonly string subjectClaimType;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kind for every decision on this surface (design §850).
+    private const string TargetKind = "runner";
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneRunnerAuthorizationsHandler"/> class.</summary>
     /// <param name="authorizations">The environment-runner authorization store (the authorization lifecycle).</param>
@@ -51,13 +56,15 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// deployment whose store lacks the capability (<see langword="null"/>) still stops all future dispatch on revoke; only the
     /// immediate in-flight fence is unavailable.</param>
     /// <param name="subjectClaimType">The claim type identifying the deciding subject (the audit actor); default <c>sub</c>.</param>
+    /// <param name="auditLogger">The logger for the §850 runner-authorization audit (who authorized/quarantined/revoked which runner); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     internal ArazzoControlPlaneRunnerAuthorizationsHandler(
         IEnvironmentRunnerAuthorizationStore authorizations,
         IEnvironmentStore environments,
         SecuredEnvironmentAdministration administration,
         ControlPlaneAccess access,
         IWorkflowLeaseAdministration? leaseAdministration = null,
-        string subjectClaimType = "sub")
+        string subjectClaimType = "sub",
+        ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(authorizations);
         ArgumentNullException.ThrowIfNull(environments);
@@ -70,7 +77,11 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         this.access = access;
         this.leaseAdministration = leaseAdministration;
         this.subjectClaimType = subjectClaimType;
+        this.auditLogger = auditLogger;
     }
+
+    // The (environment, runnerId) audit target key (design §850).
+    private static string RunnerKey(string environment, string runnerId) => $"{runnerId}@{environment}";
 
     /// <inheritdoc/>
     public async ValueTask<ListEnvironmentRunnerAuthorizationsResult> HandleListEnvironmentRunnerAuthorizationsAsync(ListEnvironmentRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -122,6 +133,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         if (gate != GovernanceGate.Authorized)
         {
+            GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
             return AuthorizeRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -139,6 +151,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return AuthorizeRunnerResult.Ok(ToView(fetched.RootElement), workspace);
         }
 
+        // The prior state names the authorization act: reinstating a quarantined runner and re-admitting a revoked one
+        // are distinct governance decisions from authorizing a freshly-registered (Pending) one.
+        string authorizeOutcome = fetched.RootElement.IsQuarantined ? "reinstated" : fetched.RootElement.IsRevoked ? "re-authorized" : "authorized";
         WorkflowEtag expectedEtag = fetched.RootElement.EtagValue;
         fetched.Dispose();
         try
@@ -150,6 +165,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                 return AuthorizeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
             }
 
+            GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), authorizeOutcome);
             workspace.TakeOwnership(decided);
             return AuthorizeRunnerResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -173,6 +189,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         if (gate != GovernanceGate.Authorized)
         {
+            GovernanceAudit.Mutation(this.auditLogger, "runner.quarantine", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
             return QuarantineRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -210,6 +227,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                 return QuarantineRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
             }
 
+            GovernanceAudit.Mutation(this.auditLogger, "runner.quarantine", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "quarantined");
             workspace.TakeOwnership(decided);
             return QuarantineRunnerResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -233,6 +251,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         if (gate != GovernanceGate.Authorized)
         {
+            GovernanceAudit.Mutation(this.auditLogger, "runner.revoke", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
             return RevokeRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -267,6 +286,8 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         // capability skips this; the authorization gate still stops all future dispatch on the next poll.
         await this.FenceRevokedRunnerAsync(runnerId, cancellationToken).ConfigureAwait(false);
 
+        // Revoke is a containment action — the most audit-worthy event on this surface — recorded once the removal is durable and fenced.
+        GovernanceAudit.Mutation(this.auditLogger, "runner.revoke", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "revoked");
         workspace.TakeOwnership(decided);
         return RevokeRunnerResult.Ok(ToView(decided.RootElement), workspace);
     }

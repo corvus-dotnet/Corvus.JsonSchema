@@ -2,11 +2,13 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -297,6 +299,93 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
 
         using Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/runnerAuthorizations", "globex"));
         inbox.RootElement.GetProperty("authorizations").EnumerateArray().ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task The_runner_authorization_lifecycle_emits_governance_audit_spans()
+    {
+        // §850: every runner decision — the act that decides which compute may claim and execute work — leaves a
+        // governance-audit trace, with the prior state naming the act (reinstate a quarantined runner vs authorize a
+        // fresh one).
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/quarantine", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        audit.Outcomes("runner-1@production").ShouldBe(["authorized", "quarantined", "reinstated", "revoked"]);
+    }
+
+    [TestMethod]
+    public async Task A_non_administrator_runner_decision_is_audited_as_refused()
+    {
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "globex")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        audit.Outcomes("runner-1@production").ShouldBe(["refused-not-administrator"]);
+        audit.Spans.Single().OperationName.ShouldBe("runner.authorize");
+    }
+
+    /// <summary>Captures the runner-authorization governance-audit spans (design §850) on the Arazzo <see cref="ActivitySource"/>.</summary>
+    private sealed class GovernanceAuditSpans : IDisposable
+    {
+        private readonly List<Activity> spans = [];
+        private readonly ActivityListener listener;
+
+        private GovernanceAuditSpans()
+        {
+            this.listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == ArazzoTelemetry.ActivitySourceName,
+                Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+                ActivityStopped = activity =>
+                {
+                    if (activity.OperationName.StartsWith("runner.", StringComparison.Ordinal))
+                    {
+                        lock (this.spans)
+                        {
+                            this.spans.Add(activity);
+                        }
+                    }
+                },
+            };
+            ActivitySource.AddActivityListener(this.listener);
+        }
+
+        // A snapshot of the captured spans, in stop order.
+        public IReadOnlyList<Activity> Spans
+        {
+            get
+            {
+                lock (this.spans)
+                {
+                    return [.. this.spans];
+                }
+            }
+        }
+
+        public static GovernanceAuditSpans Capture() => new();
+
+        // The ordered outcomes recorded for the given runner (runnerId@environment), across its lifecycle.
+        public IReadOnlyList<string> Outcomes(string targetId)
+        {
+            lock (this.spans)
+            {
+                return [.. this.spans.Where(s => (string?)s.GetTagItem(ArazzoTelemetry.TargetIdTag) == targetId).Select(s => (string)s.GetTagItem(ArazzoTelemetry.OutcomeTag)!)];
+            }
+        }
+
+        public void Dispose() => this.listener.Dispose();
     }
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)

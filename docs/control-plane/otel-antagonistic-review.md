@@ -240,6 +240,10 @@ Ranked by security value first, then by breadth of the surface it closes.
    self-elevation guard's refusal (`refused-self-elevation`) on binding create/update. (Rule ordering is
    deployment configuration, not a mutation endpoint, so there is nothing to audit there.)
 5. **Runner authorization: authorize / quarantine / revoke / reinstate** (O-RNR). Containment actions.
+   **Landed:** `runner.authorize` (the prior state names the act — `authorized` from Pending, `reinstated`
+   from Quarantined, `re-authorized` from Revoked), `runner.quarantine`, and `runner.revoke` (the
+   containment action, recorded once the removal is durable and the in-flight leases are fenced), plus the
+   `refused-not-administrator` gate on each.
 6. **Environment create / update / delete, promotion (make-available / demote), admin transfers**
    (O-ENV, O-ADM). Who governs what runs where.
 7. **Audit-grade log for the existing run and catalog spans; attribute the authenticated principal**
