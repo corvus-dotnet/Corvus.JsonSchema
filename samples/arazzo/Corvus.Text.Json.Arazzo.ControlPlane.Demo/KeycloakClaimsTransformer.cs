@@ -33,6 +33,13 @@ public sealed class KeycloakClaimsTransformer(PersistentRowSecurityPolicy entitl
     [
         ControlPlaneScopes.CatalogRead,
         ControlPlaneScopes.RunsRead,
+
+        // The §14 step-output disclosure tier. The demo grants runs:outputs:read in the read baseline so members can open
+        // step journals; the SECURITY boundary the demo then illustrates is the escalation, not this scope: a version its
+        // author classified sensitive (onboard-customer) has its journal redacted for a member without write reach on the
+        // run (an observer), and read in full only by an operator/administrator who holds it. A production deployment would
+        // instead hand runs:outputs:read out as its own grant so the baseline gate is visible too.
+        ControlPlaneScopes.RunsOutputsRead,
         ControlPlaneScopes.CredentialsRead,
         ControlPlaneScopes.AdministratorsRead,
         ControlPlaneScopes.SecurityRead,

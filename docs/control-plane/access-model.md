@@ -89,6 +89,21 @@ A worked example, a payments-team operator:
   which is a `403` decided before reach is even consulted. A `domain == finance` version is simply
   absent to them (`404`), never a `403`.
 
+## Step outputs are a disclosure tier above run visibility (§14)
+
+A run's recorded step **outputs** (its step journal, `GET /runs/{runId}/steps`) can carry the sensitive data
+the workflow processed — for a KYC flow, the identity data it handled. Reading them is therefore gated *above*
+reading a run's metadata, in two layers:
+
+- **Baseline** — the journal demands the `runs:outputs:read` capability scope **in addition to** `runs:read`
+  (ANDed). A reach-scoped observer who may see a run keeps its metadata but is refused the payloads (`403`, a
+  capability refusal, not the reach `404`). Fail-closed for every run's outputs.
+- **Per-version escalation** — a workflow administrator classifies a catalog version `outputsSensitivity:
+  sensitive`. A run of a sensitive version then has its whole journal **redacted** for callers below the stronger
+  grant — write reach on the run (operator-level) — so a read-only observer sees each step marked `redacted` with
+  no payload, while an operator reads it in full. The classification is read from the *current* version, so
+  reclassifying a workflow retroactively protects its existing runs' journals.
+
 ## Where scopes come from
 
 Scopes do not live in the control plane, and they are not stored against an identity. They ride on the
