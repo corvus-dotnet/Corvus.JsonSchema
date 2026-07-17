@@ -7,6 +7,7 @@ using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 using AdminKind = Corvus.Text.Json.Arazzo.Durability.Security.WorkflowAdministrators.AdministratorIdentity.KindEntity;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -36,6 +37,10 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
     private readonly IObservedIdentityStore? observed;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kind for a workflow-administration change on this surface (design §850).
+    private const string TargetKind = "workflow";
 
     /// <summary>Initializes a new, unscoped instance (the caller resolves to no identity — administration management
     /// requires a configured row-security policy).</summary>
@@ -51,14 +56,19 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     /// from internal tags. Unscoped (no identity) when no row security is configured.</param>
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
-    internal ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null)
+    internal ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null, ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(access);
         this.catalog = catalog;
         this.access = access;
         this.observed = observed;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject: the authenticated principal who changed the administrator set (the human-facing name;
+    // the unforgeable governance identity is the sys: tag set from CallerIdentity), or "control-plane" when unresolved.
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "control-plane";
 
     /// <inheritdoc/>
     public async ValueTask<ListAdministratorsResult> HandleListAdministratorsAsync(ListAdministratorsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -170,6 +180,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, adminKind, hasKind, label, hasLabel, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            GovernanceAudit.Mutation(this.auditLogger, "workflow.add-administrator", this.AuditActor(), TargetKind, baseWorkflowId, "added");
 
             // Record the newly named administrator as a resolvable grantee for the §16.5.4 typeahead. Best-effort: the
             // sighting is an idempotent projection and never fails the add. `complete` is honest (§17.2): the picker's
@@ -368,6 +379,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.TransferAdministrationAsync(baseWorkflowId, newAdministrators, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            GovernanceAudit.Mutation(this.auditLogger, "workflow.transfer-administration", this.AuditActor(), TargetKind, baseWorkflowId, "transferred");
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return TransferAdministrationResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
@@ -404,6 +416,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.RemoveAdministratorAsync(baseWorkflowId, digest, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            GovernanceAudit.Mutation(this.auditLogger, "workflow.remove-administrator", this.AuditActor(), TargetKind, baseWorkflowId, "removed");
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return RemoveAdministratorResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),

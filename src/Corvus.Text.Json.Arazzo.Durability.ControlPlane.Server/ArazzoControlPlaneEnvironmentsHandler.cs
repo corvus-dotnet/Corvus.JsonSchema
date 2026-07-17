@@ -9,6 +9,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 using AdminKind = Corvus.Text.Json.Arazzo.Durability.Security.EnvironmentAdministrators.AdministratorIdentity.KindEntity;
 using Environment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
@@ -41,6 +42,10 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     private readonly ControlPlaneAccess access;
     private readonly IObservedIdentityStore? observed;
     private readonly string actor;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kind for every governance write on this surface (design §850).
+    private const string TargetKind = "environment";
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/>).</summary>
     /// <param name="store">The persistent environment store.</param>
@@ -59,7 +64,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane")
+    internal ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(administration);
@@ -70,7 +75,11 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         this.access = access;
         this.observed = observed;
         this.actor = actor;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject: the authenticated principal who made the change, falling back to the configured actor.
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
 
     /// <inheritdoc/>
     public async ValueTask<ListEnvironmentsResult> HandleListEnvironmentsAsync(ListEnvironmentsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -179,6 +188,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 await this.administration.EstablishAsync(name, callerIdentity, default, hasKind: false, default, hasLabel: false, cancellationToken).ConfigureAwait(false);
             }
 
+            GovernanceAudit.Mutation(this.auditLogger, "environment.create", this.AuditActor(), TargetKind, name, "created");
             workspace.TakeOwnership(created);
             return CreateEnvironmentResult.Created(Models.EnvironmentSummary.From(created.RootElement), workspace);
         }
@@ -245,6 +255,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             return UpdateEnvironmentResult.NotFound(NotFoundProblem(name), workspace);
         }
 
+        GovernanceAudit.Mutation(this.auditLogger, "environment.update", this.AuditActor(), TargetKind, name, "updated");
         workspace.TakeOwnership(e);
         return UpdateEnvironmentResult.Ok(Models.EnvironmentSummary.From(e.RootElement), workspace);
     }
@@ -273,6 +284,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
 
         // Clean up the now-orphaned administration record (best-effort; the environment is gone either way).
         await this.administration.DeleteRecordAsync(name, cancellationToken).ConfigureAwait(false);
+        GovernanceAudit.Mutation(this.auditLogger, "environment.delete", this.AuditActor(), TargetKind, name, "deleted");
         return DeleteEnvironmentResult.NoContent();
     }
 
@@ -381,6 +393,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 System.Diagnostics.Activity.Current?.SetTag("arazzo.administration.broadening_overlap_count", overlaps.Count);
             }
 
+            GovernanceAudit.Mutation(this.auditLogger, "environment.add-administrator", this.AuditActor(), TargetKind, name, "added");
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access, overlaps);
             return AddEnvironmentAdministratorResult.Ok(
                 Models.AdministratorList.Build(
@@ -453,6 +466,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         try
         {
             using ParsedJsonDocument<EnvironmentAdministrators> record = await this.administration.TransferAdministrationAsync(name, newAdministrators, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            GovernanceAudit.Mutation(this.auditLogger, "environment.transfer-administration", this.AuditActor(), TargetKind, name, "transferred");
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return TransferEnvironmentAdministrationResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
@@ -480,6 +494,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         try
         {
             using ParsedJsonDocument<EnvironmentAdministrators> record = await this.administration.RemoveAdministratorAsync(name, digest, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            GovernanceAudit.Mutation(this.auditLogger, "environment.remove-administrator", this.AuditActor(), TargetKind, name, "removed");
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return RemoveEnvironmentAdministratorResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),

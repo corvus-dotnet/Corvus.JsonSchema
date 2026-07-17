@@ -245,15 +245,23 @@ Ranked by security value first, then by breadth of the surface it closes.
    containment action, recorded once the removal is durable and the in-flight leases are fenced), plus the
    `refused-not-administrator` gate on each.
 6. **Environment create / update / delete, promotion (make-available / demote), admin transfers**
-   (O-ENV, O-ADM). Who governs what runs where.
+   (O-ENV, O-ADM). Who governs what runs where. **Landed:** `environment.create/update/delete` and
+   `environment.add-administrator / transfer-administration / remove-administrator`;
+   `environment.promote / demote` (promotion — making a version runnable in an environment — and its
+   withdrawal); `availability-request.approve / deny` (the promotion-request decisions, with
+   `refused-own-request` for the independent-decision bar and `refused-not-administrator`); and
+   `workflow.add-administrator / transfer-administration / remove-administrator`.
 7. **Audit-grade log for the existing run and catalog spans; attribute the authenticated principal**
    (O-RUN-1, O-RUN-2, O-CAT-1). Upgrade the two surfaces that already have spans.
 8. **Debug-run and source/workspace spans** (O-DBG, O-CRED-3). Development-time traceability.
 9. **Governance rate metrics** (POLISH): counters per decision outcome (approved / denied / revoked),
    credential rotations, runner revocations — the rates worth charting.
 
-Items 3–9 are follow-up slices, deliberately not rushed in one blind pass; each touches a distinct
-handler family and wants its own contract tests. This document is the standing worklist for them.
+Items 7–9 are follow-up slices; each touches a distinct handler family and wants its own contract
+tests. This document is the standing worklist for them. Items 1–6 — every MAJOR governance surface that
+changes the system's security posture — are landed: the access-request lifecycle, credential custody,
+grants and rules authoring, runner authorization, and environments / promotion / administrator
+transfers all now emit a governance audit.
 
 ## 5. Verdict
 

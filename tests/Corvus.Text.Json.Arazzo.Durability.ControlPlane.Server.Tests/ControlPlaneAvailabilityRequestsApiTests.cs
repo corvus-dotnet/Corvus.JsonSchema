@@ -223,6 +223,31 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         (await host.SendJsonAsync(HttpMethod.Post, "/availabilityRequests", """{"baseWorkflowId":"checkout","versionNumber":99,"environment":"production"}""", "globex")).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [TestMethod]
+    public async Task Promotion_request_decisions_and_the_own_request_refusal_emit_governance_audit_spans()
+    {
+        // §850: the promotion-request decisions (approve/deny) are audited with who decided which request, and the
+        // independent-decision refusal — a requester deciding their own promotion request — leaves a trace too.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "acme");
+
+        string approved = await host.SubmitAsync("checkout", 1, "production", "globex");
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{approved}/approve", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        string denied = await host.SubmitAsync("checkout", 1, "production", "globex");
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{denied}/deny", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // acme raises its own request, then tries to approve it — refused by the independent-decision bar.
+        string own = await host.SubmitAsync("checkout", 1, "production", "acme");
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{own}/approve", "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        audit.Outcomes(approved).ShouldBe(["approved"]);
+        audit.Outcomes(denied).ShouldBe(["denied"]);
+        audit.Outcomes(own).ShouldBe(["refused-own-request"]);
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 

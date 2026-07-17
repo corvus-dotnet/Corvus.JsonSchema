@@ -229,6 +229,22 @@ public sealed class ControlPlaneAdministratorsApiTests
     private static string Digest(string tenant)
         => SecurityIdentityDigest.Compute(SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]))!;
 
+    [TestMethod]
+    public async Task Workflow_administration_changes_emit_governance_audit_spans()
+    {
+        // §850: administrator-set changes reassign governance authority — adding a co-administrator, removing one, and
+        // transferring the set are each a governance event with who changed which workflow's administration.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", Acme);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Acme)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Globex)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(HttpMethod.Put, "/administrators/flow", """{"administrators":[{"dimension":"tenant","value":"acme"}]}""", Write, Globex)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        audit.Events("flow").ShouldBe([("workflow.add-administrator", "added"), ("workflow.remove-administrator", "removed"), ("workflow.transfer-administration", "transferred")]);
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 

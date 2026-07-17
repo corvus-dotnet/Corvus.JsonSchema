@@ -7,6 +7,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 using Environment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -39,6 +40,10 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     private readonly ISourceCredentialStore credentials;
     private readonly ControlPlaneAccess access;
     private readonly string actor;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kind for promotion/demotion on this surface (design §850).
+    private const string TargetKind = "version-availability";
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/>).</summary>
     /// <param name="availability">The availability matrix store.</param>
@@ -60,7 +65,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     /// <param name="credentials">The source-credential store (readiness: a credential per source × environment).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> and deployment identity per request.</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    internal ArazzoControlPlaneAvailabilityHandler(IAvailabilityStore availability, IEnvironmentStore environments, SecuredEnvironmentAdministration administration, ISecuredWorkflowCatalog catalog, ISourceCredentialStore credentials, ControlPlaneAccess access, string actor = "control-plane")
+    internal ArazzoControlPlaneAvailabilityHandler(IAvailabilityStore availability, IEnvironmentStore environments, SecuredEnvironmentAdministration administration, ISecuredWorkflowCatalog catalog, ISourceCredentialStore credentials, ControlPlaneAccess access, string actor = "control-plane", ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(availability);
         ArgumentNullException.ThrowIfNull(environments);
@@ -76,7 +81,14 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         this.credentials = credentials;
         this.access = access;
         this.actor = actor;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject: the authenticated principal who promoted/demoted, falling back to the configured actor.
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
+
+    // The (baseWorkflowId, version, environment) audit target key for a promotion/demotion (design §850).
+    private static string AvailabilityKey(string baseWorkflowId, int versionNumber, string environment) => $"{baseWorkflowId}:{versionNumber}@{environment}";
 
     /// <inheritdoc/>
     public async ValueTask<ListVersionAvailabilityResult> HandleListVersionAvailabilityAsync(ListVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -224,6 +236,14 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         }
 
         (ParsedJsonDocument<AvailabilityEntry> entry, bool created) = await this.availability.MakeAvailableAsync(baseWorkflowId, versionNumber, environment, this.actor, cancellationToken).ConfigureAwait(false);
+
+        // §850: promotion — making a version runnable in an environment (production included) — is a governance decision
+        // recorded with who promoted what where. A no-op re-promote (already available) is not re-audited.
+        if (created)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "environment.promote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), "promoted");
+        }
+
         workspace.TakeOwnership(entry);
         Models.AvailabilityEntry.Source body = Models.AvailabilityEntry.From(entry.RootElement);
         return created
@@ -250,6 +270,11 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         }
 
         bool withdrawn = await this.availability.WithdrawAsync(baseWorkflowId, versionNumber, environment, cancellationToken).ConfigureAwait(false);
+        if (withdrawn)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "environment.demote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), "demoted");
+        }
+
         return withdrawn
             ? DeleteVersionAvailabilityResult.NoContent()
             : DeleteVersionAvailabilityResult.NotFound(AvailabilityNotFoundProblem(baseWorkflowId, versionNumber, environment), workspace);

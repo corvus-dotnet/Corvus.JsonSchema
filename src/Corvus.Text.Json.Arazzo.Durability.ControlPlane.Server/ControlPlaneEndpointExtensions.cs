@@ -153,7 +153,7 @@ public static class ControlPlaneEndpointExtensions
         // The administration management API (§15) governs a base id's administrator set by current-administrator
         // membership; it delegates to the catalog client (which owns the administrator store, if one is configured) and
         // names administrators by deployment-mapped grants rather than raw internal tags.
-        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access, observedStore);
+        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access, observedStore, auditLogger);
 
         // The access-request API (§16.5): requests route to the target workflow's §15 administrators (or self-elevate
         // when eligible); an approval writes a single capped, time-boxed grant to the security-policy store (refreshed
@@ -169,7 +169,7 @@ public static class ControlPlaneEndpointExtensions
         // administration service over the environment-administrator store), and creating an environment grants the creator
         // administration. Both default to an in-memory store so the endpoints function in development.
         IEnvironmentStore envStore = environmentStore ?? new InMemoryEnvironmentStore();
-        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore);
+        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger);
 
         // The sources registry API (§7.6): first-class, reach-scoped source documents a workflow references by name. The
         // data plane is reach-filtered (the source store); sources are not governed (no administrator set) — reach
@@ -196,14 +196,14 @@ public static class ControlPlaneEndpointExtensions
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
         // version references must resolve a credential in that environment, §7.7). Defaults to an in-memory store.
         IAvailabilityStore availStore = availabilityStore ?? new InMemoryAvailabilityStore();
-        var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access);
+        var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access, auditLogger: auditLogger);
 
         // The availability-request ("promotion request") API (§7.8): a principal who cannot make a version available
         // directly raises a request; the TARGET environment's administrators approve (readiness-gated, mirroring the direct
         // make) or deny, and the requester may withdraw their own. The approver inbox spans the environments the caller
         // administers (the reverse administration index). Defaults to an in-memory store.
         IAvailabilityRequestStore availRequestStore = availabilityRequestStore ?? new InMemoryAvailabilityRequestStore();
-        var availabilityRequestsHandler = new ArazzoControlPlaneAvailabilityRequestsHandler(availRequestStore, availStore, envStore, environmentAdministration, catalog, credentialStore, access, accessRequestSubjectClaimType);
+        var availabilityRequestsHandler = new ArazzoControlPlaneAvailabilityRequestsHandler(availRequestStore, availStore, envStore, environmentAdministration, catalog, credentialStore, access, accessRequestSubjectClaimType, auditLogger);
 
         // The runner-authorization API (§5.5): which runners may serve an environment. A runner enters Pending on
         // registration and is dispatchable only once an administrator of the TARGET environment authorizes it (revocable).

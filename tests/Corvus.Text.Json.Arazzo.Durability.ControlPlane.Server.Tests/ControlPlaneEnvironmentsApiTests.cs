@@ -245,6 +245,20 @@ public sealed class ControlPlaneEnvironmentsApiTests
         (await host.SendAsync(HttpMethod.Delete, "/environments/production", Write)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [TestMethod]
+    public async Task The_environment_lifecycle_emits_governance_audit_spans()
+    {
+        // §850: environment governance — creating a deployment target, editing its rules, retiring it — leaves a trace.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"audit-env","displayName":"Audit"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Put, "/environments/audit-env", """{"displayName":"Audit (edited)"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/environments/audit-env", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        audit.Outcomes("audit-env").ShouldBe(["created", "updated", "deleted"]);
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 

@@ -141,6 +141,23 @@ public sealed class ControlPlaneAvailabilityApiTests
         (await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/production", Read, "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [TestMethod]
+    public async Task Promoting_and_demoting_a_version_emits_governance_audit_spans()
+    {
+        // §850: promotion — making a version runnable in an environment (production included) — and its withdrawal are
+        // governance decisions with who promoted/demoted what where. A no-op re-promote is not re-audited.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "acme");
+
+        (await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/catalog/checkout/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        audit.Events("checkout:1@production").ShouldBe([("environment.promote", "promoted"), ("environment.demote", "demoted")]);
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
