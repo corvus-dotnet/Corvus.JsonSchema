@@ -154,6 +154,8 @@ class ArazzoRunDetail extends ArazzoElement {
         .pos.wait { color: var(--arazzo-status-suspended, #b45309); }
         .pos.fault { color: var(--_danger); }
         .pos.out { color: var(--_muted); cursor: pointer; }
+        /* §14: sensitive step outputs withheld from this caller — an amber held-back marker, never the payload. */
+        .pos.out.held { color: var(--arazzo-status-quarantined, #d97706); border-color: var(--arazzo-status-quarantined, #d97706); cursor: help; }
         .step-out summary { cursor: pointer; list-style: none; }
         .step-out summary::-webkit-details-marker { display: none; }
         .step-out pre { margin: 4px 0 6px; padding: 8px 10px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 6px; font-size: 11.5px; overflow-x: auto; }
@@ -278,7 +280,7 @@ class ArazzoRunDetail extends ArazzoElement {
           this.client.getRunSteps(run.id).catch(() => null), // best-effort: older servers have no journal endpoint
         ]);
         steps = this._progressSteps;
-        for (const rec of (recorded?.steps || [])) journal.set(rec.stepId, rec.outputs);
+        for (const rec of (recorded?.steps || [])) journal.set(rec.stepId, rec);
       } catch {
         steps = null;
       }
@@ -294,14 +296,22 @@ class ArazzoRunDetail extends ArazzoElement {
     const waitStep = run.status === 'Suspended' && !atEnd ? next : null;
     const faultStep = run.fault?.stepId || (run.status === 'Faulted' ? next : null);
     const rowFor = (id, i, dispatched, marks) => {
-      // A step with recorded outputs expands to show them, verbatim from the checkpoint.
-      if (journal.has(id)) {
-        const outputs = journal.get(id);
+      const rec = journal.get(id);
+      if (rec) {
+        // A redacted step (§14): the checkpoint attests it recorded outputs, but they are classified sensitive and
+        // withheld from this caller — show a held-back affordance, never the payload.
+        if (rec.redacted) {
+          return `<li class="${dispatched ? 'dispatched' : ''}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')} <span class="pos out held" title="Outputs are classified sensitive and withheld — reading them needs write access to this run.">🔒 outputs withheld</span></li>`;
+        }
+
+        // A step with recorded outputs expands to show them, verbatim from the checkpoint.
+        const outputs = rec.outputs;
         return `<li class="${dispatched ? 'dispatched' : ''}"><details class="step-out">
           <summary><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')} <span class="pos out">outputs</span></summary>
           <pre>${escapeHtml(JSON.stringify(outputs === undefined ? null : outputs, null, 2))}</pre>
         </details></li>`;
       }
+
       return `<li class="${dispatched ? 'dispatched' : ''}"><span class="mono">${escapeHtml(id)}</span> ${marks.join(' ')}</li>`;
     };
     const listed = new Set(steps);

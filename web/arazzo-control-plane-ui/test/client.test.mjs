@@ -28,6 +28,26 @@ test('listRuns returns all seeded runs', async () => {
   assert.equal(nextPageToken, null);
 });
 
+test('a sensitive versions step journal is redacted for an auditor but read in full above the stronger grant (#859)', async () => {
+  // onboard-customer is classified outputsSensitivity: sensitive (KYC identity data); run-33aa71f9 is a run of it.
+  const personaClient = (persona) => {
+    const mock = createMockControlPlane({ latencyMs: 0, persona });
+    return new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  };
+
+  // The administrator holds the operator-level grant (runs:write) → the identity data is disclosed in full.
+  const full = await personaClient('administrator').getRunSteps('run-6610ffac');
+  assert.equal(full.steps.find((s) => s.stepId === 'verifyIdentity').outputs.nationalId, '881-22-9034');
+
+  // The auditor holds runs:outputs:read but no write access → the whole journal is redacted, no payload disclosed.
+  const redacted = await personaClient('viewer').getRunSteps('run-6610ffac');
+  assert.ok(redacted.steps.length > 0 && redacted.steps.every((s) => s.redacted === true && s.outputs === undefined));
+
+  // A standard (unclassified) version's journal is NOT redacted, even for the read-only auditor.
+  const standard = await personaClient('viewer').getRunSteps('run-0a5512cd'); // adopt-pet-v1
+  assert.ok(standard.steps.length > 0 && standard.steps.every((s) => !s.redacted));
+});
+
 test('listRuns filters by status and workflowId', async () => {
   const c = makeClient();
   assert.equal((await c.listRuns({ status: 'Faulted' })).runs.length, 5);

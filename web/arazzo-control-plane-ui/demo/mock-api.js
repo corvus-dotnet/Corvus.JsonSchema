@@ -109,6 +109,12 @@ export function seedRuns() {
       id: 'run-6610ffac', workflowId: 'onboard-customer-v1', status: 'Cancelled', cursor: 2,
       createdAt: iso(-40 * day), updatedAt: iso(-40 * day + min), etag: nextEtag(),
       correlationId: '6610ffac1726354455647382910a0b0c',
+      // A KYC flow's journal carries identity data — the onboard-customer version is classified outputsSensitivity:
+      // sensitive, so this journal is redacted for callers below the stronger grant (§14).
+      stepOutputs: [
+        { stepId: 'verifyIdentity', outputs: { customerId: 'cust-55021', nationalId: '881-22-9034', dateOfBirth: '1984-03-19' } },
+        { stepId: 'runAmlCheck', outputs: { cleared: true, riskBand: 'low' } },
+      ],
     },
     {
       id: 'run-2d77b410', workflowId: 'nightly-reconcile-v3', status: 'Pending', cursor: 0,
@@ -816,7 +822,9 @@ function seedCatalog() {
         ],
       },
     }),
-    v('onboard-customer', 1, 'Active', 'Onboard Customer', teamB, ['prod', 'kyc'], 7),
+    // A KYC flow: its step outputs carry identity data, so the author classified them sensitive (§14). Its step journal
+    // is redacted for callers below the stronger grant (write reach on the run) even though they may read the run itself.
+    v('onboard-customer', 1, 'Active', 'Onboard Customer', teamB, ['prod', 'kyc'], 7, { outputsSensitivity: 'sensitive' }),
   ];
 }
 
@@ -839,6 +847,7 @@ function toCatalogSummary(v) {
     obsoletedBy: v.obsoletedBy ?? undefined,
     obsoletedAt: v.obsoletedAt ?? undefined,
     securityTags: v.securityTags ?? securityTagsForBase(v.baseWorkflowId),
+    outputsSensitivity: v.outputsSensitivity ?? undefined,
   };
 }
 
@@ -1227,13 +1236,16 @@ function seedRunnerAuthorizations() {
 // (§15/§7.7), so alice@ops (seeded on every resource) administers everything, omar@ops (seeded on onboard-customer +
 // staging) administers only those, and vera/pat administer nothing. A real deployment derives all this from the
 // principal's token; here the demo selects an identity. `administrator` is the default so existing tests are unchanged.
-const READ_ALL_SCOPES = 'runs:read catalog:read credentials:read sources:read workspace:read environments:read availability:read administrators:read security:read';
+// The auditor holds runs:outputs:read (the §14 step-output disclosure tier) alongside runs:read: it may read step
+// journals, but with no WRITE reach a sensitive version's payloads still come back redacted. The team-reader below
+// deliberately omits runs:outputs:read, so it cannot read step outputs at all (the baseline tier gate).
+const READ_ALL_SCOPES = 'runs:read runs:outputs:read catalog:read credentials:read sources:read workspace:read environments:read availability:read administrators:read security:read';
 export const DEMO_PERSONAS = {
   administrator: {
     label: 'Administrator — alice@ops (administers everything)',
     subject: 'alice@ops',
     displayName: 'Alice (Ops)',
-    scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write workspace:read workspace:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
+    scopes: 'runs:read runs:outputs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write workspace:read workspace:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
     reach: 'all',
   },
   operator: {
@@ -1244,7 +1256,7 @@ export const DEMO_PERSONAS = {
     label: 'Operator — omar@ops (administers onboard-customer + staging)',
     subject: 'omar@ops',
     displayName: 'Omar (Ops)',
-    scopes: 'runs:read runs:write catalog:read credentials:read sources:read workspace:read workspace:write environments:read availability:read administrators:read security:read',
+    scopes: 'runs:read runs:outputs:read runs:write catalog:read credentials:read sources:read workspace:read workspace:write environments:read availability:read administrators:read security:read',
     reach: 'all',
   },
   viewer: {
@@ -1293,6 +1305,12 @@ export function createMockControlPlane(options = {}) {
   const latency = options.latencyMs ?? 250;
   const find = (id) => runs.find((r) => r.id === id);
   const findVersion = (base, n) => catalog.find((v) => v.baseWorkflowId === base && v.versionNumber === Number(n));
+  // A run's version output-sensitivity classification (§14), resolved from the CURRENT catalog version (so reclassifying
+  // retroactively protects existing runs' journals) — 'sensitive' redacts the journal below the stronger grant.
+  const versionOutputsSensitivity = (workflowId) => {
+    const m = /^(.*)-v(\d+)$/.exec(workflowId || '');
+    return (m ? findVersion(m[1], m[2]) : null)?.outputsSensitivity;
+  };
   const findCredential = (s, e) => credentials.find((c) => c.sourceName === s && c.environment === e);
   // §13 IsUsableBy (demo approximation): an unscoped binding is shared; a usage-scoped one is usable only by the
   // workflow it names. The real backend does a full label-superset over the run's resolved identity.
@@ -1882,7 +1900,19 @@ export function createMockControlPlane(options = {}) {
         // The checkpoint's step journal, verbatim and in recording order — a step that recorded
         // nothing is absent, and no per-step status or timing is invented (server parity).
         if (!reachAdmits(securityTagsForBase(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
-        return json({ runId: run.id, steps: structuredClone(run.stepOutputs ?? []) });
+        // §14 disclosure tier: step outputs are a payload tier ABOVE run-metadata visibility, so reading them needs the
+        // runs:outputs:read capability scope on top of runs:read (server-enforced; the demo mirrors it).
+        if (!persona.scopes.has('runs:outputs:read')) {
+          return problem(403, 'Forbidden', 'Reading step outputs requires the runs:outputs:read capability scope.');
+        }
+        const steps = structuredClone(run.stepOutputs ?? []);
+        // A version its author classified sensitive has its whole journal redacted for callers below the stronger grant.
+        // The real gate is WRITE reach on the run; the demo proxies operator-level access with runs:write (vs an auditor).
+        if (versionOutputsSensitivity(run.workflowId) === 'sensitive' && !persona.scopes.has('runs:write')) {
+          return json({ runId: run.id, steps: steps.map((s) => ({ stepId: s.stepId, redacted: true })) });
+        }
+
+        return json({ runId: run.id, steps });
       }
       if (!action && method === 'DELETE') return deleteRun(run);
       if (action === 'resume' && method === 'POST') return resumeRun(run, body);

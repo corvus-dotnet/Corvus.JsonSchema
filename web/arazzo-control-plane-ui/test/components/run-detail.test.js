@@ -55,6 +55,39 @@ describe('<arazzo-run-detail> correlation id', () => {
   });
 });
 
+describe('<arazzo-run-detail> sensitive-output redaction (#859)', () => {
+  let el;
+  afterEach(() => el?.remove());
+
+  function detailForPersona(runId, persona) {
+    const mock = createMockControlPlane({ latencyMs: 0, persona });
+    const e = document.createElement('arazzo-run-detail');
+    e.setAttribute('runid', runId);
+    e.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    return e;
+  }
+
+  // run-33aa71f9 runs the KYC onboard-customer version (outputsSensitivity: sensitive). The auditor holds
+  // runs:outputs:read but no write access, so the journal comes back redacted — the UI shows a held-back marker.
+  it('shows a held-back marker for a sensitive versions outputs below the stronger grant, never the payload', async () => {
+    el = detailForPersona('run-6610ffac', 'viewer');
+    mount(el);
+    const held = await waitFor(() => el.shadowRoot.querySelector('.pos.out.held'));
+    ok(held.textContent.toLowerCase().includes('withheld'), 'the held-back marker is labelled');
+    ok(!el.shadowRoot.textContent.includes('881-22-9034'), 'the sensitive identity data is not disclosed');
+    ok(!el.shadowRoot.querySelector('.step-out'), 'no expandable outputs are rendered for a redacted journal');
+  });
+
+  // The operator (runs:write, the stronger-grant proxy) reads the same journal in full — no held-back marker.
+  it('shows the outputs in full for the operator', async () => {
+    el = detailForPersona('run-6610ffac', 'administrator');
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('.step-out'));
+    ok(!el.shadowRoot.querySelector('.pos.out.held'), 'no held-back marker for a full read');
+    ok(el.shadowRoot.textContent.includes('881-22-9034'), 'the identity data is disclosed to the operator');
+  });
+});
+
 describe('<arazzo-run-detail> polling vs open modals', () => {
   let el;
   afterEach(() => el?.remove());
