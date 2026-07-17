@@ -143,7 +143,7 @@ public static class ControlPlaneEndpointExtensions
         // The access-overview (GET /access/grants) aggregates a grantee's bindings + conferred capability scopes +
         // administered workflows and environments + usable credentials, so the security handler also reads the catalog
         // (administered workflows), the credential store, and the environment administration reverse index.
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration);
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration, auditLogger: auditLogger);
 
         // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
         // so the endpoints function in development) plus an optional pluggable directory. The write paths below record

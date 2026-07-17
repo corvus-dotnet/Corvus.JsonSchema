@@ -235,7 +235,10 @@ Ranked by security value first, then by breadth of the surface it closes.
    `rotated` — the secret reference changed — from a metadata `updated`), `credential.delete`, and the
    `refused-out-of-reach` privilege-escalation guard; rotations feed the `corvus.arazzo.credentials.rotated`
    counter.
-4. **Grants and rules authoring** (O-SEC). The authorization model itself, including rule reorder.
+4. **Grants and rules authoring** (O-SEC). The authorization model itself. **Landed:**
+   `security-rule.create/update/delete` and `security-binding.create/update/delete`, plus the
+   self-elevation guard's refusal (`refused-self-elevation`) on binding create/update. (Rule ordering is
+   deployment configuration, not a mutation endpoint, so there is nothing to audit there.)
 5. **Runner authorization: authorize / quarantine / revoke / reinstate** (O-RNR). Containment actions.
 6. **Environment create / update / delete, promotion (make-available / demote), admin transfers**
    (O-ENV, O-ADM). Who governs what runs where.

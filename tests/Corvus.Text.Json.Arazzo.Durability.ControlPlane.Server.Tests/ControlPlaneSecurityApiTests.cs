@@ -2,12 +2,14 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -209,6 +211,104 @@ public sealed class ControlPlaneSecurityApiTests
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+    [TestMethod]
+    public async Task Authoring_a_rule_emits_create_update_delete_audit_spans()
+    {
+        // §850: authoring the authorization model (a rule) leaves a governance-audit trace at every step of its lifecycle.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync();
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/rules", """{"name":"audit-rule","expression":"tenant == $claim.tenant"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Put, "/security/rules/audit-rule", """{"expression":"sys:tenant == $claim.tenant"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/security/rules/audit-rule", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        audit.Outcomes("audit-rule").ShouldBe(["created", "updated", "deleted"]);
+    }
+
+    [TestMethod]
+    public async Task Authoring_a_binding_emits_create_update_delete_audit_spans()
+    {
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        await using Scoped host = await StartAsync();
+
+        string id;
+        using (Stj.JsonDocument created = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"role","claimValue":"tenant-admin","read":{"unrestricted":true},"write":{"unrestricted":false},"purge":{"unrestricted":false},"order":10}""", Write)))
+        {
+            id = created.RootElement.GetProperty("id").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/security/bindings/{id}", """{"claimType":"role","claimValue":"operator","read":{"unrestricted":true},"write":{"unrestricted":true},"purge":{"unrestricted":true}}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, $"/security/bindings/{id}", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        audit.Outcomes(id).ShouldBe(["created", "updated", "deleted"]);
+    }
+
+    [TestMethod]
+    public async Task A_self_elevating_binding_is_audited_as_refused()
+    {
+        // The self-elevation guard refuses a caller authoring a grant that would elevate itself; the security control
+        // firing is audited too.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        var policyStore = new InMemorySecurityPolicyStore();
+        await using Scoped host = await StartSecuredAsync(policyStore);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":false},"write":{"unrestricted":true}}""", Write, "team=payments")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        audit.Spans.ShouldContain(s => s.OperationName == "security-binding.create" && (string?)s.GetTagItem(ArazzoTelemetry.OutcomeTag) == "refused-self-elevation");
+    }
+
+    /// <summary>Captures the grants/rules governance-audit spans (design §850) on the Arazzo <see cref="ActivitySource"/>.</summary>
+    private sealed class GovernanceAuditSpans : IDisposable
+    {
+        private readonly List<Activity> spans = [];
+        private readonly ActivityListener listener;
+
+        private GovernanceAuditSpans()
+        {
+            this.listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == ArazzoTelemetry.ActivitySourceName,
+                Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+                ActivityStopped = activity =>
+                {
+                    if (activity.OperationName.StartsWith("security-", StringComparison.Ordinal))
+                    {
+                        lock (this.spans)
+                        {
+                            this.spans.Add(activity);
+                        }
+                    }
+                },
+            };
+            ActivitySource.AddActivityListener(this.listener);
+        }
+
+        // A snapshot of the captured spans, in stop order.
+        public IReadOnlyList<Activity> Spans
+        {
+            get
+            {
+                lock (this.spans)
+                {
+                    return [.. this.spans];
+                }
+            }
+        }
+
+        public static GovernanceAuditSpans Capture() => new();
+
+        // The ordered outcomes recorded for the given target (rule name or binding id), across its lifecycle.
+        public IReadOnlyList<string> Outcomes(string targetId)
+        {
+            lock (this.spans)
+            {
+                return [.. this.spans.Where(s => (string?)s.GetTagItem(ArazzoTelemetry.TargetIdTag) == targetId).Select(s => (string)s.GetTagItem(ArazzoTelemetry.OutcomeTag)!)];
+            }
+        }
+
+        public void Dispose() => this.listener.Dispose();
+    }
 
     [TestMethod]
     public async Task The_orderings_endpoint_projects_the_configured_orderings_and_is_empty_without_a_policy()

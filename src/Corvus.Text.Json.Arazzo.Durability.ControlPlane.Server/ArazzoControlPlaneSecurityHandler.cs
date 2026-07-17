@@ -8,6 +8,7 @@ using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -39,6 +40,11 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     private readonly SecuredEnvironmentAdministration? environments;
     private readonly TimeProvider timeProvider;
     private readonly string actor;
+    private readonly ILogger? auditLogger;
+
+    // The audited resource kinds for this surface (design §850).
+    private const string RuleKind = "security-rule";
+    private const string BindingKind = "security-binding";
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneSecurityHandler"/> class.</summary>
     /// <param name="store">The persistent rule/binding store the endpoints delegate to.</param>
@@ -55,7 +61,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <param name="policy">An optional policy to refresh after a mutation.</param>
     /// <param name="access">The request-scoped access binding the guard reads the caller's claims from (<see langword="null"/> disables the guard — the unscoped posture).</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, SecuredEnvironmentAdministration? environments = null, TimeProvider? timeProvider = null, string actor = "control-plane")
+    internal ArazzoControlPlaneSecurityHandler(ISecurityPolicyStore store, PersistentRowSecurityPolicy? policy, ControlPlaneAccess? access, ISecuredWorkflowCatalog? catalog = null, ISourceCredentialStore? credentials = null, SecuredEnvironmentAdministration? environments = null, TimeProvider? timeProvider = null, string actor = "control-plane", ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(actor);
@@ -67,7 +73,12 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         this.environments = environments;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.actor = actor;
+        this.auditLogger = auditLogger;
     }
+
+    // The §850 audit subject: the authenticated principal who authored the change, falling back to the
+    // deployment-configured audit actor when no principal is resolvable (the guard-disabled unscoped posture).
+    private string AuditActor() => PrincipalDisplayName.Resolve(this.access?.CurrentPrincipal) ?? this.actor;
 
     /// <inheritdoc/>
     public async ValueTask<SearchSecurityRulesResult> HandleSearchSecurityRulesAsync(SearchSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -148,6 +159,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             // names/types/required set), so hand the pooled document to the workspace (it disposes it after the
             // response is written) and wrap with From() (a pointer reinterpret). Ownership transfers before
             // RefreshAsync so a refresh failure cannot leak the document.
+            GovernanceAudit.Mutation(this.auditLogger, "security-rule.create", this.AuditActor(), RuleKind, name, "created");
             workspace.TakeOwnership(created);
             await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
             return CreateSecurityRuleResult.Created(Models.SecurityRuleSummary.From(created.RootElement), workspace);
@@ -194,6 +206,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         // Zero-copy view over the pooled rule document handed to the workspace; ownership transfers before RefreshAsync
         // so a refresh failure cannot leak the document.
+        GovernanceAudit.Mutation(this.auditLogger, "security-rule.update", this.AuditActor(), RuleKind, name, "updated");
         workspace.TakeOwnership(r);
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
         return UpdateSecurityRuleResult.Ok(Models.SecurityRuleSummary.From(r.RootElement), workspace);
@@ -209,6 +222,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return DeleteSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
         }
 
+        GovernanceAudit.Mutation(this.auditLogger, "security-rule.delete", this.AuditActor(), RuleKind, name, "deleted");
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
         return DeleteSecurityRuleResult.NoContent();
     }
@@ -251,6 +265,9 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         if (this.SelfElevates(draft, out problem))
         {
+            // The self-elevation guard firing — a caller authoring a grant that would elevate itself — is a security
+            // control worth auditing (no id is assigned to a refused create).
+            GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", this.AuditActor(), BindingKind, string.Empty, "refused-self-elevation");
             return CreateSecurityBindingResult.Forbidden(problem, workspace);
         }
 
@@ -258,6 +275,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         // document to dispose. The summary references the returned pooled binding document (per-field From() wrap), so hand
         // that to the workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak it.
         ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(draft, this.actor, cancellationToken).ConfigureAwait(false);
+        GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", this.AuditActor(), BindingKind, (string)created.RootElement.Id, "created");
         workspace.TakeOwnership(created);
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
         return CreateSecurityBindingResult.Created(ToBindingSource(created.RootElement), workspace);
@@ -290,6 +308,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         if (this.SelfElevates(draft, out problem))
         {
+            GovernanceAudit.Mutation(this.auditLogger, "security-binding.update", this.AuditActor(), BindingKind, id, "refused-self-elevation");
             return UpdateSecurityBindingResult.Forbidden(problem, workspace);
         }
 
@@ -303,6 +322,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         // The summary references the returned pooled binding document (per-field From() zero-copy wrap) — hand it to the
         // workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak the document.
+        GovernanceAudit.Mutation(this.auditLogger, "security-binding.update", this.AuditActor(), BindingKind, id, "updated");
         workspace.TakeOwnership(b);
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
         return UpdateSecurityBindingResult.Ok(ToBindingSource(b.RootElement), workspace);
@@ -318,6 +338,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return DeleteSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
         }
 
+        GovernanceAudit.Mutation(this.auditLogger, "security-binding.delete", this.AuditActor(), BindingKind, id, "deleted");
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
         return DeleteSecurityBindingResult.NoContent();
     }
