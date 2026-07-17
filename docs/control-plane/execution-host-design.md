@@ -261,8 +261,18 @@ execution capacity (every caller sees every runner).
   into an environment — receiving an environment's runs means receiving its credentials, so it is a security
   boundary. A runner registering for environment *E* enters a **`Pending`** authorization state and is *not*
   dispatchable until an administrator of *E* (§15.1, the `EnvironmentAdministrators` set) authorizes it. This
-  reuses the §15.4 approver-inbox pattern (the same surface that approves availability/access requests). An
-  authorization can be revoked, which immediately removes the runner from dispatch for *E*.
+  reuses the §15.4 approver-inbox pattern (the same surface that approves availability/access requests).
+- **Two ways to take a runner out of the pool, for two different situations.** A **faulted** runner is
+  *quarantined*: it stops receiving new and orphaned work, but its in-flight runs are left to drain, and it is
+  *reinstated* to `Authorized` by authorizing it again, with no re-registration. A **compromised** runner is
+  *revoked*: this is permanent, and the runner returns only by a deliberate re-authorization. Revoke also *fences*
+  its in-flight work. The dispatch gate stops new claims within a poll, but a run the runner already leased would
+  otherwise run to completion, so revoke additionally expires every lease the runner holds through the store's
+  lease-administration capability. An authorized peer then reclaims those runs at once, and the revoked runner's
+  own next checkpoint write conflicts under optimistic concurrency. The fence is enforced in the store, not on the
+  runner (a cooperative self-check is worthless against a compromised, attacker-controlled runner). The lifecycle
+  is therefore `Pending -> Authorized`, `Authorized <-> Quarantined` (quarantine/reinstate), and
+  `any -> Revoked -> Authorized` (revoke/re-authorize). Only `Authorized` is dispatchable.
 - **Run→environment pinning — folded in now.** A run is pinned to an environment at start (`§7.7` already says "a
   run targets an environment and uses that environment's credential set"). `startCatalogWorkflowRun` takes a
   required `environment`; the surface validates it against the version's availability (§7.8) and the caller's
@@ -293,7 +303,7 @@ and `environment` on the run:
   "properties": {
     "environment": { "type": "string" },
     "runnerId":    { "type": "string" },
-    "status":      { "type": "string", "enum": ["pending", "authorized", "revoked"] },
+    "status":      { "type": "string", "enum": ["pending", "authorized", "quarantined", "revoked"] },
     "decidedBy":   { "type": "string" },
     "decidedAt":   { "type": "string", "format": "date-time" },
     "etag":        { "type": "string" } } }
@@ -312,7 +322,11 @@ and `environment` on the run:
 - `GET /arazzo/v1/environments/{name}/runners` — runners serving an environment with their authorization status
   (governed by the environment's administrators).
 - `POST /arazzo/v1/environments/{name}/runners/{runnerId}/authorization` (+ `DELETE` to revoke) — an environment
-  administrator authorizes/revokes a runner; appears in the approver inbox (§15.4).
+  administrator authorizes/revokes a runner; appears in the approver inbox (§15.4). The `POST` also reinstates a
+  quarantined runner and re-authorizes a revoked one (any non-authorized state to `Authorized`); the `DELETE`
+  revoke fences the runner's in-flight leases.
+- `POST /arazzo/v1/environments/{name}/runners/{runnerId}/quarantine` — temporarily excludes a faulted runner
+  (drains in-flight); only an authorized runner may be quarantined (`409` otherwise).
 - `startCatalogWorkflowRun` request body gains a required `environment`, validated against availability (§7.8) +
   reach; surfaced on the run (the runs UI already wants this, §7.7).
 
