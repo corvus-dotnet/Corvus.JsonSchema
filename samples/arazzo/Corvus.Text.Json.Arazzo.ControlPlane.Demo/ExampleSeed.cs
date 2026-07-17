@@ -106,6 +106,11 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // because a rule has no dimensions to match on an empty tag set).
         SecurityTagSet preprodZone = SecurityTagSet.FromTags([new SecurityTag("zone", "preprod")]);
 
+        // The prod zone mirrors it (§14.2 realism, backlog #862): production's row and credentials carry zone=prod,
+        // so rule-based routes to production exist at all — prod-ops administers through one, payments sees its
+        // promotion target through another. Founder-group membership stops being the only door.
+        SecurityTagSet prodZone = SecurityTagSet.FromTags([new SecurityTag("zone", "prod")]);
+
         foreach (string environment in new[] { "production", "staging", "development" })
         {
             // production is usage-scoped to the admin group; staging and development stay shared (empty usage
@@ -113,7 +118,12 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             // only environments where the version is READY (every referenced source credentialed there), so
             // wanda's request for staging is constructible end to end.
             SecurityTagSet usage = environment == "production" ? adminGroup : SecurityTagSet.Empty;
-            SecurityTagSet management = environment == "staging" ? preprodZone : SecurityTagSet.Empty;
+            SecurityTagSet management = environment switch
+            {
+                "staging" => preprodZone,
+                "production" => prodZone, // visible to prod-zone routes, so a production promotion's readiness computes for its requester
+                _ => SecurityTagSet.Empty,
+            };
 
             // 'notifications' is the AsyncAPI (NATS) source onboard-customer-async binds (kyc.requests / kyc.verdict). Its
             // transport is the message binder, not a per-source API key, but the debug-run readiness gate requires a binding
@@ -154,14 +164,24 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             // bindings below) matches: administration alone never confers reach, so erin (env-admins, administers
             // staging) and wanda (reconcile-owners, names staging as a promotion target) route their staging
             // visibility through that rule while development/production stay founder-only.
-            SecurityTagSet reach = name == "staging"
-                ? SecurityTagSet.FromTags(
+            SecurityTagSet reach = name switch
+            {
+                "staging" => SecurityTagSet.FromTags(
                     [
                         new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins"),
                         DemoData.IssuerTag,
                         new SecurityTag("zone", "preprod"),
-                    ])
-                : adminGroup;
+                    ]),
+                // production carries zone=prod so rule-based routes to it EXIST (prod-ops administration,
+                // payments' promotion-target visibility) — founders are no longer the only door (#862).
+                "production" => SecurityTagSet.FromTags(
+                    [
+                        new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins"),
+                        DemoData.IssuerTag,
+                        new SecurityTag("zone", "prod"),
+                    ]),
+                _ => adminGroup,
+            };
             using ParsedJsonDocument<CpEnvironment.SecurityTagInfoArray> reachTags =
                 PersistedJson.ToPooledDocument<CpEnvironment.SecurityTagInfoArray>(reach.RawJson);
 
@@ -230,6 +250,8 @@ public sealed class ArazzoExampleSeed : IExampleSeed
     //   observers        — reach-scoped READ: a rule-bounded read reach over onboard-customer rows only.
     //   env-admins       — environment administration only: staging, plus the environments/availability scopes.
     //   reconcile-owners — single-workflow administration: nightly-reconcile (routes its requests to wanda's inbox).
+    //   prod-ops         — production administration through the zone=prod route (pia); founders shrink toward break-glass (#862).
+    //   payments         — alice's team: reads onboarding + sees the prod zone, so her seeded promotion request is constructible.
     //   alice            — an APPROVED, time-boxed runs grant (its request decided, binding written the §16.5 approval
     //                      shape) plus an eligible-only purge assignment (self-elevation, conferring nothing active).
     //   oscar            — the PENDING access request that populates the approver inboxes.
@@ -252,9 +274,17 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             (await context.SecurityPolicy.AddRuleAsync("zone-access:preprod", zoneRule.RootElement, "demo", cancellationToken)).Dispose();
         }
 
+        // The prod-zone rule (#862): the rule-based door to production the zone=prod stamps above open.
+        using (ParsedJsonDocument<SecurityRuleDocument> prodRule = SecurityRuleDocument.Draft(
+            "zone == 'prod'", "The production zone."))
+        {
+            (await context.SecurityPolicy.AddRuleAsync("zone-access:prod", prodRule.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
         VerbGrant onboardReach = VerbGrant.Rules("workflow-access:onboard-customer");
         VerbGrant reconcileReach = VerbGrant.Rules("workflow-access:nightly-reconcile");
         VerbGrant preprodReach = VerbGrant.Rules("zone-access:preprod");
+        VerbGrant prodReach = VerbGrant.Rules("zone-access:prod");
         (string Dimension, string? Value)[] issuerPin = [("iss", DemoData.KeycloakIssuer)];
 
         // observers: reach only (read, bounded to onboard-customer rows) — capability stays the membership baseline.
@@ -301,11 +331,47 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             (await context.SecurityPolicy.AddBindingAsync(reconcileZone.RootElement, "demo", cancellationToken)).Dispose();
         }
 
+        // prod-ops: the production analogue of env-admins (#862) — the environments/availability capability scopes
+        // plus read reach over the prod zone, so production is administered by a dedicated operations group rather
+        // than the founder group alone (which shrinks toward break-glass).
+        using (ParsedJsonDocument<SecurityBindingDocument> prodOps = SecurityBindingDocument.Draft(
+            "group", "prod-ops", prodReach, VerbGrant.None, VerbGrant.None, order: 24,
+            description: "Production operators hold the environments/availability capability scopes and see the prod zone.",
+            scopes: ["environments:read", "environments:write", "availability:read", "availability:write"],
+            additionalClauses: issuerPin))
+        {
+            (await context.SecurityPolicy.AddBindingAsync(prodOps.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
+        // payments: the seeded production promotion request must be CONSTRUCTIBLE by its requester (#862) —
+        // alice needs the target environment in reach AND the workflow's rows readable, each its own binding
+        // (a verb grant's rules are a conjunction; two routes union). Plus the read scopes the request dialog
+        // uses, exactly wanda's shape for staging.
+        using (ParsedJsonDocument<SecurityBindingDocument> paymentsProd = SecurityBindingDocument.Draft(
+            "group", "payments", prodReach, VerbGrant.None, VerbGrant.None, order: 25,
+            description: "Payments see the prod zone they request promotions into.",
+            scopes: ["environments:read", "availability:read"],
+            additionalClauses: issuerPin))
+        {
+            (await context.SecurityPolicy.AddBindingAsync(paymentsProd.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
+        using (ParsedJsonDocument<SecurityBindingDocument> paymentsOnboarding = SecurityBindingDocument.Draft(
+            "group", "payments", onboardReach, VerbGrant.None, VerbGrant.None, order: 26,
+            description: "Payments read the onboarding workflow they own.",
+            additionalClauses: issuerPin))
+        {
+            (await context.SecurityPolicy.AddBindingAsync(paymentsOnboarding.RootElement, "demo", cancellationToken)).Dispose();
+        }
+
         // The administration split: erin's group co-administers staging (arazzo-admins established it above); wanda's
-        // group co-administers nightly-reconcile (the arazzo-admins founder adds it, exactly as the API would).
+        // group co-administers nightly-reconcile (the arazzo-admins founder adds it, exactly as the API would);
+        // pia's prod-ops co-administers production (#862).
         var administration = new SecuredEnvironmentAdministration(context.EnvironmentAdministrators, "demo");
         (await administration.AddAdministratorAsync(
             "staging", DemoData.GroupIdentity("env-admins"), default, false, default, false, adminGroup, cancellationToken)).Dispose();
+        (await administration.AddAdministratorAsync(
+            "production", DemoData.GroupIdentity("prod-ops"), default, false, default, false, adminGroup, cancellationToken)).Dispose();
         (await context.Catalog.AddAdministratorAsync(
             "nightly-reconcile", DemoData.GroupIdentity("reconcile-owners"), default, false, default, false, adminGroup, cancellationToken)).Dispose();
 

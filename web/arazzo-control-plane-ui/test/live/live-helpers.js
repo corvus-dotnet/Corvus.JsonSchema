@@ -21,6 +21,7 @@ export const LIVE_USERS = {
   oscar: { username: 'oscar', password: 'oscar' },        // observers group (read-only)
   erin: { username: 'erin', password: 'erin' },           // env-admins group
   wanda: { username: 'wanda', password: 'wanda' },        // reconcile-owners group
+  pia: { username: 'pia', password: 'pia' },              // prod-ops group — administers production (#862)
 };
 
 /**

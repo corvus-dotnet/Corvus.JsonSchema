@@ -50,6 +50,16 @@
       "lastName": "Reconcile",
       "credentials": [{ "type": "password", "value": "wanda", "temporary": false }],
       "groups": ["/reconcile-owners"]
+    },
+    {
+      "username": "pia",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "pia@arazzo.example",
+      "firstName": "Pia",
+      "lastName": "Production",
+      "credentials": [{ "type": "password", "value": "pia", "temporary": false }],
+      "groups": ["/prod-ops"]
     }
   ]
 }

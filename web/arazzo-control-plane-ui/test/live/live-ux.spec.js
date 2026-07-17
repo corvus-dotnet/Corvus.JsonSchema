@@ -365,6 +365,43 @@ test('the promotion loop crosses real identities: wanda requests staging availab
   }
 });
 
+test('production is governed by prod-ops, not founders-only (#862): pia reaches it by rule route and decides the seeded request', async ({ browser }) => {
+  // The org-model half of the security review: production stopped being founder-only. pia (prod-ops)
+  // administers production through the zone=prod rule route — NOT founder-group membership — so the
+  // seeded "promote v2 to production" inbox item is hers to decide, and it reads as a person
+  // ("Alice Payments"). erin, who administers only the preprod zone, must NOT see it. Deny keeps the
+  // suite re-runnable. (Dialog-constructibility of a production promotion is a separate concern: its
+  // credentials are usage-scoped to admins by design, so onboard-customer is not run-ready there for a
+  // non-admin — that gate is correct, not the governance question this test pins.)
+  const piaCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  const erinCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  try {
+    // erin administers the preprod zone only: the production request is NOT in her queue.
+    const erinPage = await erinCtx.newPage();
+    await signIn(erinPage, LIVE_USERS.erin);
+    await openLiveTab(erinPage, 'Approvals');
+    await openLiveSubTab(erinPage, 'sub-approvals-availability');
+    await expect(erinPage.locator('#sub-approvals-availability arazzo-availability-requests tbody tr[data-id]', { hasText: 'Please promote v2 to production.' })).toHaveCount(0);
+
+    // pia administers production by the prod-ops rule route: the request IS hers, attributed to a person.
+    const piaPage = await piaCtx.newPage();
+    await signIn(piaPage, LIVE_USERS.pia);
+    await openLiveTab(piaPage, 'Approvals');
+    await openLiveSubTab(piaPage, 'sub-approvals-availability');
+    const queue = piaPage.locator('#sub-approvals-availability arazzo-availability-requests');
+    const row = queue.locator('tbody tr[data-id]', { hasText: 'Please promote v2 to production.' });
+    await expect(row).toHaveCount(1);
+    await expect(row.locator('.who')).toHaveText('Alice Payments');
+    await row.locator('.act[data-action="deny"]').click();
+    await queue.locator('dialog.decision-dialog .reason-in').fill('Live UX test cleanup: denied by design.');
+    await queue.locator('dialog.decision-dialog button.ok').click();
+    await expect(queue.locator('tbody tr[data-id]', { hasText: 'Please promote v2 to production.' })).toHaveCount(0);
+  } finally {
+    await piaCtx.close();
+    await erinCtx.close();
+  }
+});
+
 test('independent decision on real infrastructure: an admin cannot decide a promotion they raised; a second admin can', async ({ browser }) => {
   // The §7.8 independent-decision rule end to end on real identities. arazzo-admin administers every
   // environment (so the request lands in their OWN approvals queue) AND can raise a request — the exact
