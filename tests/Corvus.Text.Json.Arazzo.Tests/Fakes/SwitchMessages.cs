@@ -75,3 +75,64 @@ public sealed class SwitchProducer(IMessageTransport transport)
         return ValueTask.CompletedTask;
     }
 }
+
+/// <summary>A multi-message producer whose publish methods also take headers (each message declares one).</summary>
+/// <param name="transport">The message transport.</param>
+public sealed class SwitchHeaderProducer(IMessageTransport transport)
+{
+    private readonly IMessageTransport transport = transport;
+
+    /// <summary>The messages published as <c>&lt;message&gt;:&lt;priority header&gt;</c> — reset per test.</summary>
+    public static List<string> Published { get; } = [];
+
+    /// <summary>Publishes a <c>turnOn</c> message with headers.</summary>
+    /// <param name="payload">The message payload.</param>
+    /// <param name="headers">The message headers.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A completed task.</returns>
+    public ValueTask PublishTurnOnAsync(TurnOn payload, JsonElement.Source headers, CancellationToken cancellationToken = default) => this.RecordAsync("on", headers);
+
+    /// <summary>Publishes a <c>turnOff</c> message with headers.</summary>
+    /// <param name="payload">The message payload.</param>
+    /// <param name="headers">The message headers.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A completed task.</returns>
+    public ValueTask PublishTurnOffAsync(TurnOff payload, JsonElement.Source headers, CancellationToken cancellationToken = default) => this.RecordAsync("off", headers);
+
+    private ValueTask RecordAsync(string message, JsonElement.Source headers)
+    {
+        _ = this.transport;
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        JsonElement built = JsonElement.CreateBuilder(workspace, headers).RootElement;
+        string priority = built.TryGetProperty("priority"u8, out JsonElement p) ? p.GetString()! : "?";
+        workspace.Dispose();
+        Published.Add($"{message}:{priority}");
+        return ValueTask.CompletedTask;
+    }
+}
+
+/// <summary>A multi-message request/reply producer: one SendAndReceive method per message, returning a reply that names the message.</summary>
+/// <param name="transport">The message transport.</param>
+public sealed class SwitchReplyProducer(IMessageTransport transport)
+{
+    private readonly IMessageTransport transport = transport;
+
+    /// <summary>Sends a <c>turnOn</c> request and returns a reply that names it.</summary>
+    /// <param name="payload">The request payload.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The reply payload.</returns>
+    public ValueTask<JsonElement> SendAndReceiveTurnOnAsync(TurnOn payload, CancellationToken cancellationToken = default) => this.ReplyAsync("on");
+
+    /// <summary>Sends a <c>turnOff</c> request and returns a reply that names it.</summary>
+    /// <param name="payload">The request payload.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The reply payload.</returns>
+    public ValueTask<JsonElement> SendAndReceiveTurnOffAsync(TurnOff payload, CancellationToken cancellationToken = default) => this.ReplyAsync("off");
+
+    private ValueTask<JsonElement> ReplyAsync(string kind)
+    {
+        _ = this.transport;
+        JsonElement reply = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes($$"""{"kind":"{{kind}}"}""")).RootElement;
+        return new ValueTask<JsonElement>(reply);
+    }
+}

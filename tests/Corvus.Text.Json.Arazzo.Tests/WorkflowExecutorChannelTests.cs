@@ -579,6 +579,145 @@ public partial class WorkflowExecutorEndToEndTests
         await pending;
     }
 
+    [TestMethod]
+    public async Task Generated_multi_message_send_binds_headers_to_the_selected_message()
+    {
+        // Multi-message selection combined with in:header parameters: each message declares headers, and the
+        // headers are converted to the SELECTED message's headers type inside its match branch.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "switch",
+            OperationAction.Send,
+            "onSwitch",
+            "Acme.Switches.SwitchHeaderProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages:
+            [
+                new AsyncApiChannelMessageDescriptor("turnOn", "Acme.Switches.TurnOn", "Corvus.Text.Json.JsonElement", null, "PublishTurnOnAsync"),
+                new AsyncApiChannelMessageDescriptor("turnOff", "Acme.Switches.TurnOff", "Corvus.Text.Json.JsonElement", null, "PublishTurnOffAsync"),
+            ]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelMultiMessageHeaderSendDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "ToggleWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        source.ShouldContain(".EvaluateSchema()");
+        source.ShouldContain("\"priority\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.ToggleWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        // The payload selects turnOff, and the header parameter flows to that message's producer method.
+        Acme.Switches.SwitchHeaderProducer.Published.Clear();
+        await RunToggleAsync(execute, """{"command":{"off":true},"level":"high"}""");
+        Acme.Switches.SwitchHeaderProducer.Published.ShouldBe(["off:high"]);
+    }
+
+    private const string ChannelMultiMessageHeaderSendDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "toggle",
+              "steps": [
+                {
+                  "stepId": "publish",
+                  "channelPath": "switch",
+                  "action": "send",
+                  "parameters": [ { "name": "priority", "in": "header", "value": "$inputs.level" } ],
+                  "requestBody": { "payload": "$inputs.command" }
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_multi_message_request_reply_selects_the_message()
+    {
+        // Multi-message request/reply: the send message is selected by payload-schema validity, its
+        // SendAndReceive method is called, and the (uniformly-typed) reply is captured as the step's outputs.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "switch",
+            OperationAction.Send,
+            "onSwitch",
+            "Acme.Switches.SwitchReplyProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages:
+            [
+                new AsyncApiChannelMessageDescriptor("turnOn", "Acme.Switches.TurnOn", null, null, null, "SendAndReceiveTurnOnAsync"),
+                new AsyncApiChannelMessageDescriptor("turnOff", "Acme.Switches.TurnOff", null, null, null, "SendAndReceiveTurnOffAsync"),
+            ],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelMultiMessageReplyDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "AskWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        source.ShouldContain(".SendAndReceiveTurnOffAsync(");
+        source.ShouldContain(".EvaluateSchema()");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AskWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"command":{"off":true}}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        // The reply from the selected (turnOff) message flowed to the output.
+        outputs.TryGetProperty("kind"u8, out JsonElement kind).ShouldBeTrue();
+        kind.GetString().ShouldBe("off");
+    }
+
+    private const string ChannelMultiMessageReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "ask",
+              "steps": [
+                {
+                  "stepId": "query",
+                  "channelPath": "switch",
+                  "action": "send",
+                  "requestBody": { "payload": "$inputs.command" },
+                  "outputs": { "kind": "$message.payload#/kind" }
+                }
+              ],
+              "outputs": { "kind": "$steps.query.outputs.kind" }
+            }
+          ]
+        }
+        """;
+
     private const string ChannelReceiveReplyDocument = """
         {
           "arazzo": "1.1.0",

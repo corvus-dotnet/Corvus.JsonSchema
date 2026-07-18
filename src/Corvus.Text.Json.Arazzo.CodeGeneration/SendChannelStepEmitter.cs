@@ -149,23 +149,6 @@ internal static class SendChannelStepEmitter
             (string.Equals(argument.In, "header", StringComparison.Ordinal) ? headerArgs : addressArgs).Add(argument);
         }
 
-        // Message headers on a multi-message send (where the selected message — and thus its headers type —
-        // is only known at run time) are a later phase; combine them one at a time for now.
-        if (multiMessage)
-        {
-            bool anyHeaders = headerArgs.Count > 0;
-            foreach (AsyncApiChannelMessageDescriptor message in descriptor.Messages)
-            {
-                anyHeaders |= message.HeadersTypeName is not null;
-            }
-
-            if (anyHeaders)
-            {
-                throw new NotSupportedException(
-                    $"Channel step '{stepId}' targets a multi-message channel '{descriptor.ChannelAddress}' with message headers; multi-message send with headers is a later phase.");
-            }
-        }
-
         // A parameterised channel: the generated producer method takes a string argument per channel
         // parameter (in declaration order), resolved here from the step's non-header parameters.
         var channelArgs = new StringBuilder();
@@ -175,34 +158,63 @@ internal static class SendChannelStepEmitter
             channelArgs.Append(", ").Append(local);
         }
 
-        // Message headers: assembled from the `in: header` parameters into the message's generated headers
-        // type and passed to the producer after the payload. The producer method requires the argument
-        // whenever the message declares a headers schema (HeadersTypeName), so it is emitted for every
-        // header-declaring message — an empty object when no header parameters are supplied. Setting
-        // headers on a message that declares none is an error.
-        string headersArgument = string.Empty;
+        // Message headers: assembled once from the `in: header` parameters into a stable JsonElement (the
+        // assembly is message-independent), then converted per message to that message's generated headers
+        // type at the producer call. The producer method requires the argument whenever the message declares
+        // a headers schema (HeadersTypeName), so it is emitted for every header-declaring message — an empty
+        // object when no header parameters are supplied. Setting headers is an error unless every message the
+        // send may select declares a headers schema (a multi-message send picks the message at run time).
+        bool anyMessageDeclaresHeaders = false;
+        foreach (AsyncApiChannelMessageDescriptor message in descriptor.Messages)
+        {
+            anyMessageDeclaresHeaders |= message.HeadersTypeName is not null;
+        }
+
+        if (headerArgs.Count > 0)
+        {
+            foreach (AsyncApiChannelMessageDescriptor message in descriptor.Messages)
+            {
+                if (message.HeadersTypeName is null)
+                {
+                    throw new NotSupportedException(
+                        $"Channel step '{stepId}' sets message headers (parameters with in: header), but the message '{message.MessageName}' on channel '{descriptor.ChannelAddress}' declares no headers schema.");
+                }
+            }
+        }
+
+        // A stable local so both the producer argument and a header-located correlation capture read the same
+        // assembled headers element.
         string? headersElementLocal = null;
-        if (selected.HeadersTypeName is { } headersType)
+        if (headerArgs.Count > 0 || anyMessageDeclaresHeaders)
         {
             string headersExpr = EmitHeadersObject(headerArgs, identifier, camel, workspaceVariable, stepOutputLocals, inputsVariable, inputAccessors, fields, statements);
-
-            // A stable local so both the producer argument and a header-located correlation capture read the
-            // same assembled headers element.
             headersElementLocal = $"{camel}HeadersElement";
             statements.Append("JsonElement ").Append(headersElementLocal).Append(" = ").Append(headersExpr).AppendLine(";");
-            headersArgument = ", " + RequestBindingEmitter.ConvertToSourceType(headersElementLocal, headersType);
         }
-        else if (headerArgs.Count > 0)
-        {
-            throw new NotSupportedException(
-                $"Channel step '{stepId}' sets message headers (parameters with in: header), but the message '{selected.MessageName}' on channel '{descriptor.ChannelAddress}' declares no headers schema.");
-        }
+
+        // The headers argument for a message: the assembled headers converted to that message's headers type,
+        // or empty when the message declares none.
+        string HeadersArgFor(in AsyncApiChannelMessageDescriptor message)
+            => message.HeadersTypeName is { } headersType && headersElementLocal is { } headersElement
+                ? ", " + RequestBindingEmitter.ConvertToSourceType(headersElement, headersType)
+                : string.Empty;
 
         if (!isRequestReply)
         {
             if (multiMessage)
             {
-                EmitMultiMessagePublish(descriptor, stepId, payloadLocal, camel, producerVariable, channelArgs.ToString(), captureCorrelation, cancellationTokenExpression, statements);
+                EmitMultiMessageMatchChain(descriptor, stepId, payloadLocal, camel, statements, (message, candidate) =>
+                {
+                    if (message.ProducerMethodName is not { } publishMethod)
+                    {
+                        throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' whose message '{message.MessageName}' is not publishable.");
+                    }
+
+                    statements.Append("    await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(candidate).Append(HeadersArgFor(message)).Append(channelArgs.ToString()).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+                    var capture = new StringBuilder();
+                    EmitCorrelationCapture(captureCorrelation, message, camel, payloadLocal, headersElementLocal, capture);
+                    WorkflowExecutorEmitter.AppendIndented(statements, capture.ToString(), 4);
+                });
                 return statements.ToString();
             }
 
@@ -215,24 +227,13 @@ internal static class SendChannelStepEmitter
             // model → {Type}.Source implicit conversion applies at the producer call (C# will not chain
             // JsonElement → model → Source).
             string publishPayload = RequestBindingEmitter.ConvertToSourceType(payloadLocal, selected.PayloadTypeName ?? "Corvus.Text.Json.JsonElement");
-            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(publishPayload).Append(headersArgument).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(publishPayload).Append(HeadersArgFor(selected)).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
 
             EmitCorrelationCapture(captureCorrelation, selected, camel, payloadLocal, headersElementLocal, statements);
             return statements.ToString();
         }
 
-        if (multiMessage)
-        {
-            throw new NotSupportedException(
-                $"Channel step '{stepId}' targets a multi-message request/reply channel '{descriptor.ChannelAddress}'; multi-message request/reply selection is a later phase.");
-        }
-
         // ── request/reply: send and capture the reply as the step's outputs ──
-        if (selected.RequestReplyMethodName is not { } requestMethod)
-        {
-            throw new NotSupportedException($"Channel step '{stepId}' targets a request/reply channel '{descriptor.ChannelAddress}' with no request/reply method.");
-        }
-
         ReceiveChannelStepEmitter.ValidateCriteria(stepId, successCriteria);
 
         string replyType = descriptor.ReplyPayloadTypeName!;
@@ -240,8 +241,33 @@ internal static class SendChannelStepEmitter
         string replyPayloadLocal = $"{camel}ReplyPayload";
         string outputsElementLocal = EmitText.StepOutputsElementLocal(stepId);
 
-        statements.Append(replyType).Append(' ').Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.')
-            .Append(requestMethod).Append('(').Append(payloadLocal).Append(headersArgument).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+        if (multiMessage)
+        {
+            // Select the send message by payload-schema validity; every message's request/reply method
+            // returns the same reply type (AsyncAPI collapses a multi-message reply to JsonElement), so the
+            // reply local is uniformly typed and the reply handling below is shared.
+            statements.Append(replyType).Append(' ').Append(replyLocal).AppendLine(" = default;");
+            EmitMultiMessageMatchChain(descriptor, stepId, payloadLocal, camel, statements, (message, candidate) =>
+            {
+                if (message.RequestReplyMethodName is not { } requestReplyMethod)
+                {
+                    throw new NotSupportedException($"Channel step '{stepId}' targets a request/reply channel '{descriptor.ChannelAddress}' whose message '{message.MessageName}' has no request/reply method.");
+                }
+
+                statements.Append("    ").Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.').Append(requestReplyMethod).Append('(').Append(candidate).Append(HeadersArgFor(message)).Append(channelArgs.ToString()).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+            });
+        }
+        else
+        {
+            if (selected.RequestReplyMethodName is not { } requestMethod)
+            {
+                throw new NotSupportedException($"Channel step '{stepId}' targets a request/reply channel '{descriptor.ChannelAddress}' with no request/reply method.");
+            }
+
+            statements.Append(replyType).Append(' ').Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.')
+                .Append(requestMethod).Append('(').Append(payloadLocal).Append(HeadersArgFor(selected)).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+        }
+
         statements.Append("JsonElement ").Append(replyPayloadLocal).Append(" = JsonElement.From(").Append(replyLocal).AppendLine(");");
 
         if (successFlagLocal is { } successFlag)
@@ -381,26 +407,24 @@ internal static class SendChannelStepEmitter
         return $"{builderVariable}.RootElement";
     }
 
-    // Emits a multi-message fire-and-forget send: the payload is validated against each message's schema in
-    // order (the same zero-allocation EvaluateSchema check the receive-side MatchMessage uses) and dispatched
-    // to the first (per AsyncAPI, the only) matching message's producer method. A payload matching no message
-    // is a runtime step failure. Message headers are not combined with multi-message selection yet (rejected
-    // up front), so no headers argument is emitted here.
-    private static void EmitMultiMessagePublish(
+    // Emits a multi-message send as a validity chain: the payload is validated against each message's schema
+    // in order (the same zero-allocation EvaluateSchema check the receive-side MatchMessage uses) and, on the
+    // first (per AsyncAPI, the only) match, <paramref name="emitBranch"/> emits that message's dispatch (a
+    // fire-and-forget publish, or a request/reply that assigns the reply). A payload matching no message is a
+    // runtime step failure. <paramref name="emitBranch"/> writes into the same statement builder at the
+    // branch-body indent (its own statements are appended verbatim).
+    private static void EmitMultiMessageMatchChain(
         in AsyncApiChannelDescriptor descriptor,
         string stepId,
         string payloadLocal,
         string camel,
-        string producerVariable,
-        string channelArgs,
-        bool captureCorrelation,
-        string cancellationTokenExpression,
-        StringBuilder statements)
+        StringBuilder statements,
+        Action<AsyncApiChannelMessageDescriptor, string> emitBranch)
     {
         for (int i = 0; i < descriptor.Messages.Count; i++)
         {
             AsyncApiChannelMessageDescriptor message = descriptor.Messages[i];
-            if (message.PayloadTypeName is not { } payloadType || message.ProducerMethodName is not { } publishMethod)
+            if (message.PayloadTypeName is not { } payloadType)
             {
                 throw new NotSupportedException(
                     $"Channel step '{stepId}' targets a multi-message channel '{descriptor.ChannelAddress}' whose message '{message.MessageName}' has no distinct payload type to select on.");
@@ -410,12 +434,7 @@ internal static class SendChannelStepEmitter
             statements.Append(payloadType).Append(' ').Append(candidate).Append(" = ").Append(payloadType).Append(".From(").Append(payloadLocal).AppendLine(");");
             statements.Append("if (").Append(candidate).AppendLine(".EvaluateSchema())");
             statements.AppendLine("{");
-            statements.Append("    await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(candidate).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
-
-            var capture = new StringBuilder();
-            EmitCorrelationCapture(captureCorrelation, message, camel, payloadLocal, null, capture);
-            WorkflowExecutorEmitter.AppendIndented(statements, capture.ToString(), 4);
-
+            emitBranch(message, candidate);
             statements.AppendLine("}");
             statements.AppendLine("else");
             statements.AppendLine("{");
