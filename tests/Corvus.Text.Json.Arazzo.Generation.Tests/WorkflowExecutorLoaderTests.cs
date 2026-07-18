@@ -238,6 +238,45 @@ public class WorkflowExecutorLoaderTests
             () => loader.Load("adopt", 1, artifact.Assembly, artifact.Manifest, hash, signatureUtf8));
     }
 
+    [TestMethod]
+    public void The_manifest_declares_the_workflows_sources()
+    {
+        WorkflowExecutorArtifact artifact = BuildArtifact("hash-sources");
+
+        WorkflowExecutorManifest manifest = WorkflowExecutorManifest.Parse(artifact.Manifest);
+        manifest.Sources.ShouldContain(s => s.Name == "petstore" && s.Type == "openapi");
+    }
+
+    [TestMethod]
+    public void Loads_when_the_manifest_declares_every_source_the_workflow_requires()
+    {
+        const string hash = "hash-sources-ok";
+        WorkflowExecutorArtifact artifact = BuildArtifact(hash);
+        using var loader = new WorkflowExecutorLoader();
+
+        // The compiled workflow requires "petstore", and the real manifest declares it — the load-time source check passes.
+        LoadedWorkflow loaded = loader.Load("adopt", 1, artifact.Assembly, artifact.Manifest, hash);
+        loaded.Workflow.Descriptor.Sources.ShouldContain("petstore");
+    }
+
+    [TestMethod]
+    public void Rejects_a_manifest_that_underdeclares_the_workflows_sources()
+    {
+        const string hash = "hash-sources-missing";
+        WorkflowExecutorArtifact artifact = BuildArtifact(hash);
+        using var loader = new WorkflowExecutorLoader();
+
+        // Rebuild the manifest with an empty sources[] but every other field (assembly digest, package hash, entry type,
+        // target framework) intact, so integrity verification passes and only the source-consistency check can fail.
+        WorkflowExecutorManifest real = WorkflowExecutorManifest.Parse(artifact.Manifest);
+        byte[] underdeclared = Encoding.UTF8.GetBytes(
+            $$"""{"assemblyDigest":"{{real.AssemblyDigest}}","durable":{{(real.Durable ? "true" : "false")}},"entryType":"{{real.EntryType}}","formatVersion":{{real.FormatVersion}},"packageHash":"{{real.PackageHash}}","sources":[],"targetFramework":"{{real.TargetFramework}}","workflowId":"{{real.WorkflowId}}"}""");
+
+        WorkflowExecutorLoadException ex = Should.Throw<WorkflowExecutorLoadException>(
+            () => loader.Load("adopt", 1, artifact.Assembly, underdeclared, hash));
+        ex.Message.ShouldContain("petstore");
+    }
+
     // A trust store holding only the PUBLIC half of each signing key (exported without the private parameters), so the
     // verifier proves out the custody split: a runner verifies with material it could never sign with.
     private static IExecutorPackageVerifier TrustStore(params (string KeyId, ECDsa SigningKey)[] keys)

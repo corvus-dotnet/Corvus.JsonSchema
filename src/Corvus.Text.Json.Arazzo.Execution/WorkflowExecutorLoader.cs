@@ -220,12 +220,39 @@ public sealed class WorkflowExecutorLoader : IDisposable
                 throw new WorkflowExecutorLoadException($"The executor entry type '{manifest.EntryType}' does not implement IHostedWorkflow.");
             }
 
+            VerifyDeclaredSources(manifest, workflow.Descriptor);
             return new LoadedWorkflow(workflow, manifest, context);
         }
         catch
         {
             context.Unload();
             throw;
+        }
+    }
+
+    // Fail-fast at load (design §3.3, §546): every API source the compiled workflow actually calls (the descriptor's
+    // required bindings) must be declared in the manifest's sources[], so a host that reads the manifest to bind
+    // transports sees the complete required set. A manifest that under-declares its assembly's sources is inconsistent —
+    // reject it here rather than let a run fail deep in the step that reaches the undeclared binding.
+    private static void VerifyDeclaredSources(in WorkflowExecutorManifest manifest, in WorkflowDescriptor descriptor)
+    {
+        foreach (string required in descriptor.Sources)
+        {
+            bool declared = false;
+            foreach (WorkflowManifestSource source in manifest.Sources)
+            {
+                if (string.Equals(source.Name, required, StringComparison.Ordinal))
+                {
+                    declared = true;
+                    break;
+                }
+            }
+
+            if (!declared)
+            {
+                throw new WorkflowExecutorLoadException(
+                    $"The executor manifest does not declare the source '{required}' the workflow requires; its sources[] is inconsistent with the compiled assembly.");
+            }
         }
     }
 
