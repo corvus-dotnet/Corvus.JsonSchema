@@ -243,6 +243,8 @@ internal sealed class DraftRunStepRecorder : IWorkflowRunRecorder
         /// <inheritdoc/>
         public bool TryTakeDeliveredMessage(out JsonElement payload) => this.rootRun.TryTakeDeliveredMessage(out payload);
 
+        public bool TryTakeDeliveredMessage(out JsonElement payload, out JsonElement headers) => this.rootRun.TryTakeDeliveredMessage(out payload, out headers);
+
         internal RecordedSubTrace ToSubTrace(string outcome, bool finalizeDescendants = false)
         {
             if (finalizeDescendants && this.activeChild is { } child && this.activeChildStepId is { } stepId)

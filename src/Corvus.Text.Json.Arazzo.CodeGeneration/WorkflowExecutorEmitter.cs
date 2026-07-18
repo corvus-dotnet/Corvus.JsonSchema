@@ -116,6 +116,7 @@ public static class WorkflowExecutorEmitter
                 // token's location comes from the channel message's correlation id in the AsyncAPI document.
                 string? correlationName = ReadCorrelationId(step);
                 string? correlationLocation = null;
+                bool correlationInHeader = false;
                 if (correlationName is not null)
                 {
                     if (!isReceive)
@@ -134,23 +135,25 @@ public static class WorkflowExecutorEmitter
                         ?? throw new NotSupportedException(
                             $"Channel step '{stepId}' declares correlationId '{correlationName}', but the channel's message defines no correlation id of that name (it must be in-sync with a correlationId defined in the AsyncAPI document).");
 
-                    // The correlation token must live in the message payload: the matching send step publishes
-                    // a payload (its requestBody) the engine can read the token from, but it does not set
-                    // message headers — so a header-located correlation cannot be captured.
+                    // The correlation token lives in the message payload or headers: the matching send step
+                    // publishes both (its requestBody payload and its in:header parameters), and the receive
+                    // matches the same location on the incoming message.
                     AsyncApi.CodeGeneration.AsyncApiRuntimeExpression locationExpression = AsyncApi.CodeGeneration.AsyncApiRuntimeExpression.Parse(rawLocation);
-                    if (locationExpression.Kind != AsyncApi.CodeGeneration.AsyncApiRuntimeExpressionKind.MessagePayload || locationExpression.JsonPointer is not { } pointer)
+                    bool isHeader = locationExpression.Kind == AsyncApi.CodeGeneration.AsyncApiRuntimeExpressionKind.MessageHeader;
+                    if ((locationExpression.Kind != AsyncApi.CodeGeneration.AsyncApiRuntimeExpressionKind.MessagePayload && !isHeader) || locationExpression.JsonPointer is not { } pointer)
                     {
                         throw new NotSupportedException(
-                            $"Channel step '{stepId}' correlationId '{correlationName}' has location '{rawLocation}'; only $message.payload#/… correlation locations are supported (the workflow's send step cannot set message headers).");
+                            $"Channel step '{stepId}' correlationId '{correlationName}' has location '{rawLocation}'; only $message.payload#/… and $message.header#/… correlation locations are supported.");
                     }
 
                     correlationLocation = pointer;
+                    correlationInHeader = isHeader;
                 }
 
                 // A channel step's parameters supply the channel address placeholders (parameterised
                 // channels); workflow-level parameter defaults apply here too.
                 List<StepArgument> channelArguments = MergeArguments(ReadArguments(step.Parameters, components), workflowParameters);
-                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel, timeout, correlationName, correlationLocation));
+                boundSteps.Add(new ControlFlowStep(stepId, null, channelArguments, criteria, stepOutputs, ReadRequestBody(step), false, onSuccess, onFailure, null, dependsOn, channel, timeout, correlationName, correlationLocation, CorrelationInHeader: correlationInHeader));
                 continue;
             }
 
@@ -233,7 +236,7 @@ public static class WorkflowExecutorEmitter
                     {
                         string receiveStatements = ReceiveChannelStepEmitter.Emit(
                             step.StepId, channelStep, "messageTransport", step.Outputs, step.SuccessCriteria, step.RequestBody, step.Arguments, "workspace",
-                            stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, step.CorrelationName, step.CorrelationLocation);
+                            stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, step.CorrelationName, step.CorrelationLocation, step.CorrelationInHeader);
                         AppendIndented(body, receiveStatements, 12);
                         stepOutputLocals[step.StepId] = EmitText.StepOutputsElementLocal(step.StepId);
                         body.AppendLine();
@@ -1455,4 +1458,5 @@ internal readonly record struct ControlFlowStep(
     int? TimeoutMs = null,
     string? CorrelationName = null,
     string? CorrelationLocation = null,
-    string? SubWorkflowSource = null);
+    string? SubWorkflowSource = null,
+    bool CorrelationInHeader = false);

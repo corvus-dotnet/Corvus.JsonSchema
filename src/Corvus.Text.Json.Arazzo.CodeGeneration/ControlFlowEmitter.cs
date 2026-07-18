@@ -853,6 +853,9 @@ internal static class ControlFlowEmitter
         string correlationLocation = step.CorrelationLocation ?? string.Empty;
         string expectedLocal = $"{camel}Expected";
 
+        // A header-located correlation matches the incoming message's headers; a payload-located one its body.
+        string correlationMatchSource = step.CorrelationInHeader ? "messageHeaders" : "JsonElement.From(message)";
+
         // Emits the Tier-1 blocking receive (subscribe and wait inline) into the given builder at the case
         // body indent — used directly when not durable, and as the run-less fallback in durable mode.
         void EmitBlockingReceive(StringBuilder t)
@@ -866,7 +869,7 @@ internal static class ControlFlowEmitter
                 t.AppendLine("        {");
                 WorkflowExecutorEmitter.AppendIndented(t, lambdaBody.ToString(), 12);
                 t.Append("        }, ").Append(cancellationTokenExpression)
-                    .Append(", (message, messageHeaders) => CorrelationToken.Matches(JsonElement.From(message), ")
+                    .Append(", (message, messageHeaders) => CorrelationToken.Matches(").Append(correlationMatchSource).Append(", ")
                     .Append(EmitText.Quote(correlationLocation)).Append("u8, ").Append(expectedLocal).AppendLine(")).ConfigureAwait(false);");
                 t.AppendLine("    }");
             }
@@ -899,18 +902,19 @@ internal static class ControlFlowEmitter
             ? $"System.Text.Encoding.UTF8.GetString({expectedLocal})"
             : "null";
 
+        // A step that reads message headers (a $message.header.* criterion/output, or a header-located
+        // correlation) takes the delivered message WITH its headers, so a durable resume evaluates headers
+        // exactly like the non-durable path; otherwise the payload-only overload keeps the generated code lean.
+        bool takesHeaders = handleCoreText.Contains("messageHeaders", StringComparison.Ordinal);
+
         var delivered = new StringBuilder();
         delivered.Append("JsonElement ").Append(payloadLocal).Append(" = ").Append(deliveredLocal).AppendLine(";");
-        if (handleCoreText.Contains("messageHeaders", StringComparison.Ordinal))
-        {
-            delivered.AppendLine("JsonElement messageHeaders = default;");
-        }
-
         delivered.Append(handleCoreText);
 
         c.AppendLine("    if (run is not null)");
         c.AppendLine("    {");
-        c.Append("        if (run.TryTakeDeliveredMessage(out JsonElement ").Append(deliveredLocal).AppendLine("))");
+        c.Append("        if (run.TryTakeDeliveredMessage(out JsonElement ").Append(deliveredLocal);
+        c.AppendLine(takesHeaders ? ", out JsonElement messageHeaders))" : "))");
         c.AppendLine("        {");
         WorkflowExecutorEmitter.AppendIndented(c, delivered.ToString(), 12);
         c.AppendLine("        }");

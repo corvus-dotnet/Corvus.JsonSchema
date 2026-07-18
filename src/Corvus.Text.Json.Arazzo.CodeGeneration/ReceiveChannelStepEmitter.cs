@@ -68,7 +68,8 @@ internal static class ReceiveChannelStepEmitter
         StringBuilder auxiliaryTypes,
         string namespaceName,
         string? correlationName = null,
-        string? correlationLocation = null)
+        string? correlationLocation = null,
+        bool correlationInHeader = false)
     {
         AsyncApiChannelDescriptor descriptor = channel.Channel;
 
@@ -197,7 +198,8 @@ internal static class ReceiveChannelStepEmitter
                 .Append(">(").Append(address).AppendLine(", (message, messageHeaders) =>");
             statements.AppendLine("{");
             statements.Append(lambdaBody);
-            statements.Append("}, cancellationToken, (message, messageHeaders) => CorrelationToken.Matches(JsonElement.From(message), ")
+            statements.Append("}, cancellationToken, (message, messageHeaders) => CorrelationToken.Matches(")
+                .Append(correlationInHeader ? "messageHeaders" : "JsonElement.From(message)").Append(", ")
                 .Append(EmitText.Quote(correlationLocation!)).Append("u8, ").Append(expectedLocal).AppendLine(")).ConfigureAwait(false);");
         }
         else

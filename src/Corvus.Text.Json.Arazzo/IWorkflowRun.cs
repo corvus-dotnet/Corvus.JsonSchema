@@ -87,7 +87,7 @@ public interface IWorkflowRun
     /// <summary>
     /// Suspends the run on a correlated message (Tier 2): persists <see cref="WorkflowRunStatus.Suspended"/>
     /// with a message wait at <paramref name="cursor"/>, so a worker can resume when a matching message
-    /// arrives and hand the payload back via <see cref="TryTakeDeliveredMessage"/>.
+    /// arrives and hand the payload back via <see cref="TryTakeDeliveredMessage(out JsonElement)"/>.
     /// </summary>
     /// <param name="cursor">The state index to resume at when a matching message is delivered.</param>
     /// <param name="channel">The channel the run is awaiting a message on.</param>
@@ -115,6 +115,23 @@ public interface IWorkflowRun
     /// <param name="payload">The delivered message payload when present.</param>
     /// <returns><see langword="true"/> if a delivered message was handed in.</returns>
     bool TryTakeDeliveredMessage(out JsonElement payload);
+
+    /// <summary>
+    /// Takes the message a worker delivered for a resumed correlated-receive step, along with its headers, if
+    /// any. Like <see cref="TryTakeDeliveredMessage(out JsonElement)"/> but also hands back the delivered
+    /// message headers so a resumed step can evaluate <c>$message.header.*</c> criteria/outputs. The first
+    /// call after a message-wait resume returns the message; subsequent calls and fresh runs return
+    /// <see langword="false"/>.
+    /// </summary>
+    /// <param name="payload">The delivered message payload when present.</param>
+    /// <param name="headers">The delivered message headers when present (default when the transport carried none).</param>
+    /// <returns><see langword="true"/> if a delivered message was handed in.</returns>
+    bool TryTakeDeliveredMessage(out JsonElement payload, out JsonElement headers)
+    {
+        // Default for runs that do not carry headers through delivery: return the payload with no headers.
+        headers = default;
+        return this.TryTakeDeliveredMessage(out payload);
+    }
 
     /// <summary>
     /// Begins a child scope for a sub-workflow invocation (a <c>workflowId</c>-bound step or a

@@ -37,6 +37,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private WorkflowWait? wait;
     private WorkflowFault? fault;
     private JsonElement deliveredMessage;
+    private JsonElement deliveredHeaders;
     private bool hasDeliveredMessage;
     private WorkflowPauseConfig? pause;
     private int pauseStartCursor;
@@ -459,16 +460,23 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 
     /// <inheritdoc/>
     public bool TryTakeDeliveredMessage(out JsonElement payload)
+        => this.TryTakeDeliveredMessage(out payload, out _);
+
+    /// <inheritdoc/>
+    public bool TryTakeDeliveredMessage(out JsonElement payload, out JsonElement headers)
     {
         if (this.hasDeliveredMessage)
         {
             payload = this.deliveredMessage;
+            headers = this.deliveredHeaders;
             this.hasDeliveredMessage = false;
             this.deliveredMessage = default;
+            this.deliveredHeaders = default;
             return true;
         }
 
         payload = default;
+        headers = default;
         return false;
     }
 
@@ -479,8 +487,20 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// </summary>
     /// <param name="payload">The delivered message payload.</param>
     public void DeliverMessage(in JsonElement payload)
+        => this.DeliverMessage(payload, default);
+
+    /// <summary>
+    /// Hands a delivered message and its headers to a run being resumed from a
+    /// <see cref="WorkflowWaitKind.Message"/> wait, so the awaited receive step completes immediately with it
+    /// instead of blocking (and can read <c>$message.header.*</c> on resume). The worker calls this before
+    /// re-entering <c>ExecuteAsync</c>; the payload and headers must outlive that call.
+    /// </summary>
+    /// <param name="payload">The delivered message payload.</param>
+    /// <param name="headers">The delivered message headers (default when the transport carried none).</param>
+    public void DeliverMessage(in JsonElement payload, in JsonElement headers)
     {
         this.deliveredMessage = payload;
+        this.deliveredHeaders = headers;
         this.hasDeliveredMessage = true;
     }
 

@@ -405,8 +405,8 @@ public partial class WorkflowExecutorEndToEndTests
     [TestMethod]
     public void Durable_receive_that_projects_a_message_header_declares_headers_on_the_delivered_path()
     {
-        // A durable receive whose outputs read $message.header must still expose the headers local on the
-        // resume-with-delivered-message path (where the worker hands in only the payload).
+        // A durable receive whose outputs read $message.header takes the delivered message WITH its headers
+        // on the resume path, so $message.header.* resolves against the real headers (not an empty default).
         var descriptor = new AsyncApiChannelDescriptor(
             "measurements",
             OperationAction.Receive,
@@ -428,7 +428,8 @@ public partial class WorkflowExecutorEndToEndTests
                 new WorkflowExecutorOptions("GeneratedWorkflows", "ListenDurableHeaderWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, true));
         }
 
-        source.ShouldContain("JsonElement messageHeaders = default;");
+        source.ShouldContain("out JsonElement messageHeaders))");
+        source.ShouldNotContain("JsonElement messageHeaders = default;");
         Assembly assembly = CompileInMemory(source);
         assembly.GetType("GeneratedWorkflows.ListenDurableHeaderWorkflow").ShouldNotBeNull();
     }

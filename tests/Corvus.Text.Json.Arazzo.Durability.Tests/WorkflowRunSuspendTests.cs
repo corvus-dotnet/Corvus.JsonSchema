@@ -147,4 +147,23 @@ public sealed class WorkflowRunSuspendTests
         // A second take returns nothing — the message is consumed.
         run.TryTakeDeliveredMessage(out _).ShouldBeFalse();
     }
+
+    [TestMethod]
+    public void A_delivered_message_carries_its_headers()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> payloadDoc = ParsedJsonDocument<JsonElement>.Parse("""{ "v": 42 }"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> headersDoc = ParsedJsonDocument<JsonElement>.Parse("""{ "correlationId": "abc-123", "x-trace": "T-1" }"""u8.ToArray());
+        using var run = WorkflowRun.CreateNew(store, "deliver-h", "wf", default, "development");
+
+        // A message delivered with headers hands both back, so a resumed step can read $message.header.*.
+        run.DeliverMessage(payloadDoc.RootElement, headersDoc.RootElement);
+        run.TryTakeDeliveredMessage(out JsonElement payload, out JsonElement headers).ShouldBeTrue();
+        payload.GetProperty("v"u8).GetInt32().ShouldBe(42);
+        headers.GetProperty("correlationId"u8).GetString().ShouldBe("abc-123");
+        headers.GetProperty("x-trace"u8).GetString().ShouldBe("T-1");
+
+        // Consumed once, headers included.
+        run.TryTakeDeliveredMessage(out _, out _).ShouldBeFalse();
+    }
 }

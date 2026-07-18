@@ -61,7 +61,7 @@ public sealed class WorkflowWorker
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await foreach (WorkflowRunId id in this.index.QueryDueAsync(now, cancellationToken).ConfigureAwait(false))
         {
-            if (await this.TryResumeAsync(id, deliveredMessage: default, hasDelivered: false, resume, cancellationToken).ConfigureAwait(false))
+            if (await this.TryResumeAsync(id, deliveredMessage: default, deliveredHeaders: default, hasDelivered: false, resume, cancellationToken).ConfigureAwait(false))
             {
                 resumed++;
             }
@@ -80,7 +80,22 @@ public sealed class WorkflowWorker
     /// <param name="resume">The adapter that re-enters the run's generated executor.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of runs this worker resumed with the message.</returns>
-    public async ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, WorkflowResumer resume, CancellationToken cancellationToken)
+    public ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, WorkflowResumer resume, CancellationToken cancellationToken)
+        => this.DeliverMessageAsync(channel, correlationId, payload, default, resume, cancellationToken);
+
+    /// <summary>
+    /// Delivers a message and its headers to every run awaiting <paramref name="channel"/> +
+    /// <paramref name="correlationId"/>, so a resumed step can evaluate <c>$message.header.*</c> on the
+    /// delivered message. See <see cref="DeliverMessageAsync(string, string?, JsonElement, WorkflowResumer, CancellationToken)"/>.
+    /// </summary>
+    /// <param name="channel">The channel the message arrived on.</param>
+    /// <param name="correlationId">The delivered message's correlation token, or <see langword="null"/> for an uncorrelated wait.</param>
+    /// <param name="payload">The message payload.</param>
+    /// <param name="headers">The message headers (default when the transport carried none).</param>
+    /// <param name="resume">Re-enters the run's executor after the message is handed in.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The number of runs resumed.</returns>
+    public async ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, JsonElement headers, WorkflowResumer resume, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
         ArgumentNullException.ThrowIfNull(resume);
@@ -88,7 +103,7 @@ public sealed class WorkflowWorker
         int resumed = 0;
         await foreach (WorkflowRunId id in this.index.QueryAwaitingAsync(channel, correlationId, cancellationToken).ConfigureAwait(false))
         {
-            if (await this.TryResumeAsync(id, payload, hasDelivered: true, resume, cancellationToken).ConfigureAwait(false))
+            if (await this.TryResumeAsync(id, payload, headers, hasDelivered: true, resume, cancellationToken).ConfigureAwait(false))
             {
                 resumed++;
             }
@@ -97,7 +112,7 @@ public sealed class WorkflowWorker
         return resumed;
     }
 
-    private async ValueTask<bool> TryResumeAsync(WorkflowRunId id, JsonElement deliveredMessage, bool hasDelivered, WorkflowResumer resume, CancellationToken cancellationToken)
+    private async ValueTask<bool> TryResumeAsync(WorkflowRunId id, JsonElement deliveredMessage, JsonElement deliveredHeaders, bool hasDelivered, WorkflowResumer resume, CancellationToken cancellationToken)
     {
         WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
@@ -117,7 +132,7 @@ public sealed class WorkflowWorker
 
             if (hasDelivered)
             {
-                run.DeliverMessage(deliveredMessage);
+                run.DeliverMessage(deliveredMessage, deliveredHeaders);
             }
 
             await resume(run, cancellationToken).ConfigureAwait(false);

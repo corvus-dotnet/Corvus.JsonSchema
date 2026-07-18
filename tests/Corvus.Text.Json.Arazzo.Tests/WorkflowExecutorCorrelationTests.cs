@@ -51,6 +51,36 @@ public partial class WorkflowExecutorEndToEndTests
         }
         """;
 
+    private const string HeaderCorrelationDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "correlate",
+              "steps": [
+                {
+                  "stepId": "ask",
+                  "channelPath": "notifications",
+                  "action": "send",
+                  "parameters": [ { "name": "correlationId", "in": "header", "value": "abc-123" } ],
+                  "requestBody": { "payload": { "data": "hi" } }
+                },
+                {
+                  "stepId": "listen",
+                  "channelPath": "replies",
+                  "action": "receive",
+                  "correlationId": "corr",
+                  "outputs": { "v": "$message.payload#/v", "trace": "$message.header.x-trace" }
+                }
+              ],
+              "outputs": { "v": "$steps.listen.outputs.v", "trace": "$steps.listen.outputs.trace" }
+            }
+          ]
+        }
+        """;
+
     [TestMethod]
     public void CorrelationToken_matches_only_the_expected_token()
     {
@@ -109,12 +139,50 @@ public partial class WorkflowExecutorEndToEndTests
     }
 
     [TestMethod]
-    public void Correlation_with_a_header_location_is_rejected()
+    public async Task Generated_executor_filters_by_header_located_correlation()
     {
-        // The correlation id resolves to a header location, which the send step cannot populate.
-        NotSupportedException ex = Should.Throw<NotSupportedException>(
-            () => EmitCorrelation(CorrelationDocument, correlationLocation: "$message.header#/correlationId"));
-        ex.Message.ShouldContain("payload");
+        // The correlation id is HEADER-located: the send sets it via an in:header parameter and registers the
+        // token from its headers; the receive matches the incoming message's headers (not its payload), and
+        // projects a header value to an output.
+        string source = EmitHeaderCorrelation(HeaderCorrelationDocument);
+        source.ShouldContain("CorrelationToken.Matches(messageHeaders, \"/correlationId\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.CorrelateWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+
+        // A message whose HEADER carries the wrong token is ignored...
+        await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"v":1}"""), Encoding.UTF8.GetBytes("""{"correlationId":"WRONG"}"""));
+
+        // ...until the header-correlated message arrives; its header value flows to the output too.
+        await messageTransport.DeliverAsync<JsonElement>("replies", Encoding.UTF8.GetBytes("""{"v":42}"""), Encoding.UTF8.GetBytes("""{"correlationId":"abc-123","x-trace":"T-1"}"""));
+
+        JsonElement outputs = await pending;
+        outputs.TryGetProperty("v"u8, out JsonElement v).ShouldBeTrue();
+        v.GetInt32().ShouldBe(42);
+        outputs.TryGetProperty("trace"u8, out JsonElement trace).ShouldBeTrue();
+        trace.GetString().ShouldBe("T-1");
+    }
+
+    [TestMethod]
+    public void Durable_header_located_correlation_takes_the_delivered_message_with_headers()
+    {
+        // A durable receive that reads message headers (here a header-located correlation plus a header
+        // output) takes the delivered message WITH its headers on resume, so $message.header.* resolves
+        // exactly like the non-durable path.
+        string source = EmitHeaderCorrelation(HeaderCorrelationDocument, durable: true);
+        source.ShouldContain("while (true)");
+        source.ShouldContain("out JsonElement messageHeaders))");
+        source.ShouldContain("CorrelationToken.Matches(messageHeaders, \"/correlationId\"u8");
+        CompileInMemory(source);
     }
 
     [TestMethod]
@@ -249,6 +317,38 @@ public partial class WorkflowExecutorEndToEndTests
             IsDynamicAddress: false,
             ChannelParameters: [],
             Messages: [new AsyncApiChannelMessageDescriptor("reply", "Corvus.Text.Json.JsonElement", null, null, null, null, "corr", correlationLocation)]);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [send, receive])]);
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(document));
+        ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+        return WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("GeneratedWorkflows", "CorrelateWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, durable));
+    }
+
+    private static string EmitHeaderCorrelation(string document, bool durable = false)
+    {
+        // Both messages declare typed headers and a HEADER-located correlation id; the send uses the
+        // headers-taking producer (mirrors a real generated producer for a header-declaring message).
+        var send = new AsyncApiChannelDescriptor(
+            "notifications",
+            OperationAction.Send,
+            "onNotify",
+            ProducerClassName: "Acme.Rpc.HeaderNotifyProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("notify", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, "PublishNotifyAsync", null, "corr", "$message.header#/correlationId")]);
+
+        var receive = new AsyncApiChannelDescriptor(
+            "replies",
+            OperationAction.Receive,
+            "onReply",
+            ProducerClassName: null,
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("reply", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, null, null, "corr", "$message.header#/correlationId")]);
 
         var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [send, receive])]);
 

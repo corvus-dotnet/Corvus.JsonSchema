@@ -103,7 +103,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     /// runner (the usual in-process draft-hosting case).</param>
     /// <param name="hostTimerWaits">Whether to compose a <see cref="WorkflowWorker"/> so <see cref="RunPendingAsync"/>
     /// also resumes due timer waits (a draft run that suspended on a retry timer). Message-wait delivery is not driven
-    /// by the pump; a host that needs it calls the worker's <see cref="WorkflowWorker.DeliverMessageAsync"/> directly.</param>
+    /// by the pump; a host that needs it calls the worker's <see cref="WorkflowWorker.DeliverMessageAsync(string, string?, JsonElement, WorkflowResumer, CancellationToken)"/> directly.</param>
     /// <param name="timeProvider">The time source for lease TTLs and due-timer evaluation; defaults to
     /// <see cref="TimeProvider.System"/>.</param>
     /// <param name="maxCachedExecutors">How many compiled captures the resumer keeps loaded.</param>

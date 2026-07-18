@@ -162,10 +162,16 @@ internal static class SendChannelStepEmitter
         // header-declaring message — an empty object when no header parameters are supplied. Setting
         // headers on a message that declares none is an error.
         string headersArgument = string.Empty;
+        string? headersElementLocal = null;
         if (selected.HeadersTypeName is { } headersType)
         {
-            string headersElement = EmitHeadersObject(headerArgs, identifier, camel, workspaceVariable, stepOutputLocals, inputsVariable, inputAccessors, fields, statements);
-            headersArgument = ", " + RequestBindingEmitter.ConvertToSourceType(headersElement, headersType);
+            string headersExpr = EmitHeadersObject(headerArgs, identifier, camel, workspaceVariable, stepOutputLocals, inputsVariable, inputAccessors, fields, statements);
+
+            // A stable local so both the producer argument and a header-located correlation capture read the
+            // same assembled headers element.
+            headersElementLocal = $"{camel}HeadersElement";
+            statements.Append("JsonElement ").Append(headersElementLocal).Append(" = ").Append(headersExpr).AppendLine(";");
+            headersArgument = ", " + RequestBindingEmitter.ConvertToSourceType(headersElementLocal, headersType);
         }
         else if (headerArgs.Count > 0)
         {
@@ -186,7 +192,7 @@ internal static class SendChannelStepEmitter
             string publishPayload = RequestBindingEmitter.ConvertToSourceType(payloadLocal, selected.PayloadTypeName ?? "Corvus.Text.Json.JsonElement");
             statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(publishPayload).Append(headersArgument).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
 
-            EmitCorrelationCapture(captureCorrelation, selected, camel, payloadLocal, statements);
+            EmitCorrelationCapture(captureCorrelation, selected, camel, payloadLocal, headersElementLocal, statements);
             return statements.ToString();
         }
 
@@ -345,14 +351,16 @@ internal static class SendChannelStepEmitter
     }
 
     // When the workflow correlates (some receive step declares a correlationId) and this send's message
-    // declares a payload-located AsyncAPI Correlation ID, read the token from the published payload and
-    // register it under the correlation id name so a later correlated receive can match it. A header-located
-    // correlation id is skipped (the send does not set message headers); the receive binder rejects those.
+    // declares an AsyncAPI Correlation ID, read the token from the published payload — or, for a
+    // header-located id, from the headers the send set (its in:header parameters) — and register it under
+    // the correlation id name so a later correlated receive can match it. A header-located id with no headers
+    // set on the send is skipped (nothing to capture).
     private static void EmitCorrelationCapture(
         bool captureCorrelation,
         in AsyncApiChannelMessageDescriptor message,
         string camel,
         string payloadLocal,
+        string? headersElementLocal,
         StringBuilder statements)
     {
         if (!captureCorrelation || message.CorrelationIdName is not { } correlationName || message.CorrelationIdLocation is not { } location)
@@ -361,13 +369,33 @@ internal static class SendChannelStepEmitter
         }
 
         AsyncApiRuntimeExpression locationExpression = AsyncApiRuntimeExpression.Parse(location);
-        if (locationExpression.Kind != AsyncApiRuntimeExpressionKind.MessagePayload || locationExpression.JsonPointer is not { } pointer)
+        if (locationExpression.JsonPointer is not { } pointer)
+        {
+            return;
+        }
+
+        string source;
+        if (locationExpression.Kind == AsyncApiRuntimeExpressionKind.MessageHeader)
+        {
+            if (headersElementLocal is null)
+            {
+                // The correlation id is header-located but this send set no headers; nothing to register.
+                return;
+            }
+
+            source = headersElementLocal;
+        }
+        else if (locationExpression.Kind == AsyncApiRuntimeExpressionKind.MessagePayload)
+        {
+            source = payloadLocal;
+        }
+        else
         {
             return;
         }
 
         string tokenLocal = $"{camel}CorrelationToken";
-        statements.Append("if (CorrelationToken.TryRead(").Append(payloadLocal).Append(", ").Append(EmitText.Quote(pointer)).Append("u8, out byte[] ").Append(tokenLocal).AppendLine("))");
+        statements.Append("if (CorrelationToken.TryRead(").Append(source).Append(", ").Append(EmitText.Quote(pointer)).Append("u8, out byte[] ").Append(tokenLocal).AppendLine("))");
         statements.AppendLine("{");
         statements.Append("    correlationTokens[").Append(EmitText.Quote(correlationName)).Append("] = ").Append(tokenLocal).AppendLine(";");
         statements.AppendLine("}");
