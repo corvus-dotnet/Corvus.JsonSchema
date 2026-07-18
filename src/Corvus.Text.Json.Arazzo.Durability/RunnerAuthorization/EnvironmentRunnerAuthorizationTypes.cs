@@ -22,6 +22,20 @@ public enum RunnerAuthorizationStatus
     Revoked,
 }
 
+/// <summary>What a store must do with an already-existing authorization when a runner (re-)registers presenting a machine
+/// principal (design §16.4) — the result of <see cref="EnvironmentRunnerAuthorizationSerialization.ClassifyRegistration"/>.
+/// Every outcome is decided string-free and neither writes to the store; the store acts on the result.</summary>
+public enum RegistrationOutcome
+{
+    /// <summary>Return the existing record unchanged (no write): the presented principal matches the bound one (steady-state
+    /// re-registration), no principal is presented, or the row carries no bound principal (an administrator pre-authorized it).</summary>
+    Unchanged,
+
+    /// <summary>A different machine principal is already bound to this runnerId: the store must throw
+    /// <see cref="RunnerPrincipalConflictException"/> (the registration is refused, mapped to a 409).</summary>
+    PrincipalConflict,
+}
+
 /// <summary>A decision applied to an authorization (a status transition).</summary>
 /// <param name="Status">The status to set — <see cref="RunnerAuthorizationStatus.Authorized"/> or <see cref="RunnerAuthorizationStatus.Revoked"/>.</param>
 /// <param name="Reason">An optional note recorded with the decision.</param>
@@ -119,4 +133,32 @@ public sealed class RunnerAuthorizationConflictException : Exception
 
     /// <summary>Gets the caller's expected etag.</summary>
     public WorkflowEtag ExpectedEtag { get; }
+}
+
+/// <summary>Thrown when a runner registration presents a machine principal (design §16.4) that differs from the one already
+/// bound to the same <c>(environment, runnerId)</c> — one authenticated machine cannot take over a runnerId a different
+/// machine principal already proved ownership of. Distinct from <see cref="RunnerAuthorizationConflictException"/> (an etag
+/// race); the control-plane registration endpoint maps this to a 409 with its own problem type.</summary>
+public sealed class RunnerPrincipalConflictException : Exception
+{
+    /// <summary>Initializes a new instance of the <see cref="RunnerPrincipalConflictException"/> class.</summary>
+    /// <param name="environment">The environment the runner registered for.</param>
+    /// <param name="runnerId">The runner id already bound to a different principal.</param>
+    /// <param name="presentedPrincipal">The principal the conflicting registration presented.</param>
+    public RunnerPrincipalConflictException(string environment, string runnerId, string presentedPrincipal)
+        : base($"Runner '{runnerId}' in environment '{environment}' is already bound to a different machine principal; the presented principal '{presentedPrincipal}' cannot take it over.")
+    {
+        this.Environment = environment;
+        this.RunnerId = runnerId;
+        this.PresentedPrincipal = presentedPrincipal;
+    }
+
+    /// <summary>Gets the environment the runner registered for.</summary>
+    public string Environment { get; }
+
+    /// <summary>Gets the runner id already bound to a different principal.</summary>
+    public string RunnerId { get; }
+
+    /// <summary>Gets the principal the conflicting registration presented.</summary>
+    public string PresentedPrincipal { get; }
 }

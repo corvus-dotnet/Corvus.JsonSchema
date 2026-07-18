@@ -146,7 +146,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         bool preAuthorized = fetched is null;
         if (fetched is null)
         {
-            fetched = await this.authorizations.EnsurePendingAsync(environment, runnerId, this.CallerActor(), cancellationToken).ConfigureAwait(false);
+            // Pre-authorization binds no machine principal (principal: null): the administrator is allow-listing a runnerId by
+            // name before any runner has authenticated a registration, so no verified §16.4 identity exists to stamp yet.
+            fetched = await this.authorizations.EnsurePendingAsync(environment, runnerId, this.CallerActor(), principal: null, cancellationToken).ConfigureAwait(false);
         }
 
         // Idempotent — authorizing an already-Authorized runner returns the existing record (status compared string-free).

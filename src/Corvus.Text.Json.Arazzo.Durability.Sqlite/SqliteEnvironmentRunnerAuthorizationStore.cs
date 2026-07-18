@@ -69,7 +69,7 @@ public sealed class SqliteEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, string? principal, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(runnerId);
@@ -78,15 +78,23 @@ public sealed class SqliteEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
         try
         {
             // Idempotent: a runner re-registering for an environment keeps whatever status it already has (so an Authorized
-            // runner is not reset to Pending).
+            // runner is not reset to Pending). A presented machine principal (§16.4) is classified string-free against the
+            // bound one — a match returns as-is; a different bound principal is refused. The existing-row path never writes.
             byte[]? existing = await this.DocumentAsync(environment, runnerId, cancellationToken).ConfigureAwait(false);
             if (existing is not null)
             {
-                return ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(existing.AsMemory());
+                ParsedJsonDocument<EnvironmentRunnerAuthorization> existingDoc = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(existing.AsMemory());
+                if (EnvironmentRunnerAuthorizationSerialization.ClassifyRegistration(existingDoc.RootElement, principal) == RegistrationOutcome.PrincipalConflict)
+                {
+                    existingDoc.Dispose();
+                    throw new RunnerPrincipalConflictException(environment, runnerId, principal!);
+                }
+
+                return existingDoc;
             }
 
             WorkflowEtag etag = NewEtag();
-            byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, this.timeProvider.GetUtcNow(), etag);
+            byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), etag);
             using SqliteCommand insert = this.connection.CreateCommand();
             insert.CommandText =
                 "INSERT INTO EnvironmentRunnerAuthorizations (Environment, RunnerId, Status, Etag, Document) " +

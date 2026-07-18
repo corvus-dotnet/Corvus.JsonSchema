@@ -26,6 +26,10 @@
       "type": "string",
       "description": "The actor that created the record (the runner self-registering enters Pending)."
     },
+    "principal": {
+      "type": "string",
+      "description": "The trusted machine principal that proved ownership of this runnerId by authenticating its registration (design §16.4): the runner's authorization binds to this verified identity rather than to a self-asserted runnerId. Stamped when a runner self-registers through the authenticated registration endpoint; absent on a row an administrator pre-authorized by runnerId before any runner has registered (that row's trust is the administrator's explicit allow-list). Once present, a registration presenting a different principal for the same runnerId is refused."
+    },
     "createdAt": {
       "type": "string",
       "format": "date-time",

@@ -22,19 +22,46 @@ public static class EnvironmentRunnerAuthorizationSerialization
     /// <param name="environment">The environment the runner asks to serve.</param>
     /// <param name="runnerId">The runner the authorization applies to.</param>
     /// <param name="actor">The creating identity (the runner; audit).</param>
+    /// <param name="principal">The trusted machine principal that authenticated the registration (design §16.4), stamped as
+    /// the record's <c>principal</c> when non-<see langword="null"/>; <see langword="null"/> for an administrator
+    /// pre-authorizing a runnerId (no runner has proven ownership yet).</param>
     /// <param name="createdAt">The creation timestamp.</param>
     /// <param name="etag">The new record etag.</param>
     /// <returns>The owned UTF-8 JSON bytes.</returns>
-    public static byte[] SerializePending(string environment, string runnerId, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static byte[] SerializePending(string environment, string runnerId, string actor, string? principal, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         ArgumentException.ThrowIfNullOrEmpty(environment);
         ArgumentException.ThrowIfNullOrEmpty(runnerId);
         ArgumentNullException.ThrowIfNull(actor);
         using ParsedJsonDocument<EnvironmentRunnerAuthorization> draft = EnvironmentRunnerAuthorization.Draft(environment, runnerId);
         return PersistedJson.ToArray(
-            (Draft: draft.RootElement, actor, createdAt, etag),
-            static (Utf8JsonWriter writer, in (EnvironmentRunnerAuthorization Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
-                => EnvironmentRunnerAuthorization.WriteNew(writer, c.Draft, c.Actor, c.At, c.Tag));
+            (Draft: draft.RootElement, actor, principal, createdAt, etag),
+            static (Utf8JsonWriter writer, in (EnvironmentRunnerAuthorization Draft, string Actor, string? Principal, DateTimeOffset At, WorkflowEtag Tag) c)
+                => EnvironmentRunnerAuthorization.WriteNew(writer, c.Draft, c.Actor, c.Principal, c.At, c.Tag));
+    }
+
+    /// <summary>Classifies what a store must do with an <em>already-existing</em> authorization when a runner (re-)registers
+    /// presenting <paramref name="principal"/> (design §16.4). Entirely string-free (no principal string is realised from the
+    /// stored document): the common steady-state re-registration compares the bound principal's bytes and returns
+    /// <see cref="RegistrationOutcome.Unchanged"/> without touching the store.</summary>
+    /// <param name="current">The stored authorization (already parsed by the backend).</param>
+    /// <param name="principal">The machine principal the registration presents, or <see langword="null"/> for a path that does
+    /// not carry one (an administrator pre-authorizing, or a caller that does not bind identity) — always
+    /// <see cref="RegistrationOutcome.Unchanged"/>.</param>
+    /// <returns><see cref="RegistrationOutcome.Unchanged"/> to return the existing record as-is (no write); or
+    /// <see cref="RegistrationOutcome.PrincipalConflict"/> when a <em>different</em> principal is already bound — the store
+    /// must throw <see cref="RunnerPrincipalConflictException"/>.</returns>
+    /// <remarks>A row with no bound principal (an administrator pre-authorized it by runnerId) is left unchanged even when a
+    /// principal is presented: pre-authorization is the administrator's deliberate name-based allow-listing, and binding is
+    /// reserved for the runner's own first (self-registering) creation. So every existing-row path stays read-only.</remarks>
+    public static RegistrationOutcome ClassifyRegistration(in EnvironmentRunnerAuthorization current, string? principal)
+    {
+        if (principal is null || !current.HasPrincipal || current.PrincipalEquals(principal))
+        {
+            return RegistrationOutcome.Unchanged;
+        }
+
+        return RegistrationOutcome.PrincipalConflict;
     }
 
     /// <summary>Checks the etag and serializes the decided record to owned JSON bytes, for a byte[]-leaf driver.</summary>

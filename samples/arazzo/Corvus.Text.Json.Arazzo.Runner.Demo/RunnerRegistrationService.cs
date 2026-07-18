@@ -46,7 +46,7 @@ public sealed class RunnerRegistrationService(
             // (environment, runnerId). It becomes dispatchable only once an administrator of that environment authorizes it;
             // re-registering (incl. after a stale-heartbeat prune) leaves an existing Authorized/Revoked decision intact.
             using (ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization =
-                await runnerAuthorizations.EnsurePendingAsync(options.Environment, options.RunnerId, options.RunnerId, stoppingToken).ConfigureAwait(false))
+                await runnerAuthorizations.EnsurePendingAsync(options.Environment, options.RunnerId, options.RunnerId, principal: null, stoppingToken).ConfigureAwait(false))
             {
                 logger.LogInformation(
                     "Runner {RunnerId} authorization to serve environment '{Environment}' is {Status}.",

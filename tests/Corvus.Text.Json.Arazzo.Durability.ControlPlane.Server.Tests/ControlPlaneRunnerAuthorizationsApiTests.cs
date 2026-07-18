@@ -38,7 +38,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Authorizing_a_pending_runner_as_an_administrator_makes_it_authorized()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
 
         // acme provisions 'production', granting itself administration of it.
@@ -54,7 +54,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Authorizing_an_already_authorized_runner_is_idempotent()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -69,7 +69,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Authorizing_as_a_non_administrator_of_the_environment_is_forbidden()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
 
         // acme provisions (and administers) 'production'; globex administers nothing here.
@@ -82,7 +82,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Authorizing_for_an_unknown_environment_is_not_found()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -107,7 +107,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
 
         // When the runner later registers with a matching id, EnsurePendingAsync leaves the Authorized row unchanged, so
         // the pre-authorized runner is dispatchable immediately with no second approval.
-        using ParsedJsonDocument<EnvironmentRunnerAuthorization> afterRegister = await runnerAuth.EnsurePendingAsync("production", "runner-expected", "runner-expected", default);
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> afterRegister = await runnerAuth.EnsurePendingAsync("production", "runner-expected", "runner-expected", null, default);
         afterRegister.RootElement.IsAuthorized.ShouldBeTrue();
     }
 
@@ -115,7 +115,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Revoking_an_authorized_runner_as_an_administrator_makes_it_revoked()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -129,7 +129,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Quarantining_an_authorized_runner_makes_it_quarantined()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -143,7 +143,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Reinstating_a_quarantined_runner_authorizes_it_without_re_registration()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -158,7 +158,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Quarantining_a_pending_runner_conflicts()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -170,7 +170,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Quarantining_a_revoked_runner_conflicts_so_it_cannot_be_downgraded_to_temporary()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -184,7 +184,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Re_authorizing_a_revoked_runner_returns_it_to_service()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -199,7 +199,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Quarantining_as_a_non_administrator_is_forbidden()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -211,7 +211,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Revoking_a_runner_fences_the_in_flight_run_it_leases()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -229,8 +229,8 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task The_roster_filters_by_quarantined_status()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-a", "runner", default);
-        await runnerAuth.EnsurePendingAsync("production", "runner-b", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-a", "runner", null, default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-b", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-a/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -247,8 +247,8 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Listing_an_environments_runners_as_an_administrator_lists_the_seeded_runner_and_filters_by_status()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-pending", "runner", default);
-        await runnerAuth.EnsurePendingAsync("production", "runner-authorized", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-pending", "runner", null, default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-authorized", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -272,7 +272,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task Listing_an_environments_runners_as_a_non_administrator_is_forbidden()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -283,7 +283,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task The_approver_inbox_returns_pending_authorizations_for_the_environments_the_caller_administers()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
 
         // acme administers 'production'; the inbox (no environment, defaulting to Pending) surfaces its pending runner.
@@ -300,7 +300,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     public async Task The_approver_inbox_is_empty_for_a_caller_who_administers_nothing()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
 
         // acme provisions (and administers) 'production'; globex administers nothing, so its inbox is empty.
@@ -318,7 +318,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         // fresh one).
         using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -335,7 +335,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     {
         using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", null, default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 

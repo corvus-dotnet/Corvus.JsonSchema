@@ -43,7 +43,7 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
 
-        using ParsedJsonDocument<EnvironmentRunnerAuthorization> created = await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> created = await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default);
         created.RootElement.EnvironmentValue.ShouldBe("production");
         created.RootElement.RunnerIdValue.ShouldBe("runner-1");
         created.RootElement.StatusValue.ShouldBe("Pending");
@@ -63,13 +63,13 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
 
         WorkflowEtag firstEtag;
-        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> first = await store.EnsurePendingAsync("production", "runner-1", "runner-1", default))
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> first = await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default))
         {
             firstEtag = first.RootElement.EtagValue;
         }
 
         // A second ensure-pending on a still-Pending record returns it unchanged (same status, same etag — no new record).
-        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> second = await store.EnsurePendingAsync("production", "runner-1", "someone-else", default))
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> second = await store.EnsurePendingAsync("production", "runner-1", "someone-else", null, default))
         {
             second.RootElement.StatusValue.ShouldBe("Pending");
             second.RootElement.EtagValue.ShouldBe(firstEtag);
@@ -81,7 +81,7 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
         {
         }
 
-        using ParsedJsonDocument<EnvironmentRunnerAuthorization> reEnsured = await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> reEnsured = await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default);
         reEnsured.RootElement.StatusValue.ShouldBe("Authorized");
     }
 
@@ -89,7 +89,7 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Authorizing_records_the_decision()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        using (await store.EnsurePendingAsync("production", "runner-1", "runner-1", default))
+        using (await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default))
         {
         }
 
@@ -116,7 +116,7 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Revoking_records_the_decision()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        using (await store.EnsurePendingAsync("production", "runner-1", "runner-1", default))
+        using (await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default))
         {
         }
 
@@ -138,7 +138,7 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Quarantining_records_the_decision_and_is_not_dispatchable()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        using (await store.EnsurePendingAsync("production", "runner-1", "runner-1", default))
+        using (await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default))
         {
         }
 
@@ -181,7 +181,7 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
         WorkflowEtag created;
-        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization = await store.EnsurePendingAsync("production", "runner-1", "runner-1", default))
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization = await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default))
         {
             created = authorization.RootElement.EtagValue;
         }
@@ -204,9 +204,9 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Listing_by_environment_returns_that_environments_runners()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
-        await store.EnsurePendingAsync("production", "runner-2", "runner-2", default);
-        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", default);
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default);
+        await store.EnsurePendingAsync("production", "runner-2", "runner-2", null, default);
+        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", null, default);
 
         (await this.KeysAsync(store, new RunnerAuthorizationQuery(Environment: "production")))
             .ShouldBe([("production", "runner-1"), ("production", "runner-2")], ignoreOrder: true);
@@ -216,9 +216,9 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Listing_filters_by_the_administered_environment_set_for_the_approver_inbox()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        await store.EnsurePendingAsync("envA", "runner-1", "runner-1", default);
-        await store.EnsurePendingAsync("envA", "runner-2", "runner-2", default);
-        await store.EnsurePendingAsync("envB", "runner-3", "runner-3", default);
+        await store.EnsurePendingAsync("envA", "runner-1", "runner-1", null, default);
+        await store.EnsurePendingAsync("envA", "runner-2", "runner-2", null, default);
+        await store.EnsurePendingAsync("envB", "runner-3", "runner-3", null, default);
 
         // The approver inbox: only envA's authorizations, never envB.
         (await this.KeysAsync(store, new RunnerAuthorizationQuery(AdministeredEnvironments: ["envA"])))
@@ -229,8 +229,8 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Listing_filters_by_status()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
-        await store.EnsurePendingAsync("production", "runner-2", "runner-2", default);
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default);
+        await store.EnsurePendingAsync("production", "runner-2", "runner-2", null, default);
         await store.DecideAsync("production", "runner-2", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Authorized), WorkflowEtag.None, "admin", default);
 
         (await this.KeysAsync(store, new RunnerAuthorizationQuery(Status: RunnerAuthorizationStatus.Pending)))
@@ -251,7 +251,7 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
             for (int i = 0; i < 4; i++)
             {
                 string runnerId = $"runner-{i}";
-                await store.EnsurePendingAsync(environment, runnerId, runnerId, default);
+                await store.EnsurePendingAsync(environment, runnerId, runnerId, null, default);
                 expected.Add((environment, runnerId));
             }
         }
@@ -289,9 +289,9 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Counting_is_bounded_by_the_cap_reporting_capped_only_beyond_it()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
-        await store.EnsurePendingAsync("production", "runner-2", "runner-2", default);
-        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", default);
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default);
+        await store.EnsurePendingAsync("production", "runner-2", "runner-2", null, default);
+        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", null, default);
 
         // Below the true total: the exact count, not capped (matches the list length).
         (await store.CountAsync(default, 10, default)).ShouldBe((3, false));
@@ -312,10 +312,10 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
     public async Task Counting_honours_the_same_filters_as_the_list()
     {
         IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
-        await store.EnsurePendingAsync("production", "runner-1", "runner-1", default);
-        await store.EnsurePendingAsync("production", "runner-2", "runner-2", default);
-        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", default);
-        await store.EnsurePendingAsync("qa", "runner-4", "runner-4", default);
+        await store.EnsurePendingAsync("production", "runner-1", "runner-1", null, default);
+        await store.EnsurePendingAsync("production", "runner-2", "runner-2", null, default);
+        await store.EnsurePendingAsync("staging", "runner-3", "runner-3", null, default);
+        await store.EnsurePendingAsync("qa", "runner-4", "runner-4", null, default);
 
         // By environment.
         (await store.CountAsync(new RunnerAuthorizationQuery(Environment: "production"), 10, default)).ShouldBe((2, false));
@@ -330,6 +330,88 @@ public abstract class EnvironmentRunnerAuthorizationStoreConformance
 
         // Filter + cap compose: two Pending in the administered set, capped at 1.
         (await store.CountAsync(new RunnerAuthorizationQuery(Status: RunnerAuthorizationStatus.Pending, AdministeredEnvironments: ["production", "qa"]), 1, default)).ShouldBe((1, true));
+    }
+
+    [TestMethod]
+    public async Task EnsurePending_stamps_the_machine_principal_on_create()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+
+        // A runner self-registering through the authenticated endpoint (design §16.4) presents its trusted machine principal;
+        // it is stamped on the created record so the authorization binds to a verified identity, not the self-asserted runnerId.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> created = await store.EnsurePendingAsync("production", "runner-1", "svc:runner-a", "svc:runner-a", default);
+        created.RootElement.PrincipalOrNull.ShouldBe("svc:runner-a");
+        created.RootElement.PrincipalEquals("svc:runner-a").ShouldBeTrue();
+        created.RootElement.HasPrincipal.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task EnsurePending_without_a_principal_leaves_it_absent()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+
+        // The administrator pre-authorization path (and any caller that does not bind an identity) passes no principal: the
+        // record carries none, and a later registration presenting one is still accepted (pre-authorization is the
+        // administrator's deliberate name-based allow-listing, so it never binds).
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> created = await store.EnsurePendingAsync("production", "runner-1", "admin", null, default);
+        created.RootElement.PrincipalOrNull.ShouldBeNull();
+        created.RootElement.HasPrincipal.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task Re_registering_with_the_same_principal_is_idempotent()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+
+        WorkflowEtag firstEtag;
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> first = await store.EnsurePendingAsync("production", "runner-1", "svc:runner-a", "svc:runner-a", default))
+        {
+            firstEtag = first.RootElement.EtagValue;
+        }
+
+        // The steady-state re-registration: the same runner presents its own principal, so the row returns unchanged (same
+        // etag, still bound) — the string-free match path, no write.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> again = await store.EnsurePendingAsync("production", "runner-1", "svc:runner-a", "svc:runner-a", default);
+        again.RootElement.EtagValue.ShouldBe(firstEtag);
+        again.RootElement.PrincipalEquals("svc:runner-a").ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Re_registering_with_a_different_principal_is_refused()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+        using (await store.EnsurePendingAsync("production", "runner-1", "svc:runner-a", "svc:runner-a", default))
+        {
+        }
+
+        // A different authenticated machine cannot take over a runnerId a principal already owns (§16.4): the registration is
+        // refused. The bound row is untouched.
+        RunnerPrincipalConflictException conflict = await Should.ThrowAsync<RunnerPrincipalConflictException>(
+            async () => await store.EnsurePendingAsync("production", "runner-1", "svc:runner-b", "svc:runner-b", default));
+        conflict.RunnerId.ShouldBe("runner-1");
+        conflict.PresentedPrincipal.ShouldBe("svc:runner-b");
+
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? unchanged = await store.GetAsync("production", "runner-1", default);
+        unchanged!.RootElement.PrincipalEquals("svc:runner-a").ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task A_pre_authorized_runner_accepts_a_registration_without_binding_a_principal()
+    {
+        IEnvironmentRunnerAuthorizationStore store = await this.NewStoreAsync();
+
+        // An administrator pre-authorized this runnerId by name (no principal). When the runner registers presenting a
+        // principal, it is accepted and the row is returned unchanged — a pre-authorized row is never bound, so its trust
+        // stays the administrator's explicit name-based allow-listing (the documented §16.4 residual).
+        WorkflowEtag preAuthEtag;
+        using (ParsedJsonDocument<EnvironmentRunnerAuthorization> preAuth = await store.EnsurePendingAsync("production", "runner-1", "admin", null, default))
+        {
+            preAuthEtag = preAuth.RootElement.EtagValue;
+        }
+
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> registered = await store.EnsurePendingAsync("production", "runner-1", "svc:runner-a", "svc:runner-a", default);
+        registered.RootElement.EtagValue.ShouldBe(preAuthEtag);
+        registered.RootElement.HasPrincipal.ShouldBeFalse();
     }
 
     // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as (mirroring HTTP).

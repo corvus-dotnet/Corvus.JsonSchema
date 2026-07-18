@@ -75,6 +75,23 @@ public readonly partial struct EnvironmentRunnerAuthorization
     /// <summary>Gets the actor that created the record (the runner self-registering enters Pending).</summary>
     public string CreatedByValue => (string)this.CreatedBy;
 
+    /// <summary>Gets the trusted machine principal bound to this runner authorization (design §16.4), or <see langword="null"/>
+    /// if none is bound — an administrator pre-authorized the runnerId before any runner authenticated a registration. To
+    /// <em>compare</em> the bound principal, prefer the string-free <see cref="PrincipalEquals"/>, which never allocates.</summary>
+    public string? PrincipalOrNull => this.Principal.IsNotUndefined() ? (string)this.Principal : null;
+
+    /// <summary>Tests whether the bound machine principal equals <paramref name="principal"/>, compared string-free (no
+    /// principal string is realised from the document — the candidate's bytes are compared against the JSON value). Returns
+    /// <see langword="false"/> when no principal is bound. This is the steady-state re-registration check (§16.4): an
+    /// already-bound runner re-registering with its own principal matches here and the store returns the row unchanged.</summary>
+    /// <param name="principal">The candidate principal to test for.</param>
+    /// <returns><see langword="true"/> if a principal is bound and equals <paramref name="principal"/>.</returns>
+    public bool PrincipalEquals(string principal) => this.Principal.IsNotUndefined() && this.Principal.ValueEquals(principal);
+
+    /// <summary>Gets a value indicating whether a machine principal is bound to this authorization, tested string-free (no
+    /// principal string is realised). A row an administrator pre-authorized by runnerId before any runner registered has none.</summary>
+    public bool HasPrincipal => this.Principal.IsNotUndefined();
+
     /// <summary>Gets when the record was created.</summary>
     public DateTimeOffset CreatedAtValue => ((NodaTime.OffsetDateTime)this.CreatedAt).ToDateTimeOffset();
 
@@ -121,9 +138,12 @@ public readonly partial struct EnvironmentRunnerAuthorization
     /// <param name="writer">The writer to serialize into (typically the pooled writer from <see cref="PersistedJson"/>).</param>
     /// <param name="draft">The draft carrying the create-content as JSON values (read bytes-to-bytes).</param>
     /// <param name="actor">The actor creating the record (the runner self-registering; audit).</param>
+    /// <param name="principal">The trusted machine principal that authenticated the registration (design §16.4), stamped as
+    /// the record's <c>principal</c> when non-<see langword="null"/>; <see langword="null"/> for an administrator
+    /// pre-authorizing a runnerId (no runner has proven ownership yet), which leaves <c>principal</c> absent.</param>
     /// <param name="createdAt">The creation instant.</param>
     /// <param name="etag">The optimistic-concurrency token to assign.</param>
-    public static void WriteNew(Utf8JsonWriter writer, in EnvironmentRunnerAuthorization draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
+    public static void WriteNew(Utf8JsonWriter writer, in EnvironmentRunnerAuthorization draft, string actor, string? principal, DateTimeOffset createdAt, WorkflowEtag etag)
     {
         RequireContent(draft);
         writer.WriteStartObject();
@@ -131,6 +151,11 @@ public readonly partial struct EnvironmentRunnerAuthorization
         WriteValue(writer, JsonPropertyNames.RunnerIdUtf8, (JsonElement)draft.RunnerId);
         writer.WriteString(JsonPropertyNames.StatusUtf8, RunnerAuthorizationStatusNames.Pending);
         writer.WriteString(JsonPropertyNames.CreatedByUtf8, actor);
+        if (principal is not null)
+        {
+            writer.WriteString(JsonPropertyNames.PrincipalUtf8, principal);
+        }
+
         writer.WriteString(JsonPropertyNames.CreatedAtUtf8, createdAt);
         writer.WriteString(JsonPropertyNames.EtagUtf8, etag.Value ?? string.Empty);
         writer.WriteEndObject();

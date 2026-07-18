@@ -26,13 +26,21 @@ public interface IEnvironmentRunnerAuthorizationStore
     /// <summary>Ensures a <see cref="RunnerAuthorizationStatus.Pending"/> authorization exists for <c>(environment,
     /// runnerId)</c>: idempotent — returns the existing record unchanged if one already exists (whatever its status), else
     /// creates a Pending one. A runner re-registering for an environment it is already authorized for therefore stays
-    /// Authorized.</summary>
+    /// Authorized. On create, when <paramref name="principal"/> is supplied it is stamped as the record's trusted machine
+    /// principal (design §16.4); when an authorization already exists and carries a <em>different</em> bound principal, the
+    /// registration is refused with <see cref="RunnerPrincipalConflictException"/> (one machine cannot take over a runnerId a
+    /// different machine principal already owns). Every existing-row path is read-only.</summary>
     /// <param name="environment">The environment the runner asks to serve.</param>
     /// <param name="runnerId">The runner the authorization applies to.</param>
     /// <param name="actor">The authenticated identity (the runner) creating the record (for audit).</param>
+    /// <param name="principal">The trusted machine principal that authenticated the registration (design §16.4), bound to the
+    /// record on create; <see langword="null"/> for an administrator pre-authorizing a runnerId (no runner has proven
+    /// ownership yet) — a <see langword="null"/> principal never binds and never conflicts.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The existing or newly-created authorization, as a pooled document the caller must dispose.</returns>
-    ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, CancellationToken cancellationToken);
+    /// <exception cref="RunnerPrincipalConflictException">An authorization for <c>(environment, runnerId)</c> already exists
+    /// bound to a machine principal other than <paramref name="principal"/>.</exception>
+    ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, string? principal, CancellationToken cancellationToken);
 
     /// <summary>Gets the authorization for <c>(environment, runnerId)</c>, or <see langword="null"/> if absent.</summary>
     /// <param name="environment">The environment.</param>

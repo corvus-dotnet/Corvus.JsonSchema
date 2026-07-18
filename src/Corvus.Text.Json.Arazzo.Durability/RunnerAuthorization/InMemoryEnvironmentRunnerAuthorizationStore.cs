@@ -26,7 +26,7 @@ public sealed class InMemoryEnvironmentRunnerAuthorizationStore : IEnvironmentRu
         => this.timeProvider = timeProvider ?? TimeProvider.System;
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, string? principal, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(environment);
         ArgumentException.ThrowIfNullOrEmpty(runnerId);
@@ -38,11 +38,20 @@ public sealed class InMemoryEnvironmentRunnerAuthorizationStore : IEnvironmentRu
             if (this.authorizations.TryGetValue(key, out byte[]? existing))
             {
                 // Idempotent: an existing authorization is returned unchanged whatever its status (a re-registering
-                // Authorized runner stays Authorized).
-                return new ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>>(PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(existing));
+                // Authorized runner stays Authorized). When a machine principal is presented (§16.4) it is classified
+                // string-free against the bound one: a match (steady-state re-registration) returns as-is; a different bound
+                // principal is refused. The existing-row path never writes.
+                ParsedJsonDocument<EnvironmentRunnerAuthorization> existingDoc = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(existing);
+                if (EnvironmentRunnerAuthorizationSerialization.ClassifyRegistration(existingDoc.RootElement, principal) == RegistrationOutcome.PrincipalConflict)
+                {
+                    existingDoc.Dispose();
+                    throw new RunnerPrincipalConflictException(environment, runnerId, principal!);
+                }
+
+                return new ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>>(existingDoc);
             }
 
-            byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, this.timeProvider.GetUtcNow(), this.NextEtag());
+            byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), this.NextEtag());
             this.authorizations[key] = json;
             return new ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>>(PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(json));
         }

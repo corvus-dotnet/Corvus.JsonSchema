@@ -115,7 +115,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, string? principal, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(environment);
         ArgumentException.ThrowIfNullOrEmpty(runnerId);
@@ -125,16 +125,24 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
         // Idempotent: a runner re-registering for an environment keeps whatever status it already has (so an Authorized
         // runner is not reset to Pending). Under the single-instance assumption a GET-then-SET is acceptable (a Lua
         // check-and-set would be the cluster-safe form). Read into a pooled lease (no GC read array); the returned document
-        // copies the lease span into a pooled document the caller owns.
+        // copies the lease span into a pooled document the caller owns. A presented machine principal (§16.4) is classified
+        // string-free against the bound one — a match returns as-is; a different bound principal is refused (no write).
         using (Lease<byte>? existing = await this.database.StringGetLeaseAsync(RecordKey(environment, runnerId)).ConfigureAwait(false))
         {
             if (existing is { Length: > 0 })
             {
-                return PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(existing.Span);
+                ParsedJsonDocument<EnvironmentRunnerAuthorization> existingDoc = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(existing.Span);
+                if (EnvironmentRunnerAuthorizationSerialization.ClassifyRegistration(existingDoc.RootElement, principal) == RegistrationOutcome.PrincipalConflict)
+                {
+                    existingDoc.Dispose();
+                    throw new RunnerPrincipalConflictException(environment, runnerId, principal!);
+                }
+
+                return existingDoc;
             }
         }
 
-        byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), NewEtag());
         await this.database.StringSetAsync(RecordKey(environment, runnerId), json).ConfigureAwait(false);
         await this.database.SortedSetAddAsync(IndexKey, IndexMember(environment, runnerId), 0).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(json);

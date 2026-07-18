@@ -108,7 +108,7 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, string? principal, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(runnerId);
@@ -117,14 +117,22 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
         string itemId = ItemId(environment, runnerId);
 
         // Idempotent: a runner re-registering for an environment keeps whatever status it already has (so an Authorized
-        // runner is not reset to Pending).
+        // runner is not reset to Pending). A presented machine principal (§16.4) is classified string-free against the bound
+        // one — a match returns as-is; a different bound principal is refused. The existing-row path never writes.
         byte[]? existing = await this.ReadDocumentAsync(itemId, cancellationToken).ConfigureAwait(false);
         if (existing is not null)
         {
-            return PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(existing);
+            ParsedJsonDocument<EnvironmentRunnerAuthorization> existingDoc = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(existing);
+            if (EnvironmentRunnerAuthorizationSerialization.ClassifyRegistration(existingDoc.RootElement, principal) == RegistrationOutcome.PrincipalConflict)
+            {
+                existingDoc.Dispose();
+                throw new RunnerPrincipalConflictException(environment, runnerId, principal!);
+            }
+
+            return existingDoc;
         }
 
-        byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, this.timeProvider.GetUtcNow(), NewEtag());
+        byte[] json = EnvironmentRunnerAuthorizationSerialization.SerializePending(environment, runnerId, actor, principal, this.timeProvider.GetUtcNow(), NewEtag());
 
         bool conflict;
         var fields = new EnvelopeFields(itemId, environment, runnerId, RunnerAuthorizationStatusNames.Pending, json);
@@ -151,11 +159,22 @@ public sealed class CosmosEnvironmentRunnerAuthorizationStore : IEnvironmentRunn
             document.Dispose();
         }
 
-        // The create lost a race; re-read and return the existing record unchanged (idempotent).
+        // The create lost a race; re-read and return the existing record unchanged (idempotent). Classify the winner's row
+        // against the presented principal too, so a create-race cannot admit a mismatched machine principal (§16.4).
         byte[]? raced = conflict ? await this.ReadDocumentAsync(itemId, cancellationToken).ConfigureAwait(false) : null;
-        return raced is not null
-            ? PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(raced)
-            : throw new InvalidOperationException("The runner authorization create conflicted but could not be re-read.");
+        if (raced is null)
+        {
+            throw new InvalidOperationException("The runner authorization create conflicted but could not be re-read.");
+        }
+
+        ParsedJsonDocument<EnvironmentRunnerAuthorization> racedDoc = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(raced);
+        if (EnvironmentRunnerAuthorizationSerialization.ClassifyRegistration(racedDoc.RootElement, principal) == RegistrationOutcome.PrincipalConflict)
+        {
+            racedDoc.Dispose();
+            throw new RunnerPrincipalConflictException(environment, runnerId, principal!);
+        }
+
+        return racedDoc;
     }
 
     /// <inheritdoc/>
