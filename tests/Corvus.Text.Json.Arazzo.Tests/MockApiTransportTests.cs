@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Testing;
 using Corvus.Text.Json.OpenApi;
@@ -73,6 +74,44 @@ public class MockApiTransportTests
         s2.ShouldBe(200);
         s3.ShouldBe(200); // last response repeats
         transport.Requests.Count.ShouldBe(3);
+    }
+
+    [TestMethod]
+    public async Task Instrumented_transport_creates_a_client_span_for_the_operation()
+    {
+        // InstrumentedApiTransport decorates any IApiTransport with a Client span per operation, named
+        // {method} {route}, carrying HTTP semantic tags — the OpenAPI analogue of the AsyncAPI decorator.
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+
+        var inner = new MockApiTransport();
+        inner.SetResponse(OperationMethod.Get, "/pets/{id}", 200, """{"id":"42"}""");
+        await using var transport = new InstrumentedApiTransport(inner);
+
+        await using (FakeResponse response = await transport.SendAsync<FakeRequest, FakeResponse>(new FakeRequest("42")))
+        {
+            response.StatusCode.ShouldBe(200);
+        }
+
+        activities.Count.ShouldBe(1);
+        Activity activity = activities[0];
+        activity.OperationName.ShouldBe("GET /pets/{id}");
+        activity.Kind.ShouldBe(ActivityKind.Client);
+        activity.GetTagItem("http.request.method").ShouldBe("GET");
+        activity.GetTagItem("url.template").ShouldBe("/pets/{id}");
+        activity.GetTagItem("http.response.status_code").ShouldBe(200);
+    }
+
+    private static ActivityListener CreateActivityListener(List<Activity> activities)
+    {
+        var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == OpenApiTelemetry.ActivitySourceName,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = activities.Add,
+        };
+        ActivitySource.AddActivityListener(listener);
+        return listener;
     }
 
     /// <summary>Minimal generated-style request: GET /pets/{id}.</summary>
