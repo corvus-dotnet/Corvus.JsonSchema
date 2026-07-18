@@ -375,6 +375,53 @@ Key points:
   `$message.header/payload#…` expressions. Bridge to the AsyncAPI generated
   producers/consumers and protocol bindings; reuse `AsyncApiRuntimeExpression`.
 
+#### Send-side message headers + multi-message operations (agreed 2026-07-18)
+
+Two remaining channel-step gaps, both greenfield: neither Arazzo 1.1 nor the
+AsyncAPI-binding notes define how an Arazzo step sets message headers or selects
+among an operation's messages. The generated AsyncAPI producer already does the
+heavy lifting — one `Publish{Msg}Async`/`SendAndReceive{Msg}Async` per message,
+each taking a `{HeadersType}.Source headers` argument whenever the message
+declares a `headers` schema — so the work is Arazzo-side wiring plus a chosen
+convention for each gap.
+
+- **Message headers via `in: header` parameters.** The Arazzo Parameter Object's
+  `in` enum already carries `header`, and the spec leaves its meaning for AsyncAPI
+  steps open; a send step's `in: header` parameters populate the message headers,
+  directly analogous to how `in: header` sets HTTP request headers on an OpenAPI
+  step and mirroring the read-side `$message.header.<name>`. The engine assembles
+  the named header parameters into the message's generated `HeadersType` object
+  (the same param-to-object build a sub-workflow step uses for its inputs) and
+  passes it after the payload, emitted **only** when the message declares headers.
+  Setting headers on a message that declares none is a generation error. This is a
+  Corvus convention filling an acknowledged spec gap, not a spec feature; a whole
+  `requestBody.headers` object was rejected because it invents a Request Body field
+  the spec does not have. **Enabling this also fixes a latent correctness gap**:
+  because the generated publish method *requires* the headers arg, a send step
+  targeting any header-bearing message previously failed to compile.
+- **Message selection by payload-schema validity (canonical).** AsyncAPI already
+  makes the payload the single source of truth for message identity ("valid
+  against one, and only one" of the operation's messages), and the receive side
+  already discriminates this way via the generated `MatchMessage` evaluator. The
+  send side mirrors it: a single-message channel calls directly (zero cost); a
+  multi-message channel emits a validity chain over `descriptor.Messages` using
+  the same zero-allocation per-type evaluator, and the first (per spec, only)
+  message whose payload schema the resolved value satisfies wins its producer
+  method, with headers bound inside that branch. A payload matching no message is
+  a runtime step failure. This was chosen over an `x-message` selector, which
+  would have introduced a second, drift-prone source of truth the spec designed
+  out, diverged from the canonical mechanism, and discarded the "exactly one"
+  invariant the engine can otherwise enforce.
+- **Header-located correlation** falls out once send-side headers exist: relax the
+  `$message.payload#/…`-only correlation guard, capture the token from the headers
+  the send now sets, and match it on the receive side's `messageHeaders`. Closes
+  the one deliberate limitation left in the receive-step matching work (#864).
+
+Slices: (1) headers on send [the correctness-gap fix], (2) header-located
+correlation, (3) multi-message schema-matched selection. The multi-message
+*receive* path (consuming an unknown message via `MatchMessage`) is a separate
+concern, deferred.
+
 ### Phase 6 — Polish & productionization
 - `arazzo-generate` CLI + `GeneratorConfig` integration (build-time generation).
 - **Conformance suite asserts telemetry** (span tree shape, correlation,

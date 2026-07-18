@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.AsyncApi.CodeGeneration;
 
@@ -83,6 +84,10 @@ internal static class SendChannelStepEmitter
             throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no message.");
         }
 
+        // The message this step sends. A single-message operation binds it directly; multi-message
+        // selection by payload-schema validity is a later slice.
+        AsyncApiChannelMessageDescriptor selected = descriptor.Messages[0];
+
         if (requestBody is not { } body)
         {
             throw new NotSupportedException($"Channel step '{stepId}' has no requestBody payload to publish.");
@@ -133,18 +138,44 @@ internal static class SendChannelStepEmitter
         statements.AppendLine("ArazzoTelemetry.StepsExecuted.Add(1);");
         statements.Append("var ").Append(producerVariable).Append(" = new ").Append(producerClass).Append('(').Append(messageTransportVariable).AppendLine(");");
 
+        // Partition the step's parameters: `in: header` parameters populate the message headers; the rest
+        // supply the channel-address placeholders.
+        var addressArgs = new List<StepArgument>(arguments.Count);
+        var headerArgs = new List<StepArgument>();
+        foreach (StepArgument argument in arguments)
+        {
+            (string.Equals(argument.In, "header", StringComparison.Ordinal) ? headerArgs : addressArgs).Add(argument);
+        }
+
         // A parameterised channel: the generated producer method takes a string argument per channel
-        // parameter (in declaration order), resolved here from the step's parameters.
+        // parameter (in declaration order), resolved here from the step's non-header parameters.
         var channelArgs = new StringBuilder();
         foreach ((string _, string local) in ChannelAddressEmitter.ResolveParameters(
-            descriptor.ChannelParameters, arguments, fields, statements, $"{identifier}_Ch", stepOutputLocals, inputsVariable, inputAccessors))
+            descriptor.ChannelParameters, addressArgs, fields, statements, $"{identifier}_Ch", stepOutputLocals, inputsVariable, inputAccessors))
         {
             channelArgs.Append(", ").Append(local);
         }
 
+        // Message headers: assembled from the `in: header` parameters into the message's generated headers
+        // type and passed to the producer after the payload. The producer method requires the argument
+        // whenever the message declares a headers schema (HeadersTypeName), so it is emitted for every
+        // header-declaring message — an empty object when no header parameters are supplied. Setting
+        // headers on a message that declares none is an error.
+        string headersArgument = string.Empty;
+        if (selected.HeadersTypeName is { } headersType)
+        {
+            string headersElement = EmitHeadersObject(headerArgs, identifier, camel, workspaceVariable, stepOutputLocals, inputsVariable, inputAccessors, fields, statements);
+            headersArgument = ", " + RequestBindingEmitter.ConvertToSourceType(headersElement, headersType);
+        }
+        else if (headerArgs.Count > 0)
+        {
+            throw new NotSupportedException(
+                $"Channel step '{stepId}' sets message headers (parameters with in: header), but the message '{selected.MessageName}' on channel '{descriptor.ChannelAddress}' declares no headers schema.");
+        }
+
         if (!isRequestReply)
         {
-            if (descriptor.Messages[0].ProducerMethodName is not { } publishMethod)
+            if (selected.ProducerMethodName is not { } publishMethod)
             {
                 throw new NotSupportedException($"Channel step '{stepId}' targets a channel '{descriptor.ChannelAddress}' with no publishable message.");
             }
@@ -152,15 +183,15 @@ internal static class SendChannelStepEmitter
             // Re-wrap the JsonElement payload to the message's model type with From so the single
             // model → {Type}.Source implicit conversion applies at the producer call (C# will not chain
             // JsonElement → model → Source).
-            string publishPayload = RequestBindingEmitter.ConvertToSourceType(payloadLocal, descriptor.Messages[0].PayloadTypeName ?? "Corvus.Text.Json.JsonElement");
-            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(publishPayload).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+            string publishPayload = RequestBindingEmitter.ConvertToSourceType(payloadLocal, selected.PayloadTypeName ?? "Corvus.Text.Json.JsonElement");
+            statements.Append("await ").Append(producerVariable).Append('.').Append(publishMethod).Append('(').Append(publishPayload).Append(headersArgument).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
 
-            EmitCorrelationCapture(captureCorrelation, descriptor.Messages[0], camel, payloadLocal, statements);
+            EmitCorrelationCapture(captureCorrelation, selected, camel, payloadLocal, statements);
             return statements.ToString();
         }
 
         // ── request/reply: send and capture the reply as the step's outputs ──
-        if (descriptor.Messages[0].RequestReplyMethodName is not { } requestMethod)
+        if (selected.RequestReplyMethodName is not { } requestMethod)
         {
             throw new NotSupportedException($"Channel step '{stepId}' targets a request/reply channel '{descriptor.ChannelAddress}' with no request/reply method.");
         }
@@ -173,7 +204,7 @@ internal static class SendChannelStepEmitter
         string outputsElementLocal = EmitText.StepOutputsElementLocal(stepId);
 
         statements.Append(replyType).Append(' ').Append(replyLocal).Append(" = await ").Append(producerVariable).Append('.')
-            .Append(requestMethod).Append('(').Append(payloadLocal).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
+            .Append(requestMethod).Append('(').Append(payloadLocal).Append(headersArgument).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
         statements.Append("JsonElement ").Append(replyPayloadLocal).Append(" = JsonElement.From(").Append(replyLocal).AppendLine(");");
 
         if (successFlagLocal is { } successFlag)
@@ -254,6 +285,63 @@ internal static class SendChannelStepEmitter
         }
 
         return statements.ToString();
+    }
+
+    /// <summary>
+    /// Assembles the message headers object from a send step's <c>in: header</c> parameters: each header
+    /// value is resolved (any kind) to a <see cref="Corvus.Text.Json.JsonElement"/> and added under its
+    /// parameter name — the same param-to-object build a sub-workflow step uses for its inputs. Returns the
+    /// expression for the assembled headers element (an empty object when there are no header parameters).
+    /// </summary>
+    private static string EmitHeadersObject(
+        IReadOnlyList<StepArgument> headerArgs,
+        string identifier,
+        string camel,
+        string workspaceVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        StringBuilder fields,
+        StringBuilder statements)
+    {
+        if (headerArgs.Count == 0)
+        {
+            // A header-declaring message whose step sets no headers still needs the required argument;
+            // an empty object satisfies the signature (and any required headers fail the producer's
+            // pre-send validation, which is the correct feedback).
+            return JsonTemplateEmitter.EmitConstant("{}", fields, $"{identifier}_HeadersEmpty");
+        }
+
+        var valueLocals = new List<string>(headerArgs.Count);
+        foreach (StepArgument headerArg in headerArgs)
+        {
+            string local = $"{camel}Header{valueLocals.Count.ToString(CultureInfo.InvariantCulture)}";
+            string field = $"{identifier}_Header_{EmitText.SanitizeIdentifier(headerArg.Name)}";
+            RequestBindingEmitter.EmitValueAsElement(
+                fields, statements, headerArg.Kind, headerArg.Value, "context", stepOutputLocals, inputsVariable, inputAccessors, field, local);
+            valueLocals.Add(local);
+        }
+
+        string builderVariable = $"{camel}Headers";
+        statements.Append("Span<JsonElement> ").Append(builderVariable).Append("Values = [")
+            .Append(string.Join(", ", valueLocals)).AppendLine("];");
+        statements.Append("var ").Append(builderVariable).Append(" = JsonElement.CreateBuilder(").Append(workspaceVariable).AppendLine(",");
+        statements.Append("    (ReadOnlySpan<JsonElement>)").Append(builderVariable).AppendLine("Values,");
+        statements.AppendLine("    static (in ReadOnlySpan<JsonElement> values, ref JsonElement.ObjectBuilder builder) =>");
+        statements.AppendLine("    {");
+        for (int i = 0; i < headerArgs.Count; i++)
+        {
+            // Omit a header whose value did not resolve (a default/Undefined JsonElement); a None-valued
+            // property would trip the builder's assert. A resolved null is kept.
+            string index = i.ToString(CultureInfo.InvariantCulture);
+            statements.Append("        if (values[").Append(index).AppendLine("].IsNotUndefined())");
+            statements.AppendLine("        {");
+            statements.Append("            builder.AddProperty(").Append(EmitText.Quote(headerArgs[i].Name)).Append("u8, values[").Append(index).AppendLine("]);");
+            statements.AppendLine("        }");
+        }
+
+        statements.AppendLine("    });");
+        return $"{builderVariable}.RootElement";
     }
 
     // When the workflow correlates (some receive step declares a correlationId) and this send's message

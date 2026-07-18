@@ -379,7 +379,8 @@ public enum ArgumentValueKind
 /// <param name="Name">The operation parameter name to bind.</param>
 /// <param name="Value">The expression, interpolation template, or literal value text (see <paramref name="Kind"/>).</param>
 /// <param name="Kind">How the value is produced.</param>
-public readonly record struct StepArgument(string Name, string Value, ArgumentValueKind Kind = ArgumentValueKind.Expression);
+/// <param name="In">The parameter location (<c>path</c>/<c>query</c>/<c>header</c>/…), or <see langword="null"/> when unspecified. On an AsyncAPI send step, <c>header</c> parameters populate the message headers.</param>
+public readonly record struct StepArgument(string Name, string Value, ArgumentValueKind Kind = ArgumentValueKind.Expression, string? In = null);
 
 /// <summary>
 /// A step's request body (plan §3.1).

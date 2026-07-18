@@ -322,6 +322,179 @@ public partial class WorkflowExecutorEndToEndTests
         answer.GetInt32().ShouldBe(42);
     }
 
+    private const string ChannelSendHeadersRequestReplyDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "ask",
+              "steps": [
+                {
+                  "stepId": "notify",
+                  "channelPath": "notifications",
+                  "action": "send",
+                  "parameters": [
+                    { "name": "priority", "in": "header", "value": "high" },
+                    { "name": "trace", "in": "header", "value": "$inputs.trace" }
+                  ],
+                  "requestBody": { "payload": "$inputs.body" },
+                  "outputs": { "priority": "$message.payload#/sentHeaders/priority", "trace": "$message.payload#/sentHeaders/trace" }
+                }
+              ],
+              "outputs": { "priority": "$steps.notify.outputs.priority", "trace": "$steps.notify.outputs.trace" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_send_step_sets_message_headers_from_in_header_parameters()
+    {
+        // A message that declares typed headers: the generated producer's SendAndReceive method REQUIRES a
+        // headers argument after the payload. The step supplies headers via `in: header` parameters, which
+        // the engine assembles into the message's headers object and passes to the producer.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "notifications",
+            OperationAction.Send,
+            "notify",
+            "Acme.Rpc.HeaderNotifyProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("notify", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, "PublishNotifyAsync", "SendAndReceiveNotifyAsync")],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelSendHeadersRequestReplyDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "AskWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The headers object is assembled from the in:header parameters and passed to the producer.
+        source.ShouldContain(".SendAndReceiveNotifyAsync(");
+        source.ShouldContain("\"priority\"u8");
+        source.ShouldContain("\"trace\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AskWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"body":{"text":"hi"},"trace":"abc-123"}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        // The producer echoed the headers it received; the literal and the $inputs-sourced header both flowed.
+        outputs.TryGetProperty("priority"u8, out JsonElement priority).ShouldBeTrue();
+        priority.GetString().ShouldBe("high");
+        outputs.TryGetProperty("trace"u8, out JsonElement trace).ShouldBeTrue();
+        trace.GetString().ShouldBe("abc-123");
+    }
+
+    private const string ChannelSendHeadersFireAndForgetDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "publish",
+              "steps": [
+                {
+                  "stepId": "notify",
+                  "channelPath": "notifications",
+                  "action": "send",
+                  "parameters": [ { "name": "priority", "in": "header", "value": "$inputs.priority" } ],
+                  "requestBody": { "payload": "$inputs.body" }
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_fire_and_forget_send_sets_message_headers()
+    {
+        // A fire-and-forget publish for a header-declaring message: the generated Publish method requires a
+        // headers argument, so before this feature the send omitted it and the executor failed to compile.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "notifications",
+            OperationAction.Send,
+            "notify",
+            "Acme.Rpc.HeaderNotifyProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("notify", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement", null, "PublishNotifyAsync")],
+            ReplyPayloadTypeName: null);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelSendHeadersFireAndForgetDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "PublishWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        source.ShouldContain(".PublishNotifyAsync(");
+        source.ShouldContain("\"priority\"u8");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.PublishWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"body":{"text":"hi"},"priority":"low"}"""));
+
+        // The step publishes and completes (the producer requires the headers arg, which the step now supplies).
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        await pending;
+    }
+
+    [TestMethod]
+    public void Emit_throws_when_headers_are_set_on_a_message_with_no_headers_schema()
+    {
+        // The message declares no headers type (HeadersTypeName null); setting headers on it is an error.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "notifications",
+            OperationAction.Send,
+            "notify",
+            "Acme.Rpc.HeaderNotifyProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("notify", "Corvus.Text.Json.JsonElement", null, null, "PublishNotifyAsync")],
+            ReplyPayloadTypeName: null);
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        using var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelSendHeadersFireAndForgetDocument));
+        ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+
+        NotSupportedException ex = Should.Throw<NotSupportedException>(() => WorkflowExecutorEmitter.Emit(
+            workflow,
+            binder,
+            new WorkflowExecutorOptions("GeneratedWorkflows", "PublishWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement")));
+        ex.Message.ShouldContain("header");
+    }
+
     private const string ChannelReceiveReplyDocument = """
         {
           "arazzo": "1.1.0",

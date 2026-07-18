@@ -336,7 +336,8 @@ public static class WorkflowExecutorEmitter
                     }
 
                     ArgumentValueKind referencedKind = Classify(valueSource, out string referencedText);
-                    arguments.Add(new StepArgument(resolvedName.GetString()!, referencedText, referencedKind));
+                    string? referencedIn = resolved.TryGetProperty("in"u8, out JsonElement resolvedIn) && resolvedIn.ValueKind == JsonValueKind.String ? resolvedIn.GetString() : null;
+                    arguments.Add(new StepArgument(resolvedName.GetString()!, referencedText, referencedKind, referencedIn));
                     continue;
                 }
 
@@ -348,7 +349,11 @@ public static class WorkflowExecutorEmitter
 
                 string name = parameter.Name.GetString()!;
                 ArgumentValueKind kind = Classify(parameter.Value, out string text);
-                arguments.Add(new StepArgument(name, text, kind));
+
+                // The parameter location (path/query/header/…). On an AsyncAPI send step, `in: header`
+                // parameters populate the message headers rather than the channel address.
+                string? location = element.TryGetProperty("in"u8, out JsonElement inElement) && inElement.ValueKind == JsonValueKind.String ? inElement.GetString() : null;
+                arguments.Add(new StepArgument(name, text, kind, location));
             }
         }
 
