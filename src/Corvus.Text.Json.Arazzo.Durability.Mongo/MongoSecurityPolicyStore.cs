@@ -234,6 +234,43 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsForSubjectAsync(JsonString claimType, JsonString claimValue, CancellationToken cancellationToken)
+    {
+        // The subject reifies to a managed value only at the query-filter boundary (the leaf).
+        string type = (string)claimType;
+        string value = (string)claimValue;
+
+        // Native by-subject lookup: equality on the mirrored claimType/claimValue fields. Mongo string equality is
+        // case-sensitive (no collation set), matching the in-memory default, so a case-variant subject cannot
+        // over-match; a value-less binding has no claimValue field, so the equality excludes it. Ordered by the same
+        // (order, _id) as the full read; only this subject's documents are read, never the whole collection.
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.And(b.Eq("claimType", type), b.Eq("claimValue", value));
+
+        var list = new PooledDocumentList<SecurityBindingDocument>();
+        try
+        {
+            List<BsonDocument> documents = await this.bindings
+                .Find(filter)
+                .Sort(Builders<BsonDocument>.Sort.Ascending("order").Ascending("_id"))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (BsonDocument document in documents)
+            {
+                list.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(document["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            }
+
+            return list;
+        }
+        catch
+        {
+            list.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
     {
         int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;

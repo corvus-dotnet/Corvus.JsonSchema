@@ -366,6 +366,52 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsForSubjectAsync(JsonString claimType, JsonString claimValue, CancellationToken cancellationToken)
+    {
+        // The subject reifies to a managed value only at the ADO parameter boundary (the DB-param leaf).
+        string type = (string)claimType;
+        string value = (string)claimValue;
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Native by-subject lookup: equality on the extracted ClaimType/ClaimValue columns (a value-less binding has
+            // NULL ClaimValue, which never equals a value, so it is excluded — the by-subject contract), ordered by the
+            // same (SortOrder, Id) as the full read. Only this subject's rows are read, never the whole table.
+            using SqliteCommand select = this.connection.CreateCommand();
+            select.CommandText =
+                """
+                SELECT Document FROM SecurityBindings
+                WHERE ClaimType = @claimType AND ClaimValue = @claimValue
+                ORDER BY SortOrder, Id;
+                """;
+            select.Parameters.AddWithValue("@claimType", type);
+            select.Parameters.AddWithValue("@claimValue", value);
+
+            var list = new PooledDocumentList<SecurityBindingDocument>();
+            try
+            {
+                using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    list.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                }
+
+                return list;
+            }
+            catch
+            {
+                list.Dispose();
+                throw;
+            }
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, CancellationToken cancellationToken)
     {
         int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;

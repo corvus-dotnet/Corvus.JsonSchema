@@ -497,12 +497,28 @@ public abstract class SecurityPolicyStoreConformance
         {
         }
 
-        // Exactly the two role=operator bindings, in (order asc) order: r-b (5) before r-a (20).
+        // A case-variant subject: the match is ordinal (byte-wise), so role=Operator is a DISTINCT subject from
+        // role=operator — every backend's native query must compare case-sensitively (a binary collation), matching the
+        // in-memory default. Without this the SQL backends' default (often case-insensitive) collation would over-match.
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "Operator", VerbGrant.Rules("r-cap"), VerbGrant.None, VerbGrant.None, order: 30), "alice", default))
+        {
+        }
+
+        // Exactly the two role=operator bindings, in (order asc) order: r-b (5) before r-a (20) — the capitalised
+        // role=Operator (r-cap) is excluded.
         using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> type = AsJsonString("role"u8))
         using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> value = AsJsonString("operator"u8))
         using (PooledDocumentList<SecurityBindingDocument> subject = await store.ListBindingsForSubjectAsync(type.RootElement, value.RootElement, default))
         {
             subject.Select(b => RuleNames(b.Read).Single()).ShouldBe(["r-b", "r-a"]);
+        }
+
+        // The capitalised subject resolves only to its own binding (ordinal case-sensitivity, both directions).
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> type = AsJsonString("role"u8))
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> value = AsJsonString("Operator"u8))
+        using (PooledDocumentList<SecurityBindingDocument> caps = await store.ListBindingsForSubjectAsync(type.RootElement, value.RootElement, default))
+        {
+            caps.Select(b => RuleNames(b.Read).Single()).ShouldBe(["r-cap"]);
         }
 
         // A subject that holds no bindings (the type matches, the value does not) → empty.

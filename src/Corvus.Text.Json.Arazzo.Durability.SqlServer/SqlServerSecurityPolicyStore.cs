@@ -276,6 +276,48 @@ public sealed class SqlServerSecurityPolicyStore : ISecurityPolicyStore, IAsyncD
     }
 
     /// <inheritdoc/>
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsForSubjectAsync(JsonString claimType, JsonString claimValue, CancellationToken cancellationToken)
+    {
+        // The subject reifies to a managed value only at the ADO parameter boundary (the DB-param leaf).
+        string type = (string)claimType;
+        string value = (string)claimValue;
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        // Native by-subject lookup: ordinal equality on the extracted ClaimType/ClaimValue columns. COLLATE
+        // Latin1_General_BIN2 forces the byte-wise comparison the in-memory default uses (the database's default
+        // collation is typically case-insensitive), so a case-variant subject cannot over-match. A value-less binding
+        // has NULL ClaimValue, which never equals a value, so it is excluded. Ordered by the same (SortOrder, Id) as the
+        // full read; only this subject's rows are read.
+        await using SqlCommand select = connection.CreateCommand();
+        select.CommandText =
+            """
+            SELECT Document FROM SecurityBindings
+            WHERE ClaimType COLLATE Latin1_General_BIN2 = @claimType AND ClaimValue COLLATE Latin1_General_BIN2 = @claimValue
+            ORDER BY SortOrder, Id;
+            """;
+        select.Parameters.AddWithValue("@claimType", type);
+        select.Parameters.AddWithValue("@claimValue", value);
+
+        var list = new PooledDocumentList<SecurityBindingDocument>();
+        try
+        {
+            await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                list.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+            }
+
+            return list;
+        }
+        catch
+        {
+            list.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
     {
         int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;

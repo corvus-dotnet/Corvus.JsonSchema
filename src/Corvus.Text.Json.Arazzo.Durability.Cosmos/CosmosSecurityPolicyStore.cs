@@ -413,6 +413,39 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsForSubjectAsync(global::Corvus.Text.Json.Arazzo.Durability.JsonString claimType, global::Corvus.Text.Json.Arazzo.Durability.JsonString claimValue, CancellationToken cancellationToken)
+    {
+        // The subject reifies to a managed value only at the query-parameter boundary (the leaf).
+        string type = (string)claimType;
+        string value = (string)claimValue;
+
+        // Native by-subject lookup: equality on c.doc.claimType/claimValue in place. Cosmos string `=` is case-sensitive
+        // (ordinal), matching the in-memory default, so a case-variant subject cannot over-match; a value-less binding
+        // has no claimValue, so `= @claimValue` excludes it. Ordered by the same (order, id) as the full read (order is
+        // mirrored top-level); only this subject's rows are read, never the whole partition.
+        var definition = new QueryDefinition("SELECT c.doc FROM c WHERE c.pk = @pk AND c.doc.claimType = @claimType AND c.doc.claimValue = @claimValue ORDER BY c[\"order\"], c.id")
+            .WithParameter("@pk", BindingPartition)
+            .WithParameter("@claimType", type)
+            .WithParameter("@claimValue", value);
+
+        var list = new PooledDocumentList<SecurityBindingDocument>();
+        try
+        {
+            await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, BindingPartition, cancellationToken).ConfigureAwait(false))
+            {
+                list.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc.Span));
+            }
+
+            return list;
+        }
+        catch
+        {
+            list.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, CancellationToken cancellationToken)
     {
         int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
