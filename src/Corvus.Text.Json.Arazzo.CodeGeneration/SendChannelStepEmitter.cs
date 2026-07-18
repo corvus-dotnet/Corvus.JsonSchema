@@ -19,8 +19,10 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// step calls it rather than the transport directly — mirroring how operation steps call the generated
 /// OpenAPI client. When the send operation declares a <c>reply</c> (request/reply), the step instead
 /// calls the producer's <c>SendAndReceive…Async</c> method and treats the returned reply as the step's
-/// outputs (so a step's <c>$message.payload</c> outputs/criteria resolve against the reply). Parameterised
-/// channel addresses, multi-message operations, headers, and non-expression payloads are later phases.
+/// outputs (so a step's <c>$message.payload</c> outputs/criteria resolve against the reply); with a
+/// <c>successFlagLocal</c> the reply also gates the step's success in the control-flow loop,
+/// so a request/reply send carries <c>onSuccess</c>/<c>onFailure</c> actions like any other step.
+/// Multi-message operations and message headers on a send step are later phases.
 /// </remarks>
 internal static class SendChannelStepEmitter
 {
@@ -41,6 +43,14 @@ internal static class SendChannelStepEmitter
     /// <param name="fields">Accumulates <c>static readonly</c> field declarations.</param>
     /// <param name="auxiliaryTypes">Accumulates sibling types (e.g. ahead-of-time JSONPath classes).</param>
     /// <param name="namespaceName">The executor's namespace (for generated JSONPath sibling types).</param>
+    /// <param name="cancellationTokenExpression">The in-scope cancellation-token expression.</param>
+    /// <param name="captureCorrelation">Whether to register a correlation token published in the payload.</param>
+    /// <param name="successFlagLocal">
+    /// When set (control-flow mode), the request/reply reply gates this local instead of throwing on a
+    /// failed criterion, and the outputs local (hoisted by the caller) is assigned only on success — so
+    /// the step's onSuccess/onFailure actions dispatch on the reply. When <see langword="null"/>
+    /// (straight-line), a failed criterion throws and the outputs local is declared here.
+    /// </param>
     /// <returns>The emitted in-method statements.</returns>
     public static string Emit(
         string stepId,
@@ -58,7 +68,8 @@ internal static class SendChannelStepEmitter
         StringBuilder auxiliaryTypes,
         string namespaceName,
         string cancellationTokenExpression = "cancellationToken",
-        bool captureCorrelation = false)
+        bool captureCorrelation = false,
+        string? successFlagLocal = null)
     {
         AsyncApiChannelDescriptor descriptor = channel.Channel;
 
@@ -165,6 +176,48 @@ internal static class SendChannelStepEmitter
             .Append(requestMethod).Append('(').Append(payloadLocal).Append(channelArgs).Append(", ").Append(cancellationTokenExpression).AppendLine(").ConfigureAwait(false);");
         statements.Append("JsonElement ").Append(replyPayloadLocal).Append(" = JsonElement.From(").Append(replyLocal).AppendLine(");");
 
+        if (successFlagLocal is { } successFlag)
+        {
+            // ── control-flow request/reply: the reply gates the step's success flag; outputs (hoisted by
+            // the caller) project only on success, so onSuccess/onFailure dispatch on the reply ──
+            var gateOps = new StringBuilder();
+            string gateExpression = successCriteria.Count == 0
+                ? "true"
+                : StepBodyEmitter.EmitCriteriaExpression(
+                    successCriteria, fields, gateOps, auxiliaryTypes, $"{identifier}Reply", "context",
+                    responseVar: string.Empty, new CriterionSources(replyPayloadLocal), inputsVariable, stepOutputLocals, inputAccessors, null, default, namespaceName);
+
+            if (ReceiveChannelStepEmitter.UsesContext(gateOps, gateExpression))
+            {
+                statements.Append("context.SetMessagePayload(").Append(replyPayloadLocal).AppendLine(");");
+            }
+
+            statements.Append(gateOps);
+            statements.Append(successFlag).Append(" = (").Append(gateExpression).AppendLine(");");
+            statements.Append("if (").Append(successFlag).AppendLine(")");
+            statements.AppendLine("{");
+
+            var outputsBuilder = new StringBuilder();
+            if (outputs.Count > 0)
+            {
+                OutputExtractionCode outputCode = OutputExtractionEmitter.Emit(
+                    stepId, outputs, workspaceVariable, "context", stepOutputLocals, inputsVariable, inputAccessors, responseBodyLocal: null, messagePayloadLocal: replyPayloadLocal);
+                fields.Append(outputCode.Fields);
+                outputsBuilder.Append(outputCode.Statements);
+            }
+            else
+            {
+                // No declared outputs: the whole reply becomes the step's outputs.
+                outputsBuilder.Append(outputsElementLocal).Append(" = ").Append(replyPayloadLocal)
+                    .Append(".CloneAsBuilder(").Append(workspaceVariable).AppendLine(").RootElement;");
+            }
+
+            WorkflowExecutorEmitter.AppendIndented(statements, outputsBuilder.ToString(), 4);
+            statements.AppendLine("}");
+            return statements.ToString();
+        }
+
+        // ── straight-line request/reply: a failed criterion throws, and the outputs local is declared here ──
         if (successCriteria.Count > 0)
         {
             var gateOps = new StringBuilder();

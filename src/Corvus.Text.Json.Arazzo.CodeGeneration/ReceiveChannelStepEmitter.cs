@@ -235,9 +235,10 @@ internal static class ReceiveChannelStepEmitter
     /// the reply synchronously while the request, the workspace, and these constants are all live.
     /// </para>
     /// <para>
-    /// Interpolated replies and composite replies that embed runtime expressions (building a reply object
-    /// from request fields) are a later phase — they need the template-substitution engine the request
-    /// side does not yet share for the message-payload source.
+    /// An interpolated reply, or a composite reply that embeds runtime expressions (building a reply object
+    /// from request fields), is assembled through the shared template-substitution engine
+    /// (<see cref="JsonTemplateEmitter"/>) with the message payload as an additional value source, so a
+    /// responder can compose its reply from <c>$message.payload#/…</c>, <c>$inputs</c>, and prior outputs.
     /// </para>
     /// </remarks>
     internal static string EmitReplyResolution(

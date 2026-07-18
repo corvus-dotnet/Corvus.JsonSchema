@@ -493,6 +493,96 @@ public partial class WorkflowExecutorEndToEndTests
         vk.GetInt32().ShouldBe(7);
     }
 
+    private const string ChannelRequestReplyControlFlowDocument = """
+        {
+          "arazzo": "1.1.0",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "events", "url": "./events.yaml", "type": "asyncapi" } ],
+          "workflows": [
+            {
+              "workflowId": "ask",
+              "steps": [
+                {
+                  "stepId": "query",
+                  "channelPath": "queries",
+                  "action": "send",
+                  "requestBody": { "payload": "$inputs.q" },
+                  "successCriteria": [ { "condition": "$message.payload#/status == 'ok'" } ],
+                  "onSuccess": [ { "name": "jump", "type": "goto", "stepId": "finish" } ]
+                },
+                {
+                  "stepId": "middle",
+                  "channelPath": "queries",
+                  "action": "send",
+                  "requestBody": { "payload": "$inputs.q" },
+                  "successCriteria": [ { "condition": "$message.payload#/answer == 99" } ]
+                },
+                {
+                  "stepId": "finish",
+                  "channelPath": "queries",
+                  "action": "send",
+                  "requestBody": { "payload": "$inputs.q" },
+                  "outputs": { "answer": "$message.payload#/answer" }
+                }
+              ],
+              "outputs": { "answer": "$steps.finish.outputs.answer" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public async Task Generated_request_reply_send_dispatches_an_onSuccess_goto()
+    {
+        // A request/reply send with an onSuccess action is promoted into the control-flow loop: the reply
+        // gates the step's success, and the goto transfers to a later step. 'middle' would fail its own
+        // success criteria (answer != 99) if reached, so a run that completes proves the goto skipped it.
+        var descriptor = new AsyncApiChannelDescriptor(
+            "queries",
+            OperationAction.Send,
+            "query",
+            "Acme.Rpc.QueryProducer",
+            IsDynamicAddress: false,
+            ChannelParameters: [],
+            Messages: [new AsyncApiChannelMessageDescriptor("query", "Corvus.Text.Json.JsonElement", null, null, "PublishQueryAsync", "SendAndReceiveQueryAsync")],
+            ReplyPayloadTypeName: "Corvus.Text.Json.JsonElement");
+
+        var binder = new WorkflowOperationBinder([], [new SourceDescriptionChannels("events", [descriptor])]);
+
+        string source;
+        using (var doc = ParsedJsonDocument<ArazzoDocument>.Parse(Encoding.UTF8.GetBytes(ChannelRequestReplyControlFlowDocument)))
+        {
+            ArazzoDocument.WorkflowObject workflow = doc.RootElement.Workflows.EnumerateArray().First();
+            source = WorkflowExecutorEmitter.Emit(
+                workflow,
+                binder,
+                new WorkflowExecutorOptions("GeneratedWorkflows", "AskWorkflow", "Corvus.Text.Json.JsonElement", "Corvus.Text.Json.JsonElement"));
+        }
+
+        // The request/reply send runs inside the control-flow loop, gating its success from the reply.
+        source.ShouldContain("while (true)");
+        source.ShouldContain(".SendAndReceiveQueryAsync(");
+        source.ShouldContain("querySuccess = (");
+
+        Assembly assembly = CompileInMemory(source);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.AskWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var apiTransport = new MockApiTransport();
+        await using var messageTransport = new InMemoryMessageTransport();
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"q":{"text":"meaning"}}"""));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(
+            null,
+            [apiTransport, messageTransport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        // 'query' succeeded (status == 'ok') and jumped to 'finish', skipping 'middle'; finish's reply
+        // projected the answer to the workflow output.
+        outputs.TryGetProperty("answer"u8, out JsonElement answer).ShouldBeTrue();
+        answer.GetInt32().ShouldBe(42);
+    }
+
     private const string ChannelReceiveTemplateReplyDocument = """
         {
           "arazzo": "1.1.0",

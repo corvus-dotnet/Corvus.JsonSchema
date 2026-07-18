@@ -105,12 +105,9 @@ public static class WorkflowExecutorEmitter
                     throw new NotSupportedException($"Channel step '{stepId}' has success criteria on a fire-and-forget send step; only receive and request/reply channel steps support success criteria (against $message.*).");
                 }
 
-                if (isRequestReply && (onSuccess.Count > 0 || onFailure.Count > 0))
-                {
-                    throw new NotSupportedException($"Channel step '{stepId}' is a request/reply send with onSuccess/onFailure actions; control flow on a request/reply step is a later phase.");
-                }
-
-                // onSuccess/onFailure actions promote the channel step into the control-flow loop.
+                // onSuccess/onFailure actions promote the channel step into the control-flow loop. A
+                // request/reply send is gated by its reply there (its success criteria set the step's
+                // success flag rather than throwing), so its actions dispatch like any other step's.
                 usesControlFlow |= onSuccess.Count > 0 || onFailure.Count > 0;
                 hasChannelStep = true;
 

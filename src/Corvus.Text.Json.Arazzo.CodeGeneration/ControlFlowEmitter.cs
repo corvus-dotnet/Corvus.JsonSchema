@@ -709,13 +709,19 @@ internal static class ControlFlowEmitter
         }
         else
         {
-            // Send: publish the payload, then the step succeeds unconditionally. (Request/reply with
-            // actions is rejected up front, so this is always a fire-and-forget publish.)
+            // Send: a fire-and-forget publish succeeds unconditionally; a request/reply send captures the
+            // reply and lets its success criteria set the step's success flag (so its onSuccess/onFailure
+            // actions dispatch on the reply), projecting the reply as the step's outputs on success.
+            bool isRequestReply = descriptor.ReplyPayloadTypeName is not null;
             string send = SendChannelStepEmitter.Emit(
                 step.StepId, channel, step.RequestBody, step.Outputs, step.SuccessCriteria, step.Arguments, "messageTransport", "workspace",
-                stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, channelToken, captureCorrelation: usesCorrelation);
+                stepOutputLocals, "inputs", options.InputAccessors, fields, auxiliaryTypes, options.Namespace, channelToken,
+                captureCorrelation: usesCorrelation, successFlagLocal: isRequestReply ? $"{camel}Success" : null);
             WorkflowExecutorEmitter.AppendIndented(work, send, 4);
-            work.Append("    ").Append(camel).AppendLine("Success = true;");
+            if (!isRequestReply)
+            {
+                work.Append("    ").Append(camel).AppendLine("Success = true;");
+            }
         }
 
         if (timed)
@@ -954,10 +960,12 @@ internal static class ControlFlowEmitter
         }
     }
 
+    // A receive step, and a request/reply send (which captures a reply), always project outputs (the whole
+    // message/reply when none are declared), so their outputs local must be hoisted across the loop.
     private static bool ProducesOutputs(in ControlFlowStep step)
         => step.SubWorkflowId is not null
             || step.Outputs.Count > 0
-            || (step.Channel is { } channel && channel.Channel.Action == OperationAction.Receive);
+            || (step.Channel is { } channel && (channel.Channel.Action == OperationAction.Receive || channel.Channel.ReplyPayloadTypeName is not null));
 
     /// <summary>
     /// The hoisted local that exposes a sub-workflow step's bound argument value for
