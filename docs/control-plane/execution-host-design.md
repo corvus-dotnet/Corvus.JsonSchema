@@ -1459,9 +1459,16 @@ grant): the request records that it was satisfied by an *eligibility assignment*
 `AccessRequestEligibilityNote` = note + eligibility window), symmetric with approve/deny/withdraw/revoke — writing
 the `eligibleOnly` binding (subject + the per-workflow reach rule + scopes capped to the run-access allowlist + an
 optional eligibility window); the resolver ignores it, so it confers nothing active and no in-process refresh is
-needed. (c) **Self-elevation reads stored eligibility** in `SubmitAsync` (eligibility = claims ∪ stored): a cold
-store scan matches an `eligibleOnly` binding on subject + the workflow rule + scope-cover + not-lapsed, auto-approving
-into a fresh active grant via the existing grant path (a by-claim store query is a later refinement). (d) The
+needed. (c) **Self-elevation resolves eligibility in `SubmitAsync`** (eligibility = claims ∪ stored): the deployment's
+self-elevation predicate over the requester's principal is resolved in the service (not handed in by the caller) and
+unioned with a **by-subject store query** that returns only the requester's bindings and matches an `eligibleOnly` one
+on the workflow rule + scope-cover + not-lapsed, auto-approving into a fresh active grant via the existing grant path.
+The by-subject query is the reverse index (§16.5.4): a native equality lookup on the claim columns where the backend
+can filter server-side (Sqlite, Postgres, MySql, SqlServer, Cosmos, Mongo), and a string-free in-memory filter over the
+full read where it cannot (Redis, NATS, Azure Table Storage, in-memory) — retiring the earlier cold scan. The
+workflow-rule, scope-cover, and not-lapsed filters run in-service on the (few) narrowed rows, because the reach rule
+lives inside the binding document rather than a queryable column; the claim columns carry the whole selectivity a
+requester's small binding set needs. (d) The
 **per-activation cap is the deployment max TTL** — the eligibility window bounds the *eligibility*; each *activation*
 is independently capped at the max TTL (no new binding field). (e) **Revoke accepts an `Eligible` request**, deleting
 the assignment so future activations are denied. The "make eligible *and* activate once now" convenience is deferred
@@ -1506,8 +1513,11 @@ eligible-for-All`) remains step 6.
 > `catalog:read` to read-reach over the workflow's rows — so a reviewer can see one workflow without operating or
 > administering it. The §17.1 reach-scoping (the observed-identity store, and the `/identity/grantees` search, are now
 > reach-filtered like every other list surface) and §17.2 honest `complete` are **implemented**, as is §16.5.5 ambient
-> identity dimensions. NOT YET BUILT (design-intent below): the by-subject / by-workflow entitlement indexes
-> (self-elevation still cold-scans, §16.5.3). The **resolved-grantee UI** shipped: `<arazzo-grantee-picker>` drives
+> identity dimensions. The **by-subject entitlement index** is now built (§16.5.3): self-elevation resolves eligibility
+> in the service and queries the requester's bindings by subject — a native claim-column lookup where the backend can
+> filter server-side (Sqlite/Postgres/MySql/SqlServer/Cosmos/Mongo), a string-free in-memory filter elsewhere — instead
+> of cold-scanning the whole binding store (the workflow-rule/scope filters run in-service on the narrowed set, as the
+> reach rule lives in the binding document, not a column). The **resolved-grantee UI** shipped: `<arazzo-grantee-picker>` drives
 > `GET /identity/grantees` across the admin, bindings, credential-usage, overview, and catalog surfaces (retiring the
 > hand-assembled `{dimension, value}` tuples). Multi-tag **person** resolution also landed — the directory adapters
 > resolve a person to their full membership-expanded identity, and the grantee picker pins that full resolved identity.
@@ -1549,8 +1559,10 @@ resolve it to the **exact identity** — never assemble tag tuples by hand, neve
   light up only where the deployment provides a policy + directory.
 - **Indexed-store invariant.** Every Arazzo-owned lookup here is an **indexed query pushed down to the store**, never an
   in-memory scan — the same discipline as the keyset-paged stores: the observed-identity typeahead (prefix-indexed on
-  subject), the entitlement/grant lookups (*"who may view/operate/administer this workflow"*, *"what does subject X
-  hold"* — by-subject and by-workflow-rule indexes, retiring the §16.5.3 "cold store scan" note for self-elevation), and
+  subject), the entitlement/grant lookups (*"what does subject X hold"* — the by-subject binding query, a native
+  claim-column lookup where the backend can filter server-side and a string-free in-memory filter elsewhere, retiring
+  the §16.5.3 "cold store scan" for self-elevation; the by-workflow-rule filter runs in-service on the subject-narrowed
+  set, as the reach rule is stored in the binding document, not a queryable column), and
   the reach-filtered catalog/run listings (the reach predicate pushed to the backend, like the credential keyset pages).
   Directory search is the external system's responsibility; Arazzo's own reads stay indexed and paged across all backends.
 
@@ -1561,8 +1573,9 @@ one resolved identity — **operate** (`runs:read`/`runs:write`, reach-scoped �
 *built*), and **view** (`catalog:read`, reach-scoped — *grantable server-side*, §17.3; the UI picker that drives it is
 design-intent) — so granting sight or operation of a workflow never implies administering it. Arazzo-owned
 identity/entitlement/reach queries are to be indexed and store-pushed-down; as built, the observed-identity typeahead and
-the `/identity/grantees` search are reach-filtered. The directory adapters and backend stores **ship**; the
-by-subject/by-workflow entitlement indexes and the resolved-grantee UI remain design-intent.
+the `/identity/grantees` search are reach-filtered, and the by-subject binding query (self-elevation eligibility) is
+pushed down natively where the backend supports it. The directory adapters and backend stores **ship**; the
+resolved-grantee UI remains design-intent.
 
 ### 16.5.5 Ambient identity dimensions — deriving a `sys:` tag from request context (not the IdP)
 
