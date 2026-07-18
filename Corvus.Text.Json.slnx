@@ -146,6 +146,7 @@
   </Folder>
   <Folder Name="/v5/OpenApi/">
     <Project Path="src/Corvus.Text.Json.OpenApi/Corvus.Text.Json.OpenApi.csproj" />
+    <Project Path="src/Corvus.Text.Json.OpenApi.Polly/Corvus.Text.Json.OpenApi.Polly.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi30/Corvus.Text.Json.OpenApi30.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi31/Corvus.Text.Json.OpenApi31.csproj" />
     <Project Path="src/Corvus.Text.Json.OpenApi.CodeGeneration/Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />

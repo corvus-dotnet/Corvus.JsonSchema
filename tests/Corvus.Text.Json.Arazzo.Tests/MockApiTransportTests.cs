@@ -7,7 +7,10 @@ using System.Diagnostics;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Testing;
 using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi.Polly;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using global::Polly;
+using global::Polly.Retry;
 using Shouldly;
 
 namespace Corvus.Text.Json.Arazzo.Tests;
@@ -102,6 +105,29 @@ public class MockApiTransportTests
         activity.GetTagItem("http.response.status_code").ShouldBe(200);
     }
 
+    [TestMethod]
+    public async Task Resilient_transport_retries_a_transient_failure()
+    {
+        // ResilientApiTransport wraps each operation in a Polly pipeline; a retry strategy recovers a
+        // transient failure without the caller (or the workflow step) knowing.
+        var mock = new MockApiTransport();
+        mock.SetResponse(OperationMethod.Get, "/pets/{id}", 200, """{"id":"42"}""");
+        var flaky = new FlakyTransport(mock);
+
+        ResiliencePipeline pipeline = new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions { MaxRetryAttempts = 2, Delay = TimeSpan.Zero })
+            .Build();
+        await using var transport = new ResilientApiTransport(flaky, pipeline);
+
+        await using (FakeResponse response = await transport.SendAsync<FakeRequest, FakeResponse>(new FakeRequest("42")))
+        {
+            response.StatusCode.ShouldBe(200);
+        }
+
+        // The first attempt threw and the pipeline retried, so the inner transport saw two calls.
+        flaky.Calls.ShouldBe(2);
+    }
+
     private static ActivityListener CreateActivityListener(List<Activity> activities)
     {
         var listener = new ActivityListener
@@ -186,5 +212,42 @@ public class MockApiTransportTests
         }
 
         public ValueTask DisposeAsync() => default;
+    }
+
+    /// <summary>An IApiTransport that throws on its first call, then delegates — to exercise resilience retry.</summary>
+    private sealed class FlakyTransport(IApiTransport inner) : IApiTransport
+    {
+        public int Calls { get; private set; }
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+        {
+            this.Calls++;
+            if (this.Calls == 1)
+            {
+                throw new InvalidOperationException("transient");
+            }
+
+            return inner.SendAsync<TRequest, TResponse>(in request, cancellationToken);
+        }
+
+        public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(in TRequest request, in TBody body, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TBody : struct, Corvus.Text.Json.Internal.IJsonElement<TBody>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw new NotSupportedException();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Stream body, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw new NotSupportedException();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Func<Stream, CancellationToken, ValueTask> bodyWriter, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw new NotSupportedException();
+
+        public ValueTask DisposeAsync() => inner.DisposeAsync();
     }
 }
