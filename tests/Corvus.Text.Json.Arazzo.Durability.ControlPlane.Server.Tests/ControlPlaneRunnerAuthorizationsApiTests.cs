@@ -112,6 +112,92 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
+    public async Task Registering_a_runner_records_it_pending_and_binds_the_machine_principal()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // The runner authenticates as a machine principal (the harness maps the caller's identity 'svc-runner-a' to the token
+        // subject → principal) and registers itself. The authorization enters Pending and binds to the trusted principal
+        // (design §16.4), not the self-asserted runnerId; createdBy is the principal too.
+        using Stj.JsonDocument registered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a"));
+        registered.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+        registered.RootElement.GetProperty("runnerId").GetString().ShouldBe("runner-1");
+        registered.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
+        registered.RootElement.GetProperty("createdBy").GetString().ShouldBe("svc-runner-a");
+
+        // The liveness registration is recorded in the registry, keyed on the runnerId, serving the environment.
+        IReadOnlyList<RunnerRegistration> runners = await host.Registry.ListAsync(default);
+        RunnerRegistration record = runners.Single();
+        ((string)record.RunnerId).ShouldBe("runner-1");
+        ((string)record.Environment).ShouldBe("production");
+    }
+
+    [TestMethod]
+    public async Task Re_registering_with_the_same_principal_keeps_the_authorization()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // An administrator authorizes the runner; a subsequent re-registration by the same principal must not reset it.
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using Stj.JsonDocument reregistered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a"));
+        reregistered.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+        reregistered.RootElement.GetProperty("principal").GetString().ShouldBe("svc-runner-a");
+    }
+
+    [TestMethod]
+    public async Task Registering_a_runnerId_owned_by_a_different_principal_is_conflict()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // A different authenticated machine cannot take over a runnerId that a principal already owns (§16.4) → 409.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-1"), "svc-runner-b")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // The original binding is untouched.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization>? bound = await runnerAuth.GetAsync("production", "runner-1", default);
+        bound!.RootElement.PrincipalEquals("svc-runner-a").ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Registering_for_an_unknown_environment_is_not_found()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/nowhere/runners", RegisterBody("runner-1"), "svc-runner-a")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task A_pre_authorized_runner_registering_stays_authorized_without_binding_a_principal()
+    {
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await using Scoped host = await StartAsync(runnerAuth);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // The administrator pre-authorizes the runnerId by name (no principal bound yet).
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-expected/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // The runner registers presenting a principal: it is accepted and the row stays Authorized, but the pre-authorized
+        // row is never bound — its trust remains the administrator's name-based allow-listing (the documented §16.4 residual).
+        using Stj.JsonDocument registered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/runners", RegisterBody("runner-expected"), "svc-runner-a"));
+        registered.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+        registered.RootElement.TryGetProperty("principal", out _).ShouldBeFalse();
+    }
+
+    // A minimal RunnerRegistrationRequest body: the runner's self-description (the server stamps environment/reachTags/lastSeenAt).
+    private static string RegisterBody(string runnerId)
+        => $$"""{"runnerId":"{{runnerId}}","startedAt":"2026-06-01T09:00:00Z","maxConcurrency":4,"transports":[],"hostedVersions":[]}""";
+
+    [TestMethod]
     public async Task Revoking_an_authorized_runner_as_an_administrator_makes_it_revoked()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
@@ -415,16 +501,19 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         builder.Services.AddArazzoControlPlaneAuthorization();
         builder.Services.AddHttpContextAccessor();
 
+        var registry = new InMemoryRunnerRegistry();
+
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
         // Pass the workflow state store so the runner-authorization handler picks up its lease-administration capability
         // (the §5.5 revocation fence): revoking a runner expires the leases it holds. The store is exposed to the test so a
-        // fence assertion can check that a revoked runner's lease is reclaimable.
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store);
+        // fence assertion can check that a revoked runner's lease is reclaimable. The runner registry is likewise exposed so
+        // the registration tests can confirm a registered runner's liveness record (design §16.4).
+        app.MapArazzoControlPlane(management, catalog, registry, ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store);
         await app.StartAsync();
 
-        return new Scoped(app, app.GetTestClient(), store);
+        return new Scoped(app, app.GetTestClient(), store, registry);
     }
 
     // Maps X-Tenant to both the deployment governance identity (sys:tenant=<t>) and the requester subject (sub=<t>), with
@@ -440,9 +529,11 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         }
     }
 
-    private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore stateStore) : IAsyncDisposable
+    private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore stateStore, InMemoryRunnerRegistry registry) : IAsyncDisposable
     {
         public InMemoryWorkflowStateStore StateStore => stateStore;
+
+        public InMemoryRunnerRegistry Registry => registry;
 
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string tenant)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), tenant);
@@ -485,10 +576,11 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
 
             // The presence of X-Scopes authenticates; the caller is granted the full capability-scope set the harness's
             // scoped endpoints require (creating an environment and authorize/revoke need environments:write; the runner
-            // roster list needs environments:read) — the authorization actually under test is the per-tenant environment
-            // administrator gate, not which scope is held.
+            // roster list needs environments:read; registering a runner needs runners:register) — the authorization actually
+            // under test is the per-tenant environment administrator gate (or, for registration, the machine principal), not
+            // which scope is held.
             var identity = new ClaimsIdentity(SchemeName);
-            identity.AddClaim(new Claim("scope", "environments:read environments:write availability:read availability:write credentials:write"));
+            identity.AddClaim(new Claim("scope", "environments:read environments:write availability:read availability:write credentials:write runners:register"));
             if (this.Request.Headers.TryGetValue(TenantHeader, out Microsoft.Extensions.Primitives.StringValues tenant))
             {
                 identity.AddClaim(new Claim("tenant", tenant.ToString()));

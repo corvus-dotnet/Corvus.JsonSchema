@@ -3194,6 +3194,29 @@
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
+      },
+      "post": {
+        "operationId": "registerRunner",
+        "security": [
+          { "oauth2": ["runners:register"] },
+          { "openIdConnect": ["runners:register"] },
+          { "mtls": [] }
+        ],
+        "tags": ["runnerAuthorizations"],
+        "summary": "Register a runner to serve an environment (authenticated machine principal)",
+        "description": "Registers the calling runner to serve this environment (design §5.5/§16.4). The runner authenticates as a machine principal (client-credentials, private-key-JWT, or mTLS) and presents its self-description; the control plane derives the trusted principal from the token and binds the runner's authorization to it, rather than to the self-asserted runnerId. The registration is recorded in the runner registry (with the runner's reach tags stamped from the environment's managementTags, never trusted from the runner) and the authorization enters Pending — the runner is dispatchable only once an administrator of the environment authorizes it (see authorizeRunner). Idempotent: a runner re-registering with its own principal keeps its existing authorization status. A registration presenting a principal that differs from the one already bound to this runnerId is refused (409). 404 if the environment does not exist.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RunnerRegistrationRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "The runner's authorization to serve the environment (Pending until an administrator authorizes it).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentRunnerAuthorizationView" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
       }
     },
     "/environments/{name}/runners/count": {
@@ -4467,7 +4490,8 @@
               "workspace:read": "List and read designer working copies.",
               "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
-              "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
+              "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated).",
+              "runners:register": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4); the runner enters Pending until an administrator authorizes it."
             }
           },
           "clientCredentials": {
@@ -4492,7 +4516,8 @@
               "workspace:read": "List and read designer working copies.",
               "workspace:write": "Create, save, and delete designer working copies.",
               "availability:read": "List where workflow versions are available across environments (reach-scoped).",
-              "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
+              "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated).",
+              "runners:register": "Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4); the runner enters Pending until an administrator authorizes it."
             }
           }
         }
@@ -5487,6 +5512,20 @@
         },
         "required": ["runnerId", "environment", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"]
       },
+      "RunnerRegistrationRequest": {
+        "type": "object",
+        "description": "A runner's self-description when it registers to serve a deployment environment (design §5.5/§16.4). The runner presents only what it knows about itself; the control plane stamps the rest: the environment (from the path), the runner's reach tags (from the environment's managementTags — never trusted from the runner), the last-seen instant (now), and the trusted machine principal (from the authenticated token). The registration enters Pending and is dispatchable only once an administrator of the environment authorizes it.",
+        "properties": {
+          "runnerId": { "type": "string", "description": "The stable identifier of the runner process. Self-chosen; the trust anchor is the authenticated machine principal, not this id — a registration presenting a principal that differs from the one already bound to this runnerId is refused (409)." },
+          "address": { "type": "string", "description": "An optional address (for example a base URI) at which the runner can be reached." },
+          "startedAt": { "type": "string", "format": "date-time", "description": "When the runner process started." },
+          "maxConcurrency": { "type": "integer", "format": "int32", "description": "The maximum number of runs the runner will execute concurrently." },
+          "transports": { "type": "array", "items": { "type": "string" }, "description": "The transport identifiers the runner supports." },
+          "hostedVersions": { "type": "array", "items": { "$ref": "#/components/schemas/RunnerHostedVersion" }, "description": "The catalog versions the runner currently hosts." },
+          "hostsDraftRuns": { "type": "boolean", "description": "Whether this runner claims §18 draft runs pinned to its environment (the working-copy debug-run engine seam). Absent means false; meaningful only on runners serving development-class environments." }
+        },
+        "required": ["runnerId", "startedAt", "maxConcurrency", "transports", "hostedVersions"]
+      },
       "RunnerPage": {
         "type": "object",
         "description": "A keyset page of the workflow runners currently registered with the control plane, ordered by runnerId.",
@@ -5505,6 +5544,7 @@
           "status": { "type": "string", "enum": ["Pending", "Authorized", "Quarantined", "Revoked"], "description": "The authorization's lifecycle state; only Authorized is dispatchable (Pending, Quarantined, and Revoked are all excluded from dispatch)." },
           "reason": { "type": "string", "description": "An optional note recorded with the most recent decision." },
           "createdBy": { "type": "string", "description": "The actor that created the record (the runner self-registering enters Pending)." },
+          "principal": { "type": "string", "description": "The trusted machine principal that proved ownership of this runnerId by authenticating its registration (design §16.4): the authorization binds to this verified identity rather than to a self-asserted runnerId. Absent on a row an administrator pre-authorized by runnerId before any runner has registered." },
           "createdAt": { "type": "string", "format": "date-time", "description": "When the record was created (the runner first registered for the environment)." },
           "decidedBy": { "type": "string", "description": "The environment administrator that last authorized or revoked the runner, if decided." },
           "decidedAt": { "type": "string", "format": "date-time", "description": "When the runner was last authorized or revoked, if decided." },

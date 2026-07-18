@@ -23,18 +23,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A runner&#39;s authorization to serve a deployment environment (design &#167;5.5): keyed by (environment, runnerId), governed by the environment&#39;s administrators. A runner enters Pending on registration and is dispatchable only once Authorized. Quarantined temporarily excludes a faulted runner from new dispatch while its in-flight runs drain, and it is reinstated to Authorized without re-registering. Revoked permanently removes a compromised runner and fences its in-flight work; returning it requires a deliberate re-authorization.
+/// A runner&#39;s self-description when it registers to serve a deployment environment (design &#167;5.5/&#167;16.4). The runner presents only what it knows about itself; the control plane stamps the rest: the environment (from the path), the runner&#39;s reach tags (from the environment&#39;s managementTags — never trusted from the runner), the last-seen instant (now), and the trusted machine principal (from the authenticated token). The registration enters Pending and is dispatchable only once an administrator of the environment authorizes it.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct EnvironmentRunnerAuthorizationView
+public readonly partial struct RunnerRegistrationRequest
 #if NET8_0_OR_GREATER
-    : IJsonElement<EnvironmentRunnerAuthorizationView>,
+    : IJsonElement<RunnerRegistrationRequest>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<EnvironmentRunnerAuthorizationView>,
+    : IJsonElement<RunnerRegistrationRequest>,
       IFormattable
 #endif
 {
@@ -44,10 +44,10 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="EnvironmentRunnerAuthorizationView"/> struct.
+    /// Initializes a new instance of the <see cref="RunnerRegistrationRequest"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal EnvironmentRunnerAuthorizationView(IJsonDocument parent, int idx)
+    internal RunnerRegistrationRequest(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -57,7 +57,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static EnvironmentRunnerAuthorizationView DefaultInstance { get; }
+    public static RunnerRegistrationRequest DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -159,21 +159,42 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     }
 
     /// <summary>
-    /// Gets the <c>createdAt</c> property.
+    /// Gets the (optional) <c>address</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An optional address (for example a base URI) at which the runner can be reached.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Address
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AddressUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>hostedVersions</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// When the record was created (the runner first registered for the environment).
+    /// The catalog versions the runner currently hosts.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime CreatedAt
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest.RunnerHostedVersionArray HostedVersions
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreatedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostedVersionsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest.RunnerHostedVersionArray value))
             {
                 return value;
             }
@@ -183,153 +204,42 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     }
 
     /// <summary>
-    /// Gets the <c>createdBy</c> property.
+    /// Gets the (optional) <c>hostsDraftRuns</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Whether this runner claims &#167;18 draft runs pinned to its environment (the working-copy debug-run engine seam). Absent means false; meaningful only on runners serving development-class environments.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean HostsDraftRuns
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostsDraftRunsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>maxConcurrency</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The actor that created the record (the runner self-registering enters Pending).
+    /// The maximum number of runs the runner will execute concurrently.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString CreatedBy
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32 MaxConcurrency
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CreatedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>decidedAt</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// When the runner was last authorized or revoked, if decided.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime DecidedAt
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>decidedBy</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The environment administrator that last authorized or revoked the runner, if decided.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString DecidedBy
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DecidedByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>environment</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The environment the runner serves.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>etag</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The optimistic-concurrency token.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Etag
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EtagUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>principal</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The trusted machine principal that proved ownership of this runnerId by authenticating its registration (design &#167;16.4): the authorization binds to this verified identity rather than to a self-asserted runnerId. Absent on a row an administrator pre-authorized by runnerId before any runner has registered.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Principal
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PrincipalUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>reason</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// An optional note recorded with the most recent decision.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Reason
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReasonUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxConcurrencyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32 value))
             {
                 return value;
             }
@@ -346,7 +256,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The runner the authorization applies to.
+    /// The stable identifier of the runner process. Self-chosen; the trust anchor is the authenticated machine principal, not this id — a registration presenting a principal that differs from the one already bound to this runnerId is refused (409).
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString RunnerId
@@ -363,21 +273,45 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     }
 
     /// <summary>
-    /// Gets the <c>status</c> property.
+    /// Gets the <c>startedAt</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The authorization&#39;s lifecycle state; only Authorized is dispatchable (Pending, Quarantined, and Revoked are all excluded from dispatch).
+    /// When the runner process started.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentRunnerAuthorizationView.StatusEntity Status
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime StartedAt
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StatusUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentRunnerAuthorizationView.StatusEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StartedAtUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>transports</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// <para>
+    /// The transport identifiers the runner supports.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest.JsonStringArray Transports
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TransportsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest.JsonStringArray value))
             {
                 return value;
             }
@@ -420,7 +354,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in EnvironmentRunnerAuthorizationView left, in EnvironmentRunnerAuthorizationView right)
+    public static bool operator ==(in RunnerRegistrationRequest left, in RunnerRegistrationRequest right)
     {
         return left.Equals(right);
     }
@@ -433,7 +367,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in EnvironmentRunnerAuthorizationView left, in EnvironmentRunnerAuthorizationView right)
+    public static bool operator !=(in RunnerRegistrationRequest left, in RunnerRegistrationRequest right)
     {
         return !left.Equals(right);
     }
@@ -446,7 +380,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in EnvironmentRunnerAuthorizationView left, in JsonElement right)
+    public static bool operator ==(in RunnerRegistrationRequest left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -459,7 +393,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in EnvironmentRunnerAuthorizationView left, in JsonElement right)
+    public static bool operator !=(in RunnerRegistrationRequest left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -470,7 +404,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(EnvironmentRunnerAuthorizationView instance)
+    public static implicit operator JsonElement(RunnerRegistrationRequest instance)
     {
         return JsonElement.From(instance);
     }
@@ -481,9 +415,9 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator EnvironmentRunnerAuthorizationView(JsonElement instance)
+    public static implicit operator RunnerRegistrationRequest(JsonElement instance)
     {
-        return EnvironmentRunnerAuthorizationView.From(instance);
+        return RunnerRegistrationRequest.From(instance);
     }
 
     /// <summary>
@@ -492,7 +426,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentRunnerAuthorizationView From<T>(in T instance)
+    public static RunnerRegistrationRequest From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -517,10 +451,10 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentRunnerAuthorizationView ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static RunnerRegistrationRequest ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentRunnerAuthorizationView>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<RunnerRegistrationRequest>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -543,10 +477,10 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentRunnerAuthorizationView ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static RunnerRegistrationRequest ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentRunnerAuthorizationView>(json, options);
+        return JsonElementHelpers.ParseValue<RunnerRegistrationRequest>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -569,10 +503,10 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static EnvironmentRunnerAuthorizationView ParseValue(string json, JsonDocumentOptions options = default)
+    public static RunnerRegistrationRequest ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentRunnerAuthorizationView>(json, options);
+        return JsonElementHelpers.ParseValue<RunnerRegistrationRequest>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -612,10 +546,10 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static EnvironmentRunnerAuthorizationView ParseValue(ref Utf8JsonReader reader)
+    public static RunnerRegistrationRequest ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<EnvironmentRunnerAuthorizationView>(ref reader);
+        return JsonElementHelpers.ParseValue<RunnerRegistrationRequest>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -657,16 +591,16 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out EnvironmentRunnerAuthorizationView? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out RunnerRegistrationRequest? result)
     {
-        return JsonElementHelpers.TryParseValue<EnvironmentRunnerAuthorizationView>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<RunnerRegistrationRequest>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new EnvironmentRunnerAuthorizationView(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new RunnerRegistrationRequest(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -756,11 +690,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static EnvironmentRunnerAuthorizationView IJsonElement<EnvironmentRunnerAuthorizationView>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static RunnerRegistrationRequest IJsonElement<RunnerRegistrationRequest>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"EnvironmentRunnerAuthorizationView: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"RunnerRegistrationRequest: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -775,11 +709,11 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="EnvironmentRunnerAuthorizationView"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="RunnerRegistrationRequest"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="EnvironmentRunnerAuthorizationView"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="RunnerRegistrationRequest"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -788,10 +722,10 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public EnvironmentRunnerAuthorizationView Clone()
+    public RunnerRegistrationRequest Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<EnvironmentRunnerAuthorizationView>(_idx);
+        return _parent.CloneElement<RunnerRegistrationRequest>(_idx);
     }
 
     /// <summary>
@@ -799,7 +733,7 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="EnvironmentRunnerAuthorizationView"/> that lives for the lifetime of its
+    /// An immutable <see cref="RunnerRegistrationRequest"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -813,12 +747,12 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public EnvironmentRunnerAuthorizationView Freeze()
+    public RunnerRegistrationRequest Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<EnvironmentRunnerAuthorizationView>(_idx);
+            return mutable.FreezeElement<RunnerRegistrationRequest>(_idx);
         }
 
         return this;
@@ -830,44 +764,24 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedAt"/>.
+        /// Gets the JSON property name for <see cref="Address"/>.
         /// </summary>
-        public const string CreatedAt = "createdAt";
+        public const string Address = "address";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedBy"/>.
+        /// Gets the JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
-        public const string CreatedBy = "createdBy";
+        public const string HostedVersions = "hostedVersions";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedAt"/>.
+        /// Gets the JSON property name for <see cref="HostsDraftRuns"/>.
         /// </summary>
-        public const string DecidedAt = "decidedAt";
+        public const string HostsDraftRuns = "hostsDraftRuns";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedBy"/>.
+        /// Gets the JSON property name for <see cref="MaxConcurrency"/>.
         /// </summary>
-        public const string DecidedBy = "decidedBy";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Environment"/>.
-        /// </summary>
-        public const string Environment = "environment";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public const string Etag = "etag";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Principal"/>.
-        /// </summary>
-        public const string Principal = "principal";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Reason"/>.
-        /// </summary>
-        public const string Reason = "reason";
+        public const string MaxConcurrency = "maxConcurrency";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="RunnerId"/>.
@@ -875,49 +789,34 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         public const string RunnerId = "runnerId";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
+        /// Gets the JSON property name for <see cref="StartedAt"/>.
         /// </summary>
-        public const string Status = "status";
+        public const string StartedAt = "startedAt";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedAt"/>.
+        /// Gets the JSON property name for <see cref="Transports"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedAtUtf8 => "createdAt"u8;
+        public const string Transports = "transports";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="CreatedBy"/>.
+        /// Gets the JSON property name for <see cref="Address"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedByUtf8 => "createdBy"u8;
+        public static ReadOnlySpan<byte> AddressUtf8 => "address"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedAt"/>.
+        /// Gets the JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> DecidedAtUtf8 => "decidedAt"u8;
+        public static ReadOnlySpan<byte> HostedVersionsUtf8 => "hostedVersions"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="DecidedBy"/>.
+        /// Gets the JSON property name for <see cref="HostsDraftRuns"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> DecidedByUtf8 => "decidedBy"u8;
+        public static ReadOnlySpan<byte> HostsDraftRunsUtf8 => "hostsDraftRuns"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// Gets the JSON property name for <see cref="MaxConcurrency"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> EnvironmentUtf8 => "environment"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> EtagUtf8 => "etag"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Principal"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PrincipalUtf8 => "principal"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Reason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ReasonUtf8 => "reason"u8;
+        public static ReadOnlySpan<byte> MaxConcurrencyUtf8 => "maxConcurrency"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="RunnerId"/>.
@@ -925,9 +824,14 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         public static ReadOnlySpan<byte> RunnerIdUtf8 => "runnerId"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Status"/>.
+        /// Gets the JSON property name for <see cref="StartedAt"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> StatusUtf8 => "status"u8;
+        public static ReadOnlySpan<byte> StartedAtUtf8 => "startedAt"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Transports"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TransportsUtf8 => "transports"u8;
     }
 
     /// <summary>
@@ -936,44 +840,24 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CreatedAt"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Address"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedAt => "createdAt"u8;
+        public static ReadOnlySpan<byte> Address => "address"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="CreatedBy"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedBy => "createdBy"u8;
+        public static ReadOnlySpan<byte> HostedVersions => "hostedVersions"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="DecidedAt"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="HostsDraftRuns"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> DecidedAt => "decidedAt"u8;
+        public static ReadOnlySpan<byte> HostsDraftRuns => "hostsDraftRuns"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="DecidedBy"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="MaxConcurrency"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> DecidedBy => "decidedBy"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Environment => "environment"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Etag => "etag"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Principal"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Principal => "principal"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Reason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Reason => "reason"u8;
+        public static ReadOnlySpan<byte> MaxConcurrency => "maxConcurrency"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="RunnerId"/>.
@@ -981,9 +865,14 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         public static ReadOnlySpan<byte> RunnerId => "runnerId"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="StartedAt"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Status => "status"u8;
+        public static ReadOnlySpan<byte> StartedAt => "startedAt"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Transports"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Transports => "transports"u8;
     }
 
     /// <summary>
@@ -993,44 +882,24 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CreatedAt"/>.
+        /// Gets the pre-baked property name blob for <see cref="Address"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
+        public static ReadOnlySpan<byte> Address => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="CreatedBy"/>.
+        /// Gets the pre-baked property name blob for <see cref="HostedVersions"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> CreatedBy => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x42, 0x79, 0x22];
+        public static ReadOnlySpan<byte> HostedVersions => [0x05, 0x01, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x65, 0x64, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x73, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="DecidedAt"/>.
+        /// Gets the pre-baked property name blob for <see cref="HostsDraftRuns"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> DecidedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x63, 0x69, 0x64, 0x65, 0x64, 0x41, 0x74, 0x22];
+        public static ReadOnlySpan<byte> HostsDraftRuns => [0x05, 0x01, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x73, 0x44, 0x72, 0x61, 0x66, 0x74, 0x52, 0x75, 0x6E, 0x73, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="DecidedBy"/>.
+        /// Gets the pre-baked property name blob for <see cref="MaxConcurrency"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> DecidedBy => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x63, 0x69, 0x64, 0x65, 0x64, 0x42, 0x79, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Environment"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Environment => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Etag"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Etag => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x74, 0x61, 0x67, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Principal"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Principal => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x69, 0x6E, 0x63, 0x69, 0x70, 0x61, 0x6C, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Reason"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Reason => [0x85, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x73, 0x6F, 0x6E, 0x22];
+        public static ReadOnlySpan<byte> MaxConcurrency => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x43, 0x6F, 0x6E, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6E, 0x63, 0x79, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="RunnerId"/>.
@@ -1038,8 +907,13 @@ public readonly partial struct EnvironmentRunnerAuthorizationView
         public static ReadOnlySpan<byte> RunnerId => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x6E, 0x65, 0x72, 0x49, 0x64, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Status"/>.
+        /// Gets the pre-baked property name blob for <see cref="StartedAt"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Status => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22];
+        public static ReadOnlySpan<byte> StartedAt => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Transports"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Transports => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x6E, 0x73, 0x70, 0x6F, 0x72, 0x74, 0x73, 0x22];
     }
 }

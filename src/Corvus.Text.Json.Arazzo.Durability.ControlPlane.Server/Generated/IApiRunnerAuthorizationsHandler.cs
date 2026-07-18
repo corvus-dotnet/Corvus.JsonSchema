@@ -30,6 +30,15 @@ public interface IApiRunnerAuthorizationsHandler
     ValueTask<ListEnvironmentRunnerAuthorizationsResult> HandleListEnvironmentRunnerAuthorizationsAsync(ListEnvironmentRunnerAuthorizationsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles POST /environments/{name}/runners — Register a runner to serve an environment (authenticated machine principal)
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<RegisterRunnerResult> HandleRegisterRunnerAsync(RegisterRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /environments/{name}/runners/count — Count the runners that serve an environment
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

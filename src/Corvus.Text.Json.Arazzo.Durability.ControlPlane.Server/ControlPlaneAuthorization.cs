@@ -84,8 +84,14 @@ public static class ControlPlaneScopes
     /// <summary>Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated).</summary>
     public const string AvailabilityWrite = "availability:write";
 
+    /// <summary>Register a runner to serve a deployment environment as a trusted machine principal (design §5.5/§16.4). A
+    /// machine scope: the runner presents it on its client-credentials/private-key-JWT/mTLS token to call
+    /// <c>registerRunner</c>. Registration only enters the runner into Pending; an administrator of the environment must
+    /// authorize it (<see cref="EnvironmentsWrite"/>) before it is dispatchable.</summary>
+    public const string RunnersRegister = "runners:register";
+
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsOutputsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, WorkspaceRead, WorkspaceWrite, AvailabilityRead, AvailabilityWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsOutputsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, WorkspaceRead, WorkspaceWrite, AvailabilityRead, AvailabilityWrite, RunnersRegister];
 }
 
 /// <summary>

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Security.Claims;
+using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
@@ -37,6 +38,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private readonly IEnvironmentRunnerAuthorizationStore authorizations;
     private readonly IEnvironmentStore environments;
+    private readonly IRunnerRegistry runners;
     private readonly SecuredEnvironmentAdministration administration;
     private readonly ControlPlaneAccess access;
     private readonly IWorkflowLeaseAdministration? leaseAdministration;
@@ -49,6 +51,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneRunnerAuthorizationsHandler"/> class.</summary>
     /// <param name="authorizations">The environment-runner authorization store (the authorization lifecycle).</param>
     /// <param name="environments">The environment store (target-environment visibility for the governance gate).</param>
+    /// <param name="runners">The runner registry the authenticated registration endpoint writes (design §5.5/§16.4): a runner's liveness registration, keyed on its self-chosen runnerId, with reach stamped from the serving environment.</param>
     /// <param name="administration">The environment-administration governance service (current-administrator gating + the reverse index for the inbox).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/>, deployment identity, and principal per request.</param>
     /// <param name="leaseAdministration">The workflow state store's lease-administration capability, if it has one (§5.5 revocation
@@ -60,6 +63,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     internal ArazzoControlPlaneRunnerAuthorizationsHandler(
         IEnvironmentRunnerAuthorizationStore authorizations,
         IEnvironmentStore environments,
+        IRunnerRegistry runners,
         SecuredEnvironmentAdministration administration,
         ControlPlaneAccess access,
         IWorkflowLeaseAdministration? leaseAdministration = null,
@@ -68,11 +72,13 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     {
         ArgumentNullException.ThrowIfNull(authorizations);
         ArgumentNullException.ThrowIfNull(environments);
+        ArgumentNullException.ThrowIfNull(runners);
         ArgumentNullException.ThrowIfNull(administration);
         ArgumentNullException.ThrowIfNull(access);
         ArgumentException.ThrowIfNullOrEmpty(subjectClaimType);
         this.authorizations = authorizations;
         this.environments = environments;
+        this.runners = runners;
         this.administration = administration;
         this.access = access;
         this.leaseAdministration = leaseAdministration;
@@ -179,6 +185,58 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         catch (RunnerAuthorizationConflictException)
         {
             return AuthorizeRunnerResult.Conflict(ConcurrentDecisionProblem(environment, runnerId), workspace);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<RegisterRunnerResult> HandleRegisterRunnerAsync(RegisterRunnerParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string environment = (string)parameters.Name;
+        Models.RunnerRegistrationRequest body = parameters.Body;
+        string runnerId = (string)body.RunnerId;
+
+        // The trusted machine principal (design §16.4) is derived from the authenticated token, never from the request body.
+        // The runners:register scope policy has already required an authenticated principal; guard defensively regardless.
+        string? principal = this.MachinePrincipal();
+        if (string.IsNullOrEmpty(principal))
+        {
+            return RegisterRunnerResult.Conflict(UnidentifiedPrincipalProblem(), workspace);
+        }
+
+        // The environment must exist. It is read as the trusted System identity, not as the runner: the runner's reach is the
+        // environment's (stamped below from its managementTags — never trusted from the runner), so registration is gated by
+        // the runners:register scope plus the later administrator authorization, not by the runner's own reach. Unknown
+        // environment is 404.
+        SecurityTagSet reachTags;
+        using (ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, AccessContext.System, cancellationToken).ConfigureAwait(false))
+        {
+            if (environmentDoc is null)
+            {
+                return RegisterRunnerResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+            }
+
+            reachTags = environmentDoc.RootElement.ManagementTagsValue;
+        }
+
+        // Record the runner's liveness registration (the runner's self-description, with the server stamping environment,
+        // reach tags, and the last-seen instant), then bind its authorization to the trusted principal. EnsurePendingAsync
+        // creates the Pending row and stamps the principal on first registration, returns the existing row unchanged when the
+        // same principal re-registers, and throws when a different principal already owns this runnerId (→ 409).
+        RunnerRegistration registration = BuildRegistration(body, environment, reachTags, DateTimeOffset.UtcNow);
+        await this.runners.RegisterAsync(registration, cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization =
+                await this.authorizations.EnsurePendingAsync(environment, runnerId, principal, principal, cancellationToken).ConfigureAwait(false);
+            GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), authorization.RootElement.IsAuthorized ? "registered-authorized" : "registered-pending");
+            workspace.TakeOwnership(authorization);
+            return RegisterRunnerResult.Ok(ToView(authorization.RootElement), workspace);
+        }
+        catch (RunnerPrincipalConflictException)
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-principal-conflict");
+            return RegisterRunnerResult.Conflict(PrincipalConflictProblem(environment, runnerId), workspace);
         }
     }
 
@@ -531,6 +589,67 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private string? SubjectOf(ClaimsPrincipal? principal) => principal?.FindFirst(this.subjectClaimType)?.Value;
 
+    // The trusted machine principal bound to a runner's authorization at registration (design §16.4). A machine principal is
+    // a Keycloak client, so the stable identity is the client id: prefer the authorized-party (azp) / client_id claim, then
+    // the token subject, then the authentication name. Derived from the verified token — never from the request body.
+    private string? MachinePrincipal()
+    {
+        ClaimsPrincipal? principal = this.access.CurrentPrincipal;
+        if (principal is null)
+        {
+            return null;
+        }
+
+        return principal.FindFirst("azp")?.Value
+            ?? principal.FindFirst("client_id")?.Value
+            ?? this.SubjectOf(principal)
+            ?? principal.Identity?.Name;
+    }
+
+    // Builds the runner's liveness RunnerRegistration server-side (design §5.5/§16.4): the runner's self-description is copied
+    // bytes-to-bytes from the request through a pooled scratch writer, and the server stamps the environment (from the path),
+    // the reach tags (from the environment's managementTags — never trusted from the runner), and the last-seen instant.
+    private static RunnerRegistration BuildRegistration(Models.RunnerRegistrationRequest body, string environment, SecurityTagSet reachTags, DateTimeOffset lastSeenAt)
+    {
+        return RunnerRegistration.FromJson(PersistedJson.ToArray(
+            (body, environment, reachTags, lastSeenAt),
+            static (Utf8JsonWriter writer, in (Models.RunnerRegistrationRequest Body, string Environment, SecurityTagSet Reach, DateTimeOffset LastSeen) c) =>
+            {
+                writer.WriteStartObject();
+                WriteCopied(writer, "runnerId"u8, (JsonElement)c.Body.RunnerId);
+                writer.WriteString("environment"u8, c.Environment);
+                if (!c.Reach.IsEmpty)
+                {
+                    writer.WritePropertyName("reachTags"u8);
+                    c.Reach.WriteTo(writer);
+                }
+
+                if (c.Body.Address.IsNotUndefined())
+                {
+                    WriteCopied(writer, "address"u8, (JsonElement)c.Body.Address);
+                }
+
+                WriteCopied(writer, "startedAt"u8, (JsonElement)c.Body.StartedAt);
+                writer.WriteString("lastSeenAt"u8, c.LastSeen);
+                WriteCopied(writer, "maxConcurrency"u8, (JsonElement)c.Body.MaxConcurrency);
+                WriteCopied(writer, "transports"u8, (JsonElement)c.Body.Transports);
+                WriteCopied(writer, "hostedVersions"u8, (JsonElement)c.Body.HostedVersions);
+                if (c.Body.HostsDraftRuns.IsNotUndefined())
+                {
+                    WriteCopied(writer, "hostsDraftRuns"u8, (JsonElement)c.Body.HostsDraftRuns);
+                }
+
+                writer.WriteEndObject();
+            }));
+    }
+
+    // Copies a request property's JSON value to the registration writer bytes-to-bytes (no string is realised).
+    private static void WriteCopied(Utf8JsonWriter writer, ReadOnlySpan<byte> name, in JsonElement value)
+    {
+        writer.WritePropertyName(name);
+        value.WriteTo(writer);
+    }
+
     private static Models.ProblemDetails.Source EnvironmentNotFoundProblem(string environment)
         => Problem("environment-not-found", "Environment not found", 404, $"No environment named '{environment}' exists, or it is outside your reach.");
 
@@ -545,6 +664,12 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     private static Models.ProblemDetails.Source NotAuthorizedToQuarantineProblem(string environment, string runnerId)
         => Problem("not-authorized-to-quarantine", "Runner not authorized", 409, $"Runner '{runnerId}' is not currently authorized to serve environment '{environment}', so it cannot be quarantined. Only an authorized runner can be quarantined; authorize it first, or revoke it to remove it permanently.");
+
+    private static Models.ProblemDetails.Source PrincipalConflictProblem(string environment, string runnerId)
+        => Problem("runner-principal-conflict", "Runner already claimed", 409, $"Runner '{runnerId}' in environment '{environment}' is already bound to a different machine principal (design §16.4); a registration presenting a different principal cannot take it over. Choose a distinct runnerId, or have an administrator revoke the existing authorization.");
+
+    private static Models.ProblemDetails.Source UnidentifiedPrincipalProblem()
+        => Problem("unidentified-machine-principal", "Unidentified machine principal", 409, "The registration token carries no machine principal (design §16.4); a runner must authenticate as a machine principal (client-credentials, private-key-JWT, or mTLS) to register.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => new((ref Models.ProblemDetails.Builder b) => b.Create(
