@@ -5,6 +5,7 @@
 using System.Data;
 using System.Globalization;
 using System.Text;
+using Corvus.Text.Json.Arazzo.Execution;
 using Microsoft.Data.SqlClient;
 
 namespace Corvus.Text.Json.Arazzo.Durability.SqlServer;
@@ -34,13 +35,15 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
 
-    private SqlServerWorkflowCatalogStore(string connectionString, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private SqlServerWorkflowCatalogStore(string connectionString, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.connectionString = connectionString;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <summary>
@@ -73,6 +76,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider that supplies projected metadata for each added version; <see langword="null"/> to store packages without it.</param>
     /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
+    /// <param name="signer">An optional control-plane signer that signs each compiled executor's manifest at add time (design §3.3, §12); <see langword="null"/> to store packages unsigned.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store.</returns>
     public static ValueTask<SqlServerWorkflowCatalogStore> ConnectAsync(
@@ -80,11 +84,12 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
-        return new ValueTask<SqlServerWorkflowCatalogStore>(new SqlServerWorkflowCatalogStore(connectionString, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+        return new ValueTask<SqlServerWorkflowCatalogStore>(new SqlServerWorkflowCatalogStore(connectionString, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
     }
 
     /// <inheritdoc/>
@@ -467,7 +472,7 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
             versionNumber = (int)(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! + 1;
         }
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+        CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
         TagSet tags = metadata.Tags;
         SecurityTagSet securityTags = metadata.SecurityTags;
 

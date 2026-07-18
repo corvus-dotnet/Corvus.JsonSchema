@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Text;
+using Corvus.Text.Json.Arazzo.Execution;
 using MySqlConnector;
 
 namespace Corvus.Text.Json.Arazzo.Durability.MySql;
@@ -33,14 +34,16 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
 
-    private MySqlWorkflowCatalogStore(MySqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private MySqlWorkflowCatalogStore(MySqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.dataSource = dataSource;
         this.ownsDataSource = ownsDataSource;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <summary>
@@ -80,13 +83,14 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
 
         return new ValueTask<MySqlWorkflowCatalogStore>(
-            new MySqlWorkflowCatalogStore(new MySqlDataSource(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+            new MySqlWorkflowCatalogStore(new MySqlDataSource(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
     }
 
     /// <summary>Provisions the catalog schema over a caller-supplied data source.</summary>
@@ -124,13 +128,14 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dataSource);
         cancellationToken.ThrowIfCancellationRequested();
 
         return new ValueTask<MySqlWorkflowCatalogStore>(
-            new MySqlWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+            new MySqlWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
     }
 
     /// <summary>Disposes the data source if this store created it (from a connection string).</summary>
@@ -401,7 +406,7 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             versionNumber = Convert.ToInt32(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture) + 1;
         }
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+        CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
         TagSet tags = metadata.Tags;
         SecurityTagSet securityTags = metadata.SecurityTags;
 

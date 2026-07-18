@@ -8,6 +8,7 @@ using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json.Arazzo.Execution;
 
 namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 
@@ -41,14 +42,16 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
 
-    private AzureStorageWorkflowCatalogStore(BlobContainerClient packages, TableClient catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private AzureStorageWorkflowCatalogStore(BlobContainerClient packages, TableClient catalog, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.packages = packages;
         this.catalog = catalog;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <summary>Provisions the store's blob container and table over the given connection string.</summary>
@@ -99,6 +102,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
@@ -108,6 +112,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
             timeProvider,
             metadataProvider,
             executorProvider,
+            signer,
             cancellationToken);
     }
 
@@ -129,6 +134,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(blobService);
@@ -137,7 +143,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
         BlobContainerClient packages = blobService.GetBlobContainerClient(CatalogContainer);
         TableClient catalog = tableService.GetTableClient(CatalogTable);
-        return new ValueTask<AzureStorageWorkflowCatalogStore>(new AzureStorageWorkflowCatalogStore(packages, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+        return new ValueTask<AzureStorageWorkflowCatalogStore>(new AzureStorageWorkflowCatalogStore(packages, catalog, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
     }
 
     /// <inheritdoc/>
@@ -629,7 +635,7 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+            CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
 
             // The returned version is a pooled, disposable document (the caller owns it). It is built once and the
             // Table entity is projected from it; on a 409 retry the document is disposed so the loop cannot leak it.

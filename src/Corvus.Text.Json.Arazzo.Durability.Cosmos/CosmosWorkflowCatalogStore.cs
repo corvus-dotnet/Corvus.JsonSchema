@@ -5,6 +5,7 @@
 using System.Globalization;
 using System.Net;
 using System.Runtime.CompilerServices;
+using Corvus.Text.Json.Arazzo.Execution;
 using Microsoft.Azure.Cosmos;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
@@ -23,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// and read through the Cosmos <em>stream</em> APIs so persistence flows through the <see cref="CatalogDocument"/>
 /// Corvus.Text.Json schema type and never the SDK's reflection serializer. Provision the database and container
 /// once with <see cref="PrepareAsync(string, string, CancellationToken)"/>, then open the store with
-/// <see cref="ConnectAsync(string, string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, CancellationToken)"/>;
+/// <see cref="ConnectAsync(string, string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, IExecutorPackageSigner?, CancellationToken)"/>;
 /// the overloads taking a <see cref="CosmosClient"/> let callers configure the client (for example a
 /// least-privileged data-plane managed identity) themselves.
 /// </remarks>
@@ -40,9 +41,10 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
     private readonly bool ownsClient;
 
-    private CosmosWorkflowCatalogStore(CosmosClient client, Container catalog, TimeProvider timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private CosmosWorkflowCatalogStore(CosmosClient client, Container catalog, TimeProvider timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.client = client;
         this.catalog = catalog;
@@ -50,6 +52,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         this.ownsClient = ownsClient;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <summary>Provisions the catalog's database and container over the given connection string.</summary>
@@ -73,7 +76,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     /// Creating a database/container is a Cosmos <em>management-plane</em> operation — the data-plane RBAC roles
     /// (for example <c>Cosmos DB Built-in Data Contributor</c>) cannot do it. So provisioning needs the account
     /// key or a control-plane role and must be separated from the least-privileged data-plane credential used to
-    /// <see cref="ConnectAsync(CosmosClient, string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, CancellationToken)"/> the store for operation.
+    /// <see cref="ConnectAsync(CosmosClient, string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, IExecutorPackageSigner?, CancellationToken)"/> the store for operation.
     /// Run this once at deploy/migration time.
     /// </remarks>
     /// <param name="client">A configured Cosmos client (the caller retains ownership and must dispose it).</param>
@@ -99,6 +102,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider that enriches the projected metadata of each added version; <see langword="null"/> to project without it.</param>
     /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
+    /// <param name="signer">An optional control-plane signer that signs each compiled executor's manifest at add time (design §3.3, §12); <see langword="null"/> to store packages unsigned.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it owns and disposes the client).</returns>
     public static ValueTask<CosmosWorkflowCatalogStore> ConnectAsync(
@@ -107,12 +111,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
         var client = new CosmosClient(connectionString, CreateClientOptions());
-        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: true, metadataProvider, executorProvider));
+        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: true, metadataProvider, executorProvider, signer));
     }
 
     /// <summary>Opens the catalog store for operation over a caller-supplied <see cref="CosmosClient"/>.</summary>
@@ -127,6 +132,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider that enriches the projected metadata of each added version; <see langword="null"/> to project without it.</param>
     /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
+    /// <param name="signer">An optional control-plane signer that signs each compiled executor's manifest at add time (design §3.3, §12); <see langword="null"/> to store packages unsigned.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it does not dispose the supplied client).</returns>
     public static ValueTask<CosmosWorkflowCatalogStore> ConnectAsync(
@@ -135,11 +141,12 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
         cancellationToken.ThrowIfCancellationRequested();
-        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: false, metadataProvider, executorProvider));
+        return new ValueTask<CosmosWorkflowCatalogStore>(Connect(client, databaseName, timeProvider, ownsClient: false, metadataProvider, executorProvider, signer));
     }
 
     /// <summary>The Cosmos client options the store relies on.</summary>
@@ -569,13 +576,13 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         await database.CreateContainerIfNotExistsAsync(new ContainerProperties(CatalogContainerId, "/baseWorkflowId"), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
-    private static CosmosWorkflowCatalogStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private static CosmosWorkflowCatalogStore Connect(CosmosClient client, string databaseName, TimeProvider? timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         // GetDatabase/GetContainer return proxies without network I/O (no creation), so this is a pure
         // data-plane open against the already-provisioned resources.
         Database database = client.GetDatabase(databaseName);
         Container catalog = database.GetContainer(CatalogContainerId);
-        return new CosmosWorkflowCatalogStore(client, catalog, timeProvider ?? TimeProvider.System, ownsClient, metadataProvider, executorProvider);
+        return new CosmosWorkflowCatalogStore(client, catalog, timeProvider ?? TimeProvider.System, ownsClient, metadataProvider, executorProvider, signer);
     }
 
     private static async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(Container container, QueryDefinition query, [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -604,7 +611,7 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+            CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
 
             // The version is a pooled, disposable document the caller owns on success; on a concurrency conflict it is
             // disposed and rebuilt against the recomputed max.

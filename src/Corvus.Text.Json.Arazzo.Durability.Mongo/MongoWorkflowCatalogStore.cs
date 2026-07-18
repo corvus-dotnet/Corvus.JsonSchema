@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Corvus.Text.Json.Arazzo.Execution;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using JsonMarshal = Corvus.Runtime.InteropServices.JsonMarshal;
@@ -30,16 +31,18 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
     private readonly bool ownsClient;
     private readonly IMongoCollection<BsonDocument> versions;
 
-    private MongoWorkflowCatalogStore(IMongoClient client, string databaseName, TimeProvider timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private MongoWorkflowCatalogStore(IMongoClient client, string databaseName, TimeProvider timeProvider, bool ownsClient, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.client = client;
         this.timeProvider = timeProvider;
         this.ownsClient = ownsClient;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
         IMongoDatabase database = client.GetDatabase(databaseName);
         this.versions = database.GetCollection<BsonDocument>("catalogVersions");
     }
@@ -61,7 +64,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         var client = new MongoClient(connectionString);
-        await using var store = new MongoWorkflowCatalogStore(client, databaseName, TimeProvider.System, ownsClient: true, metadataProvider: null, executorProvider: null);
+        await using var store = new MongoWorkflowCatalogStore(client, databaseName, TimeProvider.System, ownsClient: true, metadataProvider: null, executorProvider: null, signer: null);
         await store.EnsureIndexesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -82,12 +85,13 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
         var client = new MongoClient(connectionString);
-        return new ValueTask<MongoWorkflowCatalogStore>(new MongoWorkflowCatalogStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: true, metadataProvider, executorProvider));
+        return new ValueTask<MongoWorkflowCatalogStore>(new MongoWorkflowCatalogStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: true, metadataProvider, executorProvider, signer));
     }
 
     /// <summary>Provisions the store's indexes over a caller-supplied client.</summary>
@@ -106,7 +110,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        await using var store = new MongoWorkflowCatalogStore(client, databaseName, TimeProvider.System, ownsClient: false, metadataProvider: null, executorProvider: null);
+        await using var store = new MongoWorkflowCatalogStore(client, databaseName, TimeProvider.System, ownsClient: false, metadataProvider: null, executorProvider: null, signer: null);
         await store.EnsureIndexesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -127,11 +131,12 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
         cancellationToken.ThrowIfCancellationRequested();
-        return new ValueTask<MongoWorkflowCatalogStore>(new MongoWorkflowCatalogStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: false, metadataProvider, executorProvider));
+        return new ValueTask<MongoWorkflowCatalogStore>(new MongoWorkflowCatalogStore(client, databaseName, timeProvider ?? TimeProvider.System, ownsClient: false, metadataProvider, executorProvider, signer));
     }
 
     /// <inheritdoc/>
@@ -715,7 +720,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         {
             cancellationToken.ThrowIfCancellationRequested();
             int versionNumber = await this.MaxVersionAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false) + 1;
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+            CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
             SourceSet sources = SourceSet.FromSources(projection.Sources);
 
             // The projection is the sole owner of its freshly-built canonical-package array, so take it directly rather

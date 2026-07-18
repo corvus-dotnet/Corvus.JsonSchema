@@ -5,6 +5,7 @@
 using System.Globalization;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Execution;
 using StackExchange.Redis;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Redis;
@@ -19,8 +20,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// <remarks>
 /// Targets a single Redis instance (or a primary): an add touches the per-base counter, the version hash and the
 /// shared index set, which is not Redis-Cluster slot-safe. Create instances with
-/// <see cref="ConnectAsync(string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, CancellationToken)"/> (or
-/// <see cref="Connect(IConnectionMultiplexer, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, CancellationToken)"/>).
+/// <see cref="ConnectAsync(string, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, IExecutorPackageSigner?, CancellationToken)"/> (or
+/// <see cref="Connect(IConnectionMultiplexer, TimeProvider?, IWorkflowMetadataProvider?, IWorkflowExecutorProvider?, IExecutorPackageSigner?, CancellationToken)"/>).
 /// </remarks>
 public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupportsRowSecurityFilter, IAsyncDisposable
 {
@@ -48,9 +49,10 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
     private readonly bool ownsConnection;
 
-    private RedisWorkflowCatalogStore(IConnectionMultiplexer connection, TimeProvider timeProvider, bool ownsConnection, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private RedisWorkflowCatalogStore(IConnectionMultiplexer connection, TimeProvider timeProvider, bool ownsConnection, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.connection = connection;
         this.database = connection.GetDatabase();
@@ -58,6 +60,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         this.ownsConnection = ownsConnection;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <summary>Verifies the store can be reached; Redis needs no schema provisioning.</summary>
@@ -76,6 +79,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider used to bake schema metadata into the package at add time.</param>
     /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
+    /// <param name="signer">An optional control-plane signer that signs each compiled executor's manifest at add time (design §3.3, §12); <see langword="null"/> to store packages unsigned.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened store (it owns and disposes the connection).</returns>
     public static async ValueTask<RedisWorkflowCatalogStore> ConnectAsync(
@@ -83,12 +87,13 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         cancellationToken.ThrowIfCancellationRequested();
         IConnectionMultiplexer connection = await ConnectionMultiplexer.ConnectAsync(configuration).ConfigureAwait(false);
-        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true, metadataProvider, executorProvider);
+        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: true, metadataProvider, executorProvider, signer);
     }
 
     /// <summary>Creates a catalog store over an existing connection (the caller keeps ownership).</summary>
@@ -96,13 +101,14 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider used to bake schema metadata into the package at add time.</param>
     /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
+    /// <param name="signer">An optional control-plane signer that signs each compiled executor's manifest at add time (design §3.3, §12); <see langword="null"/> to store packages unsigned.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The store.</returns>
-    public static RedisWorkflowCatalogStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null, CancellationToken cancellationToken = default)
+    public static RedisWorkflowCatalogStore Connect(IConnectionMultiplexer connection, TimeProvider? timeProvider = null, IWorkflowMetadataProvider? metadataProvider = null, IWorkflowExecutorProvider? executorProvider = null, IExecutorPackageSigner? signer = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connection);
         cancellationToken.ThrowIfCancellationRequested();
-        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false, metadataProvider, executorProvider);
+        return new RedisWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, ownsConnection: false, metadataProvider, executorProvider, signer);
     }
 
     /// <inheritdoc/>
@@ -508,7 +514,7 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         RedisResult reserved = await this.database.ScriptEvaluateAsync(ReserveVersionScript, [CounterKey(baseWorkflowId)]).ConfigureAwait(false);
         int versionNumber = (int)(long)reserved;
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+        CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
 
         // Build the version document as its durable BYTES (not a standalone CatalogVersion value); store those verbatim
         // in the "doc" field, then realize a pooled, disposable document over the owned bytes for the caller-owned return.

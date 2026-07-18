@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Text;
+using Corvus.Text.Json.Arazzo.Execution;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -34,14 +35,16 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
 
-    private PostgresWorkflowCatalogStore(NpgsqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private PostgresWorkflowCatalogStore(NpgsqlDataSource dataSource, bool ownsDataSource, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.dataSource = dataSource;
         this.ownsDataSource = ownsDataSource;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <summary>
@@ -78,12 +81,13 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<PostgresWorkflowCatalogStore>(
-            new PostgresWorkflowCatalogStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+            new PostgresWorkflowCatalogStore(NpgsqlDataSource.Create(connectionString), ownsDataSource: true, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
     }
 
     /// <summary>Provisions the catalog schema over a caller-supplied data source.</summary>
@@ -120,12 +124,13 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dataSource);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<PostgresWorkflowCatalogStore>(
-            new PostgresWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider));
+            new PostgresWorkflowCatalogStore(dataSource, ownsDataSource: false, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer));
     }
 
     /// <summary>Disposes the data source if this store created it (from a connection string).</summary>
@@ -530,7 +535,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             versionNumber = Convert.ToInt32(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture) + 1;
         }
 
-        CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+        CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
         TagSet tags = metadata.Tags;
         SecurityTagSet securityTags = metadata.SecurityTags;
 

@@ -5,6 +5,7 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using Corvus.Text.Json.Arazzo.Execution;
 using Microsoft.Data.Sqlite;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
@@ -33,14 +34,16 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     private readonly TimeProvider timeProvider;
     private readonly IWorkflowMetadataProvider? metadataProvider;
     private readonly IWorkflowExecutorProvider? executorProvider;
+    private readonly IExecutorPackageSigner? signer;
     private readonly SemaphoreSlim gate = new(1, 1);
 
-    private SqliteWorkflowCatalogStore(SqliteConnection connection, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider)
+    private SqliteWorkflowCatalogStore(SqliteConnection connection, TimeProvider timeProvider, IWorkflowMetadataProvider? metadataProvider, IWorkflowExecutorProvider? executorProvider, IExecutorPackageSigner? signer)
     {
         this.connection = connection;
         this.timeProvider = timeProvider;
         this.metadataProvider = metadataProvider;
         this.executorProvider = executorProvider;
+        this.signer = signer;
     }
 
     /// <summary>Provisions the catalog schema (table and indexes) against a file database.</summary>
@@ -63,6 +66,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
     /// <param name="timeProvider">The time source for audit timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="metadataProvider">An optional provider that supplies metadata for the workflow versions added to the catalog.</param>
     /// <param name="executorProvider">An optional provider that compiles the workflow executor assembly baked into each added version; <see langword="null"/> to store packages without it.</param>
+    /// <param name="signer">An optional control-plane signer that signs each compiled executor's manifest at add time (design §3.3, §12); <see langword="null"/> to store packages unsigned.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The opened, schema-initialised store.</returns>
     public static async ValueTask<SqliteWorkflowCatalogStore> ConnectAsync(
@@ -70,6 +74,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         TimeProvider? timeProvider = null,
         IWorkflowMetadataProvider? metadataProvider = null,
         IWorkflowExecutorProvider? executorProvider = null,
+        IExecutorPackageSigner? signer = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
@@ -81,7 +86,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             using SqliteCommand schema = connection.CreateCommand();
             schema.CommandText = SchemaSql;
             await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return new SqliteWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider);
+            return new SqliteWorkflowCatalogStore(connection, timeProvider ?? TimeProvider.System, metadataProvider, executorProvider, signer);
         }
         catch
         {
@@ -392,7 +397,7 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
                 versionNumber = (int)(long)(await max.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! + 1;
             }
 
-            CatalogPackageProjection projection = CatalogPackage.Project(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider);
+            CatalogPackageProjection projection = await CatalogPackage.ProjectAsync(packageUtf8, baseWorkflowId, versionNumber, this.metadataProvider, this.executorProvider, this.signer, cancellationToken).ConfigureAwait(false);
             TagSet tags = metadata.Tags;
             SecurityTagSet securityTags = metadata.SecurityTags;
 
