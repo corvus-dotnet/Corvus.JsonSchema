@@ -27,12 +27,13 @@ public sealed class AccessRequestApprovalServiceTests
         => new(new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)).ToList(), "test"));
 
     // Submits the (pooled, disposable) draft request, disposing the draft once the service has read it; the created
-    // document is returned for the caller to assert on and dispose.
-    private static async Task<ParsedJsonDocument<AccessRequest>> SubmitRequestAsync(IAccessRequestApprovalService service, ParsedJsonDocument<AccessRequest> draft, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken = default)
+    // document is returned for the caller to assert on and dispose. The principal is what the service resolves
+    // claims-eligibility from (§16.5.3); pass null for a submit that is not claims-eligible.
+    private static async Task<ParsedJsonDocument<AccessRequest>> SubmitRequestAsync(IAccessRequestApprovalService service, ParsedJsonDocument<AccessRequest> draft, string actor, ClaimsPrincipal? principal, CancellationToken cancellationToken = default)
     {
         using (draft)
         {
-            return await service.SubmitAsync(draft.RootElement, actor, eligibleForSelfElevation, cancellationToken);
+            return await service.SubmitAsync(draft.RootElement, actor, principal, cancellationToken);
         }
     }
 
@@ -121,12 +122,14 @@ public sealed class AccessRequestApprovalServiceTests
     [TestMethod]
     public async Task An_eligible_requester_self_elevates_without_an_approver()
     {
-        Harness h = await Harness.CreateAsync();
+        // The deployment marks alice's principal claims-eligible; she is NOT an administrator, but the request is
+        // auto-approved (self-elevation, no human approver).
+        Harness h = await Harness.CreateAsync(selfElevationEligibility: static (_, _) => true);
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
 
-        // alice is NOT an administrator, but is eligible to self-elevate → the request is auto-approved.
         using (ParsedJsonDocument<AccessRequest> submitted = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
-            eligibleForSelfElevation: true,
+            alice,
             default))
         {
             submitted.RootElement.StatusValue.ShouldBe("Approved");
@@ -135,6 +138,34 @@ public sealed class AccessRequestApprovalServiceTests
 
         PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
         policy.ResolveGrantedScopes(Principal(("sub", "alice"))).ShouldContain("runs:write");
+    }
+
+    [TestMethod]
+    public async Task Claims_eligibility_is_resolved_inside_the_service_from_the_principal()
+    {
+        // §16.5.3: the service (not the caller) maps the requester's claims to self-elevation eligibility. A deployment
+        // predicate marks a principal in the 'arazzo-admins' group eligible; the same submit by a principal lacking the
+        // group stays pending — proving the claims term now lives in SubmitAsync, keyed on the principal it is handed.
+        Harness h = await Harness.CreateAsync(selfElevationEligibility: static (p, _) => p.HasClaim("groups", "arazzo-admins"));
+
+        ClaimsPrincipal eligible = Principal(("sub", "alice"), ("groups", "arazzo-admins"));
+        using (ParsedJsonDocument<AccessRequest> approved = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
+            "alice",
+            eligible,
+            default))
+        {
+            approved.RootElement.StatusValue.ShouldBe("Approved");
+            approved.RootElement.GrantedBindingIdOrNull.ShouldNotBeNull();
+        }
+
+        ClaimsPrincipal notEligible = Principal(("sub", "bob"));
+        using (ParsedJsonDocument<AccessRequest> pending = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "bob"),
+            "bob",
+            notEligible,
+            default))
+        {
+            pending.RootElement.StatusValue.ShouldBe("Pending");
+        }
     }
 
     [TestMethod]
@@ -195,7 +226,7 @@ public sealed class AccessRequestApprovalServiceTests
         // A crafted id containing a quote would break out of the sys:workflow == '...' literal — rejected up front.
         await Should.ThrowAsync<AccessRequestStateException>(async () => await SubmitRequestAsync(h.Service, AccessRequest.Draft("evil' || $claims.superset || 'x", ["runs:write"], "sub", "alice"),
             "alice",
-            eligibleForSelfElevation: false,
+            principal: null,
             default));
     }
 
@@ -247,7 +278,7 @@ public sealed class AccessRequestApprovalServiceTests
         // alice self-elevates (NOT claims-eligible) — the stored eligibility auto-approves a fresh active grant.
         using (ParsedJsonDocument<AccessRequest> activated = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
-            eligibleForSelfElevation: false,
+            principal: null,
             default))
         {
             activated.RootElement.StatusValue.ShouldBe("Approved");
@@ -272,7 +303,7 @@ public sealed class AccessRequestApprovalServiceTests
         // A self-elevation for runs:write is not covered → it stays pending for a human approver.
         using (ParsedJsonDocument<AccessRequest> over = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
-            eligibleForSelfElevation: false,
+            principal: null,
             default))
         {
             over.RootElement.StatusValue.ShouldBe("Pending");
@@ -281,7 +312,7 @@ public sealed class AccessRequestApprovalServiceTests
         // A self-elevation for runs:read is covered → auto-approved.
         using (ParsedJsonDocument<AccessRequest> ok = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:read"], "sub", "alice"),
             "alice",
-            eligibleForSelfElevation: false,
+            principal: null,
             default))
         {
             ok.RootElement.StatusValue.ShouldBe("Approved");
@@ -309,7 +340,7 @@ public sealed class AccessRequestApprovalServiceTests
         (await h.Policy.GetBindingAsync(bindingId, default)).ShouldBeNull();
         using (ParsedJsonDocument<AccessRequest> later = await SubmitRequestAsync(h.Service, AccessRequest.Draft("nightly-reconcile", ["runs:write"], "sub", "alice"),
             "alice",
-            eligibleForSelfElevation: false,
+            principal: null,
             default))
         {
             later.RootElement.StatusValue.ShouldBe("Pending");
@@ -344,7 +375,7 @@ public sealed class AccessRequestApprovalServiceTests
 
         public TimeProvider Clock { get; }
 
-        public static async Task<Harness> CreateAsync()
+        public static async Task<Harness> CreateAsync(Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null)
         {
             var clock = new FixedClock(Now);
             var stateStore = new InMemoryWorkflowStateStore(clock);
@@ -357,7 +388,7 @@ public sealed class AccessRequestApprovalServiceTests
 
             var requests = new InMemoryAccessRequestStore(clock);
             var policy = new InMemorySecurityPolicyStore(clock);
-            var service = new AccessRequestApprovalService(requests, policy, catalog, clock);
+            var service = new AccessRequestApprovalService(requests, policy, catalog, clock, selfElevationEligibility: selfElevationEligibility);
             return new Harness(service, requests, policy, clock);
         }
 
@@ -365,7 +396,7 @@ public sealed class AccessRequestApprovalServiceTests
         {
             using ParsedJsonDocument<AccessRequest> submitted = await SubmitRequestAsync(this.Service, AccessRequest.Draft(Workflow, scopes, "sub", "alice", requestedDurationSeconds: requestedDurationSeconds),
                 "alice",
-                eligibleForSelfElevation: false,
+                principal: null,
                 default);
             submitted.RootElement.StatusValue.ShouldBe("Pending");
             return submitted.RootElement.IdValue;

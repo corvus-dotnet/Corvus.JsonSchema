@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -15,13 +16,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 public interface IAccessRequestApprovalService
 {
-    /// <summary>Submits a request; auto-approves it (self-elevation) when the requester is eligible.</summary>
+    /// <summary>Submits a request; auto-approves it (self-elevation) when the requester is eligible. The service
+    /// resolves eligibility itself (§16.5.3): the deployment's self-elevation predicate over the requester's claims,
+    /// unioned with any stored approver-granted eligibility.</summary>
     /// <param name="draft">The draft request carrying the create-content (subject = the requester) as JSON values.</param>
     /// <param name="actor">The requester's audit identity.</param>
-    /// <param name="eligibleForSelfElevation">Whether the requester is eligible to self-elevate this request.</param>
+    /// <param name="principal">The requester's authenticated principal, whose claims the service tests against the deployment's self-elevation predicate; <see langword="null"/> resolves claims-eligibility to false (stored eligibility still applies).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request — pending, or already approved when self-elevated.</returns>
-    ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken);
+    ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, ClaimsPrincipal? principal, CancellationToken cancellationToken);
 
     /// <summary>Approves a pending request, writing the time-boxed entitlement (the approver must be a §15 administrator of the target workflow).</summary>
     /// <param name="requestId">The request id.</param>

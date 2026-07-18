@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
@@ -39,6 +40,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     private readonly TimeProvider timeProvider;
     private readonly AccessRequestApprovalOptions options;
     private readonly PersistentRowSecurityPolicy? rowSecurity;
+    private readonly Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility;
 
     /// <summary>Initializes a new instance of the <see cref="AccessRequestApprovalService"/> class.</summary>
     /// <param name="requests">The access-request store.</param>
@@ -47,13 +49,15 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <param name="timeProvider">The time source for grant expiry; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="options">The platform cap (max TTL + grantable scopes); defaults to run-access-only, 8h.</param>
     /// <param name="rowSecurity">The in-process policy to refresh after a grant/revoke so it takes effect immediately; optional.</param>
+    /// <param name="selfElevationEligibility">The deployment's predicate deciding whether a requester's claims make them eligible to self-elevate a request (§16.5.3); when it returns <see langword="true"/> the request is auto-approved without a human approver. Default: never claims-eligible (stored eligibility still applies).</param>
     public AccessRequestApprovalService(
         IAccessRequestStore requests,
         ISecurityPolicyStore policy,
         ISecuredWorkflowCatalog catalog,
         TimeProvider? timeProvider = null,
         AccessRequestApprovalOptions? options = null,
-        PersistentRowSecurityPolicy? rowSecurity = null)
+        PersistentRowSecurityPolicy? rowSecurity = null,
+        Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null)
     {
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(policy);
@@ -64,31 +68,35 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.options = options ?? new AccessRequestApprovalOptions();
         this.rowSecurity = rowSecurity;
+        this.selfElevationEligibility = selfElevationEligibility;
     }
 
     /// <summary>
     /// Submits a request. Any authenticated principal may submit; the caller sets the request's subject to the
-    /// requester (so a grant can never target a third party). When <paramref name="eligibleForSelfElevation"/> is
-    /// <see langword="true"/> — the requester is eligible to self-elevate exactly this — the request is auto-approved
+    /// requester (so a grant can never target a third party). When the requester is eligible to self-elevate exactly
+    /// this — by claims (the deployment's <see cref="selfElevationEligibility"/> predicate over
+    /// <paramref name="principal"/>) or by a stored approver-granted assignment — the request is auto-approved
     /// (self-elevation, no human approver); otherwise it is created pending an administrator's decision.
     /// </summary>
     /// <param name="draft">The draft request carrying the create-content (subject = the requester) as JSON values.</param>
     /// <param name="actor">The requester's audit identity.</param>
-    /// <param name="eligibleForSelfElevation">Whether the requester is eligible to self-elevate this request (caller-resolved from claims for now; §16.5.3).</param>
+    /// <param name="principal">The requester's authenticated principal, tested against the deployment's self-elevation predicate; <see langword="null"/> resolves claims-eligibility to false.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request — pending, or already approved when self-elevated.</returns>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, bool eligibleForSelfElevation, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, ClaimsPrincipal? principal, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(actor);
         ValidateWorkflowId(draft.BaseWorkflowIdValue);
 
         ParsedJsonDocument<AccessRequest> created = await this.requests.CreateAsync(draft, actor, cancellationToken).ConfigureAwait(false);
 
-        // Self-elevation eligibility is symmetric to capability (§16.5.3): claims ∪ stored eligibility. The caller
-        // resolves the IdP-coarse claims part; here we add the approver-granted part — a stored eligibility assignment
-        // (an eligibleOnly binding) for this subject + workflow + scopes. Either source auto-approves into a fresh,
-        // time-boxed active grant; otherwise the request stays pending for a human approver.
-        bool eligible = eligibleForSelfElevation || await this.IsStoredEligibleAsync(draft, cancellationToken).ConfigureAwait(false);
+        // Self-elevation eligibility is symmetric to capability (§16.5.3): claims ∪ stored eligibility. The claims part
+        // is the deployment's self-elevation predicate over the requester's principal (a group/role marker → eligible);
+        // the stored part is an approver-granted assignment (an eligibleOnly binding) for this subject + workflow +
+        // scopes. Either source auto-approves into a fresh, time-boxed active grant; otherwise the request stays pending
+        // for a human approver. The claims term is evaluated first (in-memory, no store round-trip).
+        bool eligible = (principal is not null && this.selfElevationEligibility?.Invoke(principal, draft) == true)
+            || await this.IsStoredEligibleAsync(draft, cancellationToken).ConfigureAwait(false);
         if (!eligible)
         {
             return created;

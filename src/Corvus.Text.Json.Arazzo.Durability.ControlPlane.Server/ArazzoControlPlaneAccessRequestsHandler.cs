@@ -17,11 +17,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// enforces (and a row-level visibility check on the read paths), not a global capability scope.
 /// </summary>
 /// <remarks>
-/// The requesting subject and self-elevation eligibility are read from the current principal (the subject claim the
-/// deployment configures, and an optional eligibility predicate); the approver/visibility identity is the unforgeable
-/// <c>sys:</c> identity the row-security policy stamps (<see cref="ControlPlaneAccess.InternalTags"/>). A grant can
-/// therefore never target a third party, and only the requester or an administrator of the target workflow can see a
-/// request.
+/// The requesting subject is read from the current principal (the subject claim the deployment configures), and the
+/// whole principal is handed to the approval service, which resolves self-elevation eligibility itself (§16.5.3); the
+/// approver/visibility identity is the unforgeable <c>sys:</c> identity the row-security policy stamps
+/// (<see cref="ControlPlaneAccess.InternalTags"/>). A grant can therefore never target a third party, and only the
+/// requester or an administrator of the target workflow can see a request.
 /// </remarks>
 public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequestsHandler
 {
@@ -35,16 +35,14 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
     private readonly string subjectClaimType;
-    private readonly Func<ClaimsPrincipal, AccessRequest, bool>? eligibility;
     private readonly ILogger? auditLogger;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneAccessRequestsHandler"/> class.</summary>
-    /// <param name="approval">The approval service the submit/approve/deny/withdraw/revoke operations delegate to.</param>
+    /// <param name="approval">The approval service the submit/approve/deny/withdraw/revoke operations delegate to (it resolves self-elevation eligibility from the principal, §16.5.3).</param>
     /// <param name="requests">The access-request store the list/get read paths use.</param>
     /// <param name="catalog">The catalog client, for the §15-administrator visibility checks on the read paths.</param>
     /// <param name="access">Resolves the caller's deployment identity and the current principal per request.</param>
     /// <param name="subjectClaimType">The claim type identifying the requesting subject (and that a grant keys on); default <c>sub</c>.</param>
-    /// <param name="eligibility">An optional predicate deciding whether a requester is eligible to self-elevate a request (§16.5.3); default never eligible.</param>
     /// <param name="auditLogger">The logger for the §850 governance-decision audit (who decided which request, with what outcome); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     internal ArazzoControlPlaneAccessRequestsHandler(
         IAccessRequestApprovalService approval,
@@ -52,7 +50,6 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         ISecuredWorkflowCatalog catalog,
         ControlPlaneAccess access,
         string subjectClaimType = "sub",
-        Func<ClaimsPrincipal, AccessRequest, bool>? eligibility = null,
         ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(approval);
@@ -65,7 +62,6 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         this.catalog = catalog;
         this.access = access;
         this.subjectClaimType = subjectClaimType;
-        this.eligibility = eligibility;
         this.auditLogger = auditLogger;
     }
 
@@ -84,8 +80,8 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
         // The draft request the approval pipeline + store carry: the body's already-parsed JSON values
         // (baseWorkflowId/requestedScopes/reason) copied bytes-to-bytes — no List<string>, no per-field strings — plus the
-        // principal-derived subject/label. It is a pooled, disposable document the eligibility predicate and SubmitAsync
-        // read; the store stamps id/etag/created.
+        // principal-derived subject/label. It is a pooled, disposable document SubmitAsync reads; the store stamps
+        // id/etag/created.
         using ParsedJsonDocument<AccessRequest> draft = AccessRequest.Draft(
             (JsonElement)parameters.Body.BaseWorkflowId,
             (JsonElement)parameters.Body.RequestedScopes,
@@ -95,10 +91,10 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             (JsonElement)parameters.Body.Reason,
             parameters.Body.RequestedDurationSeconds.IsNotUndefined() ? (long)parameters.Body.RequestedDurationSeconds : null);
 
-        bool eligible = this.eligibility?.Invoke(principal, draft.RootElement) ?? false;
+        // The service resolves self-elevation eligibility from the principal itself (§16.5.3: claims ∪ stored).
         try
         {
-            ParsedJsonDocument<AccessRequest> created = await this.approval.SubmitAsync(draft.RootElement, ActorOf(principal), eligible, cancellationToken).ConfigureAwait(false);
+            ParsedJsonDocument<AccessRequest> created = await this.approval.SubmitAsync(draft.RootElement, ActorOf(principal), principal, cancellationToken).ConfigureAwait(false);
             workspace.TakeOwnership(created);
             return SubmitAccessRequestResult.Created(ToView(created.RootElement), workspace);
         }
