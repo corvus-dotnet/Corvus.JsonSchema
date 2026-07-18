@@ -16,7 +16,10 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Postgres;
+using Corvus.Text.Json.Arazzo.Durability.Vault;
 using Corvus.Text.Json.AsyncApi.Nats;
+using VaultSharp;
+using VaultSharp.V1.AuthMethods.Token;
 using Corvus.Text.Json.Internal;
 using Npgsql;
 using System.Security.Claims;
@@ -96,9 +99,26 @@ PostgresWorkflowStateStore postgresStateStore = await PostgresWorkflowStateStore
 IWorkflowStateStore stateStore = builder.Configuration["ControlPlane:CheckpointProtectionKey"] is { Length: > 0 } checkpointKey
     ? new ProtectedWorkflowStateStore(postgresStateStore, new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey)))
     : postgresStateStore;
+// Executor-package signing (#879): when the AppHost provisions a control-plane signing vault, sign each compiled
+// executor's manifest with its HashiCorp Vault Transit key at catalog-add. The private key stays in that vault (the
+// sign runs server-side), a vault the RUNNER cannot reach — the runner verifies with only the exported public key it
+// carries in its own deployment config, so a compromised runner cannot forge a package. Absent the signing vault (bare
+// host / single-process runs), versions are stored unsigned and the runner loads them without a signature check.
+IExecutorPackageSigner? executorSigner = null;
+if (builder.Configuration["ControlPlane:SigningVault:Address"] is { Length: > 0 } signingVaultAddress
+    && builder.Configuration["SIGNING_VAULT_TOKEN"] is { Length: > 0 } signingVaultToken)
+{
+    string signingKeyName = builder.Configuration["ControlPlane:SigningVault:KeyName"] ?? "arazzo-executor-signing";
+    string signingKeyId = builder.Configuration["ControlPlane:SigningVault:KeyId"] ?? signingKeyName;
+    string signingMount = builder.Configuration["ControlPlane:SigningVault:MountPoint"] ?? "transit";
+    string signingAlgorithm = builder.Configuration["ControlPlane:SigningVault:Algorithm"] ?? ExecutorSignatureAlgorithms.EcdsaP256Sha256;
+    var signingVaultClient = new VaultClient(new VaultClientSettings(signingVaultAddress, new TokenAuthMethodInfo(signingVaultToken)));
+    executorSigner = new VaultTransitExecutorPackageSigner(signingVaultClient, signingKeyName, signingKeyId, signingAlgorithm, signingMount);
+}
+
 // The executor provider compiles a runnable executor into each catalogued version at add time (alongside the typed
 // metadata) — so a resumed run can re-enter the real generated Arazzo executor (live execution, §5/§8).
-PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider());
+PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider(), signer: executorSigner);
 
 // Live execution (§5/§8): a resumed run re-enters its baked executor, calling the real external source services
 // (onboarding, ledger, kyc — their own processes + databases). The resumer is built now but invoked only after the

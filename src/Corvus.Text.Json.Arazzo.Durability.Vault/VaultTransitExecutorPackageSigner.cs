@@ -95,8 +95,8 @@ public sealed class VaultTransitExecutorPackageSigner : IExecutorPackageSigner
     }
 
     // Strips Vault's "vault:v<n>:" envelope and decodes the base64 payload — base64url for the ECDSA jws marshaling,
-    // standard base64 for the raw RSA-PSS signature.
-    private static byte[] DecodeVaultSignature(string vaultSignature, bool base64Url)
+    // standard base64 for the raw RSA-PSS signature. Internal for round-trip testing without a live Vault.
+    internal static byte[] DecodeVaultSignature(string vaultSignature, bool base64Url)
     {
         if (string.IsNullOrEmpty(vaultSignature))
         {

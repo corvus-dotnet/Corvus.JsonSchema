@@ -169,12 +169,25 @@ else
     binder = DraftRunHost.CreateBinder(sourceClients, messageTransport);
 }
 
+// Executor-package verification (#879): the runner trusts the control plane's executor-signing PUBLIC key, provisioned
+// into its own config at deployment time (here the AppHost's signing-vault-init exports it to a file — the stand-in for
+// a ConfigMap/mounted secret the platform drops for the workload). The runner loads that key into its trust store and
+// verifies every catalogued executor's signature before activating it; it NEVER contacts the signing vault, so it holds
+// no material it could sign with. Absent the trust config (bare-host runs), it loads packages without a signature check.
+IExecutorPackageVerifier? executorVerifier = null;
+if (builder.Configuration["Runner:ExecutorTrust:PublicKeyFile"] is { Length: > 0 } trustKeyFile && File.Exists(trustKeyFile))
+{
+    string trustKeyId = builder.Configuration["Runner:ExecutorTrust:KeyId"] ?? "arazzo-executor-signing";
+    executorVerifier = TrustStoreExecutorPackageVerifier.FromPem(
+        new Dictionary<string, string>(StringComparer.Ordinal) { [trustKeyId] = await File.ReadAllTextAsync(trustKeyFile) });
+}
+
 // Catalogued-run execution (design §5/§8, §11 Phase 2): the runner claims a Pending run and re-enters the version's
 // baked executor.dll through the real HostedWorkflowResumer — loading it into a collectible ALC on first use and
 // running it against the binder above. This is the same live-execution path the control-plane host runs in-process;
 // wiring it here is what makes the separate runner genuinely EXECUTE catalogued runs (it previously only leased them
 // and marked them complete via a stub). The dispatch/timer-resume loops consume it as their WorkflowResumer.
-WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(), binder).AsResumer();
+WorkflowResumer catalogResumer = new HostedWorkflowResumer(catalogStore, new WorkflowExecutorLoader(verifier: executorVerifier), binder).AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 
 // The consumer side of the async KYC verdict exchange (design §8): subscribe to kyc.verdict and, per verdict, resume

@@ -5,7 +5,8 @@
 // The Aspire composition root for the Arazzo control-plane demo. This is the *real* host wiring: each piece is
 // a first-class resource so the Aspire dashboard becomes the OpenTelemetry viewer (traces/logs/metrics) and the
 // single launch point. It composes the two-process topology (control plane + runner) plus a locally-runnable
-// HashiCorp Vault for source credentials (design §13); Keycloak for OIDC and optionally Postgres join here next.
+// HashiCorp Vault for source credentials (design §13), a SEPARATE HashiCorp Vault holding the control plane's
+// executor-signing key (#879, the custody split), and Keycloak for OIDC.
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
 // The single AppHost-level switch for the *example* seeding — the infrastructure counterpart to the runtime
@@ -96,9 +97,49 @@ if (!OperatingSystem.IsWindows())
 }
 string vaultWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid.wrap");
 
+// Executor-package signing (#879). A SEPARATE HashiCorp Vault — the control-plane SIGNING vault — holds the private key
+// that signs each compiled executor's manifest at catalog-add. It is deliberately NOT the runner's credential vault
+// above: the custody split is the whole point (a runner that verifies with only the public key can never forge a
+// package). The control plane reaches this vault to sign; the runner never does. Dev mode, in-memory, fresh each run.
+const string signingVaultRootToken = "arazzo-signing-dev-root-token";
+
+// The Transit key that signs, and the id both sides agree on: the control plane stamps it into each signature, the
+// runner selects the trusted public key by it. Same value keeps the demo simple.
+const string signingKeyName = "arazzo-executor-signing";
+
+// The control plane's SIGN-ONLY token: a fixed id the provisioner (root) mints against a policy allowing only
+// transit/sign on the key — least privilege, so the signer cannot administer the vault. Injected to the control plane.
+const string signingControlPlaneToken = "arazzo-cp-signing-token";
+
+// The public-key handoff: the provisioner exports the Transit key's PUBLIC half to a file here, and the runner reads it
+// into its trust store at startup. This is the demo's stand-in for how a real runner gets its trust anchor — deployment
+// configuration the platform provisions (a mounted ConfigMap / a file IaC drops), obtained out-of-band from the signing
+// authority, NEVER by the runner contacting the signing vault. The public key is not secret, so no wrapping/handoff
+// ceremony (unlike the AppRole SecretID above) — just a config file. World-writable dir for the rootless-podman writer.
+string signingHandoffDir = Path.Combine(Path.GetTempPath(), "arazzo-signing-" + Guid.NewGuid().ToString("N")[..12]);
+Directory.CreateDirectory(signingHandoffDir);
+if (!OperatingSystem.IsWindows())
+{
+    File.SetUnixFileMode(
+        signingHandoffDir,
+        UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+        | UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
+        | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+}
+string signingPublicKeyPath = Path.Combine(signingHandoffDir, "executor-signing.pub");
+
 // HashiCorp Vault, dev mode: unsealed, in-memory (fresh each run), KV v2 mounted at secret/. The secret *store*.
 var vault = builder.AddContainer("vault", "hashicorp/vault", "1.18")
     .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", vaultRootToken)
+    .WithEnvironment("VAULT_DEV_LISTEN_ADDRESS", "0.0.0.0:8200")
+    .WithArgs("server", "-dev")
+    .WithHttpEndpoint(targetPort: 8200, name: "http");
+
+// The control-plane SIGNING vault (#879) — a second, independent dev-mode Vault. Its Transit engine (enabled by the
+// signing-vault-init provisioner below) holds the executor-signing key; the control plane signs against it, the runner
+// never touches it. Kept separate from the runner's credential `vault` above so the custody split is real infrastructure.
+var signingVault = builder.AddContainer("signing-vault", "hashicorp/vault", "1.18")
+    .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", signingVaultRootToken)
     .WithEnvironment("VAULT_DEV_LISTEN_ADDRESS", "0.0.0.0:8200")
     .WithArgs("server", "-dev")
     .WithHttpEndpoint(targetPort: 8200, name: "http");
@@ -172,6 +213,38 @@ var vaultInit = builder.AddContainer("vault-init", "hashicorp/vault", "1.18")
     // valid terminal completion (not an unexpected stop to restart, nor a start failure) and hide it from the
     // dashboard once done — the standard init-container pattern. Without this the DCP treats the quick exit as
     // "failed to start" and retries it (harmless because the script is idempotent, but noisy and misleading).
+    .WithHiddenOnCompletion(0);
+
+// The signing-vault provisioner (#879) — the control plane's key-custody equivalent of the AppRole provisioner above:
+// enable the Transit engine, generate the ECDSA P-256 signing key IN the vault (its private half never leaves), grant a
+// SIGN-ONLY policy + a fixed-id token to the control plane (least privilege — it can sign, not administer), and export
+// the key's PUBLIC half to the shared handoff file for the runner's trust store. The public key is not secret, so it is
+// exported plainly (no response-wrapping). Idempotent on retry: transit enable is guarded, the key/policy upsert, and
+// the token create tolerates a duplicate id. The PEM is extracted from the JSON key read with grep/sed/printf (busybox
+// tools in the image — no jq): strip the field wrapper, then %b-expand the JSON \n escapes into a real PEM. A single
+// concatenated line (like the AppRole script above) — NOT a multi-line literal, whose CRLF line endings break /bin/sh.
+const string signingProvisionScript =
+    "set -e; " +
+    "until vault status >/dev/null 2>&1; do echo 'waiting for signing vault'; sleep 1; done; " +
+    "vault secrets enable transit 2>/dev/null || true; " +
+    "vault write -f transit/keys/arazzo-executor-signing type=ecdsa-p256; " +
+    // VaultSharp signs at transit/sign/<key>/<hash-algo> (the hash is a PATH segment), so the sign-only policy must grant
+    // the /* sub-path, not just the bare key path — otherwise the sign is permission-denied.
+    "echo 'path \"transit/sign/arazzo-executor-signing\" { capabilities = [\"update\"] } path \"transit/sign/arazzo-executor-signing/*\" { capabilities = [\"update\"] }' | vault policy write arazzo-signer -; " +
+    "vault token create -id=arazzo-cp-signing-token -policy=arazzo-signer -period=768h >/dev/null 2>&1 || true; " +
+    "KEY=$(vault read -format=json transit/keys/arazzo-executor-signing | grep -o '\"public_key\": *\"[^\"]*\"' | head -1 | sed -e 's/^\"public_key\": *\"//' -e 's/\"$//'); " +
+    "printf '%b' \"$KEY\" > /shared/executor-signing.pub; " +
+    "chmod 644 /shared/executor-signing.pub; " +
+    "echo signing-provisioning-complete; sleep 15";
+
+var signingVaultInit = builder.AddContainer("signing-vault-init", "hashicorp/vault", "1.18")
+    .WithEnvironment("VAULT_ADDR", signingVault.GetEndpoint("http"))
+    .WithEnvironment("VAULT_TOKEN", signingVaultRootToken)
+    // The public-key export lands here; the runner (a host process) reads it from the same host dir (its trust anchor).
+    .WithBindMount(signingHandoffDir, "/shared")
+    .WithEntrypoint("/bin/sh")
+    .WithArgs("-c", signingProvisionScript)
+    .WaitFor(signingVault)
     .WithHiddenOnCompletion(0);
 
 // Keycloak — the identity provider (design §16). Bootstrapped declaratively along the real/example seam (§W4). The base
@@ -249,6 +322,16 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     // §14 at rest: the per-boot checkpoint-encryption key (see its generation above) — checkpoints, step
     // outputs included, are AES-GCM-wrapped by the application before Postgres sees them.
     .WithEnvironment("ControlPlane__CheckpointProtectionKey", checkpointProtectionKey)
+    // #879 executor-package signing: the control plane signs each compiled executor's manifest against the signing
+    // vault's Transit key at catalog-add, using its sign-only token. The runner verifies with the public key alone.
+    .WithEnvironment("ControlPlane__SigningVault__Address", signingVault.GetEndpoint("http"))
+    .WithEnvironment("SIGNING_VAULT_TOKEN", signingControlPlaneToken)
+    .WithEnvironment("ControlPlane__SigningVault__KeyName", signingKeyName)
+    .WithEnvironment("ControlPlane__SigningVault__KeyId", signingKeyName)
+    .WithEnvironment("ControlPlane__SigningVault__MountPoint", "transit")
+    .WithEnvironment("ControlPlane__SigningVault__Algorithm", "ecdsa-p256-sha256")
+    // Wait for the signing key + sign token to exist before the control plane seeds (seeding builds + signs executors).
+    .WaitForCompletion(signingVaultInit)
     .WithReference(keycloak)
     .WaitFor(keycloak)
     // Grantee-directory (§16.5.4): the control plane resolves real Keycloak users/groups/roles for the grant pickers
@@ -306,6 +389,11 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // principal / platform attestation supplies this; the sample simulates it — see the samples README.)
     .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)
     .WithEnvironment("Runner__Vault__WrapTokenFile", vaultWrapTokenPath)
+    // #879 executor-package trust: the runner's trust anchor — the signing key's PUBLIC half, exported by the signing
+    // provisioner to this host file (its stand-in for a platform-provisioned config artifact). The runner reads it into
+    // its trust store and verifies every catalogued executor before loading it; it never reaches the signing vault.
+    .WithEnvironment("Runner__ExecutorTrust__PublicKeyFile", signingPublicKeyPath)
+    .WithEnvironment("Runner__ExecutorTrust__KeyId", signingKeyName)
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
     // executing each against the real source services (below).
     .WithEnvironment("Runner__Environment", "development")
@@ -329,6 +417,8 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // vault-init reliably reaches Finished (it lingers briefly so the DCP observes Running, then WithHiddenOnCompletion
     // hides it) — the earlier reason we couldn't WaitForCompletion here (the one-shot never being seen as completed).
     .WaitForCompletion(vaultInit)
+    // #879: also gate on the signing provisioner so the exported public-key file exists before the runner reads it.
+    .WaitForCompletion(signingVaultInit)
     // Aspire-managed HTTP endpoint (no hardcoded port). The runner is an internal worker, so Aspire proxies this
     // endpoint; letting Aspire assign the port (rather than the old launchSettings applicationUrl=5280) is what stops
     // the app from binding the same port as the DCP proxy — the collision that was crashing the runner on startup.
