@@ -151,6 +151,22 @@ public interface ISecurityPolicyStore
         return n > bound ? (bound, true) : (n, false);
     }
 
+    /// <summary>Lists the bindings whose subject is exactly (<paramref name="claimType"/>, <paramref name="claimValue"/>)
+    /// — the by-subject reverse-index lookup behind self-elevation eligibility (design §16.5.3), which replaces a full
+    /// cold scan of the binding store. Naturally bounded (a subject holds few bindings). The default filters
+    /// <see cref="ListBindingsAsync(CancellationToken)"/> in memory <b>string-free</b> (the subject's UTF-8 is compared
+    /// against each binding's claim bytes, no per-binding claim string); a backend whose store can filter server-side
+    /// overrides it with a native equality query on its claim-type/value columns so the read itself is bounded.</summary>
+    /// <param name="claimType">The subject's claim type (its JSON value); matched for exact (ordinal) equality.</param>
+    /// <param name="claimValue">The subject's claim value (its JSON value); matched for exact (ordinal) equality — a binding with no claim value never matches.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The matching bindings (ascending by <c>(order, id)</c>), as a pooled batch the caller must dispose.</returns>
+    async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsForSubjectAsync(JsonString claimType, JsonString claimValue, CancellationToken cancellationToken)
+    {
+        using PooledDocumentList<SecurityBindingDocument> all = await this.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        return SecurityBindingPaging.FilterBySubject(all, claimType, claimValue);
+    }
+
     /// <summary>Updates a binding's content under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
     /// <param name="draft">The draft binding carrying the new operator-supplied content as JSON values; the store carries the id/created metadata forward and stamps the updated etag/last-updated metadata.</param>

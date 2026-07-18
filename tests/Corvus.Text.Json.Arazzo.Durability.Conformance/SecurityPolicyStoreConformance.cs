@@ -468,6 +468,61 @@ public abstract class SecurityPolicyStoreConformance
     }
 
     [TestMethod]
+    public async Task Listing_bindings_by_subject_returns_only_that_subjects_bindings_in_order()
+    {
+        // The by-subject reverse index (design §16.5.3) behind self-elevation eligibility: given a subject
+        // (claim type + value), return exactly that subject's bindings, in the store's (order, id) order — never a
+        // different subject's, and never a binding that shares only the type or only the value.
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+
+        // Two bindings for the SAME subject (role=operator), plus a different value, a different type, and a
+        // claim-value-less binding — added out of order to prove the store establishes the (order, id) order.
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Rules("r-a"), VerbGrant.None, VerbGrant.None, order: 20), "alice", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Rules("r-b"), VerbGrant.None, VerbGrant.None, order: 5), "alice", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "viewer", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 1), "alice", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("group", "operator", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 2), "alice", default))
+        {
+        }
+
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("*", null, VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 3), "alice", default))
+        {
+        }
+
+        // Exactly the two role=operator bindings, in (order asc) order: r-b (5) before r-a (20).
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> type = AsJsonString("role"u8))
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> value = AsJsonString("operator"u8))
+        using (PooledDocumentList<SecurityBindingDocument> subject = await store.ListBindingsForSubjectAsync(type.RootElement, value.RootElement, default))
+        {
+            subject.Select(b => RuleNames(b.Read).Single()).ShouldBe(["r-b", "r-a"]);
+        }
+
+        // A subject that holds no bindings (the type matches, the value does not) → empty.
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> type = AsJsonString("role"u8))
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> value = AsJsonString("nobody"u8))
+        using (PooledDocumentList<SecurityBindingDocument> none = await store.ListBindingsForSubjectAsync(type.RootElement, value.RootElement, default))
+        {
+            none.Count.ShouldBe(0);
+        }
+
+        // A different claim TYPE with the same value is a different subject (group=operator ≠ role=operator).
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> type = AsJsonString("group"u8))
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> value = AsJsonString("operator"u8))
+        using (PooledDocumentList<SecurityBindingDocument> group = await store.ListBindingsForSubjectAsync(type.RootElement, value.RootElement, default))
+        {
+            group.Select(b => b.ClaimTypeValue).ShouldBe(["group"]);
+        }
+    }
+
+    [TestMethod]
     public async Task A_binding_updates_and_deletes_under_optimistic_concurrency()
     {
         ISecurityPolicyStore store = await this.NewStoreAsync();

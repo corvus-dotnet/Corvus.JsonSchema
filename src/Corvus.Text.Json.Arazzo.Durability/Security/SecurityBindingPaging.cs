@@ -140,6 +140,66 @@ internal static class SecurityBindingPaging
         }
     }
 
+    /// <summary>Filters <paramref name="all"/> (a full read) to the bindings whose subject is exactly
+    /// (<paramref name="claimType"/>, <paramref name="claimValue"/>) — the in-memory default behind the by-subject
+    /// reverse index (design §16.5.3). It is <b>bytes-native</b>: the subject's UTF-8 is decoded once and each binding's
+    /// claim type/value is compared as an unescaped-UTF-8 span (ordinal, no per-binding claim string). A binding with no
+    /// claim value never matches (mirrors the single-clause access-request subject). Each match is re-parsed into the
+    /// returned (owned) list so the caller may dispose <paramref name="all"/>; the (order, id) order of the full read is
+    /// preserved. A native backend query returns only the matched rows, so it never pays the full read or this copy.</summary>
+    /// <param name="all">The store's full binding read (the caller disposes it).</param>
+    /// <param name="claimType">The subject's claim type (its JSON value), matched for exact equality.</param>
+    /// <param name="claimValue">The subject's claim value (its JSON value), matched for exact equality.</param>
+    /// <returns>The matching bindings, owning their pooled documents.</returns>
+    internal static PooledDocumentList<SecurityBindingDocument> FilterBySubject(PooledDocumentList<SecurityBindingDocument> all, JsonString claimType, JsonString claimValue)
+    {
+        var matches = new PooledDocumentList<SecurityBindingDocument>(0);
+        try
+        {
+            // Decode the subject once into pooled UTF-8 held for the whole scan; each binding compares span-to-span.
+            using UnescapedUtf8JsonString typeUtf8 = claimType.GetUtf8String();
+            using UnescapedUtf8JsonString valueUtf8 = claimValue.GetUtf8String();
+            ReadOnlySpan<byte> typeSpan = typeUtf8.Span;
+            ReadOnlySpan<byte> valueSpan = valueUtf8.Span;
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                SecurityBindingDocument binding = all[i];
+
+                using (UnescapedUtf8JsonString bindingType = binding.ClaimType.GetUtf8String())
+                {
+                    if (!bindingType.Span.SequenceEqual(typeSpan))
+                    {
+                        continue;
+                    }
+                }
+
+                if (!binding.ClaimValue.IsNotUndefined())
+                {
+                    continue; // no claim value on the binding → cannot match a single-clause subject (fail-safe)
+                }
+
+                using (UnescapedUtf8JsonString bindingValue = binding.ClaimValue.GetUtf8String())
+                {
+                    if (!bindingValue.Span.SequenceEqual(valueSpan))
+                    {
+                        continue;
+                    }
+                }
+
+                // Re-parse into the returned list so it is independent of `all` (which the caller disposes).
+                matches.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(JsonMarshal.GetRawUtf8Value(binding).Memory.Span));
+            }
+
+            return matches;
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+    }
+
     // True when (binding.order, binding.id) sorts strictly after the cursor in the (order asc, id ordinal asc) order.
     private static bool After(SecurityBindingDocument binding, int cursorOrder, ReadOnlySpan<byte> cursorId)
     {

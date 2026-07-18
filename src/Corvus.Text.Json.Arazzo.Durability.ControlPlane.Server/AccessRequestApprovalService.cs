@@ -473,7 +473,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
     // Approver-granted eligibility (§16.5.3): is there an eligibleOnly binding for this subject that covers the
     // requested workflow + (capped) scopes and has not lapsed? Read from the store directly — the resolver excludes
-    // eligibility from active resolution. A cold submit-path scan over the bindings; a by-claim query is a later refinement.
+    // eligibility from active resolution. The by-subject reverse index returns only this requester's bindings (a native
+    // indexed lookup where the backend can filter server-side, a string-free in-memory filter otherwise), so the
+    // submit path no longer cold-scans every binding; the store guarantees the subject match, so this loop only checks
+    // eligible/not-lapsed/reach/scope.
     private async ValueTask<bool> IsStoredEligibleAsync(AccessRequest draft, CancellationToken cancellationToken)
     {
         List<string> capped = this.CapScopes(draft.RequestedScopesArray());
@@ -484,12 +487,13 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
         string ruleName = WorkflowRuleName(draft.BaseWorkflowIdValue);
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        using PooledDocumentList<SecurityBindingDocument> bindings = await this.policy.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SecurityBindingDocument> bindings = await this.policy.ListBindingsForSubjectAsync(
+            JsonString.From(draft.SubjectClaimType),
+            JsonString.From(draft.SubjectClaimValue),
+            cancellationToken).ConfigureAwait(false);
         foreach (SecurityBindingDocument binding in bindings)
         {
-            if (!binding.EligibleOnlyValue
-                || !string.Equals(binding.ClaimTypeValue, draft.SubjectClaimTypeValue, StringComparison.Ordinal)
-                || !string.Equals(binding.ClaimValueOrNull, draft.SubjectClaimValueValue, StringComparison.Ordinal))
+            if (!binding.EligibleOnlyValue)
             {
                 continue;
             }
