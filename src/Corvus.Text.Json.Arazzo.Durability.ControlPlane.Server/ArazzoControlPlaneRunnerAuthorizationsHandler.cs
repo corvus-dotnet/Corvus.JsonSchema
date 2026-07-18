@@ -137,11 +137,16 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return AuthorizeRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
-        // The runner must have registered for the environment (entered Pending) — there is nothing to authorize otherwise.
+        // Pre-authorization (design §5.5): an administrator may allow-list a runner BEFORE it registers, so an authorize
+        // of an unknown runner creates the authorization now (attributed to the admin) rather than 404-ing. When the runner
+        // later registers with a matching id, EnsurePendingAsync sees this already-Authorized row and leaves it unchanged,
+        // so the runner is dispatchable immediately with no second approval. Register-then-approve is the same code path —
+        // GetAsync then returns the runner's own Pending row.
         ParsedJsonDocument<EnvironmentRunnerAuthorization>? fetched = await this.authorizations.GetAsync(environment, runnerId, cancellationToken).ConfigureAwait(false);
+        bool preAuthorized = fetched is null;
         if (fetched is null)
         {
-            return AuthorizeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
+            fetched = await this.authorizations.EnsurePendingAsync(environment, runnerId, this.CallerActor(), cancellationToken).ConfigureAwait(false);
         }
 
         // Idempotent — authorizing an already-Authorized runner returns the existing record (status compared string-free).
@@ -151,9 +156,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return AuthorizeRunnerResult.Ok(ToView(fetched.RootElement), workspace);
         }
 
-        // The prior state names the authorization act: reinstating a quarantined runner and re-admitting a revoked one
-        // are distinct governance decisions from authorizing a freshly-registered (Pending) one.
-        string authorizeOutcome = fetched.RootElement.IsQuarantined ? "reinstated" : fetched.RootElement.IsRevoked ? "re-authorized" : "authorized";
+        // The prior state names the authorization act: pre-authorizing an unregistered runner, reinstating a quarantined
+        // one, and re-admitting a revoked one are distinct governance decisions from authorizing a freshly-registered one.
+        string authorizeOutcome = preAuthorized ? "pre-authorized" : fetched.RootElement.IsQuarantined ? "reinstated" : fetched.RootElement.IsRevoked ? "re-authorized" : "authorized";
         WorkflowEtag expectedEtag = fetched.RootElement.EtagValue;
         fetched.Dispose();
         try

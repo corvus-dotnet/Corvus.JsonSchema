@@ -91,15 +91,24 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
-    public async Task Authorizing_a_runner_that_never_registered_is_not_found()
+    public async Task Authorizing_a_runner_that_never_registered_pre_authorizes_it()
     {
         var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
-        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", default);
         await using Scoped host = await StartAsync(runnerAuth);
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
-        // The environment exists and acme administers it, but no Pending record exists for 'runner-unknown' → 404.
-        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-unknown/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        // Pre-authorization (§5.5): the admin allow-lists a runner that has NOT registered yet → an Authorized record is
+        // created directly, attributed to the admin (createdBy + decidedBy = acme), rather than 404-ing.
+        using Stj.JsonDocument preauth = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-expected/authorization", "acme"));
+        preauth.RootElement.GetProperty("status").GetString().ShouldBe("Authorized");
+        preauth.RootElement.GetProperty("runnerId").GetString().ShouldBe("runner-expected");
+        preauth.RootElement.GetProperty("createdBy").GetString().ShouldBe("acme");
+        preauth.RootElement.GetProperty("decidedBy").GetString().ShouldBe("acme");
+
+        // When the runner later registers with a matching id, EnsurePendingAsync leaves the Authorized row unchanged, so
+        // the pre-authorized runner is dispatchable immediately with no second approval.
+        using ParsedJsonDocument<EnvironmentRunnerAuthorization> afterRegister = await runnerAuth.EnsurePendingAsync("production", "runner-expected", "runner-expected", default);
+        afterRegister.RootElement.IsAuthorized.ShouldBeTrue();
     }
 
     [TestMethod]
