@@ -138,6 +138,96 @@ public partial class WorkflowExecutorEndToEndTests
         name.GetString().ShouldBe("Fido");
     }
 
+    // #866: a sub-workflow step binds a LITERAL (non-expression) parameter — the child receives it as a constant input.
+    private const string LiteralParamSubWorkflowDocument = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "t", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "petstore", "url": "./p.yaml", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "parent",
+              "steps": [
+                {
+                  "stepId": "callChild",
+                  "workflowId": "child",
+                  "parameters": [ { "name": "petId", "value": "42" } ]
+                }
+              ],
+              "outputs": { "name": "$steps.callChild.outputs.petName" }
+            },
+            {
+              "workflowId": "child",
+              "steps": [
+                {
+                  "stepId": "getPet",
+                  "operationId": "getPet",
+                  "parameters": [ { "name": "petId", "in": "path", "value": "$inputs.petId" } ],
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "petName": "$response.body#/name" }
+                }
+              ],
+              "outputs": { "petName": "$steps.getPet.outputs.petName" }
+            }
+          ]
+        }
+        """;
+
+    [TestMethod]
+    public void Emits_a_sub_workflow_step_binding_a_literal_parameter()
+    {
+        // #866: a sub-workflow step may bind a literal (non-expression) parameter value; it is projected into the
+        // child's inputs object as a constant JsonElement rather than throwing NotSupportedException at generation.
+        string source = EmitGetPetExecutor(LiteralParamSubWorkflowDocument, "ParentWorkflow");
+        source.ShouldContain("if (values[0].IsNotUndefined())");
+        source.ShouldContain("builder.AddProperty(\"petId\"u8, values[0]);");
+    }
+
+    [TestMethod]
+    public async Task Generated_parent_passes_a_literal_sub_workflow_parameter_to_the_child()
+    {
+        OperationDescriptor[] operations =
+        [
+            new(
+                "/pets/{petId}",
+                OperationMethod.Get,
+                "getPet",
+                "GetPet",
+                typeof(PetByIdRequest).FullName!,
+                typeof(PetByIdResponse).FullName!,
+                [new RequestParameterInfo("petId", ParameterLocation.Path, "PetId", "Corvus.Text.Json.JsonElement", true, "petId")],
+                false,
+                [new ResponseDescriptor("200", "Corvus.Text.Json.JsonElement", "OkBody")],
+                typeof(PetByIdClient).FullName!,
+                "GetPetAsync",
+                null,
+                null),
+        ];
+
+        var binder = new WorkflowOperationBinder([new SourceDescriptionClient("petstore", OperationResolver.Create("petstore", operations))]);
+        IReadOnlyList<GeneratedModelFile> files = await ArazzoCodeGeneration.GenerateAsync(
+            Encoding.UTF8.GetBytes(LiteralParamSubWorkflowDocument), binder, new ArazzoGenerationOptions("GeneratedWorkflows"));
+
+        string[] executors = [.. files.Where(f => f.FileName.StartsWith("Workflows/", StringComparison.Ordinal)).Select(f => f.Content)];
+        Assembly assembly = CompileInMemory(executors);
+        MethodInfo execute = assembly.GetType("GeneratedWorkflows.Workflows.ParentWorkflow")!.GetMethod("ExecuteAsync")!;
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+
+        using var workspace = JsonWorkspace.Create();
+        using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("{}"));
+
+        var pending = (ValueTask<JsonElement>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, default(CancellationToken), null])!;
+        JsonElement outputs = await pending;
+
+        // The literal petId "42" was projected into the child's inputs, so the child fetched /pets/42.
+        transport.Requests.Count.ShouldBe(1);
+        transport.Requests[0].Path.ShouldBe("/pets/42");
+        outputs.TryGetProperty("name"u8, out JsonElement name).ShouldBeTrue();
+        name.GetString().ShouldBe("Fido");
+    }
+
     private const string RetrySubWorkflowDocument = """
         {
           "arazzo": "1.0.1",

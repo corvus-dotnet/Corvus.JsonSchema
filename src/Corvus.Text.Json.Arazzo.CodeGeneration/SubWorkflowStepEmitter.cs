@@ -18,8 +18,9 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// The target executor is generated in the same workflows namespace as the caller, so its
 /// fully-qualified name is computed directly from the workflow id (<c>{ns}.{Pascal}Workflow</c>) — no
 /// cross-workflow type map is needed. The caller-owned <c>JsonWorkspace</c> flows through, so the
-/// sub-workflow's products are owned by the same run. Reusable-parameter references and non-expression
-/// parameter values are later phases.
+/// sub-workflow's products are owned by the same run. A parameter may be a runtime expression, an
+/// interpolation/composite template, or a literal (a direct literal or a reusable parameter that resolves
+/// to one); each is materialised to a <see cref="JsonElement"/> and added to the sub-workflow's inputs.
 /// </remarks>
 internal static class SubWorkflowStepEmitter
 {
@@ -89,15 +90,12 @@ internal static class SubWorkflowStepEmitter
 
         foreach (StepArgument argument in arguments)
         {
-            if (argument.Kind != ArgumentValueKind.Expression)
-            {
-                throw new NotSupportedException(
-                    $"Sub-workflow step '{stepId}' binds parameter '{argument.Name}' to a non-expression value; only runtime-expression parameters are supported on a sub-workflow step.");
-            }
-
+            // Each parameter — whether a runtime expression, a template, or a literal (a direct literal or a reusable
+            // parameter that resolves to one, #866) — is materialised to a JsonElement local so it can be added to the
+            // sub-workflow's inputs object.
             string local = $"{camel}Input{valueLocals.Count.ToString(CultureInfo.InvariantCulture)}";
             string field = $"{prefix}Input_{EmitText.SanitizeIdentifier(argument.Name)}";
-            ValueResolution.Emit(fields, statements, argument.Value, local, "context", stepOutputLocals, field, inputsVariable, inputAccessors);
+            RequestBindingEmitter.EmitValueAsElement(fields, statements, argument.Kind, argument.Value, "context", stepOutputLocals, inputsVariable, inputAccessors, field, local);
             valueLocals.Add(local);
             byName[argument.Name] = local;
         }

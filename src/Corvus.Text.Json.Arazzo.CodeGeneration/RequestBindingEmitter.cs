@@ -283,6 +283,64 @@ public static class RequestBindingEmitter
             }
         }
     }
+
+    /// <summary>
+    /// Resolves a step-argument value of ANY kind — a runtime expression, an interpolation template, a composite
+    /// template, or a literal — to a <see cref="JsonElement"/> local (emitted as <c>JsonElement {elementLocal} = …;</c>).
+    /// Used where an argument must be materialised as an element rather than passed to a typed client parameter, e.g. a
+    /// sub-workflow input (#866).
+    /// </summary>
+    public static void EmitValueAsElement(
+        StringBuilder fields,
+        StringBuilder statements,
+        ArgumentValueKind kind,
+        string value,
+        string contextVariable,
+        IReadOnlyDictionary<string, string> stepOutputLocals,
+        string inputsVariable,
+        IReadOnlyDictionary<string, string>? inputAccessors,
+        string fieldName,
+        string elementLocal)
+    {
+        switch (kind)
+        {
+            case ArgumentValueKind.Expression:
+                // A runtime expression resolves to a reference into an existing document.
+                ValueResolution.Emit(fields, statements, value, elementLocal, contextVariable, stepOutputLocals, fieldName, inputsVariable, inputAccessors);
+                break;
+
+            case ArgumentValueKind.CompositeTemplate:
+            {
+                string built = JsonTemplateEmitter.EmitComposite(
+                    fieldName, value, "workspace", default, inputsVariable, stepOutputLocals, inputAccessors, fields, statements, $"{fieldName}Tmpl");
+                statements.Append("JsonElement ").Append(elementLocal).Append(" = ").Append(built).AppendLine(";");
+                break;
+            }
+
+            case ArgumentValueKind.Interpolation:
+            {
+                string built = JsonTemplateEmitter.EmitInterpolation(
+                    fieldName, value, "workspace", default, inputsVariable, stepOutputLocals, inputAccessors, statements, $"{fieldName}Interp");
+                statements.Append("JsonElement ").Append(elementLocal).Append(" = ").Append(built).AppendLine(";");
+                break;
+            }
+
+            default:
+            {
+                // A literal: the constant JSON text, parsed once into a standalone document.
+                string json = kind switch
+                {
+                    ArgumentValueKind.LiteralComposite or ArgumentValueKind.LiteralNumber or ArgumentValueKind.LiteralBoolean => value,
+                    ArgumentValueKind.LiteralNull => "null",
+                    ArgumentValueKind.LiteralString => System.Text.Json.JsonSerializer.Serialize(value),
+                    _ => throw new NotSupportedException($"Argument value kind '{kind}' cannot be resolved to a JSON element."),
+                };
+                string constant = JsonTemplateEmitter.EmitConstant(json, fields, $"{fieldName}Const");
+                statements.Append("JsonElement ").Append(elementLocal).Append(" = ").Append(constant).AppendLine(";");
+                break;
+            }
+        }
+    }
 }
 
 /// <summary>
