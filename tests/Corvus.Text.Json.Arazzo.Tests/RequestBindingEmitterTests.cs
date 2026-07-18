@@ -51,6 +51,27 @@ public class RequestBindingEmitterTests
             "Acme.Pets.NewPet"));
 
     [TestMethod]
+    public void Url_rebuild_includes_an_in_querystring_parameter()
+    {
+        // A $url criterion rebuilds the relative URL. An OAS 3.2 in:querystring parameter must be set on the
+        // request struct and serialized by WriteQueryString (alongside any query parameters) so the rebuilt
+        // URL includes it — previously a querystring binding was dropped from the URL rebuild.
+        var fields = new System.Text.StringBuilder();
+        string source = RequestUrlEmitter.Emit(
+            GetPet,
+            [
+                new RequestParameterBinding(ParameterLocation.Path, "PetId", "Acme.Pets.JsonString", "petIdSource"),
+                new RequestParameterBinding(ParameterLocation.Querystring, "Filter", "Acme.Pets.FilterContent", "filterSource"),
+            ],
+            "step_",
+            "workspace",
+            fields);
+
+        source.ShouldContain("Filter = ");
+        source.ShouldContain(".WriteQueryString(");
+    }
+
+    [TestMethod]
     public void Expression_resolves_to_a_JsonElement_re_wrapped_as_the_source()
     {
         RequestBindingCode code = Emit([new StepArgument("petId", "$inputs.petId")]);

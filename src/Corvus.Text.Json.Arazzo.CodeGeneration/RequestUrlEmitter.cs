@@ -186,8 +186,11 @@ internal static class RequestUrlEmitter
                 hasPath = true;
                 pathAndQuery.Add(binding);
             }
-            else if (binding.Location == ParameterLocation.Query)
+            else if (binding.Location == ParameterLocation.Query || binding.Location == ParameterLocation.Querystring)
             {
+                // A query parameter, or an OAS 3.2 whole-query-string (in: querystring) parameter: both are
+                // set on the request and serialized by its WriteQueryString, so a $url criterion rebuilds a
+                // URL that includes them.
                 hasQuery = true;
                 pathAndQuery.Add(binding);
             }
