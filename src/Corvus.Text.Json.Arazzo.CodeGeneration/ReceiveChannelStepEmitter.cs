@@ -22,10 +22,12 @@ namespace Corvus.Text.Json.Arazzo.CodeGeneration;
 /// declares no outputs the whole received message becomes the step's outputs.
 /// </para>
 /// <para>
-/// A step's <c>successCriteria</c> are inlined against the received payload (the same inliners the HTTP
-/// path uses, with the payload as the live JSON body); a criterion referencing anything other than
-/// <c>$message.*</c>/<c>$inputs</c>/<c>$steps</c> is rejected (a channel step has no request/response).
-/// <c>$message.header.*</c>, correlationId matching, timeouts, and parameterised addresses are later phases.
+/// A step's <c>successCriteria</c> are inlined against the received payload and headers (the same inliners
+/// the HTTP path uses, with the payload as the live JSON body and the headers as a second source); a
+/// criterion referencing anything other than <c>$message.*</c>/<c>$inputs</c>/<c>$steps</c> is rejected (a
+/// channel step has no request/response). <c>$message.header.*</c> criteria/outputs, correlationId matching
+/// (payload-located; a header-located id is rejected because the send step cannot set headers), receive
+/// timeouts, and parameterised addresses are all supported.
 /// </para>
 /// </remarks>
 internal static class ReceiveChannelStepEmitter
